@@ -129,6 +129,7 @@ static func _append_stack_changes(
 			"kind": "stack_change",
 			"priority": 20,
 			"player_index": slot_player_index,
+			"owner_index": slot_player_index,
 			"semantic": semantic,
 			"slot_key": slot_key,
 			"slot_runtime_id": runtime_id,
@@ -179,6 +180,7 @@ static func _append_field_moves(
 			"kind": "field_move",
 			"priority": 25,
 			"player_index": int(after_slot.get("player_index", -1)),
+			"owner_index": int(after_slot.get("player_index", -1)),
 			"slot_runtime_id": runtime_id,
 			"source_slot_key": source_slot_key,
 			"target_slot_key": target_slot_key,
@@ -203,6 +205,7 @@ static func _append_zone_transfers(
 	card_ids.sort()
 	var grouped: Dictionary = {}
 	var group_order: Array[String] = []
+	var direct_action_card_id := _resolve_direct_action_card_id(before, after, action)
 	for card_id_variant: Variant in card_ids:
 		var card_id := int(card_id_variant)
 		if consumed_card_ids.has(card_id) or not after_locations.has(card_id):
@@ -213,9 +216,10 @@ static func _append_zone_transfers(
 			continue
 		var card_snapshot: Dictionary = (after.get("cards_by_id", {}) as Dictionary).get(card_id, (before.get("cards_by_id", {}) as Dictionary).get(card_id, {}))
 		var visibility: String = PrivacyPolicyScript.resolve_visibility(card_snapshot, source_zone, target_zone, action, view_player)
-		var semantic := _transfer_semantic(action, source_zone, target_zone)
+		var semantic := _transfer_semantic(action, source_zone, target_zone, card_snapshot, direct_action_card_id)
 		var grouped_source_zone := _transfer_group_source(source_zone, semantic)
-		var key := "%s>%s|%s|%s" % [grouped_source_zone, target_zone, visibility, semantic]
+		var owner_index := int(card_snapshot.get("owner_index", -1))
+		var key := "%s>%s|%s|%s|owner:%d" % [grouped_source_zone, target_zone, visibility, semantic, owner_index]
 		if not grouped.has(key):
 			grouped[key] = {
 				"ids": [],
@@ -224,6 +228,7 @@ static func _append_zone_transfers(
 				"target_zone": target_zone,
 				"visibility": visibility,
 				"semantic": semantic,
+				"owner_index": owner_index,
 			}
 			group_order.append(key)
 		var group: Dictionary = grouped[key]
@@ -236,10 +241,13 @@ static func _append_zone_transfers(
 			if value is Dictionary:
 				snapshots.append(value as Dictionary)
 		var sanitized: Dictionary = PrivacyPolicyScript.sanitize_cards(snapshots, str(group.get("visibility", PrivacyPolicyScript.VISIBILITY_BACK)))
+		var owner_index := int(group.get("owner_index", -1))
+		var target_player_index := _player_index_from_zone(str(group.get("target_zone", "")))
 		_append_event(events, {
 			"kind": "zone_transfer",
 			"priority": _transfer_priority(str(group.get("semantic", ""))),
-			"player_index": _player_index_from_zone(str(group.get("target_zone", group.get("source_zone", "")))),
+			"player_index": target_player_index if target_player_index >= 0 else owner_index,
+			"owner_index": owner_index,
 			"source_zone": str(group.get("source_zone", "")),
 			"target_zone": str(group.get("target_zone", "")),
 			"visibility": str(group.get("visibility", PrivacyPolicyScript.VISIBILITY_BACK)),
@@ -466,7 +474,13 @@ static func _evolution_target_runtime_id(action: GameAction) -> int:
 	return int(action.data.get("target_slot_runtime_id", -1))
 
 
-static func _transfer_semantic(action: GameAction, source_zone: String, target_zone: String) -> String:
+static func _transfer_semantic(
+	action: GameAction,
+	source_zone: String,
+	target_zone: String,
+	card_snapshot: Dictionary = {},
+	direct_action_card_id: int = -1
+) -> String:
 	if action != null and action.action_type == GameAction.ActionType.KNOCKOUT:
 		return "knockout"
 	if target_zone.ends_with(".lost"):
@@ -488,16 +502,98 @@ static func _transfer_semantic(action: GameAction, source_zone: String, target_z
 	if action != null:
 		match action.action_type:
 			GameAction.ActionType.PLAY_TRAINER:
-				return "trainer_play"
+				if _is_exact_direct_action_card(action, card_snapshot, source_zone, "card_name", direct_action_card_id):
+					return "trainer_play"
 			GameAction.ActionType.PLAY_POKEMON:
-				return "play_pokemon"
+				if _is_exact_direct_action_card(action, card_snapshot, source_zone, "card_name", direct_action_card_id):
+					return "play_pokemon"
 			GameAction.ActionType.PLAY_TOOL:
-				return "attach_tool"
+				if _is_exact_direct_action_card(action, card_snapshot, source_zone, "tool", direct_action_card_id):
+					return "attach_tool"
 			GameAction.ActionType.PLAY_STADIUM:
-				return "play_stadium"
+				if _is_exact_direct_action_card(action, card_snapshot, source_zone, "card_name", direct_action_card_id):
+					return "play_stadium"
 			GameAction.ActionType.KNOCKOUT:
 				return "knockout"
+	if source_zone.ends_with(".hand") and target_zone.ends_with(".discard"):
+		return "discard"
 	return "zone_transfer"
+
+
+static func _is_exact_direct_action_card(
+	action: GameAction,
+	card_snapshot: Dictionary,
+	source_zone: String,
+	action_name_key: String,
+	direct_action_card_id: int = -1
+) -> bool:
+	if action == null or int(card_snapshot.get("owner_index", -1)) != action.player_index:
+		return false
+	if source_zone != "p%d.hand" % action.player_index:
+		return false
+	if direct_action_card_id >= 0:
+		return int(card_snapshot.get("instance_id", -1)) == direct_action_card_id
+	var expected_name := str(action.data.get(action_name_key, ""))
+	return expected_name != "" and str(card_snapshot.get("card_name", "")) == expected_name
+
+
+static func _resolve_direct_action_card_id(
+	before: Dictionary,
+	after: Dictionary,
+	action: GameAction
+) -> int:
+	if action == null:
+		return -1
+	var action_name_key := ""
+	match action.action_type:
+		GameAction.ActionType.PLAY_TRAINER, GameAction.ActionType.PLAY_POKEMON, GameAction.ActionType.PLAY_STADIUM:
+			action_name_key = "card_name"
+		GameAction.ActionType.PLAY_TOOL:
+			action_name_key = "tool"
+	if action_name_key == "":
+		return -1
+	var expected_name := str(action.data.get(action_name_key, ""))
+	if expected_name == "":
+		return -1
+	var source_zone := "p%d.hand" % action.player_index
+	var before_ids: Array = (before.get("zones", {}) as Dictionary).get(source_zone, [])
+	var before_cards: Dictionary = before.get("cards_by_id", {})
+	var after_locations: Dictionary = after.get("card_locations", {})
+	var after_zones: Dictionary = after.get("zones", {})
+	var best_id := -1
+	var best_score := -1
+	for id_variant: Variant in before_ids:
+		var card_id := int(id_variant)
+		var snapshot: Dictionary = before_cards.get(card_id, {})
+		if int(snapshot.get("owner_index", -1)) != action.player_index:
+			continue
+		if str(snapshot.get("card_name", "")) != expected_name:
+			continue
+		var target_zone := str(after_locations.get(card_id, ""))
+		if target_zone == "" or target_zone == source_zone:
+			continue
+		var target_ids: Array = after_zones.get(target_zone, [])
+		var target_position := target_ids.find(card_id)
+		var score := maxi(0, target_position)
+		if _is_expected_direct_target(action.action_type, target_zone):
+			score += 10000
+		if score >= best_score:
+			best_score = score
+			best_id = card_id
+	return best_id
+
+
+static func _is_expected_direct_target(action_type: GameAction.ActionType, target_zone: String) -> bool:
+	match action_type:
+		GameAction.ActionType.PLAY_TRAINER:
+			return target_zone.ends_with(".discard") or target_zone.ends_with(".lost")
+		GameAction.ActionType.PLAY_POKEMON:
+			return target_zone.ends_with(".stack")
+		GameAction.ActionType.PLAY_TOOL:
+			return target_zone.ends_with(".tool")
+		GameAction.ActionType.PLAY_STADIUM:
+			return target_zone == "stadium"
+	return false
 
 
 static func _transfer_group_source(source_zone: String, semantic: String) -> String:

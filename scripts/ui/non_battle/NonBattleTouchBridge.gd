@@ -2,6 +2,8 @@ class_name NonBattleTouchBridge
 extends RefCounted
 
 const WebTextInputBridgeScript := preload("res://scripts/ui/non_battle/WebTextInputBridge.gd")
+const WebInputAdapterScript := preload("res://scripts/ui/input/WebInputAdapter.gd")
+const WebUiFeatureGateScript := preload("res://scripts/ui/web/WebUiFeatureGate.gd")
 
 const TOUCH_CANDIDATE_META := "_non_battle_touch_button_candidate"
 const TOUCH_DRAG_START_META := "_non_battle_touch_drag_start"
@@ -36,12 +38,21 @@ const HIDDEN_VERTICAL_DRAG_SCROLL_META := "_non_battle_hidden_vertical_drag_scro
 const HIDDEN_VERTICAL_DRAG_SCROLLABLE_CONTROL_META := "_non_battle_hidden_vertical_drag_scrollable_control"
 const HIDDEN_SCROLLBAR_META := "_non_battle_hidden_scrollbar"
 const TOUCH_BRIDGE_ENABLED_META := "_non_battle_touch_bridge_enabled"
+const WEB_INPUT_ADAPTER_META := "_non_battle_web_input_adapter"
 
 static var _last_scroll_drag_release_msec := -1000000
 
 
 static func set_test_web_text_input_enabled(enabled: bool) -> void:
 	WebTextInputBridgeScript.set_test_force_web(enabled)
+
+
+static func set_test_web_input_adapter_mode(mode: String) -> void:
+	WebUiFeatureGateScript.set_test_mode(mode)
+
+
+static func reset_test_web_input_adapter_mode() -> void:
+	WebUiFeatureGateScript.reset_for_tests()
 
 
 static func reset_test_web_text_input_state() -> void:
@@ -79,16 +90,36 @@ static func is_touch_bridge_enabled_for(node: Node) -> bool:
 	return true
 
 
+static func clear_transient_input_state(host: Node, reason: String = "platform_cancel") -> void:
+	if host == null:
+		return
+	_clear_transient_input_state_recursive(host)
+	WebTextInputBridgeScript.cancel_active(reason)
+
+
 static func handle_root_touch(host: Control, event: InputEvent) -> bool:
 	if host == null:
 		return false
 	if not is_touch_bridge_enabled_for(host):
 		_clear_host_touch_state(host)
 		return false
+	var web_v2 := WebUiFeatureGateScript.web_input_adapter_v2_enabled()
+	if web_v2 and (event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion):
+		var adapter := _web_input_adapter_for(host)
+		var normalized := adapter.ingest(event)
+		if bool(normalized.get("suppressed", false)):
+			_accept_event(host)
+			return true
+		# Real mouse events remain owned by Godot's native Control pipeline. Web v2
+		# only replaces the touch compatibility bridge and its synthetic echo.
+		if event is InputEventMouse:
+			return false
+		if not bool(normalized.get("deliver", false)):
+			return false
 	if event is InputEventMouseButton:
 		return _handle_mouse_button(host, event as InputEventMouseButton)
 	if event is InputEventScreenDrag:
-		if not _should_bridge_screen_touch():
+		if not web_v2 and not _should_bridge_screen_touch():
 			return false
 		if _should_bypass_bridge_for_native_text_input(host, (event as InputEventScreenDrag).position, false, false):
 			return false
@@ -99,7 +130,7 @@ static func handle_root_touch(host: Control, event: InputEvent) -> bool:
 		return _handle_drag(host, event as InputEventScreenDrag)
 	if not (event is InputEventScreenTouch):
 		return false
-	if not _should_bridge_screen_touch():
+	if not web_v2 and not _should_bridge_screen_touch():
 		return false
 	var touch := event as InputEventScreenTouch
 	if _should_bypass_bridge_for_native_text_input(host, touch.position, touch.pressed, not touch.pressed):
@@ -430,6 +461,8 @@ static func handle_range_touch(range_control: Range, event: InputEvent) -> bool:
 	if range_control == null or not range_control is Control:
 		return false
 	var control := range_control as Control
+	if WebUiFeatureGateScript.web_input_adapter_v2_enabled():
+		return false
 	if not is_touch_bridge_enabled_for(control):
 		if range_control.has_meta(RANGE_TOUCH_ACTIVE_META):
 			range_control.remove_meta(RANGE_TOUCH_ACTIVE_META)
@@ -484,6 +517,8 @@ static func handle_range_touch(range_control: Range, event: InputEvent) -> bool:
 
 
 static func handle_button_touch(button: Button, event: InputEvent) -> bool:
+	if WebUiFeatureGateScript.web_input_adapter_v2_enabled():
+		return false
 	if button == null:
 		return false
 	if not is_touch_bridge_enabled_for(button):
@@ -573,6 +608,8 @@ static func _line_edit_select_all_press_event(event: InputEvent) -> bool:
 
 
 static func handle_focus_control_touch(control: Control, event: InputEvent) -> bool:
+	if WebUiFeatureGateScript.web_input_adapter_v2_enabled():
+		return false
 	if control == null:
 		return false
 	if not is_touch_bridge_enabled_for(control):
@@ -857,6 +894,35 @@ static func _clear_host_touch_state(host: Control) -> void:
 	_clear_scroll_candidate(host)
 	_clear_focus_candidate(host)
 	_clear_native_text_input_candidate(host)
+
+
+static func _clear_transient_input_state_recursive(node: Node) -> void:
+	if node is Control:
+		var control := node as Control
+		if control.has_meta(WEB_INPUT_ADAPTER_META):
+			var adapter := control.get_meta(WEB_INPUT_ADAPTER_META) as WebInputAdapter
+			if adapter != null:
+				adapter.cancel_all("platform_cancel")
+		_clear_host_touch_state(control)
+		for meta_name: String in [
+			BUTTON_TOUCH_PRESSED_META,
+			FOCUS_TOUCH_PRESSED_META,
+			RANGE_TOUCH_ACTIVE_META,
+		]:
+			if control.has_meta(meta_name):
+				control.remove_meta(meta_name)
+	for child: Node in node.get_children():
+		_clear_transient_input_state_recursive(child)
+
+
+static func _web_input_adapter_for(host: Control) -> WebInputAdapter:
+	if host.has_meta(WEB_INPUT_ADAPTER_META):
+		var existing := host.get_meta(WEB_INPUT_ADAPTER_META) as WebInputAdapter
+		if existing != null:
+			return existing
+	var adapter: WebInputAdapter = WebInputAdapterScript.new()
+	host.set_meta(WEB_INPUT_ADAPTER_META, adapter)
+	return adapter
 
 
 static func _button_at_position_recursive(node: Node, global_position: Vector2) -> Button:

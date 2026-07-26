@@ -6,6 +6,7 @@ extends RefCounted
 ## engine execution or read raw game objects.
 
 const MODULE_PATHS := {
+	"dynamic_attack_cost": "res://scripts/ai/v18_cpg/modules/V18CPGDynamicAttackCost.gd",
 	"energy_burst": "res://scripts/ai/v18_cpg/modules/V18CPGEnergyBurst.gd",
 	"tera_noctowl_search": "res://scripts/ai/v18_cpg/modules/V18CPGTeraNoctowlSearch.gd",
 	"cycle_pivot": "res://scripts/ai/v18_cpg/modules/V18CPGCyclePivot.gd",
@@ -19,6 +20,7 @@ const MODULE_PATHS := {
 	"grass_spread": "res://scripts/ai/v18_cpg/modules/V18CPGGrassSpread.gd",
 	"fire_toolbox": "res://scripts/ai/v18_cpg/modules/V18CPGEthanHoOhFireToolbox.gd",
 }
+const BASE_MODULE_IDS: Array[String] = ["dynamic_attack_cost"]
 
 var _instances: Dictionary = {}
 
@@ -32,9 +34,8 @@ func annotate_frontier(
 ) -> Array[Dictionary]:
 	var result := frontier.duplicate(true)
 	var enabled: Variant = profile.get("modules", [])
-	if not (enabled is Array):
-		return result
-	for raw_module_id: Variant in enabled as Array:
+	var module_ids := _enabled_module_ids(enabled)
+	for raw_module_id: Variant in module_ids:
 		var module_id := str(raw_module_id)
 		var module := _module(module_id)
 		if module == null:
@@ -66,9 +67,8 @@ func validate_route_switch(
 	profile: Dictionary
 ) -> Dictionary:
 	var enabled: Variant = profile.get("modules", [])
-	if not (enabled is Array):
-		return {"valid": true}
-	for raw_module_id: Variant in enabled as Array:
+	var module_ids := _enabled_module_ids(enabled)
+	for raw_module_id: Variant in module_ids:
 		var module_id := str(raw_module_id)
 		var module := _module(module_id)
 		if module == null or not module.has_method("validate_route_switch"):
@@ -88,9 +88,8 @@ func verify_route_advantage(
 	profile: Dictionary
 ) -> Dictionary:
 	var enabled: Variant = profile.get("modules", [])
-	if not (enabled is Array):
-		return {"verified": false}
-	for raw_module_id: Variant in enabled as Array:
+	var module_ids := _enabled_module_ids(enabled)
+	for raw_module_id: Variant in module_ids:
 		var module_id := str(raw_module_id)
 		var module := _module(module_id)
 		if module == null or not module.has_method("verify_route_advantage"):
@@ -183,3 +182,14 @@ func _module(module_id: String) -> RefCounted:
 		instance.call("configure", module_id)
 	_instances[module_id] = instance
 	return instance
+
+
+func _enabled_module_ids(enabled: Variant) -> Array[String]:
+	var result := BASE_MODULE_IDS.duplicate()
+	if not (enabled is Array):
+		return result
+	for raw_module_id: Variant in enabled as Array:
+		var module_id := str(raw_module_id)
+		if module_id != "" and module_id not in result:
+			result.append(module_id)
+	return result

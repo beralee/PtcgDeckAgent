@@ -22,6 +22,8 @@ class PrizeExchangeScene extends Control:
 	var _opp_deck_preview: BattleCardView = null
 	var _my_prize_slots: Array[BattleCardView] = []
 	var _opp_prize_slots: Array[BattleCardView] = []
+	var _my_prize_hud_count: Label = null
+	var _opp_prize_hud_count: Label = null
 	var _player_card_back_texture: Texture2D = null
 	var _opponent_card_back_texture: Texture2D = null
 	var _handover_panel: Control = null
@@ -30,6 +32,7 @@ class PrizeExchangeScene extends Control:
 	var refresh_ui_calls := 0
 	var refresh_hand_calls := 0
 	var maybe_run_ai_calls := 0
+	var portrait_layout := false
 
 	func _get_prize_slot_view(player_index: int, slot_index: int) -> BattleCardView:
 		var slots := _my_prize_slots if player_index == _view_player else _opp_prize_slots
@@ -39,7 +42,7 @@ class PrizeExchangeScene extends Control:
 		return Rect2(Vector2.ZERO, size)
 
 	func _is_portrait_battle_layout_active() -> bool:
-		return false
+		return portrait_layout
 
 	func _refresh_ui() -> void:
 		refresh_ui_calls += 1
@@ -65,6 +68,15 @@ func _card(name: String, owner_index: int = 0) -> CardInstance:
 	var data := CardData.new()
 	data.name = name
 	data.card_type = "Item"
+	return CardInstance.create(data, owner_index)
+
+
+func _basic(name: String, owner_index: int) -> CardInstance:
+	var data := CardData.new()
+	data.name = name
+	data.card_type = "Pokemon"
+	data.stage = "Basic"
+	data.hp = 60
 	return CardInstance.create(data, owner_index)
 
 
@@ -159,6 +171,121 @@ func test_switching_ticket_animation_plan_rejects_unrelated_trainer_actions() ->
 	var controller := BattleDrawRevealControllerScript.new()
 	var phases: Array = controller.call("build_prize_exchange_animation_plan", action)
 	return assert_true(phases.is_empty(), "The Prize exchange animation should only consume Switching Ticket actions")
+
+
+func test_opening_prize_actions_preserve_the_six_hidden_cards_for_animation() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _state()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	for player_index: int in 2:
+		var active := PokemonSlot.new()
+		active.pokemon_stack.append(_basic("Active %d" % player_index, player_index))
+		gsm.game_state.players[player_index].active_pokemon = active
+		for index: int in 12:
+			gsm.game_state.players[player_index].deck.append(_card("P%d deck %d" % [player_index, index], player_index))
+	var completed := gsm.setup_complete(0)
+	var prize_actions: Array[GameAction] = []
+	for action: GameAction in gsm.action_log:
+		if action.action_type == GameAction.ActionType.SETUP_SET_PRIZES:
+			prize_actions.append(action)
+	var checks: Array[String] = [
+		assert_true(completed, "Opening fixture should complete setup"),
+		assert_eq(prize_actions.size(), 2, "Setup should emit one Prize placement action per player"),
+	]
+	for action: GameAction in prize_actions:
+		var ids: Array = action.data.get("card_instance_ids", [])
+		checks.append(assert_eq(ids.size(), 6, "Opening Prize animation should receive all six hidden card identities"))
+		checks.append(assert_true(bool(action.data.get("opening_deal", false)), "Opening Prize placement should be marked for the dedicated deal animation"))
+		checks.append(assert_eq(str(action.data.get("source_zone", "")), "deck", "Opening cards should visibly originate from the deck"))
+		checks.append(assert_eq(str(action.data.get("target_zone", "")), "prize", "Opening cards should visibly land in the Prize destination"))
+	return run_checks(checks)
+
+
+func test_opening_prize_animation_plan_deals_once_from_deck_to_prize_destination() -> String:
+	var action := GameAction.create(
+		GameAction.ActionType.SETUP_SET_PRIZES,
+		0,
+		{
+			"count": 6,
+			"card_instance_ids": [1, 2, 3, 4, 5, 6],
+			"source_zone": "deck",
+			"target_zone": "prize",
+			"opening_deal": true,
+		},
+		0,
+		"place opening Prizes"
+	)
+	var phases: Array = BattleDrawRevealControllerScript.new().call("build_prize_exchange_animation_plan", action)
+	var phase: Dictionary = phases[0] if phases.size() == 1 else {}
+	return run_checks([
+		assert_eq(phases.size(), 1, "Opening setup should use one concise deal phase"),
+		assert_eq(str(phase.get("id", "")), "opening_deck_to_prize", "Opening phase should have a stable animation identity"),
+		assert_eq(str(phase.get("from_zone", "")), "deck", "Opening Prize cards should originate at the player's deck HUD"),
+		assert_eq(str(phase.get("to_zone", "")), "prize", "Opening Prize cards should land at the layout-specific Prize destination"),
+		assert_true(bool(phase.get("face_down", false)), "Opening Prize identities must stay hidden throughout the animation"),
+	])
+
+
+func test_portrait_prize_flights_target_the_visible_count_hud_instead_of_hidden_slots() -> String:
+	var scene := PrizeExchangeScene.new()
+	scene.size = Vector2(430, 932)
+	scene.portrait_layout = true
+	var hidden_slot := BattleCardView.new()
+	hidden_slot.size = Vector2(72, 100)
+	hidden_slot.visible = false
+	scene.add_child(hidden_slot)
+	scene._my_prize_slots.append(hidden_slot)
+	var visible_count := Label.new()
+	visible_count.size = Vector2(86, 54)
+	visible_count.position = Vector2(18, 710)
+	scene.add_child(visible_count)
+	scene._my_prize_hud_count = visible_count
+	var controller := BattleDrawRevealControllerScript.new()
+	var portrait_anchor := controller.call("_prize_exchange_zone_anchor", scene, 0, "prize", 0) as Control
+	var portrait_uses_visible_hud := portrait_anchor == visible_count
+	scene.portrait_layout = false
+	var landscape_anchor := controller.call("_prize_exchange_zone_anchor", scene, 0, "prize", 0) as Control
+	var landscape_uses_slot := landscape_anchor == hidden_slot
+	scene.free()
+	return run_checks([
+		assert_true(portrait_uses_visible_hud, "Portrait Prize flight should converge on the visible remaining-Prize HUD"),
+		assert_true(landscape_uses_slot, "Landscape Prize flight should keep targeting the physical Prize slot"),
+	])
+
+
+func test_portrait_prize_hud_flight_keeps_screen_center_under_rotated_canvas() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene := PrizeExchangeScene.new()
+	scene.size = Vector2(900, 1600)
+	scene.position = Vector2(112, 46)
+	scene.rotation_degrees = 90.0
+	scene.scale = Vector2(0.48, 0.48)
+	scene.portrait_layout = true
+	var board := Control.new()
+	board.size = scene.size
+	board.position = Vector2(24, 18)
+	board.scale = Vector2(0.96, 1.02)
+	scene.add_child(board)
+	var prize_hud := Label.new()
+	prize_hud.position = Vector2(28, 1110)
+	prize_hud.size = Vector2(132, 82)
+	board.add_child(prize_hud)
+	scene._my_prize_hud_count = prize_hud
+	tree.root.add_child(scene)
+	await tree.process_frame
+	var controller := BattleDrawRevealControllerScript.new()
+	var overlay := controller.call("_ensure_overlay", scene) as Control
+	var card_view := controller.call("_create_reveal_card_view", scene, overlay, _card("Opening Prize"), 0) as BattleCardView
+	await tree.process_frame
+	var target_scale: Vector2 = controller.call("_prize_exchange_zone_scale", scene, card_view, 0, "prize", 0)
+	card_view.scale = target_scale
+	card_view.position = controller.call("_prize_exchange_zone_position", scene, card_view, 0, "prize", 0, 1, target_scale)
+	var actual_screen := card_view.get_screen_transform() * (card_view.size * 0.5)
+	var expected_screen := prize_hud.get_screen_transform() * (prize_hud.size * 0.5)
+	var result := assert_true(actual_screen.distance_to(expected_screen) < 1.0, "Rotated Android portrait Prize flight should land on the visible count HUD")
+	scene.queue_free()
+	await tree.process_frame
+	return result
 
 
 func test_prize_exchange_flight_uses_final_screen_centers_under_nested_transforms() -> String:

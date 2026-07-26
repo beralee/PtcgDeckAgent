@@ -1,0 +1,719 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 428,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 15,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:fez_draw_area_switch_boss",
+      "choice_label": "化危为吉抽零之大空洞、能量转移与老大",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:play_area_zero",
+      "choice_label": "零之大空洞把备战上限扩到8",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:bench_hoothoot",
+      "choice_label": "第6格放下咕咕",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:bench_regular_bolt",
+      "choice_label": "第7格放下普通猛雷鼓",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:bench_mew",
+      "choice_label": "第8格放下梦幻",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:dance_one",
+      "choice_label": "第一只厄诡椪舞到2草并抽夜间担架",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:dance_two",
+      "choice_label": "第二只厄诡椪舞到2草并抽大地容器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:switch_grass_to_bloodmoon",
+      "choice_label": "能量转移把第二只厄诡椪一草交给月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:first_exact_280",
+      "choice_label": "极雷轰弃首攻雷斗与第一只厄诡椪两草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:n_reply",
+      "choice_label": "带坚硬束带的索罗亚克复制复燃击倒10HP猛雷鼓",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:replace_and_trim",
+      "choice_label": "奖赏阻碍之塔替换大空洞并裁掉咕咕与普通猛雷鼓",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:boss_fezandipiti",
+      "choice_label": "老大的指令抓出吉雉鸡ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "12:zero_retreat_to_bloodmoon",
+      "choice_label": "借天际线零撤退换入月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "13:bloodmoon_closeout",
+      "choice_label": "老练招式降费后用1草支付血月240",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "7f0b70d049008d95b1860aae2d594224d6de4efd02be5e68b7699714da33a429"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:fez_draw_area_switch_boss",
+        "choice_label": "化危为吉抽零之大空洞、能量转移与老大",
+        "depth": 14,
+        "player_actions": 13,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:play_area_zero",
+              "choice_label": "零之大空洞把备战上限扩到8",
+              "depth": 14,
+              "player_actions": 12,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:bench_hoothoot",
+                    "choice_label": "第6格放下咕咕",
+                    "depth": 14,
+                    "player_actions": 11,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:bench_regular_bolt",
+                          "choice_label": "第7格放下普通猛雷鼓",
+                          "depth": 14,
+                          "player_actions": 10,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:bench_mew",
+                                "choice_label": "第8格放下梦幻",
+                                "depth": 14,
+                                "player_actions": 9,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:dance_one",
+                                      "choice_label": "第一只厄诡椪舞到2草并抽夜间担架",
+                                      "depth": 14,
+                                      "player_actions": 8,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:dance_two",
+                                            "choice_label": "第二只厄诡椪舞到2草并抽大地容器",
+                                            "depth": 14,
+                                            "player_actions": 7,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:switch_grass_to_bloodmoon",
+                                                  "choice_label": "能量转移把第二只厄诡椪一草交给月月熊",
+                                                  "depth": 14,
+                                                  "player_actions": 6,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:first_exact_280",
+                                                        "choice_label": "极雷轰弃首攻雷斗与第一只厄诡椪两草",
+                                                        "depth": 14,
+                                                        "player_actions": 5,
+                                                        "reason": "all_defenses_hold",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:n_reply",
+                                                              "choice_label": "带坚硬束带的索罗亚克复制复燃击倒10HP猛雷鼓",
+                                                              "depth": 14,
+                                                              "player_actions": 4,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:replace_and_trim",
+                                                                    "choice_label": "奖赏阻碍之塔替换大空洞并裁掉咕咕与普通猛雷鼓",
+                                                                    "depth": 14,
+                                                                    "player_actions": 4,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:boss_fezandipiti",
+                                                                          "choice_label": "老大的指令抓出吉雉鸡ex",
+                                                                          "depth": 14,
+                                                                          "player_actions": 3,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [
+                                                                              {
+                                                                                "choice_id": "12:zero_retreat_to_bloodmoon",
+                                                                                "choice_label": "借天际线零撤退换入月月熊",
+                                                                                "depth": 14,
+                                                                                "player_actions": 2,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "status": "PROVEN",
+                                                                                "tree": {
+                                                                                  "branches": [
+                                                                                    {
+                                                                                      "choice_id": "13:bloodmoon_closeout",
+                                                                                      "choice_label": "老练招式降费后用1草支付血月240",
+                                                                                      "depth": 14,
+                                                                                      "player_actions": 1,
+                                                                                      "reason": "production_witness_reached_goal",
+                                                                                      "status": "PROVEN",
+                                                                                      "tree": {
+                                                                                        "branches": [],
+                                                                                        "coverage_complete": true,
+                                                                                        "depth": 14,
+                                                                                        "player_actions": 0,
+                                                                                        "reason": "production_witness_reached_goal",
+                                                                                        "score": 4,
+                                                                                        "status": "PROVEN",
+                                                                                        "winning_choice_count": 0
+                                                                                      }
+                                                                                    }
+                                                                                  ],
+                                                                                  "coverage_complete": true,
+                                                                                  "depth": 14,
+                                                                                  "player_actions": 1,
+                                                                                  "reason": "player_has_forcing_choice",
+                                                                                  "role": "player",
+                                                                                  "selected_choice_id": "13:bloodmoon_closeout",
+                                                                                  "selected_choice_label": "老练招式降费后用1草支付血月240",
+                                                                                  "status": "PROVEN",
+                                                                                  "winning_choice_count": 1
+                                                                                }
+                                                                              }
+                                                                            ],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 14,
+                                                                            "player_actions": 2,
+                                                                            "reason": "player_has_forcing_choice",
+                                                                            "role": "player",
+                                                                            "selected_choice_id": "12:zero_retreat_to_bloodmoon",
+                                                                            "selected_choice_label": "借天际线零撤退换入月月熊",
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 1
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 14,
+                                                                      "player_actions": 3,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:boss_fezandipiti",
+                                                                      "selected_choice_label": "老大的指令抓出吉雉鸡ex",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 14,
+                                                                "player_actions": 4,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:replace_and_trim",
+                                                                "selected_choice_label": "奖赏阻碍之塔替换大空洞并裁掉咕咕与普通猛雷鼓",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 14,
+                                                          "player_actions": 4,
+                                                          "reason": "all_defenses_hold",
+                                                          "role": "opponent",
+                                                          "selected_choice_id": "09:n_reply",
+                                                          "selected_choice_label": "带坚硬束带的索罗亚克复制复燃击倒10HP猛雷鼓",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 14,
+                                                    "player_actions": 5,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:first_exact_280",
+                                                    "selected_choice_label": "极雷轰弃首攻雷斗与第一只厄诡椪两草",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 14,
+                                              "player_actions": 6,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:switch_grass_to_bloodmoon",
+                                              "selected_choice_label": "能量转移把第二只厄诡椪一草交给月月熊",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 14,
+                                        "player_actions": 7,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:dance_two",
+                                        "selected_choice_label": "第二只厄诡椪舞到2草并抽大地容器",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 14,
+                                  "player_actions": 8,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:dance_one",
+                                  "selected_choice_label": "第一只厄诡椪舞到2草并抽夜间担架",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 14,
+                            "player_actions": 9,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:bench_mew",
+                            "selected_choice_label": "第8格放下梦幻",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 14,
+                      "player_actions": 10,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:bench_regular_bolt",
+                      "selected_choice_label": "第7格放下普通猛雷鼓",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 14,
+                "player_actions": 11,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:bench_hoothoot",
+                "selected_choice_label": "第6格放下咕咕",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 14,
+          "player_actions": 12,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:play_area_zero",
+          "selected_choice_label": "零之大空洞把备战上限扩到8",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 14,
+    "player_actions": 13,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:fez_draw_area_switch_boss",
+    "selected_choice_label": "化危为吉抽零之大空洞、能量转移与老大",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:fez_draw_area_switch_boss",
+      "choice_label": "化危为吉抽零之大空洞、能量转移与老大",
+      "depth": 14,
+      "player_actions": 13,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:play_area_zero",
+            "choice_label": "零之大空洞把备战上限扩到8",
+            "depth": 14,
+            "player_actions": 12,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:bench_hoothoot",
+                  "choice_label": "第6格放下咕咕",
+                  "depth": 14,
+                  "player_actions": 11,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:bench_regular_bolt",
+                        "choice_label": "第7格放下普通猛雷鼓",
+                        "depth": 14,
+                        "player_actions": 10,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:bench_mew",
+                              "choice_label": "第8格放下梦幻",
+                              "depth": 14,
+                              "player_actions": 9,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:dance_one",
+                                    "choice_label": "第一只厄诡椪舞到2草并抽夜间担架",
+                                    "depth": 14,
+                                    "player_actions": 8,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:dance_two",
+                                          "choice_label": "第二只厄诡椪舞到2草并抽大地容器",
+                                          "depth": 14,
+                                          "player_actions": 7,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:switch_grass_to_bloodmoon",
+                                                "choice_label": "能量转移把第二只厄诡椪一草交给月月熊",
+                                                "depth": 14,
+                                                "player_actions": 6,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:first_exact_280",
+                                                      "choice_label": "极雷轰弃首攻雷斗与第一只厄诡椪两草",
+                                                      "depth": 14,
+                                                      "player_actions": 5,
+                                                      "reason": "all_defenses_hold",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:n_reply",
+                                                            "choice_label": "带坚硬束带的索罗亚克复制复燃击倒10HP猛雷鼓",
+                                                            "depth": 14,
+                                                            "player_actions": 4,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:replace_and_trim",
+                                                                  "choice_label": "奖赏阻碍之塔替换大空洞并裁掉咕咕与普通猛雷鼓",
+                                                                  "depth": 14,
+                                                                  "player_actions": 4,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:boss_fezandipiti",
+                                                                        "choice_label": "老大的指令抓出吉雉鸡ex",
+                                                                        "depth": 14,
+                                                                        "player_actions": 3,
+                                                                        "reason": "player_has_forcing_choice",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [
+                                                                            {
+                                                                              "choice_id": "12:zero_retreat_to_bloodmoon",
+                                                                              "choice_label": "借天际线零撤退换入月月熊",
+                                                                              "depth": 14,
+                                                                              "player_actions": 2,
+                                                                              "reason": "player_has_forcing_choice",
+                                                                              "status": "PROVEN",
+                                                                              "tree": {
+                                                                                "branches": [
+                                                                                  {
+                                                                                    "choice_id": "13:bloodmoon_closeout",
+                                                                                    "choice_label": "老练招式降费后用1草支付血月240",
+                                                                                    "depth": 14,
+                                                                                    "player_actions": 1,
+                                                                                    "reason": "production_witness_reached_goal",
+                                                                                    "status": "PROVEN",
+                                                                                    "tree": {
+                                                                                      "branches": [],
+                                                                                      "coverage_complete": true,
+                                                                                      "depth": 14,
+                                                                                      "player_actions": 0,
+                                                                                      "reason": "production_witness_reached_goal",
+                                                                                      "score": 4,
+                                                                                      "status": "PROVEN",
+                                                                                      "winning_choice_count": 0
+                                                                                    }
+                                                                                  }
+                                                                                ],
+                                                                                "coverage_complete": true,
+                                                                                "depth": 14,
+                                                                                "player_actions": 1,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "role": "player",
+                                                                                "selected_choice_id": "13:bloodmoon_closeout",
+                                                                                "selected_choice_label": "老练招式降费后用1草支付血月240",
+                                                                                "status": "PROVEN",
+                                                                                "winning_choice_count": 1
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 14,
+                                                                          "player_actions": 2,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "role": "player",
+                                                                          "selected_choice_id": "12:zero_retreat_to_bloodmoon",
+                                                                          "selected_choice_label": "借天际线零撤退换入月月熊",
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 1
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 14,
+                                                                    "player_actions": 3,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:boss_fezandipiti",
+                                                                    "selected_choice_label": "老大的指令抓出吉雉鸡ex",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 14,
+                                                              "player_actions": 4,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:replace_and_trim",
+                                                              "selected_choice_label": "奖赏阻碍之塔替换大空洞并裁掉咕咕与普通猛雷鼓",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 14,
+                                                        "player_actions": 4,
+                                                        "reason": "all_defenses_hold",
+                                                        "role": "opponent",
+                                                        "selected_choice_id": "09:n_reply",
+                                                        "selected_choice_label": "带坚硬束带的索罗亚克复制复燃击倒10HP猛雷鼓",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 14,
+                                                  "player_actions": 5,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:first_exact_280",
+                                                  "selected_choice_label": "极雷轰弃首攻雷斗与第一只厄诡椪两草",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 14,
+                                            "player_actions": 6,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:switch_grass_to_bloodmoon",
+                                            "selected_choice_label": "能量转移把第二只厄诡椪一草交给月月熊",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 14,
+                                      "player_actions": 7,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:dance_two",
+                                      "selected_choice_label": "第二只厄诡椪舞到2草并抽大地容器",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 14,
+                                "player_actions": 8,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:dance_one",
+                                "selected_choice_label": "第一只厄诡椪舞到2草并抽夜间担架",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 14,
+                          "player_actions": 9,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:bench_mew",
+                          "selected_choice_label": "第8格放下梦幻",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 14,
+                    "player_actions": 10,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:bench_regular_bolt",
+                    "selected_choice_label": "第7格放下普通猛雷鼓",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 14,
+              "player_actions": 11,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:bench_hoothoot",
+              "selected_choice_label": "第6格放下咕咕",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 14,
+        "player_actions": 12,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:play_area_zero",
+        "selected_choice_label": "零之大空洞把备战上限扩到8",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "7f0b70d049008d95b1860aae2d594224d6de4efd02be5e68b7699714da33a429",
+  "scenario_id": "raging_bolt_10",
+  "shortest_player_actions": 13,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

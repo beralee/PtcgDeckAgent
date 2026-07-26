@@ -1,0 +1,719 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 415,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 15,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:research_draw_stadium_gusts",
+      "choice_label": "博士抽满7张取得道馆、捕捉器与第7张老大",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:play_spikemuth",
+      "choice_label": "打出尖钉镇道馆",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:first_spikemuth_search",
+      "choice_label": "第一回合道馆检索第一只长毛巨魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:evolve_first_grimmsnarl",
+      "choice_label": "前场诈唬魔从手牌进化",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:first_punk_up_two_one",
+      "choice_label": "首次泵感按2/1准备两条攻击线",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:counter_first_gholdengo",
+      "choice_label": "反击捕捉器拉出第一只50伤赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:munkidori_first_target",
+      "choice_label": "愿增猿搬30把首目标推到80伤",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:first_shadow_bullet",
+      "choice_label": "180精确首杀并给换位后第1备战位的50伤赛富豪再铺30",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:gholdengo_exact_reply",
+      "choice_label": "第三只赛富豪弃6能造成300，精确反杀剩300HP首攻者",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:second_spikemuth_search",
+      "choice_label": "第二回合再次用道馆检索第二只长毛巨魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:evolve_second_grimmsnarl",
+      "choice_label": "接棒诈唬魔从手牌进化",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:second_punk_up_one",
+      "choice_label": "第二次泵感只补1能达到双恶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "12:boss_second_gholdengo",
+      "choice_label": "第7张老大抓出唯一剩180HP的铺伤目标",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "13:second_shadow_bullet",
+      "choice_label": "第二次180精确击倒并完成四奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "2aa7445b7a185af7916c8a26afc56b9ba09fde2dd6de8d59e192aca671242997"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:research_draw_stadium_gusts",
+        "choice_label": "博士抽满7张取得道馆、捕捉器与第7张老大",
+        "depth": 14,
+        "player_actions": 13,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:play_spikemuth",
+              "choice_label": "打出尖钉镇道馆",
+              "depth": 14,
+              "player_actions": 12,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:first_spikemuth_search",
+                    "choice_label": "第一回合道馆检索第一只长毛巨魔",
+                    "depth": 14,
+                    "player_actions": 11,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:evolve_first_grimmsnarl",
+                          "choice_label": "前场诈唬魔从手牌进化",
+                          "depth": 14,
+                          "player_actions": 10,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:first_punk_up_two_one",
+                                "choice_label": "首次泵感按2/1准备两条攻击线",
+                                "depth": 14,
+                                "player_actions": 9,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:counter_first_gholdengo",
+                                      "choice_label": "反击捕捉器拉出第一只50伤赛富豪",
+                                      "depth": 14,
+                                      "player_actions": 8,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:munkidori_first_target",
+                                            "choice_label": "愿增猿搬30把首目标推到80伤",
+                                            "depth": 14,
+                                            "player_actions": 7,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:first_shadow_bullet",
+                                                  "choice_label": "180精确首杀并给换位后第1备战位的50伤赛富豪再铺30",
+                                                  "depth": 14,
+                                                  "player_actions": 6,
+                                                  "reason": "all_defenses_hold",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:gholdengo_exact_reply",
+                                                        "choice_label": "第三只赛富豪弃6能造成300，精确反杀剩300HP首攻者",
+                                                        "depth": 14,
+                                                        "player_actions": 5,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:second_spikemuth_search",
+                                                              "choice_label": "第二回合再次用道馆检索第二只长毛巨魔",
+                                                              "depth": 14,
+                                                              "player_actions": 5,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:evolve_second_grimmsnarl",
+                                                                    "choice_label": "接棒诈唬魔从手牌进化",
+                                                                    "depth": 14,
+                                                                    "player_actions": 4,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:second_punk_up_one",
+                                                                          "choice_label": "第二次泵感只补1能达到双恶",
+                                                                          "depth": 14,
+                                                                          "player_actions": 3,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [
+                                                                              {
+                                                                                "choice_id": "12:boss_second_gholdengo",
+                                                                                "choice_label": "第7张老大抓出唯一剩180HP的铺伤目标",
+                                                                                "depth": 14,
+                                                                                "player_actions": 2,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "status": "PROVEN",
+                                                                                "tree": {
+                                                                                  "branches": [
+                                                                                    {
+                                                                                      "choice_id": "13:second_shadow_bullet",
+                                                                                      "choice_label": "第二次180精确击倒并完成四奖",
+                                                                                      "depth": 14,
+                                                                                      "player_actions": 1,
+                                                                                      "reason": "production_witness_reached_goal",
+                                                                                      "status": "PROVEN",
+                                                                                      "tree": {
+                                                                                        "branches": [],
+                                                                                        "coverage_complete": true,
+                                                                                        "depth": 14,
+                                                                                        "player_actions": 0,
+                                                                                        "reason": "production_witness_reached_goal",
+                                                                                        "score": 4,
+                                                                                        "status": "PROVEN",
+                                                                                        "winning_choice_count": 0
+                                                                                      }
+                                                                                    }
+                                                                                  ],
+                                                                                  "coverage_complete": true,
+                                                                                  "depth": 14,
+                                                                                  "player_actions": 1,
+                                                                                  "reason": "player_has_forcing_choice",
+                                                                                  "role": "player",
+                                                                                  "selected_choice_id": "13:second_shadow_bullet",
+                                                                                  "selected_choice_label": "第二次180精确击倒并完成四奖",
+                                                                                  "status": "PROVEN",
+                                                                                  "winning_choice_count": 1
+                                                                                }
+                                                                              }
+                                                                            ],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 14,
+                                                                            "player_actions": 2,
+                                                                            "reason": "player_has_forcing_choice",
+                                                                            "role": "player",
+                                                                            "selected_choice_id": "12:boss_second_gholdengo",
+                                                                            "selected_choice_label": "第7张老大抓出唯一剩180HP的铺伤目标",
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 1
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 14,
+                                                                      "player_actions": 3,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:second_punk_up_one",
+                                                                      "selected_choice_label": "第二次泵感只补1能达到双恶",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 14,
+                                                                "player_actions": 4,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:evolve_second_grimmsnarl",
+                                                                "selected_choice_label": "接棒诈唬魔从手牌进化",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 14,
+                                                          "player_actions": 5,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:second_spikemuth_search",
+                                                          "selected_choice_label": "第二回合再次用道馆检索第二只长毛巨魔",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 14,
+                                                    "player_actions": 5,
+                                                    "reason": "all_defenses_hold",
+                                                    "role": "opponent",
+                                                    "selected_choice_id": "08:gholdengo_exact_reply",
+                                                    "selected_choice_label": "第三只赛富豪弃6能造成300，精确反杀剩300HP首攻者",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 14,
+                                              "player_actions": 6,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:first_shadow_bullet",
+                                              "selected_choice_label": "180精确首杀并给换位后第1备战位的50伤赛富豪再铺30",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 14,
+                                        "player_actions": 7,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:munkidori_first_target",
+                                        "selected_choice_label": "愿增猿搬30把首目标推到80伤",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 14,
+                                  "player_actions": 8,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:counter_first_gholdengo",
+                                  "selected_choice_label": "反击捕捉器拉出第一只50伤赛富豪",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 14,
+                            "player_actions": 9,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:first_punk_up_two_one",
+                            "selected_choice_label": "首次泵感按2/1准备两条攻击线",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 14,
+                      "player_actions": 10,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:evolve_first_grimmsnarl",
+                      "selected_choice_label": "前场诈唬魔从手牌进化",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 14,
+                "player_actions": 11,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:first_spikemuth_search",
+                "selected_choice_label": "第一回合道馆检索第一只长毛巨魔",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 14,
+          "player_actions": 12,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:play_spikemuth",
+          "selected_choice_label": "打出尖钉镇道馆",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 14,
+    "player_actions": 13,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:research_draw_stadium_gusts",
+    "selected_choice_label": "博士抽满7张取得道馆、捕捉器与第7张老大",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:research_draw_stadium_gusts",
+      "choice_label": "博士抽满7张取得道馆、捕捉器与第7张老大",
+      "depth": 14,
+      "player_actions": 13,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:play_spikemuth",
+            "choice_label": "打出尖钉镇道馆",
+            "depth": 14,
+            "player_actions": 12,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:first_spikemuth_search",
+                  "choice_label": "第一回合道馆检索第一只长毛巨魔",
+                  "depth": 14,
+                  "player_actions": 11,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:evolve_first_grimmsnarl",
+                        "choice_label": "前场诈唬魔从手牌进化",
+                        "depth": 14,
+                        "player_actions": 10,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:first_punk_up_two_one",
+                              "choice_label": "首次泵感按2/1准备两条攻击线",
+                              "depth": 14,
+                              "player_actions": 9,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:counter_first_gholdengo",
+                                    "choice_label": "反击捕捉器拉出第一只50伤赛富豪",
+                                    "depth": 14,
+                                    "player_actions": 8,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:munkidori_first_target",
+                                          "choice_label": "愿增猿搬30把首目标推到80伤",
+                                          "depth": 14,
+                                          "player_actions": 7,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:first_shadow_bullet",
+                                                "choice_label": "180精确首杀并给换位后第1备战位的50伤赛富豪再铺30",
+                                                "depth": 14,
+                                                "player_actions": 6,
+                                                "reason": "all_defenses_hold",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:gholdengo_exact_reply",
+                                                      "choice_label": "第三只赛富豪弃6能造成300，精确反杀剩300HP首攻者",
+                                                      "depth": 14,
+                                                      "player_actions": 5,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:second_spikemuth_search",
+                                                            "choice_label": "第二回合再次用道馆检索第二只长毛巨魔",
+                                                            "depth": 14,
+                                                            "player_actions": 5,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:evolve_second_grimmsnarl",
+                                                                  "choice_label": "接棒诈唬魔从手牌进化",
+                                                                  "depth": 14,
+                                                                  "player_actions": 4,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:second_punk_up_one",
+                                                                        "choice_label": "第二次泵感只补1能达到双恶",
+                                                                        "depth": 14,
+                                                                        "player_actions": 3,
+                                                                        "reason": "player_has_forcing_choice",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [
+                                                                            {
+                                                                              "choice_id": "12:boss_second_gholdengo",
+                                                                              "choice_label": "第7张老大抓出唯一剩180HP的铺伤目标",
+                                                                              "depth": 14,
+                                                                              "player_actions": 2,
+                                                                              "reason": "player_has_forcing_choice",
+                                                                              "status": "PROVEN",
+                                                                              "tree": {
+                                                                                "branches": [
+                                                                                  {
+                                                                                    "choice_id": "13:second_shadow_bullet",
+                                                                                    "choice_label": "第二次180精确击倒并完成四奖",
+                                                                                    "depth": 14,
+                                                                                    "player_actions": 1,
+                                                                                    "reason": "production_witness_reached_goal",
+                                                                                    "status": "PROVEN",
+                                                                                    "tree": {
+                                                                                      "branches": [],
+                                                                                      "coverage_complete": true,
+                                                                                      "depth": 14,
+                                                                                      "player_actions": 0,
+                                                                                      "reason": "production_witness_reached_goal",
+                                                                                      "score": 4,
+                                                                                      "status": "PROVEN",
+                                                                                      "winning_choice_count": 0
+                                                                                    }
+                                                                                  }
+                                                                                ],
+                                                                                "coverage_complete": true,
+                                                                                "depth": 14,
+                                                                                "player_actions": 1,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "role": "player",
+                                                                                "selected_choice_id": "13:second_shadow_bullet",
+                                                                                "selected_choice_label": "第二次180精确击倒并完成四奖",
+                                                                                "status": "PROVEN",
+                                                                                "winning_choice_count": 1
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 14,
+                                                                          "player_actions": 2,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "role": "player",
+                                                                          "selected_choice_id": "12:boss_second_gholdengo",
+                                                                          "selected_choice_label": "第7张老大抓出唯一剩180HP的铺伤目标",
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 1
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 14,
+                                                                    "player_actions": 3,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:second_punk_up_one",
+                                                                    "selected_choice_label": "第二次泵感只补1能达到双恶",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 14,
+                                                              "player_actions": 4,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:evolve_second_grimmsnarl",
+                                                              "selected_choice_label": "接棒诈唬魔从手牌进化",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 14,
+                                                        "player_actions": 5,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:second_spikemuth_search",
+                                                        "selected_choice_label": "第二回合再次用道馆检索第二只长毛巨魔",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 14,
+                                                  "player_actions": 5,
+                                                  "reason": "all_defenses_hold",
+                                                  "role": "opponent",
+                                                  "selected_choice_id": "08:gholdengo_exact_reply",
+                                                  "selected_choice_label": "第三只赛富豪弃6能造成300，精确反杀剩300HP首攻者",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 14,
+                                            "player_actions": 6,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:first_shadow_bullet",
+                                            "selected_choice_label": "180精确首杀并给换位后第1备战位的50伤赛富豪再铺30",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 14,
+                                      "player_actions": 7,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:munkidori_first_target",
+                                      "selected_choice_label": "愿增猿搬30把首目标推到80伤",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 14,
+                                "player_actions": 8,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:counter_first_gholdengo",
+                                "selected_choice_label": "反击捕捉器拉出第一只50伤赛富豪",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 14,
+                          "player_actions": 9,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:first_punk_up_two_one",
+                          "selected_choice_label": "首次泵感按2/1准备两条攻击线",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 14,
+                    "player_actions": 10,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:evolve_first_grimmsnarl",
+                    "selected_choice_label": "前场诈唬魔从手牌进化",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 14,
+              "player_actions": 11,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:first_spikemuth_search",
+              "selected_choice_label": "第一回合道馆检索第一只长毛巨魔",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 14,
+        "player_actions": 12,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:play_spikemuth",
+        "selected_choice_label": "打出尖钉镇道馆",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "2aa7445b7a185af7916c8a26afc56b9ba09fde2dd6de8d59e192aca671242997",
+  "scenario_id": "marnie_09",
+  "shortest_player_actions": 13,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

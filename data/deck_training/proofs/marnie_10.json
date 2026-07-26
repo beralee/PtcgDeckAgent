@@ -1,0 +1,767 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 435,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 16,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:research_seventh_secret_box",
+      "choice_label": "博士抽7，秘密箱恰好是第7张",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:secret_box_four_bridges",
+      "choice_label": "秘密箱弃三张安全成本并取得四类桥牌",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:energy_search_for_budew",
+      "choice_label": "能量输送取得含羞苞进化攻击费用",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:attach_budew_dark",
+      "choice_label": "唯一手贴给含羞苞",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:play_spikemuth",
+      "choice_label": "打出尖钉镇道馆",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:prefetch_grimmsnarl",
+      "choice_label": "第一回合预取第二回合长毛巨魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:attach_tm_evolution",
+      "choice_label": "给含羞苞附进化学习器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:munkidori_seed_target",
+      "choice_label": "首回合愿增猿先搬30，预埋两次检查后的80伤档",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:tm_evolve_two_engines",
+      "choice_label": "进化招式同时建立诈唬魔和雪妖女",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:gholdengo_reply_two_checks",
+      "choice_label": "赛富豪淘金潮反杀含羞苞；两个检查收掉愿增猿和吉雉鸡ex",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:evolve_bench_grimmsnarl",
+      "choice_label": "把备战诈唬魔进化为长毛巨魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:punk_up_two_dark",
+      "choice_label": "泵感给备战新攻击手双恶能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "12:retreat_munkidori_to_grimmsnarl",
+      "choice_label": "升场愿增猿弃掉恶能撤退到长毛巨魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "13:boss_exact_target",
+      "choice_label": "跨回合老大抓出唯一剩180HP赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "14:shadow_bullet_fifth_prize",
+      "choice_label": "暗影子弹180精确取得最后2奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "9f00eec53dcf1ca267315e83be993bfcfa25b4890ede3516bf173b8ce2ba290b"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:research_seventh_secret_box",
+        "choice_label": "博士抽7，秘密箱恰好是第7张",
+        "depth": 15,
+        "player_actions": 14,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:secret_box_four_bridges",
+              "choice_label": "秘密箱弃三张安全成本并取得四类桥牌",
+              "depth": 15,
+              "player_actions": 13,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:energy_search_for_budew",
+                    "choice_label": "能量输送取得含羞苞进化攻击费用",
+                    "depth": 15,
+                    "player_actions": 12,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:attach_budew_dark",
+                          "choice_label": "唯一手贴给含羞苞",
+                          "depth": 15,
+                          "player_actions": 11,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:play_spikemuth",
+                                "choice_label": "打出尖钉镇道馆",
+                                "depth": 15,
+                                "player_actions": 10,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:prefetch_grimmsnarl",
+                                      "choice_label": "第一回合预取第二回合长毛巨魔",
+                                      "depth": 15,
+                                      "player_actions": 9,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:attach_tm_evolution",
+                                            "choice_label": "给含羞苞附进化学习器",
+                                            "depth": 15,
+                                            "player_actions": 8,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:munkidori_seed_target",
+                                                  "choice_label": "首回合愿增猿先搬30，预埋两次检查后的80伤档",
+                                                  "depth": 15,
+                                                  "player_actions": 7,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:tm_evolve_two_engines",
+                                                        "choice_label": "进化招式同时建立诈唬魔和雪妖女",
+                                                        "depth": 15,
+                                                        "player_actions": 6,
+                                                        "reason": "all_defenses_hold",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:gholdengo_reply_two_checks",
+                                                              "choice_label": "赛富豪淘金潮反杀含羞苞；两个检查收掉愿增猿和吉雉鸡ex",
+                                                              "depth": 15,
+                                                              "player_actions": 5,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:evolve_bench_grimmsnarl",
+                                                                    "choice_label": "把备战诈唬魔进化为长毛巨魔",
+                                                                    "depth": 15,
+                                                                    "player_actions": 5,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:punk_up_two_dark",
+                                                                          "choice_label": "泵感给备战新攻击手双恶能量",
+                                                                          "depth": 15,
+                                                                          "player_actions": 4,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [
+                                                                              {
+                                                                                "choice_id": "12:retreat_munkidori_to_grimmsnarl",
+                                                                                "choice_label": "升场愿增猿弃掉恶能撤退到长毛巨魔",
+                                                                                "depth": 15,
+                                                                                "player_actions": 3,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "status": "PROVEN",
+                                                                                "tree": {
+                                                                                  "branches": [
+                                                                                    {
+                                                                                      "choice_id": "13:boss_exact_target",
+                                                                                      "choice_label": "跨回合老大抓出唯一剩180HP赛富豪",
+                                                                                      "depth": 15,
+                                                                                      "player_actions": 2,
+                                                                                      "reason": "player_has_forcing_choice",
+                                                                                      "status": "PROVEN",
+                                                                                      "tree": {
+                                                                                        "branches": [
+                                                                                          {
+                                                                                            "choice_id": "14:shadow_bullet_fifth_prize",
+                                                                                            "choice_label": "暗影子弹180精确取得最后2奖",
+                                                                                            "depth": 15,
+                                                                                            "player_actions": 1,
+                                                                                            "reason": "production_witness_reached_goal",
+                                                                                            "status": "PROVEN",
+                                                                                            "tree": {
+                                                                                              "branches": [],
+                                                                                              "coverage_complete": true,
+                                                                                              "depth": 15,
+                                                                                              "player_actions": 0,
+                                                                                              "reason": "production_witness_reached_goal",
+                                                                                              "score": 5,
+                                                                                              "status": "PROVEN",
+                                                                                              "winning_choice_count": 0
+                                                                                            }
+                                                                                          }
+                                                                                        ],
+                                                                                        "coverage_complete": true,
+                                                                                        "depth": 15,
+                                                                                        "player_actions": 1,
+                                                                                        "reason": "player_has_forcing_choice",
+                                                                                        "role": "player",
+                                                                                        "selected_choice_id": "14:shadow_bullet_fifth_prize",
+                                                                                        "selected_choice_label": "暗影子弹180精确取得最后2奖",
+                                                                                        "status": "PROVEN",
+                                                                                        "winning_choice_count": 1
+                                                                                      }
+                                                                                    }
+                                                                                  ],
+                                                                                  "coverage_complete": true,
+                                                                                  "depth": 15,
+                                                                                  "player_actions": 2,
+                                                                                  "reason": "player_has_forcing_choice",
+                                                                                  "role": "player",
+                                                                                  "selected_choice_id": "13:boss_exact_target",
+                                                                                  "selected_choice_label": "跨回合老大抓出唯一剩180HP赛富豪",
+                                                                                  "status": "PROVEN",
+                                                                                  "winning_choice_count": 1
+                                                                                }
+                                                                              }
+                                                                            ],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 15,
+                                                                            "player_actions": 3,
+                                                                            "reason": "player_has_forcing_choice",
+                                                                            "role": "player",
+                                                                            "selected_choice_id": "12:retreat_munkidori_to_grimmsnarl",
+                                                                            "selected_choice_label": "升场愿增猿弃掉恶能撤退到长毛巨魔",
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 1
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 15,
+                                                                      "player_actions": 4,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:punk_up_two_dark",
+                                                                      "selected_choice_label": "泵感给备战新攻击手双恶能量",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 15,
+                                                                "player_actions": 5,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:evolve_bench_grimmsnarl",
+                                                                "selected_choice_label": "把备战诈唬魔进化为长毛巨魔",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 15,
+                                                          "player_actions": 5,
+                                                          "reason": "all_defenses_hold",
+                                                          "role": "opponent",
+                                                          "selected_choice_id": "09:gholdengo_reply_two_checks",
+                                                          "selected_choice_label": "赛富豪淘金潮反杀含羞苞；两个检查收掉愿增猿和吉雉鸡ex",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 15,
+                                                    "player_actions": 6,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:tm_evolve_two_engines",
+                                                    "selected_choice_label": "进化招式同时建立诈唬魔和雪妖女",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 15,
+                                              "player_actions": 7,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:munkidori_seed_target",
+                                              "selected_choice_label": "首回合愿增猿先搬30，预埋两次检查后的80伤档",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 15,
+                                        "player_actions": 8,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:attach_tm_evolution",
+                                        "selected_choice_label": "给含羞苞附进化学习器",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 15,
+                                  "player_actions": 9,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:prefetch_grimmsnarl",
+                                  "selected_choice_label": "第一回合预取第二回合长毛巨魔",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 15,
+                            "player_actions": 10,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:play_spikemuth",
+                            "selected_choice_label": "打出尖钉镇道馆",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 15,
+                      "player_actions": 11,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:attach_budew_dark",
+                      "selected_choice_label": "唯一手贴给含羞苞",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 15,
+                "player_actions": 12,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:energy_search_for_budew",
+                "selected_choice_label": "能量输送取得含羞苞进化攻击费用",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 15,
+          "player_actions": 13,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:secret_box_four_bridges",
+          "selected_choice_label": "秘密箱弃三张安全成本并取得四类桥牌",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 15,
+    "player_actions": 14,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:research_seventh_secret_box",
+    "selected_choice_label": "博士抽7，秘密箱恰好是第7张",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:research_seventh_secret_box",
+      "choice_label": "博士抽7，秘密箱恰好是第7张",
+      "depth": 15,
+      "player_actions": 14,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:secret_box_four_bridges",
+            "choice_label": "秘密箱弃三张安全成本并取得四类桥牌",
+            "depth": 15,
+            "player_actions": 13,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:energy_search_for_budew",
+                  "choice_label": "能量输送取得含羞苞进化攻击费用",
+                  "depth": 15,
+                  "player_actions": 12,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:attach_budew_dark",
+                        "choice_label": "唯一手贴给含羞苞",
+                        "depth": 15,
+                        "player_actions": 11,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:play_spikemuth",
+                              "choice_label": "打出尖钉镇道馆",
+                              "depth": 15,
+                              "player_actions": 10,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:prefetch_grimmsnarl",
+                                    "choice_label": "第一回合预取第二回合长毛巨魔",
+                                    "depth": 15,
+                                    "player_actions": 9,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:attach_tm_evolution",
+                                          "choice_label": "给含羞苞附进化学习器",
+                                          "depth": 15,
+                                          "player_actions": 8,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:munkidori_seed_target",
+                                                "choice_label": "首回合愿增猿先搬30，预埋两次检查后的80伤档",
+                                                "depth": 15,
+                                                "player_actions": 7,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:tm_evolve_two_engines",
+                                                      "choice_label": "进化招式同时建立诈唬魔和雪妖女",
+                                                      "depth": 15,
+                                                      "player_actions": 6,
+                                                      "reason": "all_defenses_hold",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:gholdengo_reply_two_checks",
+                                                            "choice_label": "赛富豪淘金潮反杀含羞苞；两个检查收掉愿增猿和吉雉鸡ex",
+                                                            "depth": 15,
+                                                            "player_actions": 5,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:evolve_bench_grimmsnarl",
+                                                                  "choice_label": "把备战诈唬魔进化为长毛巨魔",
+                                                                  "depth": 15,
+                                                                  "player_actions": 5,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:punk_up_two_dark",
+                                                                        "choice_label": "泵感给备战新攻击手双恶能量",
+                                                                        "depth": 15,
+                                                                        "player_actions": 4,
+                                                                        "reason": "player_has_forcing_choice",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [
+                                                                            {
+                                                                              "choice_id": "12:retreat_munkidori_to_grimmsnarl",
+                                                                              "choice_label": "升场愿增猿弃掉恶能撤退到长毛巨魔",
+                                                                              "depth": 15,
+                                                                              "player_actions": 3,
+                                                                              "reason": "player_has_forcing_choice",
+                                                                              "status": "PROVEN",
+                                                                              "tree": {
+                                                                                "branches": [
+                                                                                  {
+                                                                                    "choice_id": "13:boss_exact_target",
+                                                                                    "choice_label": "跨回合老大抓出唯一剩180HP赛富豪",
+                                                                                    "depth": 15,
+                                                                                    "player_actions": 2,
+                                                                                    "reason": "player_has_forcing_choice",
+                                                                                    "status": "PROVEN",
+                                                                                    "tree": {
+                                                                                      "branches": [
+                                                                                        {
+                                                                                          "choice_id": "14:shadow_bullet_fifth_prize",
+                                                                                          "choice_label": "暗影子弹180精确取得最后2奖",
+                                                                                          "depth": 15,
+                                                                                          "player_actions": 1,
+                                                                                          "reason": "production_witness_reached_goal",
+                                                                                          "status": "PROVEN",
+                                                                                          "tree": {
+                                                                                            "branches": [],
+                                                                                            "coverage_complete": true,
+                                                                                            "depth": 15,
+                                                                                            "player_actions": 0,
+                                                                                            "reason": "production_witness_reached_goal",
+                                                                                            "score": 5,
+                                                                                            "status": "PROVEN",
+                                                                                            "winning_choice_count": 0
+                                                                                          }
+                                                                                        }
+                                                                                      ],
+                                                                                      "coverage_complete": true,
+                                                                                      "depth": 15,
+                                                                                      "player_actions": 1,
+                                                                                      "reason": "player_has_forcing_choice",
+                                                                                      "role": "player",
+                                                                                      "selected_choice_id": "14:shadow_bullet_fifth_prize",
+                                                                                      "selected_choice_label": "暗影子弹180精确取得最后2奖",
+                                                                                      "status": "PROVEN",
+                                                                                      "winning_choice_count": 1
+                                                                                    }
+                                                                                  }
+                                                                                ],
+                                                                                "coverage_complete": true,
+                                                                                "depth": 15,
+                                                                                "player_actions": 2,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "role": "player",
+                                                                                "selected_choice_id": "13:boss_exact_target",
+                                                                                "selected_choice_label": "跨回合老大抓出唯一剩180HP赛富豪",
+                                                                                "status": "PROVEN",
+                                                                                "winning_choice_count": 1
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 15,
+                                                                          "player_actions": 3,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "role": "player",
+                                                                          "selected_choice_id": "12:retreat_munkidori_to_grimmsnarl",
+                                                                          "selected_choice_label": "升场愿增猿弃掉恶能撤退到长毛巨魔",
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 1
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 15,
+                                                                    "player_actions": 4,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:punk_up_two_dark",
+                                                                    "selected_choice_label": "泵感给备战新攻击手双恶能量",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 15,
+                                                              "player_actions": 5,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:evolve_bench_grimmsnarl",
+                                                              "selected_choice_label": "把备战诈唬魔进化为长毛巨魔",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 15,
+                                                        "player_actions": 5,
+                                                        "reason": "all_defenses_hold",
+                                                        "role": "opponent",
+                                                        "selected_choice_id": "09:gholdengo_reply_two_checks",
+                                                        "selected_choice_label": "赛富豪淘金潮反杀含羞苞；两个检查收掉愿增猿和吉雉鸡ex",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 15,
+                                                  "player_actions": 6,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:tm_evolve_two_engines",
+                                                  "selected_choice_label": "进化招式同时建立诈唬魔和雪妖女",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 15,
+                                            "player_actions": 7,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:munkidori_seed_target",
+                                            "selected_choice_label": "首回合愿增猿先搬30，预埋两次检查后的80伤档",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 15,
+                                      "player_actions": 8,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:attach_tm_evolution",
+                                      "selected_choice_label": "给含羞苞附进化学习器",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 15,
+                                "player_actions": 9,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:prefetch_grimmsnarl",
+                                "selected_choice_label": "第一回合预取第二回合长毛巨魔",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 15,
+                          "player_actions": 10,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:play_spikemuth",
+                          "selected_choice_label": "打出尖钉镇道馆",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 15,
+                    "player_actions": 11,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:attach_budew_dark",
+                    "selected_choice_label": "唯一手贴给含羞苞",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 15,
+              "player_actions": 12,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:energy_search_for_budew",
+              "selected_choice_label": "能量输送取得含羞苞进化攻击费用",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 15,
+        "player_actions": 13,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:secret_box_four_bridges",
+        "selected_choice_label": "秘密箱弃三张安全成本并取得四类桥牌",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "9f00eec53dcf1ca267315e83be993bfcfa25b4890ede3516bf173b8ce2ba290b",
+  "scenario_id": "marnie_10",
+  "shortest_player_actions": 14,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

@@ -1,0 +1,310 @@
+{
+  "format_version": 1,
+  "puzzle_id": "gardevoir_05",
+  "deck_id": "800018498",
+  "revision": 3,
+  "profile": "deployment",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "读取有限资源残局",
+      "fingerprint": "首攻交换后只靠一张钓竿和竞技场重建单奖攻击手；回收对象、结算顺序与最后空位都必须正确。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择本回合展开路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "回收吼叫尾与两超能",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "牌面资源与时序均满足",
+      "effect_summary": "同时推进当前奖赏、处理公开威胁并保留接力"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "回收三只宝可梦",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "动作本身合法",
+      "effect_summary": "产生局部价值但破坏资源所有权"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "路线选择失败",
+      "outcome": "failure",
+      "reason": "吼叫尾仍在弃牌区，牌库里没有合法目标。",
+      "failure_axis": "route_choice",
+      "consequence_depth": 2
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "爆发、生存与接力同时成立",
+      "outcome": "success",
+      "reason": "2回合拿4奖，并从弃牌区重建吼叫尾"
+    },
+    {
+      "id": "r_bench",
+      "kind": "resource",
+      "label": "备战区空位",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_attach",
+      "kind": "resource",
+      "label": "本回合手贴",
+      "resource_type": "manual_attachment",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "公开的对手回应",
+      "visibility": "public",
+      "evidence": "首攻沙奈朵会被击倒；若未利用随之产生的空位，第二回合没有合法终结攻击手。",
+      "deadline": "对手下一回合",
+      "impact": "击倒首攻或破坏接力"
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "取得计划奖赏",
+      "category": "progress",
+      "assertion": "两回合取得4奖"
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "先用竞技场",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "动作本身合法",
+      "effect_summary": "当前回合看似成立但接力失败"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "资源分配失败",
+      "outcome": "failure",
+      "reason": "弃牌区没有足够超能供两次精神拥抱。",
+      "failure_axis": "resource_assignment",
+      "consequence_depth": 2
+    },
+    {
+      "id": "s1",
+      "kind": "state",
+      "label": "首轮计划完成并等待回应",
+      "fingerprint": "当前进度达成；引擎与接力均保留",
+      "checkpoint": "opponent_turn_1_start"
+    },
+    {
+      "id": "d_reply",
+      "kind": "opponent_decision",
+      "label": "覆盖所有高影响可信回应",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "首攻沙奈朵会被击倒；若未利用随之产生的空位，第二回合没有合法终结攻击手。"
+    },
+    {
+      "id": "a_reply_front",
+      "kind": "action",
+      "label": "对手击倒首攻者",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "前场攻击费用满足",
+      "effect_summary": "首攻者离场，但接力仍存活"
+    },
+    {
+      "id": "a_reply_disrupt",
+      "kind": "action",
+      "label": "对手向引擎或手牌施压",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "公开牌面允许该回应",
+      "effect_summary": "资源受压但无法同时处理引擎与接力"
+    },
+    {
+      "id": "s2a",
+      "kind": "state",
+      "label": "前场交换后仍可接棒",
+      "fingerprint": "玩家未输且带能接力攻击手存在",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "s2b",
+      "kind": "state",
+      "label": "干扰后仍可接棒",
+      "fingerprint": "沙奈朵引擎与终结攻击手至少各一",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "r_supporter",
+      "kind": "resource",
+      "label": "支援者窗口",
+      "resource_type": "supporter_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "g_survival",
+      "kind": "invariant",
+      "label": "核心引擎存活",
+      "category": "survival",
+      "assertion": "回应后至少保留一只沙奈朵ex"
+    },
+    {
+      "id": "g_handoff",
+      "kind": "invariant",
+      "label": "接力攻击手就绪",
+      "category": "handoff",
+      "assertion": "回应后存在至少两能攻击手"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_bench",
+      "type": "consumes"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "s1",
+      "type": "resolves"
+    },
+    {
+      "from": "s1",
+      "to": "d_reply",
+      "type": "opens"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_front",
+      "type": "reply"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_disrupt",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_front",
+      "to": "s2a",
+      "type": "resolves"
+    },
+    {
+      "from": "a_reply_disrupt",
+      "to": "s2b",
+      "type": "resolves"
+    },
+    {
+      "from": "s2a",
+      "to": "g_success",
+      "type": "reaches"
+    },
+    {
+      "from": "s2b",
+      "to": "g_success",
+      "type": "reaches"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_attach",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_supporter",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_handoff",
+      "type": "enables"
+    },
+    {
+      "from": "g_success",
+      "to": "g_survival",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_handoff",
+      "type": "requires"
+    }
+  ],
+  "proof": {
+    "max_depth": 20,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "all",
+    "negative_probe_axes": [
+      "route_choice",
+      "resource_assignment"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "enumerated commitment equivalence classes only"
+  }
+}

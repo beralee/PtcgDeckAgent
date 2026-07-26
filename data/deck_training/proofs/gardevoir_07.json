@@ -1,0 +1,896 @@
+{
+	"exhaustive_defense": true,
+	"format_version": 1,
+	"metrics": {
+		"budget_reason": "",
+		"cache_hits": 0,
+		"elapsed_milliseconds": 1056,
+		"inconclusive_leaves": 0,
+		"nodes_visited": 19,
+		"terminal_leaves": 1
+	},
+	"principal_variation": [
+		{
+			"choice_id": "00:flip_arven",
+			"choice_label": "化危为吉抽3并翻出派帕",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "01:arven_charm",
+			"choice_label": "派帕取得反击捕捉器与勇气护符",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "02:attach_charm",
+			"choice_label": "先给吼叫尾附勇气护符",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "03:embrace_1",
+			"choice_label": "吼叫尾第1次拥抱",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "04:embrace_2",
+			"choice_label": "吼叫尾第2次拥抱",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "05:embrace_3",
+			"choice_label": "吼叫尾第3次拥抱",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "06:embrace_4",
+			"choice_label": "吼叫尾第4次拥抱到80伤",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "07:munk_move_mid_chain",
+			"choice_label": "愿增猿把吼叫尾30伤搬给40伤前场",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "08:embrace_5",
+			"choice_label": "腾出空间后第5次拥抱",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "09:embrace_6",
+			"choice_label": "第6次拥抱使吼叫尾到90伤6能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "10:first_retreat",
+			"choice_label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "11:roaring_scream_180",
+			"choice_label": "凶暴吼叫180精确狙击30伤吉雉鸡ex",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "12:gholdengo_reply",
+			"choice_label": "前场赛富豪300反杀吼叫尾",
+			"role": "opponent",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "13:second_retreat",
+			"choice_label": "愿增猿再次弃恶能撤退到沙奈朵",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "14:gardevoir_embrace_1",
+			"choice_label": "沙奈朵第1次自我拥抱",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "15:gardevoir_embrace_2",
+			"choice_label": "沙奈朵第2次自我拥抱",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "16:gardevoir_embrace_3",
+			"choice_label": "沙奈朵第3次自我拥抱到3能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "17:miracle_force_closeout",
+			"choice_label": "奇迹之力190精确完成4奖",
+			"role": "player",
+			"status": "PROVEN"
+		}
+	],
+	"proof_tree": {
+		"branches": [
+			{
+				"choice_id": "00:flip_arven",
+				"choice_label": "化危为吉抽3并翻出派帕",
+				"depth": 18,
+				"player_actions": 17,
+				"reason": "player_has_forcing_choice",
+				"status": "PROVEN",
+				"tree": {
+					"branches": [
+						{
+							"choice_id": "01:arven_charm",
+							"choice_label": "派帕取得反击捕捉器与勇气护符",
+							"depth": 18,
+							"player_actions": 16,
+							"reason": "player_has_forcing_choice",
+							"status": "PROVEN",
+							"tree": {
+								"branches": [
+									{
+										"choice_id": "02:attach_charm",
+										"choice_label": "先给吼叫尾附勇气护符",
+										"depth": 18,
+										"player_actions": 15,
+										"reason": "player_has_forcing_choice",
+										"status": "PROVEN",
+										"tree": {
+											"branches": [
+												{
+													"choice_id": "03:embrace_1",
+													"choice_label": "吼叫尾第1次拥抱",
+													"depth": 18,
+													"player_actions": 14,
+													"reason": "player_has_forcing_choice",
+													"status": "PROVEN",
+													"tree": {
+														"branches": [
+															{
+																"choice_id": "04:embrace_2",
+																"choice_label": "吼叫尾第2次拥抱",
+																"depth": 18,
+																"player_actions": 13,
+																"reason": "player_has_forcing_choice",
+																"status": "PROVEN",
+																"tree": {
+																	"branches": [
+																		{
+																			"choice_id": "05:embrace_3",
+																			"choice_label": "吼叫尾第3次拥抱",
+																			"depth": 18,
+																			"player_actions": 12,
+																			"reason": "player_has_forcing_choice",
+																			"status": "PROVEN",
+																			"tree": {
+																				"branches": [
+																					{
+																						"choice_id": "06:embrace_4",
+																						"choice_label": "吼叫尾第4次拥抱到80伤",
+																						"depth": 18,
+																						"player_actions": 11,
+																						"reason": "player_has_forcing_choice",
+																						"status": "PROVEN",
+																						"tree": {
+																							"branches": [
+																								{
+																									"choice_id": "07:munk_move_mid_chain",
+																									"choice_label": "愿增猿把吼叫尾30伤搬给40伤前场",
+																									"depth": 18,
+																									"player_actions": 10,
+																									"reason": "player_has_forcing_choice",
+																									"status": "PROVEN",
+																									"tree": {
+																										"branches": [
+																											{
+																												"choice_id": "08:embrace_5",
+																												"choice_label": "腾出空间后第5次拥抱",
+																												"depth": 18,
+																												"player_actions": 9,
+																												"reason": "player_has_forcing_choice",
+																												"status": "PROVEN",
+																												"tree": {
+																													"branches": [
+																														{
+																															"choice_id": "09:embrace_6",
+																															"choice_label": "第6次拥抱使吼叫尾到90伤6能",
+																															"depth": 18,
+																															"player_actions": 8,
+																															"reason": "player_has_forcing_choice",
+																															"status": "PROVEN",
+																															"tree": {
+																																"branches": [
+																																	{
+																																		"choice_id": "10:first_retreat",
+																																		"choice_label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+																																		"depth": 18,
+																																		"player_actions": 7,
+																																		"reason": "player_has_forcing_choice",
+																																		"status": "PROVEN",
+																																		"tree": {
+																																			"branches": [
+																																				{
+																																					"choice_id": "11:roaring_scream_180",
+																																					"choice_label": "凶暴吼叫180精确狙击30伤吉雉鸡ex",
+																																					"depth": 18,
+																																					"player_actions": 6,
+																																					"reason": "all_defenses_hold",
+																																					"status": "PROVEN",
+																																					"tree": {
+																																						"branches": [
+																																							{
+																																								"choice_id": "12:gholdengo_reply",
+																																								"choice_label": "前场赛富豪300反杀吼叫尾",
+																																								"depth": 18,
+																																								"player_actions": 5,
+																																								"reason": "player_has_forcing_choice",
+																																								"status": "PROVEN",
+																																								"tree": {
+																																									"branches": [
+																																										{
+																																											"choice_id": "13:second_retreat",
+																																											"choice_label": "愿增猿再次弃恶能撤退到沙奈朵",
+																																											"depth": 18,
+																																											"player_actions": 5,
+																																											"reason": "player_has_forcing_choice",
+																																											"status": "PROVEN",
+																																											"tree": {
+																																												"branches": [
+																																													{
+																																														"choice_id": "14:gardevoir_embrace_1",
+																																														"choice_label": "沙奈朵第1次自我拥抱",
+																																														"depth": 18,
+																																														"player_actions": 4,
+																																														"reason": "player_has_forcing_choice",
+																																														"status": "PROVEN",
+																																														"tree": {
+																																															"branches": [
+																																																{
+																																																	"choice_id": "15:gardevoir_embrace_2",
+																																																	"choice_label": "沙奈朵第2次自我拥抱",
+																																																	"depth": 18,
+																																																	"player_actions": 3,
+																																																	"reason": "player_has_forcing_choice",
+																																																	"status": "PROVEN",
+																																																	"tree": {
+																																																		"branches": [
+																																																			{
+																																																				"choice_id": "16:gardevoir_embrace_3",
+																																																				"choice_label": "沙奈朵第3次自我拥抱到3能",
+																																																				"depth": 18,
+																																																				"player_actions": 2,
+																																																				"reason": "player_has_forcing_choice",
+																																																				"status": "PROVEN",
+																																																				"tree": {
+																																																					"branches": [
+																																																						{
+																																																							"choice_id": "17:miracle_force_closeout",
+																																																							"choice_label": "奇迹之力190精确完成4奖",
+																																																							"depth": 18,
+																																																							"player_actions": 1,
+																																																							"reason": "production_witness_reached_goal",
+																																																							"status": "PROVEN",
+																																																							"tree": {
+																																																								"branches": [],
+																																																								"coverage_complete": true,
+																																																								"depth": 18,
+																																																								"player_actions": 0,
+																																																								"reason": "production_witness_reached_goal",
+																																																								"score": 4,
+																																																								"status": "PROVEN",
+																																																								"winning_choice_count": 0
+																																																							}
+																																																						}
+																																																					],
+																																																					"coverage_complete": true,
+																																																					"depth": 18,
+																																																					"player_actions": 1,
+																																																					"reason": "player_has_forcing_choice",
+																																																					"role": "player",
+																																																					"selected_choice_id": "17:miracle_force_closeout",
+																																																					"selected_choice_label": "奇迹之力190精确完成4奖",
+																																																					"status": "PROVEN",
+																																																					"winning_choice_count": 1
+																																																				}
+																																																			}
+																																																		],
+																																																		"coverage_complete": true,
+																																																		"depth": 18,
+																																																		"player_actions": 2,
+																																																		"reason": "player_has_forcing_choice",
+																																																		"role": "player",
+																																																		"selected_choice_id": "16:gardevoir_embrace_3",
+																																																		"selected_choice_label": "沙奈朵第3次自我拥抱到3能",
+																																																		"status": "PROVEN",
+																																																		"winning_choice_count": 1
+																																																	}
+																																																}
+																																															],
+																																															"coverage_complete": true,
+																																															"depth": 18,
+																																															"player_actions": 3,
+																																															"reason": "player_has_forcing_choice",
+																																															"role": "player",
+																																															"selected_choice_id": "15:gardevoir_embrace_2",
+																																															"selected_choice_label": "沙奈朵第2次自我拥抱",
+																																															"status": "PROVEN",
+																																															"winning_choice_count": 1
+																																														}
+																																													}
+																																												],
+																																												"coverage_complete": true,
+																																												"depth": 18,
+																																												"player_actions": 4,
+																																												"reason": "player_has_forcing_choice",
+																																												"role": "player",
+																																												"selected_choice_id": "14:gardevoir_embrace_1",
+																																												"selected_choice_label": "沙奈朵第1次自我拥抱",
+																																												"status": "PROVEN",
+																																												"winning_choice_count": 1
+																																											}
+																																										}
+																																									],
+																																									"coverage_complete": true,
+																																									"depth": 18,
+																																									"player_actions": 5,
+																																									"reason": "player_has_forcing_choice",
+																																									"role": "player",
+																																									"selected_choice_id": "13:second_retreat",
+																																									"selected_choice_label": "愿增猿再次弃恶能撤退到沙奈朵",
+																																									"status": "PROVEN",
+																																									"winning_choice_count": 1
+																																								}
+																																							}
+																																						],
+																																						"coverage_complete": true,
+																																						"depth": 18,
+																																						"player_actions": 5,
+																																						"reason": "all_defenses_hold",
+																																						"role": "opponent",
+																																						"selected_choice_id": "12:gholdengo_reply",
+																																						"selected_choice_label": "前场赛富豪300反杀吼叫尾",
+																																						"status": "PROVEN",
+																																						"winning_choice_count": 1
+																																					}
+																																				}
+																																			],
+																																			"coverage_complete": true,
+																																			"depth": 18,
+																																			"player_actions": 6,
+																																			"reason": "player_has_forcing_choice",
+																																			"role": "player",
+																																			"selected_choice_id": "11:roaring_scream_180",
+																																			"selected_choice_label": "凶暴吼叫180精确狙击30伤吉雉鸡ex",
+																																			"status": "PROVEN",
+																																			"winning_choice_count": 1
+																																		}
+																																	}
+																																],
+																																"coverage_complete": true,
+																																"depth": 18,
+																																"player_actions": 7,
+																																"reason": "player_has_forcing_choice",
+																																"role": "player",
+																																"selected_choice_id": "10:first_retreat",
+																																"selected_choice_label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+																																"status": "PROVEN",
+																																"winning_choice_count": 1
+																															}
+																														}
+																													],
+																													"coverage_complete": true,
+																													"depth": 18,
+																													"player_actions": 8,
+																													"reason": "player_has_forcing_choice",
+																													"role": "player",
+																													"selected_choice_id": "09:embrace_6",
+																													"selected_choice_label": "第6次拥抱使吼叫尾到90伤6能",
+																													"status": "PROVEN",
+																													"winning_choice_count": 1
+																												}
+																											}
+																										],
+																										"coverage_complete": true,
+																										"depth": 18,
+																										"player_actions": 9,
+																										"reason": "player_has_forcing_choice",
+																										"role": "player",
+																										"selected_choice_id": "08:embrace_5",
+																										"selected_choice_label": "腾出空间后第5次拥抱",
+																										"status": "PROVEN",
+																										"winning_choice_count": 1
+																									}
+																								}
+																							],
+																							"coverage_complete": true,
+																							"depth": 18,
+																							"player_actions": 10,
+																							"reason": "player_has_forcing_choice",
+																							"role": "player",
+																							"selected_choice_id": "07:munk_move_mid_chain",
+																							"selected_choice_label": "愿增猿把吼叫尾30伤搬给40伤前场",
+																							"status": "PROVEN",
+																							"winning_choice_count": 1
+																						}
+																					}
+																				],
+																				"coverage_complete": true,
+																				"depth": 18,
+																				"player_actions": 11,
+																				"reason": "player_has_forcing_choice",
+																				"role": "player",
+																				"selected_choice_id": "06:embrace_4",
+																				"selected_choice_label": "吼叫尾第4次拥抱到80伤",
+																				"status": "PROVEN",
+																				"winning_choice_count": 1
+																			}
+																		}
+																	],
+																	"coverage_complete": true,
+																	"depth": 18,
+																	"player_actions": 12,
+																	"reason": "player_has_forcing_choice",
+																	"role": "player",
+																	"selected_choice_id": "05:embrace_3",
+																	"selected_choice_label": "吼叫尾第3次拥抱",
+																	"status": "PROVEN",
+																	"winning_choice_count": 1
+																}
+															}
+														],
+														"coverage_complete": true,
+														"depth": 18,
+														"player_actions": 13,
+														"reason": "player_has_forcing_choice",
+														"role": "player",
+														"selected_choice_id": "04:embrace_2",
+														"selected_choice_label": "吼叫尾第2次拥抱",
+														"status": "PROVEN",
+														"winning_choice_count": 1
+													}
+												}
+											],
+											"coverage_complete": true,
+											"depth": 18,
+											"player_actions": 14,
+											"reason": "player_has_forcing_choice",
+											"role": "player",
+											"selected_choice_id": "03:embrace_1",
+											"selected_choice_label": "吼叫尾第1次拥抱",
+											"status": "PROVEN",
+											"winning_choice_count": 1
+										}
+									}
+								],
+								"coverage_complete": true,
+								"depth": 18,
+								"player_actions": 15,
+								"reason": "player_has_forcing_choice",
+								"role": "player",
+								"selected_choice_id": "02:attach_charm",
+								"selected_choice_label": "先给吼叫尾附勇气护符",
+								"status": "PROVEN",
+								"winning_choice_count": 1
+							}
+						}
+					],
+					"coverage_complete": true,
+					"depth": 18,
+					"player_actions": 16,
+					"reason": "player_has_forcing_choice",
+					"role": "player",
+					"selected_choice_id": "01:arven_charm",
+					"selected_choice_label": "派帕取得反击捕捉器与勇气护符",
+					"status": "PROVEN",
+					"winning_choice_count": 1
+				}
+			}
+		],
+		"coverage_complete": true,
+		"depth": 18,
+		"player_actions": 17,
+		"reason": "player_has_forcing_choice",
+		"role": "player",
+		"selected_choice_id": "00:flip_arven",
+		"selected_choice_label": "化危为吉抽3并翻出派帕",
+		"status": "PROVEN",
+		"winning_choice_count": 1
+	},
+	"provider": "production_rules_ai_witness_v2",
+	"reason": "player_has_forcing_choice",
+	"root_branches": [
+		{
+			"choice_id": "00:flip_arven",
+			"choice_label": "化危为吉抽3并翻出派帕",
+			"depth": 18,
+			"player_actions": 17,
+			"reason": "player_has_forcing_choice",
+			"status": "PROVEN",
+			"tree": {
+				"branches": [
+					{
+						"choice_id": "01:arven_charm",
+						"choice_label": "派帕取得反击捕捉器与勇气护符",
+						"depth": 18,
+						"player_actions": 16,
+						"reason": "player_has_forcing_choice",
+						"status": "PROVEN",
+						"tree": {
+							"branches": [
+								{
+									"choice_id": "02:attach_charm",
+									"choice_label": "先给吼叫尾附勇气护符",
+									"depth": 18,
+									"player_actions": 15,
+									"reason": "player_has_forcing_choice",
+									"status": "PROVEN",
+									"tree": {
+										"branches": [
+											{
+												"choice_id": "03:embrace_1",
+												"choice_label": "吼叫尾第1次拥抱",
+												"depth": 18,
+												"player_actions": 14,
+												"reason": "player_has_forcing_choice",
+												"status": "PROVEN",
+												"tree": {
+													"branches": [
+														{
+															"choice_id": "04:embrace_2",
+															"choice_label": "吼叫尾第2次拥抱",
+															"depth": 18,
+															"player_actions": 13,
+															"reason": "player_has_forcing_choice",
+															"status": "PROVEN",
+															"tree": {
+																"branches": [
+																	{
+																		"choice_id": "05:embrace_3",
+																		"choice_label": "吼叫尾第3次拥抱",
+																		"depth": 18,
+																		"player_actions": 12,
+																		"reason": "player_has_forcing_choice",
+																		"status": "PROVEN",
+																		"tree": {
+																			"branches": [
+																				{
+																					"choice_id": "06:embrace_4",
+																					"choice_label": "吼叫尾第4次拥抱到80伤",
+																					"depth": 18,
+																					"player_actions": 11,
+																					"reason": "player_has_forcing_choice",
+																					"status": "PROVEN",
+																					"tree": {
+																						"branches": [
+																							{
+																								"choice_id": "07:munk_move_mid_chain",
+																								"choice_label": "愿增猿把吼叫尾30伤搬给40伤前场",
+																								"depth": 18,
+																								"player_actions": 10,
+																								"reason": "player_has_forcing_choice",
+																								"status": "PROVEN",
+																								"tree": {
+																									"branches": [
+																										{
+																											"choice_id": "08:embrace_5",
+																											"choice_label": "腾出空间后第5次拥抱",
+																											"depth": 18,
+																											"player_actions": 9,
+																											"reason": "player_has_forcing_choice",
+																											"status": "PROVEN",
+																											"tree": {
+																												"branches": [
+																													{
+																														"choice_id": "09:embrace_6",
+																														"choice_label": "第6次拥抱使吼叫尾到90伤6能",
+																														"depth": 18,
+																														"player_actions": 8,
+																														"reason": "player_has_forcing_choice",
+																														"status": "PROVEN",
+																														"tree": {
+																															"branches": [
+																																{
+																																	"choice_id": "10:first_retreat",
+																																	"choice_label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+																																	"depth": 18,
+																																	"player_actions": 7,
+																																	"reason": "player_has_forcing_choice",
+																																	"status": "PROVEN",
+																																	"tree": {
+																																		"branches": [
+																																			{
+																																				"choice_id": "11:roaring_scream_180",
+																																				"choice_label": "凶暴吼叫180精确狙击30伤吉雉鸡ex",
+																																				"depth": 18,
+																																				"player_actions": 6,
+																																				"reason": "all_defenses_hold",
+																																				"status": "PROVEN",
+																																				"tree": {
+																																					"branches": [
+																																						{
+																																							"choice_id": "12:gholdengo_reply",
+																																							"choice_label": "前场赛富豪300反杀吼叫尾",
+																																							"depth": 18,
+																																							"player_actions": 5,
+																																							"reason": "player_has_forcing_choice",
+																																							"status": "PROVEN",
+																																							"tree": {
+																																								"branches": [
+																																									{
+																																										"choice_id": "13:second_retreat",
+																																										"choice_label": "愿增猿再次弃恶能撤退到沙奈朵",
+																																										"depth": 18,
+																																										"player_actions": 5,
+																																										"reason": "player_has_forcing_choice",
+																																										"status": "PROVEN",
+																																										"tree": {
+																																											"branches": [
+																																												{
+																																													"choice_id": "14:gardevoir_embrace_1",
+																																													"choice_label": "沙奈朵第1次自我拥抱",
+																																													"depth": 18,
+																																													"player_actions": 4,
+																																													"reason": "player_has_forcing_choice",
+																																													"status": "PROVEN",
+																																													"tree": {
+																																														"branches": [
+																																															{
+																																																"choice_id": "15:gardevoir_embrace_2",
+																																																"choice_label": "沙奈朵第2次自我拥抱",
+																																																"depth": 18,
+																																																"player_actions": 3,
+																																																"reason": "player_has_forcing_choice",
+																																																"status": "PROVEN",
+																																																"tree": {
+																																																	"branches": [
+																																																		{
+																																																			"choice_id": "16:gardevoir_embrace_3",
+																																																			"choice_label": "沙奈朵第3次自我拥抱到3能",
+																																																			"depth": 18,
+																																																			"player_actions": 2,
+																																																			"reason": "player_has_forcing_choice",
+																																																			"status": "PROVEN",
+																																																			"tree": {
+																																																				"branches": [
+																																																					{
+																																																						"choice_id": "17:miracle_force_closeout",
+																																																						"choice_label": "奇迹之力190精确完成4奖",
+																																																						"depth": 18,
+																																																						"player_actions": 1,
+																																																						"reason": "production_witness_reached_goal",
+																																																						"status": "PROVEN",
+																																																						"tree": {
+																																																							"branches": [],
+																																																							"coverage_complete": true,
+																																																							"depth": 18,
+																																																							"player_actions": 0,
+																																																							"reason": "production_witness_reached_goal",
+																																																							"score": 4,
+																																																							"status": "PROVEN",
+																																																							"winning_choice_count": 0
+																																																						}
+																																																					}
+																																																				],
+																																																				"coverage_complete": true,
+																																																				"depth": 18,
+																																																				"player_actions": 1,
+																																																				"reason": "player_has_forcing_choice",
+																																																				"role": "player",
+																																																				"selected_choice_id": "17:miracle_force_closeout",
+																																																				"selected_choice_label": "奇迹之力190精确完成4奖",
+																																																				"status": "PROVEN",
+																																																				"winning_choice_count": 1
+																																																			}
+																																																		}
+																																																	],
+																																																	"coverage_complete": true,
+																																																	"depth": 18,
+																																																	"player_actions": 2,
+																																																	"reason": "player_has_forcing_choice",
+																																																	"role": "player",
+																																																	"selected_choice_id": "16:gardevoir_embrace_3",
+																																																	"selected_choice_label": "沙奈朵第3次自我拥抱到3能",
+																																																	"status": "PROVEN",
+																																																	"winning_choice_count": 1
+																																																}
+																																															}
+																																														],
+																																														"coverage_complete": true,
+																																														"depth": 18,
+																																														"player_actions": 3,
+																																														"reason": "player_has_forcing_choice",
+																																														"role": "player",
+																																														"selected_choice_id": "15:gardevoir_embrace_2",
+																																														"selected_choice_label": "沙奈朵第2次自我拥抱",
+																																														"status": "PROVEN",
+																																														"winning_choice_count": 1
+																																													}
+																																												}
+																																											],
+																																											"coverage_complete": true,
+																																											"depth": 18,
+																																											"player_actions": 4,
+																																											"reason": "player_has_forcing_choice",
+																																											"role": "player",
+																																											"selected_choice_id": "14:gardevoir_embrace_1",
+																																											"selected_choice_label": "沙奈朵第1次自我拥抱",
+																																											"status": "PROVEN",
+																																											"winning_choice_count": 1
+																																										}
+																																									}
+																																								],
+																																								"coverage_complete": true,
+																																								"depth": 18,
+																																								"player_actions": 5,
+																																								"reason": "player_has_forcing_choice",
+																																								"role": "player",
+																																								"selected_choice_id": "13:second_retreat",
+																																								"selected_choice_label": "愿增猿再次弃恶能撤退到沙奈朵",
+																																								"status": "PROVEN",
+																																								"winning_choice_count": 1
+																																							}
+																																						}
+																																					],
+																																					"coverage_complete": true,
+																																					"depth": 18,
+																																					"player_actions": 5,
+																																					"reason": "all_defenses_hold",
+																																					"role": "opponent",
+																																					"selected_choice_id": "12:gholdengo_reply",
+																																					"selected_choice_label": "前场赛富豪300反杀吼叫尾",
+																																					"status": "PROVEN",
+																																					"winning_choice_count": 1
+																																				}
+																																			}
+																																		],
+																																		"coverage_complete": true,
+																																		"depth": 18,
+																																		"player_actions": 6,
+																																		"reason": "player_has_forcing_choice",
+																																		"role": "player",
+																																		"selected_choice_id": "11:roaring_scream_180",
+																																		"selected_choice_label": "凶暴吼叫180精确狙击30伤吉雉鸡ex",
+																																		"status": "PROVEN",
+																																		"winning_choice_count": 1
+																																	}
+																																}
+																															],
+																															"coverage_complete": true,
+																															"depth": 18,
+																															"player_actions": 7,
+																															"reason": "player_has_forcing_choice",
+																															"role": "player",
+																															"selected_choice_id": "10:first_retreat",
+																															"selected_choice_label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+																															"status": "PROVEN",
+																															"winning_choice_count": 1
+																														}
+																													}
+																												],
+																												"coverage_complete": true,
+																												"depth": 18,
+																												"player_actions": 8,
+																												"reason": "player_has_forcing_choice",
+																												"role": "player",
+																												"selected_choice_id": "09:embrace_6",
+																												"selected_choice_label": "第6次拥抱使吼叫尾到90伤6能",
+																												"status": "PROVEN",
+																												"winning_choice_count": 1
+																											}
+																										}
+																									],
+																									"coverage_complete": true,
+																									"depth": 18,
+																									"player_actions": 9,
+																									"reason": "player_has_forcing_choice",
+																									"role": "player",
+																									"selected_choice_id": "08:embrace_5",
+																									"selected_choice_label": "腾出空间后第5次拥抱",
+																									"status": "PROVEN",
+																									"winning_choice_count": 1
+																								}
+																							}
+																						],
+																						"coverage_complete": true,
+																						"depth": 18,
+																						"player_actions": 10,
+																						"reason": "player_has_forcing_choice",
+																						"role": "player",
+																						"selected_choice_id": "07:munk_move_mid_chain",
+																						"selected_choice_label": "愿增猿把吼叫尾30伤搬给40伤前场",
+																						"status": "PROVEN",
+																						"winning_choice_count": 1
+																					}
+																				}
+																			],
+																			"coverage_complete": true,
+																			"depth": 18,
+																			"player_actions": 11,
+																			"reason": "player_has_forcing_choice",
+																			"role": "player",
+																			"selected_choice_id": "06:embrace_4",
+																			"selected_choice_label": "吼叫尾第4次拥抱到80伤",
+																			"status": "PROVEN",
+																			"winning_choice_count": 1
+																		}
+																	}
+																],
+																"coverage_complete": true,
+																"depth": 18,
+																"player_actions": 12,
+																"reason": "player_has_forcing_choice",
+																"role": "player",
+																"selected_choice_id": "05:embrace_3",
+																"selected_choice_label": "吼叫尾第3次拥抱",
+																"status": "PROVEN",
+																"winning_choice_count": 1
+															}
+														}
+													],
+													"coverage_complete": true,
+													"depth": 18,
+													"player_actions": 13,
+													"reason": "player_has_forcing_choice",
+													"role": "player",
+													"selected_choice_id": "04:embrace_2",
+													"selected_choice_label": "吼叫尾第2次拥抱",
+													"status": "PROVEN",
+													"winning_choice_count": 1
+												}
+											}
+										],
+										"coverage_complete": true,
+										"depth": 18,
+										"player_actions": 14,
+										"reason": "player_has_forcing_choice",
+										"role": "player",
+										"selected_choice_id": "03:embrace_1",
+										"selected_choice_label": "吼叫尾第1次拥抱",
+										"status": "PROVEN",
+										"winning_choice_count": 1
+									}
+								}
+							],
+							"coverage_complete": true,
+							"depth": 18,
+							"player_actions": 15,
+							"reason": "player_has_forcing_choice",
+							"role": "player",
+							"selected_choice_id": "02:attach_charm",
+							"selected_choice_label": "先给吼叫尾附勇气护符",
+							"status": "PROVEN",
+							"winning_choice_count": 1
+						}
+					}
+				],
+				"coverage_complete": true,
+				"depth": 18,
+				"player_actions": 16,
+				"reason": "player_has_forcing_choice",
+				"role": "player",
+				"selected_choice_id": "01:arven_charm",
+				"selected_choice_label": "派帕取得反击捕捉器与勇气护符",
+				"status": "PROVEN",
+				"winning_choice_count": 1
+			}
+		}
+	],
+	"root_role": "player",
+	"scenario_fingerprint": "ab8c2f587e2be1ae8debbed04481d626cd63d1b29742103a195507afa7a3467a",
+	"shortest_player_actions": 17,
+	"solver_version": "deck-training-and-or-v2",
+	"status": "PROVEN",
+	"unique_root_solution": true,
+	"unsupported_reasons": []
+}

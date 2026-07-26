@@ -233,6 +233,94 @@ func test_generated_limitless_card_applies_chinese_detail_translation() -> Strin
 	])
 
 
+func test_generated_tef_085_drilbur_discards_up_to_three_basic_fighting_energy_on_bench_entry() -> String:
+	var drilbur := Resolver.build_generated_card({
+		"source_url": "https://limitlesstcg.com/cards/TEF/85",
+		"source_set_code": "TEF",
+		"source_card_index": "85",
+		"source_language": "en",
+		"name": "Drilbur",
+		"name_en": "Drilbur",
+		"card_type": "Pokemon",
+		"stage": "Basic",
+		"hp": 70,
+		"energy_type": "F",
+		"abilities": [{
+			"name": "Dig Dig Dig",
+			"text": "When you play this Pokemon from your hand onto your Bench during your turn, you may search your deck for up to 3 Basic Fighting Energy cards and discard them. Then, shuffle your deck.",
+		}],
+		"attacks": [{
+			"name": "Scratch",
+			"cost": "F",
+			"damage": "20",
+			"text": "",
+			"is_vstar_power": false,
+		}],
+	})
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_limitless_card_test_state()
+	var player := gsm.game_state.players[0]
+	var drilbur_instance := CardInstance.create(drilbur, 0)
+	player.hand.append(drilbur_instance)
+	var fighting_a := _make_test_energy("Fighting A", "F", 0)
+	var fighting_b := _make_test_energy("Fighting B", "F", 0)
+	var fighting_c := _make_test_energy("Fighting C", "F", 0)
+	var fighting_d := _make_test_energy("Fighting D", "F", 0)
+	var water := _make_test_energy("Water", "W", 0)
+	player.deck = [fighting_a, water, fighting_b, fighting_c, fighting_d]
+
+	var played := gsm.play_basic_to_bench(0, drilbur_instance, false)
+	var slot: PokemonSlot = player.bench.back() if played and not player.bench.is_empty() else null
+	var effect: BaseEffect = gsm.effect_processor.get_ability_effect(slot, 0, gsm.game_state)
+	var steps: Array = effect.get_interaction_steps(drilbur_instance, gsm.game_state) if effect != null else []
+	var used := gsm.use_ability(0, slot, 0, [{
+		"dig_dig_dig_energy": [fighting_a, fighting_b, fighting_c, water],
+	}]) if slot != null else false
+
+	return run_checks([
+		assert_true(played, "Generated TEF/85 Drilbur should be playable from hand to the Bench"),
+		assert_not_null(effect, "Generated Drilbur should register Dig Dig Dig by its English Ability name"),
+		assert_eq(steps.size(), 1, "Dig Dig Dig should open one full-deck search interaction"),
+		assert_eq(str(steps[0].get("visible_scope", "")) if not steps.is_empty() else "", BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK, "Dig Dig Dig must expose the full own deck search UI"),
+		assert_true(used, "Dig Dig Dig should resolve through GameStateMachine"),
+		assert_eq(player.discard_pile.size(), 3, "Dig Dig Dig must discard at most three selected Basic Fighting Energy"),
+		assert_true(fighting_a in player.discard_pile and fighting_b in player.discard_pile and fighting_c in player.discard_pile, "The three legal selected Fighting Energy should be discarded"),
+		assert_true(fighting_d in player.deck and water in player.deck, "Extra and non-Fighting Energy must remain in the deck"),
+		assert_false(gsm.effect_processor.can_use_ability(slot, gsm.game_state, 0), "The bench-entry Ability must not be usable twice"),
+	])
+
+
+func _make_limitless_card_test_state() -> GameState:
+	CardInstance.reset_id_counter()
+	var state := GameState.new()
+	state.phase = GameState.GamePhase.MAIN
+	state.turn_number = 2
+	state.current_player_index = 0
+	state.first_player_index = 1
+	for owner_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = owner_index
+		var active_data := CardData.new()
+		active_data.name = "Active %d" % owner_index
+		active_data.card_type = "Pokemon"
+		active_data.stage = "Basic"
+		active_data.hp = 100
+		var active := PokemonSlot.new()
+		active.pokemon_stack.append(CardInstance.create(active_data, owner_index))
+		player.active_pokemon = active
+		state.players.append(player)
+	return state
+
+
+func _make_test_energy(card_name: String, energy_type: String, owner_index: int) -> CardInstance:
+	var card := CardData.new()
+	card.name = card_name
+	card.card_type = "Basic Energy"
+	card.energy_type = energy_type
+	card.energy_provides = energy_type
+	return CardInstance.create(card, owner_index)
+
+
 func _arven_html() -> String:
 	return "\n".join([
 		"<html><body>",

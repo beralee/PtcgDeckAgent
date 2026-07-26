@@ -2,6 +2,7 @@ class_name TestTestRunnerFilter
 extends TestBase
 
 const TestSuiteFilterScript = preload("res://scripts/tools/TestSuiteFilter.gd")
+const TestSuiteCatalogScript = preload("res://tests/TestSuiteCatalog.gd")
 
 
 func test_parse_suite_filter_empty_args_runs_all() -> String:
@@ -56,4 +57,15 @@ func test_should_run_any_group_accepts_matching_suite_group() -> String:
 		assert_true(TestSuiteFilterScript.should_run_any_group(selected, ["functional"]), "Matching suite groups should run"),
 		assert_false(TestSuiteFilterScript.should_run_any_group(selected, ["ai_training"]), "Non-matching suite groups should be skipped"),
 		assert_true(TestSuiteFilterScript.should_run_any_group({}, ["ai_training"]), "Empty group filters should allow all groups"),
+	])
+
+
+func test_suite_catalog_excludes_standalone_scene_tree_test_scripts() -> String:
+	var suite_path := "res://tests/test_game_manager.gd"
+	var standalone_path := "res://tests/v18_llm_policy_graph/pilots/test_tord_tera_box_round01_profile.gd"
+	return run_checks([
+		assert_true(TestSuiteCatalogScript._script_declares_suite_test_method(suite_path), "A TestBase suite with test_ methods should be discoverable"),
+		assert_false(TestSuiteCatalogScript._script_declares_suite_test_method(standalone_path), "A standalone SceneTree _initialize test must not be loaded as a SharedSuiteRunner suite"),
+		assert_true(TestSuiteCatalogScript.has_suite_path(suite_path), "The catalog should retain regular TestBase suites"),
+		assert_false(TestSuiteCatalogScript.has_suite_path(standalone_path), "The catalog should exclude independently executed SceneTree tests"),
 	])

@@ -652,11 +652,20 @@ func _call(method_name: StringName, args: Array = []) -> Variant:
 func _connect_detail_close_button(button: Button) -> void:
 	if button == null or _scene == null or not is_instance_valid(_scene) or not _scene.has_method("_hide_card_detail"):
 		return
-	var close_callable := Callable(_scene, "_hide_card_detail")
-	if not button.pressed.is_connected(close_callable):
-		button.pressed.connect(close_callable)
-	if not button.button_down.is_connected(close_callable):
-		button.button_down.connect(close_callable)
+	var pressed_callable := (
+		Callable(_scene, "_on_detail_close_pressed")
+		if _scene.has_method("_on_detail_close_pressed")
+		else Callable(_scene, "_hide_card_detail")
+	)
+	if not button.pressed.is_connected(pressed_callable):
+		button.pressed.connect(pressed_callable)
+	var button_down_callable := (
+		Callable(_scene, "_on_detail_close_button_down")
+		if _scene.has_method("_on_detail_close_button_down")
+		else Callable(_scene, "_hide_card_detail")
+	)
+	if not button.button_down.is_connected(button_down_callable):
+		button.button_down.connect(button_down_callable)
 
 
 func _node(path: NodePath) -> Node:

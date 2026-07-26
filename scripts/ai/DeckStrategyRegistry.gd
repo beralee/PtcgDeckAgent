@@ -131,6 +131,8 @@ const _STRATEGY_ID_BY_DECK_ID := {
 	1750002: "v175_pure_dragapult",
 	609431: "v175_lugia_archeops",
 	610080: "gardevoir",
+	800018506: "dragapult_dusknoir",
+	800025404: "v17_bomb_charizard",
 }
 
 const _STRATEGY_ORDER: Array[String] = [
@@ -199,6 +201,37 @@ static func strategy_id_for_deck_id(deck_id: int) -> String:
 	if v18_strategy_id != "":
 		return v18_strategy_id
 	return str(_STRATEGY_ID_BY_DECK_ID.get(deck_id, ""))
+
+
+static func llm_strategy_id_for_deck(deck_id: int, base_strategy_id: String = "") -> String:
+	var resolved_base_id := base_strategy_id
+	if resolved_base_id == "":
+		resolved_base_id = strategy_id_for_deck_id(deck_id)
+	if resolved_base_id == "":
+		return ""
+
+	# V18 CPG profiles own their release/feature availability. Asking for
+	# variants with an API available reveals whether the deck can actually offer
+	# the LLM choice in BattleSetup without coupling this marker to user config.
+	var v18_variants := V18CPGRegistryAdapterScript.variants_for_deck(
+		deck_id,
+		resolved_base_id,
+		true
+	)
+	for variant: Dictionary in v18_variants:
+		if bool(variant.get("requires_model", false)):
+			return str(variant.get("id", ""))
+
+	if deck_id == 610080 and resolved_base_id == "gardevoir":
+		return "v175_gardevoir_llm"
+	var candidate := "%s_llm" % resolved_base_id
+	if candidate == "gardevoir_llm" or _STRATEGY_SCRIPTS.has(candidate):
+		return candidate
+	return ""
+
+
+static func deck_supports_llm(deck_id: int, base_strategy_id: String = "") -> bool:
+	return llm_strategy_id_for_deck(deck_id, base_strategy_id) != ""
 
 
 func resolve_strategy_id_for_deck(deck: DeckData) -> String:

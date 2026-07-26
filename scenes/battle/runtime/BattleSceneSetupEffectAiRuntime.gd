@@ -73,6 +73,11 @@ func _setup_battle_scene_context() -> void:
 
 
 func _start_battle() -> void:
+	_match_end_return_navigation_started = false
+	var training_launch: Dictionary = GameManager.consume_deck_training_launch()
+	if not training_launch.is_empty():
+		_start_deck_training_battle(training_launch)
+		return
 	var deck1_data: DeckData = GameManager.resolve_selected_battle_deck(0)
 	var deck2_data: DeckData = GameManager.resolve_selected_battle_deck(1)
 	if deck1_data == null or deck2_data == null:
@@ -106,11 +111,66 @@ func _start_battle() -> void:
 	# The visible player may be switched later by setup and handover logic.
 
 
+func _start_deck_training_battle(launch: Dictionary) -> void:
+	var scenario_id := str(launch.get("scenario_id", ""))
+	var scenario: Dictionary = DeckTrainingCatalogScript.get_scenario(scenario_id)
+	if scenario.is_empty():
+		_log("训练残局不存在：%s" % scenario_id)
+		return
+	var admission: Dictionary = DeckTrainingAdmissionVerifierScript.verify_scenario(scenario)
+	if not bool(admission.get("ok", false)):
+		_log("训练残局未通过复杂度准入：%s" % "; ".join(PackedStringArray(admission.get("errors", []))))
+		return
+	var built: Dictionary = DeckTrainingStateFactoryScript.build(scenario)
+	var build_errors: Array = built.get("errors", [])
+	if not build_errors.is_empty():
+		_log("训练残局恢复失败：%s" % "; ".join(PackedStringArray(build_errors)))
+		return
+	_gsm = built.get("gsm", null)
+	if _gsm == null or _gsm.game_state == null:
+		_log("训练残局恢复失败：没有可用的游戏状态")
+		return
+	_bind_game_state_machine_signals(_gsm)
+	_battle_mode = "deck_training"
+	_view_player = 0
+	_setup_done = [true, true]
+	_battle_recording_started = false
+	_battle_recording_context_captured = false
+	_match_end_non_battle_orientation_restored = false
+	_turn_start_snapshot_recorded_keys.clear()
+	_deck_training_scenario = scenario.duplicate(true)
+	GameManager.game_state = _gsm.game_state
+	_sync_battle_scene_context_runtime()
+	_ensure_ai_opponent()
+	# Puzzle authoring depends on a deterministic production Rule opponent.
+	# Never inherit learned scorers, MCTS, or a user-selected LLM runtime into
+	# the mandatory middle turn of a two-turn training scenario.
+	if _ai_opponent != null:
+		_ai_opponent.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
+		_ai_opponent.use_mcts = false
+	_deck_training_controller = DeckTrainingBattleControllerScript.new()
+	_deck_training_controller.setup(self, _gsm, _deck_training_scenario, built.get("snapshot", {}))
+	_refresh_ui()
+	_setup_battle_layout()
+	_runtime_log(
+		"start_deck_training",
+		"scenario=%s player_deck=%d opponent_deck=%d turns=%d authored_operations=%d" % [
+			scenario_id,
+			int(scenario.get("player_deck_id", 0)),
+			int(scenario.get("opponent_deck_id", 0)),
+			int(scenario.get("turn_limit", 1)),
+			int(admission.get("authored_operation_count", 0)),
+		]
+	)
+
+
 
 func _setup_battle_layout() -> void:
 	_install_battle_backdrop()
 	_apply_battle_surface_styles()
 	_apply_responsive_layout()
+	if _deck_training_controller != null:
+		_deck_training_controller.apply_layout(get_viewport_rect().size)
 
 
 
@@ -280,10 +340,10 @@ func _apply_replay_launch(launch: Dictionary) -> void:
 
 
 func _bind_discard_hud_openers() -> void:
-	_bind_discard_open_control(_opp_discard if _opp_discard != null else find_child("OppDiscard", true, false) as Control, 1 - _view_player, "对方弃牌区")
-	_bind_discard_open_control(_my_discard if _my_discard != null else find_child("MyDiscard", true, false) as Control, _view_player, "己方弃牌区")
-	_bind_discard_open_control(find_child("OppDiscardHudPanel", true, false) as Control, 1 - _view_player, "对方弃牌区")
-	_bind_discard_open_control(find_child("MyDiscardHudPanel", true, false) as Control, _view_player, "己方弃牌区")
+	_bind_discard_open_control(_opp_discard if _opp_discard != null else find_child("OppDiscard", true, false) as Control, "opponent", "对方弃牌区")
+	_bind_discard_open_control(_my_discard if _my_discard != null else find_child("MyDiscard", true, false) as Control, "my", "己方弃牌区")
+	_bind_discard_open_control(find_child("OppDiscardHudPanel", true, false) as Control, "opponent", "对方弃牌区")
+	_bind_discard_open_control(find_child("MyDiscardHudPanel", true, false) as Control, "my", "己方弃牌区")
 
 
 
@@ -1379,6 +1439,11 @@ func _show_retreat_dialog(cp: int) -> void:
 
 
 func _on_match_end_return_pressed() -> void:
+	if _match_end_return_navigation_started:
+		return
+	_match_end_return_navigation_started = true
+	if _match_end_return_button != null:
+		_match_end_return_button.disabled = true
 	var return_to_tournament := _match_end_tournament_return_pending or GameManager.is_tournament_battle_active()
 	if GameManager.is_tournament_battle_active():
 		GameManager.finalize_current_tournament_battle(_battle_review_winner_index, _battle_review_reason)
@@ -1785,6 +1850,8 @@ func _apply_responsive_layout() -> void:
 	_trace_portrait_layout_stage("scene.apply_responsive.after_end_turn_style")
 	_finalize_portrait_layout_constraints()
 	_layout_llm_wait_label()
+	if _deck_training_controller != null:
+		_deck_training_controller.apply_layout(viewport_size)
 	_trace_portrait_layout_stage("scene.apply_responsive.after_finalize")
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
 	_request_portrait_layout_debug_overlay_refresh()
@@ -2029,11 +2096,34 @@ func _load_replay_turn(turn_number: int) -> void:
 
 
 
-func _bind_discard_open_control(control: Control, player_index: int, title: String) -> void:
+func _bind_discard_open_control(control: Control, visible_side: String, title: String) -> void:
 	if control == null:
 		return
+	_bind_discard_open_target(control, visible_side, title)
+	# Compact/portrait HUDs put the visible caption and count inside the panel.
+	# Labels stop GUI input before it reaches the bound outer panel, so bind every
+	# visible text hit target as well. This is especially easy to reproduce in
+	# deck training, where the compact discard panel is the primary entry point.
+	for descendant: Node in control.find_children("*", "Label", true, false):
+		var label := descendant as Label
+		if label != null:
+			_bind_discard_open_target(label, visible_side, title)
+
+
+func _bind_discard_preview_open_control(preview: BattleCardView, visible_side: String, title: String) -> void:
+	if preview == null:
+		return
+	# BattleCardView places a full-card input catcher above its outer panel. Bind
+	# the actual topmost hit target so opening a discard pile does not depend on
+	# the card-preview click gesture completing and emitting left_clicked.
+	var input_catcher := preview.find_child("CardInputCatcher", true, false) as Control
+	_bind_discard_open_target(input_catcher if input_catcher != null else preview, visible_side, title)
+
+
+func _bind_discard_open_target(control: Control, visible_side: String, title: String) -> void:
 	control.mouse_filter = Control.MOUSE_FILTER_STOP
-	var callback := Callable(self, "_on_discard_open_control_input").bind(player_index, title)
+	control.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var callback := Callable(self, "_on_discard_open_control_input").bind(visible_side, title)
 	if not control.gui_input.is_connected(callback):
 		control.gui_input.connect(callback)
 

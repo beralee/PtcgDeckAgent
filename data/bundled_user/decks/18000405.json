@@ -65,22 +65,6 @@
 			"source_url": "https://www.bilibili.com/video/BV1qpN26rErY/?t=405"
 		},
 		{
-			"card_index": "125",
-			"card_type": "Supporter",
-			"count": 1,
-			"effect_id": "1b9696068a599e81c705bcb3648f0213",
-			"name": "滨名的后援",
-			"name_en": "Roseanne's Backup",
-			"resolved_via": "video_screenshot_simplified_chinese",
-			"set_code": "CS5bC",
-			"source_card_index": "125",
-			"source_language": "ja",
-			"source_name": "",
-			"source_provider": "bilibili_screenshot",
-			"source_set_code": "CS5bC",
-			"source_url": "https://www.bilibili.com/video/BV1qpN26rErY/?t=405"
-		},
-		{
 			"card_index": "022",
 			"card_type": "Pokemon",
 			"count": 1,
@@ -131,7 +115,7 @@
 		{
 			"card_index": "183",
 			"card_type": "Item",
-			"count": 1,
+			"count": 2,
 			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
 			"name": "夜间担架",
 			"name_en": "Night Stretcher",
@@ -212,22 +196,6 @@
 			"card_index": "113",
 			"card_type": "Item",
 			"count": 1,
-			"effect_id": "66b2f1d77328b6578b1bf0d58d98f66b",
-			"name": "清除古龙水",
-			"name_en": "Canceling Cologne",
-			"resolved_via": "video_screenshot_simplified_chinese",
-			"set_code": "CS5aC",
-			"source_card_index": "113",
-			"source_language": "ja",
-			"source_name": "",
-			"source_provider": "bilibili_screenshot",
-			"source_set_code": "CS5aC",
-			"source_url": "https://www.bilibili.com/video/BV1qpN26rErY/?t=405"
-		},
-		{
-			"card_index": "113",
-			"card_type": "Item",
-			"count": 1,
 			"effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
 			"name": "宝可梦交替",
 			"name_en": "Switch",
@@ -243,7 +211,7 @@
 		{
 			"card_index": "023",
 			"card_type": "Supporter",
-			"count": 1,
+			"count": 2,
 			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
 			"name": "老大的指令",
 			"name_en": "Boss's Orders",

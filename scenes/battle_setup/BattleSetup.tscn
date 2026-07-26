@@ -481,10 +481,29 @@ layout_mode = 2
 autowrap_mode = 3
 text = ""
 
-[node name="BtnPreviewBgm" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+[node name="BgmActionsRow" type="HBoxContainer" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnImportBgm" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/BgmActionsRow"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(140, 38)
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(96, 38)
+text = "添加音乐"
+
+[node name="BtnRescanBgm" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/BgmActionsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(96, 38)
+text = "重新扫描"
+
+[node name="BtnPreviewBgm" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/BgmActionsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(96, 38)
 text = "试听"
 
 [node name="NoDeckWarning" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]

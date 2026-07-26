@@ -1,6 +1,10 @@
 class_name V18CPGFactBuilder
 extends RefCounted
 
+const DynamicAttackCostScript = preload(
+	"res://scripts/ai/v18_cpg/modules/V18CPGDynamicAttackCost.gd"
+)
+
 
 func build(observation: Dictionary, current_route_id: String = "", profile: Dictionary = {}) -> Dictionary:
 	var actions: Array = observation.get("legal_actions", []) if observation.get("legal_actions", []) is Array else []
@@ -45,17 +49,31 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 	var opponent_active: Dictionary = opponent.get("active", {}) if opponent.get("active", {}) is Dictionary else {}
 	var prize_swing := int(opponent_active.get("prize_count", 1)) if ko_available else 0
 	var prizes_remaining := int(own.get("prizes_remaining", 0))
+	var dynamic_cost_snapshot := DynamicAttackCostScript.new().public_snapshot(observation)
+	var dynamic_active: Dictionary = dynamic_cost_snapshot.get("active", {}) \
+		if dynamic_cost_snapshot.get("active", {}) is Dictionary else {}
 	return {
 		"attack": {
 			"ready": attack_ready,
 			"ko_available": ko_available,
 			"max_damage": max_damage,
+			"dynamic_cost_applied": not dynamic_active.is_empty(),
+			"effective_energy_required": int(
+				dynamic_active.get("effective_energy_required", 0)
+			),
+			"energy_deficit": int(dynamic_active.get("energy_deficit", 0)),
+			"cost_ready": bool(dynamic_active.get("cost_ready", attack_ready)),
+			"engine_confirms_cost_paid": bool(
+				dynamic_active.get("engine_confirms_cost_paid", attack_ready)
+			),
+			"dynamic_cost": dynamic_active,
 		},
 		"board": {
 			"bench_full": bench.size() >= 5,
 			"has_tera": has_tera,
 			"own_active_remaining_hp": int(own_active.get("remaining_hp", 0)),
 			"opponent_active_remaining_hp": int(opponent_active.get("remaining_hp", 0)),
+			"dynamic_attack_cost_cards": dynamic_cost_snapshot.get("cards", []),
 		},
 		"fan_call": {"available": fan_call_available},
 		"information": {"material_action_available": material_information_action},

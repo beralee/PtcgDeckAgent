@@ -1,0 +1,4 @@
+interface:
+  display_name: "升级 PTCG 卡组训练题"
+  short_description: "用图工程审计并升级既有卡组训练题的分支、资源与对抗证明"
+  default_prompt: "Use $upgrade-ptcg-deck-training-puzzles to graph-audit and upgrade an existing PTCG deck-training puzzle without editing scenario data before graph approval."

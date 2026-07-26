@@ -80,7 +80,7 @@ func mark_modal_input_consumed_at_position(scene: Object, reason: String, origin
 
 func _dialog_slot_suppression_mode(scene: Object) -> String:
 	if str(scene.get("_pending_choice")) == "pokemon_action":
-		return "clear"
+		return "sequence"
 	return "arm"
 
 
@@ -154,6 +154,8 @@ func _prepare_dialog_action_input_guard(scene: Object) -> void:
 	scene.set("_dialog_confirm_input_position", Vector2(-1.0, -1.0))
 	scene.set("_dialog_cancel_input_generation", -1)
 	scene.set("_dialog_cancel_input_position", Vector2(-1.0, -1.0))
+	scene.set("_dialog_confirm_activated_on_button_down", false)
+	scene.set("_dialog_cancel_activated_on_button_down", false)
 	scene.set("_dialog_modal_echo_blocked", false)
 	scene.set("_dialog_echo_action_pending", "")
 	var requires_fresh_action := modal_transition_depth > 0 and transition_generation >= 0 and transition_generation == modal_generation
@@ -206,6 +208,8 @@ func _is_dialog_action_press_event(event: InputEvent) -> bool:
 func on_dialog_action_button_input(scene: Object, action: String, event: InputEvent) -> void:
 	if not _is_dialog_action_press_event(event):
 		return
+	if scene.has_method("_claim_modal_pointer_event"):
+		scene.call("_claim_modal_pointer_event", event, "dialog_%s" % action)
 	var generation := int(scene.get("_dialog_generation"))
 	var position := _input_event_screen_position(event)
 	if _is_modal_echo_action_position(scene, position):
@@ -226,6 +230,8 @@ func on_dialog_action_button_input(scene: Object, action: String, event: InputEv
 
 
 func on_dialog_action_button_down(scene: Object, action: String) -> void:
+	if scene.has_method("_claim_current_modal_pointer_sequence"):
+		scene.call("_claim_current_modal_pointer_sequence", "dialog_%s" % action)
 	if (
 		bool(scene.get("_dialog_requires_fresh_action_input"))
 		and bool(scene.get("_dialog_same_position_action_locked"))
@@ -3522,10 +3528,14 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 		if event is InputEventMouseButton:
 			var mouse_event := event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+				if scene.has_method("_claim_modal_pointer_event"):
+					scene.call("_claim_modal_pointer_event", event, "action_hud_option")
 				activated = true
 		elif event is InputEventScreenTouch:
 			var touch_event := event as InputEventScreenTouch
 			if touch_event.pressed:
+				if scene.has_method("_claim_modal_pointer_event"):
+					scene.call("_claim_modal_pointer_event", event, "action_hud_option")
 				panel.set_meta("_action_hud_touch_active", true)
 				panel.set_meta("_action_hud_touch_index", touch_event.index)
 				panel.set_meta("_action_hud_touch_position", touch_event.position)
@@ -3554,6 +3564,12 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 				panel.accept_event()
 				return
 			_record_dialog_fresh_input(scene, "action_hud_option", origin_position)
+			if scene.has_method("_begin_modal_pointer_drain_for_event"):
+				scene.call(
+					"_begin_modal_pointer_drain_for_event",
+					event,
+					"action_hud_option"
+				)
 			confirm_dialog_selection(scene, PackedInt32Array([action_index]), origin_position)
 			panel.accept_event()
 	)
@@ -4093,6 +4109,22 @@ func on_assignment_target_chosen(scene: Object, target_index: int) -> void:
 	_replace_dictionary_array(scene, "_dialog_assignment_assignments", assignments)
 	scene.set("_dialog_assignment_selected_source_index", -1)
 	refresh_assignment_dialog_views(scene)
+	if should_auto_confirm_assignment(dialog_data, assignments.size()):
+		confirm_assignment_dialog(scene)
+
+
+func should_auto_confirm_assignment(dialog_data: Dictionary, assignment_count: int) -> bool:
+	var max_assignments := int(dialog_data.get("max_select", 0))
+	return (
+		bool(dialog_data.get("auto_confirm_at_max", false))
+		and
+		not bool(dialog_data.get(
+			"assignment_require_confirm",
+			dialog_data.get("field_assignment_require_confirm", false)
+		))
+		and max_assignments > 0
+		and assignment_count == max_assignments
+	)
 
 
 func refresh_assignment_dialog_views(scene: Object) -> void:
@@ -4229,12 +4261,24 @@ func on_dialog_card_chosen(scene: Object, real_index: int) -> void:
 	var max_select := int(dialog_data.get("max_select", 1))
 	var is_multi := max_select > 1 or min_select > 1
 	if not is_multi:
+		if scene.has_method("_begin_modal_pointer_drain"):
+			scene.call("_begin_modal_pointer_drain", "dialog_card")
 		confirm_dialog_selection(scene, PackedInt32Array([real_index]))
 		return
 	if not bool(scene.call("_toggle_dialog_card_choice", real_index, max_select)):
 		return
 	sync_dialog_card_selection(scene)
 	update_dialog_confirm_state(scene)
+	var selected_indices: Array = scene.get("_dialog_card_selected_indices")
+	if (
+		bool(dialog_data.get("auto_confirm_at_max", false))
+		and max_select > 0
+		and selected_indices.size() == max_select
+	):
+		var selected := PackedInt32Array()
+		for selected_index: int in selected_indices:
+			selected.append(selected_index)
+		confirm_dialog_selection(scene, selected)
 
 
 func card_dialog_should_show_selectable_hint(_selected: bool) -> bool:
@@ -4351,6 +4395,8 @@ func on_dialog_item_selected(scene: Object, idx: int) -> void:
 		return
 	dialog_confirm.disabled = false
 	if not bool(scene.get("_dialog_card_mode")):
+		if scene.has_method("_begin_modal_pointer_drain"):
+			scene.call("_begin_modal_pointer_drain", "dialog_item")
 		confirm_dialog_selection(scene, PackedInt32Array([idx]))
 
 

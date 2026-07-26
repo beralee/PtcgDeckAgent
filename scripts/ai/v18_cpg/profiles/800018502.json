@@ -1,5 +1,5 @@
 {
-  "profile_version": 6,
+  "profile_version": 7,
   "semantic_version": 1,
   "risk_posture": "balanced",
   "switch_margin": 75.0,
@@ -8,6 +8,7 @@
   "delta_response_token_budget": 170,
   "turn_visible_wait_budget_ms": 6500,
   "cold_request_estimate_ms": 5000,
+  "turn_model_judgment_mode": "required_first_main_window",
   "max_policy_nodes": 7,
   "protected_roles": [
     "copy_source",

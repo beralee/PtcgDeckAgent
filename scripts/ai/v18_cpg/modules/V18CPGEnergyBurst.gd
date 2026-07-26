@@ -367,6 +367,126 @@ func verified_minimum_discard_choice(
 	}
 
 
+func pick_verified_interaction_override(
+	items: Array,
+	step: Dictionary,
+	_rule_selection: Array,
+	context: Dictionary,
+	profile: Dictionary,
+	certificate_kind: String
+) -> Dictionary:
+	var parameters := _parameters(profile)
+	var step_ids := _lower_string_array(
+		parameters.get("minimum_lethal_discard_step_ids", [])
+	)
+	var step_id := str(step.get("id", "")).strip_edges().to_lower()
+	if certificate_kind != "public_minimum_resource_ko" \
+			or step_id not in step_ids \
+			or str(parameters.get("burst_damage_mode", "attached_discard")) \
+				!= "attached_discard":
+		return {"handled": false, "items": []}
+	var action_ref := _certified_interaction_action_ref(context)
+	if action_ref.is_empty():
+		return {"handled": false, "items": []}
+	var source_card: Dictionary = action_ref.get("source_card", {}) \
+		if action_ref.get("source_card", {}) is Dictionary else {}
+	var source_uid := str(source_card.get("uid", "")).strip_edges().to_upper()
+	var primary_uids := _upper_string_array(
+		parameters.get("primary_attacker_uids", [])
+	)
+	var primary_attack_indexes: Array[int] = _int_array(
+		parameters.get("minimum_lethal_attack_indexes", [])
+	)
+	if source_uid == "" \
+			or source_uid not in primary_uids \
+			or not primary_attack_indexes.is_empty() \
+				and int(action_ref.get("attack_index", -1)) not in primary_attack_indexes:
+		return {"handled": false, "items": []}
+	var observation: Dictionary = context.get("v18cpg_observation", {}) \
+		if context.get("v18cpg_observation", {}) is Dictionary else {}
+	var opponent: Dictionary = observation.get("opponent", {}) \
+		if observation.get("opponent", {}) is Dictionary else {}
+	var opponent_active: Dictionary = opponent.get("active", {}) \
+		if opponent.get("active", {}) is Dictionary else {}
+	var target_hp := int(opponent_active.get("remaining_hp", 0))
+	var damage_per_discard := maxi(
+		1,
+		int(parameters.get("damage_per_discard", DEFAULT_DAMAGE_PER_DISCARD))
+	)
+	var required_count := minimum_discards_for_damage(
+		target_hp,
+		damage_per_discard
+	)
+	var max_select := mini(int(step.get("max_select", items.size())), items.size())
+	if target_hp <= 0 \
+			or required_count <= 0 \
+			or required_count > max_select \
+			or required_count > items.size():
+		return {"handled": false, "items": []}
+	var ranked := _rank_attached_discard_items(
+		items,
+		observation,
+		action_ref,
+		parameters
+	)
+	if ranked.size() < required_count:
+		return {"handled": false, "items": []}
+	var selected: Array = []
+	for index: int in required_count:
+		selected.append((ranked[index] as Dictionary).get("item"))
+	return {
+		"handled": true,
+		"items": selected,
+		"certificate_kind": "public_minimum_resource_ko",
+		"target_hp": target_hp,
+		"damage_per_discard": damage_per_discard,
+		"required_count": required_count,
+		"projected_damage": required_count * damage_per_discard,
+		"live_interaction_verified": bool(
+			action_ref.get("live_interaction_verified", false)
+		),
+	}
+
+
+func _certified_interaction_action_ref(context: Dictionary) -> Dictionary:
+	var preferred: Dictionary = context.get(
+		"v18cpg_preferred_action_ref",
+		{}
+	) if context.get("v18cpg_preferred_action_ref", {}) is Dictionary else {}
+	var live: Dictionary = context.get(
+		"v18cpg_live_interaction_ref",
+		{}
+	) if context.get("v18cpg_live_interaction_ref", {}) is Dictionary else {}
+	if live.is_empty():
+		return preferred.duplicate(true)
+	if str(live.get("kind", "")).strip_edges().to_lower() != "attack" \
+			or not bool(live.get("proof_complete", false)):
+		return {}
+	var live_source: Dictionary = live.get("source_card", {}) \
+		if live.get("source_card", {}) is Dictionary else {}
+	var live_uid := str(live_source.get("uid", "")).strip_edges().to_upper()
+	var live_index := int(live.get("attack_index", -1))
+	if live_uid == "" or live_index < 0:
+		return {}
+	if not preferred.is_empty():
+		var preferred_source: Dictionary = preferred.get("source_card", {}) \
+			if preferred.get("source_card", {}) is Dictionary else {}
+		var preferred_uid := str(
+			preferred_source.get("uid", "")
+		).strip_edges().to_upper()
+		var preferred_index := int(preferred.get("attack_index", -1))
+		if preferred_uid != live_uid or preferred_index != live_index:
+			return {}
+	var result := preferred.duplicate(true) if not preferred.is_empty() \
+		else live.duplicate(true)
+	result["kind"] = "attack"
+	result["source"] = str(live.get("source", ""))
+	result["source_card"] = live_source.duplicate(true)
+	result["attack_index"] = live_index
+	result["live_interaction_verified"] = true
+	return result
+
+
 func acceleration_status(observation: Dictionary, profile: Dictionary = {}) -> Dictionary:
 	var snapshot := visible_energy_snapshot(observation, profile)
 	var own: Dictionary = observation.get("own", {}) if observation.get("own", {}) is Dictionary else {}
@@ -535,6 +655,190 @@ func _upper_string_array(value: Variant) -> Array[String]:
 			if item != "" and item not in result:
 				result.append(item)
 	return result
+
+
+func _lower_string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if value is Array:
+		for raw: Variant in value:
+			var item := str(raw).strip_edges().to_lower()
+			if item != "" and item not in result:
+				result.append(item)
+	return result
+
+
+func _int_array(value: Variant) -> Array[int]:
+	var result: Array[int] = []
+	if value is Array:
+		for raw: Variant in value:
+			var item := int(raw)
+			if item not in result:
+				result.append(item)
+	return result
+
+
+func _rank_attached_discard_items(
+	items: Array,
+	observation: Dictionary,
+	action_ref: Dictionary,
+	parameters: Dictionary
+) -> Array[Dictionary]:
+	var item_slots := _visible_energy_slot_index(observation)
+	var source_slot_id := str(action_ref.get("source", ""))
+	var required_types := EnergySymbolsScript.canonical_array(
+		parameters.get("primary_attack_required_types", ["L", "F"])
+	)
+	var engine_effect_ids := _upper_string_array(
+		parameters.get("teal_mask_engine_effect_ids", [])
+	)
+	var reserve_engine_energy := maxi(
+		0,
+		int(parameters.get("reserve_engine_energy", DEFAULT_RESERVE_ENGINE))
+	)
+	var entries: Array[Dictionary] = []
+	var group_stable_ids: Dictionary = {}
+	var slot_stable_ids: Dictionary = {}
+	for item: Variant in items:
+		var instance_id := _item_instance_id(item)
+		var slot: Dictionary = item_slots.get(instance_id, {}) \
+			if item_slots.get(instance_id, {}) is Dictionary else {}
+		var symbol := _item_energy_symbol(item)
+		var slot_id := str(slot.get("slot_id", ""))
+		var stable_id := _item_stable_id(item)
+		var group_key := "%s|%s" % [slot_id, symbol]
+		if not group_stable_ids.has(group_key):
+			group_stable_ids[group_key] = []
+		(group_stable_ids[group_key] as Array).append(stable_id)
+		if not slot_stable_ids.has(slot_id):
+			slot_stable_ids[slot_id] = []
+		(slot_stable_ids[slot_id] as Array).append(stable_id)
+		entries.append({
+			"item": item,
+			"slot_id": slot_id,
+			"symbol": symbol,
+			"pokemon_effect_id": str(
+				slot.get("pokemon_effect_id", "")
+			).to_upper(),
+			"group_key": group_key,
+			"stable_id": stable_id,
+		})
+	for raw_ids: Variant in group_stable_ids.values():
+		if raw_ids is Array:
+			(raw_ids as Array).sort()
+	for raw_ids: Variant in slot_stable_ids.values():
+		if raw_ids is Array:
+			(raw_ids as Array).sort()
+
+	var ranked: Array[Dictionary] = []
+	for entry: Dictionary in entries:
+		var symbol := str(entry.get("symbol", ""))
+		var slot_id := str(entry.get("slot_id", ""))
+		var stable_id := str(entry.get("stable_id", ""))
+		var group_ids: Array = group_stable_ids.get(
+			str(entry.get("group_key", "")),
+			[]
+		) if group_stable_ids.get(str(entry.get("group_key", "")), []) is Array \
+			else []
+		var slot_ids: Array = slot_stable_ids.get(slot_id, []) \
+			if slot_stable_ids.get(slot_id, []) is Array else []
+		var required_keep := required_types.count(symbol) \
+			if slot_id == source_slot_id else 0
+		var required_rank := group_ids.find(stable_id)
+		var engine_rank := slot_ids.find(stable_id)
+		var preservation_cost := 0
+		if required_keep > 0 \
+				and required_rank >= 0 \
+				and required_rank < required_keep:
+			preservation_cost += 10000
+		if str(entry.get("pokemon_effect_id", "")) in engine_effect_ids \
+				and engine_rank >= 0 \
+				and engine_rank < reserve_engine_energy:
+			preservation_cost += 5000
+		if symbol in required_types:
+			preservation_cost += 100
+		ranked.append({
+			"item": entry.get("item"),
+			"preservation_cost": preservation_cost,
+			"stable_id": stable_id,
+		})
+	ranked.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var cost_a := int(a.get("preservation_cost", 0))
+		var cost_b := int(b.get("preservation_cost", 0))
+		if cost_a != cost_b:
+			return cost_a < cost_b
+		return str(a.get("stable_id", "")) < str(b.get("stable_id", ""))
+	)
+	return ranked
+
+
+func _visible_energy_slot_index(observation: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var own: Dictionary = observation.get("own", {}) \
+		if observation.get("own", {}) is Dictionary else {}
+	var slots: Array = []
+	if own.get("active", {}) is Dictionary \
+			and not (own.get("active", {}) as Dictionary).is_empty():
+		slots.append(own.get("active", {}))
+	if own.get("bench", []) is Array:
+		slots.append_array(own.get("bench", []))
+	for raw_slot: Variant in slots:
+		if not (raw_slot is Dictionary):
+			continue
+		var slot: Dictionary = raw_slot
+		var symbol_counts: Dictionary = {}
+		var energy: Array = slot.get("energy", []) \
+			if slot.get("energy", []) is Array else []
+		for raw_energy: Variant in energy:
+			if raw_energy is Dictionary:
+				var symbol := _normalize_energy_type(raw_energy as Dictionary)
+				symbol_counts[symbol] = int(symbol_counts.get(symbol, 0)) + 1
+		for raw_energy: Variant in energy:
+			if not (raw_energy is Dictionary):
+				continue
+			var instance_id := int((raw_energy as Dictionary).get(
+				"instance_id",
+				-1
+			))
+			result[instance_id] = {
+				"slot_id": str(slot.get("slot_id", "")),
+				"energy_count": energy.size(),
+				"symbol_counts": symbol_counts.duplicate(true),
+				"pokemon_effect_id": str(
+					(slot.get("pokemon", {}) as Dictionary).get("effect_id", "")
+				) if slot.get("pokemon", {}) is Dictionary else "",
+			}
+	return result
+
+
+func _item_instance_id(item: Variant) -> int:
+	if item is CardInstance:
+		return int((item as CardInstance).instance_id)
+	if item is Dictionary:
+		return int((item as Dictionary).get("instance_id", -1))
+	return -1
+
+
+func _item_energy_symbol(item: Variant) -> String:
+	if item is CardInstance and (item as CardInstance).card_data != null:
+		var data := (item as CardInstance).card_data
+		return EnergySymbolsScript.canonical(
+			data.energy_provides if str(data.energy_provides) != "" \
+				else data.energy_type
+		)
+	if item is Dictionary:
+		return _normalize_energy_type(item as Dictionary)
+	return ""
+
+
+func _item_stable_id(item: Variant) -> String:
+	var instance_id := _item_instance_id(item)
+	if instance_id >= 0:
+		return "instance:%d" % instance_id
+	if item is CardInstance and (item as CardInstance).card_data != null:
+		return (item as CardInstance).card_data.get_uid()
+	if item is Dictionary:
+		return str((item as Dictionary).get("uid", ""))
+	return str(item)
 
 
 func _parameters(profile: Dictionary) -> Dictionary:

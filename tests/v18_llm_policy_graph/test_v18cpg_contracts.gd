@@ -23,8 +23,9 @@ const InformationValueScript = preload("res://scripts/ai/v18_cpg/planning/V18CPG
 const VisibleWaitBudgetScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGVisibleWaitBudget.gd")
 const DecisionClientScript = preload("res://scripts/ai/v18_cpg/network/V18CPGDecisionClient.gd")
 const RngIsolatedTransportScript = preload(
-	"res://scripts/ai/v18_cpg/network/V18CPGRngIsolatedZenMuxClient.gd"
+	"res://scripts/ai/v18_cpg/network/V18CPGRngIsolatedDeepSeekClient.gd"
 )
+const PilotBenchmarkScript = preload("res://scripts/tools/v18cpg/run_pilot_benchmark.gd")
 
 var _failures: Array[String] = []
 
@@ -66,9 +67,10 @@ func _initialize() -> void:
 	_test_compact_wire_contract()
 	_test_strict_compact_response_validation()
 	_test_transport_rng_isolation()
+	_test_pilot_benchmark_deepseek_direct_config()
 	_test_isolation_scan()
 	if _failures.is_empty():
-		print("V18CPG fixture suite: PASS (17 groups)")
+		print("V18CPG fixture suite: PASS (18 groups)")
 		quit(0)
 		return
 	for failure: String in _failures:
@@ -132,8 +134,8 @@ func _test_compact_wire_contract() -> void:
 	var payload: Dictionary = client._build_payload(envelope, 400, false)
 	_check(
 		int(payload.get("max_tokens", 0)) == 400 \
-			and not payload.has("response_format"),
-		"V18 compact transport must retain the response budget without appending the full JSON Schema"
+			and payload.get("response_format", {}) == {"type": "json_object"},
+		"V18 compact transport must retain its response budget and request DeepSeek JSON mode without appending the full JSON Schema"
 	)
 	var messages: Array = payload.get("messages", []) if payload.get("messages", []) is Array else []
 	_check(messages.size() == 2, "compact transport must contain one system and one user message")
@@ -148,6 +150,10 @@ func _test_compact_wire_contract() -> void:
 			and system_text.contains("limits.max_policy_nodes is the absolute node maximum") \
 			and system_text.contains("macro_actions[0] must both exactly equal") \
 			and system_text.contains("propose_typed_route is root-only") \
+			and system_text.contains("Default to exactly one select_candidate route node") \
+			and system_text.contains("predictably opens draw, hidden-deck search") \
+			and system_text.contains("otherwise=replan") \
+			and system_text.contains("may replace the Rule floor even across a large score gap") \
 			and system_text.contains("point only to a node listed later"),
 		"compact grammar must pin the outer policy wrapper and active profile node limit"
 	)
@@ -997,6 +1003,23 @@ func _test_rule_floor_and_route_safety() -> void:
 		"board": {"has_tera": false},
 		"resources": {"bench_slots_free": 1, "energy_on_board": 2},
 	}
+	var released_tord_parameters: Dictionary = tord_profile.get(
+		"module_parameters",
+		{}
+	).get("tera_noctowl_search", {})
+	_check(
+		not bool(released_tord_parameters.get(
+			"verify_tera_expansion_from_hand",
+			true
+		)),
+		"the released Tord profile must keep the benchmark-negative Tera-from-hand rewrite disabled"
+	)
+	var tera_opt_in_profile := tord_profile.duplicate(true)
+	tera_opt_in_profile["module_parameters"]["tera_noctowl_search"][
+		"verify_tera_expansion_from_hand"
+	] = true
+	var tera_opt_in_strategy := StrategyScript.new()
+	tera_opt_in_strategy.configure_profile(tera_opt_in_profile)
 	var tera_frontier: Array[Dictionary] = [{
 		"candidate_id": "candidate:end_after_draw",
 		"route_id": "route:end_turn",
@@ -1048,9 +1071,9 @@ func _test_rule_floor_and_route_safety() -> void:
 		}],
 	}
 	tera_frontier = handoff_module.annotate_frontier_v2(
-		tera_frontier, tera_observation, tera_facts, tord_profile, {}
+		tera_frontier, tera_observation, tera_facts, tera_opt_in_profile, {}
 	)
-	var tera_safety := tord_strategy._validate_model_route_safety(
+	var tera_safety := tera_opt_in_strategy._validate_model_route_safety(
 		"route:develop", tera_frontier, tera_facts, "candidate:teal_from_hand"
 	)
 	_check(
@@ -1064,9 +1087,9 @@ func _test_rule_floor_and_route_safety() -> void:
 		tera_observation["legal_actions"][1],
 	]
 	var no_followup_frontier := handoff_module.annotate_frontier_v2(
-		tera_frontier, no_followup_observation, tera_facts, tord_profile, {}
+		tera_frontier, no_followup_observation, tera_facts, tera_opt_in_profile, {}
 	)
-	var no_followup_safety := tord_strategy._validate_model_route_safety(
+	var no_followup_safety := tera_opt_in_strategy._validate_model_route_safety(
 		"route:develop", no_followup_frontier, tera_facts, "candidate:teal_from_hand"
 	)
 	_check(
@@ -1074,7 +1097,10 @@ func _test_rule_floor_and_route_safety() -> void:
 		"Area Zero capacity alone must not justify benching a two-prize Tera without an immediate visible follow-up"
 	)
 	_check(
-		tord_strategy._required_selection_bonus(tera_frontier[1], tera_frontier) > 98000.0,
+		tera_opt_in_strategy._required_selection_bonus(
+			tera_frontier[1],
+			tera_frontier
+		) > 98000.0,
 		"an approved exact candidate must receive enough execution authority to clear a Rule sentinel score"
 	)
 	var verified_upgrade := tord_strategy._find_module_verified_upgrade(
@@ -1515,13 +1541,44 @@ func _test_transport_rng_isolation() -> void:
 		"creating a V18 model fallback request must not advance the gameplay RNG"
 	)
 	_check(
-		str(paths.get("input_path", "")).replace("\\", "/").contains("/v18cpg/zenmux/"),
+		str(paths.get("input_path", "")).replace("\\", "/").contains("/v18cpg/deepseek/"),
 		"V18 model fallback files must stay in the isolated V18 user directory"
 	)
 	for key: String in ["input_path", "output_path"]:
 		var path := str(paths.get(key, ""))
 		if path != "":
 			DirAccess.remove_absolute(path)
+
+
+func _test_pilot_benchmark_deepseek_direct_config() -> void:
+	var benchmark := PilotBenchmarkScript.new()
+	var resolved: Dictionary = benchmark.call("_resolve_deepseek_direct_config", {
+		"provider": "zenmux",
+		"endpoint": "https://zenmux.invalid/api/v1",
+		"api_key": "zenmux-key-must-not-leak",
+		"model": "kimi-k3",
+		"provider_configs": {
+			"deepseek": {
+				"endpoint": "https://api.deepseek.com",
+				"api_key": "deepseek-direct-key",
+				"model": "deepseek-v4-pro",
+			},
+		},
+		"timeout_seconds": 60.0,
+	}, {
+		"ZENMUX_ENDPOINT": "https://zenmux-env.invalid/api/v1",
+		"ZENMUX_API_KEY": "zenmux-env-key",
+		"DEEPSEEK_API_KEY": "",
+		"V18CPG_MODEL": "",
+	})
+	_check(
+		str(resolved.get("endpoint", "")) == "https://api.deepseek.com"
+			and str(resolved.get("api_key", "")) == "deepseek-direct-key"
+			and str(resolved.get("model", "")) == "deepseek-v4-pro"
+			and is_equal_approx(float(resolved.get("timeout_seconds", 0.0)), 60.0),
+		"the V18 pilot benchmark must use the saved official DeepSeek profile, never ZenMux defaults"
+	)
+	benchmark.free()
 
 
 func _collect_files(directory: String, output: Array[String]) -> void:

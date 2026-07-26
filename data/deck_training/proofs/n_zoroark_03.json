@@ -1,0 +1,335 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 329,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 7,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:trade_cipher",
+      "choice_label": "备战索罗亚克交易取得暗码迷",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:cipher_castle_switch",
+      "choice_label": "暗码迷把城堡与能量转移置顶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:cleffa_draw",
+      "choice_label": "皮宝宝抽到城堡并把能量转移留给下回合自然抽",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:dragapult_reply",
+      "choice_label": "剩90HP多龙击倒皮宝宝",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:move_dark",
+      "choice_label": "把愿增猿的恶能移动给自动晋升的索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:reignite_finish",
+      "choice_label": "复燃按对手3张基本能量造成90精确终结",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 9,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "715470c95875f190f4eb09330431538f513fce6c7994b1891ec17482640da932"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:trade_cipher",
+        "choice_label": "备战索罗亚克交易取得暗码迷",
+        "depth": 6,
+        "player_actions": 5,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:cipher_castle_switch",
+              "choice_label": "暗码迷把城堡与能量转移置顶",
+              "depth": 6,
+              "player_actions": 4,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:cleffa_draw",
+                    "choice_label": "皮宝宝抽到城堡并把能量转移留给下回合自然抽",
+                    "depth": 6,
+                    "player_actions": 3,
+                    "reason": "all_defenses_hold",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:dragapult_reply",
+                          "choice_label": "剩90HP多龙击倒皮宝宝",
+                          "depth": 6,
+                          "player_actions": 2,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:move_dark",
+                                "choice_label": "把愿增猿的恶能移动给自动晋升的索罗亚克",
+                                "depth": 6,
+                                "player_actions": 2,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:reignite_finish",
+                                      "choice_label": "复燃按对手3张基本能量造成90精确终结",
+                                      "depth": 6,
+                                      "player_actions": 1,
+                                      "reason": "production_witness_reached_goal",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [],
+                                        "coverage_complete": true,
+                                        "depth": 6,
+                                        "player_actions": 0,
+                                        "reason": "production_witness_reached_goal",
+                                        "score": 2,
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 0
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 6,
+                                  "player_actions": 1,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:reignite_finish",
+                                  "selected_choice_label": "复燃按对手3张基本能量造成90精确终结",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 6,
+                            "player_actions": 2,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:move_dark",
+                            "selected_choice_label": "把愿增猿的恶能移动给自动晋升的索罗亚克",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 6,
+                      "player_actions": 2,
+                      "reason": "all_defenses_hold",
+                      "role": "opponent",
+                      "selected_choice_id": "03:dragapult_reply",
+                      "selected_choice_label": "剩90HP多龙击倒皮宝宝",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 6,
+                "player_actions": 3,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:cleffa_draw",
+                "selected_choice_label": "皮宝宝抽到城堡并把能量转移留给下回合自然抽",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 6,
+          "player_actions": 4,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:cipher_castle_switch",
+          "selected_choice_label": "暗码迷把城堡与能量转移置顶",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 6,
+    "player_actions": 5,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:trade_cipher",
+    "selected_choice_label": "备战索罗亚克交易取得暗码迷",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:trade_cipher",
+      "choice_label": "备战索罗亚克交易取得暗码迷",
+      "depth": 6,
+      "player_actions": 5,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:cipher_castle_switch",
+            "choice_label": "暗码迷把城堡与能量转移置顶",
+            "depth": 6,
+            "player_actions": 4,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:cleffa_draw",
+                  "choice_label": "皮宝宝抽到城堡并把能量转移留给下回合自然抽",
+                  "depth": 6,
+                  "player_actions": 3,
+                  "reason": "all_defenses_hold",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:dragapult_reply",
+                        "choice_label": "剩90HP多龙击倒皮宝宝",
+                        "depth": 6,
+                        "player_actions": 2,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:move_dark",
+                              "choice_label": "把愿增猿的恶能移动给自动晋升的索罗亚克",
+                              "depth": 6,
+                              "player_actions": 2,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:reignite_finish",
+                                    "choice_label": "复燃按对手3张基本能量造成90精确终结",
+                                    "depth": 6,
+                                    "player_actions": 1,
+                                    "reason": "production_witness_reached_goal",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [],
+                                      "coverage_complete": true,
+                                      "depth": 6,
+                                      "player_actions": 0,
+                                      "reason": "production_witness_reached_goal",
+                                      "score": 2,
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 0
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 6,
+                                "player_actions": 1,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:reignite_finish",
+                                "selected_choice_label": "复燃按对手3张基本能量造成90精确终结",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 6,
+                          "player_actions": 2,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:move_dark",
+                          "selected_choice_label": "把愿增猿的恶能移动给自动晋升的索罗亚克",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 6,
+                    "player_actions": 2,
+                    "reason": "all_defenses_hold",
+                    "role": "opponent",
+                    "selected_choice_id": "03:dragapult_reply",
+                    "selected_choice_label": "剩90HP多龙击倒皮宝宝",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 6,
+              "player_actions": 3,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:cleffa_draw",
+              "selected_choice_label": "皮宝宝抽到城堡并把能量转移留给下回合自然抽",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 6,
+        "player_actions": 4,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:cipher_castle_switch",
+        "selected_choice_label": "暗码迷把城堡与能量转移置顶",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "715470c95875f190f4eb09330431538f513fce6c7994b1891ec17482640da932",
+  "scenario_id": "n_zoroark_03",
+  "shortest_player_actions": 5,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

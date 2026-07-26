@@ -634,7 +634,10 @@ func _add_match_end_button(scene: Object, parent: Container, property_name: Stri
 	button.add_theme_color_override("font_color", Color(0.92, 0.98, 1.0, 1.0))
 	button.add_theme_color_override("font_disabled_color", Color(0.52, 0.58, 0.64, 1.0))
 	if scene.has_method(method_name):
-		button.pressed.connect(Callable(scene, method_name))
+		var callback := Callable(scene, method_name)
+		button.pressed.connect(callback)
+		if method_name == "_on_match_end_return_pressed":
+			button.button_down.connect(callback)
 	parent.add_child(button)
 	scene.set(property_name, button)
 

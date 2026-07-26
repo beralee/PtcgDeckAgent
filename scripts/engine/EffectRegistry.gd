@@ -330,6 +330,11 @@ const AbilityActiveRetreatLock = "res://scripts/effects/pokemon_effects/AbilityA
 const AttackBonusIfOwnStadium = "res://scripts/effects/pokemon_effects/AttackBonusIfOwnStadium.gd"
 const AttackPlaceDamageCountersOnOpponentActive = "res://scripts/effects/pokemon_effects/AttackPlaceDamageCountersOnOpponentActive.gd"
 const AttackChooseOpponentPokemonDamageCountersEffect = "res://scripts/effects/pokemon_effects/AttackChooseOpponentPokemonDamageCounters.gd"
+const AttackChooseOpponentBenchDamageCountersEffect = "res://scripts/effects/pokemon_effects/AttackChooseOpponentBenchDamageCounters.gd"
+const AttackDamageCountersToAllPokemonWithAbilitiesEffect = "res://scripts/effects/pokemon_effects/AttackDamageCountersToAllPokemonWithAbilities.gd"
+const AbilityTingLuCursedLandEffect = "res://scripts/effects/pokemon_effects/AbilityTingLuCursedLand.gd"
+const AbilityKoraidonExDinoCryEffect = "res://scripts/effects/pokemon_effects/AbilityKoraidonExDinoCry.gd"
+const AttackFailIfSelfDamageCountersEffect = "res://scripts/effects/pokemon_effects/AttackFailIfSelfDamageCounters.gd"
 const AttackReviveBasicFromAnyDiscardToBench = "res://scripts/effects/pokemon_effects/AttackReviveBasicFromAnyDiscardToBench.gd"
 const AttackReturnSelfAllCardsToHandEffect = "res://scripts/effects/pokemon_effects/AttackReturnSelfAllCardsToHand.gd"
 const AttackOptionalReturnSelfAllCardsToHandEffect = "res://scripts/effects/pokemon_effects/AttackOptionalReturnSelfAllCardsToHand.gd"
@@ -490,6 +495,55 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"12c9416c64d1a8cfbbf0a3000a9f3d50": # CSV6C_065 Scream Tail
+			# Imported Limitless decks and old caches can retain the English
+			# attack name "Roaring Scream". Bind this identity-stable effect by
+			# card effect_id so localized display text cannot turn the attack
+			# into an empty, zero-damage move.
+			var scream_tail_effect := _instantiate_effect(AttackSelfDamageCounterTargetDamageEffect, [20])
+			_bind_attack_index_if_supported(scream_tail_effect, 1)
+			processor.replace_attack_effects(effect_id, [scream_tail_effect])
+		"bd134d7d84e9f1a837a74b061fcb5f40": # CSV2C_055 Gardevoir ex
+			processor.register_effect(effect_id, _instantiate_effect(AbilityPsychicEmbraceEffect))
+			var miracle_force := _instantiate_effect(AttackClearOwnStatusEffect)
+			_bind_attack_index_if_supported(miracle_force, 0)
+			processor.replace_attack_effects(effect_id, [miracle_force])
+		"66fee12502043db7d92b97b0d62b0f59": # CSV8C_094 Munkidori
+			processor.register_effect(
+				effect_id,
+				_instantiate_effect(AbilityMoveDamageCountersToOpponentEffect, [3])
+			)
+			var mind_bend := EffectApplyStatus.new("confused", false)
+			_bind_attack_index_if_supported(mind_bend, 0)
+			processor.replace_attack_effects(effect_id, [mind_bend])
+		"49669fcf461deacebeb5755c11ec51f1": # 151C_151 Mew ex
+			processor.register_effect(effect_id, AbilityDrawToN.new(3))
+			var genome_hacking := AttackCopyAttack.new(processor)
+			_bind_attack_index_if_supported(genome_hacking, 0)
+			processor.replace_attack_effects(effect_id, [genome_hacking])
+		"6db296a19d741896c070fe471e92b8f3": # CSVL1C_036 Ting-Lu ex
+			processor.register_effect(effect_id, _instantiate_effect(AbilityTingLuCursedLandEffect))
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackChooseOpponentBenchDamageCountersEffect, [2, 0]),
+			])
+		"94df9ff8b811a6ae267a87194abd5323": # CSVL1C_037 Koraidon ex
+			processor.register_effect(effect_id, _instantiate_effect(AbilityKoraidonExDinoCryEffect, [2]))
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackSelfAllAttacksLockNextTurnEffect, [0]),
+			])
+		"a1a72373d6d9233349e8a3ef92a0c14d": # CSV9.5C_100 Ting-Lu
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackAttachBasicEnergyFromDiscardEffect, ["F", 2, "own_any", 0]),
+				_instantiate_effect(AttackFailIfSelfDamageCountersEffect, [40, 1]),
+			])
+		"61acdd76828977fa4ea85995594b3933": # CSV6C_056 Yamask - Ominous Eyes
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackChooseOpponentPokemonDamageCountersEffect, [3, 0]),
+			])
+		"17727f6b35cbad5906fab2edecf4236d": # CSV9C_087 Cofagrigus - Underworld Rule
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackDamageCountersToAllPokemonWithAbilitiesEffect, [6, 0]),
+			])
 		"4221c41ba964470cc5e7394886cd7716":
 			processor.replace_attack_effects(effect_id, [
 				_instantiate_effect(AttackTargetOpponentBenchDamageEffect, [30, 0]),
@@ -799,7 +853,13 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			_bind_attack_index_if_supported(night_joker, 0)
 			processor.replace_attack_effects(effect_id, [night_joker])
 		"25a245d9fcfb5befa2fe4442d1cd0993":
-			processor.register_attack_effect(effect_id, AttackOpponentActiveEnergyCountDamage.new(20, 1))
+			# "Psychic"/"精神强念" is reused by multiple prints with different
+			# multipliers and energy filters. This print counts every attached
+			# Energy at x20, so its stable identity must replace the generic
+			# localized-name fallback instead of being appended after it.
+			processor.replace_attack_effects(effect_id, [
+				AttackOpponentActiveEnergyCountDamage.new(20, 1),
+			])
 		"07ece21268d2d5ad700ebc6859b1ab1d":
 			var limitless_budew_lock := _instantiate_effect(AttackItemLockNextTurnEffect)
 			_bind_attack_index_if_supported(limitless_budew_lock, 0)
@@ -1482,6 +1542,16 @@ static func _register_items(processor: EffectProcessor) -> void:
 ## ==================== 支援者卡注册（register_effect）====================
 
 static func _register_supporters(processor: EffectProcessor) -> void:
+	# 瓢太：抽2张牌，然后从弃牌区回收1张基本能量
+	processor.register_effect(
+		"2a5c07699e0820cfe5c46e053652023f",
+		_instantiate_effect("res://scripts/effects/trainer_effects/EffectRoark.gd")
+	)
+	# 海岱：将2张其他手牌按所选顺序放回牌库下方，然后抽4张牌
+	processor.register_effect(
+		"2d43eb3b21ee954281030e8da5c7eb94",
+		_instantiate_effect("res://scripts/effects/trainer_effects/EffectKofu.gd")
+	)
 	processor.register_effect("b54276b42598426febfe34bb67d5f075", _instantiate_effect(EffectTeamStarGruntEffect))
 	processor.register_effect("565a02f4e75076963c6a884ae3622ff1", _instantiate_effect(EffectSurferEffect))
 	# 派帕
@@ -1766,6 +1836,8 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 			return _instantiate_effect(AbilityDiscardDrawAnyEffect, [2])
 		"Trade":
 			return _instantiate_effect(AbilityDiscardDrawAnyEffect, [2])
+		"Dig Dig Dig":
+			return _instantiate_effect("res://scripts/effects/pokemon_effects/AbilityDrilburDigDigDig.gd")
 		"精神拥抱":
 			# 沙奈朵ex：从弃牌区附着超能量+放置2个伤害指示物
 			return _instantiate_effect(AbilityPsychicEmbraceEffect)

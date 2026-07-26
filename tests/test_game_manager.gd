@@ -212,6 +212,15 @@ func test_scene_navigation_waits_for_in_progress_threaded_prewarm() -> String:
 	return run_checks(checks)
 
 
+func test_scene_navigation_stops_waiting_for_stalled_prewarm() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	return run_checks([
+		assert_true(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 1000)), "A healthy in-progress preload should still be awaited"),
+		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 5000)), "A stalled preload must fall back so the match-end return cannot hang forever"),
+		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_FAILED, 1000)), "A failed preload should never keep navigation waiting"),
+	])
+
+
 func test_battle_review_api_config_loads_user_file() -> String:
 	var original_config_text := _read_config_text()
 	_remove_config_file()
@@ -274,6 +283,64 @@ func test_battle_review_api_config_loads_active_deepseek_profile_without_losing_
 		assert_eq(str(zenmux_profile.get("api_key", "")), "zenmux-key", "Switching to DeepSeek must retain the ZenMux key"),
 		assert_eq(str(zenmux_profile.get("model", "")), "qwen/qwen3.7-plus", "Switching to DeepSeek must retain the ZenMux model"),
 		assert_eq(str(deepseek_profile.get("api_key", "")), "deepseek-key", "DeepSeek profile should preserve its own key"),
+	])
+
+
+func test_llm_opponent_config_uses_official_deepseek_profile_only() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	var project_source := {
+		"provider": "deepseek",
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "deepseek-key",
+		"model": "deepseek-v4-pro",
+		"provider_configs": {
+			"deepseek": {
+				"endpoint": "https://api.deepseek.com",
+				"api_key": "deepseek-key",
+				"model": "deepseek-v4-pro",
+			},
+			"zenmux": {
+				"endpoint": "https://zenmux.ai/api/v1",
+				"api_key": "zenmux-key",
+				"model": "kimi-k3",
+			},
+		},
+	}
+	var direct: Dictionary = manager.call("_deepseek_direct_llm_opponent_config", project_source)
+	var zenmux_only: Dictionary = manager.call("_deepseek_direct_llm_opponent_config", {
+		"provider": "zenmux",
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "zenmux-key",
+		"model": "kimi-k3",
+		"provider_configs": {
+			"zenmux": {
+				"endpoint": "https://zenmux.ai/api/v1",
+				"api_key": "zenmux-key",
+				"model": "kimi-k3",
+			},
+		},
+	})
+	var selected: Dictionary = manager.call(
+		"_resolve_llm_opponent_battle_review_api_config",
+		project_source,
+		{
+			"provider": "zenmux",
+			"endpoint": "https://zenmux.ai/api/v1",
+			"api_key": "legacy-zenmux-key",
+			"model": "deepseek-v4-pro",
+		},
+		"C:/legacy/PTCG Train/battle_review_api.json"
+	)
+	return run_checks([
+		assert_eq(str(direct.get("provider", "")), "deepseek", "LLM opponent should always use the DeepSeek provider"),
+		assert_eq(str(direct.get("endpoint", "")), "https://api.deepseek.com", "LLM opponent should always use the official DeepSeek endpoint"),
+		assert_eq(str(direct.get("api_key", "")), "deepseek-key", "LLM opponent should retain the configured DeepSeek credential"),
+		assert_eq(str(direct.get("model", "")), "deepseek-v4-pro", "LLM opponent should retain the selected V4 Pro model"),
+		assert_eq(str(zenmux_only.get("provider", "")), "deepseek", "ZenMux-only settings must not select ZenMux for an LLM opponent"),
+		assert_eq(str(zenmux_only.get("endpoint", "")), "https://api.deepseek.com", "ZenMux-only settings must still resolve to the official DeepSeek endpoint"),
+		assert_eq(str(zenmux_only.get("api_key", "")), "", "A ZenMux credential must never be forwarded to DeepSeek"),
+		assert_eq(str(selected.get("api_key", "")), "deepseek-key", "The active project DeepSeek profile must win over a legacy canonical config"),
+		assert_eq(str(selected.get("config_source_path", "")), CONFIG_PATH, "The selected LLM opponent config should record the active project source"),
 	])
 
 
@@ -520,6 +587,9 @@ func test_desktop_render_resolution_caps_high_density_windows() -> String:
 		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160))), "Windows 4K should enable the desktop render cap"),
 		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Linux", {}, "", Vector2i(2560, 1440))), "Linux 1440p should enable the desktop render cap"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(1920, 1080))), "Windows 1080p should keep native desktop rendering"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160), DisplayServer.WINDOW_MODE_MAXIMIZED)), "Windows maximized mode should render at the monitor's native resolution instead of looking like blurry fullscreen"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160), DisplayServer.WINDOW_MODE_FULLSCREEN)), "Windows fullscreen should render at the monitor's native resolution instead of a blurry 1080p viewport"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160), DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)), "Windows exclusive fullscreen should also keep native rendering"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Android", {"android": true}, "", Vector2i(3840, 2160))), "Native Android should not use the desktop render cap"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Web", {"web": true}, "web", Vector2i(3840, 2160))), "Web builds should keep their browser-specific canvas policy"),
 	])
@@ -948,4 +1018,26 @@ func test_non_battle_layout_toggle_cycles_only_landscape_and_portrait() -> Strin
 	return run_checks([
 		assert_eq(first_toggle, GameManager.NON_BATTLE_LAYOUT_PORTRAIT, "Non-battle layout button should switch landscape to portrait"),
 		assert_eq(second_toggle, GameManager.NON_BATTLE_LAYOUT_LANDSCAPE, "Non-battle layout button should switch portrait back to landscape"),
+	])
+
+
+func test_web_lifecycle_cancel_swallows_only_the_late_release() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	manager.set("_web_cancelled_pointer_release_until_msec", 2500)
+	var late_release := InputEventMouseButton.new()
+	late_release.button_index = MOUSE_BUTTON_LEFT
+	late_release.pressed = false
+	var consumed_release := bool(manager.call("_consume_cancelled_web_pointer_release", late_release, 2000))
+	var consumed_twice := bool(manager.call("_consume_cancelled_web_pointer_release", late_release, 2010))
+	manager.set("_web_cancelled_pointer_release_until_msec", 3500)
+	var fresh_press := InputEventMouseButton.new()
+	fresh_press.button_index = MOUSE_BUTTON_LEFT
+	fresh_press.pressed = true
+	var consumed_fresh_press := bool(manager.call("_consume_cancelled_web_pointer_release", fresh_press, 3000))
+	var consumed_fresh_release := bool(manager.call("_consume_cancelled_web_pointer_release", late_release, 3010))
+	return run_checks([
+		assert_true(consumed_release, "The release belonging to a pointer cancelled by blur must be swallowed"),
+		assert_false(consumed_twice, "The cancellation gate must be one-shot"),
+		assert_false(consumed_fresh_press, "A new physical press must clear the stale release gate"),
+		assert_false(consumed_fresh_release, "The new pointer sequence must complete normally"),
 	])

@@ -1,0 +1,479 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 362,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 10,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:coin_active",
+      "choice_label": "前场嘉奖硬币抽暗码迷与老大",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:cipher_double_retrieval",
+      "choice_label": "暗码迷把两张超级能量回收置顶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:fezandipiti_draw",
+      "choice_label": "化危为吉取得两张回收",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:retrieval_one",
+      "choice_label": "第一次回收弃奇树与宝芬",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:first_gold_rush",
+      "choice_label": "第一组四色能量完成200伤",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:ogerpon_reply",
+      "choice_label": "猛雷鼓规则AI完整回合",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:boss_second_target",
+      "choice_label": "老大的指令拉出开局备战猛雷鼓",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:retrieval_two",
+      "choice_label": "第二次回收弃宝芬与进化TM",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:second_gold_rush",
+      "choice_label": "第二组四色能量完成200伤",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 9,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "e398662626a425aabf9f8eb9257e0f25687ab18002bdd7e2a5d7ce1048b32457"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:coin_active",
+        "choice_label": "前场嘉奖硬币抽暗码迷与老大",
+        "depth": 9,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:cipher_double_retrieval",
+              "choice_label": "暗码迷把两张超级能量回收置顶",
+              "depth": 9,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:fezandipiti_draw",
+                    "choice_label": "化危为吉取得两张回收",
+                    "depth": 9,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:retrieval_one",
+                          "choice_label": "第一次回收弃奇树与宝芬",
+                          "depth": 9,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:first_gold_rush",
+                                "choice_label": "第一组四色能量完成200伤",
+                                "depth": 9,
+                                "player_actions": 4,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:ogerpon_reply",
+                                      "choice_label": "猛雷鼓规则AI完整回合",
+                                      "depth": 9,
+                                      "player_actions": 3,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:boss_second_target",
+                                            "choice_label": "老大的指令拉出开局备战猛雷鼓",
+                                            "depth": 9,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:retrieval_two",
+                                                  "choice_label": "第二次回收弃宝芬与进化TM",
+                                                  "depth": 9,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:second_gold_rush",
+                                                        "choice_label": "第二组四色能量完成200伤",
+                                                        "depth": 9,
+                                                        "player_actions": 1,
+                                                        "reason": "production_witness_reached_goal",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [],
+                                                          "coverage_complete": true,
+                                                          "depth": 9,
+                                                          "player_actions": 0,
+                                                          "reason": "production_witness_reached_goal",
+                                                          "score": 2,
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 0
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 9,
+                                                    "player_actions": 1,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:second_gold_rush",
+                                                    "selected_choice_label": "第二组四色能量完成200伤",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 9,
+                                              "player_actions": 2,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:retrieval_two",
+                                              "selected_choice_label": "第二次回收弃宝芬与进化TM",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 9,
+                                        "player_actions": 3,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:boss_second_target",
+                                        "selected_choice_label": "老大的指令拉出开局备战猛雷鼓",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 9,
+                                  "player_actions": 3,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:ogerpon_reply",
+                                  "selected_choice_label": "猛雷鼓规则AI完整回合",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 9,
+                            "player_actions": 4,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:first_gold_rush",
+                            "selected_choice_label": "第一组四色能量完成200伤",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 9,
+                      "player_actions": 5,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:retrieval_one",
+                      "selected_choice_label": "第一次回收弃奇树与宝芬",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 9,
+                "player_actions": 6,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:fezandipiti_draw",
+                "selected_choice_label": "化危为吉取得两张回收",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 9,
+          "player_actions": 7,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:cipher_double_retrieval",
+          "selected_choice_label": "暗码迷把两张超级能量回收置顶",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 9,
+    "player_actions": 8,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:coin_active",
+    "selected_choice_label": "前场嘉奖硬币抽暗码迷与老大",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:coin_active",
+      "choice_label": "前场嘉奖硬币抽暗码迷与老大",
+      "depth": 9,
+      "player_actions": 8,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:cipher_double_retrieval",
+            "choice_label": "暗码迷把两张超级能量回收置顶",
+            "depth": 9,
+            "player_actions": 7,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:fezandipiti_draw",
+                  "choice_label": "化危为吉取得两张回收",
+                  "depth": 9,
+                  "player_actions": 6,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:retrieval_one",
+                        "choice_label": "第一次回收弃奇树与宝芬",
+                        "depth": 9,
+                        "player_actions": 5,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:first_gold_rush",
+                              "choice_label": "第一组四色能量完成200伤",
+                              "depth": 9,
+                              "player_actions": 4,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:ogerpon_reply",
+                                    "choice_label": "猛雷鼓规则AI完整回合",
+                                    "depth": 9,
+                                    "player_actions": 3,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:boss_second_target",
+                                          "choice_label": "老大的指令拉出开局备战猛雷鼓",
+                                          "depth": 9,
+                                          "player_actions": 3,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:retrieval_two",
+                                                "choice_label": "第二次回收弃宝芬与进化TM",
+                                                "depth": 9,
+                                                "player_actions": 2,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:second_gold_rush",
+                                                      "choice_label": "第二组四色能量完成200伤",
+                                                      "depth": 9,
+                                                      "player_actions": 1,
+                                                      "reason": "production_witness_reached_goal",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [],
+                                                        "coverage_complete": true,
+                                                        "depth": 9,
+                                                        "player_actions": 0,
+                                                        "reason": "production_witness_reached_goal",
+                                                        "score": 2,
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 0
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 9,
+                                                  "player_actions": 1,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:second_gold_rush",
+                                                  "selected_choice_label": "第二组四色能量完成200伤",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 9,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:retrieval_two",
+                                            "selected_choice_label": "第二次回收弃宝芬与进化TM",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 9,
+                                      "player_actions": 3,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:boss_second_target",
+                                      "selected_choice_label": "老大的指令拉出开局备战猛雷鼓",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 9,
+                                "player_actions": 3,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:ogerpon_reply",
+                                "selected_choice_label": "猛雷鼓规则AI完整回合",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 9,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:first_gold_rush",
+                          "selected_choice_label": "第一组四色能量完成200伤",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 9,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:retrieval_one",
+                    "selected_choice_label": "第一次回收弃奇树与宝芬",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 9,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:fezandipiti_draw",
+              "selected_choice_label": "化危为吉取得两张回收",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 9,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:cipher_double_retrieval",
+        "selected_choice_label": "暗码迷把两张超级能量回收置顶",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "e398662626a425aabf9f8eb9257e0f25687ab18002bdd7e2a5d7ce1048b32457",
+  "scenario_id": "gholdengo_03",
+  "shortest_player_actions": 8,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

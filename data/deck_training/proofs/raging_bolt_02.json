@@ -1,0 +1,575 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 379,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 12,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:dance_into_noctowl",
+      "choice_label": "碧草之舞贴草并抽到猫头夜鹰",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:evolve_noctowl",
+      "choice_label": "进化等待一回合的咕咕",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:jewel_vessel_sada",
+      "choice_label": "寻找宝石同时取得大地容器与奥琳博士",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:vessel_fighting_to_discard",
+      "choice_label": "大地容器弃斗能并取得草能与雷能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:sada_fighting_to_backup",
+      "choice_label": "奥琳把斗能给第二攻击手、草能给必死前场",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_exact_280",
+      "choice_label": "极雷轰弃前场三能与厄诡椪草能，精确280首杀",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:n_reply",
+      "choice_label": "N规则AI用索罗亚20伤击倒前场",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:boss_second_zoroark",
+      "choice_label": "使用奖赏卡老大抓出第二只N的索罗亚克ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:manual_grass_second",
+      "choice_label": "给接棒猛雷鼓手贴草能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:dance_second_turn",
+      "choice_label": "第二回合碧草之舞补足第四张能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:second_exact_280",
+      "choice_label": "极雷轰弃4能精确280完成四奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "f1184be23157796f280b9458b3d0594eecab3b33390cc45a10138aaf514862fa"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:dance_into_noctowl",
+        "choice_label": "碧草之舞贴草并抽到猫头夜鹰",
+        "depth": 11,
+        "player_actions": 10,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:evolve_noctowl",
+              "choice_label": "进化等待一回合的咕咕",
+              "depth": 11,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:jewel_vessel_sada",
+                    "choice_label": "寻找宝石同时取得大地容器与奥琳博士",
+                    "depth": 11,
+                    "player_actions": 8,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:vessel_fighting_to_discard",
+                          "choice_label": "大地容器弃斗能并取得草能与雷能",
+                          "depth": 11,
+                          "player_actions": 7,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:sada_fighting_to_backup",
+                                "choice_label": "奥琳把斗能给第二攻击手、草能给必死前场",
+                                "depth": 11,
+                                "player_actions": 6,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_exact_280",
+                                      "choice_label": "极雷轰弃前场三能与厄诡椪草能，精确280首杀",
+                                      "depth": 11,
+                                      "player_actions": 5,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:n_reply",
+                                            "choice_label": "N规则AI用索罗亚20伤击倒前场",
+                                            "depth": 11,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:boss_second_zoroark",
+                                                  "choice_label": "使用奖赏卡老大抓出第二只N的索罗亚克ex",
+                                                  "depth": 11,
+                                                  "player_actions": 4,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:manual_grass_second",
+                                                        "choice_label": "给接棒猛雷鼓手贴草能",
+                                                        "depth": 11,
+                                                        "player_actions": 3,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:dance_second_turn",
+                                                              "choice_label": "第二回合碧草之舞补足第四张能量",
+                                                              "depth": 11,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:second_exact_280",
+                                                                    "choice_label": "极雷轰弃4能精确280完成四奖",
+                                                                    "depth": 11,
+                                                                    "player_actions": 1,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 11,
+                                                                      "player_actions": 0,
+                                                                      "reason": "production_witness_reached_goal",
+                                                                      "score": 4,
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 0
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 11,
+                                                                "player_actions": 1,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:second_exact_280",
+                                                                "selected_choice_label": "极雷轰弃4能精确280完成四奖",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 11,
+                                                          "player_actions": 2,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:dance_second_turn",
+                                                          "selected_choice_label": "第二回合碧草之舞补足第四张能量",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 11,
+                                                    "player_actions": 3,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:manual_grass_second",
+                                                    "selected_choice_label": "给接棒猛雷鼓手贴草能",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 11,
+                                              "player_actions": 4,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:boss_second_zoroark",
+                                              "selected_choice_label": "使用奖赏卡老大抓出第二只N的索罗亚克ex",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 11,
+                                        "player_actions": 4,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:n_reply",
+                                        "selected_choice_label": "N规则AI用索罗亚20伤击倒前场",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 11,
+                                  "player_actions": 5,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_exact_280",
+                                  "selected_choice_label": "极雷轰弃前场三能与厄诡椪草能，精确280首杀",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 11,
+                            "player_actions": 6,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:sada_fighting_to_backup",
+                            "selected_choice_label": "奥琳把斗能给第二攻击手、草能给必死前场",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 11,
+                      "player_actions": 7,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:vessel_fighting_to_discard",
+                      "selected_choice_label": "大地容器弃斗能并取得草能与雷能",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 11,
+                "player_actions": 8,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:jewel_vessel_sada",
+                "selected_choice_label": "寻找宝石同时取得大地容器与奥琳博士",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 11,
+          "player_actions": 9,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:evolve_noctowl",
+          "selected_choice_label": "进化等待一回合的咕咕",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 11,
+    "player_actions": 10,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:dance_into_noctowl",
+    "selected_choice_label": "碧草之舞贴草并抽到猫头夜鹰",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:dance_into_noctowl",
+      "choice_label": "碧草之舞贴草并抽到猫头夜鹰",
+      "depth": 11,
+      "player_actions": 10,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:evolve_noctowl",
+            "choice_label": "进化等待一回合的咕咕",
+            "depth": 11,
+            "player_actions": 9,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:jewel_vessel_sada",
+                  "choice_label": "寻找宝石同时取得大地容器与奥琳博士",
+                  "depth": 11,
+                  "player_actions": 8,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:vessel_fighting_to_discard",
+                        "choice_label": "大地容器弃斗能并取得草能与雷能",
+                        "depth": 11,
+                        "player_actions": 7,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:sada_fighting_to_backup",
+                              "choice_label": "奥琳把斗能给第二攻击手、草能给必死前场",
+                              "depth": 11,
+                              "player_actions": 6,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_exact_280",
+                                    "choice_label": "极雷轰弃前场三能与厄诡椪草能，精确280首杀",
+                                    "depth": 11,
+                                    "player_actions": 5,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:n_reply",
+                                          "choice_label": "N规则AI用索罗亚20伤击倒前场",
+                                          "depth": 11,
+                                          "player_actions": 4,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:boss_second_zoroark",
+                                                "choice_label": "使用奖赏卡老大抓出第二只N的索罗亚克ex",
+                                                "depth": 11,
+                                                "player_actions": 4,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:manual_grass_second",
+                                                      "choice_label": "给接棒猛雷鼓手贴草能",
+                                                      "depth": 11,
+                                                      "player_actions": 3,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:dance_second_turn",
+                                                            "choice_label": "第二回合碧草之舞补足第四张能量",
+                                                            "depth": 11,
+                                                            "player_actions": 2,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:second_exact_280",
+                                                                  "choice_label": "极雷轰弃4能精确280完成四奖",
+                                                                  "depth": 11,
+                                                                  "player_actions": 1,
+                                                                  "reason": "production_witness_reached_goal",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 11,
+                                                                    "player_actions": 0,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "score": 4,
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 0
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 11,
+                                                              "player_actions": 1,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:second_exact_280",
+                                                              "selected_choice_label": "极雷轰弃4能精确280完成四奖",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 11,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:dance_second_turn",
+                                                        "selected_choice_label": "第二回合碧草之舞补足第四张能量",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 11,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:manual_grass_second",
+                                                  "selected_choice_label": "给接棒猛雷鼓手贴草能",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 11,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:boss_second_zoroark",
+                                            "selected_choice_label": "使用奖赏卡老大抓出第二只N的索罗亚克ex",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 11,
+                                      "player_actions": 4,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:n_reply",
+                                      "selected_choice_label": "N规则AI用索罗亚20伤击倒前场",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 11,
+                                "player_actions": 5,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_exact_280",
+                                "selected_choice_label": "极雷轰弃前场三能与厄诡椪草能，精确280首杀",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 11,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:sada_fighting_to_backup",
+                          "selected_choice_label": "奥琳把斗能给第二攻击手、草能给必死前场",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 11,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:vessel_fighting_to_discard",
+                    "selected_choice_label": "大地容器弃斗能并取得草能与雷能",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 11,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:jewel_vessel_sada",
+              "selected_choice_label": "寻找宝石同时取得大地容器与奥琳博士",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 11,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:evolve_noctowl",
+        "selected_choice_label": "进化等待一回合的咕咕",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "f1184be23157796f280b9458b3d0594eecab3b33390cc45a10138aaf514862fa",
+  "scenario_id": "raging_bolt_02",
+  "shortest_player_actions": 10,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

@@ -4,6 +4,7 @@ const Parser := preload("res://scripts/network/LimitlessCardParser.gd")
 const Resolver := preload("res://scripts/network/LimitlessCardResolver.gd")
 
 const LIMITLESS_IDS := [18497, 18499, 18501, 18502, 18509]
+const DECK_TRAINING_LIMITLESS_IDS := [18506]
 const VIDEO18_LIMITLESS_IDS := [15934, 18359, 17643, 17407, 18543, 33475, 18539, 18880, 17631, 18500]
 const VIDEO18_EXPANSION_IDS := [15734, 19125, 17097, 18105, 18498, 16834, 17047]
 const VIDEO18_REMAINING_IDS := [15927, 17070, 17098, 17280, 17405, 17413, 18334, 18714, 18817, 21836, 25404, 26575]
@@ -30,6 +31,7 @@ const DECK_DISPLAY_NAMES := {
 	18501: "18.0 玛俐的长毛巨魔",
 	18502: "18.0 N的索罗亚克",
 	18509: "18.0 猛雷鼓厄诡椪",
+	18506: "18.0 自爆多龙巴鲁托（卡组训练）",
 	19125: "18.0 火焰鸡多龙巴鲁托",
 	15927: "18.0 回血药免疫盒",
 	17070: "18.0 土龙赛富豪",
@@ -222,7 +224,9 @@ func _run() -> void:
 		selected_ids = VIDEO18_REMAINING_IDS
 	elif args.has("--video18"):
 		selected_ids = VIDEO18_LIMITLESS_IDS
-	_strict_mode = args.has("--strict") or args.has("--video18") or args.has("--video18-expansion") or args.has("--video18-remaining")
+	elif args.has("--deck-training"):
+		selected_ids = DECK_TRAINING_LIMITLESS_IDS
+	_strict_mode = args.has("--strict") or args.has("--video18") or args.has("--video18-expansion") or args.has("--video18-remaining") or args.has("--deck-training")
 
 	for raw_id: Variant in selected_ids:
 		_import_and_bundle_deck(int(raw_id))

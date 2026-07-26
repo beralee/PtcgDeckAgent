@@ -233,6 +233,37 @@ func test_csv10c_004_is_numeric_only_and_005_boosts_only_cynthias_pokemon() -> S
 	])
 
 
+func test_csv10c_005_lazily_registers_glory_cheer_for_cynthias_garchomp_damage_path() -> String:
+	var roserade := _load_card("res://data/bundled_user/cards/CSV10C_005.json")
+	var garchomp := _load_card("res://data/bundled_user/cards/CSV10C_113.json")
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var attacker := _make_slot(garchomp, 0)
+	var source := _make_slot(roserade, 0)
+	state.players[0].active_pokemon = attacker
+	state.players[0].bench = [source]
+	var defender := state.players[1].active_pokemon
+	defender.get_card_data().weakness_energy = ""
+	defender.get_card_data().resistance_energy = ""
+
+	var modifier := processor.get_attacker_modifier(attacker, state, defender)
+	var resolved_damage := DamageCalculator.new().calculate_damage(
+		attacker,
+		defender,
+		garchomp.attacks[0],
+		state,
+		0,
+		modifier
+	)
+
+	return run_checks([
+		assert_not_null(roserade, "CSV10C_005 Roserade should load"),
+		assert_not_null(garchomp, "CSV10C_113 Cynthia's Garchomp ex should load"),
+		assert_eq(modifier, 30, "An in-play Roserade must lazily register Glory Cheer before attack modifiers are queried"),
+		assert_eq(resolved_damage, 130, "Cynthia's Garchomp ex Spiral Dive should resolve as 100 + 30 through DamageCalculator"),
+	])
+
+
 func _load_card(path: String) -> CardData:
 	if not FileAccess.file_exists(path):
 		return null

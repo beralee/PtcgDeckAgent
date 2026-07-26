@@ -1,0 +1,527 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 364,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 11,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:iono_disrupt_draw_four",
+      "choice_label": "奇树抽4并清掉对手6张基本能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:counter_first_gholdengo",
+      "choice_label": "反击捕捉器拉出已有30伤的赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:first_munkidori_thirty",
+      "choice_label": "第一只愿增猿搬30",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:second_munkidori_twenty",
+      "choice_label": "第二只愿增猿克制只搬20",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:first_shadow_bullet",
+      "choice_label": "暗影子弹180首杀并向第二目标铺30",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:disrupted_gholdengo_reply",
+      "choice_label": "被奇树清空能量手牌的赛富豪完成空转回合",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:boss_second_gholdengo",
+      "choice_label": "老大抓出已铺30的第二只赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:first_munkidori_second_turn",
+      "choice_label": "第二回合第一只愿增猿再搬30",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:second_munkidori_second_turn",
+      "choice_label": "第二回合第二只愿增猿搬完最后20",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:second_shadow_bullet",
+      "choice_label": "第二次暗影子弹180完成最后四奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 9,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "f65051c2fbb392b847a86aae85777829d8005212ed9bc6d72d306e5770083205"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:iono_disrupt_draw_four",
+        "choice_label": "奇树抽4并清掉对手6张基本能量",
+        "depth": 10,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:counter_first_gholdengo",
+              "choice_label": "反击捕捉器拉出已有30伤的赛富豪",
+              "depth": 10,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:first_munkidori_thirty",
+                    "choice_label": "第一只愿增猿搬30",
+                    "depth": 10,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:second_munkidori_twenty",
+                          "choice_label": "第二只愿增猿克制只搬20",
+                          "depth": 10,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:first_shadow_bullet",
+                                "choice_label": "暗影子弹180首杀并向第二目标铺30",
+                                "depth": 10,
+                                "player_actions": 5,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:disrupted_gholdengo_reply",
+                                      "choice_label": "被奇树清空能量手牌的赛富豪完成空转回合",
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:boss_second_gholdengo",
+                                            "choice_label": "老大抓出已铺30的第二只赛富豪",
+                                            "depth": 10,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:first_munkidori_second_turn",
+                                                  "choice_label": "第二回合第一只愿增猿再搬30",
+                                                  "depth": 10,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:second_munkidori_second_turn",
+                                                        "choice_label": "第二回合第二只愿增猿搬完最后20",
+                                                        "depth": 10,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:second_shadow_bullet",
+                                                              "choice_label": "第二次暗影子弹180完成最后四奖",
+                                                              "depth": 10,
+                                                              "player_actions": 1,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [],
+                                                                "coverage_complete": true,
+                                                                "depth": 10,
+                                                                "player_actions": 0,
+                                                                "reason": "production_witness_reached_goal",
+                                                                "score": 4,
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 0
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 10,
+                                                          "player_actions": 1,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:second_shadow_bullet",
+                                                          "selected_choice_label": "第二次暗影子弹180完成最后四奖",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 10,
+                                                    "player_actions": 2,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:second_munkidori_second_turn",
+                                                    "selected_choice_label": "第二回合第二只愿增猿搬完最后20",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 10,
+                                              "player_actions": 3,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:first_munkidori_second_turn",
+                                              "selected_choice_label": "第二回合第一只愿增猿再搬30",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 10,
+                                        "player_actions": 4,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:boss_second_gholdengo",
+                                        "selected_choice_label": "老大抓出已铺30的第二只赛富豪",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 10,
+                                  "player_actions": 4,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:disrupted_gholdengo_reply",
+                                  "selected_choice_label": "被奇树清空能量手牌的赛富豪完成空转回合",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 10,
+                            "player_actions": 5,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:first_shadow_bullet",
+                            "selected_choice_label": "暗影子弹180首杀并向第二目标铺30",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 10,
+                      "player_actions": 6,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:second_munkidori_twenty",
+                      "selected_choice_label": "第二只愿增猿克制只搬20",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 10,
+                "player_actions": 7,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:first_munkidori_thirty",
+                "selected_choice_label": "第一只愿增猿搬30",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 10,
+          "player_actions": 8,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:counter_first_gholdengo",
+          "selected_choice_label": "反击捕捉器拉出已有30伤的赛富豪",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 10,
+    "player_actions": 9,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:iono_disrupt_draw_four",
+    "selected_choice_label": "奇树抽4并清掉对手6张基本能量",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:iono_disrupt_draw_four",
+      "choice_label": "奇树抽4并清掉对手6张基本能量",
+      "depth": 10,
+      "player_actions": 9,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:counter_first_gholdengo",
+            "choice_label": "反击捕捉器拉出已有30伤的赛富豪",
+            "depth": 10,
+            "player_actions": 8,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:first_munkidori_thirty",
+                  "choice_label": "第一只愿增猿搬30",
+                  "depth": 10,
+                  "player_actions": 7,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:second_munkidori_twenty",
+                        "choice_label": "第二只愿增猿克制只搬20",
+                        "depth": 10,
+                        "player_actions": 6,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:first_shadow_bullet",
+                              "choice_label": "暗影子弹180首杀并向第二目标铺30",
+                              "depth": 10,
+                              "player_actions": 5,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:disrupted_gholdengo_reply",
+                                    "choice_label": "被奇树清空能量手牌的赛富豪完成空转回合",
+                                    "depth": 10,
+                                    "player_actions": 4,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:boss_second_gholdengo",
+                                          "choice_label": "老大抓出已铺30的第二只赛富豪",
+                                          "depth": 10,
+                                          "player_actions": 4,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:first_munkidori_second_turn",
+                                                "choice_label": "第二回合第一只愿增猿再搬30",
+                                                "depth": 10,
+                                                "player_actions": 3,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:second_munkidori_second_turn",
+                                                      "choice_label": "第二回合第二只愿增猿搬完最后20",
+                                                      "depth": 10,
+                                                      "player_actions": 2,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:second_shadow_bullet",
+                                                            "choice_label": "第二次暗影子弹180完成最后四奖",
+                                                            "depth": 10,
+                                                            "player_actions": 1,
+                                                            "reason": "production_witness_reached_goal",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [],
+                                                              "coverage_complete": true,
+                                                              "depth": 10,
+                                                              "player_actions": 0,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "score": 4,
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 0
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 10,
+                                                        "player_actions": 1,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:second_shadow_bullet",
+                                                        "selected_choice_label": "第二次暗影子弹180完成最后四奖",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 10,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:second_munkidori_second_turn",
+                                                  "selected_choice_label": "第二回合第二只愿增猿搬完最后20",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:first_munkidori_second_turn",
+                                            "selected_choice_label": "第二回合第一只愿增猿再搬30",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:boss_second_gholdengo",
+                                      "selected_choice_label": "老大抓出已铺30的第二只赛富豪",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 10,
+                                "player_actions": 4,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:disrupted_gholdengo_reply",
+                                "selected_choice_label": "被奇树清空能量手牌的赛富豪完成空转回合",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 10,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:first_shadow_bullet",
+                          "selected_choice_label": "暗影子弹180首杀并向第二目标铺30",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 10,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:second_munkidori_twenty",
+                    "selected_choice_label": "第二只愿增猿克制只搬20",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 10,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:first_munkidori_thirty",
+              "selected_choice_label": "第一只愿增猿搬30",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 10,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:counter_first_gholdengo",
+        "selected_choice_label": "反击捕捉器拉出已有30伤的赛富豪",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "f65051c2fbb392b847a86aae85777829d8005212ed9bc6d72d306e5770083205",
+  "scenario_id": "marnie_03",
+  "shortest_player_actions": 9,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

@@ -1,0 +1,141 @@
+{
+	"format_version": 1,
+	"minimum_negative_probes": 2,
+	"minimum_player_actions": 5,
+	"minimum_tactic_patterns": 3,
+	"targets": [
+		{
+			"deck_key": "dragapult",
+			"deck_id": 800018506,
+			"strategy_id": "dragapult_dusknoir",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "针对牌与伤害指示物组合的实际应用", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "spread_prize_map", "name": "幻影潜袭铺伤与奖赏图"},
+				{"id": "self_ko_prize_window", "name": "黑夜魔灵自爆与奖差窗口"},
+				{"id": "munkidori_breakpoint", "name": "愿增猿伤害阈值校正"},
+				{"id": "attacker_handoff", "name": "两只多龙的跨回合交接"},
+				{"id": "gust_position_tracking", "name": "捕捉换位后的场位追踪"},
+				{"id": "recon_topdeck_order", "name": "侦察指令的顶牌与沉底顺序"},
+				{"id": "hawlucha_spread_seed", "name": "摔角鹰人预埋10伤的六豆奖赏图"},
+				{"id": "budew_item_lock_offer", "name": "含羞苞封锁物品后的主动送奖"},
+				{"id": "fezandipiti_comeback", "name": "化危为吉保留支援者窗口"},
+				{"id": "bloodmoon_closeout", "name": "月月熊降费后的240终结"}
+			]
+		},
+		{
+			"deck_key": "gardevoir",
+			"deck_id": 800018498,
+			"strategy_id": "v18_800018498_academy_gardevoir",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "弱点改写、HP扩展与搬伤组合", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "embrace_damage_budget", "name": "精神拥抱的伤害预算"},
+				{"id": "retreat_energy_reuse", "name": "撤退能量与攻击能量复用"},
+				{"id": "munkidori_two_thresholds", "name": "愿增猿同时修正两个击倒档位"},
+				{"id": "bench_snipe_route", "name": "备战狙击与前场奖赏取舍"},
+				{"id": "psychic_recovery_closeout", "name": "超能量回收与终局防牌库耗尽"},
+				{"id": "vessel_discard_ownership", "name": "大地容器与超能量弃牌归属"},
+				{"id": "scream_tail_charm_snipe", "name": "勇气护符放大吼叫尾狙击"},
+				{"id": "clefairy_dragon_weakness", "name": "皮皮ex改写龙弱点后的击倒线"},
+				{"id": "rare_candy_branch", "name": "糖果爆发与奇鲁莉安续航分支"},
+				{"id": "comeback_draw_order", "name": "吉雉鸡、梦幻与支援者的抽牌顺序"}
+			]
+		},
+		{
+			"deck_key": "gholdengo",
+			"deck_id": 800016834,
+			"strategy_id": "v18_800016834_pure_gholdengo",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "单卡检索科技与淘金潮组合", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "energy_exact_count", "name": "淘金潮的精确能量计数"},
+				{"id": "retrieval_discard_cost", "name": "高级能量回收的弃牌成本"},
+				{"id": "munkidori_damage_seed", "name": "撒豆与愿增猿的伤害种子"},
+				{"id": "two_turn_four_prize", "name": "两回合四奖资源拆分"},
+				{"id": "second_attacker_rebuild", "name": "首只赛富豪倒下后的重建"},
+				{"id": "coin_arven_retrieval", "name": "嘉奖硬币抽派帕再取得回收"},
+				{"id": "cipher_coin_stack", "name": "暗码迷置顶与前场抽2"},
+				{"id": "energy_search_pro_split", "name": "多属性能量PRO跨回合拆分"},
+				{"id": "jamming_tower_breakpoint", "name": "阻碍之塔关闭HP道具后的省能"},
+				{"id": "zero_deck_rod_order", "name": "空牌库钓竿回填与抽牌次序"}
+			]
+		},
+		{
+			"deck_key": "raging_bolt",
+			"deck_id": 800018509,
+			"strategy_id": "v18_800018509_raging_bolt_ogerpon",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "属性针对牌与太晶检索组合", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "discard_energy_math", "name": "雷鸣蹴击弃能量斩杀计算"},
+				{"id": "ogerpon_acceleration", "name": "厄诡椪碧草面具的附能顺序"},
+				{"id": "sada_resource_order", "name": "奥琳博士与手贴资源顺序"},
+				{"id": "gust_energy_preservation", "name": "捕捉目标与能量保留"},
+				{"id": "two_attacker_energy_split", "name": "双攻击手跨回合能量拆分"},
+				{"id": "noctowl_tera_search", "name": "太晶在场时猫头夜鹰找两训练家"},
+				{"id": "crispin_two_type_bridge", "name": "赤松两属性能量的入手与附着分配"},
+				{"id": "slither_wing_pikachu", "name": "爬地翅用弱点与灼伤破解皮卡丘ex"},
+				{"id": "latias_zero_retreat", "name": "拉帝亚斯零撤退保留场上燃料"},
+				{"id": "area_zero_collapse", "name": "零之大空洞离场时的备战区裁剪"}
+			]
+		},
+		{
+			"deck_key": "marnie",
+			"deck_id": 800018501,
+			"strategy_id": "v18_800018501_marnies_grimmsnarl",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "铺伤保护、退化与检查伤害组合", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "punk_up_assignment", "name": "庞克泵感的恶能量分配"},
+				{"id": "non_marnie_energy_owner", "name": "愿增猿等非玛俐宝可梦的手贴归属"},
+				{"id": "damage_counter_combo", "name": "愿增猿与暗影子弹的伤害闭合"},
+				{"id": "evolution_trigger_timing", "name": "进化触发特性的正确时序"},
+				{"id": "second_grimmsnarl_route", "name": "第二只长毛巨魔的跨回合准备"},
+				{"id": "froslass_check_clock", "name": "雪妖女宝可梦检查伤害时钟"},
+				{"id": "shaymin_spread_semantics", "name": "谢米区分招式伤害与放置指示物"},
+				{"id": "devolution_damage_table", "name": "铺伤后退化的下层HP表"},
+				{"id": "spikemuth_search_order", "name": "尖钉镇道馆检索与洗牌顺序"},
+				{"id": "secret_box_cost_map", "name": "秘密箱三弃牌与四类检索成本"}
+			]
+		},
+		{
+			"deck_key": "n_zoroark",
+			"deck_id": 800018502,
+			"strategy_id": "v18_800018502_ns_zoroark",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "备战招式工具箱与奖差增伤组合", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "bench_attack_selection", "name": "N的索罗亚克调用备战招式"},
+				{"id": "night_joker_toolbox", "name": "暗夜小丑工具箱选择"},
+				{"id": "dark_energy_owner", "name": "恶能量在索罗亚克与愿增猿间分配"},
+				{"id": "bench_identity_preservation", "name": "同名与异画实例的场位识别"},
+				{"id": "zoroark_rebuild", "name": "首只索罗亚克倒下后的重建"},
+				{"id": "cipher_trade_stack", "name": "暗码迷置顶后交易抽2"},
+				{"id": "reshiram_damage_copy", "name": "复制莱希拉姆伤害倍率"},
+				{"id": "darmanitan_discard_count", "name": "读取对手弃牌区基本能量倍率"},
+				{"id": "pp_castle_handoff", "name": "PP提升剂与N的城堡零撤退交接"},
+				{"id": "karate_defiance_stack", "name": "空手道王与不服输头带叠加"}
+			]
+		},
+		{
+			"deck_key": "charizard_dragapult",
+			"deck_id": 800025404,
+			"strategy_id": "v17_bomb_charizard",
+			"candidate_count": 10,
+			"tactic_dimension": {"id": "tech_combo_application", "name": "特性封锁与送奖反击组合", "candidate_slots": [5, 10]},
+			"curriculum_axes": [
+				{"id": "concede_one_prize", "name": "主动送一奖制造反击窗口"},
+				{"id": "briar_three_prize", "name": "百蕾雅三奖终结"},
+				{"id": "charizard_damage_scaling", "name": "恶喷随对手拿奖增加伤害"},
+				{"id": "counter_catcher_closeout", "name": "反击捕捉器指定三奖目标"},
+				{"id": "dusknoir_damage_choice", "name": "彷徨夜灵50与黑夜魔灵130的自爆选择"},
+				{"id": "quick_search_order", "name": "音速搜索与冻结顶牌的洗牌顺序"},
+				{"id": "infernal_reign_split", "name": "烈炎支配三能量的双攻击手分配"},
+				{"id": "klefki_lock_unlock", "name": "钥圈儿基础特性封锁与解除"},
+				{"id": "tatsugiri_supporter_scan", "name": "米立龙顶6支援者终结选择"},
+				{"id": "rod_jet_rebuild", "name": "厉害钓竿与喷射能量重建换位"}
+			]
+		}
+	]
+}

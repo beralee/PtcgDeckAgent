@@ -26,6 +26,12 @@ const ALLOWED_EXTENSIONS := {
 	"cfg": true,
 }
 
+const IGNORED_DIRECTORY_NAMES := {
+	"node_modules": true,
+	"playwright-report": true,
+	"test-results": true,
+}
+
 const KNOWN_MOJIBAKE_CODEPOINTS := {
 	0x95B8: true,
 	0x940E: true,
@@ -77,6 +83,14 @@ func test_no_suspicious_source_characters() -> String:
 	return ""
 
 
+func test_text_diagram_box_drawing_codepoints_are_allowed() -> String:
+	return run_checks([
+		assert_true(_is_allowed_codepoint(0x2500), "Horizontal box-drawing lines should be valid in architecture documents"),
+		assert_true(_is_allowed_codepoint(0x2514), "Tree elbows should be valid in architecture documents"),
+		assert_true(_is_allowed_codepoint(0x257F), "The complete box-drawing block should be accepted"),
+	])
+
+
 func _collect_targets(path: String, out: Array[String]) -> void:
 	if FileAccess.file_exists(path):
 		if _is_allowed_target(path):
@@ -100,7 +114,8 @@ func _collect_targets(path: String, out: Array[String]) -> void:
 
 		var child_path := path.path_join(name)
 		if dir.current_is_dir():
-			_collect_targets(child_path, out)
+			if not IGNORED_DIRECTORY_NAMES.has(name):
+				_collect_targets(child_path, out)
 		elif _is_allowed_target(child_path):
 			out.append(child_path)
 	dir.list_dir_end()
@@ -201,6 +216,8 @@ func _is_allowed_codepoint(codepoint: int) -> bool:
 	if codepoint >= 0x2000 and codepoint <= 0x206F:
 		return true
 	if codepoint >= 0x2190 and codepoint <= 0x22FF:
+		return true
+	if codepoint >= 0x2500 and codepoint <= 0x257F:
 		return true
 	if codepoint >= 0x25A0 and codepoint <= 0x25FF:
 		return true

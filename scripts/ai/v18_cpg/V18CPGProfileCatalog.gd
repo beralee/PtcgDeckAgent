@@ -5,6 +5,14 @@ const ContractsScript = preload("res://scripts/ai/v18_cpg/schema/V18CPGContracts
 const RuleProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
 
 const PILOT_DECK_IDS: Array[int] = [800018509, 800017643, 800015934]
+const BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID := {
+	800015934: "roi5_complete_noninferior",
+	800018497: "roi10_complete_strictly_better",
+	800018499: "roi5_complete_noninferior",
+	800018501: "roi5_complete_strictly_better",
+	800018502: "roi5_complete_strictly_better",
+	800018509: "roi5_complete_noninferior",
+}
 const ALL_DECK_IDS: Array[int] = [
 	18000230, 18000625, 800015734, 800015934, 800016834, 800017047,
 	800017097, 800017407, 800017631, 800017643, 800018105, 800018359,
@@ -48,6 +56,7 @@ const PROFILE_OVERRIDE_KEYS: Array[String] = [
 	"delta_response_token_budget",
 	"turn_visible_wait_budget_ms",
 	"cold_request_estimate_ms",
+	"turn_model_judgment_mode",
 	"max_policy_nodes",
 	"semantic_role_overrides",
 	"public_flow",
@@ -58,6 +67,7 @@ const PROFILE_OVERRIDE_KEYS: Array[String] = [
 	"safety",
 	"module_parameters",
 	"local_action_certificate_parameters",
+	"post_attack_continuity",
 ]
 
 const _PILOTS := {
@@ -130,7 +140,9 @@ static func get_profile_for_deck(deck_id: int, include_override: bool = true) ->
 	profile["base_strategy_id"] = RuleProfileCatalogScript.strategy_id_for_deck(deck_id)
 	profile["runtime_kind"] = ContractsScript.RUNTIME_KIND
 	profile["requires_model"] = true
-	profile["experimental"] = true
+	profile["battle_setup_available"] = BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.has(deck_id)
+	profile["promotion_status"] = str(BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.get(deck_id, "experimental"))
+	profile["experimental"] = not bool(profile["battle_setup_available"])
 	profile["profile_version"] = 1
 	profile["semantic_version"] = 1
 	profile["schema_version"] = ContractsScript.SCHEMA_VERSION
@@ -239,6 +251,14 @@ static func list_profiles() -> Array[Dictionary]:
 	return result
 
 
+static func released_deck_ids() -> Array[int]:
+	var result: Array[int] = []
+	for deck_id: int in BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.keys():
+		result.append(deck_id)
+	result.sort()
+	return result
+
+
 static func list_variant_metadata(feature_enabled: bool = false) -> Array[Dictionary]:
 	if not feature_enabled:
 		return []
@@ -249,7 +269,9 @@ static func list_variant_metadata(feature_enabled: bool = false) -> Array[Dictio
 			"base_strategy_id": str(profile.get("base_strategy_id", "")),
 			"runtime_kind": ContractsScript.RUNTIME_KIND,
 			"requires_model": true,
-			"experimental": true,
+			"experimental": bool(profile.get("experimental", true)),
+			"battle_setup_available": bool(profile.get("battle_setup_available", false)),
+			"promotion_status": str(profile.get("promotion_status", "experimental")),
 			"label": "18.0 条件策略大模型版 %s" % str(profile.get("display_name", "")).trim_prefix("18.0 "),
 		})
 	return result

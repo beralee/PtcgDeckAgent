@@ -11,9 +11,15 @@ func _initialize() -> void:
 	var profile := ProfileCatalogScript.get_profile_for_deck(800018497)
 	_check(int(profile.get("profile_version", 0)) >= 3, "round02 profile must be active")
 	_check(int(profile.get("turn_visible_wait_budget_ms", 0)) == 6500, "round02 must not increase visible wait")
+	_check(
+		str(profile.get("turn_model_judgment_mode", "")) == "required_first_main_window",
+		"the Gardevoir variant must require one DeepSeek judgment at the first main window"
+	)
 	_check(int(profile.get("initial_response_token_budget", 0)) == 400, "round02 must keep the compact initial budget")
 	_check(int(profile.get("delta_response_token_budget", 0)) == 170, "round02 must keep the compact delta budget")
 	_test_exact_profile_parameters(profile)
+	_test_clefairy_dragon_weakness_closeout(profile)
+	_test_active_gardevoir_embrace_completion(profile)
 	_test_scream_tail_charm_closeout(profile)
 	_test_munkidori_dark_closeout(profile)
 	_test_academy_only_certificates_are_absent(profile)
@@ -38,6 +44,211 @@ func _test_exact_profile_parameters(profile: Dictionary) -> void:
 	_check(str(counter.get("counter_mover_uid", "")) == "CSV8C_094", "Munkidori must be the exact counter mover")
 	_check(str(counter.get("activation_symbol", "")) == "D", "Munkidori must reserve Darkness activation")
 	_check(int(counter.get("move_points_per_use", 0)) == 30, "Munkidori must expose the exact 30-point move")
+	var active_ko: Dictionary = embrace.get("active_gardevoir_public_ko", {})
+	_check(
+		active_ko.get("attack_cost", []) == ["P", "P", "C"] \
+			and int(active_ko.get("attack_damage", 0)) == 190,
+		"active Gardevoir must expose its exact PPC / 190 closeout contract"
+	)
+
+
+func _test_clefairy_dragon_weakness_closeout(profile: Dictionary) -> void:
+	var rule_attack := _candidate(
+		"rule:attack",
+		"route:attack_pressure",
+		"attack",
+		3000.0,
+		{"kind": "attack"}
+	)
+	rule_attack["engine_rule_floor_exact"] = true
+	var frontier: Array[Dictionary] = [
+		rule_attack,
+		_candidate("bench:clefairy", "route:develop", "play_basic_to_bench", -4000.0, {
+			"kind": "play_basic_to_bench",
+			"card": {"uid": "CSV10C_082", "type": "Pokemon"},
+		}),
+	]
+	var observation := {
+		"own": {
+			"prizes_remaining": 4,
+			"deck_count": 20,
+			"hand": [{"uid": "CSV10C_082", "type": "Pokemon"}],
+			"discard": [],
+			"active": _slot(
+				"slot:active",
+				"CSV2C_055",
+				270,
+				40,
+				2,
+				["P", "P", "P"]
+			),
+			"bench": [],
+		},
+		"opponent": {
+			"prizes_remaining": 4,
+			"deck_count": 20,
+			"active": _slot("slot:opponent", "CSV7C_154", 240, 0, 2),
+			"bench": [],
+		},
+	}
+	var facts := {
+		"attack": {"ready": true, "ko_available": false, "max_damage": 190},
+		"prize": {"win_now": false},
+		"resources": {"prizes_remaining": 4, "deck_low": false},
+		"turn": {"energy_available": false, "supporter_available": true},
+	}
+	var annotated := CapabilityRegistryScript.new().annotate_frontier(
+		frontier,
+		observation,
+		facts,
+		profile,
+		{}
+	)
+	var certificate: Dictionary = annotated[1].get(
+		"module_annotations",
+		{}
+	).get("gardevoir_embrace", {}).get("dragon_weakness_field", {})
+	_check(
+		bool(certificate.get("advances_immediate_dragon_ko", false)),
+		"Lillie's Clefairy ex must expose the public same-turn Raging Bolt KO breakpoint"
+	)
+	_check(
+		int(certificate.get("base_damage", 0)) == 190 \
+			and int(certificate.get("weakness_damage", 0)) == 380,
+		"Gardevoir's 190 damage must become 380 through the public Dragon weakness field"
+	)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(profile)
+	var upgrade: Dictionary = strategy._find_module_verified_upgrade(annotated, facts)
+	_check(
+		str(upgrade.get("candidate_id", "")) == "bench:clefairy",
+		"the exact Clefairy field KO must survive the Rule attack score gap"
+	)
+	var non_dragon_observation: Dictionary = observation.duplicate(true)
+	non_dragon_observation["opponent"]["active"]["pokemon"]["uid"] = "CSV8C_028"
+	var non_dragon := CapabilityRegistryScript.new().annotate_frontier(
+		frontier,
+		non_dragon_observation,
+		facts,
+		profile,
+		{}
+	)
+	var non_dragon_certificate: Dictionary = non_dragon[1].get(
+		"module_annotations",
+		{}
+	).get("gardevoir_embrace", {}).get("dragon_weakness_field", {})
+	_check(
+		not bool(non_dragon_certificate.get("advances_immediate_dragon_ko", false)),
+		"the Clefairy certificate must fail closed against non-Dragon Ogerpon"
+	)
+	var already_ko_observation: Dictionary = observation.duplicate(true)
+	already_ko_observation["opponent"]["active"]["remaining_hp"] = 180
+	var already_ko := CapabilityRegistryScript.new().annotate_frontier(
+		frontier,
+		already_ko_observation,
+		facts,
+		profile,
+		{}
+	)
+	var already_ko_certificate: Dictionary = already_ko[1].get(
+		"module_annotations",
+		{}
+	).get("gardevoir_embrace", {}).get("dragon_weakness_field", {})
+	_check(
+		not bool(already_ko_certificate.get("advances_immediate_dragon_ko", false)),
+		"the Clefairy certificate must not spend Bench space when 190 already KOs"
+	)
+
+
+func _test_active_gardevoir_embrace_completion(profile: Dictionary) -> void:
+	var rule_research := _candidate(
+		"rule:research",
+		"route:information",
+		"play_trainer",
+		3000.0,
+		{"kind": "play_trainer", "card": {"uid": "CSV1C_121", "type": "Supporter"}}
+	)
+	rule_research["engine_rule_floor_exact"] = true
+	var frontier: Array[Dictionary] = [
+		rule_research,
+		_candidate("embrace:active", "route:information", "use_ability", -4000.0, {
+			"kind": "use_ability",
+			"source": "slot:active",
+			"source_card": {"uid": "CSV2C_055", "type": "Pokemon"},
+			"ability_index": 0,
+		}),
+	]
+	var discard: Array[Dictionary] = []
+	for index: int in 3:
+		discard.append({
+			"uid": "psychic:%d" % index,
+			"type": "Basic Energy",
+			"energy_type": "P",
+		})
+	var observation := {
+		"turn": {"deterministic_attack_window_open": true},
+		"own": {
+			"prizes_remaining": 6,
+			"deck_count": 20,
+			"hand": [{"uid": "CSV1C_121", "type": "Supporter"}],
+			"discard": discard,
+			"active": _slot("slot:active", "CSV2C_055", 310, 0, 2),
+			"bench": [],
+		},
+		"opponent": {
+			"prizes_remaining": 3,
+			"deck_count": 20,
+			"active": _slot("slot:opponent", "CSV8C_028", 180, 30, 2),
+			"bench": [],
+		},
+	}
+	var facts := {
+		"attack": {"ready": false, "ko_available": false, "max_damage": 0},
+		"prize": {"win_now": false},
+		"resources": {"prizes_remaining": 6, "deck_low": false},
+		"turn": {"energy_available": true, "supporter_available": true},
+	}
+	var annotated := CapabilityRegistryScript.new().annotate_frontier(
+		frontier,
+		observation,
+		facts,
+		profile,
+		{}
+	)
+	var certificate: Dictionary = annotated[1].get(
+		"module_annotations",
+		{}
+	).get("gardevoir_embrace", {}).get("active_gardevoir_completion", {})
+	_check(
+		int(certificate.get("assignments_needed", 0)) == 3 \
+			and bool(certificate.get("advances_active_gardevoir_ko_completion", false)),
+		"three public Psychic Embrace assignments must complete the active 190 KO"
+	)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(profile)
+	var upgrade: Dictionary = strategy._find_module_verified_upgrade(annotated, facts)
+	_check(
+		str(upgrade.get("candidate_id", "")) == "embrace:active",
+		"the active Gardevoir KO completion must execute before destructive draw"
+	)
+	var unsafe_observation: Dictionary = observation.duplicate(true)
+	unsafe_observation["own"]["active"]["remaining_hp"] = 50
+	unsafe_observation["own"]["active"]["damage"] = 260
+	var unsafe := CapabilityRegistryScript.new().annotate_frontier(
+		frontier,
+		unsafe_observation,
+		facts,
+		profile,
+		{}
+	)
+	var unsafe_certificate: Dictionary = unsafe[1].get(
+		"module_annotations",
+		{}
+	).get("gardevoir_embrace", {}).get("active_gardevoir_completion", {})
+	_check(
+		not bool(unsafe_certificate.get("advances_active_gardevoir_ko_completion", false)),
+		"Psychic Embrace completion must fail closed when its damage would KO Gardevoir"
+	)
 
 
 func _test_scream_tail_charm_closeout(profile: Dictionary) -> void:

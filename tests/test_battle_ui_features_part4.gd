@@ -478,6 +478,14 @@ func test_battle_scene_vs_ai_roaring_moon_keeps_human_send_out_after_ai_replacem
 	var pending_after_ai_send_out: String = str(battle_scene.get("_pending_choice"))
 	var prompt_player_after_ai_send_out: int = int((battle_scene.get("_dialog_data") as Dictionary).get("player", -1))
 	var field_mode_after_ai_send_out: String = str(battle_scene.get("_field_interaction_mode"))
+	var roaring_moon_diagnostics := "ready=%s blocking=%s draw=%s scheduled=%s state=%s effect=%s" % [
+		str(battle_scene.call("_is_ai_turn_ready")),
+		str(battle_scene.call("_is_ui_blocking_ai")),
+		str(battle_scene.get("_draw_reveal_active")),
+		str(battle_scene.get("_ai_step_scheduled")),
+		str(battle_scene.call("_state_snapshot")),
+		str(battle_scene.call("_effect_state_snapshot")),
+	]
 
 	var result := run_checks([
 		assert_not_null(roaring_cd, "CSV6C_096 should exist in the card database"),
@@ -485,7 +493,7 @@ func test_battle_scene_vs_ai_roaring_moon_keeps_human_send_out_after_ai_replacem
 		assert_eq(initial_prize_player, 0, "The human should first take prizes for the Defending Pokemon"),
 		assert_eq(pending_before_ai_prizes, "take_prize", "After human prizes, the AI prize prompt should remain"),
 		assert_eq(prize_player_before_ai_prizes, 1, "The AI should then take prizes for Roaring Moon ex"),
-		assert_eq(pending_after_ai_prizes, "send_out", "After AI takes Roaring Moon prizes, AI send-out should remain"),
+		assert_eq(pending_after_ai_prizes, "send_out", "After AI takes Roaring Moon prizes, AI send-out should remain | %s" % roaring_moon_diagnostics),
 		assert_eq(pending_before_ai_send_out, "send_out", "After human prizes, AI should be prompted to replace its Active first"),
 		assert_eq(prompt_player_before_ai_send_out, 1, "The first send-out prompt should belong to the AI"),
 		assert_eq(ai_active_after_send_out, ai_replacement, "AI should send out its replacement"),
@@ -1005,6 +1013,73 @@ func test_match_end_return_preserves_tournament_standings_route_when_active() ->
 		assert_true(tournament_still_exists, "Tournament match-end return should not clear the tournament object"),
 		assert_false(active_after_return, "Tournament match-end return should finalize the active battle"),
 		assert_false(summary.is_empty(), "Tournament match-end return should record the round summary before standings"),
+	])
+
+
+func test_match_end_return_activates_on_button_down_and_latches_navigation() -> String:
+	var previous_suppressed := bool(GameManager.get("suppress_scene_navigation_for_tests"))
+	GameManager.set_scene_navigation_suppressed_for_tests(true)
+	GameManager.consume_last_requested_scene_path()
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.call("_show_match_end_dialog", 0, "knockout")
+	var return_button := battle_scene.get("_match_end_return_button") as Button
+	if return_button != null:
+		return_button.button_down.emit()
+	var requested_from_button_down := GameManager.consume_last_requested_scene_path()
+	if return_button != null:
+		return_button.pressed.emit()
+	var requested_from_release_echo := GameManager.consume_last_requested_scene_path()
+	var navigation_latched: bool = battle_scene.get("_match_end_return_navigation_started")
+	var button_disabled := return_button != null and return_button.disabled
+	battle_scene.queue_free()
+	GameManager.set_scene_navigation_suppressed_for_tests(previous_suppressed)
+
+	return run_checks([
+		assert_eq(requested_from_button_down, GameManager.SCENE_BATTLE_SETUP, "Match-end return must not depend on Android or desktop pointer release delivery"),
+		assert_eq(requested_from_release_echo, "", "The release echo after button-down navigation must not enqueue a second scene change"),
+		assert_true(navigation_latched, "Match-end navigation should latch after its first activation"),
+		assert_true(button_disabled, "The terminal return action should disable immediately after activation"),
+	])
+
+
+func test_battle_dialog_footer_actions_commit_once_on_release() -> String:
+	var confirm_scene = _make_battle_scene_stub()
+	confirm_scene.set("_pending_choice", "release_commit_confirm")
+	confirm_scene.call("_show_dialog", "Confirm action", ["Choice"], {
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+	})
+	var confirm_button := confirm_scene.get("_dialog_confirm") as Button
+	if confirm_button != null:
+		confirm_scene.call("_on_dialog_confirm_button_down")
+	var confirm_open_after_press := (confirm_scene.get("_dialog_overlay") as Panel).visible
+	confirm_scene.call("_on_dialog_confirm")
+	var confirm_closed := not (confirm_scene.get("_dialog_overlay") as Panel).visible
+	var confirm_choice_cleared := str(confirm_scene.get("_pending_choice")) == ""
+
+	var cancel_scene = _make_battle_scene_stub()
+	cancel_scene.set("_pending_choice", "release_commit_cancel")
+	cancel_scene.call("_show_dialog", "Cancel action", ["Choice"], {
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": true,
+	})
+	var cancel_button := cancel_scene.get("_dialog_cancel") as Button
+	if cancel_button != null:
+		cancel_scene.call("_on_dialog_cancel_button_down")
+	var cancel_open_after_press := (cancel_scene.get("_dialog_overlay") as Panel).visible
+	cancel_scene.call("_on_dialog_cancel")
+	var cancel_closed := not (cancel_scene.get("_dialog_overlay") as Panel).visible
+	var cancel_choice_cleared := str(cancel_scene.get("_pending_choice")) == ""
+	confirm_scene.queue_free()
+	cancel_scene.queue_free()
+
+	return run_checks([
+		assert_true(confirm_open_after_press, "Dialog confirm must keep the overlay present throughout the press"),
+		assert_true(cancel_open_after_press, "Dialog cancel must keep the overlay present throughout the press"),
+		assert_true(confirm_closed and confirm_choice_cleared, "Dialog confirm must commit exactly when the standard Button emits pressed on release"),
+		assert_true(cancel_closed and cancel_choice_cleared, "Dialog cancel must close exactly when the standard Button emits pressed on release"),
 	])
 
 
@@ -3148,6 +3223,348 @@ func test_action_hud_cancel_allows_immediate_slot_reopen() -> String:
 
 	battle_scene.free()
 	return result
+
+
+func test_android_action_hud_cancel_owns_pointer_tail_and_next_bench_tap_opens_hud() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	battle_scene.call("_configure_battle_pointer_input_for_tests", true)
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+	var cancel_position := Vector2(520, 720)
+
+	# Godot emits BaseButton.button_down from its internal _gui_input before the
+	# external gui_input signal can record an origin. The scene-level observer must
+	# already own the physical Android pointer when button_down closes the HUD.
+	var cancel_touch_press := InputEventScreenTouch.new()
+	cancel_touch_press.pressed = true
+	cancel_touch_press.index = 0
+	cancel_touch_press.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", cancel_touch_press)
+	battle_scene.call("_on_dialog_cancel_button_down")
+	battle_scene.call("_on_slot_input", cancel_touch_press, "my_bench_0")
+
+	var cancel_touch_release := InputEventScreenTouch.new()
+	cancel_touch_release.pressed = false
+	cancel_touch_release.index = 0
+	cancel_touch_release.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", cancel_touch_release)
+	battle_scene.call("_on_dialog_cancel")
+	battle_scene.call("_on_slot_input", cancel_touch_release, "my_bench_0")
+
+	# Android may synthesize a MouseButton pair for the same touch after the modal
+	# has disappeared. It belongs to the cancel sequence and must not hit the board.
+	var echo_press := InputEventMouseButton.new()
+	echo_press.button_index = MOUSE_BUTTON_LEFT
+	echo_press.pressed = true
+	echo_press.device = InputEvent.DEVICE_ID_EMULATION
+	echo_press.position = cancel_position
+	echo_press.global_position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", echo_press)
+	battle_scene.call("_on_slot_input", echo_press, "my_bench_0")
+	var echo_release := InputEventMouseButton.new()
+	echo_release.button_index = MOUSE_BUTTON_LEFT
+	echo_release.pressed = false
+	echo_release.device = InputEvent.DEVICE_ID_EMULATION
+	echo_release.position = cancel_position
+	echo_release.global_position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", echo_release)
+	battle_scene.call("_on_slot_input", echo_release, "my_bench_0")
+	var pending_after_cancel_tail := str(battle_scene.get("_pending_choice"))
+
+	# A new physical touch is a new sequence even at the exact same coordinate.
+	# It must open the Bench Pokemon HUD immediately, with no time-window heuristic.
+	var bench_press := InputEventScreenTouch.new()
+	bench_press.pressed = true
+	bench_press.index = 0
+	bench_press.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", bench_press)
+	battle_scene.call("_on_slot_input", bench_press, "my_bench_0")
+	var bench_release := InputEventScreenTouch.new()
+	bench_release.pressed = false
+	bench_release.index = 0
+	bench_release.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", bench_release)
+	battle_scene.call("_on_slot_input", bench_release, "my_bench_0")
+	var bench_card_data: CardData = (battle_scene.get("_dialog_data") as Dictionary).get("pokemon_card_data", null)
+
+	var result := run_checks([
+		assert_eq(pending_after_cancel_tail, "", "The cancel touch tail and its Android mouse echo must not open an underlying HUD"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "The next independent Bench touch must open the Pokemon action HUD"),
+		assert_true(bench_card_data != null and bench_card_data.name == "Retreat Receiver", "The reopened HUD must belong to the tapped Bench Pokemon"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_action_hud_cancel_blocks_unlabelled_mouse_echo_over_active_slot() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	battle_scene.call("_configure_battle_pointer_input_for_tests", true)
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+	var cancel_position := Vector2(360, 720)
+
+	var cancel_touch_press := InputEventScreenTouch.new()
+	cancel_touch_press.pressed = true
+	cancel_touch_press.index = 0
+	cancel_touch_press.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", cancel_touch_press)
+	battle_scene.call("_on_dialog_cancel_button_down")
+
+	var cancel_touch_release := InputEventScreenTouch.new()
+	cancel_touch_release.pressed = false
+	cancel_touch_release.index = 0
+	cancel_touch_release.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", cancel_touch_release)
+	battle_scene.call("_on_dialog_cancel")
+	battle_scene.call("_on_slot_input", cancel_touch_release, "my_active")
+
+	# Some native Android paths deliver the compatibility mouse tail without
+	# DEVICE_ID_EMULATION. It is still the same physical tap that cancelled the
+	# HUD and must not be treated as a fresh board click.
+	var echo_press := InputEventMouseButton.new()
+	echo_press.button_index = MOUSE_BUTTON_LEFT
+	echo_press.pressed = true
+	echo_press.device = 0
+	echo_press.position = cancel_position
+	echo_press.global_position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", echo_press)
+	battle_scene.call("_on_slot_input", echo_press, "my_active")
+	var echo_release := InputEventMouseButton.new()
+	echo_release.button_index = MOUSE_BUTTON_LEFT
+	echo_release.pressed = false
+	echo_release.device = 0
+	echo_release.position = cancel_position
+	echo_release.global_position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", echo_release)
+	battle_scene.call("_on_slot_input", echo_release, "my_active")
+
+	var result := run_checks([
+		assert_eq(
+			str(battle_scene.get("_pending_choice")),
+			"",
+			"Cancel's native Android compatibility-mouse tail must not reopen the underlying Active Pokemon HUD"
+		),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_modal_pointer_drain_shield_releases_for_next_independent_touch() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	battle_scene.call("_configure_battle_pointer_input_for_tests", true)
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+	var cancel_position := Vector2(360, 720)
+	var cancel_press := InputEventScreenTouch.new()
+	cancel_press.pressed = true
+	cancel_press.index = 0
+	cancel_press.position = cancel_position
+	battle_scene.call("_observe_battle_pointer_event", cancel_press)
+	battle_scene.call("_begin_modal_pointer_drain", "test_press_commit_control")
+	var drain_shield := battle_scene.get("_modal_pointer_drain_shield") as Control
+	var visible_after_commit := drain_shield != null and drain_shield.visible
+
+	var cancel_release := InputEventScreenTouch.new()
+	cancel_release.pressed = false
+	cancel_release.index = 0
+	cancel_release.position = cancel_position
+	var release_observation: Dictionary = battle_scene.call(
+		"_observe_battle_pointer_event",
+		cancel_release
+	)
+	var release_consumed := bool(
+		battle_scene.call(
+			"_update_modal_pointer_drain",
+			cancel_release,
+			release_observation
+		)
+	)
+	var visible_while_waiting_for_optional_echo := (
+		drain_shield != null
+		and drain_shield.visible
+	)
+
+	# A platform is allowed to omit the compatibility mouse echo. The very next
+	# touch press is a new physical sequence and must remove the barrier
+	# synchronously instead of waiting for a timeout.
+	var next_press := InputEventScreenTouch.new()
+	next_press.pressed = true
+	next_press.index = 0
+	next_press.position = Vector2(520, 720)
+	var next_observation: Dictionary = battle_scene.call(
+		"_observe_battle_pointer_event",
+		next_press
+	)
+	var next_press_consumed := bool(
+		battle_scene.call(
+			"_update_modal_pointer_drain",
+			next_press,
+			next_observation
+		)
+	)
+
+	var result := run_checks([
+		assert_true(visible_after_commit, "Closing on touch-down should leave a full-screen drain shield"),
+		assert_true(release_consumed, "The release from the closing gesture should remain owned by the modal"),
+		assert_true(visible_while_waiting_for_optional_echo, "The drain shield should wait for a possible compatibility-mouse tail"),
+		assert_false(next_press_consumed, "A new touch sequence must pass through immediately"),
+		assert_true(drain_shield != null and not drain_shield.visible, "The new touch should synchronously remove the old drain shield"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_dialog_action_button_down_claims_sequence_and_release_commits() -> String:
+	var source := FileAccess.get_file_as_string(
+		"res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd"
+	)
+	var controller_source := FileAccess.get_file_as_string(
+		"res://scripts/ui/battle/BattleDialogController.gd"
+	)
+	var runtime_source := FileAccess.get_file_as_string(
+		"res://scenes/battle/BattleSceneRuntime.gd"
+	)
+	var confirm_start := source.find("func _on_dialog_confirm_input")
+	var confirm_end := source.find("func _on_dialog_cancel_input", confirm_start)
+	var cancel_start := confirm_end
+	var cancel_end := source.find("func _on_dialog_confirm_button_down", cancel_start)
+	var confirm_body := (
+		source.substr(confirm_start, confirm_end - confirm_start)
+		if confirm_start >= 0 and confirm_end > confirm_start
+		else ""
+	)
+	var cancel_body := (
+		source.substr(cancel_start, cancel_end - cancel_start)
+		if cancel_start >= 0 and cancel_end > cancel_start
+		else ""
+	)
+	var confirm_dispatch := confirm_body.find("_battle_dialog_controller.call")
+	var cancel_dispatch := cancel_body.find("_battle_dialog_controller.call")
+	var drain_end_start := runtime_source.find("func _end_modal_pointer_drain")
+	var drain_end_end := runtime_source.find(
+		"\n\nfunc _update_modal_pointer_drain",
+		drain_end_start
+	)
+	var drain_end_body := (
+		runtime_source.substr(drain_end_start, drain_end_end - drain_end_start)
+		if drain_end_start >= 0 and drain_end_end > drain_end_start
+		else ""
+	)
+	var pressed_confirm_start := source.find("func _on_dialog_confirm()")
+	var pressed_confirm_end := source.find(
+		"func _on_dialog_cancel()",
+		pressed_confirm_start
+	)
+	var pressed_cancel_start := pressed_confirm_end
+	var pressed_cancel_end := source.find(
+		"func _on_dialog_confirm_input",
+		pressed_cancel_start
+	)
+	var pressed_confirm_body := (
+		source.substr(
+			pressed_confirm_start,
+			pressed_confirm_end - pressed_confirm_start
+		)
+		if pressed_confirm_start >= 0 and pressed_confirm_end > pressed_confirm_start
+		else ""
+	)
+	var pressed_cancel_body := (
+		source.substr(
+			pressed_cancel_start,
+			pressed_cancel_end - pressed_cancel_start
+		)
+		if pressed_cancel_start >= 0 and pressed_cancel_end > pressed_cancel_start
+		else ""
+	)
+	var button_down_start := controller_source.find("func on_dialog_action_button_down")
+	var button_down_end := controller_source.find(
+		"func _has_fresh_dialog_action_input",
+		button_down_start
+	)
+	var button_down_body := (
+		controller_source.substr(button_down_start, button_down_end - button_down_start)
+		if button_down_start >= 0 and button_down_end > button_down_start
+		else ""
+	)
+	var confirm_down_start := source.find("func _on_dialog_confirm_button_down")
+	var confirm_down_end := source.find(
+		"func _on_dialog_cancel_button_down",
+		confirm_down_start
+	)
+	var cancel_down_start := confirm_down_end
+	var cancel_down_end := source.find(
+		"func _confirm_assignment_dialog",
+		cancel_down_start
+	)
+	var confirm_down_body := (
+		source.substr(confirm_down_start, confirm_down_end - confirm_down_start)
+		if confirm_down_start >= 0 and confirm_down_end > confirm_down_start
+		else ""
+	)
+	var cancel_down_body := (
+		source.substr(cancel_down_start, cancel_down_end - cancel_down_start)
+		if cancel_down_start >= 0 and cancel_down_end > cancel_down_start
+		else ""
+	)
+
+	return run_checks([
+		assert_true(
+			confirm_dispatch >= 0,
+			"Confirm GUI input must register exact pointer ownership with the dialog controller"
+		),
+		assert_true(
+			cancel_dispatch >= 0,
+			"Cancel GUI input must register exact pointer ownership with the dialog controller"
+		),
+		assert_false(
+			confirm_body.contains("accept_event()") or confirm_body.contains("set_input_as_handled()"),
+			"Confirm gui_input must not preempt BaseButton's native button_down/pressed lifecycle"
+		),
+		assert_false(
+			cancel_body.contains("accept_event()") or cancel_body.contains("set_input_as_handled()"),
+			"Cancel gui_input must not preempt BaseButton's native button_down/pressed lifecycle"
+		),
+		assert_true(
+			button_down_body.contains("_claim_current_modal_pointer_sequence"),
+			"Button-down must assign exact sequence ownership before the modal can close"
+		),
+		assert_false(
+			button_down_body.contains("_begin_modal_pointer_drain"),
+			"Standard Buttons must not arm a full-screen drain shield that can outlive touch-only Android input"
+		),
+		assert_false(
+			confirm_down_body.contains("_battle_dialog_controller.call(\"on_dialog_confirm\", self)"),
+			"Confirm button-down must only claim the pointer sequence, not commit the action"
+		),
+		assert_false(
+			cancel_down_body.contains("_battle_dialog_controller.call(\"on_dialog_cancel\", self)"),
+			"Cancel button-down must only claim the pointer sequence, not close the overlay"
+		),
+		assert_false(
+			drain_end_body.contains("_dialog_cancel_activated_on_button_down"),
+			"Ending the pointer barrier must not cancel an already scheduled dialog action"
+		),
+		assert_false(
+			drain_end_body.contains("_dialog_confirm_activated_on_button_down"),
+			"Pointer lifecycle and dialog-action lifecycle must remain independent"
+		),
+		assert_true(
+			pressed_confirm_body.contains("_dialog_confirm_activated_on_button_down = false"),
+			"The release callback must consume the armed confirm action"
+		),
+		assert_true(
+			pressed_cancel_body.contains("_dialog_cancel_activated_on_button_down = false"),
+			"The release callback must consume the armed cancel action"
+		),
+		assert_true(
+			pressed_confirm_body.contains("on_dialog_confirm"),
+			"Confirm must commit through the standard Button pressed signal"
+		),
+		assert_true(
+			pressed_cancel_body.contains("on_dialog_cancel"),
+			"Cancel must commit through the standard Button pressed signal"
+		),
+	])
 
 
 func test_tool_attached_active_repeated_mouse_opening_never_auto_enters_retreat() -> String:

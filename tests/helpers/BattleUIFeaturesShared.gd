@@ -274,7 +274,14 @@ func _make_battle_scene_stub() -> Control:
 	battle_scene.set("_enemy_lost_value", Label.new())
 	battle_scene.set("_my_lost_value", Label.new())
 	battle_scene.set("_hand_container", HBoxContainer.new())
-	(battle_scene.get("_handover_panel") as Panel).visible = false
+	# Match the packed BattleScene startup contract. Fresh Controls default to
+	# visible, while these modal overlays are hidden in the real scene until an
+	# interaction explicitly opens them. Leaving the discard overlay visible in
+	# this stub falsely blocks every AI continuation via _is_ui_blocking_ai().
+	for overlay_name: String in ["_dialog_overlay", "_handover_panel", "_coin_overlay", "_detail_overlay", "_discard_overlay"]:
+		var overlay: Control = battle_scene.get(overlay_name) as Control
+		if overlay != null:
+			overlay.visible = false
 	return battle_scene
 
 

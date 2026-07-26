@@ -1,0 +1,132 @@
+{
+  "format_version": 1,
+  "purpose": "Authoritative deck-owned curriculum used before scenario construction. Every lesson records a prerequisite, order constraint, exact payoff, and failure consequence.",
+  "decks": {
+    "dragapult": {
+      "deck_id": 800018506,
+      "identity": "用侦察指令控制信息，以咒怨炸弹、飞身入场、亢奋脑力和幻影潜袭的200+60构造多目标奖赏图。",
+      "damage_equations": ["幻影潜袭=前场200+备战区合计60伤害指示物", "彷徨夜灵咒怨炸弹=50且自送1奖", "黑夜魔灵咒怨炸弹=130且自送1奖", "摔角鹰人=两只备战各10", "愿增猿=搬运最多30"],
+      "resource_bottlenecks": ["全牌组只有1张基本火能量", "夜光能量既可补攻击属性又常被愿增猿占用", "支援者窗口在派帕、吉尼亚、老大与抽牌间竞争", "自爆会永久改变双方奖差与反击捕捉器合法性"],
+      "lessons": [
+        {"id":"dragapult_recon_bottom_lock","prerequisites":["场上多龙奇","牌库顶2张包含桥牌与诱饵"],"ordered_steps":["先侦察指令","拿桥牌并把诱饵沉底","再使用会洗牌的检索"],"payoff":"保留唯一攻击资源并获得下一段检索","reordered_failure":"先洗牌或先研究会失去已知顶牌，第二回合缺少攻击属性"},
+        {"id":"dragapult_hawlucha_six_counter_map","prerequisites":["手中摔角鹰人","对手两个备战目标处于70/10或40/40档位"],"ordered_steps":["飞身入场各放10","决定前场200目标","分配幻影潜袭6豆"],"payoff":"一次攻击同时形成两只备战击倒或下一回合双奖图","reordered_failure":"先攻击或把10伤给装饰目标会少拿至少1奖"},
+        {"id":"dragapult_dusclops_counter_window","prerequisites":["彷徨夜灵可自爆","对手目标差50进入击倒线"],"ordered_steps":["先确认奖差","咒怨炸弹50并送奖","再使用反击捕捉器"],"payoff":"以较小自爆成本开启捕捉并闭合200+60","reordered_failure":"先捕捉不合法；错误升级黑夜魔灵会过量伤害并浪费130档"},
+        {"id":"dragapult_dusknoir_prize_inversion","prerequisites":["黑夜魔灵可自爆","对手高价值目标差130","己方能承受送奖"],"ordered_steps":["130伤指定目标","结算送奖","利用新奖差捕捉另一目标","幻影潜袭双线收割"],"payoff":"把主动送1奖转换为4奖或5奖回合","reordered_failure":"自爆目标与攻击目标重叠过量，或奖差未计算导致捕捉器失效"},
+        {"id":"dragapult_munkidori_breakpoint","prerequisites":["愿增猿有恶属性能量","己方有可搬伤害","目标剩余HP为230/260等非整档"],"ordered_steps":["保留夜光能量给愿增猿","搬20或30校正目标","再决定60豆去向"],"payoff":"200前场与60备战同时精确击倒","reordered_failure":"先手贴给攻击手使愿增猿失去恶属性，目标残10至30HP"},
+        {"id":"dragapult_two_attacker_handoff","prerequisites":["两条多龙进化线","火/超攻击属性总量有限"],"ordered_steps":["第一只只拿本回合所需能量","第二只提前进化并保留下一次手贴","第一只攻击后让AI击倒或撤出"],"payoff":"连续两个玩家回合都能使用幻影潜袭","reordered_failure":"把唯一火能或夜光能留在必死攻击手上，第二回合只能70伤"},
+        {"id":"dragapult_budew_item_lock_offer","prerequisites":["含羞苞可零撤退","对手下一回合依赖物品","后排多龙尚未完成"],"ordered_steps":["用含羞苞痒痒花粉","让出低奖目标","对手回合被锁物品","化危为吉/反击捕捉器反击"],"payoff":"用1奖换取完整重建回合和捕捉窗口","reordered_failure":"无意义交替或提前撤走含羞苞既不封锁也不改变奖差"},
+        {"id":"dragapult_fezandipiti_recovery","prerequisites":["上回合己方宝可梦被击倒","吉雉鸡ex在场","牌库顶冻结为桥牌序列"],"ordered_steps":["先化危为吉抽3","读取新信息","再决定博士/奇树/检索"],"payoff":"不消耗支援者窗口地找到进化、能量与终结捕捉","reordered_failure":"先博士会重置手牌并越过精确顶牌，或先奇树破坏已知顺序"},
+        {"id":"dragapult_boss_vs_counter_quota","prerequisites":["手中有抽牌支援者诱饵","反击捕捉器与老大均可能拉人"],"ordered_steps":["先用非支援者引擎找牌","验证当前奖差","选反击捕捉器或保留老大到第二回合"],"payoff":"两个回合各拥有一次有效捕捉并完成奖赏图","reordered_failure":"第一回合随意用老大占掉支援者次数，第二回合缺少滤抽或终结目标"},
+        {"id":"dragapult_bloodmoon_exact_closeout","prerequisites":["对手已拿足够奖使血月降费","多龙线资源耗尽","月月熊可进入战斗场"],"ordered_steps":["先完成铺伤/自爆","计算血月实际费用","保留对应手贴或夜光能量","最后换入月月熊"],"payoff":"用240伤单卡收掉多龙无法覆盖的高HP前场","reordered_failure":"过早给月月熊贴能或在降费不足时换入会失去多龙的多奖路线"}
+      ]
+    },
+    "gardevoir": {
+      "deck_id": 800018498,
+      "identity": "把弃牌区超能量经精神拥抱变成附能与自伤，再由吼叫尾、愿增猿、皮皮ex和沙奈朵把伤害转换为远程或弱点击倒。",
+      "damage_equations": ["精神拥抱每张超能量=附能1+己方20伤", "吼叫尾凶暴吼叫=自身伤害指示物×20，可打任意目标", "愿增猿搬运最多30", "皮皮ex在满双方备战时=20+备战总数×20", "沙奈朵ex=190"],
+      "resource_bottlenecks": ["超能量必须先进入弃牌区", "精神拥抱不能让目标因20伤昏厥", "恶能量只能手贴且支撑愿增猿", "勇气护符决定吼叫尾可承受的拥抱次数", "一回合一个支援者在派帕、老大与抽牌间竞争"],
+      "lessons": [
+        {"id":"gardevoir_vessel_discard_ownership","prerequisites":["手中大地容器与可弃牌","牌库/弃牌超能量数量冻结"],"ordered_steps":["选择不会成为后续成本的弃牌","容器拿超能","把超能送入弃牌区","再精神拥抱"],"payoff":"把一次检索同时变成手牌资源和弃牌区附能资源","reordered_failure":"弃掉桥牌或把所有超能留手导致精神拥抱无目标"},
+        {"id":"gardevoir_embrace_survival_budget","prerequisites":["沙奈朵ex在场","目标超宝可梦已有伤害","弃牌有多张超能"],"ordered_steps":["计算有效HP","逐张拥抱并在致死前停止","保留攻击费用"],"payoff":"获得最大可用能量而不自我击倒","reordered_failure":"多附1张直接非法或少附1张使最终攻击不足"},
+        {"id":"gardevoir_scream_tail_charm_snipe","prerequisites":["吼叫尾与勇气护符","弃牌区至少4张超能","备战有高价值目标"],"ordered_steps":["先装勇气护符提高HP","连续精神拥抱制造伤害","最后凶暴吼叫指定备战"],"payoff":"将安全自伤转化为240至320远程伤害","reordered_failure":"先拥抱后装护符会提前触及昏厥上限；能量张数错1造成差40伤"},
+        {"id":"gardevoir_munkidori_damage_recycling","prerequisites":["愿增猿已有恶能","精神拥抱制造至少30自伤"],"ordered_steps":["先完成需要的拥抱","选择不会影响吼叫尾倍率的伤源","搬30到精确目标"],"payoff":"同时治疗攻击手并把对手推进190或狙击档","reordered_failure":"过早搬走吼叫尾伤害会让其攻击少60，搬错目标只是无效过量"},
+        {"id":"gardevoir_clefairy_dragon_weakness","prerequisites":["对手龙属性前场","皮皮ex留场","超属性攻击可用"],"ordered_steps":["先确保妖精领域仍在场","按超弱点重算伤害","选择沙奈朵或其他超攻击"],"payoff":"把190变为380击倒高HP龙ex","reordered_failure":"先让皮皮离场或把它当牺牲品，弱点恢复后攻击少190"},
+        {"id":"gardevoir_nest_ball_route_choice","prerequisites":["巢穴球可用","备战区只有1至2个空位","愿增猿/飘飘球/吼叫尾/谢米仍在牌库"],"ordered_steps":["先读对手公开威胁与奖赏图","判断当前输出、搬伤、狙击或保护哪一类能力真正缺失","只把闭合两回合路线的基础宝可梦放入备战区","为接力保留必要空位"],"payoff":"让一次检索同时完成当前展开、威胁应对和下回合接力","reordered_failure":"先铺看似有用的支援宝可梦会挤掉真正攻击手或抢走唯一手贴"},
+        {"id":"gardevoir_rare_candy_vs_kirlia_line","prerequisites":["拉鲁拉丝、糖果、沙奈朵与奇鲁莉安路线竞争"],"ordered_steps":["判断本回合需要立即拥抱还是下回合资源深度","保留正确进化件","用另一条线提供后续攻击手"],"payoff":"兼顾当前爆发与第二回合重建","reordered_failure":"两只都走糖果会没有中间进化冗余；贪奇鲁莉安会错过本回合致命"},
+        {"id":"gardevoir_comeback_draw_order","prerequisites":["上回合己方被击倒","吉雉鸡可抽","手中博士或奇树是诱饵"],"ordered_steps":["先用不占支援者的化危为吉读取确定牌顶","根据抽到的派帕或反击捕捉器选择路线","最后才决定是否重置手牌"],"payoff":"保留支援者窗口并取得回收、护符或捕捉终结","reordered_failure":"研究优先会丢弃回收成本并使抽到的派帕无法使用"},
+        {"id":"gardevoir_shaymin_damage_semantics","prerequisites":["谢米可检索","对手存在备战区压力","招式文字公开"],"ordered_steps":["区分招式伤害与效果放置伤害指示物","确认目标是否为拥有规则的宝可梦","只有真实阻止关键伤害时才占用备战位"],"payoff":"避免把花之纱幔当成万能保护并保留正确接力场位","reordered_failure":"面对多龙放置伤害指示物仍找谢米，会既挡不住伤害又挤掉攻击手"},
+        {"id":"gardevoir_rod_low_deck_loop","prerequisites":["牌库极薄或空","弃牌有超能/宝可梦","场上仍有抽牌特性"],"ordered_steps":["先厉害钓竿回填确定卡","再使用抽牌特性","最后恢复攻击资源"],"payoff":"避免牌库耗尽并精确抽到下一回合组件","reordered_failure":"先抽牌直接败北，或钓竿回填错误卡导致攻击能量不足"}
+      ]
+    },
+    "gholdengo": {
+      "deck_id": 800016834,
+      "identity": "用嘉奖硬币、暗码迷和多种检索控制手牌信息，再把基本能量经超级能量回收转换为淘金潮每张50的精确伤害。",
+      "damage_equations": ["淘金潮=弃置手牌基本能量张数×50", "战斗场嘉奖硬币抽2，备战区抽1", "普通赛富豪进化当回合富裕打击=120", "愿增猿搬运最多30", "阻碍之塔可取消对手道具HP加成"],
+      "resource_bottlenecks": ["每次淘金潮既是伤害也是永久消耗手牌弹药", "超级能量回收需要先弃2张非能量手牌", "派帕、暗码迷、老大共享支援者窗口", "能量输送PRO要求不同属性仍留在牌库", "赛富豪在前场多抽1但也暴露为双奖目标"],
+      "lessons": [
+        {"id":"gholdengo_coin_arven_retrieval","prerequisites":["前场赛富豪ex可用嘉奖硬币","牌库顶为派帕","手中博士是诱饵"],"ordered_steps":["先嘉奖硬币抽到派帕","派帕取得超级能量回收与所需道具","支付回收成本","精确淘金潮"],"payoff":"保留支援者窗口并完成当回合及次回合弹药闭环","reordered_failure":"博士优先虽抽7却占支援者并丢弃回收成本，最终少2至4张能量"},
+        {"id":"gholdengo_cipher_coin_two_card_stack","prerequisites":["暗码迷可用","前场赛富豪抽2","两个组件都在牌库"],"ordered_steps":["先完成所有会洗牌的检索","暗码迷按使用顺序置顶2张","再嘉奖硬币一次拿齐"],"payoff":"把随机抽牌变为确定的回收+终结组合","reordered_failure":"置顶后检索会洗散；赛富豪在备战只抽1而缺第二组件"},
+        {"id":"gholdengo_active_vs_bench_coin_budget","prerequisites":["两只赛富豪位置不同","牌库顶顺序冻结"],"ordered_steps":["判断哪只必须在前场抽2","先用抽1的备战特性停在正确顶牌","换位后用前场特性拿两张"],"payoff":"在不多抽或少抽的情况下命中三个连续检查点","reordered_failure":"交换使用顺序会越过派帕/老大或提前抽空牌库"},
+        {"id":"gholdengo_retrieval_discard_cost","prerequisites":["弃牌至少4基本能量","手牌混有两张可弃成本与关键牌"],"ordered_steps":["先消费可用道具制造成本牌","保护第二回合桥牌","超级能量回收弃正确2张","只回收所需4能"],"payoff":"得到200伤以上同时保留下一回合检索","reordered_failure":"弃掉老大/钓竿或没有预先腾出成本会让第二回合断线"},
+        {"id":"gholdengo_energy_search_pro_split","prerequisites":["牌库保留多属性基本能量","能量输送PRO在隐藏检查点"],"ordered_steps":["先统计仍在牌库的属性","检索所有不同属性","第一回合仅弃精确数量","保留第二回合弹药"],"payoff":"一次ACE SPEC支撑两次淘金潮","reordered_failure":"提前用容器/研究弃掉稀有属性，PRO少拿1张造成50伤缺口"},
+        {"id":"gholdengo_munkidori_seed","prerequisites":["愿增猿有恶能","己方赛富豪受伤","目标差20至30进入50倍数档"],"ordered_steps":["先搬伤校正目标","再计算向上取整的弃能数","保留省下的1张能量"],"payoff":"少弃1能完成击倒并把资源带到第二回合","reordered_failure":"先按原HP弃能会过量50；搬到错误目标无法减少支付"},
+        {"id":"gholdengo_jamming_tower_breakpoint","prerequisites":["对手基础宝可梦有勇气护符等HP道具","阻碍之塔仍在牌库或手牌"],"ordered_steps":["先关闭道具","重算有效HP","按新档位淘金潮","保留节省能量"],"payoff":"用少1张基本能量完成击倒","reordered_failure":"先攻击再开塔或过量弃能，会让第二回合少50伤"},
+        {"id":"gholdengo_regular_evolution_bridge","prerequisites":["本回合可进化索财灵","普通赛富豪在隐藏位置","目标剩120"],"ordered_steps":["抽到/检索普通赛富豪","当回合进化","手贴钢能","富裕打击120"],"payoff":"不用消耗手牌基本能量就拿1奖并保留ex弹药","reordered_failure":"前一回合提前进化使加90条件消失，只打30"},
+        {"id":"gholdengo_iron_bundle_gust_choice","prerequisites":["铁包袱在备战","对手前场难杀且后场有多个候选","老大/反击捕捉器是隐藏终结"],"ordered_steps":["先用强力吹风机迫使对手选择","读取新前场","把真正定点捕捉留到第二回合"],"payoff":"用非支援者换位逼出低价值目标，再由老大完成高价值终结","reordered_failure":"先老大再吹风机会让对手重新选择并逃掉目标"},
+        {"id":"gholdengo_zero_deck_rod_closeout","prerequisites":["牌库为0或极薄","弃牌有钓竿目标","多个嘉奖硬币可用"],"ordered_steps":["先厉害钓竿回填精确3张","按1抽/2抽顺序使用赛富豪","取得超级能量回收与老大","完成第二次淘金潮"],"payoff":"从牌库耗尽边缘完成两回合4奖","reordered_failure":"先使用任一抽牌特性直接牌库耗尽或抽牌顺序错位"}
+      ]
+    },
+    "raging_bolt": {
+      "deck_id": 800018509,
+      "identity": "用碧草之舞、奥琳博士、赤松和能量转移不断把基本能量变为场上燃料，再由猛雷鼓ex每弃1能造成70伤或用针对攻击手绕过特殊防线。",
+      "damage_equations": ["极雷轰=弃置己方场上基本能量张数×70", "万叶阵雨=30+双方战斗宝可梦所附能量总数×30", "爬地翅120经斗弱点=240，之后灼伤检查20", "普通猛雷鼓备战狙击=自身能量数×30", "月月熊血月=240并随对手奖赏降费"],
+      "resource_bottlenecks": ["极雷轰弃掉的是场上未来回合资源", "奥琳只能给古代宝可梦且需要弃牌区能量","碧草之舞需要手中草能并同时抽1","赤松要求两个不同属性","斗能量既是猛雷鼓攻击成本又是爬地翅针对资源"],
+      "lessons": [
+        {"id":"raging_bolt_ogerpon_draw_order","prerequisites":["碧草之舞可用","牌库顶为支援者桥牌","手中有博士/奇树诱饵"],"ordered_steps":["先碧草之舞贴草并抽桥牌","使用桥牌取得后续组件","再决定是否重置手牌"],"payoff":"将一次附能同时变成确定抽牌并保留支援者窗口","reordered_failure":"研究优先会洗掉顶牌且消耗支援者，少一次加速"},
+        {"id":"raging_bolt_sada_two_target_budget","prerequisites":["弃牌有至少2基本能量","场上两个古代目标","奥琳可用"],"ordered_steps":["选择第一/第二攻击手各1能","奥琳后抽3读取信息","手贴补缺失属性"],"payoff":"一次支援者建立两只攻击手并增加极雷轰燃料","reordered_failure":"两能都给本回合攻击手导致第二回合无法攻击"},
+        {"id":"raging_bolt_exact_discard_count","prerequisites":["场上至少5基本能量","目标HP落在70倍数附近","第二回合仍需资源"],"ordered_steps":["计入弱点/道具/现有伤","向上取整所需能量数","从会被击倒或多余的宝可梦先弃"],"payoff":"精确击倒并保留下一回合启动能量","reordered_failure":"多弃1能造成第二回合少70；少弃1能目标残血"},
+        {"id":"raging_bolt_dance_energy_switch","prerequisites":["厄诡椪可舞","能量转移可用","猛雷鼓缺攻击属性或撤退资源"],"ordered_steps":["先碧草之舞制造场上草能并抽牌","再能量转移到需要位置","最后手贴补另一属性"],"payoff":"突破一次手贴限制并扩大场上可弃池","reordered_failure":"先转移没有合法来源；把厄诡椪唯一攻击能移走破坏第二路线"},
+        {"id":"raging_bolt_noctowl_tera_search","prerequisites":["咕咕已在场一回合","太晶厄诡椪仍在场","猫头夜鹰在隐藏抽牌点"],"ordered_steps":["保持太晶宝可梦在场","进化触发寻找宝石","选择两张能共同闭合路线的训练家"],"payoff":"一次进化拼出捕捉+加速或回收+换位组合","reordered_failure":"先让太晶离场不触发；拿两张各自强但互不兼容的牌"},
+        {"id":"raging_bolt_crispin_two_type_bridge","prerequisites":["牌库有两种不同基本能量","一个目标能合法附能","另一能量需进手"],"ordered_steps":["决定哪种能量附场、哪种入手","赤松结算","再手贴或作为舞/攻击成本"],"payoff":"一次支援者同时满足两个攻击属性并增加场上燃料","reordered_failure":"属性分配反了会使猛雷鼓缺雷/斗或厄诡椪缺草"},
+        {"id":"raging_bolt_slither_wing_pikachu","prerequisites":["对手满HP皮卡丘ex有顽强之心且弱斗","爬地翅可支付双斗"],"ordered_steps":["保留双斗给爬地翅","烫伤怒涛经弱点造成240","顽强之心留10HP","宝可梦检查由灼伤击倒"],"payoff":"绕过一次攻击不昏厥效果取得2奖","reordered_failure":"把斗能量先作为极雷轰燃料，或误判检查时点导致少拿奖"},
+        {"id":"raging_bolt_latias_zero_retreat","prerequisites":["拉帝亚斯ex在场","当前基础宝可梦需换位","手贴资源紧张"],"ordered_steps":["确认天际线生效","零成本撤退","保留附着能量作为极雷轰燃料","换入正确攻击手"],"payoff":"不消耗能量完成攻击手交接","reordered_failure":"先弃能撤退或让拉帝亚斯离场后仍按零撤退计算"},
+        {"id":"raging_bolt_regular_bolt_snipe","prerequisites":["普通猛雷鼓有雷斗与额外能量","备战目标处于90/120档","ex攻击会浪费资源"],"ordered_steps":["先通过奥琳/赤松供能","选择落雷风暴远程目标","保留ex场上能量"],"payoff":"用单奖攻击手取奖并保护主攻弹药","reordered_failure":"把普通猛雷鼓能量全部弃给极雷轰会失去远程击倒"},
+        {"id":"raging_bolt_area_zero_collapse","prerequisites":["零之大空洞扩展到8格","场上太晶宝可梦可能离场","必须保留的引擎/攻击手已标记"],"ordered_steps":["先使用将被丢弃宝可梦的特性","完成所有依赖场位的检索","让太晶/竞技场离场","按优先级压回5格"],"payoff":"把临时大备战区转换为资源而不丢关键攻击手","reordered_failure":"提前移除竞技场会强制弃掉未使用的猫头夜鹰、拉帝亚斯或第二攻击手"}
+      ]
+    },
+    "marnie": {
+      "deck_id": 800018501,
+      "identity": "用玛俐的长毛巨魔ex进化时一次附最多5恶能量建立双攻击手，以雪妖女检查伤害、愿增猿搬伤和暗影子弹30点构造跨回合击倒。",
+      "damage_equations": ["暗影子弹=前场180+备战30", "冻结帷幕每次宝可梦检查给双方非雪妖女的有特性宝可梦10伤", "愿增猿搬运最多30", "招式学习器退化按下层HP重新判断昏厥"],
+      "resource_bottlenecks": ["庞克泵感只给玛俐的宝可梦且只在从手牌进化时触发","愿增猿所需恶能只能靠手贴等其他路线","雪妖女也会伤己方长毛巨魔与愿增猿","神奇糖果/中间进化决定第二只长毛巨魔的速度","反击捕捉器依赖奖差"],
+      "lessons": [
+        {"id":"marnie_punk_up_trigger","prerequisites":["场上捣蛋小妖或诈唬魔","手中长毛巨魔ex","牌库有恶能"],"ordered_steps":["从手牌合法进化","立即触发庞克泵感","在玛俐宝可梦间分配最多5能"],"payoff":"单次进化建立当回合与第二回合攻击手","reordered_failure":"题面直接放进化后状态或用非手牌进化方式会错过特性"},
+        {"id":"marnie_punk_up_split","prerequisites":["两条玛俐进化线","总恶能有限","第一只可能被击倒"],"ordered_steps":["只给当前攻击手2能","其余给第二条线","保留非玛俐宝可梦手贴"],"payoff":"连续两个回合暗影子弹","reordered_failure":"把5能全堆第一只会随击倒全部损失"},
+        {"id":"marnie_munkidori_manual_energy","prerequisites":["愿增猿在场但无能","手贴未使用","庞克泵感可触发"],"ordered_steps":["庞克泵感只处理玛俐宝可梦","手贴恶能给愿增猿","再搬运雪妖女/受击伤害"],"payoff":"同时保持双长毛巨魔与亢奋脑力在线","reordered_failure":"误以为庞克泵感能给愿增猿附能会让整条搬伤线非法"},
+        {"id":"marnie_froslass_check_clock","prerequisites":["雪妖女在场","双方多个有特性宝可梦","剩余回合数固定"],"ordered_steps":["列出每次检查受伤对象","把即将形成的10伤计入斩杀","在检查前保护己方关键HP"],"payoff":"利用回合间10伤完成本来差一档的击倒","reordered_failure":"漏算己方伤害会在AI回合后失去引擎或攻击手"},
+        {"id":"marnie_shaymin_spread_semantics","prerequisites":["谢米在场","非规则备战宝可梦可能受到焚身加农炮等招式伤害","对手也可能用幻影潜袭放置伤害指示物"],"ordered_steps":["区分招式伤害与效果放置指示物","保留谢米保护可保护的非规则目标","对不可保护的伤害指示物另做HP预算"],"payoff":"让关键雪妖女/愿增猿避开备战招式伤害并跨回合存活，同时不误判幻影潜袭等放置指示物效果","reordered_failure":"错误认为谢米能阻止伤害指示物、保护规则宝可梦，或在真实备战伤害到来前让谢米离场"},
+        {"id":"marnie_devolution_table","prerequisites":["对手多个糖果进化目标已有伤害","退化TM与1无色可用"],"ordered_steps":["记录每只下层HP","先用暗影子弹/冻结帷幕铺到阈值","再退化一次结算多只昏厥"],"payoff":"一次攻击清理多个进化目标并取多奖","reordered_failure":"提前退化使伤害未超过下层HP，或先击倒顶层浪费多目标价值"},
+        {"id":"marnie_spikemuth_search_order","prerequisites":["尖钉镇道馆可用","牌库有玛俐宝可梦","之后还有会洗牌的检索/置顶"],"ordered_steps":["先用道馆找进化桥","完成其他洗牌","再执行确定顶牌抽牌"],"payoff":"用非支援者检索保留派帕/老大窗口","reordered_failure":"错过每回合一次或在置顶后洗牌破坏抽牌线"},
+        {"id":"marnie_secret_box_cost_map","prerequisites":["秘密箱与至少3张手牌","四类目标都在牌库","弃牌中可回收部分资源"],"ordered_steps":["保护长毛巨魔/能量/终结牌","弃可由担架或钓竿回收的3张","取得物品/道具/支援者/竞技场组合"],"payoff":"一次ACE SPEC拼出进化、场地和捕捉路线","reordered_failure":"弃掉不可替代进化或恶能会让检索到的四张牌也无法闭合"},
+        {"id":"marnie_counter_catcher_timing","prerequisites":["己方奖赏落后","对手后场有180+30奖赏图目标","支援者窗口需保留"],"ordered_steps":["先确认奖差","用反击捕捉器而非老大","暗影子弹前场180并给下一个目标30"],"payoff":"一回合捕捉、一回合老大，连续精确取奖","reordered_failure":"先拿奖改变奖差后捕捉器不再合法，或第一回合浪费老大"},
+        {"id":"marnie_second_grimmsnarl_rebuild","prerequisites":["首只长毛巨魔即将被击倒","弃牌有进化线/能量","担架或钓竿在隐藏抽牌点"],"ordered_steps":["预留第二只基础/中间进化","回收正确进化件","再次从手牌进化触发庞克泵感","重新分能"],"payoff":"把首攻损失转化为第二次5能爆发","reordered_failure":"直接恢复到场或错误回收导致不能触发进化特性"}
+      ]
+    },
+    "n_zoroark": {
+      "deck_id": 800018502,
+      "identity": "用交易和暗码迷控制抽牌，以N的城堡/PP提升剂准备场位，再让N的索罗亚克ex复制备战区不同N宝可梦的针对招式。",
+      "damage_equations": ["N的莱希拉姆力量愤怒=自身伤害指示物×20", "达摩狒狒复燃=对手弃牌区基本能量×30", "焚身加农炮=前场90+备战90", "空手道王对ex+40", "不服输头带在落后时+30"],
+      "resource_bottlenecks": ["暗夜王牌要求双恶且复制源必须在备战区","交易弃1抽2会改变手牌与顶牌顺序","PP提升剂只给备战N宝可梦","城堡只给N宝可梦零撤退","逆转能量仅在落后且附给非规则进化宝可梦时三能"],
+      "lessons": [
+        {"id":"n_cipher_trade_stack","prerequisites":["暗码迷可用","索罗亚克交易未用","两个桥牌在牌库"],"ordered_steps":["先完成所有洗牌","暗码迷置顶2张","交易弃掉可回收诱饵并抽2"],"payoff":"确定取得PP提升剂与终结支援者","reordered_failure":"先交易只能抽随机牌；置顶后再检索会洗散"},
+        {"id":"n_trade_discard_ownership","prerequisites":["手牌至少3类资源","交易需要弃1","担架/手册/PP提升剂可利用弃牌"],"ordered_steps":["识别可被后续回收或利用的牌","交易弃正确成本","根据抽到信息选择复制源"],"payoff":"把弃牌成本转为下一步资源而非净损失","reordered_failure":"弃掉唯一双恶、复制源进化或老大导致终局断线"},
+        {"id":"n_reshiram_damage_copy","prerequisites":["备战N的莱希拉姆已有精确伤害","索罗亚克双恶","目标HP与20倍数匹配"],"ordered_steps":["保留莱希拉姆在备战","需要时用愿增猿调整其伤害但不搬空","暗夜王牌复制力量愤怒"],"payoff":"不需给莱希拉姆火雷能即可输出高倍率伤害","reordered_failure":"治疗过量或把莱希拉姆拉前会失去复制源/倍率"},
+        {"id":"n_darmanitan_discard_count","prerequisites":["对手弃牌区基本能量数已知","达摩狒狒在备战","索罗亚克双恶"],"ordered_steps":["精确统计基本能量而非所有能量","比较复燃与其他复制攻击","选择达到档位的路线"],"payoff":"以对手资源历史转化为无需额外成本的高伤","reordered_failure":"把特殊能量计入或漏算回收后的能量会差30至60伤"},
+        {"id":"n_darmanitan_split_prizes","prerequisites":["对手前场与备战各剩90","达摩狒狒在备战","复制攻击可用"],"ordered_steps":["确保复制焚身加农炮","指定正确备战目标","结算前场90+备战90"],"payoff":"一次攻击同时取得两条奖赏线","reordered_failure":"HUD误看索罗亚克自身招式或备战目标点错导致少奖"},
+        {"id":"n_pp_booster_handoff","prerequisites":["弃牌有基本能量","备战N宝可梦存在","下一攻击手需要准备"],"ordered_steps":["先确定复制源是否只是工具","PP提升剂附给真正需要能量的N宝可梦","手贴给索罗亚克或愿增猿"],"payoff":"突破一次手贴限制并保留工具箱完整","reordered_failure":"把能量附给只提供复制招式的工具宝可梦，当前索罗亚克仍缺双恶"},
+        {"id":"n_castle_zero_retreat","prerequisites":["N的城堡可用","前场N宝可梦需撤退","附着能量必须保留"],"ordered_steps":["先放N的城堡","确认撤退变0","零成本换入索罗亚克","保留原场能量"],"payoff":"无损完成攻击手交接","reordered_failure":"先支付撤退成本再放城堡，或把非N宝可梦也当成零撤退"},
+        {"id":"n_karate_defiance_stack","prerequisites":["己方奖赏落后","对手前场为ex","复制攻击距击倒差70以内"],"ordered_steps":["确认头带条件","先装不服输头带","本回合使用空手道王","复制正确攻击"],"payoff":"叠加+30与+40精确跨越ex斩杀线","reordered_failure":"拿奖后头带条件变化，或把空手道王用在非ex目标"},
+        {"id":"n_reversal_darmanitan_option","prerequisites":["逆转能量附给非规则1阶达摩狒狒","己方奖赏落后","需要其亲自攻击或撤退"],"ordered_steps":["先确认奖差","把逆转能量附给达摩狒狒","选择亲自焚身或作为场位资源"],"payoff":"一张能量支付三无色等价值并保留恶能给索罗亚克","reordered_failure":"附给索罗亚克ex只提供1无色，或拿奖后失去三能效果"},
+        {"id":"n_boss_toolbox_closeout","prerequisites":["持续交易后牌库顶出现老大","多种复制招式均可用","对手后场有精确目标"],"ordered_steps":["先用交易/暗码迷命中老大","老大抓出目标","根据目标选择莱希拉姆或达摩狒狒复制攻击"],"payoff":"从看似无解手牌中滤出定点捕捉并精确绝杀","reordered_failure":"提前使用奇树/其他支援者或先选攻击路线会错失目标与支援者窗口"}
+      ]
+    },
+    "charizard_dragapult": {
+      "deck_id": 800025404,
+      "identity": "用大比鸟ex精确检索、喷火龙ex进化附能和咒怨炸弹主动送奖，同时开启燃烧黑暗增伤、反击捕捉器与白蕾雅三奖终结。",
+      "damage_equations": ["燃烧黑暗=180+对手已拿奖数×30", "彷徨夜灵/黑夜魔灵自爆=50/130且对手多拿1奖", "白蕾雅在对手剩2奖时使太晶宝可梦击倒前场多拿1奖", "不服输头带落后时+30", "大比鸟狂风呼啸=120"],
+      "resource_bottlenecks": ["喷火龙与大比鸟都依赖糖果/进化件","咒怨炸弹送奖不可逆且改变多张卡条件","白蕾雅只有对手恰好剩2奖可用","烈炎支配只在从手牌进化时触发","钥圈儿前场也会封锁己方基础特性"],
+      "lessons": [
+        {"id":"charizard_quick_search_order","prerequisites":["大比鸟ex音速搜索可用","牌库有任意桥牌","另有暗码/顶牌式顺序"],"ordered_steps":["先完成所有置顶/抽牌判断","在正确时点音速搜索并洗牌","拿唯一缺失组件"],"payoff":"用任意卡检索补齐复杂终局","reordered_failure":"过早搜索会洗掉准备好的顶牌或拿到随后必然可抽的冗余牌"},
+        {"id":"charizard_rare_candy_infernal_reign","prerequisites":["小火龙在场一回合","糖果与喷火龙ex需经抽牌获得","牌库有火能"],"ordered_steps":["先找糖果/喷火龙","从手牌糖果进化","触发烈炎支配分配最多3火能"],"payoff":"一个进化动作立即建立攻击与第二攻击手资源","reordered_failure":"场景预放进化状态或错误路线会错过附能触发"},
+        {"id":"charizard_dusclops_fifty_window","prerequisites":["彷徨夜灵可自爆","目标只差50","送奖后增伤/捕捉条件改变"],"ordered_steps":["先算送奖后的燃烧黑暗","50伤放到另一奖赏目标","再选择捕捉与攻击"],"payoff":"用最小自爆同时增伤30并创造双目标图","reordered_failure":"升级黑夜魔灵过量130或自爆打到当前攻击目标造成资源浪费"},
+        {"id":"charizard_dusknoir_briar_window","prerequisites":["对手剩3奖","黑夜魔灵可自爆","对手有高价值ex","白蕾雅隐藏在牌库"],"ordered_steps":["咒怨炸弹130并送奖","对手变剩2奖","滤抽/音速搜索取得白蕾雅","捕捉目标","太晶喷火龙击倒"],"payoff":"燃烧黑暗增伤并由白蕾雅一次取得3奖","reordered_failure":"先拿其他奖或先用支援者会错过恰好2奖/白蕾雅窗口"},
+        {"id":"charizard_counter_catcher_after_offer","prerequisites":["送奖后己方奖赏落后","反击捕捉器可取得","高价值目标在备战"],"ordered_steps":["先完成自爆或送低奖宝可梦","确认奖差","反击捕捉器拉目标","保留老大给第二回合"],"payoff":"两个回合各有一次定点捕捉","reordered_failure":"送奖前捕捉器非法；先用老大占支援者导致白蕾雅无法用"},
+        {"id":"charizard_defiance_exact_thirty","prerequisites":["己方奖赏落后","燃烧黑暗距击倒差30","不服输头带在隐藏检索点"],"ordered_steps":["确认当前奖差","检索并装头带","只使用需要的自爆/增伤","攻击"],"payoff":"省下一次咒怨炸弹或额外能量路线","reordered_failure":"拿奖改变条件后才装头带，或同时自爆造成过量"},
+        {"id":"charizard_klefki_lock_unlock","prerequisites":["钥圈儿在前场","对手依赖基础特性","己方之后需要吉雉鸡/米立龙"],"ordered_steps":["先让钥圈儿封锁对手一个回合","在己方爆发前撤退或换走","再使用己方基础抽牌特性"],"payoff":"用单奖前场换取设置时间且不锁死自己的翻盘引擎","reordered_failure":"钥圈儿仍在前场时尝试化危为吉/揽客均非法"},
+        {"id":"charizard_tatsugiri_supporter_scan","prerequisites":["米立龙在前场","牌库顶6含白蕾雅/老大与诱导支援者","支援者次数未用"],"ordered_steps":["先揽客查看6张","选择符合当前奖差的支援者","再执行会洗牌的音速搜索/道具"],"payoff":"在绝境中定向找到白蕾雅或老大终结","reordered_failure":"先洗牌改变顶6或选抽牌支援者占掉唯一终结窗口"},
+        {"id":"charizard_chiyu_recovery_revenge","prerequisites":["古玉鱼可攻击","弃牌有火能或上回合己方被招式击倒","喷火龙线尚未完成"],"ordered_steps":["判断本回合应恢复2火能还是打140","用单奖古玉鱼过渡","把资源交给下一只喷火龙"],"payoff":"从首攻倒下后无缝重建","reordered_failure":"在无上回合击倒事实时按140计算，或恢复到必死目标"},
+        {"id":"charizard_rod_jet_rebuild","prerequisites":["弃牌有进化线/火能","厉害钓竿与喷射能量可取得","当前前场不适合攻击"],"ordered_steps":["先钓竿回填精确组件","用抽牌/音速搜索取得","喷射能量完成换位","再次进化触发烈炎支配"],"payoff":"低资源状态下重建喷火龙并抢回节奏","reordered_failure":"先抽后回填错过组件，或喷射能量贴错目标无法换入攻击手"}
+      ]
+    }
+  }
+}

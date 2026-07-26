@@ -160,6 +160,11 @@ func _finish_modal_input_interaction(reason: String = "modal", slot_suppression_
 			_modal_input_slot_suppress_until_msec = Time.get_ticks_msec() + MODAL_INPUT_SLOT_SUPPRESS_MSEC
 		"clear":
 			_modal_input_slot_suppress_until_msec = 0
+		"sequence":
+			_modal_input_slot_suppress_until_msec = 0
+			# The physical pointer router owns the exact press/release tail. Do not
+			# leave a coordinate/time heuristic that can swallow the next real tap.
+			_modal_input_origin_position = Vector2(-1.0, -1.0)
 		"preserve":
 			pass
 		_:
@@ -518,26 +523,42 @@ func _on_dialog_item_multi_selected(idx: int, selected: bool) -> void:
 
 
 func _on_dialog_confirm() -> void:
+	if _dialog_confirm_activated_on_button_down:
+		_dialog_confirm_activated_on_button_down = false
+		_battle_dialog_controller.call("on_dialog_confirm", self)
+		return
 	_battle_dialog_controller.call("on_dialog_confirm", self)
 
 
 func _on_dialog_cancel() -> void:
+	if _dialog_cancel_activated_on_button_down:
+		_dialog_cancel_activated_on_button_down = false
+		_battle_dialog_controller.call("on_dialog_cancel", self)
+		return
 	_battle_dialog_controller.call("on_dialog_cancel", self)
 
 
 func _on_dialog_confirm_input(event: InputEvent) -> void:
+	# Keep the event available to BaseButton's native state machine. The overlay
+	# remains visible until release, while the controller records exact pointer
+	# ownership so the release tail cannot reach the board after commit.
 	_battle_dialog_controller.call("on_dialog_action_button_input", self, "confirm", event)
 
 
 func _on_dialog_cancel_input(event: InputEvent) -> void:
+	# Do not mark this GUI event handled here: gui_input is emitted before
+	# BaseButton updates button_down/pressed on Android, so early acceptance
+	# disables the button itself.
 	_battle_dialog_controller.call("on_dialog_action_button_input", self, "cancel", event)
 
 
 func _on_dialog_confirm_button_down() -> void:
+	_dialog_confirm_activated_on_button_down = true
 	_battle_dialog_controller.call("on_dialog_action_button_down", self, "confirm")
 
 
 func _on_dialog_cancel_button_down() -> void:
+	_dialog_cancel_activated_on_button_down = true
 	_battle_dialog_controller.call("on_dialog_action_button_down", self, "cancel")
 
 
@@ -891,6 +912,12 @@ func _setup_ai_for_tests() -> void:
 		_handover_panel.visible = false
 	if _field_interaction_overlay != null:
 		_field_interaction_overlay.visible = false
+	if _coin_overlay != null:
+		_coin_overlay.visible = false
+	if _detail_overlay != null:
+		_detail_overlay.visible = false
+	if _discard_overlay != null:
+		_discard_overlay.visible = false
 	_pending_prize_animating = false
 	_ai_running = false
 	_ai_step_scheduled = false
@@ -1166,6 +1193,9 @@ func _on_ai_advice_pressed() -> void:
 
 
 func _on_battle_discuss_ai_pressed() -> void:
+	if _deck_training_controller != null:
+		_deck_training_controller.restart()
+		return
 	var view_deck := _battle_discussion_view_deck()
 	if view_deck == null:
 		return
@@ -1531,10 +1561,29 @@ func _run_ai_step() -> void:
 	_ai_running = true
 	_ai_followup_requested = false
 	_ensure_ai_opponent()
-	var handled: bool = _ai_opponent.run_single_step(self, _gsm)
+	var step_result: Dictionary = _ai_opponent.run_single_step_result(self, _gsm) \
+		if _ai_opponent.has_method("run_single_step_result") \
+		else {
+			"status": "progressed" if _ai_opponent.run_single_step(self, _gsm) else "no_progress",
+		}
+	var step_status := str(step_result.get("status", "no_progress"))
+	var handled := step_status == "progressed"
 	_ai_running = false
 	if handled:
 		_ai_actions_this_turn += 1
+	elif step_status == "waiting_policy":
+		# A V18CPG request may start inside run_single_step, after the preflight
+		# wait check above. Treat it as an asynchronous continuation, never as a
+		# terminal lack of progress.
+		_should_wait_for_llm()
+		_runtime_log(
+			"ai_step_waiting_for_policy",
+			"turn=%d player=%d actions=%d" % [
+				_gsm.game_state.turn_number,
+				_ai_opponent.player_index,
+				_ai_actions_this_turn,
+			]
+		)
 	elif starting_pending_choice == "" \
 		and _pending_choice == "" \
 		and _gsm != null \
@@ -1862,7 +1911,7 @@ func _advance_coin_animation_queue() -> void:
 
 
 
-func _on_discard_open_control_input(event: InputEvent, player_index: int, title: String) -> void:
+func _on_discard_open_control_input(event: InputEvent, visible_side_or_player: Variant, title: String) -> void:
 	if _consume_modal_hud_input_if_needed(event, "discard_hud"):
 		return
 	var pressed := false
@@ -1873,10 +1922,26 @@ func _on_discard_open_control_input(event: InputEvent, player_index: int, title:
 		pressed = (event as InputEventScreenTouch).pressed
 	if not pressed:
 		return
+	# Native Android may deliver a compatibility MouseButton press before the
+	# ScreenTouch press for one finger. Claim the opening sequence so the newly
+	# visible collection backdrop rejects the mirrored half of the same tap.
+	if has_method("_claim_modal_pointer_event"):
+		call("_claim_modal_pointer_event", event, "discard_hud_open")
+	var player_index := _discard_player_index_for_visible_side(visible_side_or_player)
 	_show_discard_pile(player_index, title)
 	var viewport := get_viewport()
 	if viewport != null:
 		viewport.set_input_as_handled()
+
+
+func _discard_player_index_for_visible_side(visible_side_or_player: Variant) -> int:
+	# HUD controls represent a visual side, not a permanent game-state player.
+	# Local handovers and replay loading can change _view_player after _ready(),
+	# so resolve the side only when the user opens the collection.
+	if visible_side_or_player is String:
+		return 1 - _view_player if str(visible_side_or_player) == "opponent" else _view_player
+	# Direct/internal callers may still provide an explicit player index.
+	return int(visible_side_or_player)
 
 
 
@@ -1891,6 +1956,8 @@ func _on_lost_zone_open_control_input(event: InputEvent, enemy: bool) -> void:
 		pressed = (event as InputEventScreenTouch).pressed
 	if not pressed:
 		return
+	if has_method("_claim_modal_pointer_event"):
+		call("_claim_modal_pointer_event", event, "lost_zone_hud_open")
 	if _gsm == null or _gsm.game_state == null:
 		return
 	var player_index := 1 - _view_player if enemy else _view_player

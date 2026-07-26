@@ -1,0 +1,815 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 439,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 17,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:dance_into_area_zero",
+      "choice_label": "碧草之舞抽到零之大空洞",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:play_area_zero",
+      "choice_label": "零之大空洞把太晶玩家备战上限扩到8",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:bench_regular_bolt",
+      "choice_label": "第6格放普通猛雷鼓",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:bench_slither_wing",
+      "choice_label": "第7格放爬地翅",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:bench_fezandipiti",
+      "choice_label": "第8格放吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_exact_280",
+      "choice_label": "首攻弃必死前场与两只厄诡椪的4能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:n_reply",
+      "choice_label": "N的索罗亚20伤击倒首攻猛雷鼓",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:refill_eighth_with_ursaluna",
+      "choice_label": "第二回合放月月熊重新补满8格",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:evolve_noctowl",
+      "choice_label": "奖赏猫头夜鹰进化咕咕",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:jewel_tower_stretcher",
+      "choice_label": "寻找宝石取得阻碍之塔与夜间担架",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:stretcher_grass",
+      "choice_label": "夜间担架从弃牌区拿回草能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:dance_one_after_search",
+      "choice_label": "第一只厄诡椪附手中草能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "12:dance_two_after_recovery",
+      "choice_label": "第二只厄诡椪附担架回收的草能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "13:boss_second_zoroark",
+      "choice_label": "奖赏老大抓出第二只N的索罗亚克ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "14:replace_and_trim",
+      "choice_label": "阻碍之塔替换大空洞并裁掉猫头夜鹰、爬地翅、吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "15:second_exact_280",
+      "choice_label": "极雷轰弃接棒雷斗与两只厄诡椪草能",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "c444e441706e3e3f384d65da02ac975c8d7c7d3b478e892c34494df985ef43f7"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:dance_into_area_zero",
+        "choice_label": "碧草之舞抽到零之大空洞",
+        "depth": 16,
+        "player_actions": 15,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:play_area_zero",
+              "choice_label": "零之大空洞把太晶玩家备战上限扩到8",
+              "depth": 16,
+              "player_actions": 14,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:bench_regular_bolt",
+                    "choice_label": "第6格放普通猛雷鼓",
+                    "depth": 16,
+                    "player_actions": 13,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:bench_slither_wing",
+                          "choice_label": "第7格放爬地翅",
+                          "depth": 16,
+                          "player_actions": 12,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:bench_fezandipiti",
+                                "choice_label": "第8格放吉雉鸡",
+                                "depth": 16,
+                                "player_actions": 11,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_exact_280",
+                                      "choice_label": "首攻弃必死前场与两只厄诡椪的4能",
+                                      "depth": 16,
+                                      "player_actions": 10,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:n_reply",
+                                            "choice_label": "N的索罗亚20伤击倒首攻猛雷鼓",
+                                            "depth": 16,
+                                            "player_actions": 9,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:refill_eighth_with_ursaluna",
+                                                  "choice_label": "第二回合放月月熊重新补满8格",
+                                                  "depth": 16,
+                                                  "player_actions": 9,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:evolve_noctowl",
+                                                        "choice_label": "奖赏猫头夜鹰进化咕咕",
+                                                        "depth": 16,
+                                                        "player_actions": 8,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:jewel_tower_stretcher",
+                                                              "choice_label": "寻找宝石取得阻碍之塔与夜间担架",
+                                                              "depth": 16,
+                                                              "player_actions": 7,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:stretcher_grass",
+                                                                    "choice_label": "夜间担架从弃牌区拿回草能",
+                                                                    "depth": 16,
+                                                                    "player_actions": 6,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:dance_one_after_search",
+                                                                          "choice_label": "第一只厄诡椪附手中草能",
+                                                                          "depth": 16,
+                                                                          "player_actions": 5,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [
+                                                                              {
+                                                                                "choice_id": "12:dance_two_after_recovery",
+                                                                                "choice_label": "第二只厄诡椪附担架回收的草能",
+                                                                                "depth": 16,
+                                                                                "player_actions": 4,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "status": "PROVEN",
+                                                                                "tree": {
+                                                                                  "branches": [
+                                                                                    {
+                                                                                      "choice_id": "13:boss_second_zoroark",
+                                                                                      "choice_label": "奖赏老大抓出第二只N的索罗亚克ex",
+                                                                                      "depth": 16,
+                                                                                      "player_actions": 3,
+                                                                                      "reason": "player_has_forcing_choice",
+                                                                                      "status": "PROVEN",
+                                                                                      "tree": {
+                                                                                        "branches": [
+                                                                                          {
+                                                                                            "choice_id": "14:replace_and_trim",
+                                                                                            "choice_label": "阻碍之塔替换大空洞并裁掉猫头夜鹰、爬地翅、吉雉鸡",
+                                                                                            "depth": 16,
+                                                                                            "player_actions": 2,
+                                                                                            "reason": "player_has_forcing_choice",
+                                                                                            "status": "PROVEN",
+                                                                                            "tree": {
+                                                                                              "branches": [
+                                                                                                {
+                                                                                                  "choice_id": "15:second_exact_280",
+                                                                                                  "choice_label": "极雷轰弃接棒雷斗与两只厄诡椪草能",
+                                                                                                  "depth": 16,
+                                                                                                  "player_actions": 1,
+                                                                                                  "reason": "production_witness_reached_goal",
+                                                                                                  "status": "PROVEN",
+                                                                                                  "tree": {
+                                                                                                    "branches": [],
+                                                                                                    "coverage_complete": true,
+                                                                                                    "depth": 16,
+                                                                                                    "player_actions": 0,
+                                                                                                    "reason": "production_witness_reached_goal",
+                                                                                                    "score": 4,
+                                                                                                    "status": "PROVEN",
+                                                                                                    "winning_choice_count": 0
+                                                                                                  }
+                                                                                                }
+                                                                                              ],
+                                                                                              "coverage_complete": true,
+                                                                                              "depth": 16,
+                                                                                              "player_actions": 1,
+                                                                                              "reason": "player_has_forcing_choice",
+                                                                                              "role": "player",
+                                                                                              "selected_choice_id": "15:second_exact_280",
+                                                                                              "selected_choice_label": "极雷轰弃接棒雷斗与两只厄诡椪草能",
+                                                                                              "status": "PROVEN",
+                                                                                              "winning_choice_count": 1
+                                                                                            }
+                                                                                          }
+                                                                                        ],
+                                                                                        "coverage_complete": true,
+                                                                                        "depth": 16,
+                                                                                        "player_actions": 2,
+                                                                                        "reason": "player_has_forcing_choice",
+                                                                                        "role": "player",
+                                                                                        "selected_choice_id": "14:replace_and_trim",
+                                                                                        "selected_choice_label": "阻碍之塔替换大空洞并裁掉猫头夜鹰、爬地翅、吉雉鸡",
+                                                                                        "status": "PROVEN",
+                                                                                        "winning_choice_count": 1
+                                                                                      }
+                                                                                    }
+                                                                                  ],
+                                                                                  "coverage_complete": true,
+                                                                                  "depth": 16,
+                                                                                  "player_actions": 3,
+                                                                                  "reason": "player_has_forcing_choice",
+                                                                                  "role": "player",
+                                                                                  "selected_choice_id": "13:boss_second_zoroark",
+                                                                                  "selected_choice_label": "奖赏老大抓出第二只N的索罗亚克ex",
+                                                                                  "status": "PROVEN",
+                                                                                  "winning_choice_count": 1
+                                                                                }
+                                                                              }
+                                                                            ],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 16,
+                                                                            "player_actions": 4,
+                                                                            "reason": "player_has_forcing_choice",
+                                                                            "role": "player",
+                                                                            "selected_choice_id": "12:dance_two_after_recovery",
+                                                                            "selected_choice_label": "第二只厄诡椪附担架回收的草能",
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 1
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 16,
+                                                                      "player_actions": 5,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:dance_one_after_search",
+                                                                      "selected_choice_label": "第一只厄诡椪附手中草能",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 16,
+                                                                "player_actions": 6,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:stretcher_grass",
+                                                                "selected_choice_label": "夜间担架从弃牌区拿回草能",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 16,
+                                                          "player_actions": 7,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:jewel_tower_stretcher",
+                                                          "selected_choice_label": "寻找宝石取得阻碍之塔与夜间担架",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 16,
+                                                    "player_actions": 8,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:evolve_noctowl",
+                                                    "selected_choice_label": "奖赏猫头夜鹰进化咕咕",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 16,
+                                              "player_actions": 9,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:refill_eighth_with_ursaluna",
+                                              "selected_choice_label": "第二回合放月月熊重新补满8格",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 16,
+                                        "player_actions": 9,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:n_reply",
+                                        "selected_choice_label": "N的索罗亚20伤击倒首攻猛雷鼓",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 16,
+                                  "player_actions": 10,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_exact_280",
+                                  "selected_choice_label": "首攻弃必死前场与两只厄诡椪的4能",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 16,
+                            "player_actions": 11,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:bench_fezandipiti",
+                            "selected_choice_label": "第8格放吉雉鸡",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 16,
+                      "player_actions": 12,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:bench_slither_wing",
+                      "selected_choice_label": "第7格放爬地翅",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 16,
+                "player_actions": 13,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:bench_regular_bolt",
+                "selected_choice_label": "第6格放普通猛雷鼓",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 16,
+          "player_actions": 14,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:play_area_zero",
+          "selected_choice_label": "零之大空洞把太晶玩家备战上限扩到8",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 16,
+    "player_actions": 15,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:dance_into_area_zero",
+    "selected_choice_label": "碧草之舞抽到零之大空洞",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:dance_into_area_zero",
+      "choice_label": "碧草之舞抽到零之大空洞",
+      "depth": 16,
+      "player_actions": 15,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:play_area_zero",
+            "choice_label": "零之大空洞把太晶玩家备战上限扩到8",
+            "depth": 16,
+            "player_actions": 14,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:bench_regular_bolt",
+                  "choice_label": "第6格放普通猛雷鼓",
+                  "depth": 16,
+                  "player_actions": 13,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:bench_slither_wing",
+                        "choice_label": "第7格放爬地翅",
+                        "depth": 16,
+                        "player_actions": 12,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:bench_fezandipiti",
+                              "choice_label": "第8格放吉雉鸡",
+                              "depth": 16,
+                              "player_actions": 11,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_exact_280",
+                                    "choice_label": "首攻弃必死前场与两只厄诡椪的4能",
+                                    "depth": 16,
+                                    "player_actions": 10,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:n_reply",
+                                          "choice_label": "N的索罗亚20伤击倒首攻猛雷鼓",
+                                          "depth": 16,
+                                          "player_actions": 9,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:refill_eighth_with_ursaluna",
+                                                "choice_label": "第二回合放月月熊重新补满8格",
+                                                "depth": 16,
+                                                "player_actions": 9,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:evolve_noctowl",
+                                                      "choice_label": "奖赏猫头夜鹰进化咕咕",
+                                                      "depth": 16,
+                                                      "player_actions": 8,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:jewel_tower_stretcher",
+                                                            "choice_label": "寻找宝石取得阻碍之塔与夜间担架",
+                                                            "depth": 16,
+                                                            "player_actions": 7,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:stretcher_grass",
+                                                                  "choice_label": "夜间担架从弃牌区拿回草能",
+                                                                  "depth": 16,
+                                                                  "player_actions": 6,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:dance_one_after_search",
+                                                                        "choice_label": "第一只厄诡椪附手中草能",
+                                                                        "depth": 16,
+                                                                        "player_actions": 5,
+                                                                        "reason": "player_has_forcing_choice",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [
+                                                                            {
+                                                                              "choice_id": "12:dance_two_after_recovery",
+                                                                              "choice_label": "第二只厄诡椪附担架回收的草能",
+                                                                              "depth": 16,
+                                                                              "player_actions": 4,
+                                                                              "reason": "player_has_forcing_choice",
+                                                                              "status": "PROVEN",
+                                                                              "tree": {
+                                                                                "branches": [
+                                                                                  {
+                                                                                    "choice_id": "13:boss_second_zoroark",
+                                                                                    "choice_label": "奖赏老大抓出第二只N的索罗亚克ex",
+                                                                                    "depth": 16,
+                                                                                    "player_actions": 3,
+                                                                                    "reason": "player_has_forcing_choice",
+                                                                                    "status": "PROVEN",
+                                                                                    "tree": {
+                                                                                      "branches": [
+                                                                                        {
+                                                                                          "choice_id": "14:replace_and_trim",
+                                                                                          "choice_label": "阻碍之塔替换大空洞并裁掉猫头夜鹰、爬地翅、吉雉鸡",
+                                                                                          "depth": 16,
+                                                                                          "player_actions": 2,
+                                                                                          "reason": "player_has_forcing_choice",
+                                                                                          "status": "PROVEN",
+                                                                                          "tree": {
+                                                                                            "branches": [
+                                                                                              {
+                                                                                                "choice_id": "15:second_exact_280",
+                                                                                                "choice_label": "极雷轰弃接棒雷斗与两只厄诡椪草能",
+                                                                                                "depth": 16,
+                                                                                                "player_actions": 1,
+                                                                                                "reason": "production_witness_reached_goal",
+                                                                                                "status": "PROVEN",
+                                                                                                "tree": {
+                                                                                                  "branches": [],
+                                                                                                  "coverage_complete": true,
+                                                                                                  "depth": 16,
+                                                                                                  "player_actions": 0,
+                                                                                                  "reason": "production_witness_reached_goal",
+                                                                                                  "score": 4,
+                                                                                                  "status": "PROVEN",
+                                                                                                  "winning_choice_count": 0
+                                                                                                }
+                                                                                              }
+                                                                                            ],
+                                                                                            "coverage_complete": true,
+                                                                                            "depth": 16,
+                                                                                            "player_actions": 1,
+                                                                                            "reason": "player_has_forcing_choice",
+                                                                                            "role": "player",
+                                                                                            "selected_choice_id": "15:second_exact_280",
+                                                                                            "selected_choice_label": "极雷轰弃接棒雷斗与两只厄诡椪草能",
+                                                                                            "status": "PROVEN",
+                                                                                            "winning_choice_count": 1
+                                                                                          }
+                                                                                        }
+                                                                                      ],
+                                                                                      "coverage_complete": true,
+                                                                                      "depth": 16,
+                                                                                      "player_actions": 2,
+                                                                                      "reason": "player_has_forcing_choice",
+                                                                                      "role": "player",
+                                                                                      "selected_choice_id": "14:replace_and_trim",
+                                                                                      "selected_choice_label": "阻碍之塔替换大空洞并裁掉猫头夜鹰、爬地翅、吉雉鸡",
+                                                                                      "status": "PROVEN",
+                                                                                      "winning_choice_count": 1
+                                                                                    }
+                                                                                  }
+                                                                                ],
+                                                                                "coverage_complete": true,
+                                                                                "depth": 16,
+                                                                                "player_actions": 3,
+                                                                                "reason": "player_has_forcing_choice",
+                                                                                "role": "player",
+                                                                                "selected_choice_id": "13:boss_second_zoroark",
+                                                                                "selected_choice_label": "奖赏老大抓出第二只N的索罗亚克ex",
+                                                                                "status": "PROVEN",
+                                                                                "winning_choice_count": 1
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 16,
+                                                                          "player_actions": 4,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "role": "player",
+                                                                          "selected_choice_id": "12:dance_two_after_recovery",
+                                                                          "selected_choice_label": "第二只厄诡椪附担架回收的草能",
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 1
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 16,
+                                                                    "player_actions": 5,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:dance_one_after_search",
+                                                                    "selected_choice_label": "第一只厄诡椪附手中草能",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 16,
+                                                              "player_actions": 6,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:stretcher_grass",
+                                                              "selected_choice_label": "夜间担架从弃牌区拿回草能",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 16,
+                                                        "player_actions": 7,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:jewel_tower_stretcher",
+                                                        "selected_choice_label": "寻找宝石取得阻碍之塔与夜间担架",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 16,
+                                                  "player_actions": 8,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:evolve_noctowl",
+                                                  "selected_choice_label": "奖赏猫头夜鹰进化咕咕",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 16,
+                                            "player_actions": 9,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:refill_eighth_with_ursaluna",
+                                            "selected_choice_label": "第二回合放月月熊重新补满8格",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 16,
+                                      "player_actions": 9,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:n_reply",
+                                      "selected_choice_label": "N的索罗亚20伤击倒首攻猛雷鼓",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 16,
+                                "player_actions": 10,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_exact_280",
+                                "selected_choice_label": "首攻弃必死前场与两只厄诡椪的4能",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 16,
+                          "player_actions": 11,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:bench_fezandipiti",
+                          "selected_choice_label": "第8格放吉雉鸡",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 16,
+                    "player_actions": 12,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:bench_slither_wing",
+                    "selected_choice_label": "第7格放爬地翅",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 16,
+              "player_actions": 13,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:bench_regular_bolt",
+              "selected_choice_label": "第6格放普通猛雷鼓",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 16,
+        "player_actions": 14,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:play_area_zero",
+        "selected_choice_label": "零之大空洞把太晶玩家备战上限扩到8",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "c444e441706e3e3f384d65da02ac975c8d7c7d3b478e892c34494df985ef43f7",
+  "scenario_id": "raging_bolt_05",
+  "shortest_player_actions": 15,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

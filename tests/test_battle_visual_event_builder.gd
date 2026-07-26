@@ -105,6 +105,51 @@ func test_zone_diff_emits_one_transfer_and_hides_opponent_draw_identity() -> Str
 	])
 
 
+func test_trainer_play_animates_only_the_exact_trainer_when_effect_discards_other_hand_cards() -> String:
+	var state := _state()
+	var trainer := _card("Ultra Ball", 0, "Item", 0)
+	var cost_a := _card("Discard Cost A", 0, "Pokemon", 100)
+	var cost_b := _card("Discard Cost B", 0, "Energy", 0)
+	var same_name_alternate_art_cost := _card("Ultra Ball", 0, "Item", 0)
+	state.players[0].hand = [trainer, cost_a, cost_b, same_name_alternate_art_cost]
+	var before := SnapshotScript.capture(state)
+	state.players[0].hand.clear()
+	state.players[0].discard_pile = [cost_a, cost_b, same_name_alternate_art_cost, trainer]
+	var after := SnapshotScript.capture(state)
+	var action := GameAction.create(
+		GameAction.ActionType.PLAY_TRAINER,
+		0,
+		{"card_name": "Ultra Ball"},
+		3,
+		"trainer with discard cost"
+	)
+	var transfers := _events_of_kind(BuilderScript.build(before, after, action, 0), "zone_transfer")
+	var trainer_events: Array[Dictionary] = []
+	var other_ids: Array[int] = []
+	for event: Dictionary in transfers:
+		if str(event.get("semantic", "")) == "trainer_play":
+			trainer_events.append(event)
+		else:
+			for id_variant: Variant in event.get("card_instance_ids", []):
+				other_ids.append(int(id_variant))
+	return run_checks([
+		assert_eq(trainer_events.size(), 1, "One PLAY_TRAINER action should present exactly one Trainer batch"),
+		assert_eq(
+			trainer_events[0].get("card_instance_ids", []) if not trainer_events.is_empty() else [],
+			[trainer.instance_id],
+			"Discard costs must never be presented as the Trainer being played"
+		),
+		assert_true(
+			other_ids.has(cost_a.instance_id)
+			and other_ids.has(cost_b.instance_id)
+			and other_ids.has(same_name_alternate_art_cost.instance_id),
+			"Effect costs, including same-name alternate art, should remain separate visual transfers"
+		),
+		assert_eq(int(trainer_events[0].get("owner_index", -1)) if not trainer_events.is_empty() else -1, 0, "Transfer event must freeze card ownership"),
+		assert_eq(int(trainer_events[0].get("view_player", -1)) if not trainer_events.is_empty() else -1, 0, "Transfer event must freeze its capture perspective"),
+	])
+
+
 func test_public_reveal_allows_opponent_card_face_without_changing_hidden_defaults() -> String:
 	var state := _state()
 	var revealed := _card("Revealed Search", 1)

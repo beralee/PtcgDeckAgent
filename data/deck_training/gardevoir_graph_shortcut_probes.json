@@ -1,0 +1,3079 @@
+{
+  "format_version": 1,
+  "scenarios": {
+    "gardevoir_01": [
+      {
+        "id": "gardevoir_01_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "nest_csv6c_065",
+            "kind": "play_trainer",
+            "label": "巢穴球四选一，只把吼叫尾放入关键空位",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_065",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flip_the_script_arven",
+            "kind": "use_ability",
+            "label": "化危为吉抽3，第一张翻出派帕",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "arven_counter_charm",
+            "kind": "play_trainer",
+            "label": "派帕取得反击捕捉器与勇气护符",
+            "card_uid": "CSV1C_123",
+            "targets": [
+              {
+                "search_item": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_tool": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_118",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "counter_first_gholdengo",
+            "kind": "play_trainer",
+            "label": "反击捕捉器拉出70伤赛富豪",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_first_gardevoir",
+            "kind": "use_ability",
+            "label": "精神拥抱补第三超能并留下20伤",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_01_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "nest_csv6c_065",
+            "kind": "play_trainer",
+            "label": "巢穴球四选一，只把吼叫尾放入关键空位",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_065",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flip_the_script_arven",
+            "kind": "use_ability",
+            "label": "化危为吉抽3，第一张翻出派帕",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "arven_counter_charm",
+            "kind": "play_trainer",
+            "label": "派帕取得反击捕捉器与勇气护符",
+            "card_uid": "CSV1C_123",
+            "targets": [
+              {
+                "search_item": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_tool": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_118",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "counter_first_gholdengo",
+            "kind": "play_trainer",
+            "label": "反击捕捉器拉出70伤赛富豪",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_first_gardevoir",
+            "kind": "use_ability",
+            "label": "精神拥抱补第三超能并留下20伤",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_miracle_force",
+            "kind": "attack",
+            "label": "奇迹之力190精确取得首2奖",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "gholdengo_exact_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "带钢能赛富豪升场并以300击倒剩290HP沙奈朵",
+            "require_attack": true
+          },
+          {
+            "id": "attach_charm_scream_tail",
+            "kind": "attach_tool",
+            "label": "给备战吼叫尾附勇气护符",
+            "card_uid": "CSV1C_118",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            }
+          },
+          {
+            "id": "embrace_scream_1",
+            "kind": "use_ability",
+            "label": "吼叫尾第1次精神拥抱",
+            "source": {
+              "zone": "active_or_bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_2",
+            "kind": "use_ability",
+            "label": "吼叫尾第2次精神拥抱",
+            "source": {
+              "zone": "active_or_bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_3",
+            "kind": "use_ability",
+            "label": "吼叫尾第3次精神拥抱",
+            "source": {
+              "zone": "active_or_bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_4",
+            "kind": "use_ability",
+            "label": "吼叫尾第4次精神拥抱",
+            "source": {
+              "zone": "active_or_bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_5",
+            "kind": "use_ability",
+            "label": "吼叫尾第5次精神拥抱",
+            "source": {
+              "zone": "active_or_bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_6",
+            "kind": "use_ability",
+            "label": "吼叫尾第6次精神拥抱到120伤",
+            "source": {
+              "zone": "active_or_bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "retreat_munkidori",
+            "kind": "retreat",
+            "label": "升场愿增猿弃恶能撤退到吼叫尾",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_DAR",
+                  "occurrence": 0
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_02": [
+      {
+        "id": "gardevoir_02_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "retreat_ralts",
+            "kind": "retreat",
+            "label": "拉鲁拉丝弃超能撤退到第一只沙奈朵",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_PSY",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "first_embrace_retreated_energy",
+            "kind": "use_ability",
+            "label": "精神拥抱取回撤退能量补齐三能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_02_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "retreat_ralts",
+            "kind": "retreat",
+            "label": "拉鲁拉丝弃超能撤退到第一只沙奈朵",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_PSY",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "first_embrace_retreated_energy",
+            "kind": "use_ability",
+            "label": "精神拥抱取回撤退能量补齐三能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_miracle_force",
+            "kind": "attack",
+            "label": "奇迹之力190精确首杀并取得奖赏老大",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "gholdengo_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "健康带钢能赛富豪升场并300反杀第一只沙奈朵",
+            "require_attack": true
+          },
+          {
+            "id": "second_embrace",
+            "kind": "use_ability",
+            "label": "升场第二只沙奈朵从弃牌取回第三能并产生20伤",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "munkidori_move_twenty",
+            "kind": "munkidori",
+            "label": "愿增猿把沙奈朵新产生的20伤搬到50伤目标",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "bench_remaining_hp",
+              "remaining_hp": 210
+            },
+            "amount": 20
+          },
+          {
+            "id": "boss_second_damaged_gholdengo",
+            "kind": "play_trainer",
+            "label": "奖赏反击捕捉器抓出70伤赛富豪",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 190
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_03": [
+      {
+        "id": "gardevoir_03_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "nest_csv8c_135",
+            "kind": "play_trainer",
+            "label": "巢穴球只找吉雉鸡ex，建立隐藏三张桥牌",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV8C_135",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flip_the_script_bridges",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "attach_drawn_psychic_to_first",
+            "kind": "attach_energy",
+            "label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "first_munkidori_thirty",
+            "kind": "munkidori",
+            "label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_03_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "nest_csv8c_135",
+            "kind": "play_trainer",
+            "label": "巢穴球只找吉雉鸡ex，建立隐藏三张桥牌",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV8C_135",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flip_the_script_bridges",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "attach_drawn_psychic_to_first",
+            "kind": "attach_energy",
+            "label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "first_munkidori_thirty",
+            "kind": "munkidori",
+            "label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          },
+          {
+            "id": "first_miracle_force",
+            "kind": "attack",
+            "label": "奇迹之力190精确取得首2奖",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "gholdengo_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "健康带钢能赛富豪升场并300击倒剩280HP沙奈朵",
+            "require_attack": true
+          },
+          {
+            "id": "second_embrace",
+            "kind": "use_ability",
+            "label": "第二只沙奈朵拥抱一次，从10伤变30伤并补第三能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_munkidori_thirty",
+            "kind": "munkidori",
+            "label": "同一只愿增猿第二次把30伤搬给备战40伤赛富豪",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "bench_remaining_hp",
+              "remaining_hp": 220
+            },
+            "amount": 30
+          },
+          {
+            "id": "counter_second_target",
+            "kind": "play_trainer",
+            "label": "反击捕捉器抓出剩190HP的第二目标",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 190
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_04": [
+      {
+        "id": "gardevoir_04_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "nest_csv6c_065",
+            "kind": "play_trainer",
+            "label": "巢穴球四选一，只找能绕后取奖的吼叫尾",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_065",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flip_the_script_energy_pair",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、超能和夜间担架",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "embrace_first_scream_energy",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_second_scream_energy",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_energy_3",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_energy_4",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "retreat_munk_to_scream_tail",
+            "kind": "retreat",
+            "label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_PSY",
+                  "occurrence": 0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_04_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "nest_csv6c_065",
+            "kind": "play_trainer",
+            "label": "巢穴球四选一，只找能绕后取奖的吼叫尾",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_065",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "flip_the_script_energy_pair",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、超能和夜间担架",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "embrace_first_scream_energy",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_second_scream_energy",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_energy_3",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_energy_4",
+            "kind": "use_ability",
+            "label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "retreat_munk_to_scream_tail",
+            "kind": "retreat",
+            "label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_PSY",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "roaring_scream_bench_fez",
+            "kind": "attack",
+            "label": "凶暴吼叫160精确狙击50伤吉雉鸡ex",
+            "attack_index": 1,
+            "targets": [
+              {
+                "target_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 160
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gholdengo_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "前场赛富豪300反杀吼叫尾",
+            "require_attack": true
+          },
+          {
+            "id": "embrace_handoff",
+            "kind": "use_ability",
+            "label": "沙奈朵取回第三能并从30伤增至50伤",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "munkidori_calibrate_active",
+            "kind": "munkidori",
+            "label": "愿增猿把30伤搬给40伤前场赛富豪",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          }
+        ]
+      }
+    ],
+    "gardevoir_05": [
+      {
+        "id": "gardevoir_05_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "flip_the_script_rod",
+            "kind": "use_ability",
+            "label": "化危为吉抽前三张并取得厉害钓竿",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "munkidori_first_threshold",
+            "kind": "munkidori",
+            "label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_05_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "flip_the_script_rod",
+            "kind": "use_ability",
+            "label": "化危为吉抽前三张并取得厉害钓竿",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "munkidori_first_threshold",
+            "kind": "munkidori",
+            "label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          },
+          {
+            "id": "first_miracle_force",
+            "kind": "attack",
+            "label": "奇迹之力190精确取得首2奖",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "gholdengo_reply_and_last_draw",
+            "kind": "fixed_rules_ai_turn",
+            "label": "赛富豪300反杀，第二回合自然抽到最后一张桌台市",
+            "require_attack": true
+          },
+          {
+            "id": "super_rod_scream_two_psychic",
+            "kind": "play_trainer",
+            "label": "厉害钓竿回收吼叫尾与两张超能",
+            "card_uid": "CSV1C_109",
+            "targets": [
+              {
+                "cards_to_return": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSV6C_065",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 1
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "artazon_recovered_scream",
+            "kind": "play_trainer",
+            "label": "桌台市把回填的吼叫尾直接放到新空出的备战位",
+            "card_uid": "CSV2C_127",
+            "targets": [
+              {
+                "artazon_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_065",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_one",
+            "kind": "use_ability",
+            "label": "第一次精神拥抱给吼叫尾附超能并放20伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_scream_two",
+            "kind": "use_ability",
+            "label": "第二次精神拥抱给吼叫尾附超能并到40伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "retreat_munk_to_scream",
+            "kind": "retreat",
+            "label": "愿增猿弃恶能撤退到新回收的吼叫尾",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_DAR",
+                  "occurrence": 0
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_06": [
+      {
+        "id": "gardevoir_06_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "flip_vessel_package",
+            "kind": "use_ability",
+            "label": "化危为吉抽到容器、超能与反击捕捉器",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "vessel_discard_psychic",
+            "kind": "play_trainer",
+            "label": "大地容器弃刚抽到的超能并检索超能与恶能",
+            "card_uid": "CSV6C_115",
+            "targets": [
+              {
+                "discard_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_discarded_psychic",
+            "kind": "use_ability",
+            "label": "精神拥抱取回容器刚弃的超能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "munkidori_twenty",
+            "kind": "munkidori",
+            "label": "愿增猿把新增20伤搬给50伤目标",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 20
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_06_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "flip_vessel_package",
+            "kind": "use_ability",
+            "label": "化危为吉抽到容器、超能与反击捕捉器",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "vessel_discard_psychic",
+            "kind": "play_trainer",
+            "label": "大地容器弃刚抽到的超能并检索超能与恶能",
+            "card_uid": "CSV6C_115",
+            "targets": [
+              {
+                "discard_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_discarded_psychic",
+            "kind": "use_ability",
+            "label": "精神拥抱取回容器刚弃的超能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "munkidori_twenty",
+            "kind": "munkidori",
+            "label": "愿增猿把新增20伤搬给50伤目标",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 20
+          },
+          {
+            "id": "first_miracle_force",
+            "kind": "attack",
+            "label": "奇迹之力190精确首杀",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "gholdengo_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "健康赛富豪300反杀首攻者",
+            "require_attack": true
+          },
+          {
+            "id": "attach_saved_psychic",
+            "kind": "attach_energy",
+            "label": "第二只沙奈朵手贴容器检索的超能",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "counter_second_target",
+            "kind": "play_trainer",
+            "label": "反击捕捉器抓出70伤赛富豪",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 190
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_07": [
+      {
+        "id": "gardevoir_07_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "flip_arven",
+            "kind": "use_ability",
+            "label": "化危为吉抽3并翻出派帕",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "arven_charm",
+            "kind": "play_trainer",
+            "label": "派帕取得反击捕捉器与勇气护符",
+            "card_uid": "CSV1C_123",
+            "targets": [
+              {
+                "search_item": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_tool": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_118",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "attach_charm",
+            "kind": "attach_tool",
+            "label": "先给吼叫尾附勇气护符",
+            "card_uid": "CSV1C_118",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            }
+          },
+          {
+            "id": "embrace_1",
+            "kind": "use_ability",
+            "label": "吼叫尾第1次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_2",
+            "kind": "use_ability",
+            "label": "吼叫尾第2次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_3",
+            "kind": "use_ability",
+            "label": "吼叫尾第3次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_4",
+            "kind": "use_ability",
+            "label": "吼叫尾第4次拥抱到80伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "munk_move_mid_chain",
+            "kind": "munkidori",
+            "label": "愿增猿把吼叫尾30伤搬给40伤前场",
+            "ability_source": {
+              "zone": "active"
+            },
+            "damage_source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          },
+          {
+            "id": "embrace_5",
+            "kind": "use_ability",
+            "label": "腾出空间后第5次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_6",
+            "kind": "use_ability",
+            "label": "第6次拥抱使吼叫尾到90伤6能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_retreat",
+            "kind": "retreat",
+            "label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_DAR",
+                  "occurrence": 0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_07_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "flip_arven",
+            "kind": "use_ability",
+            "label": "化危为吉抽3并翻出派帕",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "arven_charm",
+            "kind": "play_trainer",
+            "label": "派帕取得反击捕捉器与勇气护符",
+            "card_uid": "CSV1C_123",
+            "targets": [
+              {
+                "search_item": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_tool": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_118",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "attach_charm",
+            "kind": "attach_tool",
+            "label": "先给吼叫尾附勇气护符",
+            "card_uid": "CSV1C_118",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            }
+          },
+          {
+            "id": "embrace_1",
+            "kind": "use_ability",
+            "label": "吼叫尾第1次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_2",
+            "kind": "use_ability",
+            "label": "吼叫尾第2次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_3",
+            "kind": "use_ability",
+            "label": "吼叫尾第3次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_4",
+            "kind": "use_ability",
+            "label": "吼叫尾第4次拥抱到80伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "munk_move_mid_chain",
+            "kind": "munkidori",
+            "label": "愿增猿把吼叫尾30伤搬给40伤前场",
+            "ability_source": {
+              "zone": "active"
+            },
+            "damage_source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          },
+          {
+            "id": "embrace_5",
+            "kind": "use_ability",
+            "label": "腾出空间后第5次拥抱",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_6",
+            "kind": "use_ability",
+            "label": "第6次拥抱使吼叫尾到90伤6能",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV6C_065"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_retreat",
+            "kind": "retreat",
+            "label": "愿增猿弃一张恶能、保留一张撤退到吼叫尾",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV6C_065"
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_DAR",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "roaring_scream_180",
+            "kind": "attack",
+            "label": "凶暴吼叫180精确狙击30伤吉雉鸡ex",
+            "attack_index": 1,
+            "targets": [
+              {
+                "target_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 180
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gholdengo_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "前场赛富豪300反杀吼叫尾",
+            "require_attack": true
+          },
+          {
+            "id": "second_retreat",
+            "kind": "retreat",
+            "label": "愿增猿再次弃恶能撤退到沙奈朵",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSVE1C_DAR",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "gardevoir_embrace_1",
+            "kind": "use_ability",
+            "label": "沙奈朵第1次自我拥抱",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gardevoir_embrace_2",
+            "kind": "use_ability",
+            "label": "沙奈朵第2次自我拥抱",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "gardevoir_embrace_3",
+            "kind": "use_ability",
+            "label": "沙奈朵第3次自我拥抱到3能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_08": [
+      {
+        "id": "gardevoir_08_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "flip_switch_arven",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移与派帕",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "attach_exact_third_psychic",
+            "kind": "attach_energy",
+            "label": "只把抽到的第三张超能手贴给首攻沙奈朵",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "arven_counter",
+            "kind": "play_trainer",
+            "label": "派帕取得反击捕捉器与勇气护符",
+            "card_uid": "CSV1C_123",
+            "targets": [
+              {
+                "search_item": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_tool": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_118",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "counter_first_dragapult",
+            "kind": "play_trainer",
+            "label": "反击捕捉器抓出第一只健康多龙",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_08_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "flip_switch_arven",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移与派帕",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "attach_exact_third_psychic",
+            "kind": "attach_energy",
+            "label": "只把抽到的第三张超能手贴给首攻沙奈朵",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "arven_counter",
+            "kind": "play_trainer",
+            "label": "派帕取得反击捕捉器与勇气护符",
+            "card_uid": "CSV1C_123",
+            "targets": [
+              {
+                "search_item": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "search_tool": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_118",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "counter_first_dragapult",
+            "kind": "play_trainer",
+            "label": "反击捕捉器抓出第一只健康多龙",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_weakness_miracle",
+            "kind": "attack",
+            "label": "奇迹之力190经超弱点变380击倒多龙",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "dragapult_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "带火超能多龙升场并200反杀110伤沙奈朵",
+            "require_attack": true
+          },
+          {
+            "id": "second_embrace",
+            "kind": "use_ability",
+            "label": "第二只沙奈朵拥抱第三能",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "gardevoir_09": [
+      {
+        "id": "gardevoir_09_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "flip_candy_package",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、糖果和沙奈朵",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "attach_psychic_to_backup_ralts",
+            "kind": "attach_energy",
+            "label": "把抽到的超能手贴给30伤拉鲁拉丝",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_053"
+            }
+          },
+          {
+            "id": "rare_candy_gardevoir",
+            "kind": "play_trainer",
+            "label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+            "card_uid": "CSVH1C_045",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_053"
+                    }
+                  }
+                ],
+                "stage2_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_055",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_backup",
+            "kind": "use_ability",
+            "label": "新沙奈朵拥抱第三能并到50伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_055"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_09_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "flip_candy_package",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、糖果和沙奈朵",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "attach_psychic_to_backup_ralts",
+            "kind": "attach_energy",
+            "label": "把抽到的超能手贴给30伤拉鲁拉丝",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_053"
+            }
+          },
+          {
+            "id": "rare_candy_gardevoir",
+            "kind": "play_trainer",
+            "label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+            "card_uid": "CSVH1C_045",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_053"
+                    }
+                  }
+                ],
+                "stage2_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_055",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_backup",
+            "kind": "use_ability",
+            "label": "新沙奈朵拥抱第三能并到50伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_055"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_miracle",
+            "kind": "attack",
+            "label": "奇迹之力190击倒130伤第一多龙",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "dragapult_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "第二多龙200反杀首攻者并放置60点备战伤害",
+            "require_attack": true
+          },
+          {
+            "id": "munkidori_second",
+            "kind": "munkidori",
+            "label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          }
+        ]
+      }
+    ],
+    "gardevoir_10": [
+      {
+        "id": "gardevoir_10_route_stops_before_progress",
+        "category": "route_choice",
+        "description": "选择局部展开但没有完成首轮奖赏，证明铺场本身不等于过关。",
+        "proof_steps": [
+          {
+            "id": "flip_candy_package",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、糖果和沙奈朵",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "nest_preserve_last_slot",
+            "kind": "play_trainer",
+            "label": "查看巢穴球候选后不放置，保留最后空位",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": []
+              }
+            ]
+          },
+          {
+            "id": "attach_psychic_to_backup_ralts",
+            "kind": "attach_energy",
+            "label": "把抽到的超能手贴给30伤拉鲁拉丝",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_053"
+            }
+          },
+          {
+            "id": "rare_candy_gardevoir",
+            "kind": "play_trainer",
+            "label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+            "card_uid": "CSVH1C_045",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_053"
+                    }
+                  }
+                ],
+                "stage2_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_055",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_backup",
+            "kind": "use_ability",
+            "label": "新沙奈朵拥抱第三能并到50伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_055"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gardevoir_10_handoff_stops_before_closeout",
+        "category": "handoff_timing",
+        "description": "首轮拿奖后没有完成终结攻击，证明两回合接力属于成功条件。",
+        "proof_steps": [
+          {
+            "id": "flip_candy_package",
+            "kind": "use_ability",
+            "label": "化危为吉抽到能量转移、糖果和沙奈朵",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_135"
+            },
+            "targets": []
+          },
+          {
+            "id": "nest_preserve_last_slot",
+            "kind": "play_trainer",
+            "label": "查看巢穴球候选后不放置，保留最后空位",
+            "card_uid": "CSVH1C_043",
+            "targets": [
+              {
+                "basic_pokemon": []
+              }
+            ]
+          },
+          {
+            "id": "attach_psychic_to_backup_ralts",
+            "kind": "attach_energy",
+            "label": "把抽到的超能手贴给30伤拉鲁拉丝",
+            "card_uid": "CSVE1C_PSY",
+            "target": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_053"
+            }
+          },
+          {
+            "id": "rare_candy_gardevoir",
+            "kind": "play_trainer",
+            "label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+            "card_uid": "CSVH1C_045",
+            "targets": [
+              {
+                "basic_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_053"
+                    }
+                  }
+                ],
+                "stage2_pokemon": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_055",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "embrace_backup",
+            "kind": "use_ability",
+            "label": "新沙奈朵拥抱第三能并到50伤",
+            "source": {
+              "zone": "bench_uid",
+              "uid": "CSV2C_055"
+            },
+            "targets": [
+              {
+                "embrace_energy": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_PSY",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "embrace_target": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench_uid",
+                      "uid": "CSV2C_055"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first_miracle",
+            "kind": "attack",
+            "label": "奇迹之力190击倒130伤第一多龙",
+            "attack_index": 0,
+            "targets": []
+          },
+          {
+            "id": "dragapult_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "第二多龙200反杀首攻者并放置60点备战伤害",
+            "require_attack": true
+          },
+          {
+            "id": "munkidori_second",
+            "kind": "munkidori",
+            "label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+            "ability_source": {
+              "zone": "bench_uid",
+              "uid": "CSV8C_094"
+            },
+            "damage_target": {
+              "zone": "active"
+            },
+            "amount": 30
+          }
+        ]
+      }
+    ]
+  }
+}

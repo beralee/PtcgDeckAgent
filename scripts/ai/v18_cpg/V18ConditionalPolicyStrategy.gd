@@ -14,6 +14,7 @@ const ResourceLedgerScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGRe
 const PrizeGraphScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGPrizeGraphSolver.gd")
 const ThreatResponseScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGThreatResponseSolver.gd")
 const RouteSearchScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGRouteSearch.gd")
+const TurnCompletionSolverScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGTurnCompletionSolver.gd")
 const PolicyGraphScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGPolicyGraph.gd")
 const PolicyValidatorScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGPolicyValidator.gd")
 const DecisionClientScript = preload("res://scripts/ai/v18_cpg/network/V18CPGDecisionClient.gd")
@@ -25,6 +26,7 @@ const ProfilePolicyScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGProfi
 const ExecutionCursorScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGExecutionCursor.gd")
 const InteractionPolicyScript = preload("res://scripts/ai/v18_cpg/execution/V18CPGInteractionPolicy.gd")
 const VisibleWaitBudgetScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGVisibleWaitBudget.gd")
+const EventBridgeScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGEventBridge.gd")
 
 const ROUTE_SELECTION_BONUS := 20000.0
 const MAX_ROUTE_SELECTION_BONUS := 250000.0
@@ -59,6 +61,7 @@ var _resource_ledger = ResourceLedgerScript.new()
 var _prize_graph = PrizeGraphScript.new()
 var _threat_response = ThreatResponseScript.new()
 var _route_search = RouteSearchScript.new()
+var _turn_completion_solver = TurnCompletionSolverScript.new()
 var _policy_graph = PolicyGraphScript.new()
 var _policy_validator = PolicyValidatorScript.new()
 var _decision_client = DecisionClientScript.new()
@@ -70,6 +73,7 @@ var _profile_policy = ProfilePolicyScript.new()
 var _execution_cursor = ExecutionCursorScript.new()
 var _interaction_policy = InteractionPolicyScript.new()
 var _visible_wait_budget = VisibleWaitBudgetScript.new()
+var _event_bridge = EventBridgeScript.new()
 
 var _runtime_configured: bool = false
 var _last_observation: Dictionary = {}
@@ -92,6 +96,9 @@ var _branch_hits: int = 0
 var _uncovered_events: int = 0
 var _turn_visible_wait_ms: int = 0
 var _turn_model_requests: int = 0
+var _turn_model_judgment_attempted: bool = false
+var _turn_model_judgment_requested: bool = false
+var _turn_model_judgment_resolved: bool = false
 var _request_wait_samples_ms: Array[float] = []
 var _unconsumed_action_result: Dictionary = {}
 var _route_selection_bonus: float = ROUTE_SELECTION_BONUS
@@ -138,6 +145,20 @@ func configure_audit(run_id: String, match_id: String, write_files: bool = false
 	_audit.configure(run_id, match_id, write_files)
 
 
+func configure_live_audit() -> void:
+	# Live audit is V18-only and uses wall-clock/object identity rather than
+	# gameplay RNG. This keeps production matches replay-attributable without
+	# perturbing shuffles, coin flips, or action selection.
+	var timestamp := Time.get_datetime_string_from_system(false, false) \
+		.replace("-", "").replace(":", "")
+	var day := timestamp.substr(0, 8)
+	_audit.configure(
+		"live_%s" % day,
+		"match_%s_%d" % [timestamp, get_instance_id()],
+		true
+	)
+
+
 func get_strategy_id() -> String:
 	return str(_profile.get("strategy_id", ""))
 
@@ -152,7 +173,9 @@ func get_runtime_metadata() -> Dictionary:
 		"base_strategy_id": str(_profile.get("base_strategy_id", "")),
 		"runtime_kind": ContractsScript.RUNTIME_KIND,
 		"feature_flag": ContractsScript.FEATURE_FLAG,
-		"experimental": true,
+		"experimental": bool(_profile.get("experimental", true)),
+		"battle_setup_available": bool(_profile.get("battle_setup_available", false)),
+		"promotion_status": str(_profile.get("promotion_status", "experimental")),
 		"requires_model": true,
 	}
 
@@ -206,17 +229,25 @@ func prepare_decision(
 		observation,
 		facts
 	)
+	candidate_pool = _turn_completion_solver.annotate_frontier(
+		candidate_pool,
+		observation,
+		facts,
+		_profile
+	)
 	# The terminal
 	# skip proof must compare every legal candidate against that same Rule floor,
 	# including candidates that do not fit into the ten-item model frontier.
 	var frontier := _route_search.prune_frontier(candidate_pool, 10)
 	frontier = _bind_engine_rule_floor(frontier, rule_floor_action_id)
+	facts = _with_turn_completion_facts(facts, observation, frontier)
+	var force_turn_model_judgment := _should_force_turn_model_judgment(event_context)
 	_trace_filtered_state(observation, facts, frontier)
 	# The match's first observation has no material delta, so the normal post-action
 	# certificate hook below cannot run yet.  The allowlist remains deliberately
 	# narrow: a paired opening-counter proof, or an exact same-quota attachment
 	# that immediately completes the current Active's public attack cost.
-	if _runtime_configured and _last_observation.is_empty():
+	if _runtime_configured and _last_observation.is_empty() and not force_turn_model_judgment:
 		var initial_upgrade := _find_module_verified_upgrade(frontier, facts)
 		if _can_apply_initial_module_upgrade(initial_upgrade):
 			_select_route(
@@ -242,11 +273,55 @@ func prepare_decision(
 	var delta_for_request: Dictionary = {}
 	var request_is_delta := false
 	if not _last_observation.is_empty() and str(observation.get("observation_hash", "")) != str(_last_observation.get("observation_hash", "")):
-		var delta := _material_delta.compare(_last_observation, observation, _last_facts, facts)
-		var delta_hash := str(delta.get("material_delta_hash", ""))
+		var delta: Dictionary = _material_delta.compare(
+			_last_observation,
+			observation,
+			_last_facts,
+			facts
+		)
 		var completed_action := _unconsumed_action_result.duplicate(true)
 		_unconsumed_action_result.clear()
-		if _runtime_configured:
+		delta = _enrich_material_delta_with_information_event(delta, completed_action)
+		var delta_hash := str(delta.get("material_delta_hash", ""))
+		# Once the turn's required model judgment has been accepted, the shared
+		# completion solver owns the exact ordering of its public, monotonic
+		# engine prefixes. This is what lets Area Zero -> Hoothoot -> Noctowl ->
+		# Ogerpon continue across fresh observations without another model call or
+		# a stale graph branch jumping straight back to attack.
+		if _runtime_configured \
+				and _turn_model_judgment_resolved \
+				and not force_turn_model_judgment:
+			var completion_continuation := _completion_override_for_rule_root(
+				frontier,
+				facts,
+				observation
+			)
+			if bool(completion_continuation.get("handled", false)):
+				_install_turn_completion_override(
+					completion_continuation,
+					frontier
+				)
+				_update_last_state(observation, facts, frontier)
+				_record_planning(
+					"turn_completion_prefix_continue",
+					started_msec,
+					false,
+					delta,
+					{
+						"candidate_id": _preferred_candidate_id,
+						"action_id": _preferred_action_id,
+						"completion_reason": str(
+							completion_continuation.get("reason", "")
+						),
+					}
+				)
+				return {
+					"status": "ready",
+					"owner": _current_action_owner,
+					"route_id": _current_route_id,
+					"candidate_id": _preferred_candidate_id,
+				}
+		if _runtime_configured and not force_turn_model_judgment:
 			var verified_upgrade := _find_module_verified_upgrade(frontier, facts)
 			if not verified_upgrade.is_empty():
 				_select_route(
@@ -364,7 +439,7 @@ func prepare_decision(
 				_clear_route("rules_fallback")
 				_update_last_state(observation, facts, frontier)
 				return {"status": "rules_fallback", "reason": "policy_otherwise"}
-			if not bool(delta.get("material", false)):
+			if not _information_event_requires_delta_replan(completed_action, delta):
 				_install_local_policy(frontier, "local_gate")
 				_update_last_state(observation, facts, frontier)
 				_record_planning("non_material_local_continue", started_msec, false, delta, {})
@@ -404,7 +479,7 @@ func prepare_decision(
 		_update_last_state(observation, facts, frontier)
 		return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id, "candidate_id": _preferred_candidate_id}
 	var terminal_skip := _should_skip_terminal_without_admissible_switch(candidate_pool, facts)
-	if bool(terminal_skip.get("skip", false)):
+	if bool(terminal_skip.get("skip", false)) and not force_turn_model_judgment:
 		# This is not a local strategic rewrite. Production safety checked the full
 		# annotated legal pool and found no admissible non-Rule root switch. Keep a
 		# one-shot Rule selection: a later observation must be evaluated afresh and
@@ -423,7 +498,8 @@ func prepare_decision(
 			"candidate_id": _preferred_candidate_id,
 		}
 	var local_decision := _should_use_local(frontier, facts)
-	if bool(local_decision.get("use_local", false)) or not _runtime_configured:
+	if bool(local_decision.get("use_local", false)) and not force_turn_model_judgment \
+			or not _runtime_configured:
 		var fallback_owner := "local_gate" if _runtime_configured else "rules_fallback"
 		_install_local_policy(frontier, fallback_owner)
 		_update_last_state(observation, facts, frontier)
@@ -448,16 +524,48 @@ func prepare_decision(
 	_request_serial += 1
 	_lifecycle["decision_window_id"] = "%s:w%d" % [str(_lifecycle.get("policy_id", "policy")), _request_serial]
 	_lifecycle["request_id"] = "%s:q%d" % [str(_lifecycle.get("policy_id", "policy")), _request_serial]
-	var request_envelope := _build_request_envelope(observation, facts, frontier, delta_for_request)
+	var request_envelope := _build_request_envelope(
+		observation,
+		facts,
+		frontier,
+		delta_for_request,
+		force_turn_model_judgment
+	)
 	var request_id := str(_lifecycle.get("request_id", ""))
+	var configured_token_budget := (
+		int(_profile.get("delta_response_token_budget", 220))
+		if request_is_delta
+		else int(_profile.get("initial_response_token_budget", 600))
+	)
+	var effective_token_budget := DecisionClientScript.new().resolve_token_budget(
+		configured_token_budget,
+		request_is_delta
+	)
 	var request_error := _decision_client.request_policy(
 		request_id,
 		request_envelope,
-		int(_profile.get("delta_response_token_budget", 220)) if request_is_delta else int(_profile.get("initial_response_token_budget", 600)),
+		configured_token_budget,
 		request_is_delta
 	)
 	if request_error != OK:
-		_install_local_policy(frontier, "deadline_fallback")
+		if force_turn_model_judgment:
+			_turn_model_judgment_attempted = true
+			_audit.record({
+				"turn_id": _current_turn,
+				"policy_id": str(_lifecycle.get("policy_id", "")),
+				"request_id": request_id,
+				"deck_id": int(_profile.get("deck_id", 0)),
+				"strategy_id": get_strategy_id(),
+				"event_type": "turn_model_judgment_request_failed",
+				"turn_model_judgment_required": true,
+				"fallback_reason": "request_error_%d" % request_error,
+			})
+		_install_completion_aware_fallback(
+			frontier,
+			"deadline_fallback",
+			facts,
+			observation
+		)
 		_update_last_state(observation, facts, frontier)
 		_record_planning("request_start_failed", started_msec, false, {}, {"fallback_reason": "request_error_%d" % request_error})
 		return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id}
@@ -470,9 +578,23 @@ func prepare_decision(
 		"strategy_id": get_strategy_id(),
 		"event_type": "model_request",
 		"is_delta": request_is_delta,
-		"token_budget": int(_profile.get("delta_response_token_budget", 220)) if request_is_delta else int(_profile.get("initial_response_token_budget", 600)),
+		"configured_token_budget": configured_token_budget,
+		"token_budget": effective_token_budget,
 		"request_envelope": request_envelope,
 	})
+	if force_turn_model_judgment:
+		_turn_model_judgment_attempted = true
+		_turn_model_judgment_requested = true
+		_audit.record({
+			"turn_id": _current_turn,
+			"policy_id": str(_lifecycle.get("policy_id", "")),
+			"decision_window_id": str(_lifecycle.get("decision_window_id", "")),
+			"request_id": request_id,
+			"deck_id": int(_profile.get("deck_id", 0)),
+			"strategy_id": get_strategy_id(),
+			"event_type": "turn_model_judgment_requested",
+			"turn_model_judgment_required": true,
+		})
 	_turn_model_requests += 1
 	_pending_request_id = request_id
 	_pending_request_started_msec = Time.get_ticks_msec()
@@ -495,6 +617,7 @@ func prepare_decision(
 		"lifecycle": _lifecycle.duplicate(true),
 		"is_delta": request_is_delta,
 		"material_delta": delta_for_request.duplicate(true),
+		"turn_model_judgment": force_turn_model_judgment,
 	}
 	_update_last_state(observation, facts, frontier)
 	return {"status": "pending", "request_id": request_id}
@@ -562,6 +685,8 @@ func force_deadline_fallback(
 ) -> void:
 	if _pending_request_id == "":
 		return
+	var resolves_turn_model_judgment := _turn_model_judgment_requested \
+		and not _turn_model_judgment_resolved
 	_pending_request_id = ""
 	_pending_context.clear()
 	if visible_wait_ms >= 0:
@@ -569,7 +694,12 @@ func force_deadline_fallback(
 		_request_wait_samples_ms.append(float(visible_wait_ms))
 	_pending_request_started_msec = 0
 	_pending_request_visible_budget_ms = 0
-	_install_local_policy(_last_frontier, "deadline_fallback")
+	_install_completion_aware_fallback(
+		_last_frontier,
+		"deadline_fallback",
+		_last_facts,
+		_last_observation
+	)
 	_audit.record({
 		"turn_id": _current_turn,
 		"policy_id": str(_lifecycle.get("policy_id", "")),
@@ -583,8 +713,15 @@ func force_deadline_fallback(
 		"fallback_reason": reason,
 		"request_wall_ms": maxi(0, visible_wait_ms),
 		"visible_wait_ms": maxi(0, visible_wait_ms),
+		"turn_model_judgment": resolves_turn_model_judgment,
 	})
-	v18cpg_decision_ready.emit(_current_turn, false, reason)
+	if resolves_turn_model_judgment:
+		_turn_model_judgment_resolved = true
+	v18cpg_decision_ready.emit(
+		_current_turn,
+		false,
+		_user_facing_response_reason(false, reason)
+	)
 
 
 func has_active_policy(turn_id: int, observation_version: int = -1) -> bool:
@@ -681,6 +818,15 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 	typed_context["v18cpg_facts"] = _last_facts.duplicate(true)
 	typed_context["v18cpg_observation"] = _last_observation.duplicate(true)
 	typed_context["v18cpg_semantic_manifest"] = _semantic_manifest.duplicate(true)
+	typed_context["v18cpg_preferred_action_ref"] = _preferred_action_ref()
+	typed_context["v18cpg_live_interaction_ref"] = \
+		_live_public_interaction_ref(context)
+	typed_context["turn_completion_contract"] = _turn_completion_solver.build(
+		_last_observation,
+		_last_facts,
+		_last_frontier,
+		_profile
+	)
 	var interaction_route_id := _interaction_route_context()
 	var rule_picks := _rules_fallback.pick_interaction_items(items, step, context)
 	var exact_gardevoir_stage := _active_profiled_gardevoir_ko_interaction_stage(step)
@@ -708,6 +854,55 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 		"policy_graph_branch",
 		"module_verified_upgrade",
 	]
+	# A public minimum-resource KO is an attack-effect invariant, not a route
+	# ownership preference. Production intentionally installs terminal Rule
+	# roots as one-shot `rules_fallback` actions, and deadline fallback may own
+	# the same legal attack. Once the live attack source/index, public target HP,
+	# and legal discard pool prove the payment, every configured V18CPG owner
+	# must obey it. The runtime gate preserves exact Rule behavior in no-model
+	# mode.
+	if _runtime_configured:
+		var minimum_lethal_override := \
+			_capability_registry.pick_verified_interaction_override(
+				items,
+				step,
+				rule_picks,
+				typed_context,
+				_profile,
+				"public_minimum_resource_ko"
+			)
+		if bool(minimum_lethal_override.get("handled", false)):
+			_audit.record({
+				"turn_id": _current_turn,
+				"policy_id": str(_lifecycle.get("policy_id", "")),
+				"revision_id": str(_lifecycle.get("revision_id", "")),
+				"node_id": _policy_graph.current_node_id(),
+				"route_id": interaction_route_id,
+				"candidate_id": _preferred_candidate_id,
+				"deck_id": int(_profile.get("deck_id", 0)),
+				"strategy_id": get_strategy_id(),
+				"event_type": "minimum_lethal_interaction_override",
+				"action_owner": _current_action_owner,
+				"fallback_reason": "",
+				"certificate_kind": str(
+					minimum_lethal_override.get("certificate_kind", "")
+				),
+				"selected_count": (
+					minimum_lethal_override.get("items", []) as Array
+				).size(),
+				"rule_count": rule_picks.size(),
+				"target_hp": int(minimum_lethal_override.get("target_hp", 0)),
+				"projected_damage": int(
+					minimum_lethal_override.get("projected_damage", 0)
+				),
+				"live_interaction_verified": bool(
+					minimum_lethal_override.get(
+						"live_interaction_verified",
+						false
+					)
+				),
+			})
+			return minimum_lethal_override.get("items", []) as Array
 	if _runtime_configured and (module_owned or _current_action_owner == "local_gate"):
 		var basic_search_override := _noctowl_search.pick_verified_basic_search_override(
 			items,
@@ -732,6 +927,38 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 				"certificate_kind": str(basic_search_override.get("certificate_kind", "")),
 			})
 			return basic_search_override.get("items", []) as Array
+	if _runtime_configured and module_owned \
+			and _active_module_certificate_kind in [
+				"bloodmoon_closeout_recover_energy",
+				"profiled_bloodmoon_closeout_recover_energy",
+			]:
+		var bloodmoon_recovery_override := \
+			_noctowl_search.pick_verified_bloodmoon_closeout_override(
+				items,
+				step,
+				rule_picks,
+				_last_observation,
+				_profile,
+				_active_module_certificate_kind
+			)
+		if bool(bloodmoon_recovery_override.get("handled", false)):
+			_audit.record({
+				"turn_id": _current_turn,
+				"policy_id": str(_lifecycle.get("policy_id", "")),
+				"revision_id": str(_lifecycle.get("revision_id", "")),
+				"node_id": _policy_graph.current_node_id(),
+				"route_id": interaction_route_id,
+				"candidate_id": _preferred_candidate_id,
+				"deck_id": int(_profile.get("deck_id", 0)),
+				"strategy_id": get_strategy_id(),
+				"event_type": "module_verified_interaction_override",
+				"action_owner": "module_verified_upgrade",
+				"fallback_reason": "",
+				"certificate_kind": str(
+					bloodmoon_recovery_override.get("certificate_kind", "")
+				),
+			})
+			return bloodmoon_recovery_override.get("items", []) as Array
 	if _runtime_configured and exact_gardevoir_stage != "":
 		# The route certificate intentionally expires after every engine action.
 		# The current frontier annotation and the capability registry both
@@ -900,12 +1127,31 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		if module_score != null:
 			return float(module_score)
 	if _runtime_configured \
+			and _current_route_id == "route:gust" \
+			and _active_module_certificate_kind in [
+				"fan_rotom_gust_closeout",
+				"public_fan_rotom_gust_attach_attack_closeout",
+			]:
+		var gust_score: Variant = _noctowl_search.verified_fan_rotom_gust_target_score(
+			item,
+			step,
+			_last_observation,
+			_profile,
+			_active_module_certificate_kind
+		)
+		if gust_score != null:
+			return float(gust_score)
+	if _runtime_configured \
 			and _current_route_id == "route:accelerate" \
-			and _active_module_certificate_kind == "banked_energy_handoff":
+			and _active_module_certificate_kind in [
+				"banked_energy_handoff",
+			]:
 		var verified_score: Variant = _noctowl_search.verified_energy_handoff_target_score(
 			item,
 			step,
-			_profile
+			_profile,
+			_last_observation,
+			_active_module_certificate_kind
 		)
 		if verified_score != null:
 			return float(verified_score)
@@ -1024,6 +1270,61 @@ func stable_action_id_for_host(action: Dictionary) -> String:
 	return _observation_gateway.stable_action_id(action)
 
 
+func make_v18cpg_runtime_snapshot(
+	game_state: GameState,
+	player_index: int
+) -> Dictionary:
+	return _observation_gateway.snapshot_public_state(game_state, player_index)
+
+
+func observe_v18cpg_runtime_state_change(
+	before_snapshot: Dictionary,
+	after_snapshot: Dictionary,
+	context: Dictionary = {}
+) -> Dictionary:
+	var event: Dictionary = _event_bridge.observe_transition(
+		before_snapshot,
+		after_snapshot,
+		context
+	)
+	if bool(event.get("information_material", false)):
+		# Main-action ownership was recorded before the interaction resolved. Keep
+		# that owner and attach the public information result to it, even when the
+		# selected root was named evolve/accelerate rather than information.
+		if _unconsumed_action_result.is_empty():
+			_unconsumed_action_result = {
+				"action_id": str(context.get("action_id", "")),
+				"action_kind": str(context.get("action_kind", "")),
+				"success": bool(event.get("success", false)),
+				"route_id": _current_route_id,
+				"candidate_id": _preferred_candidate_id,
+				"owner": _current_action_owner,
+			}
+		_unconsumed_action_result["information_event"] = true
+		_unconsumed_action_result["information_event_type"] = str(event.get("event_type", ""))
+		_unconsumed_action_result["resolution_id"] = str(event.get("resolution_id", ""))
+		_unconsumed_action_result["public_delta"] = event.get("public_delta", {}).duplicate(true) \
+			if event.get("public_delta", {}) is Dictionary else {}
+		_unconsumed_action_result["acquired_own_hand_cards"] = event.get(
+			"acquired_own_hand_cards", []
+		).duplicate(true)
+		_audit.record({
+			"turn_id": _current_turn,
+			"policy_id": str(_lifecycle.get("policy_id", "")),
+			"revision_id": str(_lifecycle.get("revision_id", "")),
+			"deck_id": int(_profile.get("deck_id", 0)),
+			"strategy_id": get_strategy_id(),
+			"event_type": "information_epoch_observed",
+			"resolution_id": str(event.get("resolution_id", "")),
+			"action_owner": str(_unconsumed_action_result.get("owner", "")),
+			"route_id": str(_unconsumed_action_result.get("route_id", "")),
+			"candidate_id": str(_unconsumed_action_result.get("candidate_id", "")),
+			"step_kind": str(event.get("step_kind", "")),
+			"public_delta": event.get("public_delta", {}),
+		})
+	return event
+
+
 func _annotate_candidate_pool_with_engine_rule_floor(
 	candidate_pool: Array[Dictionary],
 	action_id: String,
@@ -1075,6 +1376,113 @@ func _bind_engine_rule_floor(frontier: Array[Dictionary], action_id: String) -> 
 	return result
 
 
+func _terminal_completion_override(
+	root_ref: Dictionary,
+	frontier: Array[Dictionary],
+	facts: Dictionary,
+	observation: Dictionary
+) -> Dictionary:
+	var selected_id := str(root_ref.get(
+		"candidate_id",
+		root_ref.get("first_candidate_id", "")
+	))
+	var selected := _route_search.find_candidate(frontier, selected_id)
+	if selected.is_empty():
+		return {"handled": false}
+	var contract: Dictionary = _turn_completion_solver.build(
+		observation,
+		facts,
+		frontier,
+		_profile
+	)
+	if not bool(contract.get("must_review_before_terminal", false)):
+		return {"handled": false}
+	var recommended_id := str(contract.get("recommended_candidate_id", ""))
+	var recommended_action_id := str(contract.get("recommended_action_id", ""))
+	var recommended := _route_search.find_candidate(frontier, recommended_id)
+	if recommended.is_empty() \
+			or recommended_id == selected_id \
+			or recommended_action_id == "" \
+			or str(recommended.get("safe_prefix_action_id", "")) \
+				!= recommended_action_id:
+		return {"handled": false}
+	var recommended_route := str(recommended.get("route_id", ""))
+	var recommended_kind := str(recommended.get("action_kind", ""))
+	if recommended_route in [
+		"route:attack_ko",
+		"route:attack_pressure",
+		"route:end_turn",
+	] or recommended_kind in ["attack", "granted_attack", "end_turn"]:
+		return {"handled": false}
+	var selected_effect: Dictionary = selected.get(
+		"post_attack_continuity",
+		{}
+	) if selected.get("post_attack_continuity", {}) is Dictionary else {}
+	var recommended_effect: Dictionary = recommended.get(
+		"post_attack_continuity",
+		{}
+	) if recommended.get("post_attack_continuity", {}) is Dictionary else {}
+	if bool(selected_effect.get("force_before_terminal", false)) \
+			and int(selected_effect.get("priority", 1000)) \
+				<= int(recommended_effect.get("priority", 1000)):
+		return {"handled": false}
+	return {
+		"handled": true,
+		"candidate_id": recommended_id,
+		"action_id": recommended_action_id,
+		"route_id": recommended_route,
+		"reason": str(contract.get("recommended_reason", "")),
+		"model_candidate_id": selected_id,
+		"model_route_id": str(selected.get("route_id", "")),
+	}
+
+
+func _completion_override_for_rule_root(
+	frontier: Array[Dictionary],
+	facts: Dictionary,
+	observation: Dictionary
+) -> Dictionary:
+	if frontier.is_empty():
+		return {"handled": false}
+	var rule_root: Dictionary = frontier[0]
+	return _terminal_completion_override(
+		{
+			"candidate_id": str(rule_root.get("candidate_id", "")),
+			"route_id": str(rule_root.get("route_id", "")),
+		},
+		frontier,
+		facts,
+		observation
+	)
+
+
+func _install_turn_completion_override(
+	completion_override: Dictionary,
+	frontier: Array[Dictionary]
+) -> void:
+	var candidate_id := str(completion_override.get("candidate_id", ""))
+	var candidate := _route_search.find_candidate(frontier, candidate_id)
+	if candidate.is_empty():
+		_install_rejected_model_fallback(frontier)
+		return
+	_policy_graph.clear()
+	_execution_cursor.clear()
+	_revision_serial += 1
+	_lifecycle["revision_id"] = "%s:r%d" % [
+		str(_lifecycle.get("policy_id", "policy")),
+		_revision_serial,
+	]
+	# The completion solver is a deterministic public-state safety barrier. Its
+	# exact candidate gets execution authority for one action, after which the
+	# information-event bridge rebuilds the frontier from the new observation.
+	_select_route(
+		str(candidate.get("route_id", "")),
+		frontier,
+		"module_verified_upgrade",
+		candidate_id
+	)
+
+
 func install_policy_response_for_test(
 	response: Dictionary,
 	frontier: Array[Dictionary],
@@ -1104,6 +1512,20 @@ func install_policy_response_for_test(
 	var progress_validation := _validate_candidate_bound_policy_progress(policy, root_ref, frontier, facts)
 	if not bool(progress_validation.get("valid", false)):
 		return progress_validation
+	var completion_override := _terminal_completion_override(
+		root_ref,
+		frontier,
+		facts,
+		_last_observation
+	)
+	if bool(completion_override.get("handled", false)):
+		_install_turn_completion_override(completion_override, frontier)
+		return {
+			"valid": true,
+			"turn_completion_override": true,
+			"candidate_id": str(completion_override.get("candidate_id", "")),
+			"action_id": str(completion_override.get("action_id", "")),
+		}
 	var origin := "model_synthesized_route" if str(root_ref.get("mode", "")) == "propose_typed_route" else "model_selected_local_route"
 	_policy_graph.install(policy, origin)
 	_execution_cursor.install(root_ref, _lifecycle, int(_last_observation.get("observation_version", 0)), origin)
@@ -1141,7 +1563,12 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		if raw_route is Dictionary:
 			frontier.append(raw_route as Dictionary)
 	if stale:
-		_install_local_policy(frontier, "deadline_fallback")
+		_install_completion_aware_fallback(
+			_last_frontier,
+			"deadline_fallback",
+			_last_facts,
+			_last_observation
+		)
 		_record_policy_response(false, "stale_response", metrics)
 		return
 	var validation := _policy_validator.validate_response(
@@ -1152,13 +1579,25 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		true
 	)
 	if not bool(validation.get("valid", false)):
-		_install_local_policy(frontier, "schema_fallback")
+		_install_completion_aware_fallback(
+			frontier,
+			"schema_fallback",
+			context.get("facts", {}) \
+				if context.get("facts", {}) is Dictionary else {},
+			_last_observation
+		)
 		_record_policy_response(false, str(validation.get("reason", "schema_error")), metrics)
 		return
 	var policy: Dictionary = validation.get("policy", {})
 	var binding := _policy_validator.bind_root_to_frontier(policy, frontier)
 	if not bool(binding.get("valid", false)):
-		_install_local_policy(frontier, "schema_fallback")
+		_install_completion_aware_fallback(
+			frontier,
+			"schema_fallback",
+			context.get("facts", {}) \
+				if context.get("facts", {}) is Dictionary else {},
+			_last_observation
+		)
 		_record_policy_response(false, str(binding.get("reason", "candidate_binding_failed")), metrics)
 		return
 	policy = binding.get("policy", {})
@@ -1166,7 +1605,13 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 	var root_route := str(root_ref.get("route_id", ""))
 	var root_candidate := str(root_ref.get("candidate_id", root_ref.get("first_candidate_id", "")))
 	if root_route not in context.get("available_route_ids", []):
-		_install_local_policy(frontier, "schema_fallback")
+		_install_completion_aware_fallback(
+			frontier,
+			"schema_fallback",
+			context.get("facts", {}) \
+				if context.get("facts", {}) is Dictionary else {},
+			_last_observation
+		)
 		_record_policy_response(false, "root_route_unavailable", metrics)
 		return
 	var binding_validation := _validate_root_route_ref(root_ref, frontier)
@@ -1183,6 +1628,37 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 	if not bool(progress_validation.get("valid", false)):
 		_install_rejected_model_fallback(frontier)
 		_record_policy_response(false, str(progress_validation.get("reason", "policy_progress_unproven")), metrics, "route_validation")
+		return
+	var completion_override := _terminal_completion_override(
+		root_ref,
+		frontier,
+		context.get("facts", {}) if context.get("facts", {}) is Dictionary else {},
+		_last_observation
+	)
+	if bool(completion_override.get("handled", false)):
+		_install_turn_completion_override(completion_override, frontier)
+		_record_policy_response(
+			true,
+			"turn_completion_barrier_override",
+			metrics,
+			"",
+			{
+				"model_candidate_id": str(root_ref.get(
+					"candidate_id",
+					root_ref.get("first_candidate_id", "")
+				)),
+				"model_route_id": str(root_ref.get("route_id", "")),
+				"completion_candidate_id": str(
+					completion_override.get("candidate_id", "")
+				),
+				"completion_action_id": str(
+					completion_override.get("action_id", "")
+				),
+				"completion_reason": str(
+					completion_override.get("reason", "")
+				),
+			}
+		)
 		return
 	var route_safety := _validate_model_route_safety(
 		root_route,
@@ -1204,6 +1680,67 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		return
 	var selected_candidate := _route_search.find_candidate(frontier, root_candidate)
 	var shadow_exact_rule_root := _should_shadow_exact_rule_root(route_safety)
+	var post_judgment_upgrade: Dictionary = {}
+	if shadow_exact_rule_root and bool(context.get("turn_model_judgment", false)):
+		post_judgment_upgrade = _find_module_verified_upgrade(
+			frontier,
+			context.get("facts", {}) if context.get("facts", {}) is Dictionary else {}
+		)
+		var upgrade_reviews: Array[Dictionary] = []
+		for review_candidate: Dictionary in frontier:
+			if not _candidate_has_verified_module_annotation(review_candidate):
+				continue
+			var review_safety := _validate_model_route_safety(
+				str(review_candidate.get("route_id", "")),
+				frontier,
+				context.get("facts", {}) if context.get("facts", {}) is Dictionary else {},
+				str(review_candidate.get("candidate_id", ""))
+			)
+			upgrade_reviews.append({
+				"candidate_id": str(review_candidate.get("candidate_id", "")),
+				"route_id": str(review_candidate.get("route_id", "")),
+				"action_kind": str(review_candidate.get("action_kind", "")),
+				"engine_rule_floor_exact": bool(
+					review_candidate.get("engine_rule_floor_exact", false)
+				),
+				"valid": bool(review_safety.get("valid", false)),
+				"reason": str(review_safety.get("reason", "")),
+				"certificate_kind": str(
+					review_safety.get("advantage", {}).get("certificate_kind", "")
+				),
+			})
+		_audit.record({
+			"turn_id": _current_turn,
+			"policy_id": str(_lifecycle.get("policy_id", "")),
+			"request_id": request_id,
+			"deck_id": int(_profile.get("deck_id", 0)),
+			"strategy_id": get_strategy_id(),
+			"event_type": "post_judgment_verified_upgrade_review",
+			"accepted": not post_judgment_upgrade.is_empty(),
+			"candidate_id": str(post_judgment_upgrade.get("candidate_id", "")),
+			"route_id": str(post_judgment_upgrade.get("route_id", "")),
+			"certificate_kind": str(
+				post_judgment_upgrade.get("verified_advantage", {}).get(
+					"certificate_kind",
+					""
+				)
+			),
+			"candidate_reviews": upgrade_reviews,
+		})
+	if not post_judgment_upgrade.is_empty():
+		_install_post_judgment_verified_upgrade(post_judgment_upgrade, frontier)
+		_record_policy_response(
+			true,
+			"exact_rule_root_reviewed_then_module_verified_upgrade",
+			metrics,
+			"",
+			{
+				"canonicalized_unreachable_nodes": int(
+					validation.get("canonicalized_unreachable_nodes", 0)
+				),
+			}
+		)
+		return
 	var defer_root_to_rule := shadow_exact_rule_root or not bool(route_safety.get("valid", false)) \
 		and str(route_safety.get("reason", "")) in [
 			"ambiguous_rule_tie_without_verified_advantage",
@@ -1372,6 +1909,9 @@ func _begin_turn(turn_number: int, event_context: Dictionary) -> void:
 	_request_serial = 0
 	_turn_visible_wait_ms = 0
 	_turn_model_requests = 0
+	_turn_model_judgment_attempted = false
+	_turn_model_judgment_requested = false
+	_turn_model_judgment_resolved = false
 	var run_id := str(event_context.get("run_id", "v18cpg"))
 	var match_id := str(event_context.get("match_id", "match"))
 	_lifecycle = ContractsScript.make_lifecycle(run_id, match_id, turn_number, _revision_serial)
@@ -1400,21 +1940,58 @@ func _begin_turn(turn_number: int, event_context: Dictionary) -> void:
 		"risk_posture": str(_profile.get("risk_posture", "balanced")),
 		"expires_when": ["turn_end", "major_ko", "engine_lost"],
 	}
+	if _requires_turn_model_judgment():
+		_audit.record({
+			"turn_id": _current_turn,
+			"policy_id": str(_lifecycle.get("policy_id", "")),
+			"deck_id": int(_profile.get("deck_id", 0)),
+			"strategy_id": get_strategy_id(),
+			"event_type": "turn_model_judgment_opened",
+			"turn_model_judgment_required": true,
+		})
+
+
+func _requires_turn_model_judgment() -> bool:
+	return str(_profile.get("turn_model_judgment_mode", "")) \
+		== "required_first_main_window"
+
+
+func _should_force_turn_model_judgment(event_context: Dictionary) -> bool:
+	return _requires_turn_model_judgment() \
+		and _runtime_configured \
+		and str(event_context.get("event_type", "MAIN_ACTION_WINDOW")) == "MAIN_ACTION_WINDOW" \
+		and not _turn_model_judgment_attempted
 
 
 func _build_request_envelope(
 	observation: Dictionary,
 	facts: Dictionary,
 	frontier: Array[Dictionary],
-	material_delta: Dictionary = {}
+	material_delta: Dictionary = {},
+	required_turn_judgment: bool = false
 ) -> Dictionary:
 	var typed_policy := _profile_policy.sanitize(_profile, REGISTERED_ROUTE_IDS)
 	var compact_frontier := _compact_frontier_for_model(frontier)
 	var factored_frontier := _factor_common_capability_context(compact_frontier)
 	var profile_summary := _profile_summary_for_model(typed_policy)
+	var request_facts := _with_turn_completion_facts(
+		facts,
+		observation,
+		frontier
+	)
+	var turn_completion_contract := _turn_completion_solver.build(
+		observation,
+		request_facts,
+		frontier,
+		_profile
+	)
 	return {
 		"schema_version": ContractsScript.SCHEMA_VERSION,
 		"limits": {
+			# A required first-main-window judgment is still a conditional-policy
+			# request. Preserve the profile's graph budget so predictable action
+			# prefixes and information checkpoints can avoid unnecessary future
+			# calls; the validator and token budget continue to reject verbosity.
 			"max_policy_nodes": mini(
 				maxi(int(_profile.get("max_policy_nodes", 8)), 1),
 				ContractsScript.HARD_MAX_POLICY_NODES
@@ -1425,12 +2002,15 @@ func _build_request_envelope(
 		"observation": _compact_observation_for_model(observation),
 		"belief": _belief.snapshot(),
 		"match_agenda": _match_agenda.duplicate(true),
-		"facts": facts.duplicate(true),
+		"facts": request_facts,
 		"resource_ledger": _compact_resource_ledger_for_model(
 			_resource_ledger.build(observation, _semantic_manifest, _profile, _belief.snapshot())
 		),
-		"prize_graph": _compact_prize_graph_for_model(_prize_graph.solve(observation, facts)),
+		"prize_graph": _compact_prize_graph_for_model(
+			_prize_graph.solve(observation, request_facts)
+		),
 		"threat_response": _threat_response.solve(observation),
+		"turn_completion_contract": turn_completion_contract,
 		"capability_context": factored_frontier.get("capability_context", {}),
 		"frontier": factored_frontier.get("frontier", []),
 		"current_root_route_ids": _route_ids(frontier),
@@ -1543,10 +2123,19 @@ func _compact_action_card_ref(value: Variant) -> Dictionary:
 func _compact_outcome_for_model(value: Variant) -> Dictionary:
 	var source: Dictionary = value if value is Dictionary else {}
 	var result: Dictionary = {}
-	for key: String in ["win_now", "attack_ready", "terminal"]:
+	for key: String in [
+		"win_now",
+		"attack_ready",
+		"attack_uptime_next_turn",
+		"terminal",
+	]:
 		if bool(source.get(key, false)):
 			result[key] = true
-	for key: String in ["prizes_now", "estimated_damage"]:
+	for key: String in [
+		"prizes_now",
+		"estimated_damage",
+		"continuity_debt_reduction",
+	]:
 		var amount := int(source.get(key, 0))
 		if amount != 0:
 			result[key] = amount
@@ -1977,13 +2566,39 @@ func _install_local_policy(frontier: Array[Dictionary], owner: String) -> void:
 	)
 
 
+func _install_completion_aware_fallback(
+	frontier: Array[Dictionary],
+	owner: String,
+	facts: Dictionary = {},
+	observation: Dictionary = {}
+) -> bool:
+	var effective_facts := facts if not facts.is_empty() else _last_facts
+	var effective_observation := observation \
+		if not observation.is_empty() else _last_observation
+	var completion_override := _completion_override_for_rule_root(
+		frontier,
+		effective_facts,
+		effective_observation
+	)
+	if bool(completion_override.get("handled", false)):
+		_install_turn_completion_override(completion_override, frontier)
+		return true
+	_install_local_policy(frontier, owner)
+	return false
+
+
 func _install_rejected_model_fallback(frontier: Array[Dictionary]) -> void:
 	# A rejected response must be observationally equivalent to a request that
 	# never arrived.  In particular, it must not relabel the Rule root as
 	# `local_gate`, because that owner is allowed to activate additional local
 	# interaction certificates and can therefore change a same-seed duel even
 	# when audit reports model_accepted=0.
-	_install_local_policy(frontier, "deadline_fallback")
+	_install_completion_aware_fallback(
+		frontier,
+		"deadline_fallback",
+		_last_facts,
+		_last_observation
+	)
 
 
 func _install_wait_budget_fallback(frontier: Array[Dictionary]) -> void:
@@ -2017,6 +2632,12 @@ func _should_reopen_information_epoch(
 		return false
 	if not bool(completed_action.get("success", false)):
 		return false
+	# An engine interaction can turn any root action into an information action:
+	# Noctowl is selected as an evolve route, for example, but its triggered
+	# search changes the next decision's visible hand identities. The event bridge
+	# is the proof, so route naming must not suppress the new information epoch.
+	if bool(completed_action.get("information_event", false)):
+		return true
 	var route_id := str(completed_action.get("route_id", ""))
 	var candidate_id := str(completed_action.get("candidate_id", ""))
 	var checkpoint_after := ""
@@ -2059,6 +2680,40 @@ func _should_reopen_information_epoch(
 		return true
 	var changed_facts: Array = delta.get("changed_facts", []) if delta.get("changed_facts", []) is Array else []
 	return "resources.hand_size" in changed_facts
+
+
+func _information_event_requires_delta_replan(
+	completed_action: Dictionary,
+	delta: Dictionary
+) -> bool:
+	# A model graph is allowed to keep ownership only when one of its typed
+	# checkpoints actually resolves. If the graph returns `replan`, the engine's
+	# information event is authoritative even when coarse material-delta fields
+	# miss a same-size hand identity replacement.
+	return bool(completed_action.get("information_event", false)) \
+		or bool(delta.get("material", false)) \
+		or bool(delta.get("legal_actions_changed", false))
+
+
+func _enrich_material_delta_with_information_event(
+	delta: Dictionary,
+	completed_action: Dictionary
+) -> Dictionary:
+	if not bool(completed_action.get("information_event", false)):
+		return delta
+	var enriched := delta.duplicate(true)
+	enriched["material"] = true
+	enriched["information_event"] = true
+	enriched["information_event_type"] = str(completed_action.get("information_event_type", ""))
+	enriched["resolution_id"] = str(completed_action.get("resolution_id", ""))
+	enriched["public_delta"] = completed_action.get("public_delta", {}).duplicate(true) \
+		if completed_action.get("public_delta", {}) is Dictionary else {}
+	enriched["acquired_own_hand_cards"] = completed_action.get(
+		"acquired_own_hand_cards", []
+	).duplicate(true)
+	enriched.erase("material_delta_hash")
+	enriched["material_delta_hash"] = ContractsScript.stable_hash(enriched)
+	return enriched
 
 
 func _validate_model_route_safety(
@@ -2312,6 +2967,9 @@ func _can_apply_autonomous_module_upgrade(
 	# The former repeated-Embrace projection is intentionally absent: one current
 	# ability cannot own an unbound multi-interaction future sequence.
 	if certificate_kind in [
+		"public_active_ko_cost_before_independent_bench_evolve",
+		"public_dragon_weakness_field_immediate_ko",
+		"public_active_gardevoir_attack_completion",
 		"public_second_counter_mover_final_prize_closeout",
 		"public_profiled_low_pressure_counter_engine_setup",
 		"profiled_double_counter_engine_hand_reset",
@@ -2326,6 +2984,11 @@ func _can_apply_autonomous_module_upgrade(
 		"public_same_ko_preserve_attached_energy",
 		"profiled_stage2_search_before_pivot",
 		"public_copy_source_recovery_attack_epoch",
+		"profiled_bloodmoon_closeout_bench",
+		"profiled_bloodmoon_closeout_recover_energy",
+		"profiled_bloodmoon_closeout_attach_pivot",
+		"profiled_bloodmoon_closeout_retreat_finisher",
+		"public_dynamic_cost_ready_attack_over_redundant_attachment",
 	]:
 		return true
 	# A non-terminal local certificate must never postpone an executable Rule
@@ -2334,6 +2997,17 @@ func _can_apply_autonomous_module_upgrade(
 	if bool(facts.get("attack", {}).get("ready", false)) \
 			or bool(facts.get("attack", {}).get("ko_available", false)) \
 			or str(local_top.get("route_id", "")) in ["route:attack_ko", "route:attack_pressure"]:
+		return false
+	if certificate_kind == "public_distinct_energy_coverage":
+		# Coverage arithmetic proves only that a type is new, not that it is more
+		# valuable than Rule's exact attachment. Seed 800015946 demonstrates that
+		# replacing Grass with Psychic inside the same quota can lose the future
+		# Ogerpon line. Keep this evidence model-visible but never autonomous.
+		return false
+	if certificate_kind == "public_stadium_immediate_capacity":
+		# Bench capacity is future flexibility, not a monotonic action-level
+		# advantage. Spending a Basic from hand can lose both tempo and a future
+		# search target even when Rule would otherwise end the turn.
 		return false
 	if certificate_kind != "public_typed_attack_cost_completion":
 		return certificate_kind != ""
@@ -2376,10 +3050,12 @@ func _can_apply_initial_module_upgrade(upgrade: Dictionary) -> bool:
 		upgrade.get("verified_advantage", {}).get("certificate_kind", "")
 	)
 	return certificate_kind in [
+		"public_active_ko_cost_before_independent_bench_evolve",
 		"profiled_counter_activation",
 		"public_typed_attack_cost_completion",
 		"public_same_ko_preserve_attached_energy",
 		"profiled_stage2_search_before_pivot",
+		"public_dynamic_cost_ready_attack_over_redundant_attachment",
 	]
 
 
@@ -2793,6 +3469,30 @@ func _activate_verified_upgrade_certificate(upgrade: Dictionary) -> void:
 		}
 
 
+func _install_post_judgment_verified_upgrade(
+	upgrade: Dictionary,
+	frontier: Array[Dictionary]
+) -> void:
+	_policy_graph.clear()
+	_execution_cursor.clear()
+	_revision_serial += 1
+	_lifecycle["revision_id"] = "%s:r%d" % [
+		str(_lifecycle.get("policy_id", "policy")),
+		_revision_serial,
+	]
+	# Reuse the existing closed action-owner contract. A novel owner string is
+	# normalized to local_gate by _select_route(), which drops the route bonus
+	# and makes the host reopen the same observation before executing the
+	# verified candidate.
+	_select_route(
+		str(upgrade.get("route_id", "")),
+		frontier,
+		"module_verified_upgrade",
+		str(upgrade.get("candidate_id", ""))
+	)
+	_activate_verified_upgrade_certificate(upgrade)
+
+
 func _required_selection_bonus(selected: Dictionary, frontier: Array[Dictionary]) -> float:
 	# Route validation decides whether a switch is safe. Once approved, scoring
 	# must faithfully execute its exact candidate even when the Rule strategy
@@ -2914,6 +3614,65 @@ func _with_public_flow_facts(facts: Dictionary, observation: Dictionary) -> Dict
 	return result
 
 
+func _with_turn_completion_facts(
+	facts: Dictionary,
+	observation: Dictionary,
+	frontier: Array[Dictionary]
+) -> Dictionary:
+	var result := facts.duplicate(true)
+	var contract := _turn_completion_solver.build(
+		observation,
+		result,
+		frontier,
+		_profile
+	)
+	var continuity: Dictionary = contract.get(
+		"post_attack_continuity",
+		{}
+	) if contract.get("post_attack_continuity", {}) is Dictionary else {}
+	result["continuity"] = {
+		"enabled": bool(continuity.get("enabled", false)),
+		"floor_met": bool(continuity.get("floor_met", true)),
+		"review_before_terminal": bool(
+			continuity.get("review_before_terminal", false)
+		),
+		"debt_count": int(continuity.get("debt_count", 0)),
+		"banked_damage_units": int(
+			continuity.get("post_payment_banked_units", 0)
+		),
+		"required_banked_damage_units": int(
+			continuity.get("minimum_banked_damage_units", 0)
+		),
+		"live_engine_count": int(continuity.get("live_engine_count", 0)),
+		"current_live_engine_count": int(
+			continuity.get("current_live_engine_count", 0)
+		),
+		"current_energized_engine_count": int(
+			continuity.get("current_energized_engine_count", 0)
+		),
+		"search_engine_roots": int(
+			continuity.get("search_engine_roots", 0)
+		),
+		"live_search_engines": int(
+			continuity.get("live_search_engines", 0)
+		),
+		"bench_capacity": int(continuity.get("bench_capacity", 5)),
+		"bench_slots_free": int(
+			continuity.get("bench_slots_free", 0)
+		),
+		"expansion_active": bool(
+			continuity.get("expansion_active", false)
+		),
+		"next_attacker_roots": int(
+			continuity.get("next_attacker_roots", 0)
+		),
+		"safe_prefix_available": bool(
+			continuity.get("safe_prefix_available", false)
+		),
+	}
+	return result
+
+
 func _visible_hand_uid_counts(side: Dictionary) -> Dictionary:
 	var counts: Dictionary = {}
 	for raw_card: Variant in side.get("hand", []):
@@ -3028,6 +3787,8 @@ func _record_policy_response(
 	extra: Dictionary = {}
 ) -> void:
 	var fallback_layer := "" if accepted else (fallback_override if fallback_override != "" else _current_action_owner)
+	var resolves_turn_model_judgment := _turn_model_judgment_requested \
+		and not _turn_model_judgment_resolved
 	var record := {
 		"turn_id": _current_turn,
 		"policy_id": str(_lifecycle.get("policy_id", "")),
@@ -3048,11 +3809,86 @@ func _record_policy_response(
 		"visible_wait_ms": int(metrics.get("visible_wait_ms", 0)),
 		"payload_bytes": int(metrics.get("payload_bytes", 0)),
 		"response_bytes": int(metrics.get("response_bytes", 0)),
+		"configured_token_budget": int(metrics.get("configured_token_budget", 0)),
+		"effective_token_budget": int(metrics.get("effective_token_budget", 0)),
+		"finish_reason": str(metrics.get("finish_reason", "")),
+		"prompt_tokens": int(metrics.get("prompt_tokens", 0)),
+		"completion_tokens": int(metrics.get("completion_tokens", 0)),
+		"turn_model_judgment": resolves_turn_model_judgment,
 	}
 	for raw_key: Variant in extra.keys():
 		record[str(raw_key)] = extra.get(raw_key)
 	_audit.record(record)
-	v18cpg_decision_ready.emit(_current_turn, accepted, reason)
+	if resolves_turn_model_judgment:
+		_turn_model_judgment_resolved = true
+	v18cpg_decision_ready.emit(
+		_current_turn,
+		accepted,
+		_user_facing_response_reason(accepted, reason)
+	)
+
+
+func _preferred_action_ref() -> Dictionary:
+	for candidate: Dictionary in _last_frontier:
+		if str(candidate.get("candidate_id", "")) == _preferred_candidate_id \
+				or str(candidate.get("safe_prefix_action_id", "")) == _preferred_action_id:
+			return (candidate.get("action_ref", {}) as Dictionary).duplicate(true) \
+				if candidate.get("action_ref", {}) is Dictionary else {}
+	return {}
+
+
+func _live_public_interaction_ref(context: Dictionary) -> Dictionary:
+	var kind := str(context.get("pending_effect_kind", "")).strip_edges().to_lower()
+	if kind == "":
+		return {}
+	var result := {
+		"kind": kind,
+		"proof_complete": false,
+	}
+	if kind != "attack":
+		return result
+	var attack_index := int(context.get("pending_effect_ability_index", -1))
+	var source_slot: Variant = context.get("pending_effect_slot", null)
+	var pending_card: Variant = context.get("pending_effect_card", null)
+	if not (source_slot is PokemonSlot) \
+			or not (pending_card is CardInstance) \
+			or attack_index < 0:
+		return result
+	var slot := source_slot as PokemonSlot
+	var top_card := slot.get_top_card()
+	if top_card == null \
+			or top_card.card_data == null \
+			or (pending_card as CardInstance).card_data == null \
+			or top_card.instance_id != (pending_card as CardInstance).instance_id:
+		return result
+	var live_ref := _observation_gateway.action_ref({
+		"kind": "attack",
+		"source_slot": slot,
+		"attack_index": attack_index,
+		"requires_interaction": true,
+	})
+	live_ref["proof_complete"] = true
+	return live_ref
+
+
+func _user_facing_response_reason(accepted: bool, reason: String) -> String:
+	if accepted:
+		return "模型策略已校验" if reason in [
+			"",
+			"exact_rule_root_shadowed",
+			"root_deferred_to_rule",
+		] else reason
+	match reason:
+		"response_truncated":
+			return "模型回复不完整，已自动切换本地策略"
+		"invalid_model_response":
+			return "模型回复格式无效，已自动切换本地策略"
+		"transport_error":
+			return "模型连接暂时不可用，已自动切换本地策略"
+		"turn_visible_wait_budget_exhausted", "external_wait_budget_exhausted":
+			return "模型响应超时，已自动切换本地策略"
+		_:
+			return reason
 
 
 func _reset_match_state() -> void:
@@ -3082,5 +3918,9 @@ func _reset_match_state() -> void:
 	_uncovered_events = 0
 	_turn_visible_wait_ms = 0
 	_turn_model_requests = 0
+	_turn_model_judgment_attempted = false
+	_turn_model_judgment_requested = false
+	_turn_model_judgment_resolved = false
 	_request_wait_samples_ms.clear()
 	_unconsumed_action_result.clear()
+	_event_bridge.reset()

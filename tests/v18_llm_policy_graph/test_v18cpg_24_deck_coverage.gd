@@ -20,6 +20,18 @@ func _initialize() -> void:
 	_check(profiles.size() == 24, "V18CPG must construct exactly 24 profiles")
 	var strategy_ids: Dictionary = {}
 	var rows: Array[Dictionary] = []
+	var released_ids := ProfileCatalogScript.released_deck_ids()
+	_check(
+		released_ids == [
+			800015934,
+			800018497,
+			800018499,
+			800018501,
+			800018502,
+			800018509,
+		],
+		"BattleSetup release metadata must contain exactly the promoted ROI decks"
+	)
 	_check(not RegistryAdapterScript.feature_enabled(), "V18CPG production feature flag must default off")
 	for profile: Dictionary in profiles:
 		var deck_id := int(profile.get("deck_id", 0))
@@ -62,10 +74,15 @@ func _initialize() -> void:
 		strategy.configure_profile(profile)
 		var metadata := strategy.get_runtime_metadata()
 		_check(str(metadata.get("strategy_id", "")) == strategy_id, "%d runtime metadata must retain strategy identity" % deck_id)
+		_check(bool(metadata.get("battle_setup_available", false)) == (deck_id in released_ids), "%d runtime metadata must retain release availability" % deck_id)
+		_check(str(metadata.get("promotion_status", "")) == str(profile.get("promotion_status", "")), "%d runtime metadata must retain promotion status" % deck_id)
 		var adapter_strategy := RegistryAdapterScript.create_strategy_by_id(strategy_id, false)
 		_check(adapter_strategy != null and str(adapter_strategy.call("get_strategy_id")) == strategy_id, "%d registry adapter must construct the generic runtime" % deck_id)
 		_check(RegistryAdapterScript.variants_for_deck(deck_id, str(profile.get("base_strategy_id", "")), true, false).is_empty(), "%d feature-off adapter must expose no variants" % deck_id)
 		_check(RegistryAdapterScript.variants_for_deck(deck_id, str(profile.get("base_strategy_id", "")), true, true).size() == 2, "%d feature-on adapter must expose Rule and CPG variants" % deck_id)
+		var production_variants := RegistryAdapterScript.variants_for_deck(deck_id, str(profile.get("base_strategy_id", "")), true)
+		_check(production_variants.size() == (2 if deck_id in released_ids else 0), "%d production adapter visibility must follow ROI5 release metadata" % deck_id)
+		_check(bool(profile.get("experimental", true)) == (deck_id not in released_ids), "%d experimental metadata must match release status" % deck_id)
 		rows.append({
 			"deck_id": deck_id,
 			"display_name": str(profile.get("display_name", "")),
@@ -85,6 +102,10 @@ func _initialize() -> void:
 	var shared_registry := SharedRegistryScript.new()
 	_check(shared_registry.create_strategy_by_id(sample_strategy_id) == null, "shared registry must hide V18CPG while the production flag is off")
 	_check(shared_registry.create_strategy_by_id(str(sample_profile.get("base_strategy_id", ""))) != null, "feature-off integration must preserve the existing Rule registry path")
+	var released_profile := ProfileCatalogScript.get_profile_for_deck(800018502)
+	var released_strategy_id := str(released_profile.get("strategy_id", ""))
+	var released_strategy: RefCounted = shared_registry.create_strategy_by_id(released_strategy_id)
+	_check(released_strategy != null and str(released_strategy.call("get_strategy_id")) == released_strategy_id, "released N's Zoroark strategy must construct while the experimental feature flag stays off")
 	var setting_key := "ai/v18_conditional_policy_enabled"
 	var had_setting := ProjectSettings.has_setting(setting_key)
 	var previous_setting: Variant = ProjectSettings.get_setting(setting_key, false)
@@ -103,6 +124,7 @@ func _initialize() -> void:
 		"profile_count": profiles.size(),
 		"unique_strategy_count": strategy_ids.size(),
 		"feature_on_variant_count": variants.size(),
+		"battle_setup_release_count": released_ids.size(),
 		"all_passed": _failures.is_empty(),
 		"rows": rows,
 		"failures": _failures.duplicate(),

@@ -1,0 +1,527 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 364,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 11,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:dance_one_sada",
+      "choice_label": "第一只碧草之舞贴草并抽到奥琳博士",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:dance_two_boss",
+      "choice_label": "第二只碧草之舞贴草并抽到老大的指令",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:sada_split",
+      "choice_label": "奥琳博士给两只猛雷鼓分别附能并抽到能量转移",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:energy_switch_save_grass",
+      "choice_label": "能量转移把必死前场的草能交给第二只猛雷鼓",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:first_bellowing_thunder",
+      "choice_label": "首攻只弃必死前场雷斗与两只厄诡椪草能，造成280",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:marnie_reply",
+      "choice_label": "玛俐规则AI用10伤击倒仅剩10HP的前场",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:boss_second_grimmsnarl",
+      "choice_label": "老大的指令抓出经过两次雪妖女检查的玛俐的长毛巨魔ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:manual_grass",
+      "choice_label": "给接棒猛雷鼓手贴草能作为第五张燃料之一",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:dance_after_handoff",
+      "choice_label": "接棒后再用碧草之舞补到第五张场上能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:second_bellowing_thunder",
+      "choice_label": "极雷轰精确弃5能造成350伤完成四奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "155aa1c27e11cf69cdad9f512c36d9a07bddf58af6713c688ea0141204864186"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:dance_one_sada",
+        "choice_label": "第一只碧草之舞贴草并抽到奥琳博士",
+        "depth": 10,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:dance_two_boss",
+              "choice_label": "第二只碧草之舞贴草并抽到老大的指令",
+              "depth": 10,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:sada_split",
+                    "choice_label": "奥琳博士给两只猛雷鼓分别附能并抽到能量转移",
+                    "depth": 10,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:energy_switch_save_grass",
+                          "choice_label": "能量转移把必死前场的草能交给第二只猛雷鼓",
+                          "depth": 10,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:first_bellowing_thunder",
+                                "choice_label": "首攻只弃必死前场雷斗与两只厄诡椪草能，造成280",
+                                "depth": 10,
+                                "player_actions": 5,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:marnie_reply",
+                                      "choice_label": "玛俐规则AI用10伤击倒仅剩10HP的前场",
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:boss_second_grimmsnarl",
+                                            "choice_label": "老大的指令抓出经过两次雪妖女检查的玛俐的长毛巨魔ex",
+                                            "depth": 10,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:manual_grass",
+                                                  "choice_label": "给接棒猛雷鼓手贴草能作为第五张燃料之一",
+                                                  "depth": 10,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:dance_after_handoff",
+                                                        "choice_label": "接棒后再用碧草之舞补到第五张场上能量",
+                                                        "depth": 10,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:second_bellowing_thunder",
+                                                              "choice_label": "极雷轰精确弃5能造成350伤完成四奖",
+                                                              "depth": 10,
+                                                              "player_actions": 1,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [],
+                                                                "coverage_complete": true,
+                                                                "depth": 10,
+                                                                "player_actions": 0,
+                                                                "reason": "production_witness_reached_goal",
+                                                                "score": 4,
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 0
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 10,
+                                                          "player_actions": 1,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:second_bellowing_thunder",
+                                                          "selected_choice_label": "极雷轰精确弃5能造成350伤完成四奖",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 10,
+                                                    "player_actions": 2,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:dance_after_handoff",
+                                                    "selected_choice_label": "接棒后再用碧草之舞补到第五张场上能量",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 10,
+                                              "player_actions": 3,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:manual_grass",
+                                              "selected_choice_label": "给接棒猛雷鼓手贴草能作为第五张燃料之一",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 10,
+                                        "player_actions": 4,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:boss_second_grimmsnarl",
+                                        "selected_choice_label": "老大的指令抓出经过两次雪妖女检查的玛俐的长毛巨魔ex",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 10,
+                                  "player_actions": 4,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:marnie_reply",
+                                  "selected_choice_label": "玛俐规则AI用10伤击倒仅剩10HP的前场",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 10,
+                            "player_actions": 5,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:first_bellowing_thunder",
+                            "selected_choice_label": "首攻只弃必死前场雷斗与两只厄诡椪草能，造成280",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 10,
+                      "player_actions": 6,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:energy_switch_save_grass",
+                      "selected_choice_label": "能量转移把必死前场的草能交给第二只猛雷鼓",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 10,
+                "player_actions": 7,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:sada_split",
+                "selected_choice_label": "奥琳博士给两只猛雷鼓分别附能并抽到能量转移",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 10,
+          "player_actions": 8,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:dance_two_boss",
+          "selected_choice_label": "第二只碧草之舞贴草并抽到老大的指令",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 10,
+    "player_actions": 9,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:dance_one_sada",
+    "selected_choice_label": "第一只碧草之舞贴草并抽到奥琳博士",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:dance_one_sada",
+      "choice_label": "第一只碧草之舞贴草并抽到奥琳博士",
+      "depth": 10,
+      "player_actions": 9,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:dance_two_boss",
+            "choice_label": "第二只碧草之舞贴草并抽到老大的指令",
+            "depth": 10,
+            "player_actions": 8,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:sada_split",
+                  "choice_label": "奥琳博士给两只猛雷鼓分别附能并抽到能量转移",
+                  "depth": 10,
+                  "player_actions": 7,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:energy_switch_save_grass",
+                        "choice_label": "能量转移把必死前场的草能交给第二只猛雷鼓",
+                        "depth": 10,
+                        "player_actions": 6,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:first_bellowing_thunder",
+                              "choice_label": "首攻只弃必死前场雷斗与两只厄诡椪草能，造成280",
+                              "depth": 10,
+                              "player_actions": 5,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:marnie_reply",
+                                    "choice_label": "玛俐规则AI用10伤击倒仅剩10HP的前场",
+                                    "depth": 10,
+                                    "player_actions": 4,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:boss_second_grimmsnarl",
+                                          "choice_label": "老大的指令抓出经过两次雪妖女检查的玛俐的长毛巨魔ex",
+                                          "depth": 10,
+                                          "player_actions": 4,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:manual_grass",
+                                                "choice_label": "给接棒猛雷鼓手贴草能作为第五张燃料之一",
+                                                "depth": 10,
+                                                "player_actions": 3,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:dance_after_handoff",
+                                                      "choice_label": "接棒后再用碧草之舞补到第五张场上能量",
+                                                      "depth": 10,
+                                                      "player_actions": 2,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:second_bellowing_thunder",
+                                                            "choice_label": "极雷轰精确弃5能造成350伤完成四奖",
+                                                            "depth": 10,
+                                                            "player_actions": 1,
+                                                            "reason": "production_witness_reached_goal",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [],
+                                                              "coverage_complete": true,
+                                                              "depth": 10,
+                                                              "player_actions": 0,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "score": 4,
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 0
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 10,
+                                                        "player_actions": 1,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:second_bellowing_thunder",
+                                                        "selected_choice_label": "极雷轰精确弃5能造成350伤完成四奖",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 10,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:dance_after_handoff",
+                                                  "selected_choice_label": "接棒后再用碧草之舞补到第五张场上能量",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:manual_grass",
+                                            "selected_choice_label": "给接棒猛雷鼓手贴草能作为第五张燃料之一",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:boss_second_grimmsnarl",
+                                      "selected_choice_label": "老大的指令抓出经过两次雪妖女检查的玛俐的长毛巨魔ex",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 10,
+                                "player_actions": 4,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:marnie_reply",
+                                "selected_choice_label": "玛俐规则AI用10伤击倒仅剩10HP的前场",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 10,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:first_bellowing_thunder",
+                          "selected_choice_label": "首攻只弃必死前场雷斗与两只厄诡椪草能，造成280",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 10,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:energy_switch_save_grass",
+                    "selected_choice_label": "能量转移把必死前场的草能交给第二只猛雷鼓",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 10,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:sada_split",
+              "selected_choice_label": "奥琳博士给两只猛雷鼓分别附能并抽到能量转移",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 10,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:dance_two_boss",
+        "selected_choice_label": "第二只碧草之舞贴草并抽到老大的指令",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "155aa1c27e11cf69cdad9f512c36d9a07bddf58af6713c688ea0141204864186",
+  "scenario_id": "raging_bolt_01",
+  "shortest_player_actions": 9,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

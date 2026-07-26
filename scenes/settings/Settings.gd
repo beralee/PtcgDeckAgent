@@ -5,6 +5,7 @@ const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const WebPlatformServicesScript := preload("res://scripts/ui/web/WebPlatformServices.gd")
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -28,7 +29,7 @@ var _current_non_battle_layout_context: Dictionary = {}
 var _model_picker_overlay: Control = null
 var _model_picker_scroll: ScrollContainer = null
 var _model_picker_list: VBoxContainer = null
-var _web_api_key_clipboard_callback = null
+var _web_platform_services: WebPlatformServices = WebPlatformServicesScript.new()
 var _active_provider: String = "zenmux"
 var _provider_configs: Dictionary = {}
 var _provider_button_group := ButtonGroup.new()
@@ -45,6 +46,11 @@ func _ready() -> void:
 	_populate_model_options()
 	_load_config()
 	call_deferred("_apply_non_battle_layout")
+
+
+func _exit_tree() -> void:
+	if _web_platform_services != null:
+		_web_platform_services.shutdown()
 
 
 func _notification(what: int) -> void:
@@ -434,6 +440,12 @@ func _apply_settings_copy() -> void:
 	_set_label_text("Title", "AI 设置")
 	_set_label_text("SectionLabel", "AI 提供商与 AI 性格")
 	_set_label_text("ProviderLabel", "API 提供商:")
+	var deepseek_provider_button := find_child("ProviderDeepSeekButton", true, false) as Button
+	if deepseek_provider_button != null:
+		deepseek_provider_button.text = "DeepSeek 直连"
+	var zenmux_provider_button := find_child("ProviderZenMuxButton", true, false) as Button
+	if zenmux_provider_button != null:
+		zenmux_provider_button.text = "ZenMux（需翻墙）"
 	_set_label_text("EndpointLabel", "API 地址:")
 	_set_label_text("ApiKeyLabel", "API 密钥:")
 	_set_label_text("ModelLabel", "模型:")
@@ -812,6 +824,7 @@ func _connect_settings_controls() -> void:
 func _configure_provider_controls() -> void:
 	var zenmux_button := find_child("ProviderZenMuxButton", true, false) as Button
 	var deepseek_button := find_child("ProviderDeepSeekButton", true, false) as Button
+	_provider_button_group.allow_unpress = false
 	var zenmux_callback := _switch_provider.bind("zenmux")
 	var deepseek_callback := _switch_provider.bind("deepseek")
 	if zenmux_button != null:
@@ -1405,78 +1418,15 @@ func _is_web_api_key_clipboard_runtime_for_tests(os_name: String = "", feature_f
 
 
 func _build_web_api_key_clipboard_script_for_tests(callback_name: String = "__ptcgDeckAgentApiKeyPasteCallback") -> String:
-	return _build_web_api_key_clipboard_script(callback_name)
+	return WebPlatformServicesScript.build_clipboard_read_script(callback_name, 1)
 
 
 func _is_web_api_key_clipboard_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
-	var resolved_os := os_name.strip_edges().to_lower()
-	var resolved_display := display_server_name.strip_edges().to_lower()
-	var flags := feature_flags
-	if flags.is_empty() and os_name == "" and display_server_name == "":
-		resolved_os = OS.get_name().strip_edges().to_lower()
-		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
-		flags = {
-			"web": OS.has_feature("web"),
-			"web_android": OS.has_feature("web_android"),
-			"web_ios": OS.has_feature("web_ios"),
-		}
-	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
-		return true
-	for feature: String in ["web", "web_android", "web_ios"]:
-		if bool(flags.get(feature, false)):
-			return true
-	return false
+	return _web_platform_services.is_web_runtime(os_name, feature_flags, display_server_name)
 
 
 func _request_web_api_key_clipboard_paste() -> bool:
-	if not _ensure_web_api_key_clipboard_callback():
-		return false
-	var result: Variant = JavaScriptBridge.eval(_build_web_api_key_clipboard_script(), true)
-	return bool(result)
-
-
-func _ensure_web_api_key_clipboard_callback() -> bool:
-	var window := JavaScriptBridge.get_interface("window")
-	if window == null:
-		return false
-	if _web_api_key_clipboard_callback == null:
-		_web_api_key_clipboard_callback = JavaScriptBridge.create_callback(_on_web_api_key_clipboard_text)
-	window.__ptcgDeckAgentApiKeyPasteCallback = _web_api_key_clipboard_callback
-	return true
-
-
-func _build_web_api_key_clipboard_script(callback_name: String = "__ptcgDeckAgentApiKeyPasteCallback") -> String:
-	var resolved_callback := callback_name.strip_edges()
-	if resolved_callback == "":
-		resolved_callback = "__ptcgDeckAgentApiKeyPasteCallback"
-	return """
-(function() {
-  var callbackName = "__CALLBACK_NAME__";
-  function finish(payload) {
-    try {
-      var cb = window[callbackName];
-      if (typeof cb === 'function') {
-        cb(JSON.stringify(payload || {}));
-      }
-    } catch (_error) {}
-  }
-  try {
-    if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
-      finish({ ok: false, error: 'clipboard API unavailable' });
-      return false;
-    }
-    navigator.clipboard.readText().then(function(text) {
-      finish({ ok: true, text: String(text || '') });
-    }).catch(function(error) {
-      finish({ ok: false, error: String(error && error.message ? error.message : error) });
-    });
-    return true;
-  } catch (error) {
-    finish({ ok: false, error: String(error && error.message ? error.message : error) });
-    return false;
-  }
-})();
-""".replace("__CALLBACK_NAME__", resolved_callback)
+	return _web_platform_services.request_clipboard_text(_on_web_api_key_clipboard_payload)
 
 
 func _on_web_api_key_clipboard_text(args: Array) -> void:
@@ -1487,7 +1437,10 @@ func _on_web_api_key_clipboard_text(args: Array) -> void:
 	if not (parsed is Dictionary):
 		_set_status_message("浏览器剪贴板返回格式异常，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
 		return
-	var payload := parsed as Dictionary
+	_on_web_api_key_clipboard_payload(parsed as Dictionary)
+
+
+func _on_web_api_key_clipboard_payload(payload: Dictionary) -> void:
 	if not bool(payload.get("ok", false)):
 		_set_status_message("浏览器未允许读取剪贴板，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
 		return

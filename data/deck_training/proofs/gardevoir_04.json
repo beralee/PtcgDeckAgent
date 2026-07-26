@@ -1,0 +1,608 @@
+{
+	"exhaustive_defense": true,
+	"format_version": 1,
+	"metrics": {
+		"budget_reason": "",
+		"cache_hits": 0,
+		"elapsed_milliseconds": 851,
+		"inconclusive_leaves": 0,
+		"nodes_visited": 13,
+		"terminal_leaves": 1
+	},
+	"principal_variation": [
+		{
+			"choice_id": "00:nest_csv6c_065",
+			"choice_label": "巢穴球四选一，只找能绕后取奖的吼叫尾",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "01:flip_the_script_energy_pair",
+			"choice_label": "化危为吉抽到能量转移、超能和夜间担架",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "02:embrace_first_scream_energy",
+			"choice_label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "03:embrace_second_scream_energy",
+			"choice_label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "04:embrace_scream_energy_3",
+			"choice_label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "05:embrace_scream_energy_4",
+			"choice_label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "06:retreat_munk_to_scream_tail",
+			"choice_label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "07:roaring_scream_bench_fez",
+			"choice_label": "凶暴吼叫160精确狙击50伤吉雉鸡ex",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "08:gholdengo_reply",
+			"choice_label": "前场赛富豪300反杀吼叫尾",
+			"role": "opponent",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "09:embrace_handoff",
+			"choice_label": "沙奈朵取回第三能并从30伤增至50伤",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "10:munkidori_calibrate_active",
+			"choice_label": "愿增猿把30伤搬给40伤前场赛富豪",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "11:miracle_force_closeout",
+			"choice_label": "奇迹之力190精确完成4奖",
+			"role": "player",
+			"status": "PROVEN"
+		}
+	],
+	"proof_tree": {
+		"branches": [
+			{
+				"choice_id": "00:nest_csv6c_065",
+				"choice_label": "巢穴球四选一，只找能绕后取奖的吼叫尾",
+				"depth": 12,
+				"player_actions": 11,
+				"reason": "player_has_forcing_choice",
+				"status": "PROVEN",
+				"tree": {
+					"branches": [
+						{
+							"choice_id": "01:flip_the_script_energy_pair",
+							"choice_label": "化危为吉抽到能量转移、超能和夜间担架",
+							"depth": 12,
+							"player_actions": 10,
+							"reason": "player_has_forcing_choice",
+							"status": "PROVEN",
+							"tree": {
+								"branches": [
+									{
+										"choice_id": "02:embrace_first_scream_energy",
+										"choice_label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+										"depth": 12,
+										"player_actions": 9,
+										"reason": "player_has_forcing_choice",
+										"status": "PROVEN",
+										"tree": {
+											"branches": [
+												{
+													"choice_id": "03:embrace_second_scream_energy",
+													"choice_label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+													"depth": 12,
+													"player_actions": 8,
+													"reason": "player_has_forcing_choice",
+													"status": "PROVEN",
+													"tree": {
+														"branches": [
+															{
+																"choice_id": "04:embrace_scream_energy_3",
+																"choice_label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+																"depth": 12,
+																"player_actions": 7,
+																"reason": "player_has_forcing_choice",
+																"status": "PROVEN",
+																"tree": {
+																	"branches": [
+																		{
+																			"choice_id": "05:embrace_scream_energy_4",
+																			"choice_label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+																			"depth": 12,
+																			"player_actions": 6,
+																			"reason": "player_has_forcing_choice",
+																			"status": "PROVEN",
+																			"tree": {
+																				"branches": [
+																					{
+																						"choice_id": "06:retreat_munk_to_scream_tail",
+																						"choice_label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+																						"depth": 12,
+																						"player_actions": 5,
+																						"reason": "player_has_forcing_choice",
+																						"status": "PROVEN",
+																						"tree": {
+																							"branches": [
+																								{
+																									"choice_id": "07:roaring_scream_bench_fez",
+																									"choice_label": "凶暴吼叫160精确狙击50伤吉雉鸡ex",
+																									"depth": 12,
+																									"player_actions": 4,
+																									"reason": "all_defenses_hold",
+																									"status": "PROVEN",
+																									"tree": {
+																										"branches": [
+																											{
+																												"choice_id": "08:gholdengo_reply",
+																												"choice_label": "前场赛富豪300反杀吼叫尾",
+																												"depth": 12,
+																												"player_actions": 3,
+																												"reason": "player_has_forcing_choice",
+																												"status": "PROVEN",
+																												"tree": {
+																													"branches": [
+																														{
+																															"choice_id": "09:embrace_handoff",
+																															"choice_label": "沙奈朵取回第三能并从30伤增至50伤",
+																															"depth": 12,
+																															"player_actions": 3,
+																															"reason": "player_has_forcing_choice",
+																															"status": "PROVEN",
+																															"tree": {
+																																"branches": [
+																																	{
+																																		"choice_id": "10:munkidori_calibrate_active",
+																																		"choice_label": "愿增猿把30伤搬给40伤前场赛富豪",
+																																		"depth": 12,
+																																		"player_actions": 2,
+																																		"reason": "player_has_forcing_choice",
+																																		"status": "PROVEN",
+																																		"tree": {
+																																			"branches": [
+																																				{
+																																					"choice_id": "11:miracle_force_closeout",
+																																					"choice_label": "奇迹之力190精确完成4奖",
+																																					"depth": 12,
+																																					"player_actions": 1,
+																																					"reason": "production_witness_reached_goal",
+																																					"status": "PROVEN",
+																																					"tree": {
+																																						"branches": [],
+																																						"coverage_complete": true,
+																																						"depth": 12,
+																																						"player_actions": 0,
+																																						"reason": "production_witness_reached_goal",
+																																						"score": 4,
+																																						"status": "PROVEN",
+																																						"winning_choice_count": 0
+																																					}
+																																				}
+																																			],
+																																			"coverage_complete": true,
+																																			"depth": 12,
+																																			"player_actions": 1,
+																																			"reason": "player_has_forcing_choice",
+																																			"role": "player",
+																																			"selected_choice_id": "11:miracle_force_closeout",
+																																			"selected_choice_label": "奇迹之力190精确完成4奖",
+																																			"status": "PROVEN",
+																																			"winning_choice_count": 1
+																																		}
+																																	}
+																																],
+																																"coverage_complete": true,
+																																"depth": 12,
+																																"player_actions": 2,
+																																"reason": "player_has_forcing_choice",
+																																"role": "player",
+																																"selected_choice_id": "10:munkidori_calibrate_active",
+																																"selected_choice_label": "愿增猿把30伤搬给40伤前场赛富豪",
+																																"status": "PROVEN",
+																																"winning_choice_count": 1
+																															}
+																														}
+																													],
+																													"coverage_complete": true,
+																													"depth": 12,
+																													"player_actions": 3,
+																													"reason": "player_has_forcing_choice",
+																													"role": "player",
+																													"selected_choice_id": "09:embrace_handoff",
+																													"selected_choice_label": "沙奈朵取回第三能并从30伤增至50伤",
+																													"status": "PROVEN",
+																													"winning_choice_count": 1
+																												}
+																											}
+																										],
+																										"coverage_complete": true,
+																										"depth": 12,
+																										"player_actions": 3,
+																										"reason": "all_defenses_hold",
+																										"role": "opponent",
+																										"selected_choice_id": "08:gholdengo_reply",
+																										"selected_choice_label": "前场赛富豪300反杀吼叫尾",
+																										"status": "PROVEN",
+																										"winning_choice_count": 1
+																									}
+																								}
+																							],
+																							"coverage_complete": true,
+																							"depth": 12,
+																							"player_actions": 4,
+																							"reason": "player_has_forcing_choice",
+																							"role": "player",
+																							"selected_choice_id": "07:roaring_scream_bench_fez",
+																							"selected_choice_label": "凶暴吼叫160精确狙击50伤吉雉鸡ex",
+																							"status": "PROVEN",
+																							"winning_choice_count": 1
+																						}
+																					}
+																				],
+																				"coverage_complete": true,
+																				"depth": 12,
+																				"player_actions": 5,
+																				"reason": "player_has_forcing_choice",
+																				"role": "player",
+																				"selected_choice_id": "06:retreat_munk_to_scream_tail",
+																				"selected_choice_label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+																				"status": "PROVEN",
+																				"winning_choice_count": 1
+																			}
+																		}
+																	],
+																	"coverage_complete": true,
+																	"depth": 12,
+																	"player_actions": 6,
+																	"reason": "player_has_forcing_choice",
+																	"role": "player",
+																	"selected_choice_id": "05:embrace_scream_energy_4",
+																	"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+																	"status": "PROVEN",
+																	"winning_choice_count": 1
+																}
+															}
+														],
+														"coverage_complete": true,
+														"depth": 12,
+														"player_actions": 7,
+														"reason": "player_has_forcing_choice",
+														"role": "player",
+														"selected_choice_id": "04:embrace_scream_energy_3",
+														"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+														"status": "PROVEN",
+														"winning_choice_count": 1
+													}
+												}
+											],
+											"coverage_complete": true,
+											"depth": 12,
+											"player_actions": 8,
+											"reason": "player_has_forcing_choice",
+											"role": "player",
+											"selected_choice_id": "03:embrace_second_scream_energy",
+											"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+											"status": "PROVEN",
+											"winning_choice_count": 1
+										}
+									}
+								],
+								"coverage_complete": true,
+								"depth": 12,
+								"player_actions": 9,
+								"reason": "player_has_forcing_choice",
+								"role": "player",
+								"selected_choice_id": "02:embrace_first_scream_energy",
+								"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+								"status": "PROVEN",
+								"winning_choice_count": 1
+							}
+						}
+					],
+					"coverage_complete": true,
+					"depth": 12,
+					"player_actions": 10,
+					"reason": "player_has_forcing_choice",
+					"role": "player",
+					"selected_choice_id": "01:flip_the_script_energy_pair",
+					"selected_choice_label": "化危为吉抽到能量转移、超能和夜间担架",
+					"status": "PROVEN",
+					"winning_choice_count": 1
+				}
+			}
+		],
+		"coverage_complete": true,
+		"depth": 12,
+		"player_actions": 11,
+		"reason": "player_has_forcing_choice",
+		"role": "player",
+		"selected_choice_id": "00:nest_csv6c_065",
+		"selected_choice_label": "巢穴球四选一，只找能绕后取奖的吼叫尾",
+		"status": "PROVEN",
+		"winning_choice_count": 1
+	},
+	"provider": "production_rules_ai_witness_v2",
+	"reason": "player_has_forcing_choice",
+	"root_branches": [
+		{
+			"choice_id": "00:nest_csv6c_065",
+			"choice_label": "巢穴球四选一，只找能绕后取奖的吼叫尾",
+			"depth": 12,
+			"player_actions": 11,
+			"reason": "player_has_forcing_choice",
+			"status": "PROVEN",
+			"tree": {
+				"branches": [
+					{
+						"choice_id": "01:flip_the_script_energy_pair",
+						"choice_label": "化危为吉抽到能量转移、超能和夜间担架",
+						"depth": 12,
+						"player_actions": 10,
+						"reason": "player_has_forcing_choice",
+						"status": "PROVEN",
+						"tree": {
+							"branches": [
+								{
+									"choice_id": "02:embrace_first_scream_energy",
+									"choice_label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+									"depth": 12,
+									"player_actions": 9,
+									"reason": "player_has_forcing_choice",
+									"status": "PROVEN",
+									"tree": {
+										"branches": [
+											{
+												"choice_id": "03:embrace_second_scream_energy",
+												"choice_label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+												"depth": 12,
+												"player_actions": 8,
+												"reason": "player_has_forcing_choice",
+												"status": "PROVEN",
+												"tree": {
+													"branches": [
+														{
+															"choice_id": "04:embrace_scream_energy_3",
+															"choice_label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+															"depth": 12,
+															"player_actions": 7,
+															"reason": "player_has_forcing_choice",
+															"status": "PROVEN",
+															"tree": {
+																"branches": [
+																	{
+																		"choice_id": "05:embrace_scream_energy_4",
+																		"choice_label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+																		"depth": 12,
+																		"player_actions": 6,
+																		"reason": "player_has_forcing_choice",
+																		"status": "PROVEN",
+																		"tree": {
+																			"branches": [
+																				{
+																					"choice_id": "06:retreat_munk_to_scream_tail",
+																					"choice_label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+																					"depth": 12,
+																					"player_actions": 5,
+																					"reason": "player_has_forcing_choice",
+																					"status": "PROVEN",
+																					"tree": {
+																						"branches": [
+																							{
+																								"choice_id": "07:roaring_scream_bench_fez",
+																								"choice_label": "凶暴吼叫160精确狙击50伤吉雉鸡ex",
+																								"depth": 12,
+																								"player_actions": 4,
+																								"reason": "all_defenses_hold",
+																								"status": "PROVEN",
+																								"tree": {
+																									"branches": [
+																										{
+																											"choice_id": "08:gholdengo_reply",
+																											"choice_label": "前场赛富豪300反杀吼叫尾",
+																											"depth": 12,
+																											"player_actions": 3,
+																											"reason": "player_has_forcing_choice",
+																											"status": "PROVEN",
+																											"tree": {
+																												"branches": [
+																													{
+																														"choice_id": "09:embrace_handoff",
+																														"choice_label": "沙奈朵取回第三能并从30伤增至50伤",
+																														"depth": 12,
+																														"player_actions": 3,
+																														"reason": "player_has_forcing_choice",
+																														"status": "PROVEN",
+																														"tree": {
+																															"branches": [
+																																{
+																																	"choice_id": "10:munkidori_calibrate_active",
+																																	"choice_label": "愿增猿把30伤搬给40伤前场赛富豪",
+																																	"depth": 12,
+																																	"player_actions": 2,
+																																	"reason": "player_has_forcing_choice",
+																																	"status": "PROVEN",
+																																	"tree": {
+																																		"branches": [
+																																			{
+																																				"choice_id": "11:miracle_force_closeout",
+																																				"choice_label": "奇迹之力190精确完成4奖",
+																																				"depth": 12,
+																																				"player_actions": 1,
+																																				"reason": "production_witness_reached_goal",
+																																				"status": "PROVEN",
+																																				"tree": {
+																																					"branches": [],
+																																					"coverage_complete": true,
+																																					"depth": 12,
+																																					"player_actions": 0,
+																																					"reason": "production_witness_reached_goal",
+																																					"score": 4,
+																																					"status": "PROVEN",
+																																					"winning_choice_count": 0
+																																				}
+																																			}
+																																		],
+																																		"coverage_complete": true,
+																																		"depth": 12,
+																																		"player_actions": 1,
+																																		"reason": "player_has_forcing_choice",
+																																		"role": "player",
+																																		"selected_choice_id": "11:miracle_force_closeout",
+																																		"selected_choice_label": "奇迹之力190精确完成4奖",
+																																		"status": "PROVEN",
+																																		"winning_choice_count": 1
+																																	}
+																																}
+																															],
+																															"coverage_complete": true,
+																															"depth": 12,
+																															"player_actions": 2,
+																															"reason": "player_has_forcing_choice",
+																															"role": "player",
+																															"selected_choice_id": "10:munkidori_calibrate_active",
+																															"selected_choice_label": "愿增猿把30伤搬给40伤前场赛富豪",
+																															"status": "PROVEN",
+																															"winning_choice_count": 1
+																														}
+																													}
+																												],
+																												"coverage_complete": true,
+																												"depth": 12,
+																												"player_actions": 3,
+																												"reason": "player_has_forcing_choice",
+																												"role": "player",
+																												"selected_choice_id": "09:embrace_handoff",
+																												"selected_choice_label": "沙奈朵取回第三能并从30伤增至50伤",
+																												"status": "PROVEN",
+																												"winning_choice_count": 1
+																											}
+																										}
+																									],
+																									"coverage_complete": true,
+																									"depth": 12,
+																									"player_actions": 3,
+																									"reason": "all_defenses_hold",
+																									"role": "opponent",
+																									"selected_choice_id": "08:gholdengo_reply",
+																									"selected_choice_label": "前场赛富豪300反杀吼叫尾",
+																									"status": "PROVEN",
+																									"winning_choice_count": 1
+																								}
+																							}
+																						],
+																						"coverage_complete": true,
+																						"depth": 12,
+																						"player_actions": 4,
+																						"reason": "player_has_forcing_choice",
+																						"role": "player",
+																						"selected_choice_id": "07:roaring_scream_bench_fez",
+																						"selected_choice_label": "凶暴吼叫160精确狙击50伤吉雉鸡ex",
+																						"status": "PROVEN",
+																						"winning_choice_count": 1
+																					}
+																				}
+																			],
+																			"coverage_complete": true,
+																			"depth": 12,
+																			"player_actions": 5,
+																			"reason": "player_has_forcing_choice",
+																			"role": "player",
+																			"selected_choice_id": "06:retreat_munk_to_scream_tail",
+																			"selected_choice_label": "愿增猿弃超能、保留恶能撤退到吼叫尾",
+																			"status": "PROVEN",
+																			"winning_choice_count": 1
+																		}
+																	}
+																],
+																"coverage_complete": true,
+																"depth": 12,
+																"player_actions": 6,
+																"reason": "player_has_forcing_choice",
+																"role": "player",
+																"selected_choice_id": "05:embrace_scream_energy_4",
+																"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第4张超能",
+																"status": "PROVEN",
+																"winning_choice_count": 1
+															}
+														}
+													],
+													"coverage_complete": true,
+													"depth": 12,
+													"player_actions": 7,
+													"reason": "player_has_forcing_choice",
+													"role": "player",
+													"selected_choice_id": "04:embrace_scream_energy_3",
+													"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第3张超能",
+													"status": "PROVEN",
+													"winning_choice_count": 1
+												}
+											}
+										],
+										"coverage_complete": true,
+										"depth": 12,
+										"player_actions": 8,
+										"reason": "player_has_forcing_choice",
+										"role": "player",
+										"selected_choice_id": "03:embrace_second_scream_energy",
+										"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第二张超能",
+										"status": "PROVEN",
+										"winning_choice_count": 1
+									}
+								}
+							],
+							"coverage_complete": true,
+							"depth": 12,
+							"player_actions": 9,
+							"reason": "player_has_forcing_choice",
+							"role": "player",
+							"selected_choice_id": "02:embrace_first_scream_energy",
+							"selected_choice_label": "沙奈朵精神拥抱给吼叫尾第一张超能",
+							"status": "PROVEN",
+							"winning_choice_count": 1
+						}
+					}
+				],
+				"coverage_complete": true,
+				"depth": 12,
+				"player_actions": 10,
+				"reason": "player_has_forcing_choice",
+				"role": "player",
+				"selected_choice_id": "01:flip_the_script_energy_pair",
+				"selected_choice_label": "化危为吉抽到能量转移、超能和夜间担架",
+				"status": "PROVEN",
+				"winning_choice_count": 1
+			}
+		}
+	],
+	"root_role": "player",
+	"scenario_fingerprint": "be23ab9cfac296df3475cfc9229ea493c40a38420ebf9ab92504cd7ed22fc8be",
+	"shortest_player_actions": 11,
+	"solver_version": "deck-training-and-or-v2",
+	"status": "PROVEN",
+	"unique_root_solution": true,
+	"unsupported_reasons": []
+}

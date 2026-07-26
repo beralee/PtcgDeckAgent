@@ -1,0 +1,8628 @@
+{
+	"format_version": 3,
+	"module": "18.0 七套卡组专家级两回合残局训练",
+	"grading": "只按最终奖赏进度评分；题目发布前必须通过专家难度作者合约与生产状态机构筑验证",
+	"scenarios": [
+		{
+			"id": "dragapult_gardevoir_01",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "自爆多龙：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 8,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082",
+							"CSV8C_083"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158"
+						]
+					}
+				],
+				"hand": [
+					"CSV8C_159",
+					"CSVE1C_FIR",
+					"CSV1C_079"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_121",
+					"CSV7C_177"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_121"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_02",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "自爆多龙：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 8,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					],
+					"damage": 20
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158"
+						],
+						"energy": [
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082",
+							"CSV8C_083"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_123",
+					"CSV8C_159",
+					"CSVE1C_FIR",
+					"CSV1C_121"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_113",
+					"CSV7C_185",
+					"CSV7C_177"
+				]
+			},
+			"opponent": {
+				"prize_count": 2,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [
+					"CSV3C_123"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_PSY"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_03",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "自爆多龙：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 10,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082",
+							"CSV8C_083"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_114",
+					"CSV8C_159",
+					"CSVE1C_FIR",
+					"CSV1C_079"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_121"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_094"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054",
+							"CSV2C_055"
+						],
+						"damage": 50
+					},
+					{
+						"stack": [
+							"CSV2C_053"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_123"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_04",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "自爆多龙：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 8,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_079",
+					"CSV8C_159",
+					"CSVE1C_FIR"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV7C_177"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV6C_065"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_112"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_PSY"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_05",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "自爆多龙：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 10,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_157"
+						]
+					}
+				],
+				"hand": [
+					"CSV8C_183",
+					"CSV1C_112",
+					"CSV1C_121",
+					"CSV7C_177",
+					"CSVE1C_FIR"
+				],
+				"discard": [
+					"CSV8C_083",
+					"CSV8C_159"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV8C_158",
+					"CSV3C_123"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [
+					"CSV3C_123"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_121"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_06",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "自爆多龙：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 10,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"energy": [
+						"CSVE1C_PSY",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082",
+							"CSV8C_083"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_157"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_157"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_135"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_079",
+					"CSV4C_117"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9.5C_004",
+					"CSVH1C_043"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV6C_065"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					},
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [
+					"CSV1C_112"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_07",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "自爆多龙：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 10,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"energy": [
+						"CSVE1C_PSY",
+						"CSVE1C_FIR"
+					],
+					"damage": 40
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_127",
+					"CSV8C_083",
+					"CSV1C_079"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_121"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_123"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_PSY"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_08",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "自爆多龙：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 10,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158"
+					],
+					"energy": [
+						"CSV7C_203"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082"
+						]
+					}
+				],
+				"hand": [
+					"CSV1C_120",
+					"CSV6C_114",
+					"CSV1C_079"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV8C_159",
+					"CSV8C_083",
+					"CSV1C_121"
+				]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_094"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054",
+							"CSV2C_055"
+						],
+						"damage": 50
+					},
+					{
+						"stack": [
+							"CSV2C_053"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_123"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_112"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_09",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "自爆多龙：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 12,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					],
+					"tool": "CSV7C_185",
+					"damage": 20
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082",
+							"CSV8C_083"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_FIR"
+						]
+					}
+				],
+				"hand": [
+					"CSV8C_172",
+					"CSV1C_113",
+					"CSV1C_127"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV1C_121"
+				]
+			},
+			"opponent": {
+				"prize_count": 2,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [
+					"CSV3C_123"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_PSY"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_10",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "自爆多龙：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018497,
+			"turn_number": 12,
+			"player": {
+				"prize_count": 6,
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					],
+					"damage": 20
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158"
+						],
+						"energy": [
+							"CSV7C_203"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081",
+							"CSV8C_082"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"damage": 30
+					}
+				],
+				"hand": [
+					"CSV1C_120",
+					"CSV6C_114",
+					"CSV8C_183",
+					"CSV1C_127",
+					"CSV1C_079",
+					"CSV1C_113"
+				],
+				"discard": [
+					"CSV8C_083"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV8C_159",
+					"CSVE1C_FIR",
+					"CSV1C_121"
+				]
+			},
+			"opponent": {
+				"prize_count": 2,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053"
+						],
+						"damage": 0
+					},
+					{
+						"stack": [
+							"CSV6C_065"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_PSY"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"deck_key": "dragapult",
+			"turn_limit": 2,
+			"validation_operations": [
+				"用愿增猿把30伤害移到第二个双奖目标",
+				"进化黑夜魔灵并选择是否自爆",
+				"处理自爆送奖产生的反击捕捉器窗口",
+				"进化多龙巴鲁托ex",
+				"补齐火与超能量",
+				"第一次幻影潜袭击倒前场并把60伤害精确放到下一个目标",
+				"跨过规则AI回合保住第二攻击手",
+				"再次调整伤害后使用第二次幻影潜袭完成四奖"
+			],
+			"opponent_name": "沙奈朵",
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "自爆现在使用还是留到下一回合",
+						"failure": "错误送奖时机会关闭反击捕捉器或让第二攻击手断层"
+					},
+					{
+						"choice": "幻影潜袭的60伤害如何分到下一目标",
+						"failure": "分散伤害会让第二回合差一个斩杀档位"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		},
+		{
+			"id": "gardevoir_01",
+			"deck_key": "gardevoir",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "沙奈朵：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800016834,
+			"opponent_name": "赛富豪",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "gardevoir_02",
+			"deck_key": "gardevoir",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "沙奈朵：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 50
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 50
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "gardevoir_03",
+			"deck_key": "gardevoir",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "沙奈朵：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800018501,
+			"opponent_name": "玛俐",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_146",
+						"CSV10C_147",
+						"CSV10C_148"
+					],
+					"damage": 130
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147",
+							"CSV10C_148"
+						],
+						"damage": 130
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "gardevoir_04",
+			"deck_key": "gardevoir",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "沙奈朵：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800018502,
+			"opponent_name": "N",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_144",
+						"CSV10C_145"
+					],
+					"damage": 90
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144",
+							"CSV10C_145"
+						],
+						"damage": 90
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "gardevoir_05",
+			"deck_key": "gardevoir",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "沙奈朵：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 140
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 140
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "gardevoir_06",
+			"deck_key": "gardevoir",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "沙奈朵：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"damage": 130
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"damage": 130
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "gardevoir_07",
+			"deck_key": "gardevoir",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "沙奈朵：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800016834,
+			"opponent_name": "赛富豪",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "gardevoir_08",
+			"deck_key": "gardevoir",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "沙奈朵：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800016834,
+			"opponent_name": "赛富豪",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					],
+					"turn_played": 1
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						],
+						"turn_played": 1
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "gardevoir_09",
+			"deck_key": "gardevoir",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "沙奈朵：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 50
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 50
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "gardevoir_10",
+			"deck_key": "gardevoir",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "沙奈朵：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018497,
+			"opponent_deck_id": 800018501,
+			"opponent_name": "玛俐",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"energy": [
+						"CSVE1C_PSY"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054"
+						],
+						"energy": [
+							"CSVE1C_PSY",
+							"CSVE1C_PSY"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV2C_055",
+					"CSVE1C_PSY",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV1C_112",
+					"CSVE1C_DAR"
+				],
+				"discard": [
+					"CSVE1C_PSY"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV3C_123",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_146",
+						"CSV10C_147",
+						"CSV10C_148"
+					],
+					"damage": 130
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147",
+							"CSV10C_148"
+						],
+						"damage": 130
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"给吼叫尾附着勇气护符",
+				"进化沙奈朵ex建立精神拥抱引擎",
+				"第一次精神拥抱",
+				"第二次精神拥抱并核对剩余HP",
+				"只附着达到第一条斩杀线所需的能量",
+				"完成第一次双奖击倒",
+				"跨过规则AI回合后重建能量",
+				"用愿增猿修正第二目标阈值",
+				"完成第二次双奖击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "精神拥抱附几次以及先给谁附能",
+						"failure": "过量伤害会让攻击手昏厥，少一次则无法完成斩杀"
+					},
+					{
+						"choice": "愿增猿搬走多少伤害",
+						"failure": "吼叫尾伤害会随自身伤害下降，搬错会同时丢失两个击倒点"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		},
+		{
+			"id": "gholdengo_01",
+			"deck_key": "gholdengo",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "赛富豪：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "gholdengo_02",
+			"deck_key": "gholdengo",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "赛富豪：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "gholdengo_03",
+			"deck_key": "gholdengo",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "赛富豪：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "gholdengo_04",
+			"deck_key": "gholdengo",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "赛富豪：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "gholdengo_05",
+			"deck_key": "gholdengo",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "赛富豪：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "gholdengo_06",
+			"deck_key": "gholdengo",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "赛富豪：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "gholdengo_07",
+			"deck_key": "gholdengo",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "赛富豪：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "gholdengo_08",
+			"deck_key": "gholdengo",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "赛富豪：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "gholdengo_09",
+			"deck_key": "gholdengo",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "赛富豪：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "gholdengo_10",
+			"deck_key": "gholdengo",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "赛富豪：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"energy": [
+						"CSVE1C_MET"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"energy": [
+							"CSVE1C_MET"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV3C_115",
+					"CSV3C_115",
+					"CSVE1C_MET",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_177",
+					"CSV7C_191",
+					"CSV6C_114"
+				],
+				"discard": [
+					"CSVE1C_LIG",
+					"CSVE1C_GRA",
+					"CSVE1C_FIR",
+					"CSVE1C_WAT"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIG",
+					"CSVE1C_PSY",
+					"CSV3C_115",
+					"CSV3C_115"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 10
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV6C_115",
+					"CSV9C_207"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"先发动两只赛富豪ex的嘉奖硬币",
+				"用愿增猿把30伤害搬到第二个猛雷鼓ex",
+				"第一次超级能量回收只弃两张非能量",
+				"保留第二张超级能量回收",
+				"第一次淘金潮精确弃5能击倒满血目标",
+				"跨过规则AI回合再次发动嘉奖硬币",
+				"第二次超级能量回收取回4能",
+				"第二次淘金潮只弃4能击倒已调伤目标",
+				"两回合合计拿4奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合淘金潮弃4能还是5能",
+						"failure": "少1能拿不到首个双奖，多弃则第二回合没有4能可回收"
+					},
+					{
+						"choice": "愿增猿的30伤害放在哪只宝可梦",
+						"failure": "不预先把第二目标压到200HP，第二次淘金潮会差1张能量"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		},
+		{
+			"id": "raging_bolt_01",
+			"deck_key": "raging_bolt",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "猛雷鼓：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018501,
+			"opponent_name": "玛俐",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_146",
+						"CSV10C_147",
+						"CSV10C_148"
+					],
+					"damage": 40
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147",
+							"CSV10C_148"
+						],
+						"damage": 40
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "raging_bolt_02",
+			"deck_key": "raging_bolt",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "猛雷鼓：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018502,
+			"opponent_name": "N",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_144",
+						"CSV10C_145"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144",
+							"CSV10C_145"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "raging_bolt_03",
+			"deck_key": "raging_bolt",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "猛雷鼓：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 50
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 50
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "raging_bolt_04",
+			"deck_key": "raging_bolt",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "猛雷鼓：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"damage": 40
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"damage": 40
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "raging_bolt_05",
+			"deck_key": "raging_bolt",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "猛雷鼓：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018497,
+			"opponent_name": "沙奈朵",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054",
+							"CSV2C_055"
+						],
+						"damage": 30
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "raging_bolt_06",
+			"deck_key": "raging_bolt",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "猛雷鼓：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800016834,
+			"opponent_name": "赛富豪",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "raging_bolt_07",
+			"deck_key": "raging_bolt",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "猛雷鼓：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018501,
+			"opponent_name": "玛俐",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_146",
+						"CSV10C_147",
+						"CSV10C_148"
+					],
+					"damage": 40
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147",
+							"CSV10C_148"
+						],
+						"damage": 40
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "raging_bolt_08",
+			"deck_key": "raging_bolt",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "猛雷鼓：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018501,
+			"opponent_name": "玛俐",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					],
+					"turn_played": 1
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						],
+						"turn_played": 1
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_146",
+						"CSV10C_147",
+						"CSV10C_148"
+					],
+					"damage": 40
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147",
+							"CSV10C_148"
+						],
+						"damage": 40
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "raging_bolt_09",
+			"deck_key": "raging_bolt",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "猛雷鼓：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 800018502,
+			"opponent_name": "N",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_144",
+						"CSV10C_145"
+					],
+					"damage": 0
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144",
+							"CSV10C_145"
+						],
+						"damage": 0
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "raging_bolt_10",
+			"deck_key": "raging_bolt",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "猛雷鼓：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018509,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"151C_151"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"energy": [
+							"CSVE1C_LIG"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_028"
+						]
+					}
+				],
+				"hand": [
+					"CSV6C_121",
+					"CSV7C_180",
+					"CSVE1C_GRA",
+					"CSVE1C_GRA",
+					"CSV6C_115",
+					"CSVH1aC_008",
+					"CSV9C_196",
+					"CSVE1C_LIG"
+				],
+				"discard": [
+					"CSVE1C_GRA",
+					"CSVE1C_FIG"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_207",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 50
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 50
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"大地容器先把斗能量送入弃牌区",
+				"碧草之舞附草能并抽牌",
+				"奥琳博士把斗能量附给猛雷鼓",
+				"手贴保留给第二攻击手",
+				"第一次雷鸣蹴击只弃精确数量能量",
+				"跨过规则AI回合保住草能引擎",
+				"再次碧草之舞并补齐第二条攻击线",
+				"第二次雷鸣蹴击完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "大地容器弃哪种能量",
+						"failure": "斗能没有先进入弃牌区时奥琳博士无法形成加速"
+					},
+					{
+						"choice": "每次雷鸣蹴击弃几张能量",
+						"failure": "首回合过量弃能会直接切断第二次攻击"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		},
+		{
+			"id": "marnie_01",
+			"deck_key": "marnie",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "玛俐的长毛巨魔：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018502,
+			"opponent_name": "N",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_144",
+						"CSV10C_145"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144",
+							"CSV10C_145"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "marnie_02",
+			"deck_key": "marnie",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "玛俐的长毛巨魔：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 120
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 120
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "marnie_03",
+			"deck_key": "marnie",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "玛俐的长毛巨魔：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"damage": 110
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "marnie_04",
+			"deck_key": "marnie",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "玛俐的长毛巨魔：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018497,
+			"opponent_name": "沙奈朵",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 100
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054",
+							"CSV2C_055"
+						],
+						"damage": 100
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "marnie_05",
+			"deck_key": "marnie",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "玛俐的长毛巨魔：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800016834,
+			"opponent_name": "赛富豪",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"damage": 50
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"damage": 50
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "marnie_06",
+			"deck_key": "marnie",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "玛俐的长毛巨魔：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 30
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 30
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "marnie_07",
+			"deck_key": "marnie",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "玛俐的长毛巨魔：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018502,
+			"opponent_name": "N",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_144",
+						"CSV10C_145"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144",
+							"CSV10C_145"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "marnie_08",
+			"deck_key": "marnie",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "玛俐的长毛巨魔：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018502,
+			"opponent_name": "N",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					],
+					"turn_played": 1
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						],
+						"turn_played": 1
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_144",
+						"CSV10C_145"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144",
+							"CSV10C_145"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "marnie_09",
+			"deck_key": "marnie",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "玛俐的长毛巨魔：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 120
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 120
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "marnie_10",
+			"deck_key": "marnie",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "玛俐的长毛巨魔：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018501,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV9.5C_004"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_148",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV1C_123",
+					"CSV10C_216",
+					"CSV8C_183"
+				],
+				"discard": [
+					"CSVE1C_DAR",
+					"CSV9.5C_043"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSVE1C_DAR",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"damage": 110
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"damage": 110
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"进化玛俐的长毛巨魔ex",
+				"庞克泵感给当前攻击手与后续玛俐轴分配恶能量",
+				"把手贴恶能保留给不能吃特性的愿增猿",
+				"愿增猿先搬30到前场斩杀点",
+				"长毛巨魔暗影子弹击倒前场并给第二目标30",
+				"跨过规则AI回合保护能量分配",
+				"第二次愿增猿校正伤害",
+				"第二次暗影子弹击倒双奖目标并完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "庞克泵感的5张恶能如何分给当前与后续攻击手",
+						"failure": "全给当前会让第二回合没有可接力的攻击线"
+					},
+					{
+						"choice": "手贴给长毛巨魔还是愿增猿",
+						"failure": "愿增猿不是玛俐的宝可梦，错留手贴会失去搬伤能力"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		},
+		{
+			"id": "n_zoroark_01",
+			"deck_key": "n_zoroark",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "N的索罗亚克：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 160
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 160
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "n_zoroark_02",
+			"deck_key": "n_zoroark",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "N的索罗亚克：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"damage": 150
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"damage": 150
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "n_zoroark_03",
+			"deck_key": "n_zoroark",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "N的索罗亚克：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800018497,
+			"opponent_name": "沙奈朵",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 140
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054",
+							"CSV2C_055"
+						],
+						"damage": 140
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "n_zoroark_04",
+			"deck_key": "n_zoroark",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "N的索罗亚克：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800016834,
+			"opponent_name": "赛富豪",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV9C_096",
+						"CSV4C_089"
+					],
+					"damage": 90
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV9C_096",
+							"CSV4C_089"
+						],
+						"damage": 90
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "n_zoroark_05",
+			"deck_key": "n_zoroark",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "N的索罗亚克：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV7C_154"
+					],
+					"damage": 70
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV7C_154"
+						],
+						"damage": 70
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "n_zoroark_06",
+			"deck_key": "n_zoroark",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "N的索罗亚克：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800018501,
+			"opponent_name": "玛俐",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV10C_146",
+						"CSV10C_147",
+						"CSV10C_148"
+					],
+					"damage": 150
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_146",
+							"CSV10C_147",
+							"CSV10C_148"
+						],
+						"damage": 150
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "n_zoroark_07",
+			"deck_key": "n_zoroark",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "N的索罗亚克：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 160
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 160
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "n_zoroark_08",
+			"deck_key": "n_zoroark",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "N的索罗亚克：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 18000230,
+			"opponent_name": "恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					],
+					"turn_played": 1
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						],
+						"turn_played": 1
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"151C_004",
+						"CSV5C_075"
+					],
+					"damage": 160
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_075"
+						],
+						"damage": 160
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "n_zoroark_09",
+			"deck_key": "n_zoroark",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "N的索罗亚克：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV8C_157",
+						"CSV8C_158",
+						"CSV8C_159"
+					],
+					"damage": 150
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV8C_157",
+							"CSV8C_158",
+							"CSV8C_159"
+						],
+						"damage": 150
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "n_zoroark_10",
+			"deck_key": "n_zoroark",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "N的索罗亚克：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "在2个我方回合内连续击倒2只双奖宝可梦，拿4张奖赏。",
+			"player_deck_id": 800018502,
+			"opponent_deck_id": 800018497,
+			"opponent_name": "沙奈朵",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV4C_044"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV10C_144"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						],
+						"damage": 30
+					},
+					{
+						"stack": [
+							"CSV10C_166"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_094"
+						],
+						"energy": [
+							"CSVE1C_DAR"
+						]
+					}
+				],
+				"hand": [
+					"CSV10C_145",
+					"CSVE1C_DAR",
+					"CSV6C_114",
+					"CSV10C_190",
+					"CSV7C_191",
+					"CSV2C_114"
+				],
+				"discard": [
+					"CSVE1C_DAR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSV9C_198",
+					"CSV8C_183"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV2C_053",
+						"CSV2C_054",
+						"CSV2C_055"
+					],
+					"damage": 140
+				},
+				"bench": [
+					{
+						"stack": [
+							"CSV2C_053",
+							"CSV2C_054",
+							"CSV2C_055"
+						],
+						"damage": 140
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": []
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 4
+			},
+			"validation_operations": [
+				"暗码迷先把PP提升剂与恶能量置顶",
+				"交易抽到固定的两张牌",
+				"PP提升剂给备战N的宝可梦附能",
+				"补齐N的索罗亚克ex的双恶费用",
+				"暗夜王牌选择正确的N宝可梦招式",
+				"第一次复制攻击拿2奖",
+				"跨过规则AI回合后用夜间担架恢复复制源",
+				"再次交易但保留攻击资源",
+				"第二次暗夜王牌完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "暗码迷与交易的发动顺序",
+						"failure": "先交易会抽走未知牌，置顶资源无法在本回合兑现"
+					},
+					{
+						"choice": "暗夜王牌复制哪个N的宝可梦招式",
+						"failure": "复制单体低伤招式会错过双目标或精确击倒窗口"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		},
+		{
+			"id": "charizard_dragapult_01",
+			"deck_key": "charizard_dragapult",
+			"order": 1,
+			"title": "双击倒资源线",
+			"focus": "自爆恶喷：第一回合拿下前场，同时为第二个双奖目标保留攻击资源",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第1题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "第一回合拿下前场，同时为第二个双奖目标保留攻击资源"
+			}
+		},
+		{
+			"id": "charizard_dragapult_02",
+			"deck_key": "charizard_dragapult",
+			"order": 2,
+			"title": "奖差反击窗口",
+			"focus": "自爆恶喷：主动经营奖差，保留捕捉手段完成第二次指定击倒",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第2题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "主动经营奖差，保留捕捉手段完成第二次指定击倒"
+			}
+		},
+		{
+			"id": "charizard_dragapult_03",
+			"deck_key": "charizard_dragapult",
+			"order": 3,
+			"title": "精确伤害分配",
+			"focus": "自爆恶喷：用搬伤或附加伤害把第二回合的斩杀档位降低一档",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第3题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "用搬伤或附加伤害把第二回合的斩杀档位降低一档"
+			}
+		},
+		{
+			"id": "charizard_dragapult_04",
+			"deck_key": "charizard_dragapult",
+			"order": 4,
+			"title": "检索与抽牌次序",
+			"focus": "自爆恶喷：先固定牌库顶与公开信息，再消耗一次性抽牌能力",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第4题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "先固定牌库顶与公开信息，再消耗一次性抽牌能力"
+			}
+		},
+		{
+			"id": "charizard_dragapult_05",
+			"deck_key": "charizard_dragapult",
+			"order": 5,
+			"title": "不可逆弃牌成本",
+			"focus": "自爆恶喷：两次攻击共享同一批资源，第一回合多花一张就会断档",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第5题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "两次攻击共享同一批资源，第一回合多花一张就会断档"
+			}
+		},
+		{
+			"id": "charizard_dragapult_06",
+			"deck_key": "charizard_dragapult",
+			"order": 6,
+			"title": "攻击手交接",
+			"focus": "自爆恶喷：首攻后预留第二攻击手，跨过规则 AI 回合继续收奖",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第6题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "首攻后预留第二攻击手，跨过规则 AI 回合继续收奖"
+			}
+		},
+		{
+			"id": "charizard_dragapult_07",
+			"deck_key": "charizard_dragapult",
+			"order": 7,
+			"title": "两回合四奖",
+			"focus": "自爆恶喷：连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第7题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "连续击倒两只双奖宝可梦；首回合必须为次回合调伤与蓄能"
+			}
+		},
+		{
+			"id": "charizard_dragapult_08",
+			"deck_key": "charizard_dragapult",
+			"order": 8,
+			"title": "先送后取",
+			"focus": "自爆恶喷：接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第8题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "接受对手中间回合改变奖差，再把劣势转成反击牌的合法窗口"
+			}
+		},
+		{
+			"id": "charizard_dragapult_09",
+			"deck_key": "charizard_dragapult",
+			"order": 9,
+			"title": "错误路线排除",
+			"focus": "自爆恶喷：手牌中存在看似有收益的支援者，使用后会破坏最终斩杀",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第9题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "手牌中存在看似有收益的支援者，使用后会破坏最终斩杀"
+			}
+		},
+		{
+			"id": "charizard_dragapult_10",
+			"deck_key": "charizard_dragapult",
+			"order": 10,
+			"title": "终局精算",
+			"focus": "自爆恶喷：在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线",
+			"objective": "第一回合允许对手拿1奖；第二回合用反击捕捉器＋白蕾雅一次拿3奖。",
+			"player_deck_id": 800025404,
+			"opponent_deck_id": 800025404,
+			"opponent_name": "自爆恶喷",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"active": {
+					"stack": [
+						"CSV8C_081"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004"
+						]
+					},
+					{
+						"stack": [
+							"151C_016"
+						]
+					},
+					{
+						"stack": [
+							"CSV8C_081"
+						]
+					}
+				],
+				"hand": [
+					"CSVH1C_045",
+					"CSV5C_075",
+					"CSV6C_114",
+					"CSV9C_202",
+					"CSV1C_117",
+					"CSV1C_121",
+					"CSV3C_123",
+					"CSV1C_112"
+				],
+				"discard": [
+					"CSVE1C_FIR"
+				],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177",
+					"CSV1C_109"
+				],
+				"prize_count": 6
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {
+					"stack": [
+						"CSV4C_099",
+						"151C_017",
+						"CSV4C_101"
+					],
+					"energy": [
+						"CSVE1C_FIR",
+						"CSVE1C_FIR"
+					]
+				},
+				"bench": [
+					{
+						"stack": [
+							"151C_004",
+							"CSV5C_015",
+							"CSV5C_075"
+						]
+					}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [
+					"CSVE1C_FIR",
+					"CSV7C_177"
+				]
+			},
+			"goal": {
+				"type": "prizes",
+				"count": 3
+			},
+			"validation_operations": [
+				"第一回合保留白蕾雅与反击捕捉器",
+				"让低价值前场承受对手规则AI的击倒",
+				"对手拿奖后确认其剩余2奖",
+				"用神奇糖果进化喷火龙ex",
+				"炼狱支配只给最终攻击手附能",
+				"附着不服输头带",
+				"反击捕捉器拉出330HP双奖目标",
+				"使用白蕾雅",
+				"恶喷以330伤害击倒并一次拿3奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{
+						"choice": "第一回合是否贪图无关动作或提前消耗支援者",
+						"failure": "白蕾雅被弃掉后第二回合最多只能拿2奖"
+					},
+					{
+						"choice": "是否允许对手先拿1奖",
+						"failure": "不制造对手剩2奖的状态，白蕾雅与恶喷增伤都不会同时成立"
+					}
+				],
+				"cross_turn_dependencies": [
+					"第一回合的伤害、奖差或资源余量必须直接降低第二回合的斩杀成本",
+					"规则AI中间回合后重新检查公开场面，不能把作者路线当成固定脚本"
+				],
+				"resource_tensions": [
+					"两次攻击共享同一批一次性检索、能量与换位资源",
+					"第10题设置了可立即使用但会破坏最终结果的诱饵牌"
+				],
+				"learning_outcome": "在资源、牌库与攻击次数都封顶的场面完成唯一的高奖赏路线"
+			}
+		}
+	]
+}

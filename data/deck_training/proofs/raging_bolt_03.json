@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 346,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:dance_into_crispin",
+      "choice_label": "碧草之舞附草并抽到赤松",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:crispin_fighting_to_slither",
+      "choice_label": "赤松把草能加入手牌、斗能附给爬地翅",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:manual_fighting_slither",
+      "choice_label": "给爬地翅手贴第二张斗能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:zero_retreat_to_slither",
+      "choice_label": "借天际线零成本撤退换入爬地翅",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:burn_pikachu",
+      "choice_label": "烫伤怒涛经弱点并由灼伤检查击倒皮卡丘ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:tera_box_reply",
+      "choice_label": "月月熊升场并用血月击倒50HP爬地翅",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:sada_rebuild_backup",
+      "choice_label": "奖赏奥琳把斗能给接棒猛雷鼓、草能给原前场猛雷鼓",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:bolt_exact_280",
+      "choice_label": "极雷轰弃4能造成280击倒月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "d659d8192e3d87d3fc11e8389828556da9bf9ce162e0de94e43e561fc350d33a"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:dance_into_crispin",
+        "choice_label": "碧草之舞附草并抽到赤松",
+        "depth": 8,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:crispin_fighting_to_slither",
+              "choice_label": "赤松把草能加入手牌、斗能附给爬地翅",
+              "depth": 8,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:manual_fighting_slither",
+                    "choice_label": "给爬地翅手贴第二张斗能",
+                    "depth": 8,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:zero_retreat_to_slither",
+                          "choice_label": "借天际线零成本撤退换入爬地翅",
+                          "depth": 8,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:burn_pikachu",
+                                "choice_label": "烫伤怒涛经弱点并由灼伤检查击倒皮卡丘ex",
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:tera_box_reply",
+                                      "choice_label": "月月熊升场并用血月击倒50HP爬地翅",
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:sada_rebuild_backup",
+                                            "choice_label": "奖赏奥琳把斗能给接棒猛雷鼓、草能给原前场猛雷鼓",
+                                            "depth": 8,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:bolt_exact_280",
+                                                  "choice_label": "极雷轰弃4能造成280击倒月月熊",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 4,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:bolt_exact_280",
+                                              "selected_choice_label": "极雷轰弃4能造成280击倒月月熊",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 2,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:sada_rebuild_backup",
+                                        "selected_choice_label": "奖赏奥琳把斗能给接棒猛雷鼓、草能给原前场猛雷鼓",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 2,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:tera_box_reply",
+                                  "selected_choice_label": "月月熊升场并用血月击倒50HP爬地翅",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:burn_pikachu",
+                            "selected_choice_label": "烫伤怒涛经弱点并由灼伤检查击倒皮卡丘ex",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:zero_retreat_to_slither",
+                      "selected_choice_label": "借天际线零成本撤退换入爬地翅",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:manual_fighting_slither",
+                "selected_choice_label": "给爬地翅手贴第二张斗能",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 6,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:crispin_fighting_to_slither",
+          "selected_choice_label": "赤松把草能加入手牌、斗能附给爬地翅",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 7,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:dance_into_crispin",
+    "selected_choice_label": "碧草之舞附草并抽到赤松",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:dance_into_crispin",
+      "choice_label": "碧草之舞附草并抽到赤松",
+      "depth": 8,
+      "player_actions": 7,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:crispin_fighting_to_slither",
+            "choice_label": "赤松把草能加入手牌、斗能附给爬地翅",
+            "depth": 8,
+            "player_actions": 6,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:manual_fighting_slither",
+                  "choice_label": "给爬地翅手贴第二张斗能",
+                  "depth": 8,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:zero_retreat_to_slither",
+                        "choice_label": "借天际线零成本撤退换入爬地翅",
+                        "depth": 8,
+                        "player_actions": 4,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:burn_pikachu",
+                              "choice_label": "烫伤怒涛经弱点并由灼伤检查击倒皮卡丘ex",
+                              "depth": 8,
+                              "player_actions": 3,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:tera_box_reply",
+                                    "choice_label": "月月熊升场并用血月击倒50HP爬地翅",
+                                    "depth": 8,
+                                    "player_actions": 2,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:sada_rebuild_backup",
+                                          "choice_label": "奖赏奥琳把斗能给接棒猛雷鼓、草能给原前场猛雷鼓",
+                                          "depth": 8,
+                                          "player_actions": 2,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:bolt_exact_280",
+                                                "choice_label": "极雷轰弃4能造成280击倒月月熊",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 4,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:bolt_exact_280",
+                                            "selected_choice_label": "极雷轰弃4能造成280击倒月月熊",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:sada_rebuild_backup",
+                                      "selected_choice_label": "奖赏奥琳把斗能给接棒猛雷鼓、草能给原前场猛雷鼓",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:tera_box_reply",
+                                "selected_choice_label": "月月熊升场并用血月击倒50HP爬地翅",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:burn_pikachu",
+                          "selected_choice_label": "烫伤怒涛经弱点并由灼伤检查击倒皮卡丘ex",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:zero_retreat_to_slither",
+                    "selected_choice_label": "借天际线零成本撤退换入爬地翅",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:manual_fighting_slither",
+              "selected_choice_label": "给爬地翅手贴第二张斗能",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:crispin_fighting_to_slither",
+        "selected_choice_label": "赤松把草能加入手牌、斗能附给爬地翅",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "d659d8192e3d87d3fc11e8389828556da9bf9ce162e0de94e43e561fc350d33a",
+  "scenario_id": "raging_bolt_03",
+  "shortest_player_actions": 7,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

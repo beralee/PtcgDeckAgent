@@ -2,6 +2,8 @@
 
 extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 
+const CSV9CAdvancedEffectsScript := preload("res://scripts/effects/pokemon_effects/CSV9CAdvancedEffects.gd")
+
 
 func test_munkidori_ability_opens_and_completes_two_stage_field_interaction() -> String:
 	var battle_scene = _make_battle_scene_stub()
@@ -48,6 +50,53 @@ func test_munkidori_ability_opens_and_completes_two_stage_field_interaction() ->
 		assert_eq(damaged_ally.damage_counters, 0, "Completing the HUD flow should remove the selected two counters from the ally"),
 		assert_eq(opponent.damage_counters, 20, "Completing the HUD flow should place both counters on the opponent"),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "A valid Munkidori interaction should finish without leaving a stuck modal"),
+	])
+
+
+func test_archaludon_alloy_build_auto_finishes_after_assigning_max_energy() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var archaludon_data := _make_pokemon_cd("铝钢桥龙ex", 300, "M")
+	archaludon_data.stage = "Stage 1"
+	archaludon_data.evolves_from = "铝钢龙"
+	archaludon_data.effect_id = "archaludon_alloy_build_ui_regression"
+	archaludon_data.abilities = [{"name": "合金建设", "text": "附着最多2张基本钢能量。"}]
+	var archaludon := PokemonSlot.new()
+	archaludon.pokemon_stack.append(CardInstance.create(archaludon_data, 0))
+	archaludon.turn_evolved = gsm.game_state.turn_number
+	player.active_pokemon = archaludon
+	var metal_a := CardInstance.create(_make_energy_cd("Metal Energy A", "M"), 0)
+	var metal_b := CardInstance.create(_make_energy_cd("Metal Energy B", "M"), 0)
+	player.discard_pile.append_array([metal_a, metal_b])
+	gsm.effect_processor.register_effect(
+		archaludon_data.effect_id,
+		CSV9CAdvancedEffectsScript.ArchaludonExAlloyBuild.new()
+	)
+
+	battle_scene.call("_try_use_ability_with_interaction", 0, archaludon, 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 1)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+
+	return run_checks([
+		assert_true(metal_a in archaludon.attached_energy and metal_b in archaludon.attached_energy, "Alloy Build should attach both selected Metal Energy cards after the second assignment"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Reaching Alloy Build's maximum assignment count should finish instead of leaving Android on the Energy assignment page"),
+		assert_false(bool((battle_scene.get("_field_interaction_overlay") as Control).visible), "Alloy Build should close the field assignment overlay after the maximum is assigned"),
 	])
 
 
@@ -670,6 +719,313 @@ func test_battle_scene_lost_zone_click_reuses_discard_viewer() -> String:
 		assert_eq(first_card.card_data.name if first_card != null and first_card.card_data != null else "", "Lost B", "LOST viewer should show the most recent lost card first like discard"),
 		assert_eq(second_card.card_data.name if second_card != null and second_card.card_data != null else "", "Lost A", "LOST viewer should include older lost cards"),
 	])
+
+
+func test_normal_battle_discard_hud_physical_click_opens_collection_popup() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_ids: Array[int] = GameManager.selected_deck_ids.duplicate()
+	var previous_launch: Dictionary = GameManager.peek_deck_training_launch()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	GameManager.selected_deck_ids = [800018497, 800018502]
+	GameManager.clear_deck_training_launch()
+
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene: Control = BattleScenePacked.instantiate()
+	tree.root.add_child(scene)
+	await tree.process_frame
+	await tree.process_frame
+
+	scene.call("_setup_ai_for_tests")
+	var coin_animator := scene.get("_coin_animator") as Control
+	if coin_animator != null:
+		coin_animator.visible = false
+	scene.set("_coin_animating", false)
+	(scene.get("_coin_flip_queue") as Array).clear()
+	var gsm: GameStateMachine = scene.get("_gsm")
+	if gsm != null and gsm.game_state != null and not gsm.game_state.players.is_empty():
+		gsm.game_state.players[0].discard_pile.append(
+			CardInstance.create(_make_pokemon_cd("Normal Battle Discard", 70, "C"), 0)
+		)
+		scene.call("_refresh_ui")
+	var discard_panel := scene.find_child("MyDiscardHudPanel", true, false) as Control
+	var discard_caption := scene.find_child("MyDiscardHudCaption", true, false) as Control
+	var discard_overlay := scene.get("_discard_overlay") as Control
+	var click_position := discard_caption.get_global_rect().get_center() if discard_caption != null else (
+		discard_panel.get_global_rect().get_center() if discard_panel != null else Vector2.ZERO
+	)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = click_position
+	press.global_position = click_position
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = click_position
+	release.global_position = click_position
+	scene.get_viewport().push_input(press, true)
+	scene.get_viewport().push_input(release, true)
+	await tree.process_frame
+	var caption_popup_opened := discard_overlay != null and discard_overlay.visible
+	if caption_popup_opened:
+		scene.call("_close_discard_collection_viewer", "normal_battle_caption_test")
+
+	var discard_preview := scene.get("_my_discard_preview") as Control
+	var preview_hit_rect := discard_panel.get_global_rect().intersection(discard_preview.get_global_rect()) if (
+		discard_panel != null and discard_preview != null
+	) else Rect2()
+	var preview_click_position := preview_hit_rect.get_center()
+	var touch_press := InputEventScreenTouch.new()
+	touch_press.index = 0
+	touch_press.pressed = true
+	touch_press.position = preview_click_position
+	var touch_release := InputEventScreenTouch.new()
+	touch_release.index = 0
+	touch_release.pressed = false
+	touch_release.position = preview_click_position
+	scene.get_viewport().push_input(touch_press, true)
+	scene.get_viewport().push_input(touch_release, true)
+	await tree.process_frame
+	var preview_popup_opened := discard_overlay != null and discard_overlay.visible
+	if preview_popup_opened:
+		scene.call("_close_discard_collection_viewer", "normal_battle_preview_test")
+
+	var panel_touch_position := (
+		discard_panel.get_global_transform_with_canvas()
+		* (discard_panel.size * 0.5)
+		if discard_panel != null
+		else Vector2.ZERO
+	)
+	var native_touch_press := InputEventScreenTouch.new()
+	native_touch_press.index = 0
+	native_touch_press.pressed = true
+	native_touch_press.position = panel_touch_position
+	var native_touch_handled := bool(
+		scene.call("_try_handle_battle_hud_touch_input", native_touch_press)
+	)
+	var native_touch_popup_opened := (
+		discard_overlay != null
+		and discard_overlay.visible
+	)
+	var click_inside_panel := discard_panel != null and discard_panel.get_global_rect().has_point(click_position)
+	if native_touch_popup_opened:
+		scene.call("_close_discard_collection_viewer", "normal_battle_native_touch_test")
+
+	var logical_panel_rect: Rect2 = scene.call(
+		"_control_rect_in_battle_local",
+		discard_panel
+	)
+	var logical_native_press := InputEventScreenTouch.new()
+	logical_native_press.index = 0
+	logical_native_press.pressed = true
+	logical_native_press.position = logical_panel_rect.get_center()
+	var logical_touch_handled := bool(
+		scene.call("_try_handle_battle_hud_touch_input", logical_native_press)
+	)
+	var logical_touch_popup_opened := (
+		discard_overlay != null
+		and discard_overlay.visible
+	)
+	if logical_touch_popup_opened:
+		scene.call("_close_discard_collection_viewer", "logical_viewport_touch_test")
+
+	# Native Android can emit compatibility MouseButton first and ScreenTouch
+	# second for one physical finger press. Opening on the mouse half must claim
+	# the whole sequence so the newly visible backdrop cannot interpret the
+	# touch half as a second tap and immediately close itself.
+	scene.call("_configure_battle_pointer_input_for_tests", true)
+	scene.call("_cancel_transient_platform_input", "android_mouse_first_test_reset")
+	var android_mouse_first := InputEventMouseButton.new()
+	android_mouse_first.button_index = MOUSE_BUTTON_LEFT
+	android_mouse_first.pressed = true
+	android_mouse_first.device = 0
+	android_mouse_first.position = logical_panel_rect.get_center()
+	android_mouse_first.global_position = logical_panel_rect.get_center()
+	var android_mouse_result: Dictionary = scene.call(
+		"_observe_battle_pointer_event",
+		android_mouse_first
+	)
+	var android_mouse_sequence := (
+		android_mouse_result.get("sequence", null) as PointerSequence
+	)
+	var android_mouse_state_before_open := (
+		android_mouse_sequence.state if android_mouse_sequence != null else "null"
+	)
+	scene.call(
+		"_on_discard_open_control_input",
+		android_mouse_first,
+		"my",
+		"己方弃牌区"
+	)
+	var android_mouse_state_after_open := (
+		android_mouse_sequence.state if android_mouse_sequence != null else "null"
+	)
+	var android_touch_echo := InputEventScreenTouch.new()
+	android_touch_echo.index = 0
+	android_touch_echo.pressed = true
+	android_touch_echo.position = logical_panel_rect.get_center()
+	var android_touch_result: Dictionary = scene.call(
+		"_observe_battle_pointer_event",
+		android_touch_echo
+	)
+	var android_touch_was_merged := bool(
+		android_touch_result.get("synthetic_echo", false)
+	)
+	var android_open_sequence_claimed := (
+		android_mouse_sequence != null
+		and android_mouse_sequence.owner == "battle_modal"
+		and android_mouse_sequence.consumed_intent == "discard_hud_open"
+	)
+	scene.call("_on_discard_overlay_gui_input", android_touch_echo)
+	var mouse_first_popup_stayed_open := (
+		discard_overlay != null
+		and discard_overlay.visible
+	)
+	if mouse_first_popup_stayed_open:
+		scene.call("_close_discard_collection_viewer", "android_mouse_first_test")
+
+	# Android forced portrait renders the battle through a rotated landscape
+	# viewport. Reproduce that transform and feed the native viewport coordinate,
+	# not the already-converted portrait coordinate.
+	var rotated_physical_size := Vector2(1600, 900)
+	var rotated_logical_size := Vector2(900, 1600)
+	scene.call(
+		"_apply_battle_canvas_transform",
+		true,
+		rotated_physical_size,
+		rotated_logical_size
+	)
+	var panel_battle_rect: Rect2 = scene.call(
+		"_control_rect_in_battle_local",
+		discard_panel
+	)
+	var panel_battle_center := panel_battle_rect.get_center()
+	var rotated_screen_position := Vector2(
+		rotated_physical_size.x - panel_battle_center.y,
+		panel_battle_center.x
+	)
+	var rotated_native_press := InputEventScreenTouch.new()
+	rotated_native_press.index = 0
+	rotated_native_press.pressed = true
+	rotated_native_press.position = rotated_screen_position
+	var rotated_touch_handled := bool(
+		scene.call("_try_handle_battle_hud_touch_input", rotated_native_press)
+	)
+	var rotated_touch_popup_opened := (
+		discard_overlay != null
+		and discard_overlay.visible
+	)
+	if rotated_touch_popup_opened:
+		scene.call("_close_discard_collection_viewer", "rotated_viewport_touch_test")
+
+	# Godot Android can also deliver ScreenTouch after the OS has already rotated
+	# it into portrait coordinates even though get_viewport_rect() is landscape.
+	var post_rotation_native_press := InputEventScreenTouch.new()
+	post_rotation_native_press.index = 0
+	post_rotation_native_press.pressed = true
+	post_rotation_native_press.position = panel_battle_center
+	var post_rotation_touch_handled := bool(
+		scene.call("_try_handle_battle_hud_touch_input", post_rotation_native_press)
+	)
+	var post_rotation_touch_popup_opened := (
+		discard_overlay != null
+		and discard_overlay.visible
+	)
+	var gsm_created := gsm != null
+	var discard_panel_found := discard_panel != null
+	var discard_caption_found := discard_caption != null
+	var preview_hit_available := preview_hit_rect.has_area()
+
+	scene.queue_free()
+	await tree.process_frame
+	GameManager.current_mode = previous_mode
+	GameManager.selected_deck_ids = previous_ids
+	GameManager.set("_deck_training_launch", previous_launch)
+	return run_checks([
+		assert_true(gsm_created, "Normal battle should create its production game state machine"),
+		assert_true(discard_panel_found, "Normal battle should expose the visible discard HUD panel"),
+		assert_true(discard_caption_found, "Normal battle should expose the visible discard HUD caption"),
+		assert_true(click_inside_panel, "The regression click should land inside the visible discard HUD panel"),
+		assert_true(caption_popup_opened, "A physical click on the normal battle discard caption must open the collection popup"),
+		assert_true(preview_hit_available, "The discard card preview should occupy a visible part of the discard HUD"),
+		assert_true(preview_popup_opened, "A physical click on the normal battle discard card preview must open the collection popup"),
+		assert_true(native_touch_handled, "The scene-level native touch fallback must own a discard HUD press"),
+		assert_true(native_touch_popup_opened, "A native Android touch on the discard HUD must open the collection popup"),
+		assert_true(logical_touch_handled, "Canvas-stretched native touches must hit the HUD in Godot logical coordinates"),
+		assert_true(logical_touch_popup_opened, "A logical viewport touch must open the discard popup without applying physical canvas scale"),
+		assert_true(android_open_sequence_claimed, "Opening the discard popup must claim Android's leading compatibility-mouse sequence"),
+		assert_true(
+			android_touch_was_merged,
+			"Android's following ScreenTouch press must merge into the leading compatibility-mouse sequence (phase=%s mouse_state_before_open=%s mouse_state_after_open=%s mouse_state=%s)"
+			% [
+				str(android_touch_result.get("phase", "")),
+				android_mouse_state_before_open,
+				android_mouse_state_after_open,
+				android_mouse_sequence.state if android_mouse_sequence != null else "null",
+			]
+		),
+		assert_true(mouse_first_popup_stayed_open, "Android's mouse-first touch echo must not immediately close the discard popup it just opened"),
+		assert_true(rotated_touch_handled, "Forced portrait must convert the native landscape touch into battle-local HUD coordinates"),
+		assert_true(rotated_touch_popup_opened, "A native Android touch must open the discard popup through the rotated portrait canvas"),
+		assert_true(post_rotation_touch_handled, "Forced portrait must accept Android touch coordinates already rotated by the OS"),
+		assert_true(post_rotation_touch_popup_opened, "Post-rotation native Android coordinates must open the discard popup"),
+	])
+
+
+func test_discard_hud_openers_follow_current_view_player_after_handover() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	scene.set("_discard_overlay", scene.find_child("DiscardOverlay", true, false))
+	scene.set("_discard_title", scene.find_child("DiscardTitle", true, false))
+	scene.set("_discard_list", scene.find_child("DiscardList", true, false))
+	scene.set("_discard_close_btn", scene.find_child("DiscardCloseBtn", true, false))
+	scene.call("_setup_discard_gallery")
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		player.discard_pile.append(
+			CardInstance.create(_make_pokemon_cd("Player %d Discard" % player_index, 70, "C"), player_index)
+		)
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+
+	# The HUD is wired while player 0 is visible, then a local handover changes
+	# which game-state player is rendered on the "my" side of the board.
+	scene.set("_view_player", 0)
+	scene.call("_bind_discard_hud_openers")
+	scene.set("_view_player", 1)
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	var my_panel := scene.find_child("MyDiscardHudPanel", true, false) as Control
+	my_panel.emit_signal("gui_input", click)
+	var my_opened_player_index := int(scene.get("_discard_collection_current_player_index"))
+	var my_row := scene.get("_discard_card_row") as HBoxContainer
+	var my_card := my_row.get_child(0) as BattleCardView if my_row != null and my_row.get_child_count() > 0 else null
+	var my_card_name := my_card.card_data.name if my_card != null and my_card.card_data != null else ""
+
+	scene.call("_close_discard_collection_viewer", "handover_regression")
+	var opp_panel := scene.find_child("OppDiscardHudPanel", true, false) as Control
+	var opponent_click := InputEventMouseButton.new()
+	opponent_click.button_index = MOUSE_BUTTON_LEFT
+	opponent_click.pressed = true
+	opp_panel.emit_signal("gui_input", opponent_click)
+	var opponent_opened_player_index := int(scene.get("_discard_collection_current_player_index"))
+	var opponent_row := scene.get("_discard_card_row") as HBoxContainer
+	var opponent_card := opponent_row.get_child(0) as BattleCardView if opponent_row != null and opponent_row.get_child_count() > 0 else null
+	var opponent_card_name := opponent_card.card_data.name if opponent_card != null and opponent_card.card_data != null else ""
+
+	var result := run_checks([
+		assert_eq(my_opened_player_index, 1, "The visible self discard HUD must resolve to the current view player after handover"),
+		assert_eq(my_card_name, "Player 1 Discard", "The self discard popup must show the cards rendered on the current self side"),
+		assert_eq(opponent_opened_player_index, 0, "The visible opponent discard HUD must resolve opposite the current view player after handover"),
+		assert_eq(opponent_card_name, "Player 0 Discard", "The opponent discard popup must show the cards rendered on the current opponent side"),
+	])
+	scene.queue_free()
+	return result
 
 
 func test_battle_scene_discard_viewer_uses_compact_hud_surface() -> String:
@@ -2389,7 +2745,12 @@ func test_energy_switch_field_assignment_compacts_after_source_and_waits_for_con
 
 	battle_scene.call("_handle_field_assignment_target_index", 0)
 	var assignments: Array = battle_scene.get("_field_interaction_assignment_entries")
+	var assignment_count_before_button_down := assignments.size()
 	var pending_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var mode_before_button_down := str(battle_scene.get("_field_interaction_mode"))
+	if confirm_button != null:
+		confirm_button.button_down.emit()
+	var mode_after_button_down := str(battle_scene.get("_field_interaction_mode"))
 
 	return run_checks([
 		assert_true(scroll_visible_before, "Energy Switch source picker should start expanded"),
@@ -2397,10 +2758,11 @@ func test_energy_switch_field_assignment_compacts_after_source_and_waits_for_con
 		assert_true(compact_height < expanded_height, "Energy Switch field assignment panel should shrink after source selection"),
 		assert_true(clear_button != null and clear_button.visible, "Compact Energy Switch should allow clearing the selected source"),
 		assert_true(confirm_disabled_after_source, "Energy Switch confirm should stay disabled until a target is chosen"),
-		assert_eq(assignments.size(), 1, "Clicking the target should create a pending path"),
-		assert_eq(str(battle_scene.get("_field_interaction_mode")), "assignment", "Energy Switch should wait for explicit confirmation instead of resolving immediately"),
+		assert_eq(assignment_count_before_button_down, 1, "Clicking the target should create a pending path"),
+		assert_eq(mode_before_button_down, "assignment", "Energy Switch should wait for explicit confirmation instead of resolving immediately"),
 		assert_eq(pending_step_index, 0, "Energy Switch should not advance the effect step before confirm"),
 		assert_false(confirm_button.disabled, "Energy Switch confirm should enable after source and target form a path"),
+		assert_eq(mode_after_button_down, "", "Explicit field assignment confirmation must complete on button-down without waiting for pointer release"),
 	])
 
 
@@ -3660,18 +4022,22 @@ func test_battle_scene_superior_energy_retrieval_multi_select_keeps_second_tap_l
 
 	var player: PlayerState = gsm.game_state.players[0]
 	var superior_card := CardInstance.create(_make_trainer_cd("超级能量回收", "Item", ""), 0)
+	superior_card.card_data.effect_id = "superior_energy_retrieval_ui_regression"
+	var discard_energy := [
+		CardInstance.create(_make_energy_cd("Water Energy", "W"), 0),
+		CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0),
+		CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0),
+		CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0),
+	]
 	player.hand = [
 		superior_card,
 		CardInstance.create(_make_pokemon_cd("Discard Cost A", 60, "C"), 0),
 		CardInstance.create(_make_pokemon_cd("Discard Cost B", 70, "C"), 0),
 	]
-	player.discard_pile = [
-		CardInstance.create(_make_energy_cd("Water Energy", "W"), 0),
-		CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0),
-		CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0),
-	]
+	player.discard_pile.append_array(discard_energy)
 
 	var effect := preload("res://scripts/effects/trainer_effects/EffectRecoverBasicEnergy.gd").new(4, 2)
+	gsm.effect_processor.register_effect(superior_card.card_data.effect_id, effect)
 	var steps: Array[Dictionary] = effect.get_interaction_steps(superior_card, gsm.game_state)
 	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, superior_card)
 
@@ -3692,6 +4058,8 @@ func test_battle_scene_superior_energy_retrieval_multi_select_keeps_second_tap_l
 	battle_scene.call("_on_dialog_card_chosen", 1)
 	var recover_second_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
 	var recover_suppression_after_second := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+	battle_scene.call("_on_dialog_card_chosen", 2)
+	battle_scene.call("_on_dialog_card_chosen", 3)
 
 	return run_checks([
 		assert_eq(discard_cost_first_selection, [0], "Superior Energy Retrieval should select the first discard-cost card immediately"),
@@ -3703,6 +4071,8 @@ func test_battle_scene_superior_energy_retrieval_multi_select_keeps_second_tap_l
 		assert_eq(recover_second_selection, [0, 1], "Superior Energy Retrieval should select the second discard-pile Energy without requiring an extra tap"),
 		assert_eq(recover_suppression_after_first, 0, "Recovery multi-select should not arm modal slot suppression while the dialog remains open"),
 		assert_eq(recover_suppression_after_second, 0, "Recovery consecutive card taps should stay live"),
+		assert_true(discard_energy.all(func(energy: CardInstance) -> bool: return energy in player.hand), "Selecting the fourth discard-pile Energy should reliably commit all four cards to the hand"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Superior Energy Retrieval should close as soon as its maximum four Energy cards are selected"),
 	])
 
 

@@ -27,8 +27,10 @@ func _initialize() -> void:
 	_test_wait_budget_fallback_preserves_rejection_ownership()
 	_test_energy_burst_uses_profiled_damage_resource_zone()
 	_test_autonomous_typed_completion_requires_rule_end_and_active()
+	_test_distinct_energy_coverage_cannot_skip_rule_development()
+	_test_tera_capacity_cannot_skip_rule_information()
 	if _failures.is_empty():
-		print("V18CPG shared blocker suite: PASS (13 groups)")
+		print("V18CPG shared blocker suite: PASS (15 groups)")
 		quit(0)
 		return
 	for failure: String in _failures:
@@ -230,6 +232,128 @@ func _test_direct_verified_selection_is_idempotent() -> void:
 	_check(
 		bool(strategy.call("_can_reuse_direct_verified_selection", frontier, "same")),
 		"a direct module-verified selection must survive the host's repeated prepare call"
+	)
+
+
+func _test_distinct_energy_coverage_cannot_skip_rule_development() -> void:
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(ProfileCatalogScript.get_profile_for_deck(800015934))
+	var selected := {
+		"candidate_id": "candidate:distinct-metal",
+		"route_id": "route:energy_commit",
+		"action_kind": "attach_energy",
+		"base_score": 1700.0,
+	}
+	var rule_evolve := {
+		"candidate_id": "candidate:rule-evolve",
+		"route_id": "route:evolve",
+		"action_kind": "evolve",
+		"base_score": 9000.0,
+		"engine_rule_floor_exact": true,
+	}
+	var safety := {
+		"valid": true,
+		"reason": "module_verified_advantage",
+		"score_gap": 7300.0,
+		"advantage": {
+			"verified": true,
+			"certificate_kind": "public_distinct_energy_coverage",
+		},
+	}
+	_check(
+		not strategy._can_apply_autonomous_module_upgrade(
+			selected,
+			rule_evolve,
+			{"attack": {"ready": false, "ko_available": false}},
+			safety
+		),
+		"distinct typed-energy coverage must not autonomously reorder a Rule evolve/search epoch"
+	)
+	var rule_end_turn := {
+		"candidate_id": "candidate:rule-end",
+		"route_id": "route:end_turn",
+		"action_kind": "end_turn",
+		"base_score": 1800.0,
+		"engine_rule_floor_exact": true,
+	}
+	safety["score_gap"] = 100.0
+	_check(
+		not strategy._can_apply_autonomous_module_upgrade(
+			selected,
+			rule_end_turn,
+			{"attack": {"ready": false, "ko_available": false}},
+			safety
+		),
+		"distinct typed-energy coverage must not spend an attachment that Rule intentionally leaves unused"
+	)
+	var rule_attachment := {
+		"candidate_id": "candidate:rule-duplicate",
+		"route_id": "route:energy_commit",
+		"action_kind": "attach_energy",
+		"base_score": 1710.0,
+		"engine_rule_floor_exact": true,
+	}
+	safety["score_gap"] = 10.0
+	_check(
+		not strategy._can_apply_autonomous_module_upgrade(
+			selected,
+			rule_attachment,
+			{"attack": {"ready": false, "ko_available": false}},
+			safety
+		),
+		"distinct typed-energy coverage must preserve Rule's exact same-quota energy type"
+	)
+
+
+func _test_tera_capacity_cannot_skip_rule_information() -> void:
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(ProfileCatalogScript.get_profile_for_deck(800015934))
+	var selected := {
+		"candidate_id": "candidate:tera-basic",
+		"route_id": "route:develop",
+		"action_kind": "play_basic_to_bench",
+		"base_score": 1200.0,
+	}
+	var rule_information := {
+		"candidate_id": "candidate:ultra-ball",
+		"route_id": "route:information",
+		"action_kind": "play_trainer",
+		"base_score": 1800.0,
+		"engine_rule_floor_exact": true,
+	}
+	var safety := {
+		"valid": true,
+		"reason": "module_verified_advantage",
+		"score_gap": 600.0,
+		"advantage": {
+			"verified": true,
+			"certificate_kind": "public_stadium_immediate_capacity",
+		},
+	}
+	_check(
+		not strategy._can_apply_autonomous_module_upgrade(
+			selected,
+			rule_information,
+			{"attack": {"ready": false, "ko_available": false}},
+			safety
+		),
+		"Tera bench-capacity setup must not autonomously skip the exact Rule information action"
+	)
+	var rule_end := {
+		"candidate_id": "candidate:end",
+		"route_id": "route:end_turn",
+		"action_kind": "end_turn",
+		"base_score": -244.0,
+		"engine_rule_floor_exact": true,
+	}
+	_check(
+		not strategy._can_apply_autonomous_module_upgrade(
+			selected,
+			rule_end,
+			{"attack": {"ready": false, "ko_available": false}},
+			safety
+		),
+		"Tera capacity alone must not spend a Basic from hand before an intentional Rule end-turn"
 	)
 
 

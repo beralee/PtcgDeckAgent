@@ -1,0 +1,335 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 331,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 7,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:budew_pollen",
+      "choice_label": "含羞苞用痒痒花粉补10并封锁物品",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:dreepy_reply",
+      "choice_label": "物品被封锁，多龙梅西亚用咬住击倒含羞苞",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:fez_draw_three",
+      "choice_label": "化危为吉抽走侦察前的三张诱饵",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:recon_boss",
+      "choice_label": "侦察指令从老大与奇树中拿老大",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:boss_fezandipiti",
+      "choice_label": "老大抓出剩200HP吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:four_prize_dive",
+      "choice_label": "200击倒吉雉鸡，六豆3+3双杀多龙梅西亚",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 8,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "998038c94bd5dc9276bc715d42529c78179a8abdb65bc5a8e8f536490c69640c"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:budew_pollen",
+        "choice_label": "含羞苞用痒痒花粉补10并封锁物品",
+        "depth": 6,
+        "player_actions": 5,
+        "reason": "all_defenses_hold",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:dreepy_reply",
+              "choice_label": "物品被封锁，多龙梅西亚用咬住击倒含羞苞",
+              "depth": 6,
+              "player_actions": 4,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:fez_draw_three",
+                    "choice_label": "化危为吉抽走侦察前的三张诱饵",
+                    "depth": 6,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:recon_boss",
+                          "choice_label": "侦察指令从老大与奇树中拿老大",
+                          "depth": 6,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:boss_fezandipiti",
+                                "choice_label": "老大抓出剩200HP吉雉鸡",
+                                "depth": 6,
+                                "player_actions": 2,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:four_prize_dive",
+                                      "choice_label": "200击倒吉雉鸡，六豆3+3双杀多龙梅西亚",
+                                      "depth": 6,
+                                      "player_actions": 1,
+                                      "reason": "production_witness_reached_goal",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [],
+                                        "coverage_complete": true,
+                                        "depth": 6,
+                                        "player_actions": 0,
+                                        "reason": "production_witness_reached_goal",
+                                        "score": 4,
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 0
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 6,
+                                  "player_actions": 1,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:four_prize_dive",
+                                  "selected_choice_label": "200击倒吉雉鸡，六豆3+3双杀多龙梅西亚",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 6,
+                            "player_actions": 2,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:boss_fezandipiti",
+                            "selected_choice_label": "老大抓出剩200HP吉雉鸡",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 6,
+                      "player_actions": 3,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:recon_boss",
+                      "selected_choice_label": "侦察指令从老大与奇树中拿老大",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 6,
+                "player_actions": 4,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:fez_draw_three",
+                "selected_choice_label": "化危为吉抽走侦察前的三张诱饵",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 6,
+          "player_actions": 4,
+          "reason": "all_defenses_hold",
+          "role": "opponent",
+          "selected_choice_id": "01:dreepy_reply",
+          "selected_choice_label": "物品被封锁，多龙梅西亚用咬住击倒含羞苞",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 6,
+    "player_actions": 5,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:budew_pollen",
+    "selected_choice_label": "含羞苞用痒痒花粉补10并封锁物品",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:budew_pollen",
+      "choice_label": "含羞苞用痒痒花粉补10并封锁物品",
+      "depth": 6,
+      "player_actions": 5,
+      "reason": "all_defenses_hold",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:dreepy_reply",
+            "choice_label": "物品被封锁，多龙梅西亚用咬住击倒含羞苞",
+            "depth": 6,
+            "player_actions": 4,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:fez_draw_three",
+                  "choice_label": "化危为吉抽走侦察前的三张诱饵",
+                  "depth": 6,
+                  "player_actions": 4,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:recon_boss",
+                        "choice_label": "侦察指令从老大与奇树中拿老大",
+                        "depth": 6,
+                        "player_actions": 3,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:boss_fezandipiti",
+                              "choice_label": "老大抓出剩200HP吉雉鸡",
+                              "depth": 6,
+                              "player_actions": 2,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:four_prize_dive",
+                                    "choice_label": "200击倒吉雉鸡，六豆3+3双杀多龙梅西亚",
+                                    "depth": 6,
+                                    "player_actions": 1,
+                                    "reason": "production_witness_reached_goal",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [],
+                                      "coverage_complete": true,
+                                      "depth": 6,
+                                      "player_actions": 0,
+                                      "reason": "production_witness_reached_goal",
+                                      "score": 4,
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 0
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 6,
+                                "player_actions": 1,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:four_prize_dive",
+                                "selected_choice_label": "200击倒吉雉鸡，六豆3+3双杀多龙梅西亚",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 6,
+                          "player_actions": 2,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:boss_fezandipiti",
+                          "selected_choice_label": "老大抓出剩200HP吉雉鸡",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 6,
+                    "player_actions": 3,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:recon_boss",
+                    "selected_choice_label": "侦察指令从老大与奇树中拿老大",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 6,
+              "player_actions": 4,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:fez_draw_three",
+              "selected_choice_label": "化危为吉抽走侦察前的三张诱饵",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 6,
+        "player_actions": 4,
+        "reason": "all_defenses_hold",
+        "role": "opponent",
+        "selected_choice_id": "01:dreepy_reply",
+        "selected_choice_label": "物品被封锁，多龙梅西亚用咬住击倒含羞苞",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "998038c94bd5dc9276bc715d42529c78179a8abdb65bc5a8e8f536490c69640c",
+  "scenario_id": "dragapult_gardevoir_08",
+  "shortest_player_actions": 5,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 352,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:first_trade",
+      "choice_label": "主攻索罗亚克交易取得暗码迷",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:cipher_band_counter",
+      "choice_label": "暗码迷置顶不服输头带与反击捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:second_trade",
+      "choice_label": "第二索罗亚克交易兑现头带与捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:attach_band",
+      "choice_label": "给主攻索罗亚克附不服输头带",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:counter_fez",
+      "choice_label": "反击捕捉器抓健康吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:rage_210",
+      "choice_label": "力量愤怒180加头带30精确击倒吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:budew_reply",
+      "choice_label": "含羞苞攻击10并封锁物品",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:immolating_finish",
+      "choice_label": "物品封锁下改复制焚身加农炮，90+90双杀",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "222b7ed7fbf56e63aaf5194ec7b07a053a45d95f9868ea69b24517572d05ea0e"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:first_trade",
+        "choice_label": "主攻索罗亚克交易取得暗码迷",
+        "depth": 8,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:cipher_band_counter",
+              "choice_label": "暗码迷置顶不服输头带与反击捕捉器",
+              "depth": 8,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:second_trade",
+                    "choice_label": "第二索罗亚克交易兑现头带与捕捉器",
+                    "depth": 8,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:attach_band",
+                          "choice_label": "给主攻索罗亚克附不服输头带",
+                          "depth": 8,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:counter_fez",
+                                "choice_label": "反击捕捉器抓健康吉雉鸡",
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:rage_210",
+                                      "choice_label": "力量愤怒180加头带30精确击倒吉雉鸡",
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:budew_reply",
+                                            "choice_label": "含羞苞攻击10并封锁物品",
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:immolating_finish",
+                                                  "choice_label": "物品封锁下改复制焚身加农炮，90+90双杀",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 4,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:immolating_finish",
+                                              "selected_choice_label": "物品封锁下改复制焚身加农炮，90+90双杀",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 1,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:budew_reply",
+                                        "selected_choice_label": "含羞苞攻击10并封锁物品",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 2,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:rage_210",
+                                  "selected_choice_label": "力量愤怒180加头带30精确击倒吉雉鸡",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:counter_fez",
+                            "selected_choice_label": "反击捕捉器抓健康吉雉鸡",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:attach_band",
+                      "selected_choice_label": "给主攻索罗亚克附不服输头带",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:second_trade",
+                "selected_choice_label": "第二索罗亚克交易兑现头带与捕捉器",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 6,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:cipher_band_counter",
+          "selected_choice_label": "暗码迷置顶不服输头带与反击捕捉器",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 7,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:first_trade",
+    "selected_choice_label": "主攻索罗亚克交易取得暗码迷",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:first_trade",
+      "choice_label": "主攻索罗亚克交易取得暗码迷",
+      "depth": 8,
+      "player_actions": 7,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:cipher_band_counter",
+            "choice_label": "暗码迷置顶不服输头带与反击捕捉器",
+            "depth": 8,
+            "player_actions": 6,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:second_trade",
+                  "choice_label": "第二索罗亚克交易兑现头带与捕捉器",
+                  "depth": 8,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:attach_band",
+                        "choice_label": "给主攻索罗亚克附不服输头带",
+                        "depth": 8,
+                        "player_actions": 4,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:counter_fez",
+                              "choice_label": "反击捕捉器抓健康吉雉鸡",
+                              "depth": 8,
+                              "player_actions": 3,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:rage_210",
+                                    "choice_label": "力量愤怒180加头带30精确击倒吉雉鸡",
+                                    "depth": 8,
+                                    "player_actions": 2,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:budew_reply",
+                                          "choice_label": "含羞苞攻击10并封锁物品",
+                                          "depth": 8,
+                                          "player_actions": 1,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:immolating_finish",
+                                                "choice_label": "物品封锁下改复制焚身加农炮，90+90双杀",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 4,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:immolating_finish",
+                                            "selected_choice_label": "物品封锁下改复制焚身加农炮，90+90双杀",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 1,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:budew_reply",
+                                      "selected_choice_label": "含羞苞攻击10并封锁物品",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:rage_210",
+                                "selected_choice_label": "力量愤怒180加头带30精确击倒吉雉鸡",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:counter_fez",
+                          "selected_choice_label": "反击捕捉器抓健康吉雉鸡",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:attach_band",
+                    "selected_choice_label": "给主攻索罗亚克附不服输头带",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:second_trade",
+              "selected_choice_label": "第二索罗亚克交易兑现头带与捕捉器",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:cipher_band_counter",
+        "selected_choice_label": "暗码迷置顶不服输头带与反击捕捉器",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "222b7ed7fbf56e63aaf5194ec7b07a053a45d95f9868ea69b24517572d05ea0e",
+  "scenario_id": "n_zoroark_06",
+  "shortest_player_actions": 7,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

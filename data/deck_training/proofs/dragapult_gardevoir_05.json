@@ -1,0 +1,383 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 343,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 8,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:flip_gust_pair",
+      "choice_label": "化危为吉抽到老大与反击捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:boss_bloodmoon",
+      "choice_label": "老大把60HP月月熊设为旧前场",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:offer_bloodmoon_attack",
+      "choice_label": "结束回合并保留月月熊前场",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:bloodmoon_reply",
+      "choice_label": "月月熊血月240后仍留在前场",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:dusknoir_opens_counter",
+      "choice_label": "黑夜魔灵向健康多龙放130并送1奖",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:counter_fez",
+      "choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:track_old_active",
+      "choice_label": "200击倒吉雉鸡，60追踪换回备战区末位的月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "2f156b29c4c3eafd7a46b316f26c28610fb9afcb92da06437105dcae6394c87f"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:flip_gust_pair",
+        "choice_label": "化危为吉抽到老大与反击捕捉器",
+        "depth": 7,
+        "player_actions": 5,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:boss_bloodmoon",
+              "choice_label": "老大把60HP月月熊设为旧前场",
+              "depth": 7,
+              "player_actions": 4,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:offer_bloodmoon_attack",
+                    "choice_label": "结束回合并保留月月熊前场",
+                    "depth": 7,
+                    "player_actions": 3,
+                    "reason": "all_defenses_hold",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:bloodmoon_reply",
+                          "choice_label": "月月熊血月240后仍留在前场",
+                          "depth": 7,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:dusknoir_opens_counter",
+                                "choice_label": "黑夜魔灵向健康多龙放130并送1奖",
+                                "depth": 7,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:counter_fez",
+                                      "choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                      "depth": 7,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:track_old_active",
+                                            "choice_label": "200击倒吉雉鸡，60追踪换回备战区末位的月月熊",
+                                            "depth": 7,
+                                            "player_actions": 1,
+                                            "reason": "production_witness_reached_goal",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [],
+                                              "coverage_complete": true,
+                                              "depth": 7,
+                                              "player_actions": 0,
+                                              "reason": "production_witness_reached_goal",
+                                              "score": 4,
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 0
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 7,
+                                        "player_actions": 1,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:track_old_active",
+                                        "selected_choice_label": "200击倒吉雉鸡，60追踪换回备战区末位的月月熊",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 7,
+                                  "player_actions": 2,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:counter_fez",
+                                  "selected_choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 7,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:dusknoir_opens_counter",
+                            "selected_choice_label": "黑夜魔灵向健康多龙放130并送1奖",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 7,
+                      "player_actions": 3,
+                      "reason": "all_defenses_hold",
+                      "role": "opponent",
+                      "selected_choice_id": "03:bloodmoon_reply",
+                      "selected_choice_label": "月月熊血月240后仍留在前场",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 7,
+                "player_actions": 3,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:offer_bloodmoon_attack",
+                "selected_choice_label": "结束回合并保留月月熊前场",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 7,
+          "player_actions": 4,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:boss_bloodmoon",
+          "selected_choice_label": "老大把60HP月月熊设为旧前场",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 7,
+    "player_actions": 5,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:flip_gust_pair",
+    "selected_choice_label": "化危为吉抽到老大与反击捕捉器",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:flip_gust_pair",
+      "choice_label": "化危为吉抽到老大与反击捕捉器",
+      "depth": 7,
+      "player_actions": 5,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:boss_bloodmoon",
+            "choice_label": "老大把60HP月月熊设为旧前场",
+            "depth": 7,
+            "player_actions": 4,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:offer_bloodmoon_attack",
+                  "choice_label": "结束回合并保留月月熊前场",
+                  "depth": 7,
+                  "player_actions": 3,
+                  "reason": "all_defenses_hold",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:bloodmoon_reply",
+                        "choice_label": "月月熊血月240后仍留在前场",
+                        "depth": 7,
+                        "player_actions": 3,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:dusknoir_opens_counter",
+                              "choice_label": "黑夜魔灵向健康多龙放130并送1奖",
+                              "depth": 7,
+                              "player_actions": 3,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:counter_fez",
+                                    "choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                    "depth": 7,
+                                    "player_actions": 2,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:track_old_active",
+                                          "choice_label": "200击倒吉雉鸡，60追踪换回备战区末位的月月熊",
+                                          "depth": 7,
+                                          "player_actions": 1,
+                                          "reason": "production_witness_reached_goal",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [],
+                                            "coverage_complete": true,
+                                            "depth": 7,
+                                            "player_actions": 0,
+                                            "reason": "production_witness_reached_goal",
+                                            "score": 4,
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 0
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 7,
+                                      "player_actions": 1,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:track_old_active",
+                                      "selected_choice_label": "200击倒吉雉鸡，60追踪换回备战区末位的月月熊",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 7,
+                                "player_actions": 2,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:counter_fez",
+                                "selected_choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 7,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:dusknoir_opens_counter",
+                          "selected_choice_label": "黑夜魔灵向健康多龙放130并送1奖",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 7,
+                    "player_actions": 3,
+                    "reason": "all_defenses_hold",
+                    "role": "opponent",
+                    "selected_choice_id": "03:bloodmoon_reply",
+                    "selected_choice_label": "月月熊血月240后仍留在前场",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 7,
+              "player_actions": 3,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:offer_bloodmoon_attack",
+              "selected_choice_label": "结束回合并保留月月熊前场",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 7,
+        "player_actions": 4,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:boss_bloodmoon",
+        "selected_choice_label": "老大把60HP月月熊设为旧前场",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "2f156b29c4c3eafd7a46b316f26c28610fb9afcb92da06437105dcae6394c87f",
+  "scenario_id": "dragapult_gardevoir_05",
+  "shortest_player_actions": 5,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

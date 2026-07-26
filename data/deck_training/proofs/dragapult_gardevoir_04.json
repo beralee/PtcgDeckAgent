@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 357,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:flip_handoff_three",
+      "choice_label": "化危为吉抽到后备多龙、ACE与老大",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:evolve_backup",
+      "choice_label": "先把后备多龙奇进化",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:attach_neo_upper",
+      "choice_label": "把新冲天能量贴给后备多龙",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:boss_fez",
+      "choice_label": "老大的指令抓出剩200HP吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:first_attack_three",
+      "choice_label": "第一只多龙取得3奖",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:ko_first_attacker",
+      "choice_label": "规则AI以200精确击倒第一只多龙",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:dusknoir_active_dragapult",
+      "choice_label": "黑夜魔灵给健康前场多龙放130伤",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:backup_finishes",
+      "choice_label": "接棒多龙以200完成最后2奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "b09ee0dfce7961139d40041b8c5d101af029c0eaa7f713a5159140886e2d2d0a"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:flip_handoff_three",
+        "choice_label": "化危为吉抽到后备多龙、ACE与老大",
+        "depth": 8,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:evolve_backup",
+              "choice_label": "先把后备多龙奇进化",
+              "depth": 8,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:attach_neo_upper",
+                    "choice_label": "把新冲天能量贴给后备多龙",
+                    "depth": 8,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:boss_fez",
+                          "choice_label": "老大的指令抓出剩200HP吉雉鸡",
+                          "depth": 8,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:first_attack_three",
+                                "choice_label": "第一只多龙取得3奖",
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:ko_first_attacker",
+                                      "choice_label": "规则AI以200精确击倒第一只多龙",
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:dusknoir_active_dragapult",
+                                            "choice_label": "黑夜魔灵给健康前场多龙放130伤",
+                                            "depth": 8,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:backup_finishes",
+                                                  "choice_label": "接棒多龙以200完成最后2奖",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 5,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:backup_finishes",
+                                              "selected_choice_label": "接棒多龙以200完成最后2奖",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 2,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:dusknoir_active_dragapult",
+                                        "selected_choice_label": "黑夜魔灵给健康前场多龙放130伤",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 2,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:ko_first_attacker",
+                                  "selected_choice_label": "规则AI以200精确击倒第一只多龙",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:first_attack_three",
+                            "selected_choice_label": "第一只多龙取得3奖",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:boss_fez",
+                      "selected_choice_label": "老大的指令抓出剩200HP吉雉鸡",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:attach_neo_upper",
+                "selected_choice_label": "把新冲天能量贴给后备多龙",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 6,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:evolve_backup",
+          "selected_choice_label": "先把后备多龙奇进化",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 7,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:flip_handoff_three",
+    "selected_choice_label": "化危为吉抽到后备多龙、ACE与老大",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:flip_handoff_three",
+      "choice_label": "化危为吉抽到后备多龙、ACE与老大",
+      "depth": 8,
+      "player_actions": 7,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:evolve_backup",
+            "choice_label": "先把后备多龙奇进化",
+            "depth": 8,
+            "player_actions": 6,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:attach_neo_upper",
+                  "choice_label": "把新冲天能量贴给后备多龙",
+                  "depth": 8,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:boss_fez",
+                        "choice_label": "老大的指令抓出剩200HP吉雉鸡",
+                        "depth": 8,
+                        "player_actions": 4,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:first_attack_three",
+                              "choice_label": "第一只多龙取得3奖",
+                              "depth": 8,
+                              "player_actions": 3,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:ko_first_attacker",
+                                    "choice_label": "规则AI以200精确击倒第一只多龙",
+                                    "depth": 8,
+                                    "player_actions": 2,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:dusknoir_active_dragapult",
+                                          "choice_label": "黑夜魔灵给健康前场多龙放130伤",
+                                          "depth": 8,
+                                          "player_actions": 2,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:backup_finishes",
+                                                "choice_label": "接棒多龙以200完成最后2奖",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 5,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:backup_finishes",
+                                            "selected_choice_label": "接棒多龙以200完成最后2奖",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:dusknoir_active_dragapult",
+                                      "selected_choice_label": "黑夜魔灵给健康前场多龙放130伤",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:ko_first_attacker",
+                                "selected_choice_label": "规则AI以200精确击倒第一只多龙",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:first_attack_three",
+                          "selected_choice_label": "第一只多龙取得3奖",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:boss_fez",
+                    "selected_choice_label": "老大的指令抓出剩200HP吉雉鸡",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:attach_neo_upper",
+              "selected_choice_label": "把新冲天能量贴给后备多龙",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:evolve_backup",
+        "selected_choice_label": "先把后备多龙奇进化",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "b09ee0dfce7961139d40041b8c5d101af029c0eaa7f713a5159140886e2d2d0a",
+  "scenario_id": "dragapult_gardevoir_04",
+  "shortest_player_actions": 7,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

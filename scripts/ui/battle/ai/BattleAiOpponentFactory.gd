@@ -83,10 +83,9 @@ func build_default_ai_opponent(deck_strategy_registry: RefCounted, host_scene: N
 		if variant_strategy != null and variant_strategy != deck_strategy:
 			deck_strategy = variant_strategy
 		ai.set_deck_strategy(deck_strategy)
-		if deck_strategy.has_method("get_runtime_kind") \
-				and str(deck_strategy.call("get_runtime_kind")) == "v18_conditional_policy":
-			ai.use_mcts = false
-			ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
+	if is_conditional_policy_strategy(deck_strategy):
+		ai.use_mcts = false
+		ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_CONDITIONAL_POLICY
 		strategy_label = str(deck_strategy.call("get_strategy_id")) if deck_strategy.has_method("get_strategy_id") else "Default AI"
 	elif GameManager.selected_deck_ids.size() < 2:
 		match GameManager.ai_deck_strategy:
@@ -130,12 +129,19 @@ func build_default_ai_opponent(deck_strategy_registry: RefCounted, host_scene: N
 				pass
 	if is_strong_fixed_opening_mode():
 		ai.use_mcts = false
-		ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
+		if not is_conditional_policy_strategy(deck_strategy):
+			ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
 		strategy_label += " 强开局"
 	ai.set_meta("ai_source", "default")
 	ai.set_meta("ai_version_id", "")
 	ai.set_meta("ai_display_name", selection_display_name if selection_display_name != "" else strategy_label)
 	return ai
+
+
+func is_conditional_policy_strategy(strategy: RefCounted) -> bool:
+	return strategy != null \
+		and strategy.has_method("get_runtime_kind") \
+		and str(strategy.call("get_runtime_kind")) == "v18_conditional_policy"
 
 
 func is_strong_fixed_opening_mode() -> bool:
@@ -199,6 +205,8 @@ func resolve_strategy_variant_override(strategy: RefCounted, deck_strategy_regis
 		variant.call("configure_from_deck", ai_deck)
 	if variant.has_method("configure_runtime"):
 		variant.call("configure_runtime", host_scene, GameManager.get_llm_opponent_battle_review_api_config())
+	if variant.has_method("configure_live_audit"):
+		variant.call("configure_live_audit")
 	if variant.has_method("set_llm_host_node"):
 		variant.call("set_llm_host_node", host_scene)
 	connect_llm_strategy_signals(variant, host_scene)

@@ -7,12 +7,15 @@ signal response_ready(request_id: String, response: Dictionary, metrics: Diction
 ## V18CPGPolicyValidator.  This version only identifies the compact model wire
 ## contract: do not resend the full JSON Schema or duplicate frontier indexes.
 const COMPACT_WIRE_CONTRACT_VERSION := 3
+const MIN_INITIAL_COMPLETION_TOKENS := 512
+const MIN_DELTA_COMPLETION_TOKENS := 512
+const MAX_COMPLETION_TOKENS := 900
 
-const RngIsolatedZenMuxClientScript = preload(
-	"res://scripts/ai/v18_cpg/network/V18CPGRngIsolatedZenMuxClient.gd"
+const RngIsolatedDeepSeekClientScript = preload(
+	"res://scripts/ai/v18_cpg/network/V18CPGRngIsolatedDeepSeekClient.gd"
 )
 
-var _client = RngIsolatedZenMuxClientScript.new()
+var _client = RngIsolatedDeepSeekClientScript.new()
 var _host: Node = null
 var _config: Dictionary = {}
 var _pending: Dictionary = {}
@@ -29,15 +32,21 @@ func configure(host: Node, api_config: Dictionary) -> void:
 func is_configured() -> bool:
 	return _host != null \
 		and is_instance_valid(_host) \
-		and str(_config.get("endpoint", "")).strip_edges() != "" \
+		and _client.is_official_deepseek_endpoint(
+			str(_config.get("endpoint", ""))
+		) \
 		and str(_config.get("api_key", "")).strip_edges() != "" \
-		and str(_config.get("model", "")).strip_edges() != ""
+		and str(_config.get("model", "")).strip_edges() in [
+			"deepseek-v4-flash",
+			"deepseek-v4-pro",
+		]
 
 
 func request_policy(request_id: String, request_envelope: Dictionary, token_budget: int = 600, is_delta: bool = false) -> int:
 	if not is_configured() or request_id == "" or _pending.has(request_id):
 		return ERR_UNCONFIGURED
-	var payload := _build_payload(request_envelope, token_budget, is_delta)
+	var effective_token_budget := resolve_token_budget(token_budget, is_delta)
+	var payload := _build_payload(request_envelope, effective_token_budget, is_delta)
 	var started := Time.get_ticks_msec()
 	var request_error := _client.request_json(
 		_host,
@@ -55,8 +64,18 @@ func request_policy(request_id: String, request_envelope: Dictionary, token_budg
 			"user_prompt_bytes": _message_content_bytes(messages, "user"),
 			"transport_contract_version": COMPACT_WIRE_CONTRACT_VERSION,
 			"is_delta": is_delta,
+			"configured_token_budget": token_budget,
+			"effective_token_budget": effective_token_budget,
 		}
 	return request_error
+
+
+func resolve_token_budget(configured_budget: int, is_delta: bool) -> int:
+	# max_tokens is a ceiling, not a requested output length. A 512-token floor
+	# leaves room for a complete compact checkpoint graph without slowing the
+	# normal one-node response or asking the model to fill the allowance.
+	var minimum := MIN_DELTA_COMPLETION_TOKENS if is_delta else MIN_INITIAL_COMPLETION_TOKENS
+	return clampi(maxi(configured_budget, minimum), minimum, MAX_COMPLETION_TOKENS)
 
 
 func has_pending(request_id: String = "") -> bool:
@@ -79,6 +98,11 @@ func _on_response(response: Dictionary, request_id: String) -> void:
 		"transport": str(response.get("transport", "http_request")),
 		"rng_isolated_transport": bool(response.get("rng_isolated_transport", false)),
 		"rng_isolated_request_sequence": int(response.get("rng_isolated_request_sequence", 0)),
+		"configured_token_budget": int(request_meta.get("configured_token_budget", 0)),
+		"effective_token_budget": int(request_meta.get("effective_token_budget", 0)),
+		"finish_reason": str(response.get("finish_reason", "")),
+		"prompt_tokens": int(response.get("prompt_tokens", 0)),
+		"completion_tokens": int(response.get("completion_tokens", 0)),
 	}
 	response_ready.emit(request_id, response.duplicate(true), metrics)
 
@@ -95,14 +119,18 @@ func _build_payload(request_envelope: Dictionary, token_budget: int, is_delta: b
 	var system := """You are the strategic planner for a Pokemon TCG engine. Return one compact, acyclic conditional policy graph as JSON.
 Use only candidate_id, route_id, interaction role, and fact values supplied by the request. Never invent cards, actions, IDs, facts, or hidden information.
 The outermost JSON object must contain policy. Put root_node_id and nodes inside policy, never at the outermost level. agenda_patch is the only other semantic outer key.
+Default to exactly one select_candidate route node bound to the best supplied current candidate. Add more nodes or use propose_typed_route only when a future conditional branch is genuinely necessary and every extra node is connected. A one-node exact judgment is complete; do not add speculative follow-up actions merely to make the graph look strategic.
+A root that predictably opens draw, hidden-deck search, a full-deck interaction, or another route-changing information window is a genuinely necessary future conditional branch. When limits permit, connect that root to a checkpoint with typed follow_route branches and otherwise=replan so newly acquired cards are consumed in the same turn.
 Prefer the shortest safe prize path, but preserve the next attacker and typed energy when a current KO is not decisive.
 Honor the request's typed strategic_priorities, route_preferences, protected_roles, and safety fields. They are deck-profile constraints, not suggestions to invent new actions.
 The frontier contains multiple exact candidates, including alternatives inside one macro route. Compare exact targets and costs, not only action categories.
+When facts.attack.dynamic_cost_applied=true, its effective_energy_required and energy_deficit are recomputed from the current public Prize count and override the printed cost for planning. If cost_ready and engine_confirms_cost_paid are true, the attack is already paid: never attach another Energy to that Active merely to satisfy its printed cost, and branch to the supplied legal attack candidate after a pivot.
 The candidate marked rule_floor_exact is the exact Rule choice. When candidates are marked rule_tie_ambiguous, host-only Rule intent scoring may still break that tie: do not force one of them unless the supplied outcome contains a concrete, verifier-checkable advantage. Select a different candidate only when its supplied outcome, information value, target quality, or next-turn continuity contains such an advantage; never replace a Rule tie by guesswork.
-When a capability module marks verified_advantage=true, that exact candidate has a deterministic public-state certificate and may replace end_turn even across a large score gap. Prefer it when its verified_advantage_kind preserves or completes the next attack route.
+When a capability module marks verified_advantage=true, that exact candidate has a deterministic public-state certificate and may replace the Rule floor even across a large score gap; the host still revalidates it atomically. Prefer it when its verified_advantage_kind preserves or completes the current or next attack route, including completing an Active attack cost before an independent Bench evolve/develop action.
 Information actions are checkpoints. In a typed macro, route:information, route:noctowl_search, route:opening_search, or route:tutor may appear only as the final macro action, never before another macro. To plan beyond one of them, use select_candidate at the root, then a checkpoint and follow_route branches. Delay irreversible supporter, attachment, retreat, and terminal commitments until useful information is collected.
 Public-discard recovery is deterministic and may remain inside the current graph as route:recover. Hidden-deck trainer tutoring is route:tutor and is an information checkpoint. When the supplied Gardevoir capability context shows that an HP-expansion tool is the missing public final-prize scaler, preserve recover -> evolve the Embrace engine -> tutor -> tool -> repeated Embrace -> KO, rather than collapsing directly into a low-damage attack.
 For Noctowl/Jewel Seeker routes, plan trainer pairs that jointly complete the attack route; do not rank each trainer independently.
+Before any attachment, acceleration, attack, or end-turn commitment, obey turn_completion_contract. If must_review_before_terminal=true, choose the supplied recommended productive candidate first; its priority is the certified executable order, not a suggestion. Reobserve after every prefix. This may form a same-turn chain such as bench-capacity Stadium -> search-engine root/evolution -> Noctowl pair search -> energy-engine bench/ability. Do not jump to a lower-priority setup action or attack merely because it is legal. ko_available=true permits immediate attack only when post_attack_continuity.floor_met=true, win_now_override=true, or no certified safe prefix is available. Once that gate is closed, stop optional churn and pay exactly minimum_lethal_units when the interaction permits it.
 The root must bind an exact current action with mode select_candidate and a supplied candidate_id, or use propose_typed_route with a supplied first_candidate_id plus 2-4 supplied macro route IDs. Never use follow_route at the root. propose_typed_route is root-only: every later route node must use follow_route or select_candidate, never propose_typed_route.
 For the root, copy candidate_id and route_id from the same frontier entry as one indivisible pair. Do not use a future macro route as the root route_id.
 Use only allowed_follow_route_ids for later macro_actions and follow_route nodes. Use follow_route only after checkpoints, where the engine will bind the best legal exact candidate of that macro intent after new information.
@@ -118,6 +146,7 @@ Omit agenda_patch and omit empty policy fields. The client deterministically def
 Interaction rank_by values: route_completion, energy_fit, prize_value, knockout_efficiency, attacker_readiness, survival, resource_preservation, stable_id. desired_roles values: attacker, alternate_attacker, finisher, next_attacker, draw_engine, search_engine, recovery, evolution_piece, energy_source, energy_access, typed_energy_access, energy_accelerator, supporter_acceleration, energy_mover, pivot, gust, hand_disruption, lock, stadium, pokemon_search, bench_protection, resource_recycler. Energy symbols: G,W,L,P,F,D,M,C. Tie breakers: stable_id, lower_resource_cost, higher_survival, higher_prize. Optional target_position: any, own_active, own_bench, opponent_active, opponent_bench; optional prize_goal: none, shortest_safe_path, highest_prize, engine_ko, spread_closeout. Checkpoint otherwise is a node_id, local_best, replan, or rules_fallback.
 In sparse frontier outcomes and capability annotations, an omitted scalar means false, 0, or empty. capability_context applies to every frontier candidate; a candidate's module_annotations are only its exact overrides.
 Keep the answer short. Do not explain the choice and do not repeat request data.
+Output minified JSON on one line. Always prefer a syntactically complete one-node response over a larger graph that could be truncated; add nodes only when the complete JSON will fit.
 Return JSON only."""
 	var full_payload := {
 		"transport_contract_version": COMPACT_WIRE_CONTRACT_VERSION,
@@ -132,6 +161,10 @@ Return JSON only."""
 		"resource_ledger": request_envelope.get("resource_ledger", {}),
 		"prize_graph": request_envelope.get("prize_graph", {}),
 		"threat_response": request_envelope.get("threat_response", {}),
+		"turn_completion_contract": request_envelope.get(
+			"turn_completion_contract",
+			{}
+		),
 		"capability_context": request_envelope.get("capability_context", {}),
 		"frontier": request_envelope.get("frontier", []),
 		"allowed_follow_route_ids": request_envelope.get("allowed_follow_route_ids", []),
@@ -151,6 +184,10 @@ Return JSON only."""
 		"resource_ledger": request_envelope.get("resource_ledger", {}),
 		"prize_graph": request_envelope.get("prize_graph", {}),
 		"threat_response": request_envelope.get("threat_response", {}),
+		"turn_completion_contract": request_envelope.get(
+			"turn_completion_contract",
+			{}
+		),
 		"capability_context": request_envelope.get("capability_context", {}),
 		"frontier": request_envelope.get("frontier", []),
 		"allowed_follow_route_ids": request_envelope.get("allowed_follow_route_ids", []),
@@ -164,6 +201,6 @@ Return JSON only."""
 		],
 		"temperature": 0,
 		"max_tokens": token_budget,
-		"reasoning": {"enabled": false},
+		"response_format": {"type": "json_object"},
 		"thinking": {"type": "disabled"},
 	}

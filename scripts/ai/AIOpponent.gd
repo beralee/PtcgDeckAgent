@@ -37,6 +37,10 @@ const ACTION_SCORER_SUPPORTED_KINDS := {
 const DECISION_RUNTIME_RULES_PLUS_LEARNED := "rules_plus_learned"
 const DECISION_RUNTIME_RULES_ONLY := "rules_only"
 const DECISION_RUNTIME_HEURISTIC_ONLY := "heuristic_only"
+const DECISION_RUNTIME_CONDITIONAL_POLICY := "conditional_policy"
+const STEP_PROGRESSED := "progressed"
+const STEP_WAITING_POLICY := "waiting_policy"
+const STEP_NO_PROGRESS := "no_progress"
 var player_index: int = 1
 var difficulty: int = 1
 var heuristic_weights: Dictionary = {}
@@ -138,6 +142,7 @@ func _resolve_decision_runtime_mode() -> String:
 		DECISION_RUNTIME_RULES_PLUS_LEARNED,
 		DECISION_RUNTIME_RULES_ONLY,
 		DECISION_RUNTIME_HEURISTIC_ONLY,
+		DECISION_RUNTIME_CONDITIONAL_POLICY,
 	]:
 		return decision_runtime_mode
 	return DECISION_RUNTIME_RULES_PLUS_LEARNED
@@ -277,6 +282,21 @@ func get_event_counters() -> Dictionary:
 	return _event_counters.duplicate(true)
 
 
+func run_single_step_result(
+	battle_scene: Control,
+	gsm: GameStateMachine
+) -> Dictionary:
+	var progressed := run_single_step(battle_scene, gsm)
+	if progressed:
+		return {"status": STEP_PROGRESSED, "progressed": true}
+	# The request can be created inside run_single_step(), after the battle host's
+	# preflight wait check. Re-read the V18 runtime state here so asynchronous
+	# planning is never collapsed into the legacy "no progress" boolean.
+	if _is_v18_conditional_policy_pending():
+		return {"status": STEP_WAITING_POLICY, "progressed": false}
+	return {"status": STEP_NO_PROGRESS, "progressed": false}
+
+
 func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	if battle_scene == null or gsm == null or gsm.game_state == null:
 		return false
@@ -321,18 +341,22 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 			_step_resolver.interaction_scorer = _interaction_scorer
 			_step_resolver.decision_exporter = _decision_exporter
 		var llm_before_interaction: Dictionary = _llm_runtime_snapshot(gsm)
+		var public_step_context := _current_effect_step_public_context(battle_scene)
 		var interaction_handled: bool = _step_resolver.resolve_pending_step(
 			battle_scene,
 			gsm,
 			player_index,
 			_encode_state_features(gsm.game_state)
 		)
-		_notify_llm_runtime_state_change(llm_before_interaction, gsm, {
+		var interaction_context := {
 			"success": interaction_handled,
 			"step_kind": "effect_interaction",
 			"pending_choice_before": pending_choice,
 			"pending_choice_after": str(battle_scene.get("_pending_choice")),
-		})
+			"interaction_complete": str(battle_scene.get("_pending_choice")) != "effect_interaction",
+		}
+		interaction_context.merge(public_step_context, true)
+		_notify_llm_runtime_state_change(llm_before_interaction, gsm, interaction_context)
 		return interaction_handled
 	if _deck_strategy != null and _deck_strategy.has_method("prepare_decision"):
 		if _deck_strategy.has_method("enforce_visible_wait_deadline"):
@@ -379,7 +403,15 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 
 
 func _llm_runtime_snapshot(gsm: GameStateMachine) -> Dictionary:
-	if _deck_strategy == null or not _deck_strategy.has_method("make_llm_runtime_snapshot"):
+	if _deck_strategy == null:
+		return {}
+	if _deck_strategy.has_method("make_v18cpg_runtime_snapshot"):
+		return _deck_strategy.call(
+			"make_v18cpg_runtime_snapshot",
+			gsm.game_state if gsm != null else null,
+			player_index
+		)
+	if not _deck_strategy.has_method("make_llm_runtime_snapshot"):
 		return {}
 	return _deck_strategy.call("make_llm_runtime_snapshot", gsm.game_state if gsm != null else null, player_index)
 
@@ -387,14 +419,67 @@ func _llm_runtime_snapshot(gsm: GameStateMachine) -> Dictionary:
 func _notify_llm_runtime_state_change(before_snapshot: Dictionary, gsm: GameStateMachine, context: Dictionary) -> void:
 	if before_snapshot.is_empty():
 		return
-	if _deck_strategy == null or not _deck_strategy.has_method("observe_llm_runtime_state_change"):
+	if _deck_strategy == null:
 		return
-	_deck_strategy.call(
-		"observe_llm_runtime_state_change",
-		before_snapshot,
-		_deck_strategy.call("make_llm_runtime_snapshot", gsm.game_state if gsm != null else null, player_index),
-		context
-	)
+	if _deck_strategy.has_method("observe_v18cpg_runtime_state_change") \
+			and _deck_strategy.has_method("make_v18cpg_runtime_snapshot"):
+		_deck_strategy.call(
+			"observe_v18cpg_runtime_state_change",
+			before_snapshot,
+			_deck_strategy.call(
+				"make_v18cpg_runtime_snapshot",
+				gsm.game_state if gsm != null else null,
+				player_index
+			),
+			context
+		)
+		return
+	if _deck_strategy.has_method("observe_llm_runtime_state_change") \
+			and _deck_strategy.has_method("make_llm_runtime_snapshot"):
+		_deck_strategy.call(
+			"observe_llm_runtime_state_change",
+			before_snapshot,
+			_deck_strategy.call(
+				"make_llm_runtime_snapshot",
+				gsm.game_state if gsm != null else null,
+				player_index
+			),
+			context
+		)
+
+
+func _is_v18_conditional_policy_pending() -> bool:
+	if _deck_strategy == null \
+			or not _deck_strategy.has_method("get_runtime_metadata") \
+			or not _deck_strategy.has_method("is_llm_pending"):
+		return false
+	var metadata: Variant = _deck_strategy.call("get_runtime_metadata")
+	return metadata is Dictionary \
+		and str((metadata as Dictionary).get("runtime_kind", "")) == "v18_conditional_policy" \
+		and bool(_deck_strategy.call("is_llm_pending"))
+
+
+func _current_effect_step_public_context(battle_scene: Control) -> Dictionary:
+	if battle_scene == null:
+		return {}
+	var steps: Variant = battle_scene.get("_pending_effect_steps")
+	var step_index := int(battle_scene.get("_pending_effect_step_index"))
+	if not (steps is Array) or step_index < 0 or step_index >= (steps as Array).size():
+		return {}
+	var raw_step: Variant = (steps as Array)[step_index]
+	if not (raw_step is Dictionary):
+		return {}
+	var step := raw_step as Dictionary
+	return {
+		"step_id": str(step.get("id", "")),
+		"step_type": str(step.get("type", "")),
+		"ui_mode": str(step.get("ui_mode", "")),
+		"visible_scope": str(step.get("visible_scope", "")),
+		"information_checkpoint": str(step.get("visible_scope", "")) in [
+			"own_full_deck",
+			"opponent_hand_revealed",
+		],
+	}
 
 
 func _is_bridge_owned_prompt(pending_choice: String) -> bool:

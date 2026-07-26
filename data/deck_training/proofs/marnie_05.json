@@ -1,0 +1,575 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 379,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 12,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:research_draw_grimmsnarl_counter",
+      "choice_label": "博士抽到第一进化与第7张反击捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:evolve_first_grimmsnarl",
+      "choice_label": "前场诈唬魔从手牌进化",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:first_punk_up_two_one",
+      "choice_label": "首次泵感只取3能，按2/1准备两条攻击线",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:attach_dark_to_munkidori",
+      "choice_label": "把博士抽到的恶能手贴愿增猿，不能浪费在首攻者上",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:munkidori_tunes_second_dragapult",
+      "choice_label": "愿增猿从首攻者搬30伤，把第二只糖果多龙补到70伤",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:counter_first_dragapult",
+      "choice_label": "反击捕捉器拉出剩180HP的第一只多龙",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:first_shadow_bullet",
+      "choice_label": "暗影子弹首杀并把第5备战位的40伤糖果恶喷补到70伤",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:charizard_reply",
+      "choice_label": "我方从5奖开始且首杀2奖后，恶喷以270伤精确击倒剩270HP的首攻者",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:evolve_second_grimmsnarl",
+      "choice_label": "奖赏长毛巨魔进化预埋1能的接棒诈唬魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:attach_tm_devolution",
+      "choice_label": "把奖赏退化学习器附着给第二只长毛巨魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:devolution_triple_ko",
+      "choice_label": "用预埋1能发动退化，一次完成三只基础宝可梦击倒",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "8bd09856638e00ec264d654ede94f6cc02e4fd8ef79b5e93c7b4a0329b0feeb5"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:research_draw_grimmsnarl_counter",
+        "choice_label": "博士抽到第一进化与第7张反击捕捉器",
+        "depth": 11,
+        "player_actions": 10,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:evolve_first_grimmsnarl",
+              "choice_label": "前场诈唬魔从手牌进化",
+              "depth": 11,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:first_punk_up_two_one",
+                    "choice_label": "首次泵感只取3能，按2/1准备两条攻击线",
+                    "depth": 11,
+                    "player_actions": 8,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:attach_dark_to_munkidori",
+                          "choice_label": "把博士抽到的恶能手贴愿增猿，不能浪费在首攻者上",
+                          "depth": 11,
+                          "player_actions": 7,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:munkidori_tunes_second_dragapult",
+                                "choice_label": "愿增猿从首攻者搬30伤，把第二只糖果多龙补到70伤",
+                                "depth": 11,
+                                "player_actions": 6,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:counter_first_dragapult",
+                                      "choice_label": "反击捕捉器拉出剩180HP的第一只多龙",
+                                      "depth": 11,
+                                      "player_actions": 5,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:first_shadow_bullet",
+                                            "choice_label": "暗影子弹首杀并把第5备战位的40伤糖果恶喷补到70伤",
+                                            "depth": 11,
+                                            "player_actions": 4,
+                                            "reason": "all_defenses_hold",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:charizard_reply",
+                                                  "choice_label": "我方从5奖开始且首杀2奖后，恶喷以270伤精确击倒剩270HP的首攻者",
+                                                  "depth": 11,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:evolve_second_grimmsnarl",
+                                                        "choice_label": "奖赏长毛巨魔进化预埋1能的接棒诈唬魔",
+                                                        "depth": 11,
+                                                        "player_actions": 3,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:attach_tm_devolution",
+                                                              "choice_label": "把奖赏退化学习器附着给第二只长毛巨魔",
+                                                              "depth": 11,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:devolution_triple_ko",
+                                                                    "choice_label": "用预埋1能发动退化，一次完成三只基础宝可梦击倒",
+                                                                    "depth": 11,
+                                                                    "player_actions": 1,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 11,
+                                                                      "player_actions": 0,
+                                                                      "reason": "production_witness_reached_goal",
+                                                                      "score": 5,
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 0
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 11,
+                                                                "player_actions": 1,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:devolution_triple_ko",
+                                                                "selected_choice_label": "用预埋1能发动退化，一次完成三只基础宝可梦击倒",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 11,
+                                                          "player_actions": 2,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:attach_tm_devolution",
+                                                          "selected_choice_label": "把奖赏退化学习器附着给第二只长毛巨魔",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 11,
+                                                    "player_actions": 3,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:evolve_second_grimmsnarl",
+                                                    "selected_choice_label": "奖赏长毛巨魔进化预埋1能的接棒诈唬魔",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 11,
+                                              "player_actions": 3,
+                                              "reason": "all_defenses_hold",
+                                              "role": "opponent",
+                                              "selected_choice_id": "07:charizard_reply",
+                                              "selected_choice_label": "我方从5奖开始且首杀2奖后，恶喷以270伤精确击倒剩270HP的首攻者",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 11,
+                                        "player_actions": 4,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:first_shadow_bullet",
+                                        "selected_choice_label": "暗影子弹首杀并把第5备战位的40伤糖果恶喷补到70伤",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 11,
+                                  "player_actions": 5,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:counter_first_dragapult",
+                                  "selected_choice_label": "反击捕捉器拉出剩180HP的第一只多龙",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 11,
+                            "player_actions": 6,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:munkidori_tunes_second_dragapult",
+                            "selected_choice_label": "愿增猿从首攻者搬30伤，把第二只糖果多龙补到70伤",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 11,
+                      "player_actions": 7,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:attach_dark_to_munkidori",
+                      "selected_choice_label": "把博士抽到的恶能手贴愿增猿，不能浪费在首攻者上",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 11,
+                "player_actions": 8,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:first_punk_up_two_one",
+                "selected_choice_label": "首次泵感只取3能，按2/1准备两条攻击线",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 11,
+          "player_actions": 9,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:evolve_first_grimmsnarl",
+          "selected_choice_label": "前场诈唬魔从手牌进化",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 11,
+    "player_actions": 10,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:research_draw_grimmsnarl_counter",
+    "selected_choice_label": "博士抽到第一进化与第7张反击捕捉器",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:research_draw_grimmsnarl_counter",
+      "choice_label": "博士抽到第一进化与第7张反击捕捉器",
+      "depth": 11,
+      "player_actions": 10,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:evolve_first_grimmsnarl",
+            "choice_label": "前场诈唬魔从手牌进化",
+            "depth": 11,
+            "player_actions": 9,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:first_punk_up_two_one",
+                  "choice_label": "首次泵感只取3能，按2/1准备两条攻击线",
+                  "depth": 11,
+                  "player_actions": 8,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:attach_dark_to_munkidori",
+                        "choice_label": "把博士抽到的恶能手贴愿增猿，不能浪费在首攻者上",
+                        "depth": 11,
+                        "player_actions": 7,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:munkidori_tunes_second_dragapult",
+                              "choice_label": "愿增猿从首攻者搬30伤，把第二只糖果多龙补到70伤",
+                              "depth": 11,
+                              "player_actions": 6,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:counter_first_dragapult",
+                                    "choice_label": "反击捕捉器拉出剩180HP的第一只多龙",
+                                    "depth": 11,
+                                    "player_actions": 5,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:first_shadow_bullet",
+                                          "choice_label": "暗影子弹首杀并把第5备战位的40伤糖果恶喷补到70伤",
+                                          "depth": 11,
+                                          "player_actions": 4,
+                                          "reason": "all_defenses_hold",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:charizard_reply",
+                                                "choice_label": "我方从5奖开始且首杀2奖后，恶喷以270伤精确击倒剩270HP的首攻者",
+                                                "depth": 11,
+                                                "player_actions": 3,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:evolve_second_grimmsnarl",
+                                                      "choice_label": "奖赏长毛巨魔进化预埋1能的接棒诈唬魔",
+                                                      "depth": 11,
+                                                      "player_actions": 3,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:attach_tm_devolution",
+                                                            "choice_label": "把奖赏退化学习器附着给第二只长毛巨魔",
+                                                            "depth": 11,
+                                                            "player_actions": 2,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:devolution_triple_ko",
+                                                                  "choice_label": "用预埋1能发动退化，一次完成三只基础宝可梦击倒",
+                                                                  "depth": 11,
+                                                                  "player_actions": 1,
+                                                                  "reason": "production_witness_reached_goal",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 11,
+                                                                    "player_actions": 0,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "score": 5,
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 0
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 11,
+                                                              "player_actions": 1,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:devolution_triple_ko",
+                                                              "selected_choice_label": "用预埋1能发动退化，一次完成三只基础宝可梦击倒",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 11,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:attach_tm_devolution",
+                                                        "selected_choice_label": "把奖赏退化学习器附着给第二只长毛巨魔",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 11,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:evolve_second_grimmsnarl",
+                                                  "selected_choice_label": "奖赏长毛巨魔进化预埋1能的接棒诈唬魔",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 11,
+                                            "player_actions": 3,
+                                            "reason": "all_defenses_hold",
+                                            "role": "opponent",
+                                            "selected_choice_id": "07:charizard_reply",
+                                            "selected_choice_label": "我方从5奖开始且首杀2奖后，恶喷以270伤精确击倒剩270HP的首攻者",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 11,
+                                      "player_actions": 4,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:first_shadow_bullet",
+                                      "selected_choice_label": "暗影子弹首杀并把第5备战位的40伤糖果恶喷补到70伤",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 11,
+                                "player_actions": 5,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:counter_first_dragapult",
+                                "selected_choice_label": "反击捕捉器拉出剩180HP的第一只多龙",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 11,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:munkidori_tunes_second_dragapult",
+                          "selected_choice_label": "愿增猿从首攻者搬30伤，把第二只糖果多龙补到70伤",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 11,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:attach_dark_to_munkidori",
+                    "selected_choice_label": "把博士抽到的恶能手贴愿增猿，不能浪费在首攻者上",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 11,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:first_punk_up_two_one",
+              "selected_choice_label": "首次泵感只取3能，按2/1准备两条攻击线",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 11,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:evolve_first_grimmsnarl",
+        "selected_choice_label": "前场诈唬魔从手牌进化",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "8bd09856638e00ec264d654ede94f6cc02e4fd8ef79b5e93c7b4a0329b0feeb5",
+  "scenario_id": "marnie_05",
+  "shortest_player_actions": 10,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

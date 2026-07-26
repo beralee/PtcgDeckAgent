@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 357,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:flip_two_gusts",
+      "choice_label": "化危为吉抽到老大、反击捕捉器和夜间担架",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:boss_bloodmoon",
+      "choice_label": "老大的指令抓出剩230HP月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:first_munk",
+      "choice_label": "第一次亢奋脑力把月月熊校准到200HP",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:first_three_prizes",
+      "choice_label": "幻影潜袭击倒月月熊并以60击倒多龙梅西亚",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:dragapult_reply",
+      "choice_label": "对手多龙反击200，制造第二次搬伤来源",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:second_munk",
+      "choice_label": "第二次亢奋脑力把剩230HP多龙校准到200HP",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:counter_second_dragapult",
+      "choice_label": "反击捕捉器抓出校准后的多龙",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:second_two_prizes",
+      "choice_label": "第二次幻影潜袭精确击倒并取得第五奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "ba63efadd3eaa416391d5b3c95787c2fcb43cbcc43b438b92dce28e29a2f6c66"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:flip_two_gusts",
+        "choice_label": "化危为吉抽到老大、反击捕捉器和夜间担架",
+        "depth": 8,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:boss_bloodmoon",
+              "choice_label": "老大的指令抓出剩230HP月月熊",
+              "depth": 8,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:first_munk",
+                    "choice_label": "第一次亢奋脑力把月月熊校准到200HP",
+                    "depth": 8,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:first_three_prizes",
+                          "choice_label": "幻影潜袭击倒月月熊并以60击倒多龙梅西亚",
+                          "depth": 8,
+                          "player_actions": 4,
+                          "reason": "all_defenses_hold",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:dragapult_reply",
+                                "choice_label": "对手多龙反击200，制造第二次搬伤来源",
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:second_munk",
+                                      "choice_label": "第二次亢奋脑力把剩230HP多龙校准到200HP",
+                                      "depth": 8,
+                                      "player_actions": 3,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:counter_second_dragapult",
+                                            "choice_label": "反击捕捉器抓出校准后的多龙",
+                                            "depth": 8,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:second_two_prizes",
+                                                  "choice_label": "第二次幻影潜袭精确击倒并取得第五奖",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 5,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:second_two_prizes",
+                                              "selected_choice_label": "第二次幻影潜袭精确击倒并取得第五奖",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 2,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:counter_second_dragapult",
+                                        "selected_choice_label": "反击捕捉器抓出校准后的多龙",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 3,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:second_munk",
+                                  "selected_choice_label": "第二次亢奋脑力把剩230HP多龙校准到200HP",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 3,
+                            "reason": "all_defenses_hold",
+                            "role": "opponent",
+                            "selected_choice_id": "04:dragapult_reply",
+                            "selected_choice_label": "对手多龙反击200，制造第二次搬伤来源",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:first_three_prizes",
+                      "selected_choice_label": "幻影潜袭击倒月月熊并以60击倒多龙梅西亚",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:first_munk",
+                "selected_choice_label": "第一次亢奋脑力把月月熊校准到200HP",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 6,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:boss_bloodmoon",
+          "selected_choice_label": "老大的指令抓出剩230HP月月熊",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 7,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:flip_two_gusts",
+    "selected_choice_label": "化危为吉抽到老大、反击捕捉器和夜间担架",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:flip_two_gusts",
+      "choice_label": "化危为吉抽到老大、反击捕捉器和夜间担架",
+      "depth": 8,
+      "player_actions": 7,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:boss_bloodmoon",
+            "choice_label": "老大的指令抓出剩230HP月月熊",
+            "depth": 8,
+            "player_actions": 6,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:first_munk",
+                  "choice_label": "第一次亢奋脑力把月月熊校准到200HP",
+                  "depth": 8,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:first_three_prizes",
+                        "choice_label": "幻影潜袭击倒月月熊并以60击倒多龙梅西亚",
+                        "depth": 8,
+                        "player_actions": 4,
+                        "reason": "all_defenses_hold",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:dragapult_reply",
+                              "choice_label": "对手多龙反击200，制造第二次搬伤来源",
+                              "depth": 8,
+                              "player_actions": 3,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:second_munk",
+                                    "choice_label": "第二次亢奋脑力把剩230HP多龙校准到200HP",
+                                    "depth": 8,
+                                    "player_actions": 3,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:counter_second_dragapult",
+                                          "choice_label": "反击捕捉器抓出校准后的多龙",
+                                          "depth": 8,
+                                          "player_actions": 2,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:second_two_prizes",
+                                                "choice_label": "第二次幻影潜袭精确击倒并取得第五奖",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 5,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:second_two_prizes",
+                                            "selected_choice_label": "第二次幻影潜袭精确击倒并取得第五奖",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:counter_second_dragapult",
+                                      "selected_choice_label": "反击捕捉器抓出校准后的多龙",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:second_munk",
+                                "selected_choice_label": "第二次亢奋脑力把剩230HP多龙校准到200HP",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "all_defenses_hold",
+                          "role": "opponent",
+                          "selected_choice_id": "04:dragapult_reply",
+                          "selected_choice_label": "对手多龙反击200，制造第二次搬伤来源",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:first_three_prizes",
+                    "selected_choice_label": "幻影潜袭击倒月月熊并以60击倒多龙梅西亚",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:first_munk",
+              "selected_choice_label": "第一次亢奋脑力把月月熊校准到200HP",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:boss_bloodmoon",
+        "selected_choice_label": "老大的指令抓出剩230HP月月熊",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "ba63efadd3eaa416391d5b3c95787c2fcb43cbcc43b438b92dce28e29a2f6c66",
+  "scenario_id": "dragapult_gardevoir_03",
+  "shortest_player_actions": 7,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

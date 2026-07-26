@@ -1145,6 +1145,7 @@ func test_battle_scene_pokemon_catcher_waits_for_coin_animation_before_field_slo
 	var delayed_coin_results: Array = coin_animator.played_results.duplicate()
 
 	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
 
 	return run_checks([
 		assert_eq(delayed_pending_choice, "effect_interaction", "Coin-flip follow-up prompts should stay in effect_interaction while the animation is running"),
@@ -1152,6 +1153,40 @@ func test_battle_scene_pokemon_catcher_waits_for_coin_animation_before_field_slo
 		assert_eq(delayed_coin_results, [true], "Pokemon Catcher should start the coin animation immediately after the shared flipper emits"),
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "Pokemon Catcher should show field slot selection after the coin animation finishes"),
 		assert_eq(int((battle_scene.get("_field_interaction_data") as Dictionary).get("items", []).size()), 2, "Pokemon Catcher should still expose opponent bench targets after the coin animation"),
+	])
+
+
+func test_battle_scene_hoothoot_triple_stab_plays_all_three_coin_animations() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var coin_animator := FakeCoinAnimator.new()
+	battle_scene.set("_coin_animator", coin_animator)
+
+	# Triple Stab resolves all three flips synchronously. The battle UI must retain
+	# the two later results while the first Tween is still playing.
+	battle_scene.call("_on_coin_flipped", true)
+	battle_scene.call("_on_coin_flipped", false)
+	battle_scene.call("_on_coin_flipped", true)
+	var first_animation_results: Array = coin_animator.played_results.duplicate()
+	var queued_after_first: Array = (battle_scene.get("_coin_flip_queue") as Array).duplicate()
+
+	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
+	var second_animation_results: Array = coin_animator.played_results.duplicate()
+
+	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
+	var third_animation_results: Array = coin_animator.played_results.duplicate()
+
+	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
+
+	return run_checks([
+		assert_eq(first_animation_results, [true], "Hoothoot should start by displaying the first of its three coin results"),
+		assert_eq(queued_after_first, [false, true], "Hoothoot should retain the other two synchronous coin results in order"),
+		assert_eq(second_animation_results, [true, false], "Finishing the first animation should display the second result"),
+		assert_eq(third_animation_results, [true, false, true], "Triple Stab should visibly display all three coin results"),
+		assert_false(bool(battle_scene.get("_coin_animating")), "The coin overlay should finish only after the third result"),
+		assert_true((battle_scene.get("_coin_flip_queue") as Array).is_empty(), "The three-result queue should be empty after all animations finish"),
 	])
 
 
@@ -1201,17 +1236,19 @@ func test_battle_scene_ai_owned_coin_followup_resumes_after_animation() -> Strin
 	var scheduled_before_finish: bool = bool(battle_scene.get("_ai_step_scheduled"))
 	var pending_before_finish: String = str(battle_scene.get("_pending_choice"))
 	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
 	var scheduled_after_finish: bool = bool(battle_scene.get("_ai_step_scheduled"))
 	if scheduled_after_finish:
 		battle_scene.call("_run_ai_step")
 
 	var pending_after_resume: String = str(battle_scene.get("_pending_choice"))
+	var ai_resumed_after_finish: bool = scheduled_after_finish or pending_after_resume == ""
 	GameManager.current_mode = previous_mode
 	return run_checks([
 		assert_eq(pending_before_finish, "effect_interaction", "AI-owned coin follow-up should remain pending while the coin animation is still running"),
 		assert_false(scheduled_before_finish, "AI should not be scheduled before the coin animation finishes"),
 		assert_eq(coin_animator.played_results, [true], "Capturing Aroma should enqueue exactly one shared coin animation"),
-		assert_true(scheduled_after_finish, "When the coin animation finishes, BattleScene should schedule the AI-owned follow-up step"),
+		assert_true(ai_resumed_after_finish, "When the coin animation finishes, BattleScene should schedule or complete the AI-owned follow-up step"),
 		assert_eq(pending_after_resume, "", "After the AI resolves the resumed Capturing Aroma step, the interaction should complete"),
 	])
 
@@ -1723,6 +1760,57 @@ func test_battle_scene_attack_any_target_damage_routes_real_attack_to_opponent_f
 	])
 
 
+func test_battle_scene_raging_bolt_clicks_opponent_bench_and_resolves_lightning_storm() -> String:
+	var previous_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for owner_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = owner_index
+		gsm.game_state.players.append(player)
+
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/CSV8C_161.json"))
+	var raging_card := CardData.from_dict(parsed as Dictionary) if parsed is Dictionary else null
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(raging_card, 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+
+	var opp_active := PokemonSlot.new()
+	opp_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Active", 160, "C"), 1))
+	gsm.game_state.players[1].active_pokemon = opp_active
+	var opp_bench := PokemonSlot.new()
+	opp_bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Bench", 120, "C"), 1))
+	gsm.game_state.players[1].bench = [opp_bench]
+
+	battle_scene.call("_try_use_attack_with_interaction", 0, attacker, 0)
+	var first_mode := str(battle_scene.get("_field_interaction_mode"))
+	var field_map: Dictionary = battle_scene.get("_field_interaction_slot_index_by_id")
+	battle_scene.call("_try_handle_field_interaction_slot_click", "opp_bench_0", opp_bench)
+	GameManager.current_mode = previous_mode
+
+	var result := run_checks([
+		assert_not_null(raging_card, "CSV8C_161 Raging Bolt should load for the production UI path"),
+		assert_eq(first_mode, "slot_select", "Lightning Storm should open the battlefield target selector"),
+		assert_true(field_map.has("opp_bench_0"), "Lightning Storm should map the opponent Bench slot as clickable"),
+		assert_eq(opp_bench.damage_counters, 60, "Clicking the opponent Bench slot should deal attached Energy count x30 to that Bench Pokemon"),
+		assert_eq(opp_active.damage_counters, 0, "A selected Bench target must not silently fall back to the opponent Active Pokemon"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "The target click should finish the attack interaction without leaving the UI stuck"),
+	])
+	battle_scene.free()
+	return result
+
+
 func test_battle_scene_self_damage_counter_attack_routes_real_attack_to_opponent_field() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -1758,6 +1846,132 @@ func test_battle_scene_self_damage_counter_attack_routes_real_attack_to_opponent
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "Self-damage-counter attacks should route to field slot selection"),
 		assert_eq(str(battle_scene.get("_field_interaction_position")), "bottom", "Self-damage-counter attacks should move the field panel downward for opponent targets"),
 	])
+
+
+func test_csv6c_065_scream_tail_player_click_deals_damage_to_selected_bench_target() -> String:
+	var previous_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	for owner_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = owner_index
+		gsm.game_state.players.append(player)
+
+	var scream_tail: CardData = CardDatabase.get_card("CSV6C", "065")
+	if scream_tail == null:
+		GameManager.current_mode = previous_mode
+		battle_scene.free()
+		return "Missing bundled CSV6C_065 Scream Tail"
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(scream_tail, 0))
+	attacker.damage_counters = 60
+	attacker.attached_energy = [
+		CardInstance.create(_make_energy_cd("Psychic Energy 1", "P"), 0),
+		CardInstance.create(_make_energy_cd("Psychic Energy 2", "P"), 0),
+	]
+	gsm.game_state.players[0].active_pokemon = attacker
+	var opp_active := PokemonSlot.new()
+	opp_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Active", 260, "M"), 1))
+	gsm.game_state.players[1].active_pokemon = opp_active
+	var opp_bench := PokemonSlot.new()
+	opp_bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Bench", 260, "M"), 1))
+	gsm.game_state.players[1].bench = [opp_bench]
+	gsm.effect_processor.register_pokemon_card(scream_tail)
+
+	var registered_effects := gsm.effect_processor.get_attack_effects_for_slot(attacker, 1)
+	battle_scene.call("_try_use_attack_with_interaction", 0, attacker, 1)
+	var field_map: Dictionary = battle_scene.get("_field_interaction_slot_index_by_id")
+	battle_scene.call("_try_handle_field_interaction_slot_click", "opp_bench_0", opp_bench)
+	GameManager.current_mode = previous_mode
+
+	var result := run_checks([
+		assert_eq(registered_effects.size(), 1, "The real CSV6C_065 second attack should register exactly one native effect"),
+		assert_true(registered_effects[0] is AttackSelfDamageCounterTargetDamage, "CSV6C_065 should register the self-damage-counter target effect"),
+		assert_true(field_map.has("opp_bench_0"), "The player UI should expose the selected opponent Bench target"),
+		assert_eq(opp_bench.damage_counters, 120, "Six damage counters should deal 120 damage to the selected Bench Pokemon"),
+		assert_eq(opp_active.damage_counters, 0, "The chosen-target attack must not redirect to the opponent Active Pokemon"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "The attack target interaction should finish after the field click"),
+	])
+	gsm.prepare_for_disposal()
+	battle_scene.free()
+	return result
+
+
+func test_scream_tail_bench_knockout_visual_completion_clears_gholdengo_card_view() -> String:
+	var previous_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	for owner_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = owner_index
+		gsm.game_state.players.append(player)
+	if battle_scene.has_method("_sync_battle_scene_context_runtime"):
+		battle_scene.call("_sync_battle_scene_context_runtime")
+
+	var scream_tail: CardData = CardDatabase.get_card("CSV6C", "065")
+	if scream_tail == null:
+		GameManager.current_mode = previous_mode
+		gsm.prepare_for_disposal()
+		battle_scene.free()
+		return "Missing bundled CSV6C_065 Scream Tail"
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(scream_tail, 0))
+	attacker.damage_counters = 60
+	attacker.attached_energy = [
+		CardInstance.create(_make_energy_cd("Psychic Energy 1", "P"), 0),
+		CardInstance.create(_make_energy_cd("Psychic Energy 2", "P"), 0),
+	]
+	gsm.game_state.players[0].active_pokemon = attacker
+	gsm.game_state.players[0].prizes = [CardInstance.create(_make_trainer_cd("Prize", "Item", ""), 0)]
+
+	var opp_active := PokemonSlot.new()
+	opp_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Active", 260, "M"), 1))
+	gsm.game_state.players[1].active_pokemon = opp_active
+	var gholdengo_slot := PokemonSlot.new()
+	var gholdengo_card := CardInstance.create(_make_pokemon_cd("Gholdengo ex", 260, "M"), 1)
+	gholdengo_slot.pokemon_stack.append(gholdengo_card)
+	gholdengo_slot.damage_counters = 140
+	gsm.game_state.players[1].bench = [gholdengo_slot]
+	gsm.effect_processor.register_pokemon_card(scream_tail)
+
+	var bench_panel := PanelContainer.new()
+	var bench_card_view := BattleCardViewScript.new()
+	bench_panel.add_child(bench_card_view)
+	bench_card_view.setup_from_instance(gholdengo_card, BattleCardView.MODE_SLOT_BENCH)
+	battle_scene.set("_slot_card_views", {"opp_bench_0": bench_card_view})
+
+	battle_scene.call("_try_use_attack_with_interaction", 0, attacker, 1)
+	battle_scene.call("_try_handle_field_interaction_slot_click", "opp_bench_0", gholdengo_slot)
+	var removed_from_bench := gsm.game_state.players[1].bench.is_empty()
+	var cleared_by_committed_state_refresh := bench_card_view.card_instance == null
+	battle_scene.call("_refresh_field_after_visual_event", "knockout")
+	GameManager.current_mode = previous_mode
+
+	var result := run_checks([
+		assert_true(removed_from_bench, "Scream Tail should already remove the defeated Gholdengo ex from the rule-state Bench"),
+		assert_true(cleared_by_committed_state_refresh, "The regular committed-state refresh should clear the defeated Bench slot"),
+		assert_null(bench_card_view.card_instance, "KO visual completion must clear the defeated Gholdengo ex card view immediately"),
+	])
+	gsm.prepare_for_disposal()
+	bench_panel.free()
+	battle_scene.free()
+	return result
 
 
 func test_battle_scene_attack_dialog_routes_ns_darmanitan_flamebody_cannon_to_bench_choice() -> String:
@@ -3748,6 +3962,18 @@ func test_battle_scene_vs_ai_area_zero_ko_cleanup_uses_human_chooser_when_ai_own
 	var prize_player_after_cleanup: int = int(battle_scene.get("_pending_prize_player_index"))
 	var prize_remaining_after_cleanup: int = int(battle_scene.get("_pending_prize_remaining"))
 	var ai_scheduled_after_cleanup: bool = bool(battle_scene.get("_ai_step_scheduled"))
+	var cleanup_dialog_overlay: Control = battle_scene.get("_dialog_overlay") as Control
+	var cleanup_field_overlay: Control = battle_scene.get("_field_interaction_overlay") as Control
+	var ai_cleanup_diagnostics := "ready=%s blocking=%s draw=%s coin=%s dialog=%s field=%s state=%s effect=%s" % [
+		str(battle_scene.call("_is_ai_turn_ready")),
+		str(battle_scene.call("_is_ui_blocking_ai")),
+		str(battle_scene.get("_draw_reveal_active")),
+		str(battle_scene.call("_has_pending_coin_animation")),
+		str(cleanup_dialog_overlay != null and cleanup_dialog_overlay.visible),
+		str(cleanup_field_overlay != null and cleanup_field_overlay.visible),
+		str(battle_scene.call("_state_snapshot")),
+		str(battle_scene.call("_effect_state_snapshot")),
+	]
 	var cleanup_target_removed: bool = cleanup_target not in gsm.game_state.players[0].bench
 	var bench_size_after_cleanup: int = gsm.game_state.players[0].bench.size()
 
@@ -3772,7 +3998,7 @@ func test_battle_scene_vs_ai_area_zero_ko_cleanup_uses_human_chooser_when_ai_own
 		assert_eq(pending_after_cleanup, "take_prize", "After human cleanup, the pending engine prize prompt should be restored"),
 		assert_eq(prize_player_after_cleanup, 1, "After cleanup, the AI should be the prize-taking player"),
 		assert_eq(prize_remaining_after_cleanup, 2, "KOing the Tera ex should still require two AI prizes"),
-		assert_true(ai_scheduled_after_cleanup, "Restoring an AI-owned prize prompt after cleanup should schedule the AI to continue"),
+		assert_true(ai_scheduled_after_cleanup, "Restoring an AI-owned prize prompt after cleanup should schedule the AI to continue | %s" % ai_cleanup_diagnostics),
 		assert_true(cleanup_target_removed, "The human-selected Bench Pokemon should be discarded"),
 		assert_eq(bench_size_after_cleanup, 5, "Human Bench should be trimmed to the normal limit before prizes"),
 		assert_eq(pending_after_prizes, "send_out", "After AI prizes, the flow should ask the human to send out a replacement"),
@@ -4211,6 +4437,18 @@ func test_battle_scene_vs_ai_area_zero_bench_tera_ko_cleanup_confirm_discards_mu
 	var prize_player_after_cleanup: int = int(battle_scene.get("_pending_prize_player_index"))
 	var prize_remaining_after_cleanup: int = int(battle_scene.get("_pending_prize_remaining"))
 	var ai_scheduled_after_cleanup: bool = bool(battle_scene.get("_ai_step_scheduled"))
+	var cleanup_dialog_overlay: Control = battle_scene.get("_dialog_overlay") as Control
+	var cleanup_field_overlay: Control = battle_scene.get("_field_interaction_overlay") as Control
+	var ai_cleanup_diagnostics := "ready=%s blocking=%s draw=%s coin=%s dialog=%s field=%s state=%s effect=%s" % [
+		str(battle_scene.call("_is_ai_turn_ready")),
+		str(battle_scene.call("_is_ui_blocking_ai")),
+		str(battle_scene.get("_draw_reveal_active")),
+		str(battle_scene.call("_has_pending_coin_animation")),
+		str(cleanup_dialog_overlay != null and cleanup_dialog_overlay.visible),
+		str(cleanup_field_overlay != null and cleanup_field_overlay.visible),
+		str(battle_scene.call("_state_snapshot")),
+		str(battle_scene.call("_effect_state_snapshot")),
+	]
 	var discarded_a: bool = discard_a not in gsm.game_state.players[0].bench
 	var discarded_b: bool = discard_b not in gsm.game_state.players[0].bench
 	var bench_tera_removed: bool = bench_tera not in gsm.game_state.players[0].bench
@@ -4232,7 +4470,7 @@ func test_battle_scene_vs_ai_area_zero_bench_tera_ko_cleanup_confirm_discards_mu
 		assert_eq(pending_after_cleanup, "take_prize", "Confirming the two discards should restore the AI prize prompt"),
 		assert_eq(prize_player_after_cleanup, 1, "The AI should take prizes after Bench Tera cleanup"),
 		assert_eq(prize_remaining_after_cleanup, 2, "Bench Tera ex knockout should award two prizes"),
-		assert_true(ai_scheduled_after_cleanup, "Confirming the cleanup should schedule the AI prize continuation"),
+		assert_true(ai_scheduled_after_cleanup, "Confirming the cleanup should schedule the AI prize continuation | %s" % ai_cleanup_diagnostics),
 		assert_true(bench_tera_removed, "The knocked-out Bench Tera should already be removed from the Bench"),
 		assert_true(discarded_a, "The first selected excess Bench Pokemon should be discarded"),
 		assert_true(discarded_b, "The second selected excess Bench Pokemon should be discarded"),

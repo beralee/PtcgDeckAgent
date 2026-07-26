@@ -5,6 +5,7 @@ const ContractsScript = preload("res://scripts/ai/v18_cpg/schema/V18CPGContracts
 
 const GOALS: Array[String] = [
 	"minimum_resource_ko",
+	"post_attack_continuity",
 	"prize_closeout",
 	"next_attacker_continuity",
 	"typed_energy_continuity",

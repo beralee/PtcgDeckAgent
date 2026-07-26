@@ -61,6 +61,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"min_select": 0,
 		"max_select": mini(recover_count, discard_items.size()),
 		"allow_cancel": true,
+		"auto_confirm_at_max": true,
 	})
 	return steps
 

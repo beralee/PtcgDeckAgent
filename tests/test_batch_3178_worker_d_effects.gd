@@ -236,6 +236,40 @@ func test_csv8c_161_raging_bolt_lightning_storm_uses_attacker_energy_for_bench_t
 	])
 
 
+func test_csv8c_161_raging_bolt_rejects_lost_target_context_instead_of_silently_hitting_active() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var raging_cd := _make_pokemon_data("Raging Bolt", "N", 130, "Basic", RAGING_BOLT_ID)
+	raging_cd.attacks = [
+		{"name": "Lightning Storm", "cost": "LF", "damage": "", "text": "", "is_vstar_power": false},
+		{"name": "Dragon Headbutt", "cost": "LFC", "damage": "130", "text": "", "is_vstar_power": false},
+	]
+	var raging := _make_slot(raging_cd, 0)
+	player.active_pokemon = raging
+	var processor := EffectProcessor.new()
+	processor.register_pokemon_card(raging_cd)
+	var lost_context_valid := processor.validate_attack_effect_context(
+		raging,
+		0,
+		opponent.active_pokemon,
+		state,
+		[]
+	)
+	var bench_context_valid := processor.validate_attack_effect_context(
+		raging,
+		0,
+		opponent.active_pokemon,
+		state,
+		[{AttackRagingBoltLightningStorm.STEP_ID: [opponent.bench[0]]}]
+	)
+
+	return run_checks([
+		assert_false(lost_context_valid, "Lightning Storm must reject a missing mandatory target instead of silently falling back to the Active Pokemon"),
+		assert_true(bench_context_valid, "Lightning Storm must accept an explicitly selected opposing Bench target"),
+	])
+
+
 func test_csv7c_142_brute_bonnet_poison_and_damage_counter_bonus() -> String:
 	var state := _make_state()
 	var player := state.players[0]

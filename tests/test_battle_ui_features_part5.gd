@@ -330,18 +330,83 @@ func test_modal_choice_tap_suppresses_portrait_bench_grid_fallback() -> String:
 
 func test_modal_choice_tap_suppresses_followup_discard_hud_open() -> String:
 	var battle_scene := _make_battle_scene_stub()
-	var discard_overlay := battle_scene.get("_discard_overlay") as Panel
-	discard_overlay.visible = false
-	battle_scene.call("_mark_modal_input_consumed", "test_modal_discard")
-
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
-	battle_scene.call("_on_discard_open_control_input", click, 0, "Discard")
+	battle_scene.call("_configure_battle_pointer_input_for_tests", true)
+	var position := Vector2(100, 100)
+	var modal_press := InputEventScreenTouch.new()
+	modal_press.pressed = true
+	modal_press.position = position
+	battle_scene.call("_observe_battle_pointer_event", modal_press)
+	battle_scene.call("_claim_modal_pointer_event", modal_press, "test_modal_discard")
+	var modal_release := InputEventScreenTouch.new()
+	modal_release.pressed = false
+	modal_release.position = position
+	battle_scene.call("_observe_battle_pointer_event", modal_release)
+	var echo_press := InputEventMouseButton.new()
+	echo_press.button_index = MOUSE_BUTTON_LEFT
+	echo_press.pressed = true
+	echo_press.device = 0
+	echo_press.position = position
+	echo_press.global_position = position
+	var consumed := bool(
+		battle_scene.call(
+			"_consume_modal_hud_input_if_needed",
+			echo_press,
+			"discard_hud"
+		)
+	)
 
 	var result := run_checks([
-		assert_false(discard_overlay.visible, "A follow-up touch event from a modal card choice should not open the discard viewer"),
+		assert_true(consumed, "The compatibility-mouse tail from the modal touch should not open the discard viewer"),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the modal follow-up should not start another pending choice"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_fresh_android_touch_after_modal_can_open_discard_immediately() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.call("_configure_battle_pointer_input_for_tests", true)
+
+	var modal_press := InputEventScreenTouch.new()
+	modal_press.pressed = true
+	modal_press.index = 0
+	modal_press.position = Vector2(100, 100)
+	battle_scene.call("_observe_battle_pointer_event", modal_press)
+	battle_scene.call("_claim_modal_pointer_event", modal_press, "test_modal")
+	battle_scene.call(
+		"_finish_modal_input_interaction",
+		"test_modal",
+		"sequence",
+		modal_press.position
+	)
+
+	var modal_release := InputEventScreenTouch.new()
+	modal_release.pressed = false
+	modal_release.index = 0
+	modal_release.position = modal_press.position
+	battle_scene.call("_observe_battle_pointer_event", modal_release)
+
+	# Reusing Android touch index 0 after release starts a new physical pointer
+	# sequence. A time window must not swallow this intentional discard-HUD tap.
+	var fresh_discard_press := InputEventScreenTouch.new()
+	fresh_discard_press.pressed = true
+	fresh_discard_press.index = 0
+	fresh_discard_press.position = Vector2(320, 320)
+	battle_scene.call("_observe_battle_pointer_event", fresh_discard_press)
+	var incorrectly_consumed := bool(
+		battle_scene.call(
+			"_consume_modal_hud_input_if_needed",
+			fresh_discard_press,
+			"discard_hud"
+		)
+	)
+
+	var result := run_checks([
+		assert_false(
+			incorrectly_consumed,
+			"A new Android touch sequence must be allowed to open the discard HUD immediately after a modal closes"
+		),
 	])
 
 	battle_scene.free()
@@ -350,17 +415,33 @@ func test_modal_choice_tap_suppresses_followup_discard_hud_open() -> String:
 
 func test_modal_choice_tap_suppresses_followup_lost_zone_hud_open() -> String:
 	var battle_scene := _make_battle_scene_stub()
-	var discard_overlay := battle_scene.get("_discard_overlay") as Panel
-	discard_overlay.visible = false
-	battle_scene.call("_mark_modal_input_consumed", "test_modal_lost_zone")
-
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
-	battle_scene.call("_on_lost_zone_open_control_input", click, false)
+	battle_scene.call("_configure_battle_pointer_input_for_tests", true)
+	var position := Vector2(120, 120)
+	var modal_press := InputEventScreenTouch.new()
+	modal_press.pressed = true
+	modal_press.position = position
+	battle_scene.call("_observe_battle_pointer_event", modal_press)
+	battle_scene.call("_claim_modal_pointer_event", modal_press, "test_modal_lost_zone")
+	var modal_release := InputEventScreenTouch.new()
+	modal_release.pressed = false
+	modal_release.position = position
+	battle_scene.call("_observe_battle_pointer_event", modal_release)
+	var echo_press := InputEventMouseButton.new()
+	echo_press.button_index = MOUSE_BUTTON_LEFT
+	echo_press.pressed = true
+	echo_press.device = 0
+	echo_press.position = position
+	echo_press.global_position = position
+	var consumed := bool(
+		battle_scene.call(
+			"_consume_modal_hud_input_if_needed",
+			echo_press,
+			"lost_zone_hud"
+		)
+	)
 
 	var result := run_checks([
-		assert_false(discard_overlay.visible, "A follow-up touch event from a modal card choice should not open the LOST viewer"),
+		assert_true(consumed, "The compatibility-mouse tail from the modal touch should not open the LOST viewer"),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the modal follow-up should not start another pending choice"),
 	])
 
@@ -368,21 +449,24 @@ func test_modal_choice_tap_suppresses_followup_lost_zone_hud_open() -> String:
 	return result
 
 
-func test_recent_modal_completion_suppresses_delayed_lost_zone_hud_open() -> String:
+func test_recent_modal_completion_does_not_suppress_independent_lost_zone_hud_input() -> String:
 	var battle_scene := _make_battle_scene_stub()
-	var discard_overlay := battle_scene.get("_discard_overlay") as Panel
-	discard_overlay.visible = false
 	battle_scene.set("_modal_input_slot_suppress_until_msec", 0)
 	battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec())
 
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true
-	battle_scene.call("_on_lost_zone_open_control_input", click, false)
+	var consumed := bool(
+		battle_scene.call(
+			"_consume_modal_hud_input_if_needed",
+			click,
+			"lost_zone_hud"
+		)
+	)
 
 	var result := run_checks([
-		assert_false(discard_overlay.visible, "A delayed follow-up event after an action modal should not open the LOST viewer"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the delayed LOST follow-up should not start another pending choice"),
+		assert_false(consumed, "A recent modal timestamp alone must not suppress an independent LOST-zone click"),
 	])
 
 	battle_scene.free()

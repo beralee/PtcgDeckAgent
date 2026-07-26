@@ -9,6 +9,7 @@ const CSV9C202Briar = preload("res://scripts/effects/trainer_effects/CSV9C202Bri
 const NoivernExEffectsScript = preload("res://scripts/effects/pokemon_effects/NoivernExEffects.gd")
 const AbilityZamazentaVSTARShieldScript = preload("res://scripts/effects/pokemon_effects/AbilityZamazentaVSTARShield.gd")
 const AbilityPreventTeraAttackDamageAndEffectsScript = preload("res://scripts/effects/pokemon_effects/AbilityPreventTeraAttackDamageAndEffects.gd")
+const AbilityTingLuCursedLandScript = preload("res://scripts/effects/pokemon_effects/AbilityTingLuCursedLand.gd")
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
 
 const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
@@ -258,7 +259,7 @@ func _get_registered_pokemon_effect(slot: PokemonSlot) -> BaseEffect:
 	var existing_effect := get_effect(card_data.effect_id)
 	if existing_effect != null:
 		return existing_effect
-	if card_data.abilities.is_empty() or has_attack_effect(card_data.effect_id):
+	if card_data.abilities.is_empty():
 		return null
 	register_pokemon_card(card_data)
 	return get_effect(card_data.effect_id)
@@ -744,7 +745,7 @@ func get_ability_effect(
 
 	var native_count: int = card_data.abilities.size()
 	if ability_index < native_count:
-		return get_effect(card_data.effect_id)
+		return _get_registered_pokemon_effect(pokemon)
 	if state != null and ability_index == native_count:
 		return _get_tool_granted_ability_effect(pokemon, state)
 	return null
@@ -1543,6 +1544,8 @@ func is_ability_disabled(slot: PokemonSlot, state: GameState = null) -> bool:
 			return true
 		if AbilityBasicVLockScript.is_locked(slot, state):
 			return true
+		if AbilityTingLuCursedLandScript.is_locked_by_cursed_land(slot, state):
+			return true
 		if state.stadium_card != null and state.stadium_card.card_data != null:
 			var stadium_effect: BaseEffect = get_effect(state.stadium_card.card_data.effect_id)
 			if stadium_effect != null and stadium_effect.has_method("suppresses_ability") and bool(stadium_effect.call("suppresses_ability", slot, state)):
@@ -2112,7 +2115,7 @@ func _get_ability_attack_modifier(attacker: PokemonSlot, state: GameState, pi: i
 		var cd: CardData = slot.get_card_data()
 		if cd == null:
 			continue
-		var effect: BaseEffect = get_effect(cd.effect_id)
+		var effect: BaseEffect = _get_registered_pokemon_effect(slot)
 		if effect is AbilityFutureDamageBoost:
 			continue
 		if effect is AbilityDamageModifier:
@@ -2136,7 +2139,7 @@ func _get_ability_defense_modifier(defender: PokemonSlot, state: GameState, pi: 
 		var cd: CardData = slot.get_card_data()
 		if cd == null:
 			continue
-		var effect: BaseEffect = get_effect(cd.effect_id)
+		var effect: BaseEffect = _get_registered_pokemon_effect(slot)
 		if effect is AbilityDamageModifier:
 			var mod: AbilityDamageModifier = effect as AbilityDamageModifier
 			if mod.is_defense_modifier() and (not mod.self_only or slot == defender):

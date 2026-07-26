@@ -155,8 +155,8 @@ func test_video18_decks_keep_the_audited_archetype_core_counts() -> String:
 	return run_checks(checks)
 
 
-func test_video18_gardevoir_variants_use_the_g_mark_svi_kirlia_print() -> String:
-	var gardevoir_deck_ids := [800017097, 800018105, 800018497, 800018498]
+func test_video18_gardevoir_variants_use_the_intended_kirlia_print() -> String:
+	var gardevoir_deck_ids := [800017097, 800018105, 800018497]
 	var checks: Array[String] = []
 	for deck_id: int in gardevoir_deck_ids:
 		var deck := _load_bundled_deck(deck_id)
@@ -169,6 +169,11 @@ func test_video18_gardevoir_variants_use_the_g_mark_svi_kirlia_print() -> String
 			var card := CardDatabase.get_card(str(entry.get("set_code", "")), str(entry.get("card_index", "")))
 			if card != null:
 				checks.append(assert_false(card.regulation_mark == "F", "18.0 Gardevoir deck %d must not contain F-mark card %s" % [deck_id, card.display_name()]))
+	var academy_deck := _load_bundled_deck(800018498)
+	checks.append(assert_not_null(academy_deck, "18.0 Academy Gardevoir deck should load"))
+	if academy_deck != null:
+		checks.append(assert_eq(_entry_count(academy_deck, "CSV2C_054"), 0, "Academy Gardevoir must remove the old SVI/85 Kirlia"))
+		checks.append(assert_eq(_entry_count(academy_deck, "CS6.5C_030"), 2, "Academy Gardevoir should use two Refinement Kirlia"))
 	var kirlia := CardDatabase.get_card("CSV2C", "054")
 	checks.append(assert_not_null(kirlia, "The exact Chinese SVI/85 Kirlia print CSV2C_054 should be bundled"))
 	if kirlia != null:
@@ -204,6 +209,71 @@ func test_video18_gardevoir_variants_use_the_g_mark_svi_kirlia_print() -> String
 		checks.append(assert_eq(psychic_effects.size(), 1, "CSV2C_054 Psychic should register one exact per-opponent-Energy modifier"))
 		if not psychic_effects.is_empty():
 			checks.append(assert_eq(int(psychic_effects[0].call("get_damage_bonus", attacker, state)), 40, "CSV2C_054 Psychic should add 20 for each Energy on the opponent's Active Pokemon"))
+	return run_checks(checks)
+
+
+func test_academy_gardevoir_matches_the_complete_v18_rebuild() -> String:
+	var deck := _load_bundled_deck(800018498)
+	var expected_counts := {
+		"CSV2C_053": 3,
+		"CS6.5C_030": 2,
+		"CSV2C_055": 2,
+		"CSV8C_094": 3,
+		"CSV10C_082": 1,
+		"CSV8C_135": 1,
+		"CSV10C_007": 1,
+		"CSV2C_060": 1,
+		"CSV9.5C_004": 1,
+		"CSV6C_065": 1,
+		"CSV1C_121": 4,
+		"CSV3C_123": 4,
+		"CSV1C_123": 2,
+		"CSV1C_112": 4,
+		"CSV6C_115": 3,
+		"CSVH1C_043": 2,
+		"CSV6C_114": 2,
+		"CSV8C_183": 2,
+		"CSV7C_177": 1,
+		"CSV1C_109": 1,
+		"CSV8C_176": 1,
+		"CSVH1C_045": 1,
+		"CSV5C_119": 3,
+		"CSV1C_118": 2,
+		"CSV2C_127": 2,
+		"CSVE1C_PSY": 7,
+		"CSVE1C_DAR": 3,
+	}
+	var checks: Array[String] = [
+		assert_not_null(deck, "18.0 Academy Gardevoir should load from the bundled deck"),
+	]
+	if deck == null:
+		return run_checks(checks)
+	checks.append(assert_eq(_deck_total(deck), 60, "18.0 Academy Gardevoir must remain a legal 60-card list"))
+	checks.append(assert_eq(deck.cards.size(), expected_counts.size(), "18.0 Academy Gardevoir must not retain any stale or extra card entry"))
+	for uid: String in expected_counts:
+		checks.append(assert_eq(
+			_entry_count(deck, uid),
+			int(expected_counts[uid]),
+			"18.0 Academy Gardevoir should contain the exact count for %s" % uid
+		))
+	return run_checks(checks)
+
+
+func test_video18_festival_lead_deck_contains_no_retired_f_mark_cards() -> String:
+	var deck := _load_bundled_deck(18000405)
+	var checks: Array[String] = [
+		assert_not_null(deck, "18.0 Festival Lead deck should load"),
+		assert_eq(_deck_total(deck), 60, "18.0 Festival Lead deck should remain exactly 60 cards"),
+		assert_eq(_entry_count(deck, "CS5aC_113"), 0, "18.0 Festival Lead must remove F-mark Canceling Cologne"),
+		assert_eq(_entry_count(deck, "CS5bC_125"), 0, "18.0 Festival Lead must remove F-mark Roseanne's Backup"),
+		assert_eq(_entry_count(deck, "CSV8C_183"), 2, "The replacement list should use two Night Stretcher"),
+		assert_eq(_entry_count(deck, "CSVH1aC_023"), 2, "The replacement list should use two Boss's Orders"),
+	]
+	if deck != null:
+		for entry: Dictionary in deck.cards:
+			var card := CardDatabase.get_card(str(entry.get("set_code", "")), str(entry.get("card_index", "")))
+			if card != null and card.card_type != "Basic Energy":
+				checks.append(assert_false(card.regulation_mark == "F", "18.0 Festival Lead must not contain retired F-mark card %s" % card.display_name()))
 	return run_checks(checks)
 
 

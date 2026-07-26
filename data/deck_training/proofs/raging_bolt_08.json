@@ -1,0 +1,527 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 368,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 11,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:fez_draw_sada_boss",
+      "choice_label": "化危为吉抽奥琳、老大与担架",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:sada_grass_active_lightning_backup",
+      "choice_label": "奥琳草给前场、雷给后备并抽到能量转移",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:switch_grass_to_backup",
+      "choice_label": "能量转移把必死前场草能交给后备",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:dance_one_first",
+      "choice_label": "第一只厄诡椪舞草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:dance_two_first",
+      "choice_label": "第二只厄诡椪舞草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_280",
+      "choice_label": "首攻弃自身雷斗与两只厄诡椪草能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:marnie_reply",
+      "choice_label": "捣蛋小妖10伤击倒首攻者",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:dance_one_second",
+      "choice_label": "第一只厄诡椪新回合舞草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:dance_two_second",
+      "choice_label": "第二只厄诡椪新回合舞草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:second_350",
+      "choice_label": "接棒猛雷鼓弃雷斗草与两只厄诡椪草能",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "f3167055eaae19f20dc2e97061395731ff5052a964e9bca9b68db414f0dbbb31"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:fez_draw_sada_boss",
+        "choice_label": "化危为吉抽奥琳、老大与担架",
+        "depth": 10,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:sada_grass_active_lightning_backup",
+              "choice_label": "奥琳草给前场、雷给后备并抽到能量转移",
+              "depth": 10,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:switch_grass_to_backup",
+                    "choice_label": "能量转移把必死前场草能交给后备",
+                    "depth": 10,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:dance_one_first",
+                          "choice_label": "第一只厄诡椪舞草",
+                          "depth": 10,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:dance_two_first",
+                                "choice_label": "第二只厄诡椪舞草",
+                                "depth": 10,
+                                "player_actions": 5,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_280",
+                                      "choice_label": "首攻弃自身雷斗与两只厄诡椪草能",
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:marnie_reply",
+                                            "choice_label": "捣蛋小妖10伤击倒首攻者",
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:dance_one_second",
+                                                  "choice_label": "第一只厄诡椪新回合舞草",
+                                                  "depth": 10,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:dance_two_second",
+                                                        "choice_label": "第二只厄诡椪新回合舞草",
+                                                        "depth": 10,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:second_350",
+                                                              "choice_label": "接棒猛雷鼓弃雷斗草与两只厄诡椪草能",
+                                                              "depth": 10,
+                                                              "player_actions": 1,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [],
+                                                                "coverage_complete": true,
+                                                                "depth": 10,
+                                                                "player_actions": 0,
+                                                                "reason": "production_witness_reached_goal",
+                                                                "score": 4,
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 0
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 10,
+                                                          "player_actions": 1,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:second_350",
+                                                          "selected_choice_label": "接棒猛雷鼓弃雷斗草与两只厄诡椪草能",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 10,
+                                                    "player_actions": 2,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:dance_two_second",
+                                                    "selected_choice_label": "第二只厄诡椪新回合舞草",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 10,
+                                              "player_actions": 3,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:dance_one_second",
+                                              "selected_choice_label": "第一只厄诡椪新回合舞草",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 10,
+                                        "player_actions": 3,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:marnie_reply",
+                                        "selected_choice_label": "捣蛋小妖10伤击倒首攻者",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 10,
+                                  "player_actions": 4,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_280",
+                                  "selected_choice_label": "首攻弃自身雷斗与两只厄诡椪草能",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 10,
+                            "player_actions": 5,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:dance_two_first",
+                            "selected_choice_label": "第二只厄诡椪舞草",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 10,
+                      "player_actions": 6,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:dance_one_first",
+                      "selected_choice_label": "第一只厄诡椪舞草",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 10,
+                "player_actions": 7,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:switch_grass_to_backup",
+                "selected_choice_label": "能量转移把必死前场草能交给后备",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 10,
+          "player_actions": 8,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:sada_grass_active_lightning_backup",
+          "selected_choice_label": "奥琳草给前场、雷给后备并抽到能量转移",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 10,
+    "player_actions": 9,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:fez_draw_sada_boss",
+    "selected_choice_label": "化危为吉抽奥琳、老大与担架",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:fez_draw_sada_boss",
+      "choice_label": "化危为吉抽奥琳、老大与担架",
+      "depth": 10,
+      "player_actions": 9,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:sada_grass_active_lightning_backup",
+            "choice_label": "奥琳草给前场、雷给后备并抽到能量转移",
+            "depth": 10,
+            "player_actions": 8,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:switch_grass_to_backup",
+                  "choice_label": "能量转移把必死前场草能交给后备",
+                  "depth": 10,
+                  "player_actions": 7,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:dance_one_first",
+                        "choice_label": "第一只厄诡椪舞草",
+                        "depth": 10,
+                        "player_actions": 6,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:dance_two_first",
+                              "choice_label": "第二只厄诡椪舞草",
+                              "depth": 10,
+                              "player_actions": 5,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_280",
+                                    "choice_label": "首攻弃自身雷斗与两只厄诡椪草能",
+                                    "depth": 10,
+                                    "player_actions": 4,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:marnie_reply",
+                                          "choice_label": "捣蛋小妖10伤击倒首攻者",
+                                          "depth": 10,
+                                          "player_actions": 3,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:dance_one_second",
+                                                "choice_label": "第一只厄诡椪新回合舞草",
+                                                "depth": 10,
+                                                "player_actions": 3,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:dance_two_second",
+                                                      "choice_label": "第二只厄诡椪新回合舞草",
+                                                      "depth": 10,
+                                                      "player_actions": 2,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:second_350",
+                                                            "choice_label": "接棒猛雷鼓弃雷斗草与两只厄诡椪草能",
+                                                            "depth": 10,
+                                                            "player_actions": 1,
+                                                            "reason": "production_witness_reached_goal",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [],
+                                                              "coverage_complete": true,
+                                                              "depth": 10,
+                                                              "player_actions": 0,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "score": 4,
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 0
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 10,
+                                                        "player_actions": 1,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:second_350",
+                                                        "selected_choice_label": "接棒猛雷鼓弃雷斗草与两只厄诡椪草能",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 10,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:dance_two_second",
+                                                  "selected_choice_label": "第二只厄诡椪新回合舞草",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:dance_one_second",
+                                            "selected_choice_label": "第一只厄诡椪新回合舞草",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 10,
+                                      "player_actions": 3,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:marnie_reply",
+                                      "selected_choice_label": "捣蛋小妖10伤击倒首攻者",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 10,
+                                "player_actions": 4,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_280",
+                                "selected_choice_label": "首攻弃自身雷斗与两只厄诡椪草能",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 10,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:dance_two_first",
+                          "selected_choice_label": "第二只厄诡椪舞草",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 10,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:dance_one_first",
+                    "selected_choice_label": "第一只厄诡椪舞草",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 10,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:switch_grass_to_backup",
+              "selected_choice_label": "能量转移把必死前场草能交给后备",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 10,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:sada_grass_active_lightning_backup",
+        "selected_choice_label": "奥琳草给前场、雷给后备并抽到能量转移",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "f3167055eaae19f20dc2e97061395731ff5052a964e9bca9b68db414f0dbbb31",
+  "scenario_id": "raging_bolt_08",
+  "shortest_player_actions": 9,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

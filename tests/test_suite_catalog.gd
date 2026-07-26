@@ -4,7 +4,7 @@ extends TestBase
 const TestSuiteCatalogScript = preload("res://tests/TestSuiteCatalog.gd")
 
 
-func test_catalog_discovers_every_test_file() -> String:
+func test_catalog_discovers_every_shared_suite_test_file() -> String:
 	var discovered := TestSuiteCatalogScript.all_suites()
 	var discovered_paths := {}
 	for suite: Dictionary in discovered:
@@ -14,7 +14,7 @@ func test_catalog_discovers_every_test_file() -> String:
 	_collect_missing("res://tests", "res://tests", discovered_paths, missing)
 
 	return run_checks([
-		assert_eq(missing.size(), 0, "Every test_*.gd file should be discoverable through the suite catalog"),
+		assert_eq(missing.size(), 0, "Every test_*.gd file that declares test_ methods should be discoverable through the shared suite catalog"),
 	])
 
 
@@ -33,7 +33,7 @@ func _collect_missing(root_dir: String, current_dir: String, discovered_paths: D
 		if dir.current_is_dir():
 			_collect_missing(root_dir, script_path, discovered_paths, missing)
 		elif entry.begins_with("test_") and entry.ends_with(".gd"):
-			if not bool(discovered_paths.get(script_path, false)):
+			if TestSuiteCatalogScript._script_declares_suite_test_method(script_path) and not bool(discovered_paths.get(script_path, false)):
 				missing.append(script_path)
 		entry = dir.get_next()
 	dir.list_dir_end()

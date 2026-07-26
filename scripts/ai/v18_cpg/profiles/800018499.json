@@ -1,5 +1,5 @@
 {
-  "profile_version": 2,
+  "profile_version": 4,
   "semantic_version": 1,
   "risk_posture": "balanced",
   "switch_margin": 80.0,
@@ -8,6 +8,7 @@
   "delta_response_token_budget": 180,
   "turn_visible_wait_budget_ms": 6500,
   "cold_request_estimate_ms": 5000,
+  "turn_model_judgment_mode": "required_first_main_window",
   "max_policy_nodes": 8,
   "protected_roles": [
     "dragapult_rp_cost",
@@ -89,7 +90,10 @@
   "module_parameters": {
     "stage2_chain": {
       "attack_cost_by_uid": {"CSV8C_159": ["R", "P"]},
+      "fixed_damage_after_cost_completion_by_uid": {"CSV8C_159": 200},
+      "cost_completion_ko_target_uids": ["CSV6C_051"],
       "evolution_root_by_attacker_uid": {"CSV8C_159": "CSV8C_157"},
+      "conditional_any_type_energy_uids": ["CSV1C_127"],
       "prefer_ready_attacker_before_optional_stage2": true
     },
     "dragapult_spread": {

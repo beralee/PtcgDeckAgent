@@ -1,0 +1,527 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 372,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 11,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:active_trade",
+      "choice_label": "首攻索罗亚克在备战区交易取得暗码迷",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:cipher_dark_pp",
+      "choice_label": "暗码迷置顶基本恶能与PP提升剂",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:backup_trade",
+      "choice_label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:prebank_pp",
+      "choice_label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:castle",
+      "choice_label": "N的城堡让前场莱希拉姆零撤退",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_handoff",
+      "choice_label": "莱希拉姆换入双恶首攻索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:first_rage",
+      "choice_label": "60伤首攻者力量愤怒120击倒月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:ns_reply",
+      "choice_label": "160伤对手索罗亚克反杀首攻者",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:energy_switch_finish",
+      "choice_label": "奖赏卡能量转移把愿增猿恶能送给自动晋升的第二索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:second_rage",
+      "choice_label": "第二索罗亚克力量愤怒120击倒剩120HP对手",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "6d72d2a5b6d9e5185f90afb087780a25a6c64daf42fd666fbb35fdc848499784"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:active_trade",
+        "choice_label": "首攻索罗亚克在备战区交易取得暗码迷",
+        "depth": 10,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:cipher_dark_pp",
+              "choice_label": "暗码迷置顶基本恶能与PP提升剂",
+              "depth": 10,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:backup_trade",
+                    "choice_label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+                    "depth": 10,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:prebank_pp",
+                          "choice_label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+                          "depth": 10,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:castle",
+                                "choice_label": "N的城堡让前场莱希拉姆零撤退",
+                                "depth": 10,
+                                "player_actions": 5,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_handoff",
+                                      "choice_label": "莱希拉姆换入双恶首攻索罗亚克",
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:first_rage",
+                                            "choice_label": "60伤首攻者力量愤怒120击倒月月熊",
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "all_defenses_hold",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:ns_reply",
+                                                  "choice_label": "160伤对手索罗亚克反杀首攻者",
+                                                  "depth": 10,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:energy_switch_finish",
+                                                        "choice_label": "奖赏卡能量转移把愿增猿恶能送给自动晋升的第二索罗亚克",
+                                                        "depth": 10,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:second_rage",
+                                                              "choice_label": "第二索罗亚克力量愤怒120击倒剩120HP对手",
+                                                              "depth": 10,
+                                                              "player_actions": 1,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [],
+                                                                "coverage_complete": true,
+                                                                "depth": 10,
+                                                                "player_actions": 0,
+                                                                "reason": "production_witness_reached_goal",
+                                                                "score": 4,
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 0
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 10,
+                                                          "player_actions": 1,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:second_rage",
+                                                          "selected_choice_label": "第二索罗亚克力量愤怒120击倒剩120HP对手",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 10,
+                                                    "player_actions": 2,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:energy_switch_finish",
+                                                    "selected_choice_label": "奖赏卡能量转移把愿增猿恶能送给自动晋升的第二索罗亚克",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 10,
+                                              "player_actions": 2,
+                                              "reason": "all_defenses_hold",
+                                              "role": "opponent",
+                                              "selected_choice_id": "07:ns_reply",
+                                              "selected_choice_label": "160伤对手索罗亚克反杀首攻者",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 10,
+                                        "player_actions": 3,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:first_rage",
+                                        "selected_choice_label": "60伤首攻者力量愤怒120击倒月月熊",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 10,
+                                  "player_actions": 4,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_handoff",
+                                  "selected_choice_label": "莱希拉姆换入双恶首攻索罗亚克",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 10,
+                            "player_actions": 5,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:castle",
+                            "selected_choice_label": "N的城堡让前场莱希拉姆零撤退",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 10,
+                      "player_actions": 6,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:prebank_pp",
+                      "selected_choice_label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 10,
+                "player_actions": 7,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:backup_trade",
+                "selected_choice_label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 10,
+          "player_actions": 8,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:cipher_dark_pp",
+          "selected_choice_label": "暗码迷置顶基本恶能与PP提升剂",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 10,
+    "player_actions": 9,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:active_trade",
+    "selected_choice_label": "首攻索罗亚克在备战区交易取得暗码迷",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:active_trade",
+      "choice_label": "首攻索罗亚克在备战区交易取得暗码迷",
+      "depth": 10,
+      "player_actions": 9,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:cipher_dark_pp",
+            "choice_label": "暗码迷置顶基本恶能与PP提升剂",
+            "depth": 10,
+            "player_actions": 8,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:backup_trade",
+                  "choice_label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+                  "depth": 10,
+                  "player_actions": 7,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:prebank_pp",
+                        "choice_label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+                        "depth": 10,
+                        "player_actions": 6,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:castle",
+                              "choice_label": "N的城堡让前场莱希拉姆零撤退",
+                              "depth": 10,
+                              "player_actions": 5,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_handoff",
+                                    "choice_label": "莱希拉姆换入双恶首攻索罗亚克",
+                                    "depth": 10,
+                                    "player_actions": 4,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:first_rage",
+                                          "choice_label": "60伤首攻者力量愤怒120击倒月月熊",
+                                          "depth": 10,
+                                          "player_actions": 3,
+                                          "reason": "all_defenses_hold",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:ns_reply",
+                                                "choice_label": "160伤对手索罗亚克反杀首攻者",
+                                                "depth": 10,
+                                                "player_actions": 2,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:energy_switch_finish",
+                                                      "choice_label": "奖赏卡能量转移把愿增猿恶能送给自动晋升的第二索罗亚克",
+                                                      "depth": 10,
+                                                      "player_actions": 2,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:second_rage",
+                                                            "choice_label": "第二索罗亚克力量愤怒120击倒剩120HP对手",
+                                                            "depth": 10,
+                                                            "player_actions": 1,
+                                                            "reason": "production_witness_reached_goal",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [],
+                                                              "coverage_complete": true,
+                                                              "depth": 10,
+                                                              "player_actions": 0,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "score": 4,
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 0
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 10,
+                                                        "player_actions": 1,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:second_rage",
+                                                        "selected_choice_label": "第二索罗亚克力量愤怒120击倒剩120HP对手",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 10,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:energy_switch_finish",
+                                                  "selected_choice_label": "奖赏卡能量转移把愿增猿恶能送给自动晋升的第二索罗亚克",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 10,
+                                            "player_actions": 2,
+                                            "reason": "all_defenses_hold",
+                                            "role": "opponent",
+                                            "selected_choice_id": "07:ns_reply",
+                                            "selected_choice_label": "160伤对手索罗亚克反杀首攻者",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 10,
+                                      "player_actions": 3,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:first_rage",
+                                      "selected_choice_label": "60伤首攻者力量愤怒120击倒月月熊",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 10,
+                                "player_actions": 4,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_handoff",
+                                "selected_choice_label": "莱希拉姆换入双恶首攻索罗亚克",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 10,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:castle",
+                          "selected_choice_label": "N的城堡让前场莱希拉姆零撤退",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 10,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:prebank_pp",
+                    "selected_choice_label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 10,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:backup_trade",
+              "selected_choice_label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 10,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:cipher_dark_pp",
+        "selected_choice_label": "暗码迷置顶基本恶能与PP提升剂",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "6d72d2a5b6d9e5185f90afb087780a25a6c64daf42fd666fbb35fdc848499784",
+  "scenario_id": "n_zoroark_09",
+  "shortest_player_actions": 9,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

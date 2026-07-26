@@ -9,19 +9,52 @@ var _failures: Array[String] = []
 
 func _initialize() -> void:
 	var profile := ProfileCatalogScript.get_profile_for_deck(800018497)
-	_check(int(profile.get("profile_version", 0)) >= 8, "round07 profile must be active")
-	_test_exact_retreat_bridge_route(profile)
-	_test_route_negative_boundaries(profile)
-	_test_embrace_target_bridge(profile)
-	_test_local_gate_interaction_bridge(profile)
-	_test_profile_isolation()
+	_check(int(profile.get("profile_version", 0)) >= 11, "the source-correct profile must be active")
+	_test_invalidated_legacy_bridge_is_removed(profile)
 	if _failures.is_empty():
-		print("V18CPG 800018497 round07 same-turn retreat bridge: PASS")
+		print("V18CPG 800018497 invalidated retreat bridge removal: PASS")
 		quit(0)
 		return
 	for failure: String in _failures:
 		push_error(failure)
 	quit(1)
+
+
+func _test_invalidated_legacy_bridge_is_removed(profile: Dictionary) -> void:
+	var annotated := CapabilityRegistryScript.new().annotate_frontier(
+		_frontier(),
+		_route_observation(),
+		_facts(),
+		profile,
+		{}
+	)
+	_check(
+		not bool(_bridge(annotated[1]).get("advances_profiled_retreat_bridge", false)),
+		"the source-correct deck must not revive the invalidated exact Darkness retreat bridge"
+	)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(profile)
+	_check(
+		str(strategy._find_module_verified_upgrade(annotated, _facts()).get(
+			"candidate_id",
+			""
+		)) != "candidate:dark_active",
+		"the invalidated artifact must not authorize Darkness attachment over the Rule floor"
+	)
+	strategy.configure_verified_local_only_for_benchmark()
+	strategy.set("_current_action_owner", "local_gate")
+	strategy.set("_last_observation", _interaction_observation())
+	strategy.set("_last_facts", _facts())
+	var engine := _pokemon_slot("Gardevoir ex", "CSV2C", "055", "D")
+	var tail := _pokemon_slot("Scream Tail", "CSV6C", "065", "P")
+	_check(
+		strategy.pick_interaction_items(
+			[tail, engine],
+			{"id": "embrace_target", "min_select": 1, "max_select": 1},
+			{}
+		) == [tail],
+		"the invalidated bridge must not override the Rule interaction target"
+	)
 
 
 func _test_exact_retreat_bridge_route(profile: Dictionary) -> void:

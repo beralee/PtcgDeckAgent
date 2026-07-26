@@ -15,7 +15,7 @@
     },
     {
       "count": 2,
-      "effect_id": "773a7c5bc165bd5d75321bc7c29fdd25",
+      "effect_id": "4abd956bdf3e956fcf679120601760ff",
       "name": "Kirlia",
       "roles": [
         "pokemon",
@@ -24,7 +24,7 @@
         "ability_engine"
       ],
       "type": "Pokemon",
-      "uid": "CSV2C_054"
+      "uid": "CS6.5C_030"
     },
     {
       "count": 2,
@@ -320,9 +320,9 @@
       "uid": "CSVE1C_DAR"
     }
   ],
-  "deck_content_fingerprint": "e4dfb15b7f4f436077c4830ad2ce6e0f2b98d798e6773d6d2fed2949ae7fc319",
+  "deck_content_fingerprint": "38f0ab7a2e37fa7813490e460af58928b1ec72920cfcd3754d5070679f485f5e",
   "deck_id": 800018498,
-  "manifest_hash": "e729eafab9c9d5c37a4c6ee06ee00bf3d9ec00e70e521f0a9543b3fe8dfee621",
+  "manifest_hash": "5e46630aaeed7783c6e4f98f172e4684dc65a1efee56efc2857938634584b5eb",
   "modules": [
     "gardevoir_embrace",
     "damage_counter_control"

@@ -1,0 +1,159 @@
+{
+  "format_version": 1,
+  "puzzle_id": "gardevoir_08",
+  "deck_id": "800018498",
+  "revision": 3,
+  "profile": "precision",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "读取有限资源残局",
+      "fingerprint": "利用莉莉艾的皮皮ex改写龙弱点，用两只沙奈朵各自三能完成380；任何多余附能都会破坏第二回合。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择本回合展开路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "三能沙奈朵打弱点",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "牌面资源与时序均满足",
+      "effect_summary": "同时推进当前奖赏、处理公开威胁并保留接力"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "四能过量附着",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "动作本身合法",
+      "effect_summary": "产生局部价值但破坏资源所有权"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "路线选择失败",
+      "outcome": "failure",
+      "reason": "伤害不增加，却挪走第二回合唯一可用超能。",
+      "failure_axis": "route_choice",
+      "consequence_depth": 2
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "爆发、生存与接力同时成立",
+      "outcome": "success",
+      "reason": "2回合拿4奖，用两次190弱点击倒多龙"
+    },
+    {
+      "id": "r_bench",
+      "kind": "resource",
+      "label": "备战区空位",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_attach",
+      "kind": "resource",
+      "label": "本回合手贴",
+      "resource_type": "manual_attachment",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "公开的对手回应",
+      "visibility": "public",
+      "evidence": "对手第二只多龙已具备反击条件，第一只沙奈朵倒下后必须立刻有三能接力。",
+      "deadline": "对手下一回合",
+      "impact": "击倒首攻或破坏接力"
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "取得计划奖赏",
+      "category": "progress",
+      "assertion": "两回合取得4奖"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_bench",
+      "type": "consumes"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_attach",
+      "type": "consumes"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "r_attach",
+      "type": "consumes"
+    }
+  ],
+  "proof": {
+    "max_depth": 20,
+    "max_player_turns": 2,
+    "required_initial_options": 2,
+    "opponent_reply_coverage": "frozen policy",
+    "negative_probe_axes": [
+      "route_choice"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "enumerated commitment equivalence classes only"
+  }
+}

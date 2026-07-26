@@ -422,7 +422,7 @@ class ArchaludonExAlloyBuild extends BaseEffect:
 		for slot: PokemonSlot in target_items:
 			target_labels.append(AdvancedHelpers.slot_label(slot))
 		var max_count := mini(2, source_items.size())
-		return [build_card_assignment_step(
+		var step := build_card_assignment_step(
 			STEP_ID,
 			"选择最多2张弃牌区基本钢能量并分配给己方钢宝可梦",
 			source_items,
@@ -432,7 +432,9 @@ class ArchaludonExAlloyBuild extends BaseEffect:
 			0,
 			max_count,
 			true
-		)]
+		)
+		step["auto_confirm_at_max"] = true
+		return [step]
 
 	func execute_ability(pokemon: PokemonSlot, _ability_index: int, targets: Array, state: GameState) -> void:
 		if pokemon == null or pokemon.get_top_card() == null:

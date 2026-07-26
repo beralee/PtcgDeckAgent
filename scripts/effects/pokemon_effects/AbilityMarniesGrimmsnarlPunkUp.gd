@@ -6,6 +6,10 @@ const USED_KEY := "marnies_grimmsnarl_punk_up_used"
 const MAX_COUNT := 5
 
 
+func is_evolve_triggered_ability() -> bool:
+	return true
+
+
 func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	if pokemon == null or state == null:
 		return false

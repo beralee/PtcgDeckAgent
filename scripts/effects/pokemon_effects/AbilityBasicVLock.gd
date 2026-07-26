@@ -44,6 +44,8 @@ static func _is_lock_source_suppressed(slot: PokemonSlot, state: GameState) -> b
 		return true
 	if AbilityIronThornsInit.is_locked_by_init(slot, state, source_order):
 		return true
+	if AbilityTingLuCursedLand.is_locked_by_cursed_land(slot, state, source_order):
+		return true
 	return false
 
 

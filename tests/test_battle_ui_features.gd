@@ -2713,9 +2713,18 @@ func test_vs_ai_ai_first_turn_returns_view_and_controls_to_human_after_setup() -
 	var view_player_after_ai_turn: int = int(scene.get("_view_player"))
 	var end_turn_disabled: bool = bool((scene.get("_btn_end_turn") as Button).disabled)
 	var pending_choice_after_ai_turn: String = str(scene.get("_pending_choice"))
+	var ai_setup_diagnostics := "run_count=%d scheduled=%s ready=%s blocking=%s draw=%s state=%s effect=%s" % [
+		ai.run_count,
+		str(scene.get("_ai_step_scheduled")),
+		str(scene.call("_is_ai_turn_ready")),
+		str(scene.call("_is_ui_blocking_ai")),
+		str(scene.get("_draw_reveal_active")),
+		str(scene.call("_state_snapshot")),
+		str(scene.call("_effect_state_snapshot")),
+	]
 	GameManager.current_mode = previous_mode
 	return run_checks([
-		assert_true(ai.run_count >= 2, "AI-first setup should run through setup resolution and the opening turn"),
+		assert_true(ai.run_count >= 2, "AI-first setup should run through setup resolution and the opening turn | %s" % ai_setup_diagnostics),
 		assert_eq(ai.end_turn_calls, 1, "The AI test double should end exactly one opening turn"),
 		assert_eq(current_player_after_ai_turn, 0, "After the AI opening turn ends, control should return to the human player"),
 		assert_eq(phase_after_ai_turn, GameState.GamePhase.MAIN, "After the AI opening turn ends, the human should be in MAIN phase"),

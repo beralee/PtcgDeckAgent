@@ -1,0 +1,570 @@
+{
+  "format_version": 1,
+  "puzzle_id": "gardevoir_graph_design_example",
+  "deck_id": "800018498",
+  "revision": 1,
+  "profile": "composite",
+  "illustrative_only": true,
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "观察不完整沙奈朵场面与公开威胁",
+      "fingerprint": "玩家有空备战位、一次支援者机会和一次手贴；对手上回合公开检索老大的指令",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d_supporter",
+      "kind": "player_decision",
+      "label": "先处理威胁还是最大化当前手牌",
+      "operator": "OR",
+      "axis": "supporter_choice"
+    },
+    {
+      "id": "a_iono",
+      "kind": "action",
+      "label": "使用奇树，打断已知老大并重建双方手牌",
+      "actor": "player",
+      "axis": "supporter_choice",
+      "legal_guard": "本回合尚未使用支援者，奇树在手牌",
+      "effect_summary": "消耗支援者窗口；已公开的老大离开对手手牌；玩家获得有限新资源"
+    },
+    {
+      "id": "a_research",
+      "kind": "action",
+      "label": "使用博士的研究，追求当前最大抽牌",
+      "actor": "player",
+      "axis": "supporter_choice",
+      "legal_guard": "本回合尚未使用支援者，博士的研究在手牌",
+      "effect_summary": "抽到更多牌但保留对手已知老大威胁"
+    },
+    {
+      "id": "a_boss",
+      "kind": "action",
+      "label": "使用老大的指令，只处理当前目标",
+      "actor": "player",
+      "axis": "supporter_choice",
+      "legal_guard": "本回合尚未使用支援者，老大的指令在手牌",
+      "effect_summary": "改变对手前场但既不补资源也不打断已知反杀牌"
+    },
+    {
+      "id": "s1",
+      "kind": "state",
+      "label": "已打断威胁，只剩有限展开资源",
+      "fingerprint": "支援者已用；老大威胁已被洗回；巢穴球可用；两个备战空位；手贴未用",
+      "checkpoint": "player_turn_1_after_supporter"
+    },
+    {
+      "id": "f_research",
+      "kind": "terminal",
+      "label": "抽牌很多但回合后被抓杀",
+      "outcome": "failure",
+      "reason": "没有处理公开的老大威胁，对手下回合直接完成最后奖赏",
+      "failure_axis": "supporter_choice",
+      "consequence_depth": 2
+    },
+    {
+      "id": "f_boss",
+      "kind": "terminal",
+      "label": "当前换位没有形成完整展开",
+      "outcome": "failure",
+      "reason": "支援者窗口耗尽，既缺抽牌桥梁也未消除对手反杀",
+      "failure_axis": "supporter_choice",
+      "consequence_depth": 1
+    },
+    {
+      "id": "d_search",
+      "kind": "player_decision",
+      "label": "巢穴球寻找哪条展开路线",
+      "operator": "OR",
+      "axis": "search_target"
+    },
+    {
+      "id": "a_drifloon",
+      "kind": "action",
+      "label": "寻找飘飘球，建立当前前场爆发路线",
+      "actor": "player",
+      "axis": "search_target",
+      "legal_guard": "飘飘球仍在牌库且有空备战位",
+      "effect_summary": "占一个备战位；获得能被超能拥抱加速的单奖攻击手"
+    },
+    {
+      "id": "a_munkidori",
+      "kind": "action",
+      "label": "寻找愿增猿，选择伤害阈值调整路线",
+      "actor": "player",
+      "axis": "search_target",
+      "legal_guard": "愿增猿仍在牌库且有空备战位",
+      "effect_summary": "占一个备战位；需要恶能手贴才能搬伤"
+    },
+    {
+      "id": "a_scream_tail",
+      "kind": "action",
+      "label": "寻找吼叫尾，选择后排狙击路线",
+      "actor": "player",
+      "axis": "search_target",
+      "legal_guard": "吼叫尾仍在牌库且有空备战位",
+      "effect_summary": "占一个备战位；具备后排输出但无法处理本题前场与回合交接"
+    },
+    {
+      "id": "a_shaymin",
+      "kind": "action",
+      "label": "寻找谢米，选择备战区保护路线",
+      "actor": "player",
+      "axis": "search_target",
+      "legal_guard": "谢米仍在牌库且有空备战位",
+      "effect_summary": "占一个备战位；阻止对备战宝可梦的招式伤害，但不阻止放置伤害指示物"
+    },
+    {
+      "id": "s2",
+      "kind": "state",
+      "label": "飘飘球落位，开始分配唯一手贴与工具",
+      "fingerprint": "飘飘球在备战；剩一个备战空位；手贴、工具和精确超能预算均未分配",
+      "checkpoint": "player_turn_1_after_search"
+    },
+    {
+      "id": "f_munkidori",
+      "kind": "terminal",
+      "label": "愿增猿路线差一个攻击资源",
+      "outcome": "failure",
+      "reason": "恶能手贴解决搬伤，却让当前攻击手少一份必要资源",
+      "failure_axis": "search_target",
+      "consequence_depth": 1
+    },
+    {
+      "id": "f_scream_tail",
+      "kind": "terminal",
+      "label": "后排路线没有处理当前前场与回合交接",
+      "outcome": "failure",
+      "reason": "拿到奖赏但暴露主引擎，对手回应后没有下一攻击手",
+      "failure_axis": "search_target",
+      "consequence_depth": 2
+    },
+    {
+      "id": "s_shaymin",
+      "kind": "state",
+      "label": "谢米占位，等待对手选择压力方式",
+      "fingerprint": "谢米保护招式伤害；当前爆发攻击手缺失；对手仍有伤害指示物路线",
+      "checkpoint": "opponent_turn_1_reply"
+    },
+    {
+      "id": "d_shaymin_reply",
+      "kind": "opponent_decision",
+      "label": "谢米分支必须面对两种可见备战压力",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "对手前场招式文字公开同时包含伤害与放置伤害指示物的不同效果"
+    },
+    {
+      "id": "a_counter_placement",
+      "kind": "action",
+      "label": "对手使用放置伤害指示物路线",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "对手前场已满足招式费用，效果不是招式伤害",
+      "effect_summary": "绕过谢米的备战区伤害保护，击倒关键引擎"
+    },
+    {
+      "id": "a_bench_damage",
+      "kind": "action",
+      "label": "对手使用普通备战区伤害路线",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "对手前场已满足招式费用",
+      "effect_summary": "伤害被谢米阻止，但玩家因未建立攻击手而错过两回合时限"
+    },
+    {
+      "id": "f_shaymin_counter",
+      "kind": "terminal",
+      "label": "谢米无法阻止伤害指示物",
+      "outcome": "failure",
+      "reason": "防护对象读错，关键引擎在对手回应中被击倒",
+      "failure_axis": "search_target",
+      "consequence_depth": 2
+    },
+    {
+      "id": "f_shaymin_deadline",
+      "kind": "terminal",
+      "label": "挡住伤害仍错过输出期限",
+      "outcome": "failure",
+      "reason": "备战位用于防守后没有建立本回合爆发与下一回合交接",
+      "failure_axis": "search_target",
+      "consequence_depth": 3
+    },
+    {
+      "id": "d_assignment",
+      "kind": "player_decision",
+      "label": "分配手贴、工具和超能拥抱",
+      "operator": "OR",
+      "axis": "resource_assignment"
+    },
+    {
+      "id": "a_exact_build",
+      "kind": "action",
+      "label": "把手贴与工具留给飘飘球并精确加速",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "手贴、工具和牌库/弃牌区超能均满足精确支付",
+      "effect_summary": "以近零余量完成攻击，同时保留第二攻击手与最后备战位"
+    },
+    {
+      "id": "a_dark_misattach",
+      "kind": "action",
+      "label": "把唯一手贴用作恶能",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "恶能在手牌且尚未手贴",
+      "effect_summary": "失去飘飘球当前攻击所需的手贴资源"
+    },
+    {
+      "id": "a_tool_wrong_owner",
+      "kind": "action",
+      "label": "把勇气护符给错误的宝可梦",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "工具在手牌且目标可装备",
+      "effect_summary": "飘飘球伤害上限和存活阈值不足"
+    },
+    {
+      "id": "s3",
+      "kind": "state",
+      "label": "当前攻击和下一回合交接同时就绪",
+      "fingerprint": "飘飘球精确带能与工具；主引擎保留；另一空位与第二攻击路线仍存在",
+      "checkpoint": "player_turn_1_before_attack"
+    },
+    {
+      "id": "f_dark",
+      "kind": "terminal",
+      "label": "手贴所有权错误",
+      "outcome": "failure",
+      "reason": "当前攻击费用不足",
+      "failure_axis": "resource_assignment",
+      "consequence_depth": 1
+    },
+    {
+      "id": "f_tool",
+      "kind": "terminal",
+      "label": "工具所有权错误",
+      "outcome": "failure",
+      "reason": "攻击伤害或自伤后的存活阈值不足",
+      "failure_axis": "resource_assignment",
+      "consequence_depth": 1
+    },
+    {
+      "id": "d_finish",
+      "kind": "player_decision",
+      "label": "立刻攻击还是过度展开",
+      "operator": "OR",
+      "axis": "timing"
+    },
+    {
+      "id": "a_attack_now",
+      "kind": "action",
+      "label": "按精确伤害攻击并拿奖",
+      "actor": "player",
+      "axis": "timing",
+      "legal_guard": "攻击费用满足且目标仍在前场",
+      "effect_summary": "完成本回合奖赏进度并进入对手回应"
+    },
+    {
+      "id": "a_overextend",
+      "kind": "action",
+      "label": "继续占位和抽牌，破坏交接资源",
+      "actor": "player",
+      "axis": "timing",
+      "legal_guard": "仍有可使用的展开效果",
+      "effect_summary": "消耗最后备战位或重排关键资源，当前攻击不变但下回合无接力"
+    },
+    {
+      "id": "s4",
+      "kind": "state",
+      "label": "已完成首轮奖赏，等待所有可信回应",
+      "fingerprint": "首攻完成；对手未获胜；玩家关键引擎与下一攻击路线均可验证",
+      "checkpoint": "opponent_turn_1_start"
+    },
+    {
+      "id": "f_overextend",
+      "kind": "terminal",
+      "label": "过度展开破坏下一回合",
+      "outcome": "failure",
+      "reason": "即使本回合拿奖，第二回合没有合法接力攻击路线",
+      "failure_axis": "timing",
+      "consequence_depth": 3
+    },
+    {
+      "id": "d_reply",
+      "kind": "opponent_decision",
+      "label": "正确路线必须扛住所有高影响可信回应",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "公开手牌历史、场上攻击费用、可见招式和规则引擎合法动作"
+    },
+    {
+      "id": "a_reply_gust",
+      "kind": "action",
+      "label": "对手尝试重建抓杀路线",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "对手可合法抽牌和搜索，但原公开老大已被奇树打断",
+      "effect_summary": "无法稳定恢复原抓杀，转为次优攻击"
+    },
+    {
+      "id": "a_reply_front",
+      "kind": "action",
+      "label": "对手用前场主攻交换",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "对手主攻费用公开满足",
+      "effect_summary": "击倒首攻者但没有越过保护阈值处理主引擎"
+    },
+    {
+      "id": "a_reply_bench",
+      "kind": "action",
+      "label": "对手向备战区施压",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "对手招式公开具备备战区压力",
+      "effect_summary": "造成压力但无法同时终结主引擎和下一攻击路线"
+    },
+    {
+      "id": "s5_gust",
+      "kind": "state",
+      "label": "抓杀威胁被打断后仍保有接力",
+      "fingerprint": "对手回合结束；玩家未输；主引擎和下一攻击路线至少各一",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "s5_front",
+      "kind": "state",
+      "label": "首攻交换后仍保有接力",
+      "fingerprint": "首攻者可能被击倒；主引擎和接力攻击手存活；资源可支付",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "s5_bench",
+      "kind": "state",
+      "label": "备战区承压后仍保有接力",
+      "fingerprint": "对手未完成最后奖赏；至少一个引擎和一个合法攻击手存活",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "完成爆发、干扰、生存与交接",
+      "outcome": "success",
+      "reason": "当前回合取得有效奖赏，打断公开反杀，并在所有可信回应后保留下一回合终结路线"
+    },
+    {
+      "id": "r_bench",
+      "kind": "resource",
+      "label": "备战区空位",
+      "resource_type": "bench_slot",
+      "available": 2,
+      "minimum_required": 1,
+      "slack": 1,
+      "deadline": "巢穴球结算前",
+      "scarce": true
+    },
+    {
+      "id": "r_supporter",
+      "kind": "resource",
+      "label": "本回合支援者窗口",
+      "resource_type": "supporter_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_manual",
+      "kind": "resource",
+      "label": "本回合手贴",
+      "resource_type": "manual_attachment",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_energy",
+      "kind": "resource",
+      "label": "可承受伤害指示物的超能预算",
+      "resource_type": "energy",
+      "available": 5,
+      "minimum_required": 4,
+      "slack": 1,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_tool",
+      "kind": "resource",
+      "label": "勇气护符所有权",
+      "resource_type": "tool",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "t_gust",
+      "kind": "threat",
+      "label": "公开的老大抓杀",
+      "visibility": "history",
+      "evidence": "对手上回合公开检索并展示老大的指令",
+      "deadline": "对手下回合",
+      "impact": "抓出两奖负担完成最后奖赏"
+    },
+    {
+      "id": "t_front_trade",
+      "kind": "threat",
+      "label": "前场主攻交换",
+      "visibility": "public",
+      "evidence": "对手前场主攻与能量均可见且费用满足",
+      "deadline": "对手下回合",
+      "impact": "击倒首攻者并迫使玩家展示接力"
+    },
+    {
+      "id": "t_counter_placement",
+      "kind": "threat",
+      "label": "向备战区放置伤害指示物",
+      "visibility": "public",
+      "evidence": "对手前场招式文字公开写明放置伤害指示物",
+      "deadline": "对手下回合",
+      "impact": "绕过谢米的招式伤害保护处理引擎"
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "本回合取得有效进度",
+      "category": "progress",
+      "assertion": "首轮攻击取得计划中的奖赏或关键击倒"
+    },
+    {
+      "id": "g_disruption",
+      "kind": "invariant",
+      "label": "公开反杀威胁已受干扰",
+      "category": "disruption",
+      "assertion": "对手上回合公开的老大不再稳定留在手牌"
+    },
+    {
+      "id": "g_survival",
+      "kind": "invariant",
+      "label": "核心引擎或接力攻击手存活",
+      "category": "survival",
+      "assertion": "所有可信回应后至少保留一个引擎和一个合法攻击手"
+    },
+    {
+      "id": "g_no_loss",
+      "kind": "invariant",
+      "label": "对手没有获胜",
+      "category": "deny_opponent_win",
+      "assertion": "终局检查时对手未拿完奖赏且玩家未因其他规则失败"
+    },
+    {
+      "id": "g_handoff",
+      "kind": "invariant",
+      "label": "第二回合终结路线仍合法",
+      "category": "handoff",
+      "assertion": "自然抽牌后存在可支付、可升场、可攻击的接力路线"
+    }
+  ],
+  "edges": [
+    {"from": "s0", "to": "d_supporter", "type": "opens"},
+    {"from": "d_supporter", "to": "a_iono", "type": "option"},
+    {"from": "d_supporter", "to": "a_research", "type": "option"},
+    {"from": "d_supporter", "to": "a_boss", "type": "option"},
+    {"from": "a_iono", "to": "s1", "type": "resolves"},
+    {"from": "a_research", "to": "f_research", "type": "resolves"},
+    {"from": "a_boss", "to": "f_boss", "type": "resolves"},
+    {"from": "s1", "to": "d_search", "type": "opens"},
+    {"from": "d_search", "to": "a_drifloon", "type": "option"},
+    {"from": "d_search", "to": "a_munkidori", "type": "option"},
+    {"from": "d_search", "to": "a_scream_tail", "type": "option"},
+    {"from": "d_search", "to": "a_shaymin", "type": "option"},
+    {"from": "a_drifloon", "to": "s2", "type": "resolves"},
+    {"from": "a_munkidori", "to": "f_munkidori", "type": "resolves"},
+    {"from": "a_scream_tail", "to": "f_scream_tail", "type": "resolves"},
+    {"from": "a_shaymin", "to": "s_shaymin", "type": "resolves"},
+    {"from": "s_shaymin", "to": "d_shaymin_reply", "type": "opens"},
+    {"from": "d_shaymin_reply", "to": "a_counter_placement", "type": "reply"},
+    {"from": "d_shaymin_reply", "to": "a_bench_damage", "type": "reply"},
+    {"from": "a_counter_placement", "to": "f_shaymin_counter", "type": "resolves"},
+    {"from": "a_bench_damage", "to": "f_shaymin_deadline", "type": "resolves"},
+    {"from": "s2", "to": "d_assignment", "type": "opens"},
+    {"from": "d_assignment", "to": "a_exact_build", "type": "option"},
+    {"from": "d_assignment", "to": "a_dark_misattach", "type": "option"},
+    {"from": "d_assignment", "to": "a_tool_wrong_owner", "type": "option"},
+    {"from": "a_exact_build", "to": "s3", "type": "resolves"},
+    {"from": "a_dark_misattach", "to": "f_dark", "type": "resolves"},
+    {"from": "a_tool_wrong_owner", "to": "f_tool", "type": "resolves"},
+    {"from": "s3", "to": "d_finish", "type": "opens"},
+    {"from": "d_finish", "to": "a_attack_now", "type": "option"},
+    {"from": "d_finish", "to": "a_overextend", "type": "option"},
+    {"from": "a_attack_now", "to": "s4", "type": "resolves"},
+    {"from": "a_overextend", "to": "f_overextend", "type": "resolves"},
+    {"from": "s4", "to": "d_reply", "type": "opens"},
+    {"from": "d_reply", "to": "a_reply_gust", "type": "reply"},
+    {"from": "d_reply", "to": "a_reply_front", "type": "reply"},
+    {"from": "d_reply", "to": "a_reply_bench", "type": "reply"},
+    {"from": "a_reply_gust", "to": "s5_gust", "type": "resolves"},
+    {"from": "a_reply_front", "to": "s5_front", "type": "resolves"},
+    {"from": "a_reply_bench", "to": "s5_bench", "type": "resolves"},
+    {"from": "s5_gust", "to": "g_success", "type": "reaches"},
+    {"from": "s5_front", "to": "g_success", "type": "reaches"},
+    {"from": "s5_bench", "to": "g_success", "type": "reaches"},
+
+    {"from": "a_iono", "to": "r_supporter", "type": "consumes"},
+    {"from": "a_iono", "to": "t_gust", "type": "counters"},
+    {"from": "a_iono", "to": "g_disruption", "type": "satisfies"},
+    {"from": "a_iono", "to": "g_handoff", "type": "enables"},
+    {"from": "a_research", "to": "t_gust", "type": "exposes"},
+    {"from": "a_drifloon", "to": "r_bench", "type": "consumes"},
+    {"from": "a_drifloon", "to": "g_progress", "type": "enables"},
+    {"from": "a_munkidori", "to": "r_bench", "type": "consumes"},
+    {"from": "a_munkidori", "to": "r_manual", "type": "consumes"},
+    {"from": "a_scream_tail", "to": "r_bench", "type": "consumes"},
+    {"from": "a_shaymin", "to": "r_bench", "type": "consumes"},
+    {"from": "a_shaymin", "to": "t_counter_placement", "type": "exposes"},
+    {"from": "a_exact_build", "to": "r_manual", "type": "consumes"},
+    {"from": "a_exact_build", "to": "r_energy", "type": "consumes"},
+    {"from": "a_exact_build", "to": "r_tool", "type": "consumes"},
+    {"from": "a_exact_build", "to": "g_handoff", "type": "enables"},
+    {"from": "a_attack_now", "to": "g_progress", "type": "satisfies"},
+    {"from": "a_overextend", "to": "g_handoff", "type": "violates"},
+    {"from": "t_gust", "to": "d_supporter", "type": "constrains"},
+    {"from": "t_front_trade", "to": "d_assignment", "type": "constrains"},
+    {"from": "t_counter_placement", "to": "d_search", "type": "constrains"},
+    {"from": "s5_gust", "to": "g_survival", "type": "satisfies"},
+    {"from": "s5_gust", "to": "g_no_loss", "type": "satisfies"},
+    {"from": "s5_gust", "to": "g_handoff", "type": "satisfies"},
+    {"from": "s5_front", "to": "g_survival", "type": "satisfies"},
+    {"from": "s5_front", "to": "g_no_loss", "type": "satisfies"},
+    {"from": "s5_front", "to": "g_handoff", "type": "satisfies"},
+    {"from": "s5_bench", "to": "g_survival", "type": "satisfies"},
+    {"from": "s5_bench", "to": "g_no_loss", "type": "satisfies"},
+    {"from": "s5_bench", "to": "g_handoff", "type": "satisfies"},
+    {"from": "g_success", "to": "g_progress", "type": "requires"},
+    {"from": "g_success", "to": "g_disruption", "type": "requires"},
+    {"from": "g_success", "to": "g_survival", "type": "requires"},
+    {"from": "g_success", "to": "g_no_loss", "type": "requires"},
+    {"from": "g_success", "to": "g_handoff", "type": "requires"}
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "all",
+    "negative_probe_axes": [
+      "supporter_choice",
+      "search_target",
+      "resource_assignment"
+    ],
+    "claim": "graph_compiled",
+    "uniqueness_scope": "enumerated commitment equivalence classes only"
+  }
+}

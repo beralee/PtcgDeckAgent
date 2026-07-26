@@ -7,6 +7,7 @@ const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
+const BattleMusicImportAdapterScript := preload("res://scripts/audio/BattleMusicImportAdapter.gd")
 
 const DECK_DISCUSSION_DIALOG_SCRIPT_PATH := "res://scenes/deck_editor/DeckDiscussionDialog.gd"
 const FIRST_PLAYER_RANDOM := -1
@@ -58,6 +59,8 @@ const STARTUP_INPUT_SHIELD_MIN_SECONDS := 0.05
 const INITIAL_DECK_REFRESH_MAX_ATTEMPTS := 10
 const INITIAL_DECK_REFRESH_INTERVAL_SECONDS := 0.12
 const AI_SETUP_HELP_COPY := "规则模型可直接开打；想使用大模型或策略探讨，请先在 AI 设置填写 API，并用“测试”确认当前模型可用。"
+const AI_DECK_LLM_MARKER := " *"
+const AI_DECK_LLM_LEGEND_COPY := "* 表示该卡组支持大模型版 AI（需先在“AI 设置”中配置模型 API）"
 
 ## 卡组列表，与 OptionButton index 对应
 var _deck_list: Array = []
@@ -97,10 +100,12 @@ var _deck_picker_tabs: Dictionary = {}
 var _deck_picker_grid: GridContainer = null
 var _deck_picker_search_input: LineEdit = null
 var _deck_picker_subtitle: Label = null
+var _deck_picker_llm_legend: Label = null
 var _deck_picker_input_suppress_until_msec: int = 0
 var _bgm_picker_overlay: Control = null
 var _bgm_picker_scroll: ScrollContainer = null
 var _bgm_picker_list: VBoxContainer = null
+var _battle_music_import_adapter: Variant = null
 var _hud_option_picker_overlay: Control = null
 var _hud_option_picker_scroll: ScrollContainer = null
 var _hud_option_picker_list: VBoxContainer = null
@@ -178,6 +183,9 @@ func _ready() -> void:
 		%BtnTestLLMModel.pressed.connect(_on_test_llm_model_pressed)
 	if not %BtnPreviewBgm.pressed.is_connected(_on_bgm_preview_pressed):
 		%BtnPreviewBgm.pressed.connect(_on_bgm_preview_pressed)
+	_connect_button_pressed_once(%BtnImportBgm, Callable(self, "_on_bgm_import_pressed"))
+	_connect_button_pressed_once(%BtnRescanBgm, Callable(self, "_on_bgm_rescan_pressed"))
+	_ensure_battle_music_import_adapter()
 
 	_load_deck_usage_stats()
 	_refresh_deck_options()
@@ -1670,7 +1678,12 @@ func _refresh_ai_strategy_variant_options() -> void:
 		ai_strategy_option.add_item(str(variant.get("label", "")))
 		ai_strategy_option.set_item_metadata(idx, str(variant.get("id", "")))
 	_rebuild_ai_strategy_segment_buttons(variants)
-	var restore_id := prev_selected_id if prev_selected_id != "" else _pending_ai_strategy_variant_id
+	# A value loaded from battle_setup.json or a returned editor context is the
+	# user's last explicit choice. The selector may already contain a temporary
+	# Rule selection from its pre-load construction pass, so pending state must
+	# take precedence exactly once.
+	var restore_id := _pending_ai_strategy_variant_id \
+		if _pending_ai_strategy_variant_id != "" else prev_selected_id
 	_pending_ai_strategy_variant_id = ""
 	for i: int in ai_strategy_option.item_count:
 		if str(ai_strategy_option.get_item_metadata(i)) == restore_id:
@@ -1770,62 +1783,17 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 	)
 	if not v18cpg_variants.is_empty():
 		return v18cpg_variants
-	if base_id not in [
-		"raging_bolt_ogerpon",
-		"dragapult_charizard",
-		"miraidon",
-		"lugia_archeops",
-		"charizard_ex",
-		"arceus_giratina",
-		"gardevoir",
-		"dragapult_dusknoir",
-		"v17_archaludon_dialga",
-		"v17_water_turtle",
-		"v17_palkia_gholdengo",
-		"v17_bomb_charizard",
-		"v17_miraidon",
-		"v17_dragapult_dusknoir",
-		"v17_regidrago",
-		"v175_pure_dragapult",
-		"v175_lugia_archeops",
-	]:
-		return []
-	var labels_by_strategy := {
-		"charizard_ex": ["规则版喷火龙ex", "大模型版喷火龙ex"],
-		"arceus_giratina": ["规则版阿尔宙斯骑拉帝纳", "大模型版阿尔宙斯骑拉帝纳"],
-		"gardevoir": ["规则版沙奈朵", "大模型版沙奈朵"],
-		"dragapult_dusknoir": ["规则版多龙黑夜魔灵", "大模型版多龙黑夜魔灵"],
-		"dragapult_charizard": ["规则版多龙喷火龙", "大模型版多龙喷火龙"],
-		"miraidon": ["规则版密勒顿", "大模型版密勒顿"],
-		"lugia_archeops": ["规则版洛奇亚始祖大鸟", "大模型版洛奇亚始祖大鸟"],
-		"raging_bolt_ogerpon": ["规则版猛雷鼓", "大模型版猛雷鼓"],
-		"v17_archaludon_dialga": ["规则版17.0铝钢桥龙", "大模型版17.0铝钢桥龙"],
-		"v17_water_turtle": ["规则版17.0水龙龟", "大模型版17.0水龙龟"],
-		"v17_palkia_gholdengo": ["规则版17.0水龙赛富豪", "大模型版17.0水龙赛富豪"],
-		"v17_bomb_charizard": ["规则版17.0自爆恶喷", "大模型版17.0自爆恶喷"],
-		"v17_miraidon": ["规则版17.0密勒顿", "大模型版17.0密勒顿"],
-		"v17_dragapult_dusknoir": ["规则版17.0多龙黑夜魔灵", "大模型版17.0多龙黑夜魔灵"],
-		"v17_regidrago": ["规则版17.0龙柱", "大模型版17.0龙柱"],
-		"v175_pure_dragapult": ["规则版17.5纯多龙", "大模型版17.5纯多龙"],
-		"v175_lugia_archeops": ["规则版17.5洛奇亚始祖大鸟", "大模型版17.5洛奇亚始祖大鸟"],
-	}
-	var labels_by_deck_id := {
-		610080: ["规则版17.5沙奈朵", "大模型版17.5沙奈朵"],
-	}
-	var labels: Array = labels_by_deck_id.get(int(deck.id), labels_by_strategy.get(base_id, []))
-	if labels.is_empty():
+	var llm_strategy_id := DeckStrategyRegistryScript.llm_strategy_id_for_deck(int(deck.id), base_id)
+	if llm_strategy_id == "":
 		return []
 	var variants: Array[Dictionary] = [{
 		"id": base_id,
-		"label": str(labels[0]),
+		"label": "规则版",
 	}]
 	if _has_llm_api_configured():
-		var llm_id_by_deck_id := {
-			610080: "v175_gardevoir_llm",
-		}
 		variants.append({
-			"id": str(llm_id_by_deck_id.get(int(deck.id), "%s_llm" % base_id)),
-			"label": str(labels[1]),
+			"id": llm_strategy_id,
+			"label": "大模型版",
 		})
 	return variants
 
@@ -1845,11 +1813,13 @@ func _on_ai_strategy_variant_changed(_index: int) -> void:
 
 func _setup_llm_model_options() -> void:
 	%LLMModelOption.clear()
-	for model: Dictionary in GameManager.get_supported_battle_review_models():
+	var api_config: Dictionary = GameManager.get_battle_review_api_config()
+	var provider := GameManager.normalize_battle_review_provider(str(api_config.get("provider", "")))
+	for model: Dictionary in GameManager.get_supported_battle_review_models_for_provider(provider):
 		var index: int = %LLMModelOption.get_item_count()
 		%LLMModelOption.add_item(str(model.get("label", model.get("id", ""))))
 		%LLMModelOption.set_item_metadata(index, str(model.get("id", "")))
-	_select_llm_model(str(GameManager.get_battle_review_api_config().get("model", "")))
+	_select_llm_model(str(api_config.get("model", "")))
 	_refresh_llm_model_controls()
 
 
@@ -1857,7 +1827,11 @@ func _select_llm_model(model_id: String) -> void:
 	var model_option := find_child("LLMModelOption", true, false) as OptionButton
 	if model_option == null:
 		return
-	var normalized := GameManager.normalize_battle_review_model(model_id)
+	var api_config: Dictionary = GameManager.get_battle_review_api_config()
+	var normalized := GameManager.normalize_battle_review_model_for_provider(
+		model_id,
+		str(api_config.get("provider", ""))
+	)
 	for index: int in model_option.get_item_count():
 		if str(model_option.get_item_metadata(index)) == normalized:
 			model_option.select(index)
@@ -1867,14 +1841,18 @@ func _select_llm_model(model_id: String) -> void:
 
 
 func _selected_llm_model_id() -> String:
+	var api_config: Dictionary = GameManager.get_battle_review_api_config()
+	var provider := str(api_config.get("provider", ""))
 	var model_option := find_child("LLMModelOption", true, false) as OptionButton
 	if model_option == null:
-		return GameManager.normalize_battle_review_model(str(GameManager.get_battle_review_api_config().get("model", "")))
+		return GameManager.normalize_battle_review_model_for_provider(str(api_config.get("model", "")), provider)
 	var selected_index: int = model_option.selected
 	if selected_index < 0 or selected_index >= model_option.get_item_count():
-		var configured_model := str(GameManager.get_battle_review_api_config().get("model", ""))
-		return GameManager.normalize_battle_review_model(configured_model)
-	return GameManager.normalize_battle_review_model(str(model_option.get_item_metadata(selected_index)))
+		return GameManager.normalize_battle_review_model_for_provider(str(api_config.get("model", "")), provider)
+	return GameManager.normalize_battle_review_model_for_provider(
+		str(model_option.get_item_metadata(selected_index)),
+		provider
+	)
 
 
 func _selected_llm_model_label() -> String:
@@ -2328,7 +2306,7 @@ func _setup_battle_music_options() -> void:
 	_sync_selected_battle_music_from_option()
 	%BgmVolumeSlider.value = _selected_battle_music_volume_percent
 	_update_bgm_volume_value_label()
-	%BgmHint.text = "自定义音乐目录: %s" % BattleMusicManager.get_custom_music_absolute_dir_path()
+	_update_bgm_hint()
 	if not %BgmOption.item_selected.is_connected(_on_bgm_option_changed):
 		%BgmOption.item_selected.connect(_on_bgm_option_changed)
 	if not %BgmOption.pressed.is_connected(_on_bgm_option_pressed):
@@ -2336,6 +2314,75 @@ func _setup_battle_music_options() -> void:
 	if not %BgmVolumeSlider.value_changed.is_connected(_on_bgm_volume_changed):
 		%BgmVolumeSlider.value_changed.connect(_on_bgm_volume_changed)
 	_update_bgm_preview_button()
+
+
+func _refresh_battle_music_tracks(preferred_track_id: String = "") -> void:
+	var option := get_node_or_null("%BgmOption") as OptionButton
+	if option == null:
+		return
+	BattleMusicManager.ensure_custom_music_dir()
+	_battle_music_tracks = BattleMusicManager.get_available_battle_tracks()
+	option.clear()
+	for track: Dictionary in _battle_music_tracks:
+		option.add_item(str(track.get("label", "")))
+	var preferred := preferred_track_id
+	if preferred == "":
+		preferred = _selected_battle_music_id
+	_selected_battle_music_id = BattleMusicManager.sanitize_track_id(preferred)
+	var selected_index := _battle_music_index_from_id(_selected_battle_music_id)
+	if selected_index >= 0 and selected_index < option.item_count:
+		option.select(selected_index)
+	elif option.item_count > 0:
+		option.select(0)
+	_sync_selected_battle_music_from_option()
+	if _bgm_picker_overlay != null and is_instance_valid(_bgm_picker_overlay) and _bgm_picker_overlay.visible:
+		_populate_battle_music_picker()
+	_update_bgm_preview_button()
+
+
+func _ensure_battle_music_import_adapter() -> void:
+	if _battle_music_import_adapter != null and is_instance_valid(_battle_music_import_adapter):
+		return
+	_battle_music_import_adapter = BattleMusicImportAdapterScript.new()
+	_battle_music_import_adapter.name = "BattleMusicImportAdapter"
+	add_child(_battle_music_import_adapter)
+	if not _battle_music_import_adapter.track_imported.is_connected(_on_bgm_track_imported):
+		_battle_music_import_adapter.track_imported.connect(_on_bgm_track_imported)
+	if not _battle_music_import_adapter.import_failed.is_connected(_on_bgm_import_failed):
+		_battle_music_import_adapter.import_failed.connect(_on_bgm_import_failed)
+
+
+func _on_bgm_import_pressed() -> void:
+	_ensure_battle_music_import_adapter()
+	if _battle_music_import_adapter != null:
+		_battle_music_import_adapter.pick_music()
+
+
+func _on_bgm_rescan_pressed() -> void:
+	_sync_selected_battle_music_from_option()
+	_refresh_battle_music_tracks(_selected_battle_music_id)
+	_update_bgm_hint("已重新扫描自定义音乐。")
+
+
+func _on_bgm_track_imported(track_id: String, source_name: String) -> void:
+	_refresh_battle_music_tracks(track_id)
+	_update_bgm_hint("已添加：%s" % (source_name if source_name != "" else "自定义音乐"))
+
+
+func _on_bgm_import_failed(message: String) -> void:
+	_update_bgm_hint("添加失败：%s" % message)
+
+
+func _update_bgm_hint(status_message: String = "") -> void:
+	var hint := get_node_or_null("%BgmHint") as Label
+	if hint == null:
+		return
+	var location_message := ""
+	if OS.has_feature("android") or OS.has_feature("ios"):
+		location_message = "使用“添加音乐”从系统文件中选择 OGG、MP3 或 WAV。"
+	else:
+		location_message = "自定义音乐目录: %s" % BattleMusicManager.get_custom_music_absolute_dir_path()
+	hint.text = location_message if status_message == "" else "%s\n%s" % [status_message, location_message]
 
 
 func _ensure_battle_music_options_ready() -> void:
@@ -2800,6 +2847,35 @@ func _ensure_battle_music_picker_overlay() -> void:
 	_bgm_picker_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_bgm_picker_list.add_theme_constant_override("separation", 14)
 	_bgm_picker_scroll.add_child(_bgm_picker_list)
+
+	var action_row := HBoxContainer.new()
+	action_row.name = "BattleMusicPickerActionRow"
+	action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_row.add_theme_constant_override("separation", 18)
+	root.add_child(action_row)
+
+	var import_button := Button.new()
+	import_button.name = "BattleMusicPickerImportButton"
+	import_button.text = "添加音乐"
+	import_button.custom_minimum_size = Vector2(0.0, 130.0)
+	import_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_hud_button(import_button)
+	import_button.add_theme_font_size_override("font_size", 42)
+	import_button.pressed.connect(_on_bgm_import_pressed)
+	NonBattleTouchBridgeScript.bind_button_touch(import_button)
+	action_row.add_child(import_button)
+
+	var rescan_button := Button.new()
+	rescan_button.name = "BattleMusicPickerRescanButton"
+	rescan_button.text = "重新扫描"
+	rescan_button.custom_minimum_size = Vector2(0.0, 130.0)
+	rescan_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_hud_button(rescan_button)
+	rescan_button.add_theme_font_size_override("font_size", 42)
+	rescan_button.pressed.connect(_on_bgm_rescan_pressed)
+	NonBattleTouchBridgeScript.bind_button_touch(rescan_button)
+	action_row.add_child(rescan_button)
 
 	var close_button := Button.new()
 	close_button.name = "BattleMusicPickerCloseButton"
@@ -3533,6 +3609,14 @@ func _ensure_deck_picker_overlay() -> void:
 	_style_hud_label(_deck_picker_subtitle)
 	root.add_child(_deck_picker_subtitle)
 
+	_deck_picker_llm_legend = Label.new()
+	_deck_picker_llm_legend.name = "DeckPickerLLMLegend"
+	_deck_picker_llm_legend.text = AI_DECK_LLM_LEGEND_COPY
+	_deck_picker_llm_legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_deck_picker_llm_legend.add_theme_color_override("font_color", HUD_ACCENT_WARM)
+	_deck_picker_llm_legend.visible = false
+	root.add_child(_deck_picker_llm_legend)
+
 	_deck_picker_search_input = LineEdit.new()
 	_deck_picker_search_input.placeholder_text = "搜索卡组名、ID 或类型"
 	_deck_picker_search_input.custom_minimum_size = Vector2(0, 42)
@@ -3649,6 +3733,10 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
 		_deck_picker_subtitle.max_lines_visible = -1 if portrait else 1
 		_deck_picker_subtitle.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(14))
 		_deck_picker_subtitle.add_theme_constant_override("line_spacing", maxi(3, int(float(context.get("portrait_scale", 1.0)) * 6.0)) if portrait else 2)
+	if _deck_picker_llm_legend != null:
+		_deck_picker_llm_legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_deck_picker_llm_legend.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(14))
+		_deck_picker_llm_legend.add_theme_constant_override("line_spacing", maxi(3, int(float(context.get("portrait_scale", 1.0)) * 6.0)) if portrait else 2)
 	if _deck_picker_search_input != null:
 		_deck_picker_search_input.custom_minimum_size.y = float(context.get("input_height", 42.0)) if portrait else 42.0
 		_deck_picker_search_input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else 15)
@@ -3716,6 +3804,8 @@ func _refresh_deck_picker() -> void:
 	var decks := _decks_for_picker(_deck_picker_slot_index, _deck_picker_category, _deck_picker_search)
 	if _deck_picker_subtitle != null:
 		_deck_picker_subtitle.text = _deck_picker_subtitle_text(_deck_picker_slot_index, _deck_picker_category, decks.size())
+	if _deck_picker_llm_legend != null:
+		_deck_picker_llm_legend.visible = _is_ai_deck_picker_slot(_deck_picker_slot_index)
 	if decks.is_empty():
 		var empty := Label.new()
 		empty.text = "没有找到符合条件的卡组"
@@ -3736,7 +3826,7 @@ func _refresh_deck_picker() -> void:
 			break
 		var is_selected := deck.id == selected_id
 		var button := Button.new()
-		button.text = deck.deck_name
+		button.text = _deck_selection_display_name(deck, _deck_picker_slot_index)
 		button.tooltip_text = _deck_picker_card_tooltip(deck)
 		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 76.0)) if portrait else 72.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3999,8 +4089,24 @@ func _sync_deck_picker_button(slot_index: int) -> void:
 		button.disabled = true
 		return
 	button.disabled = false
-	button.text = deck.deck_name
+	button.text = _deck_selection_display_name(deck, slot_index)
 	button.tooltip_text = _deck_picker_card_tooltip(deck)
+
+
+func _deck_selection_display_name(deck: DeckData, slot_index: int) -> String:
+	if deck == null:
+		return ""
+	var deck_name := str(deck.deck_name)
+	if _is_ai_deck_picker_slot(slot_index) and _ai_deck_supports_llm(deck):
+		return deck_name + AI_DECK_LLM_MARKER
+	return deck_name
+
+
+func _ai_deck_supports_llm(deck: DeckData) -> bool:
+	if deck == null:
+		return false
+	var base_strategy_id := str(_deck_strategy_registry.call("resolve_strategy_id_for_deck", deck))
+	return DeckStrategyRegistryScript.deck_supports_llm(int(deck.id), base_strategy_id)
 
 
 func _load_background_preview_texture(path: String) -> Texture2D:
@@ -4039,7 +4145,7 @@ func _apply_deck_option_controls(selected_deck1: DeckData = null, selected_deck2
 		deck1_option.set_item_metadata(deck1_option.item_count - 1, deck.id)
 	if _is_ai_mode():
 		for ai_deck: DeckData in _ai_deck_list:
-			deck2_option.add_item("%s (%d张)" % [ai_deck.deck_name, ai_deck.total_cards])
+			deck2_option.add_item("%s (%d张)" % [_deck_selection_display_name(ai_deck, 1), ai_deck.total_cards])
 			deck2_option.set_item_metadata(deck2_option.item_count - 1, ai_deck.id)
 	else:
 		for deck: DeckData in _deck_list:

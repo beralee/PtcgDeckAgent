@@ -2947,7 +2947,7 @@ func test_portrait_detail_close_button_closes_on_touch_down() -> String:
 		close_button.emit_signal("button_down")
 	var result := run_checks([
 		assert_true(close_button != null, "Portrait detail close button should exist"),
-		assert_true(close_button != null and close_button.button_down.is_connected(Callable(scene, "_hide_card_detail")), "Portrait detail close button should close on touch down"),
+		assert_true(close_button != null and close_button.button_down.is_connected(Callable(scene, "_on_detail_close_button_down")), "Portrait detail close button should close through the pointer-drain guard on touch down"),
 		assert_true(overlay != null and not overlay.visible, "Portrait detail overlay should close immediately on close touch"),
 		assert_true(overlay != null and overlay.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Closed detail overlay should not keep blocking input"),
 	])
@@ -3663,7 +3663,10 @@ func test_portrait_discard_hud_panels_open_discard_dialog() -> String:
 		discard_overlay.visible = false
 	var opp_panel := scene.find_child("OppDiscardHudPanel", true, false) as Control
 	if opp_panel != null:
-		opp_panel.emit_signal("gui_input", event)
+		var opponent_event := InputEventMouseButton.new()
+		opponent_event.button_index = MOUSE_BUTTON_LEFT
+		opponent_event.pressed = true
+		opp_panel.emit_signal("gui_input", opponent_event)
 	var opponent_opened := discard_overlay != null and discard_overlay.visible
 
 	var result := run_checks([

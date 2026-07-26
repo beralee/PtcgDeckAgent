@@ -1,0 +1,623 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 545,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 13,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:fez_hidden_three",
+      "choice_label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:quick_search_finisher",
+      "choice_label": "音速搜索取得仍藏在牌库里的终结组件",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:chi_yu_revenge",
+      "choice_label": "嫉妒业火140击倒首只双奖目标",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:zoroark_reply",
+      "choice_label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:second_quick_counter",
+      "choice_label": "第二回合音速搜索取得反击捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:offer_prize",
+      "choice_label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:counter_fresh_zoroark",
+      "choice_label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:candy_second_charizard",
+      "choice_label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:infernal_reign_two",
+      "choice_label": "烈炎支配从牌库精确附着2张火能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:attach_defiance",
+      "choice_label": "奖差落后时给喷火龙装不服输头带",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:play_briar",
+      "choice_label": "确认对手恰好剩2奖后使用白蕾雅",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:burning_darkness",
+      "choice_label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "8efb99b458f82103fe9aa20df5c60c8c39ce0dc8d06b5e5f0856b710e39e886d"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:fez_hidden_three",
+        "choice_label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "depth": 12,
+        "player_actions": 11,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:quick_search_finisher",
+              "choice_label": "音速搜索取得仍藏在牌库里的终结组件",
+              "depth": 12,
+              "player_actions": 10,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:chi_yu_revenge",
+                    "choice_label": "嫉妒业火140击倒首只双奖目标",
+                    "depth": 12,
+                    "player_actions": 9,
+                    "reason": "all_defenses_hold",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:zoroark_reply",
+                          "choice_label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+                          "depth": 12,
+                          "player_actions": 8,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:second_quick_counter",
+                                "choice_label": "第二回合音速搜索取得反击捕捉器",
+                                "depth": 12,
+                                "player_actions": 8,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:offer_prize",
+                                      "choice_label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+                                      "depth": 12,
+                                      "player_actions": 7,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:counter_fresh_zoroark",
+                                            "choice_label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+                                            "depth": 12,
+                                            "player_actions": 6,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:candy_second_charizard",
+                                                  "choice_label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+                                                  "depth": 12,
+                                                  "player_actions": 5,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:infernal_reign_two",
+                                                        "choice_label": "烈炎支配从牌库精确附着2张火能",
+                                                        "depth": 12,
+                                                        "player_actions": 4,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:attach_defiance",
+                                                              "choice_label": "奖差落后时给喷火龙装不服输头带",
+                                                              "depth": 12,
+                                                              "player_actions": 3,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:play_briar",
+                                                                    "choice_label": "确认对手恰好剩2奖后使用白蕾雅",
+                                                                    "depth": 12,
+                                                                    "player_actions": 2,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:burning_darkness",
+                                                                          "choice_label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+                                                                          "depth": 12,
+                                                                          "player_actions": 1,
+                                                                          "reason": "production_witness_reached_goal",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 12,
+                                                                            "player_actions": 0,
+                                                                            "reason": "production_witness_reached_goal",
+                                                                            "score": 5,
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 0
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 12,
+                                                                      "player_actions": 1,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:burning_darkness",
+                                                                      "selected_choice_label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 12,
+                                                                "player_actions": 2,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:play_briar",
+                                                                "selected_choice_label": "确认对手恰好剩2奖后使用白蕾雅",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 12,
+                                                          "player_actions": 3,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:attach_defiance",
+                                                          "selected_choice_label": "奖差落后时给喷火龙装不服输头带",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 12,
+                                                    "player_actions": 4,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:infernal_reign_two",
+                                                    "selected_choice_label": "烈炎支配从牌库精确附着2张火能",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 12,
+                                              "player_actions": 5,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:candy_second_charizard",
+                                              "selected_choice_label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 12,
+                                        "player_actions": 6,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:counter_fresh_zoroark",
+                                        "selected_choice_label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 12,
+                                  "player_actions": 7,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:offer_prize",
+                                  "selected_choice_label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 12,
+                            "player_actions": 8,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:second_quick_counter",
+                            "selected_choice_label": "第二回合音速搜索取得反击捕捉器",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 12,
+                      "player_actions": 8,
+                      "reason": "all_defenses_hold",
+                      "role": "opponent",
+                      "selected_choice_id": "03:zoroark_reply",
+                      "selected_choice_label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 12,
+                "player_actions": 9,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:chi_yu_revenge",
+                "selected_choice_label": "嫉妒业火140击倒首只双奖目标",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 12,
+          "player_actions": 10,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:quick_search_finisher",
+          "selected_choice_label": "音速搜索取得仍藏在牌库里的终结组件",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 12,
+    "player_actions": 11,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:fez_hidden_three",
+    "selected_choice_label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:fez_hidden_three",
+      "choice_label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+      "depth": 12,
+      "player_actions": 11,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:quick_search_finisher",
+            "choice_label": "音速搜索取得仍藏在牌库里的终结组件",
+            "depth": 12,
+            "player_actions": 10,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:chi_yu_revenge",
+                  "choice_label": "嫉妒业火140击倒首只双奖目标",
+                  "depth": 12,
+                  "player_actions": 9,
+                  "reason": "all_defenses_hold",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:zoroark_reply",
+                        "choice_label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+                        "depth": 12,
+                        "player_actions": 8,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:second_quick_counter",
+                              "choice_label": "第二回合音速搜索取得反击捕捉器",
+                              "depth": 12,
+                              "player_actions": 8,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:offer_prize",
+                                    "choice_label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+                                    "depth": 12,
+                                    "player_actions": 7,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:counter_fresh_zoroark",
+                                          "choice_label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+                                          "depth": 12,
+                                          "player_actions": 6,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:candy_second_charizard",
+                                                "choice_label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+                                                "depth": 12,
+                                                "player_actions": 5,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:infernal_reign_two",
+                                                      "choice_label": "烈炎支配从牌库精确附着2张火能",
+                                                      "depth": 12,
+                                                      "player_actions": 4,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:attach_defiance",
+                                                            "choice_label": "奖差落后时给喷火龙装不服输头带",
+                                                            "depth": 12,
+                                                            "player_actions": 3,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:play_briar",
+                                                                  "choice_label": "确认对手恰好剩2奖后使用白蕾雅",
+                                                                  "depth": 12,
+                                                                  "player_actions": 2,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:burning_darkness",
+                                                                        "choice_label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+                                                                        "depth": 12,
+                                                                        "player_actions": 1,
+                                                                        "reason": "production_witness_reached_goal",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 12,
+                                                                          "player_actions": 0,
+                                                                          "reason": "production_witness_reached_goal",
+                                                                          "score": 5,
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 0
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 12,
+                                                                    "player_actions": 1,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:burning_darkness",
+                                                                    "selected_choice_label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 12,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:play_briar",
+                                                              "selected_choice_label": "确认对手恰好剩2奖后使用白蕾雅",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 12,
+                                                        "player_actions": 3,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:attach_defiance",
+                                                        "selected_choice_label": "奖差落后时给喷火龙装不服输头带",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 12,
+                                                  "player_actions": 4,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:infernal_reign_two",
+                                                  "selected_choice_label": "烈炎支配从牌库精确附着2张火能",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 12,
+                                            "player_actions": 5,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:candy_second_charizard",
+                                            "selected_choice_label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 12,
+                                      "player_actions": 6,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:counter_fresh_zoroark",
+                                      "selected_choice_label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 12,
+                                "player_actions": 7,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:offer_prize",
+                                "selected_choice_label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 12,
+                          "player_actions": 8,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:second_quick_counter",
+                          "selected_choice_label": "第二回合音速搜索取得反击捕捉器",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 12,
+                    "player_actions": 8,
+                    "reason": "all_defenses_hold",
+                    "role": "opponent",
+                    "selected_choice_id": "03:zoroark_reply",
+                    "selected_choice_label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 12,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:chi_yu_revenge",
+              "selected_choice_label": "嫉妒业火140击倒首只双奖目标",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 12,
+        "player_actions": 10,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:quick_search_finisher",
+        "selected_choice_label": "音速搜索取得仍藏在牌库里的终结组件",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "8efb99b458f82103fe9aa20df5c60c8c39ce0dc8d06b5e5f0856b710e39e886d",
+  "scenario_id": "charizard_dragapult_09",
+  "shortest_player_actions": 11,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

@@ -2,6 +2,7 @@ class_name TestBattleMusicManager
 extends TestBase
 
 const BattleMusicManagerScript := preload("res://scripts/autoload/BattleMusicManager.gd")
+const BattleMusicImportAdapterScript := preload("res://scripts/audio/BattleMusicImportAdapter.gd")
 
 
 func _make_manager() -> Node:
@@ -51,6 +52,122 @@ func test_available_battle_tracks_include_none_and_custom_files() -> String:
 	return run_checks([
 		assert_eq(str(tracks[0].get("id", "")), "none", "第一项应始终是无音乐"),
 		assert_true(tracks.any(func(track: Dictionary) -> bool: return str(track.get("id", "")) == "custom:sample.ogg"), "应扫描到自定义音频文件"),
+	])
+
+
+func test_android_picker_bytes_are_imported_into_managed_custom_music_directory() -> String:
+	var temp_dir := "user://test_imported_custom_bgm"
+	_clear_directory(temp_dir)
+	var manager := _make_manager()
+	manager.call("set_custom_music_dir_override_for_test", temp_dir)
+	var ogg_bytes := PackedByteArray([
+		0x4f, 0x67, 0x67, 0x53,
+		0x00, 0x02, 0x00, 0x00,
+	])
+	var result_variant: Variant = manager.call(
+		"import_custom_track_bytes",
+		ogg_bytes,
+		"android-picked-song"
+	)
+	var result: Dictionary = result_variant if result_variant is Dictionary else {}
+	var imported_path := str(result.get("path", ""))
+	var tracks: Array = manager.call("get_available_battle_tracks")
+	var imported_bytes := PackedByteArray()
+	if imported_path != "" and FileAccess.file_exists(imported_path):
+		var imported_file := FileAccess.open(imported_path, FileAccess.READ)
+		if imported_file != null:
+			imported_bytes = imported_file.get_buffer(imported_file.get_length())
+			imported_file.close()
+	_cleanup_manager(manager)
+	_clear_directory(temp_dir)
+
+	return run_checks([
+		assert_true(bool(result.get("ok", false)), "Android SAF bytes should import into the app-managed custom BGM directory"),
+		assert_eq(str(result.get("track_id", "")), "custom:android-picked-song.ogg", "Header sniffing should restore a missing OGG extension"),
+		assert_eq(imported_bytes, ogg_bytes, "Import must preserve the selected audio bytes exactly"),
+		assert_true(tracks.any(func(track: Dictionary) -> bool: return str(track.get("id", "")) == "custom:android-picked-song.ogg"), "An imported Android track should appear after a rescan"),
+	])
+
+
+func test_custom_music_import_rejects_unsupported_file_bytes() -> String:
+	var temp_dir := "user://test_rejected_custom_bgm"
+	_clear_directory(temp_dir)
+	var manager := _make_manager()
+	manager.call("set_custom_music_dir_override_for_test", temp_dir)
+	var result_variant: Variant = manager.call(
+		"import_custom_track_bytes",
+		PackedByteArray([0x00, 0x01, 0x02, 0x03]),
+		"not-audio.bin"
+	)
+	var result: Dictionary = result_variant if result_variant is Dictionary else {}
+	var tracks: Array = manager.call("get_available_battle_tracks")
+	_cleanup_manager(manager)
+	_clear_directory(temp_dir)
+
+	return run_checks([
+		assert_false(bool(result.get("ok", true)), "Unsupported picker data must not be accepted as battle music"),
+		assert_false(tracks.any(func(track: Dictionary) -> bool: return str(track.get("source", "")) == "custom"), "Rejected bytes must not leave a fake custom track behind"),
+	])
+
+
+func test_music_import_adapter_reads_picker_path_and_uses_android_audio_filter() -> String:
+	var source_dir := "user://test_bgm_picker_source"
+	var destination_dir := "user://test_bgm_picker_destination"
+	_clear_directory(source_dir)
+	_clear_directory(destination_dir)
+	var source_path := "%s/picked-song.mp3" % source_dir
+	var mp3_bytes := PackedByteArray([0x49, 0x44, 0x33, 0x04, 0x00, 0x00])
+	var source_file := FileAccess.open(source_path, FileAccess.WRITE)
+	if source_file != null:
+		source_file.store_buffer(mp3_bytes)
+		source_file.close()
+	BattleMusicManager.set_custom_music_dir_override_for_test(destination_dir)
+	var adapter: Variant = BattleMusicImportAdapterScript.new()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(adapter)
+	var imported: Array[Dictionary] = []
+	adapter.track_imported.connect(func(track_id: String, source_name: String) -> void:
+		imported.append({"track_id": track_id, "source_name": source_name})
+	)
+	adapter.call("_import_selected_path", source_path)
+	var filters := BattleMusicImportAdapterScript.native_audio_filters_for_tests()
+	var destination_exists := FileAccess.file_exists("%s/picked-song.mp3" % destination_dir)
+	adapter.queue_free()
+	BattleMusicManager.clear_test_overrides()
+	_clear_directory(source_dir)
+	_clear_directory(destination_dir)
+
+	return run_checks([
+		assert_eq(imported.size(), 1, "The picker adapter should emit one imported-track result"),
+		assert_eq(str(imported[0].get("track_id", "")) if not imported.is_empty() else "", "custom:picked-song.mp3", "The picker path should be copied into managed custom music"),
+		assert_true(destination_exists, "The imported picker file should exist in the app-managed directory"),
+		assert_true(not filters.is_empty() and str(filters[0]).contains("audio/mpeg"), "The native Android file picker should advertise audio MIME filters"),
+	])
+
+
+func test_android_content_uri_is_reduced_to_the_real_audio_file_name() -> String:
+	var content_uri := "content://com.android.externalstorage.documents/document/primary%3ADownload%2FCodex-Custom-Music-Test.mp3"
+	var adapter: Variant = BattleMusicImportAdapterScript.new()
+	var display_name: Variant = adapter.call(
+		"selected_path_display_name_for_tests",
+		content_uri
+	)
+	adapter.free()
+
+	return run_checks([
+		assert_eq(str(display_name), "Codex-Custom-Music-Test.mp3", "Android SAF content URIs must not become long custom-track labels"),
+	])
+
+
+func test_opaque_android_media_uri_uses_a_readable_generated_track_name() -> String:
+	var content_uri := "content://com.android.providers.media.documents/document/msf%3A443"
+	var adapter: Variant = BattleMusicImportAdapterScript.new()
+	var display_name := str(adapter.call("selected_path_display_name_for_tests", content_uri))
+	adapter.free()
+
+	return run_checks([
+		assert_true(display_name.begins_with("导入音乐-"), "Opaque Android media IDs should use a readable generated track name"),
+		assert_false(display_name.contains("msf") or display_name.contains("content://"), "Android media database IDs must not leak into the custom-track label"),
 	])
 
 

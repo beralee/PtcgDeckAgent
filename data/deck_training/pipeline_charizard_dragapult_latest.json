@@ -1,0 +1,2495 @@
+{
+  "backlog": [
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "concede_one_prize",
+      "curriculum_axis_name": "主动送一奖制造反击窗口",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 1,
+      "scenario_id": "charizard_dragapult_01",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "briar_three_prize",
+      "curriculum_axis_name": "百蕾雅三奖终结",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 2,
+      "scenario_id": "charizard_dragapult_02",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "charizard_damage_scaling",
+      "curriculum_axis_name": "恶喷随对手拿奖增加伤害",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 3,
+      "scenario_id": "charizard_dragapult_03",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "counter_catcher_closeout",
+      "curriculum_axis_name": "反击捕捉器指定三奖目标",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 4,
+      "scenario_id": "charizard_dragapult_04",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "dusknoir_damage_choice",
+      "curriculum_axis_name": "彷徨夜灵50与黑夜魔灵130的自爆选择",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_klefki_basic_ability_counter"
+      ],
+      "next_gate": "published_candidate",
+      "order": 5,
+      "scenario_id": "charizard_dragapult_05",
+      "suggested_tactic_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_defiance_damage_threshold"
+      ],
+      "tactic_dimension_id": "tech_combo_application",
+      "tactic_dimension_name": "特性封锁与送奖反击组合",
+      "tactic_required": true
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "quick_search_order",
+      "curriculum_axis_name": "音速搜索与冻结顶牌的洗牌顺序",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 6,
+      "scenario_id": "charizard_dragapult_06",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "infernal_reign_split",
+      "curriculum_axis_name": "烈炎支配三能量的双攻击手分配",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 7,
+      "scenario_id": "charizard_dragapult_07",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "klefki_lock_unlock",
+      "curriculum_axis_name": "钥圈儿基础特性封锁与解除",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 8,
+      "scenario_id": "charizard_dragapult_08",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "tatsugiri_supporter_scan",
+      "curriculum_axis_name": "米立龙顶6支援者终结选择",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [],
+      "next_gate": "published_candidate",
+      "order": 9,
+      "scenario_id": "charizard_dragapult_09",
+      "suggested_tactic_ids": [],
+      "tactic_dimension_id": "",
+      "tactic_dimension_name": "",
+      "tactic_required": false
+    },
+    {
+      "current_status": "RELEASE_READY",
+      "curriculum_axis_id": "rod_jet_rebuild",
+      "curriculum_axis_name": "厉害钓竿与喷射能量重建换位",
+      "deck_key": "charizard_dragapult",
+      "encoded_tactic_pattern_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_defiance_damage_threshold"
+      ],
+      "next_gate": "published_candidate",
+      "order": 10,
+      "scenario_id": "charizard_dragapult_10",
+      "suggested_tactic_ids": [
+        "charizard_klefki_basic_ability_counter"
+      ],
+      "tactic_dimension_id": "tech_combo_application",
+      "tactic_dimension_name": "特性封锁与送奖反击组合",
+      "tactic_required": true
+    }
+  ],
+  "candidates": [
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 27,
+      "order": 1,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_01.json"
+      },
+      "scenario_id": "charizard_dragapult_01",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_01_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_01_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "复仇不是过渡：古玉鱼倒下才开启三奖终结"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 21,
+      "order": 2,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_02.json"
+      },
+      "scenario_id": "charizard_dragapult_02",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_02_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_02_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "顶6只有一个答案：米立龙先拿白蕾雅"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 15,
+      "order": 3,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_03.json"
+      },
+      "scenario_id": "charizard_dragapult_03",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_03_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_03_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "三张火能不能全给恶喷：烈炎支配分流"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 27,
+      "order": 4,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_04.json"
+      },
+      "scenario_id": "charizard_dragapult_04",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_04_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_04_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "50比130更难：彷徨夜灵的最小送奖"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 27,
+      "order": 5,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_05.json"
+      },
+      "scenario_id": "charizard_dragapult_05",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_05_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_05_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_klefki_basic_ability_counter"
+      ],
+      "tactic_required": true,
+      "title": "捕捉器必须等自爆：送奖后的首杀窗口"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 20,
+      "order": 6,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_06.json"
+      },
+      "scenario_id": "charizard_dragapult_06",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_06_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_06_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "钥圈儿也锁自己：先封后解再爆发"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 27,
+      "order": 7,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_07.json"
+      },
+      "scenario_id": "charizard_dragapult_07",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_07_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_07_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "博士研究是陷阱：七抽反而丢掉唯一解"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 27,
+      "order": 8,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_08.json"
+      },
+      "scenario_id": "charizard_dragapult_08",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_08_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_08_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "差的正是30：不服输头带精确跨320"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 27,
+      "order": 9,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_09.json"
+      },
+      "scenario_id": "charizard_dragapult_09",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_09_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_09_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [],
+      "tactic_required": false,
+      "title": "先送、再死、最后三奖：白蕾雅时点题"
+    },
+    {
+      "authoring_errors": [],
+      "deck_key": "charizard_dragapult",
+      "legal_action_count": 26,
+      "order": 10,
+      "proof": {
+        "available": true,
+        "errors": [],
+        "ok": true,
+        "path": "res://data/deck_training/proofs/charizard_dragapult_10.json"
+      },
+      "scenario_id": "charizard_dragapult_10",
+      "shortcut_probes": [
+        {
+          "category": "research_now",
+          "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+          "id": "charizard_dragapult_10_research_now",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 6,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        },
+        {
+          "category": "skip_offer",
+          "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+          "id": "charizard_dragapult_10_skip_offer",
+          "invalid_transition_reasons": [],
+          "nodes_visited": 4,
+          "ok": true,
+          "reason": "all_player_choices_refuted",
+          "status": "REFUTED"
+        }
+      ],
+      "stages": {
+        "author_contract": true,
+        "positive_proof": true,
+        "production_opening_legal": true,
+        "shortcut_audit": true,
+        "state_compiled": true,
+        "tactic_coverage": true
+      },
+      "state_errors": [],
+      "status": "RELEASE_READY",
+      "tactic_errors": [],
+      "tactic_pattern_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_defiance_damage_threshold"
+      ],
+      "tactic_required": true,
+      "title": "弃牌区才是第二副手牌：钓竿回填重建"
+    }
+  ],
+  "errors": [],
+  "format_version": 1,
+  "ok": true,
+  "pipeline": "deck_training_puzzle_pipeline_v1",
+  "summary": {
+    "candidate_count": 10,
+    "compiled": 10,
+    "identity_passed": 1,
+    "playable": 10,
+    "proven": 10,
+    "release_ready": 10,
+    "shortcut_audited": 10,
+    "tactic_recipe_count": 3,
+    "tactic_targets_passed": 1,
+    "target_count": 1,
+    "tech_candidate_count": 3
+  },
+  "tactics": {
+    "decks": [
+      {
+        "cards_scanned": 28,
+        "deck_id": 800018506,
+        "deck_key": "dragapult",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 3,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "先使用捕捉器时不满足奖差条件",
+              "130伤放错目标导致最终奖赏图无法闭合"
+            ],
+            "id": "dragapult_dusknoir_counter_catcher",
+            "kind": "sequencing_combo",
+            "name": "咒怨炸弹主动送奖后开启反击捕捉器",
+            "ok": true,
+            "payoff": "主动送出1奖、定点放置130伤并拉出高价值目标，再由幻影潜袭同时收前场与备战区奖赏。",
+            "puzzle_hooks": [
+              "自爆前后奖差变化",
+              "捕捉目标与60点铺伤目标不能选反"
+            ],
+            "source_card_refs": [
+              "CSV8C_083",
+              "CSV6C_114",
+              "CSV8C_159"
+            ],
+            "target_card_refs": [],
+            "trigger": "双方奖差尚未满足反击捕捉器，黑夜魔灵能够自爆且130伤可以制造击倒档位。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "先攻击后才放摔角鹰人",
+              "把预埋伤害给了不会参与奖赏图的目标"
+            ],
+            "id": "dragapult_hawlucha_spread_seed",
+            "kind": "combo",
+            "name": "摔角鹰人预埋伤害配合幻影潜袭",
+            "ok": true,
+            "payoff": "飞身入场先向两个场位各放10伤，使幻影潜袭的6个指示物可以形成双击倒或为下一回合留下精确档位。",
+            "puzzle_hooks": [
+              "放置摔角鹰人的时机",
+              "10+60伤在多个备战位之间的整数分配"
+            ],
+            "source_card_refs": [
+              "CSV1C_079",
+              "CSV8C_159"
+            ],
+            "target_card_refs": [],
+            "trigger": "对手两只备战宝可梦距离击倒档位分别差10或70伤。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "夜光能量先附给其他宝可梦",
+              "搬少10伤导致目标残血"
+            ],
+            "id": "dragapult_munkidori_threshold_transfer",
+            "kind": "combo",
+            "name": "愿增猿搬伤校正200与60的双阈值",
+            "ok": true,
+            "payoff": "先搬最多30伤修正前场档位，再用幻影潜袭200伤与备战区60指示物同时击倒。",
+            "puzzle_hooks": [
+              "夜光能量归属",
+              "搬伤数量与幻影潜袭分配的联立计算"
+            ],
+            "source_card_refs": [
+              "CSV8C_094",
+              "CSV1C_127",
+              "CSV8C_159"
+            ],
+            "target_card_refs": [],
+            "trigger": "愿增猿有可提供恶属性的夜光能量，我方存在可搬走的伤害，对手目标处于230或260一类非整档HP。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV8C_159",
+            "count": 3,
+            "name": "多龙巴鲁托ex",
+            "roles": [
+              "bench_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_082",
+            "count": 2,
+            "name": "彷徨夜灵",
+            "roles": [
+              "self_ko_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_083",
+            "count": 1,
+            "name": "黑夜魔灵",
+            "roles": [
+              "self_ko_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV9.5C_004",
+            "count": 2,
+            "name": "含羞苞",
+            "roles": [
+              "item_lock"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_079",
+            "count": 1,
+            "name": "摔角鹰人",
+            "roles": [
+              "bench_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_135",
+            "count": 1,
+            "name": "吉雉鸡ex",
+            "roles": [
+              "bench_damage",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_094",
+            "count": 1,
+            "name": "愿增猿",
+            "roles": [
+              "damage_counter_move"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 4,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_121",
+            "count": 4,
+            "name": "博士的研究",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 2,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_120",
+            "count": 1,
+            "name": "吉尼亚",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_123",
+            "count": 1,
+            "name": "派帕",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_112",
+            "count": 4,
+            "name": "高级球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_177",
+            "count": 4,
+            "name": "友好宝芬",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_114",
+            "count": 3,
+            "name": "反击捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_113",
+            "count": 1,
+            "name": "宝可梦交替",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSVH1C_043",
+            "count": 1,
+            "name": "巢穴球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV4C_117",
+            "count": 1,
+            "name": "豪华斗篷",
+            "roles": [
+              "prize_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_185",
+            "count": 1,
+            "name": "紧急滑板",
+            "roles": [
+              "free_retreat"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV4C_117",
+            "count": 1,
+            "name": "豪华斗篷",
+            "roles": [
+              "prize_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_185",
+            "count": 1,
+            "name": "紧急滑板",
+            "roles": [
+              "free_retreat"
+            ]
+          }
+        ]
+      },
+      {
+        "cards_scanned": 27,
+        "deck_id": 800018497,
+        "deck_key": "gardevoir",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 3,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "在计算伤害后才放皮皮ex",
+              "把皮皮ex当普通进攻手而暴露给无价值击倒"
+            ],
+            "id": "gardevoir_clefairy_dragon_counter",
+            "kind": "matchup_counter",
+            "name": "莉莉艾的皮皮ex改写龙属性弱点",
+            "ok": true,
+            "payoff": "妖精领域把龙宝可梦弱点改为超属性，使沙奈朵体系的超能攻击进入二倍伤害档位。",
+            "puzzle_hooks": [
+              "皮皮ex必须先在场",
+              "比较弱点改写前后的精确击倒线"
+            ],
+            "source_card_refs": [
+              "CSV10C_082"
+            ],
+            "target_card_refs": [
+              "CSV8C_159"
+            ],
+            "trigger": "对手以龙属性多龙巴鲁托ex作为高HP主攻手，皮皮ex能安全留场。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "漏装护符导致最后一次精神拥抱非法",
+              "多附或少附一张能量破坏斩杀档位"
+            ],
+            "id": "gardevoir_scream_tail_embrace_charm",
+            "kind": "combo",
+            "name": "精神拥抱、自伤与勇气护符放大吼叫尾狙击",
+            "ok": true,
+            "payoff": "勇气护符提高HP上限，精神拥抱连续附能并制造自伤，凶暴吼叫把伤害指示物转化为远程斩杀。",
+            "puzzle_hooks": [
+              "可附能次数上限",
+              "护符放置前后允许的最大自伤与攻击伤害"
+            ],
+            "source_card_refs": [
+              "CSV2C_055",
+              "CSV6C_065",
+              "CSV1C_118"
+            ],
+            "target_card_refs": [],
+            "trigger": "弃牌区有多张超能量，吼叫尾需要在不自我击倒的前提下累积伤害指示物。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "把恶能量作为无关撤退成本弃掉",
+              "搬伤给了本来就会被攻击击倒的目标造成浪费"
+            ],
+            "id": "gardevoir_embrace_munkidori_cleanup",
+            "kind": "combo",
+            "name": "精神拥抱制造可搬伤害，再由愿增猿完成双阈值",
+            "ok": true,
+            "payoff": "亢奋脑力将最多30伤转给对手关键目标，同时降低我方被击倒风险并修正下一次攻击档位。",
+            "puzzle_hooks": [
+              "恶能量必须保留给愿增猿",
+              "选择伤害来源与对手目标"
+            ],
+            "source_card_refs": [
+              "CSV2C_055",
+              "CSV8C_094",
+              "CSVE1C_DAR"
+            ],
+            "target_card_refs": [],
+            "trigger": "愿增猿已有恶能量，精神拥抱后的我方宝可梦带有至少3个伤害指示物。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV2C_055",
+            "count": 2,
+            "name": "沙奈朵ex",
+            "roles": [
+              "energy_acceleration"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_094",
+            "count": 4,
+            "name": "愿增猿",
+            "roles": [
+              "damage_counter_move"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_065",
+            "count": 1,
+            "name": "吼叫尾",
+            "roles": [
+              "bench_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_082",
+            "count": 1,
+            "name": "莉莉艾的皮皮ex",
+            "roles": [
+              "bench_damage",
+              "weakness_rewrite"
+            ]
+          },
+          {
+            "card_ref": "151C_151",
+            "count": 1,
+            "name": "梦幻ex",
+            "roles": [
+              "attack_copy",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_135",
+            "count": 1,
+            "name": "吉雉鸡ex",
+            "roles": [
+              "bench_damage",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_121",
+            "count": 4,
+            "name": "博士的研究",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 4,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_123",
+            "count": 2,
+            "name": "派帕",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 1,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_112",
+            "count": 4,
+            "name": "高级球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_115",
+            "count": 3,
+            "name": "大地容器",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSVH1C_043",
+            "count": 2,
+            "name": "巢穴球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_114",
+            "count": 1,
+            "name": "反击捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_008",
+            "count": 1,
+            "name": "能量转移",
+            "roles": [
+              "energy_move"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_176",
+            "count": 1,
+            "name": "秘密箱",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV4C_119",
+            "count": 1,
+            "name": "招式学习器 能量涡轮",
+            "roles": [
+              "energy_acceleration",
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV2C_127",
+            "count": 2,
+            "name": "深钵镇",
+            "roles": [
+              "search"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV10C_082",
+            "count": 1,
+            "name": "莉莉艾的皮皮ex",
+            "roles": [
+              "bench_damage",
+              "weakness_rewrite"
+            ]
+          }
+        ]
+      },
+      {
+        "cards_scanned": 32,
+        "deck_id": 800016834,
+        "deck_key": "gholdengo",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 4,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "提前把某属性能量弃掉导致PRO少检索一张",
+              "过量弃能造成第二回合无法攻击"
+            ],
+            "id": "gholdengo_energy_search_pro_burst",
+            "kind": "combo",
+            "name": "能量输送PRO一次凑齐淘金潮弹药",
+            "ok": true,
+            "payoff": "一次检索多种不同属性基本能量，以每张50伤精确支付淘金潮斩杀，同时规划剩余牌库弹药。",
+            "puzzle_hooks": [
+              "统计牌库中仍存在的能量属性",
+              "只弃达到击倒所需的最少张数"
+            ],
+            "source_card_refs": [
+              "CSV9C_176",
+              "CSV4C_089"
+            ],
+            "target_card_refs": [],
+            "trigger": "牌库仍保存多种不同属性的基本能量，赛富豪ex已具备攻击能量。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "置顶后又使用会洗牌的卡",
+              "赛富豪不在战斗场导致只抽1张"
+            ],
+            "id": "gholdengo_cipher_coin_draw",
+            "kind": "sequencing_combo",
+            "name": "暗码迷置顶后用嘉奖硬币定向抽取",
+            "ok": true,
+            "payoff": "暗码迷把两个组件按正确顺序置顶，随后嘉奖硬币直接取得，避免随机摸牌。",
+            "puzzle_hooks": [
+              "置顶顺序",
+              "必须在洗牌类检索完成后再使用暗码迷"
+            ],
+            "source_card_refs": [
+              "CSV7C_191",
+              "CSV4C_089"
+            ],
+            "target_card_refs": [],
+            "trigger": "赛富豪ex位于战斗场可用嘉奖硬币抽2张，牌库中存在两个必需组件。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "先按含护符HP过量弃能",
+              "开塔后又主动替换竞技场导致护符恢复"
+            ],
+            "id": "gholdengo_jamming_tower_tool_counter",
+            "kind": "matchup_counter",
+            "name": "阻碍之塔关闭勇气护符的额外HP",
+            "ok": true,
+            "payoff": "先放阻碍之塔消除道具效果，降低所需弃能数量，并把节省的能量留给后续攻击手。",
+            "puzzle_hooks": [
+              "竞技场使用时机",
+              "开塔前后击倒所需能量张数比较"
+            ],
+            "source_card_refs": [
+              "CSV8C_203"
+            ],
+            "target_card_refs": [
+              "CSV1C_118"
+            ],
+            "trigger": "对手依靠勇气护符把基础宝可梦抬出当前淘金潮伤害档位。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "提前结束回合使富裕打击只剩30",
+              "用赛富豪ex过量支付首个低HP目标"
+            ],
+            "id": "gholdengo_regular_evolution_bridge",
+            "kind": "sequencing_combo",
+            "name": "普通赛富豪进化回合120桥接保留淘金潮弹药",
+            "ok": true,
+            "payoff": "从手牌进化普通赛富豪，以当回合富裕打击120完成首杀，再换入赛富豪ex把保留能量转成第二次淘金潮。",
+            "puzzle_hooks": [
+              "进化与攻击必须发生在同一回合",
+              "回收能量不得用于第一击",
+              "第二回合换位时机"
+            ],
+            "source_card_refs": [
+              "CSV9C_096",
+              "CSV9C_142",
+              "CSV4C_089",
+              "CSV1C_113"
+            ],
+            "target_card_refs": [],
+            "trigger": "索财灵已在场一回合，目标正好处于120HP档，备战赛富豪ex需要把手牌基本能量完整保留到下一回合。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV9C_096",
+            "count": 4,
+            "name": "索财灵",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV4C_089",
+            "count": 4,
+            "name": "赛富豪ex",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_135",
+            "count": 1,
+            "name": "吉雉鸡ex",
+            "roles": [
+              "bench_damage",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_094",
+            "count": 1,
+            "name": "愿增猿",
+            "roles": [
+              "damage_counter_move"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_042",
+            "count": 1,
+            "name": "铁包袱",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_123",
+            "count": 4,
+            "name": "派帕",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_191",
+            "count": 4,
+            "name": "暗码迷的解读",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 2,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 1,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_177",
+            "count": 4,
+            "name": "友好宝芬",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSVH1C_043",
+            "count": 2,
+            "name": "巢穴球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_112",
+            "count": 2,
+            "name": "高级球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_115",
+            "count": 1,
+            "name": "大地容器",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_114",
+            "count": 1,
+            "name": "反击捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_113",
+            "count": 1,
+            "name": "宝可梦交替",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_203",
+            "count": 1,
+            "name": "阻碍之塔",
+            "roles": [
+              "tool_lock"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV8C_203",
+            "count": 1,
+            "name": "阻碍之塔",
+            "roles": [
+              "tool_lock"
+            ]
+          }
+        ]
+      },
+      {
+        "cards_scanned": 28,
+        "deck_id": 800018509,
+        "deck_key": "raging_bolt",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 3,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "把斗能量都当作猛雷鼓弃能燃料",
+              "误以为顽强之心会让皮卡丘永久留场"
+            ],
+            "id": "raging_bolt_slither_wing_pikachu_counter",
+            "kind": "matchup_counter",
+            "name": "爬地翅利用斗弱点与灼伤破解皮卡丘ex顽强之心",
+            "ok": true,
+            "payoff": "120伤经斗弱点变为240，顽强之心先令皮卡丘留下10HP，随后宝可梦检查的灼伤完成击倒。",
+            "puzzle_hooks": [
+              "双斗能量必须留给爬地翅",
+              "区分招式结算与宝可梦检查的两段击倒"
+            ],
+            "source_card_refs": [
+              "CSV6C_082"
+            ],
+            "target_card_refs": [
+              "CSV9C_054"
+            ],
+            "target_predicate": {
+              "description_contains": [
+                "顽强之心"
+              ],
+              "field_equals": {
+                "mechanic": "ex",
+                "weakness_energy": "F"
+              }
+            },
+            "trigger": "满HP皮卡丘ex具有顽强之心且弱斗，爬地翅能支付双斗能量使用烫伤怒涛。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "先用能量转移导致没有合法来源",
+              "把唯一维持万叶阵雨的草能量转走"
+            ],
+            "id": "raging_bolt_ogerpon_energy_switch",
+            "kind": "sequencing_combo",
+            "name": "碧草之舞产能后用能量转移重排场上燃料",
+            "ok": true,
+            "payoff": "先用特性把草能量变为场上资源并抽牌，再按攻击和撤退需求转附，扩大雷鸣蹴击可弃能量池。",
+            "puzzle_hooks": [
+              "碧草之舞必须先于能量转移",
+              "转移后仍要保留厄诡椪后续攻击或抽牌所需资源"
+            ],
+            "source_card_refs": [
+              "CSV8C_028",
+              "CSVH1aC_008",
+              "CSV7C_154"
+            ],
+            "target_card_refs": [],
+            "trigger": "手中有草能量，厄诡椪可用碧草之舞，猛雷鼓需要更多场上能量或撤退资源。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "先让太晶厄诡椪离场导致特性不触发",
+              "搜索两张单独强但无法共同闭合路线的训练家"
+            ],
+            "id": "raging_bolt_tera_noctowl_search",
+            "kind": "combo",
+            "name": "太晶厄诡椪开启猫头夜鹰寻找宝石",
+            "ok": true,
+            "payoff": "零之大空洞扩展备战区，猫头夜鹰进化时寻找两张训练家，直接拼出附能、捕捉或回收组合。",
+            "puzzle_hooks": [
+              "太晶宝可梦必须在进化触发时仍在场",
+              "两张训练家的组合选择"
+            ],
+            "source_card_refs": [
+              "CSV8C_028",
+              "CSV9C_155",
+              "CSV9C_207"
+            ],
+            "target_card_refs": [],
+            "trigger": "场上有咕咕和太晶厄诡椪，手中可进化猫头夜鹰，且需要两张训练家完成回合路线。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV9C_155",
+            "count": 3,
+            "name": "猫头夜鹰",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_028",
+            "count": 3,
+            "name": "厄诡椪 碧草面具ex",
+            "roles": [
+              "energy_acceleration",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV9C_161",
+            "count": 2,
+            "name": "旋转洛托姆",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_154",
+            "count": 2,
+            "name": "猛雷鼓ex",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_161",
+            "count": 1,
+            "name": "猛雷鼓",
+            "roles": [
+              "bench_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV9C_078",
+            "count": 1,
+            "name": "拉帝亚斯ex",
+            "roles": [
+              "ability_lock",
+              "free_retreat"
+            ]
+          },
+          {
+            "card_ref": "151C_151",
+            "count": 1,
+            "name": "梦幻ex",
+            "roles": [
+              "attack_copy",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_135",
+            "count": 1,
+            "name": "吉雉鸡ex",
+            "roles": [
+              "bench_damage",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "151C_132",
+            "count": 1,
+            "name": "百变怪",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_121",
+            "count": 4,
+            "name": "奥琳博士的气魄",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV9C_196",
+            "count": 2,
+            "name": "赤松",
+            "roles": [
+              "energy_acceleration",
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 1,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 1,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSVH1C_043",
+            "count": 4,
+            "name": "巢穴球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_112",
+            "count": 4,
+            "name": "高级球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_115",
+            "count": 3,
+            "name": "大地容器",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_180",
+            "count": 1,
+            "name": "顶尖捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_008",
+            "count": 1,
+            "name": "能量转移",
+            "roles": [
+              "energy_move"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_203",
+            "count": 1,
+            "name": "阻碍之塔",
+            "roles": [
+              "tool_lock"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV9C_078",
+            "count": 1,
+            "name": "拉帝亚斯ex",
+            "roles": [
+              "ability_lock",
+              "free_retreat"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_203",
+            "count": 1,
+            "name": "阻碍之塔",
+            "roles": [
+              "tool_lock"
+            ]
+          }
+        ]
+      },
+      {
+        "cards_scanned": 28,
+        "deck_id": 800018501,
+        "deck_key": "marnie",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 3,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "为了腾备战位先弃掉谢米",
+              "错误地认为谢米也保护拥有规则的长毛巨魔ex"
+            ],
+            "id": "marnie_shaymin_spread_counter",
+            "kind": "matchup_counter",
+            "name": "谢米保护非规则备战区对抗焚身加农炮",
+            "ok": true,
+            "payoff": "花之纱幔阻止非规则备战宝可梦受到90点招式伤害，让关键雪妖女或愿增猿跨回合存活。",
+            "puzzle_hooks": [
+              "谢米必须在对手攻击前留场",
+              "区分会被阻止的备战伤害与不会被阻止的伤害指示物效果"
+            ],
+            "source_card_refs": [
+              "CSV10C_007"
+            ],
+            "target_card_refs": [
+              "CSV10C_041"
+            ],
+            "trigger": "对手N的达摩狒狒或索罗亚克ex准备使用焚身加农炮，己方备战区有雪童子、雪妖女或愿增猿等非规则宝可梦。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "低估己方长毛巨魔ex也会受冻结帷幕影响",
+              "过早搬伤使后续退化击倒少一个目标"
+            ],
+            "id": "marnie_froslass_munkidori_clock",
+            "kind": "combo",
+            "name": "雪妖女全场伤害时钟与愿增猿定点搬伤",
+            "ok": true,
+            "payoff": "冻结帷幕持续制造伤害指示物，亢奋脑力把己方累积伤害转给对手关键目标，形成不对称时钟。",
+            "puzzle_hooks": [
+              "宝可梦检查次数",
+              "搬伤来源与目标选择"
+            ],
+            "source_card_refs": [
+              "CSV7C_059",
+              "CSV8C_094"
+            ],
+            "target_card_refs": [],
+            "trigger": "双方场上有多只有特性的宝可梦，愿增猿已有恶能量。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "伤害不足就提前退化",
+              "把附有学习器的攻击手撤走或耗尽能量"
+            ],
+            "id": "marnie_devolution_damage_table",
+            "kind": "matchup_counter",
+            "name": "铺伤后招式学习器退化清理糖果进化线",
+            "ok": true,
+            "payoff": "先用冻结帷幕或暗影子弹铺伤，再同时移除所有目标的顶层进化卡，按下层HP一次制造多只击倒。",
+            "puzzle_hooks": [
+              "逐只计算退化后的HP上限",
+              "退化攻击前不能误杀或清除关键伤害"
+            ],
+            "source_card_refs": [
+              "CSV5C_120",
+              "CSV7C_059",
+              "CSV10C_148"
+            ],
+            "target_card_refs": [
+              "CSV5C_075"
+            ],
+            "trigger": "对手多个高阶进化宝可梦已累积超过下层宝可梦HP的伤害，且我方能支付退化所需无色能量。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV10C_146",
+            "count": 3,
+            "name": "玛俐的捣蛋小妖",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_148",
+            "count": 2,
+            "name": "玛俐的长毛巨魔ex",
+            "roles": [
+              "bench_damage",
+              "energy_acceleration",
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_094",
+            "count": 3,
+            "name": "愿增猿",
+            "roles": [
+              "damage_counter_move"
+            ]
+          },
+          {
+            "card_ref": "CSV9.5C_004",
+            "count": 1,
+            "name": "含羞苞",
+            "roles": [
+              "item_lock"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_007",
+            "count": 1,
+            "name": "谢米",
+            "roles": [
+              "bench_protection"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_123",
+            "count": 4,
+            "name": "派帕",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 4,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_121",
+            "count": 3,
+            "name": "博士的研究",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 2,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_177",
+            "count": 2,
+            "name": "友好宝芬",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSVH1C_043",
+            "count": 2,
+            "name": "巢穴球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_114",
+            "count": 2,
+            "name": "反击捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSVH1C_035",
+            "count": 1,
+            "name": "能量输送",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_112",
+            "count": 1,
+            "name": "高级球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_176",
+            "count": 1,
+            "name": "秘密箱",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV5C_120",
+            "count": 1,
+            "name": "招式学习器 退化",
+            "roles": [
+              "devolution"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_185",
+            "count": 1,
+            "name": "紧急滑板",
+            "roles": [
+              "free_retreat"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_216",
+            "count": 3,
+            "name": "尖钉镇道馆",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV2C_127",
+            "count": 1,
+            "name": "深钵镇",
+            "roles": [
+              "search"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV9.5C_004",
+            "count": 1,
+            "name": "含羞苞",
+            "roles": [
+              "item_lock"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_007",
+            "count": 1,
+            "name": "谢米",
+            "roles": [
+              "bench_protection"
+            ]
+          },
+          {
+            "card_ref": "CSV5C_120",
+            "count": 1,
+            "name": "招式学习器 退化",
+            "roles": [
+              "devolution"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_185",
+            "count": 1,
+            "name": "紧急滑板",
+            "roles": [
+              "free_retreat"
+            ]
+          }
+        ]
+      },
+      {
+        "cards_scanned": 29,
+        "deck_id": 800018502,
+        "deck_key": "n_zoroark",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 3,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "HUD或计算误用了索罗亚克自身招式文本",
+              "只看前场伤害而漏掉备战区90伤的额外奖赏"
+            ],
+            "id": "n_zoroark_darmanitan_copy",
+            "kind": "combo",
+            "name": "暗夜王牌调用达摩狒狒的弃牌区倍率或双线攻击",
+            "ok": true,
+            "payoff": "索罗亚克无需给达摩狒狒准备攻击能量，就能在复燃倍率与焚身加农炮双线伤害之间选择最佳招式。",
+            "puzzle_hooks": [
+              "读取对手弃牌区基本能量数量",
+              "在两个被复制招式之间选择"
+            ],
+            "source_card_refs": [
+              "CSV10C_145",
+              "CSV10C_041"
+            ],
+            "target_card_refs": [],
+            "trigger": "N的达摩狒狒在备战区，索罗亚克ex具备双恶能量，对手弃牌区能量数或备战区90伤目标满足击倒线。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "奖差未满足时错误计算头带30伤",
+              "把空手道王浪费在非ex目标"
+            ],
+            "id": "n_zoroark_karate_defiance_ex_counter",
+            "kind": "matchup_counter",
+            "name": "落后奖赏时空手道王与不服输头带叠加打ex",
+            "ok": true,
+            "payoff": "不服输头带提供30，空手道王再提供40，把原本不足的复制招式推入高HP ex击倒档位。",
+            "puzzle_hooks": [
+              "奖差条件",
+              "确认伤害加成作用于被复制招式"
+            ],
+            "source_card_refs": [
+              "CSV9.5C_188",
+              "CSV1C_117",
+              "CSV10C_145"
+            ],
+            "target_card_refs": [
+              "CSV5C_075"
+            ],
+            "trigger": "己方奖赏落后，对手战斗场是宝可梦ex，当前复制招式距离击倒差不超过70伤。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "先支付撤退能量再放城堡",
+              "把回收能量附给只提供复制招式、不需攻击的工具宝可梦"
+            ],
+            "id": "n_castle_pp_booster_handoff",
+            "kind": "sequencing_combo",
+            "name": "N的城堡零撤退与PP提升剂准备第二攻击手",
+            "ok": true,
+            "payoff": "城堡免除撤退成本，PP提升剂把弃牌区能量附给备战N宝可梦，在不损失手贴的情况下准备下一回合路线。",
+            "puzzle_hooks": [
+              "竞技场必须先在场",
+              "PP提升剂的目标不能占用错误的备战攻击位"
+            ],
+            "source_card_refs": [
+              "CSV10C_215",
+              "CSV10C_190",
+              "CSV10C_145"
+            ],
+            "target_card_refs": [],
+            "trigger": "弃牌区有基本能量，备战区有N的宝可梦，当前N的宝可梦需要零成本撤退完成交接。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV10C_145",
+            "count": 4,
+            "name": "N的索罗亚克ex",
+            "roles": [
+              "attack_copy",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_094",
+            "count": 2,
+            "name": "愿增猿",
+            "roles": [
+              "damage_counter_move"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_041",
+            "count": 1,
+            "name": "N的达摩狒狒",
+            "roles": [
+              "bench_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_135",
+            "count": 1,
+            "name": "吉雉鸡ex",
+            "roles": [
+              "bench_damage",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV4C_044",
+            "count": 1,
+            "name": "皮宝宝",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV9C_198",
+            "count": 4,
+            "name": "席蓝",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 3,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 2,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_191",
+            "count": 2,
+            "name": "暗码迷的解读",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV9.5C_188",
+            "count": 1,
+            "name": "空手道王的修炼",
+            "roles": [
+              "damage_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_177",
+            "count": 4,
+            "name": "友好宝芬",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_190",
+            "count": 3,
+            "name": "N的PP提升剂",
+            "roles": [
+              "energy_acceleration"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_114",
+            "count": 2,
+            "name": "反击捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_008",
+            "count": 1,
+            "name": "能量转移",
+            "roles": [
+              "energy_move"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_176",
+            "count": 1,
+            "name": "秘密箱",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_117",
+            "count": 1,
+            "name": "不服输头带",
+            "roles": [
+              "damage_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV5C_120",
+            "count": 1,
+            "name": "招式学习器 退化",
+            "roles": [
+              "devolution"
+            ]
+          },
+          {
+            "card_ref": "CSV2C_127",
+            "count": 2,
+            "name": "深钵镇",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV10C_215",
+            "count": 2,
+            "name": "N的城堡",
+            "roles": [
+              "free_retreat"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV9.5C_188",
+            "count": 1,
+            "name": "空手道王的修炼",
+            "roles": [
+              "damage_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_117",
+            "count": 1,
+            "name": "不服输头带",
+            "roles": [
+              "damage_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV5C_120",
+            "count": 1,
+            "name": "招式学习器 退化",
+            "roles": [
+              "devolution"
+            ]
+          }
+        ]
+      },
+      {
+        "cards_scanned": 33,
+        "deck_id": 800025404,
+        "deck_key": "charizard_dragapult",
+        "errors": [],
+        "ok": true,
+        "recipe_count": 3,
+        "recipes": [
+          {
+            "errors": [],
+            "failure_modes": [
+              "先打掉一奖目标导致白蕾雅窗口错位",
+              "自爆目标与反击捕捉目标不一致造成伤害浪费"
+            ],
+            "id": "charizard_dusknoir_briar_window",
+            "kind": "sequencing_combo",
+            "name": "咒怨炸弹送奖、恶喷增伤与白蕾雅三奖窗口",
+            "ok": true,
+            "payoff": "自爆同时加130伤、让燃烧黑暗增加30伤、开启反击捕捉器和白蕾雅条件，最终击倒一只双奖目标拿3奖。",
+            "puzzle_hooks": [
+              "自爆造成的奖差与伤害同步变化",
+              "白蕾雅必须在太晶喷火龙攻击前使用"
+            ],
+            "source_card_refs": [
+              "CSV8C_083",
+              "CSV5C_075",
+              "CSV9C_202",
+              "CSV6C_114"
+            ],
+            "target_card_refs": [],
+            "trigger": "对手剩3奖且有高价值备战ex，黑夜魔灵自爆后能把对手推进剩2奖。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "把钥圈儿撤到备战区后仍按封锁生效",
+              "需要化危为吉时忘记先解除自己的封锁"
+            ],
+            "id": "charizard_klefki_basic_ability_counter",
+            "kind": "matchup_counter",
+            "name": "钥圈儿前场封锁基础宝可梦特性",
+            "ok": true,
+            "payoff": "恶作剧之锁同时关闭双方基础宝可梦特性，迫使对手失去碧草之舞等引擎，为恶喷进化争取回合。",
+            "puzzle_hooks": [
+              "钥圈儿必须位于战斗场",
+              "同时计算己方吉雉鸡ex等基础特性也被关闭的代价"
+            ],
+            "source_card_refs": [
+              "CSV1C_060"
+            ],
+            "target_card_refs": [
+              "CSV8C_028"
+            ],
+            "trigger": "对手依靠厄诡椪等基础宝可梦特性连续附能或抽牌，钥圈儿能够留在战斗场。"
+          },
+          {
+            "errors": [],
+            "failure_modes": [
+              "拿奖后奖差改变却仍计算头带加成",
+              "不必要地同时消耗头带和咒怨炸弹造成资源过量"
+            ],
+            "id": "charizard_defiance_damage_threshold",
+            "kind": "combo",
+            "name": "奖差落后时不服输头带补足燃烧黑暗档位",
+            "ok": true,
+            "payoff": "利用头带30伤补齐斩杀，并保留咒怨炸弹给另一只目标或下一回合奖差窗口。",
+            "puzzle_hooks": [
+              "判断当前奖差是否仍满足头带",
+              "比较使用头带与消耗黑夜魔灵的机会成本"
+            ],
+            "source_card_refs": [
+              "CSV1C_117",
+              "CSV5C_075"
+            ],
+            "target_card_refs": [],
+            "trigger": "己方剩余奖赏比对手多，燃烧黑暗距离当前目标击倒线差30伤以内。"
+          }
+        ],
+        "semantic_cards": [
+          {
+            "card_ref": "CSV5C_075",
+            "count": 2,
+            "name": "喷火龙ex",
+            "roles": [
+              "energy_acceleration",
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_082",
+            "count": 1,
+            "name": "彷徨夜灵",
+            "roles": [
+              "self_ko_damage"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_083",
+            "count": 1,
+            "name": "黑夜魔灵",
+            "roles": [
+              "self_ko_damage"
+            ]
+          },
+          {
+            "card_ref": "151C_016",
+            "count": 1,
+            "name": "波波",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV4C_101",
+            "count": 2,
+            "name": "大比鸟ex",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_135",
+            "count": 1,
+            "name": "吉雉鸡ex",
+            "roles": [
+              "bench_damage",
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV5C_022",
+            "count": 1,
+            "name": "古玉鱼",
+            "roles": [
+              "energy_acceleration"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_060",
+            "count": 1,
+            "name": "钥圈儿",
+            "roles": [
+              "ability_lock"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_121",
+            "count": 4,
+            "name": "博士的研究",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_123",
+            "count": 2,
+            "name": "派帕",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV3C_123",
+            "count": 2,
+            "name": "奇树",
+            "roles": [
+              "draw"
+            ]
+          },
+          {
+            "card_ref": "CSVH1aC_023",
+            "count": 2,
+            "name": "老大的指令",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV9C_202",
+            "count": 1,
+            "name": "白蕾雅",
+            "roles": [
+              "prize_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_112",
+            "count": 4,
+            "name": "高级球",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV7C_177",
+            "count": 4,
+            "name": "友好宝芬",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV6C_114",
+            "count": 2,
+            "name": "反击捕捉器",
+            "roles": [
+              "gust"
+            ]
+          },
+          {
+            "card_ref": "CSV8C_176",
+            "count": 1,
+            "name": "秘密箱",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_117",
+            "count": 1,
+            "name": "不服输头带",
+            "roles": [
+              "damage_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_126",
+            "count": 1,
+            "name": "桌台市",
+            "roles": [
+              "search"
+            ]
+          },
+          {
+            "card_ref": "CSV2C_127",
+            "count": 1,
+            "name": "深钵镇",
+            "roles": [
+              "search"
+            ]
+          }
+        ],
+        "tech_candidates": [
+          {
+            "card_ref": "CSV1C_060",
+            "count": 1,
+            "name": "钥圈儿",
+            "roles": [
+              "ability_lock"
+            ]
+          },
+          {
+            "card_ref": "CSV9C_202",
+            "count": 1,
+            "name": "白蕾雅",
+            "roles": [
+              "prize_modifier"
+            ]
+          },
+          {
+            "card_ref": "CSV1C_117",
+            "count": 1,
+            "name": "不服输头带",
+            "roles": [
+              "damage_modifier"
+            ]
+          }
+        ]
+      }
+    ],
+    "errors": [],
+    "ok": true,
+    "recipe_count": 22,
+    "tech_candidate_count": 16
+  },
+  "targets": [
+    {
+      "candidate_count": 10,
+      "curriculum_axis_count": 10,
+      "deck_card_count": 60,
+      "deck_id": 800025404,
+      "deck_key": "charizard_dragapult",
+      "deck_name": "自爆恶喷",
+      "errors": [],
+      "ok": true,
+      "strategy_id": "v17_bomb_charizard",
+      "tactic_recipe_count": 3,
+      "tactic_scan_ok": true,
+      "tech_candidate_count": 3
+    }
+  ]
+}

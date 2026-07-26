@@ -1,5 +1,5 @@
 {
-	"profile_version": 14,
+	"profile_version": 20,
 	"semantic_version": 1,
 	"risk_posture": "safe",
 	"switch_margin": 90.0,
@@ -8,6 +8,7 @@
 	"delta_response_token_budget": 180,
 	"turn_visible_wait_budget_ms": 6500,
 	"cold_request_estimate_ms": 5000,
+	"turn_model_judgment_mode": "required_first_main_window",
 	"max_policy_nodes": 7,
 	"protected_roles": [
 		"toolbox_attacker",
@@ -120,7 +121,22 @@
 			"energy_mover_requires_board_energy": true,
 			"dead_energy_mover_penalty": 1100.0,
 			"verify_energy_handoff_from_end_turn": true,
+			"verify_fan_rotom_gust_closeout": true,
+			"verify_bloodmoon_zero_cost_closeout": true,
 			"verified_energy_mover_uids": ["CSVH1AC_008"],
+			"fan_rotom_gust_uid": "CSVH1AC_023",
+			"fan_rotom_gust_active_uid": "CSV9C_161",
+			"fan_rotom_gust_attack_damage": 70,
+			"bloodmoon_closeout_uid": "CSV8C_172",
+			"bloodmoon_closeout_pivot_uids": ["CSV8C_135"],
+			"bloodmoon_closeout_pivot_retreat_cost": 1,
+			"bloodmoon_closeout_recovery_uid": "CSV8C_183",
+			"bloodmoon_closeout_basic_energy_uids": [
+				"CSVE1C_GRA", "CSVE1C_MET", "CSVE1C_PSY",
+				"CSVE1C_WAT", "CSVE1C_LIG"
+			],
+			"bloodmoon_closeout_damage": 240,
+			"bloodmoon_closeout_zero_cost_opponent_prizes_remaining": 1,
 			"energy_bank_uids": ["CSV9C_078", "CSV8C_135"],
 			"energy_handoff_target_uids": [
 				"CSV9C_175", "CSV8C_067", "CSV9C_054", "CSV8C_172", "CSV8C_028"
@@ -136,7 +152,7 @@
 			"energy_rescue_active_hp_threshold": 60,
 			"energy_rescue_min_opponent_energy": 2,
 			"verify_tera_expansion_basic_search": true,
-			"verify_tera_expansion_from_hand": true,
+			"verify_tera_expansion_from_hand": false,
 			"tera_expansion_stadium_uids": ["CSV9C_207"],
 			"tera_expansion_target_priority": [
 				"CSV8C_028", "CSV8C_067", "CSV9C_175", "CSV9C_054"

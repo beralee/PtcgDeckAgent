@@ -1,0 +1,383 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 337,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 8,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:rich_strike_first",
+      "choice_label": "富裕打击120完成首杀并领取关键奖赏",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:rules_ai_reply",
+      "choice_label": "猛雷鼓规则AI完整回合",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:super_rod_rebuild",
+      "choice_label": "自然抽空后用厉害钓竿回填两能一宝可梦",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:cipher_two_energy",
+      "choice_label": "暗码迷把两张基本能量置顶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:switch_to_ex",
+      "choice_label": "宝可梦交替换入第一只赛富豪ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:coin_active",
+      "choice_label": "前场嘉奖硬币一次抽到两张能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:gold_rush_two_energy",
+      "choice_label": "淘金潮弃2能量造成100伤完成终结",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 8,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "3c28475cc2b07a7d8c0d1c1ea279227d96516e35220041f1203be4ddf048fa0e"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:rich_strike_first",
+        "choice_label": "富裕打击120完成首杀并领取关键奖赏",
+        "depth": 7,
+        "player_actions": 6,
+        "reason": "all_defenses_hold",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:rules_ai_reply",
+              "choice_label": "猛雷鼓规则AI完整回合",
+              "depth": 7,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:super_rod_rebuild",
+                    "choice_label": "自然抽空后用厉害钓竿回填两能一宝可梦",
+                    "depth": 7,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:cipher_two_energy",
+                          "choice_label": "暗码迷把两张基本能量置顶",
+                          "depth": 7,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:switch_to_ex",
+                                "choice_label": "宝可梦交替换入第一只赛富豪ex",
+                                "depth": 7,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:coin_active",
+                                      "choice_label": "前场嘉奖硬币一次抽到两张能量",
+                                      "depth": 7,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:gold_rush_two_energy",
+                                            "choice_label": "淘金潮弃2能量造成100伤完成终结",
+                                            "depth": 7,
+                                            "player_actions": 1,
+                                            "reason": "production_witness_reached_goal",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [],
+                                              "coverage_complete": true,
+                                              "depth": 7,
+                                              "player_actions": 0,
+                                              "reason": "production_witness_reached_goal",
+                                              "score": 4,
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 0
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 7,
+                                        "player_actions": 1,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:gold_rush_two_energy",
+                                        "selected_choice_label": "淘金潮弃2能量造成100伤完成终结",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 7,
+                                  "player_actions": 2,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:coin_active",
+                                  "selected_choice_label": "前场嘉奖硬币一次抽到两张能量",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 7,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:switch_to_ex",
+                            "selected_choice_label": "宝可梦交替换入第一只赛富豪ex",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 7,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:cipher_two_energy",
+                      "selected_choice_label": "暗码迷把两张基本能量置顶",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 7,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:super_rod_rebuild",
+                "selected_choice_label": "自然抽空后用厉害钓竿回填两能一宝可梦",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 7,
+          "player_actions": 5,
+          "reason": "all_defenses_hold",
+          "role": "opponent",
+          "selected_choice_id": "01:rules_ai_reply",
+          "selected_choice_label": "猛雷鼓规则AI完整回合",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 7,
+    "player_actions": 6,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:rich_strike_first",
+    "selected_choice_label": "富裕打击120完成首杀并领取关键奖赏",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:rich_strike_first",
+      "choice_label": "富裕打击120完成首杀并领取关键奖赏",
+      "depth": 7,
+      "player_actions": 6,
+      "reason": "all_defenses_hold",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:rules_ai_reply",
+            "choice_label": "猛雷鼓规则AI完整回合",
+            "depth": 7,
+            "player_actions": 5,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:super_rod_rebuild",
+                  "choice_label": "自然抽空后用厉害钓竿回填两能一宝可梦",
+                  "depth": 7,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:cipher_two_energy",
+                        "choice_label": "暗码迷把两张基本能量置顶",
+                        "depth": 7,
+                        "player_actions": 4,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:switch_to_ex",
+                              "choice_label": "宝可梦交替换入第一只赛富豪ex",
+                              "depth": 7,
+                              "player_actions": 3,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:coin_active",
+                                    "choice_label": "前场嘉奖硬币一次抽到两张能量",
+                                    "depth": 7,
+                                    "player_actions": 2,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:gold_rush_two_energy",
+                                          "choice_label": "淘金潮弃2能量造成100伤完成终结",
+                                          "depth": 7,
+                                          "player_actions": 1,
+                                          "reason": "production_witness_reached_goal",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [],
+                                            "coverage_complete": true,
+                                            "depth": 7,
+                                            "player_actions": 0,
+                                            "reason": "production_witness_reached_goal",
+                                            "score": 4,
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 0
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 7,
+                                      "player_actions": 1,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:gold_rush_two_energy",
+                                      "selected_choice_label": "淘金潮弃2能量造成100伤完成终结",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 7,
+                                "player_actions": 2,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:coin_active",
+                                "selected_choice_label": "前场嘉奖硬币一次抽到两张能量",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 7,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:switch_to_ex",
+                          "selected_choice_label": "宝可梦交替换入第一只赛富豪ex",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 7,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:cipher_two_energy",
+                    "selected_choice_label": "暗码迷把两张基本能量置顶",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 7,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:super_rod_rebuild",
+              "selected_choice_label": "自然抽空后用厉害钓竿回填两能一宝可梦",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 7,
+        "player_actions": 5,
+        "reason": "all_defenses_hold",
+        "role": "opponent",
+        "selected_choice_id": "01:rules_ai_reply",
+        "selected_choice_label": "猛雷鼓规则AI完整回合",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "3c28475cc2b07a7d8c0d1c1ea279227d96516e35220041f1203be4ddf048fa0e",
+  "scenario_id": "gholdengo_10",
+  "shortest_player_actions": 6,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

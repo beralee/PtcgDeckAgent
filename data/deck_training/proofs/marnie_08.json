@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 350,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:research_draw_keys",
+      "choice_label": "博士抽满7张取得能量输送与第7张退化学习器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:energy_search_dark",
+      "choice_label": "能量输送取得愿增猿恶能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:attach_dark_munkidori",
+      "choice_label": "手贴恶能给愿增猿",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:munkidori_zero_damage_gholdengo",
+      "choice_label": "愿增猿把30伤搬给唯一无伤赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:end_first_turn_for_check",
+      "choice_label": "第一回合不攻击，触发第一次双冻结帷幕",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:gholdengo_reply_and_second_check",
+      "choice_label": "赛富豪反击并在回合结束触发第二次双冻结帷幕",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:attach_tm_devolution",
+      "choice_label": "第二回合给长毛巨魔附着退化学习器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:quad_devolution",
+      "choice_label": "以1恶发动退化，四只70伤索财灵同时昏厥",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "f32c0dc98a1aa0664f13a95aea774c0c8093304575bc068cd829b2af4ed22131"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:research_draw_keys",
+        "choice_label": "博士抽满7张取得能量输送与第7张退化学习器",
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:energy_search_dark",
+              "choice_label": "能量输送取得愿增猿恶能",
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:attach_dark_munkidori",
+                    "choice_label": "手贴恶能给愿增猿",
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:munkidori_zero_damage_gholdengo",
+                          "choice_label": "愿增猿把30伤搬给唯一无伤赛富豪",
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:end_first_turn_for_check",
+                                "choice_label": "第一回合不攻击，触发第一次双冻结帷幕",
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:gholdengo_reply_and_second_check",
+                                      "choice_label": "赛富豪反击并在回合结束触发第二次双冻结帷幕",
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:attach_tm_devolution",
+                                            "choice_label": "第二回合给长毛巨魔附着退化学习器",
+                                            "depth": 8,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:quad_devolution",
+                                                  "choice_label": "以1恶发动退化，四只70伤索财灵同时昏厥",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 4,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:quad_devolution",
+                                              "selected_choice_label": "以1恶发动退化，四只70伤索财灵同时昏厥",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 2,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:attach_tm_devolution",
+                                        "selected_choice_label": "第二回合给长毛巨魔附着退化学习器",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 2,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:gholdengo_reply_and_second_check",
+                                  "selected_choice_label": "赛富豪反击并在回合结束触发第二次双冻结帷幕",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 2,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:end_first_turn_for_check",
+                            "selected_choice_label": "第一回合不攻击，触发第一次双冻结帷幕",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 3,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:munkidori_zero_damage_gholdengo",
+                      "selected_choice_label": "愿增猿把30伤搬给唯一无伤赛富豪",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 4,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:attach_dark_munkidori",
+                "selected_choice_label": "手贴恶能给愿增猿",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 5,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:energy_search_dark",
+          "selected_choice_label": "能量输送取得愿增猿恶能",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 6,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:research_draw_keys",
+    "selected_choice_label": "博士抽满7张取得能量输送与第7张退化学习器",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:research_draw_keys",
+      "choice_label": "博士抽满7张取得能量输送与第7张退化学习器",
+      "depth": 8,
+      "player_actions": 6,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:energy_search_dark",
+            "choice_label": "能量输送取得愿增猿恶能",
+            "depth": 8,
+            "player_actions": 5,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:attach_dark_munkidori",
+                  "choice_label": "手贴恶能给愿增猿",
+                  "depth": 8,
+                  "player_actions": 4,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:munkidori_zero_damage_gholdengo",
+                        "choice_label": "愿增猿把30伤搬给唯一无伤赛富豪",
+                        "depth": 8,
+                        "player_actions": 3,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:end_first_turn_for_check",
+                              "choice_label": "第一回合不攻击，触发第一次双冻结帷幕",
+                              "depth": 8,
+                              "player_actions": 2,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:gholdengo_reply_and_second_check",
+                                    "choice_label": "赛富豪反击并在回合结束触发第二次双冻结帷幕",
+                                    "depth": 8,
+                                    "player_actions": 2,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:attach_tm_devolution",
+                                          "choice_label": "第二回合给长毛巨魔附着退化学习器",
+                                          "depth": 8,
+                                          "player_actions": 2,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:quad_devolution",
+                                                "choice_label": "以1恶发动退化，四只70伤索财灵同时昏厥",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 4,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:quad_devolution",
+                                            "selected_choice_label": "以1恶发动退化，四只70伤索财灵同时昏厥",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:attach_tm_devolution",
+                                      "selected_choice_label": "第二回合给长毛巨魔附着退化学习器",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:gholdengo_reply_and_second_check",
+                                "selected_choice_label": "赛富豪反击并在回合结束触发第二次双冻结帷幕",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 2,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:end_first_turn_for_check",
+                          "selected_choice_label": "第一回合不攻击，触发第一次双冻结帷幕",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 3,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:munkidori_zero_damage_gholdengo",
+                    "selected_choice_label": "愿增猿把30伤搬给唯一无伤赛富豪",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 4,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:attach_dark_munkidori",
+              "selected_choice_label": "手贴恶能给愿增猿",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 5,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:energy_search_dark",
+        "selected_choice_label": "能量输送取得愿增猿恶能",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "f32c0dc98a1aa0664f13a95aea774c0c8093304575bc068cd829b2af4ed22131",
+  "scenario_id": "marnie_08",
+  "shortest_player_actions": 6,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

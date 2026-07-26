@@ -125,6 +125,30 @@ func _write_battle_review_config_for_test(data: Dictionary) -> void:
 		file.close()
 
 
+func _snapshot_battle_setup_settings_file() -> Dictionary:
+	const PATH := "user://battle_setup.json"
+	if not FileAccess.file_exists(PATH):
+		return {"exists": false, "text": ""}
+	var file := FileAccess.open(PATH, FileAccess.READ)
+	if file == null:
+		return {"exists": false, "text": ""}
+	var text := file.get_as_text()
+	file.close()
+	return {"exists": true, "text": text}
+
+
+func _restore_battle_setup_settings_file(snapshot: Dictionary) -> void:
+	const PATH := "user://battle_setup.json"
+	if bool(snapshot.get("exists", false)):
+		var file := FileAccess.open(PATH, FileAccess.WRITE)
+		if file != null:
+			file.store_string(str(snapshot.get("text", "")))
+			file.close()
+			return
+	if FileAccess.file_exists(PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
+
+
 func _variant_ids(variants: Array) -> Array[String]:
 	var ids: Array[String] = []
 	for variant: Dictionary in variants:
@@ -220,6 +244,195 @@ func test_battle_setup_llm_model_controls_show_in_ai_mode() -> String:
 	return result
 
 
+func test_battle_setup_deepseek_provider_limits_model_picker() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-pro",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	var model_option := scene.find_child("LLMModelOption", true, false) as OptionButton
+	var model_ids: Array[String] = []
+	for index: int in model_option.get_item_count():
+		model_ids.append(str(model_option.get_item_metadata(index)))
+
+	var result := run_checks([
+		assert_eq(model_ids, ["deepseek-v4-flash", "deepseek-v4-pro"], "DeepSeek direct should expose only its two supported models in BattleSetup"),
+		assert_eq(str(model_option.get_item_metadata(model_option.selected)), "deepseek-v4-pro", "BattleSetup should retain the configured DeepSeek model"),
+		assert_eq(str(scene.call("_selected_llm_model_id")), "deepseek-v4-pro", "BattleSetup should resolve the selected model inside the active provider"),
+	])
+	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_windows_landscape_exposes_released_ns_zoroark_cpg() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-flash",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	var ns_zoroark := _make_deck(800018502, "18.0 N的索罗亚克", "N的索罗亚克ex")
+	scene.set("_ai_deck_list", [ns_zoroark])
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	deck2_option.clear()
+	deck2_option.add_item(ns_zoroark.deck_name)
+	deck2_option.set_item_metadata(0, ns_zoroark.id)
+	deck2_option.select(0)
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+
+	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
+	var strategy_segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
+	var ids: Array[String] = []
+	for index: int in strategy_option.get_item_count():
+		ids.append(str(strategy_option.get_item_metadata(index)))
+
+	var result := run_checks([
+		assert_eq(ids, ["v18_800018502_ns_zoroark", "v18cpg_800018502_ns_zoroark"], "Released N's Zoroark should expose Rule and V18CPG choices"),
+		assert_true(strategy_segment.visible, "Windows landscape should keep the released V18CPG selector visible"),
+		assert_eq(strategy_segment.get_child_count(), 2, "Windows landscape should show both Rule and LLM strategy buttons"),
+		assert_eq((strategy_segment.get_child(0) as Button).text, "规则版", "The first N's Zoroark strategy button should use the short rules label"),
+		assert_eq((strategy_segment.get_child(1) as Button).text, "大模型版", "The second N's Zoroark strategy button should use the short LLM label"),
+		assert_eq(str(scene.call("_selected_ai_strategy_variant_id")), "v18_800018502_ns_zoroark", "Rule should remain the default selected strategy"),
+	])
+	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_saved_llm_variant_overrides_prebuilt_rule_selection() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-flash",
+		"timeout_seconds": 60.0,
+	})
+	var scene := _make_scene_ready()
+	var gardevoir := _make_deck(800018497, "18.0 沙奈朵", "沙奈朵ex")
+	scene.set("_ai_deck_list", [gardevoir])
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	deck2_option.clear()
+	deck2_option.add_item(gardevoir.deck_name)
+	deck2_option.set_item_metadata(0, gardevoir.id)
+	deck2_option.select(0)
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	scene.call("_select_ai_strategy_option", 0)
+	var initial_id := str(scene.call("_selected_ai_strategy_variant_id"))
+
+	scene.set("_pending_ai_strategy_variant_id", "v18cpg_800018497_gardevoir")
+	scene.call("_refresh_ai_strategy_variant_options")
+	var restored_id := str(scene.call("_selected_ai_strategy_variant_id"))
+
+	var result := run_checks([
+		assert_eq(initial_id, "v18_800018497_gardevoir", "A newly built selector should initially use the rules variant"),
+		assert_eq(restored_id, "v18cpg_800018497_gardevoir", "A persisted LLM variant must override the selector's prebuilt rules value"),
+		assert_eq(str(scene.get("_pending_ai_strategy_variant_id")), "", "The persisted variant request should be consumed exactly once"),
+	])
+	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_missing_saved_llm_variant_falls_back_to_rules() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-flash",
+		"timeout_seconds": 60.0,
+	})
+	var scene := _make_scene_ready()
+	var gardevoir := _make_deck(800018497, "18.0 沙奈朵", "沙奈朵ex")
+	scene.set("_ai_deck_list", [gardevoir])
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	deck2_option.clear()
+	deck2_option.add_item(gardevoir.deck_name)
+	deck2_option.set_item_metadata(0, gardevoir.id)
+	deck2_option.select(0)
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	scene.call("_select_ai_strategy_option", 1)
+
+	scene.set("_pending_ai_strategy_variant_id", "removed_llm_variant")
+	scene.call("_refresh_ai_strategy_variant_options")
+	var restored_id := str(scene.call("_selected_ai_strategy_variant_id"))
+
+	var result := run_checks([
+		assert_eq(restored_id, "v18_800018497_gardevoir", "An unavailable persisted LLM variant must safely fall back to rules"),
+		assert_eq(str(scene.get("_pending_ai_strategy_variant_id")), "", "An unavailable persisted variant should not be retried forever"),
+	])
+	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_llm_variant_round_trips_through_settings_file() -> String:
+	var api_snapshot := _snapshot_battle_review_config_file()
+	var settings_snapshot := _snapshot_battle_setup_settings_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-flash",
+		"timeout_seconds": 60.0,
+	})
+	var scene := _make_scene_ready()
+	var player_deck := _make_deck(575716, "player")
+	var gardevoir := _make_deck(800018497, "18.0 沙奈朵", "沙奈朵ex")
+	scene.set("_deck_list", [player_deck])
+	scene.set("_ai_deck_list", [gardevoir])
+	var deck1_option := scene.find_child("Deck1Option", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	deck1_option.clear()
+	deck1_option.add_item(player_deck.deck_name)
+	deck1_option.set_item_metadata(0, player_deck.id)
+	deck1_option.select(0)
+	deck2_option.clear()
+	deck2_option.add_item(gardevoir.deck_name)
+	deck2_option.set_item_metadata(0, gardevoir.id)
+	deck2_option.select(0)
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	scene.call("_select_ai_strategy_option", 1)
+	scene.call("_save_settings")
+
+	scene.call("_select_ai_strategy_option", 0)
+	scene.call("_load_settings")
+	scene.call("_refresh_ai_ui_visibility")
+	var restored_id := str(scene.call("_selected_ai_strategy_variant_id"))
+
+	var result := run_checks([
+		assert_eq(restored_id, "v18cpg_800018497_gardevoir", "The selected LLM variant must survive a battle_setup.json save/load round trip"),
+	])
+	scene.queue_free()
+	_restore_battle_setup_settings_file(settings_snapshot)
+	_restore_battle_review_config_file(api_snapshot)
+	return result
+
+
 func test_battle_setup_defaults_to_rules_model_without_llm_api() -> String:
 	var snapshot := _snapshot_battle_review_config_file()
 	_write_battle_review_config_for_test({
@@ -257,7 +470,7 @@ func test_battle_setup_defaults_to_rules_model_without_llm_api() -> String:
 		assert_false(strategy_option.visible, "Legacy strategy dropdown should stay hidden behind the HUD segment"),
 		assert_true(strategy_option.disabled, "Without API there should be no LLM strategy to select"),
 		assert_eq(strategy_option.get_item_count(), 1, "Without API the strategy selector should only contain the rules model"),
-		assert_str_contains(strategy_option.get_item_text(0), "规则版", "The only available AI mode should be the rules variant"),
+		assert_eq(strategy_option.get_item_text(0), "规则版", "The only available AI mode should use the short rules label"),
 		assert_eq(strategy_segment.get_child_count() if strategy_segment != null else 0, 1, "Without API the HUD segment should only contain the rules model"),
 		assert_true(strategy_button != null and strategy_button.disabled, "The single rules-mode segment should be shown as the locked current mode"),
 		assert_eq(strategy_button.text if strategy_button != null else "", strategy_option.get_item_text(0), "HUD segment should mirror the hidden strategy label"),
@@ -330,10 +543,10 @@ func test_battle_setup_strategy_variant_labels_are_readable_chinese() -> String:
 	var result := run_checks([
 		assert_true(strategy_segment != null and strategy_segment.visible, "Miraidon AI should expose strategy variant choices when API is configured"),
 		assert_false(strategy_option.visible, "Legacy strategy dropdown should stay hidden when the HUD segment is visible"),
-		assert_eq(strategy_option.get_item_text(0), "规则版密勒顿", "Rules strategy label should be readable Chinese"),
-		assert_eq(strategy_option.get_item_text(1), "大模型版密勒顿", "LLM strategy label should be readable Chinese"),
-		assert_eq(rules_button.text if rules_button != null else "", "规则版密勒顿", "Rules segment button should mirror the readable Chinese label"),
-		assert_eq(llm_button.text if llm_button != null else "", "大模型版密勒顿", "LLM segment button should mirror the readable Chinese label"),
+		assert_eq(strategy_option.get_item_text(0), "规则版", "Rules strategy should use the short label"),
+		assert_eq(strategy_option.get_item_text(1), "大模型版", "LLM strategy should use the short label"),
+		assert_eq(rules_button.text if rules_button != null else "", "规则版", "Rules segment button should mirror the short label"),
+		assert_eq(llm_button.text if llm_button != null else "", "大模型版", "LLM segment button should mirror the short label"),
 	])
 	_restore_battle_review_config_file(snapshot)
 	return result
@@ -357,35 +570,19 @@ func test_battle_setup_all_strategy_variant_labels_use_chinese_naming() -> Strin
 	mode_option.select(1)
 	scene.call("_on_mode_changed", 1)
 
-	var expected_labels := {
-		575716: ["规则版喷火龙ex", "大模型版喷火龙ex"],
-		575720: ["规则版密勒顿", "大模型版密勒顿"],
-		569061: ["规则版阿尔宙斯骑拉帝纳", "大模型版阿尔宙斯骑拉帝纳"],
-		575657: ["规则版洛奇亚始祖大鸟", "大模型版洛奇亚始祖大鸟"],
-		609431: ["规则版17.5洛奇亚始祖大鸟", "大模型版17.5洛奇亚始祖大鸟"],
-		578647: ["规则版沙奈朵", "大模型版沙奈朵"],
-		610080: ["规则版17.5沙奈朵", "大模型版17.5沙奈朵"],
-		575718: ["规则版猛雷鼓", "大模型版猛雷鼓"],
-		579502: ["规则版多龙喷火龙", "大模型版多龙喷火龙"],
-		575723: ["规则版多龙黑夜魔灵", "大模型版多龙黑夜魔灵"],
-		1700002: ["规则版17.0铝钢桥龙", "大模型版17.0铝钢桥龙"],
-		1700003: ["规则版17.0水龙龟", "大模型版17.0水龙龟"],
-		1700004: ["规则版17.0水龙赛富豪", "大模型版17.0水龙赛富豪"],
-		1700005: ["规则版17.0自爆恶喷", "大模型版17.0自爆恶喷"],
-		1700007: ["规则版17.0密勒顿", "大模型版17.0密勒顿"],
-		1700008: ["规则版17.0多龙黑夜魔灵", "大模型版17.0多龙黑夜魔灵"],
-		1700011: ["规则版17.0龙柱", "大模型版17.0龙柱"],
-	}
+	var supported_deck_ids := [
+		575716, 575720, 569061, 575657, 609431, 578647, 610080, 575718,
+		579502, 575723, 1700002, 1700003, 1700004, 1700005, 1700007,
+		1700008, 1700011,
+	]
 	var checks: Array[String] = []
-	for deck_id: int in expected_labels.keys():
+	for deck_id: int in supported_deck_ids:
 		scene.call("_select_option_for_deck_id", deck2_option, deck_id)
 		var variants: Array = scene.call("_detect_ai_strategy_variants")
 		var labels: Array[String] = []
 		for variant: Dictionary in variants:
 			labels.append(str(variant.get("label", "")))
-		checks.append(assert_eq(labels, expected_labels[deck_id], "Deck %d strategy labels should use Chinese rules/LLM naming" % deck_id))
-		for label: String in labels:
-			checks.append(assert_false(label.begins_with("Rules ") or label.begins_with("LLM "), "Strategy label should not expose English prefix: %s" % label))
+		checks.append(assert_eq(labels, ["规则版", "大模型版"], "Deck %d strategy labels should use the short rules/LLM naming" % deck_id))
 	_restore_battle_review_config_file(snapshot)
 	return run_checks(checks)
 
@@ -646,6 +843,57 @@ func test_battle_setup_ai_deck_picker_opens_all_with_v18_ai_decks_first() -> Str
 		assert_eq(picker_category, "all", "AI deck picker should open on the creation-time ordered full list"),
 		assert_eq(all_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck picker All category should order every 18.0 deck by benchmark strength"),
 		assert_eq(recent_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck picker Recent category should preserve the same 18.0 benchmark-strength order"),
+	])
+
+
+func test_battle_setup_ai_deck_picker_marks_llm_supported_decks_and_explains_star() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+
+	var player_deck := _make_deck(99000001, "Player Deck")
+	var llm_deck := _make_deck(575716, "LLM Charizard", "Charizard ex")
+	var released_v18_llm_deck := _make_deck(800018509, "18.0 LLM Raging Bolt")
+	var rules_only_deck := _make_deck(561444, "Rules Dialga", "Dialga VSTAR")
+	scene.set("_deck_list", [player_deck])
+	scene.set("_ai_deck_list", [llm_deck, released_v18_llm_deck, rules_only_deck])
+	scene.call("_apply_deck_option_controls", player_deck, llm_deck)
+
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	var option_labels_by_id := {}
+	for index: int in deck2_option.item_count:
+		option_labels_by_id[int(deck2_option.get_item_metadata(index))] = deck2_option.get_item_text(index)
+
+	scene.set("_deck_picker_slot_index", 1)
+	scene.set("_deck_picker_category", "all")
+	scene.set("_deck_picker_search", "")
+	scene.call("_ensure_deck_picker_overlay")
+	scene.call("_refresh_deck_picker")
+	var legend := scene.find_child("DeckPickerLLMLegend", true, false) as Label
+	var grid := scene.get("_deck_picker_grid") as GridContainer
+	var picker_labels: Array[String] = []
+	for child: Node in grid.get_children():
+		if child is Button:
+			picker_labels.append((child as Button).text)
+	var selected_button := scene.find_child("Deck2PickerButton", true, false) as Button
+	var ai_legend_visible := legend != null and legend.visible
+	scene.set("_deck_picker_slot_index", 0)
+	scene.call("_refresh_deck_picker")
+	var player_legend_hidden := legend != null and not legend.visible
+
+	return run_checks([
+		assert_eq(str(option_labels_by_id.get(575716, "")), "LLM Charizard * (60张)", "The AI deck option list should suffix LLM-supported decks with a star"),
+		assert_eq(str(option_labels_by_id.get(800018509, "")), "18.0 LLM Raging Bolt * (60张)", "Released V18 LLM decks should receive the same automatic support star"),
+		assert_eq(str(option_labels_by_id.get(561444, "")), "Rules Dialga (60张)", "Rules-only AI decks must not receive the LLM support star"),
+		assert_true("LLM Charizard *" in picker_labels, "The visible AI deck picker HUD should mark an LLM-supported deck"),
+		assert_true("18.0 LLM Raging Bolt *" in picker_labels, "The visible AI deck picker HUD should mark released V18 LLM decks"),
+		assert_true("Rules Dialga" in picker_labels, "The visible AI deck picker HUD should keep rules-only names unchanged"),
+		assert_eq(selected_button.text if selected_button != null else "", "LLM Charizard *", "The selected AI deck HUD button should preserve the support star"),
+		assert_true(ai_legend_visible, "The AI deck picker HUD should show the star explanation above the list"),
+		assert_true(player_legend_hidden, "The star explanation should stay hidden for the player deck picker"),
+		assert_str_contains(legend.text if legend != null else "", "*", "The AI deck picker legend should identify the star symbol"),
+		assert_str_contains(legend.text if legend != null else "", "大模型版 AI", "The AI deck picker legend should explain that starred decks support the LLM AI"),
 	])
 
 

@@ -1,0 +1,671 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 401,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 14,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:first_split",
+      "choice_label": "焚身加农炮90+90取得两个一奖",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:ns_reply",
+      "choice_label": "对手索罗亚克反杀首攻者",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:fez_draw",
+      "choice_label": "化危为吉取得担架、PP提升剂与城堡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:cipher_stack",
+      "choice_label": "暗码迷置顶第二张PP提升剂与捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:recover_zoroark",
+      "choice_label": "夜间担架回收弃牌区索罗亚克ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:evolve_backup",
+      "choice_label": "把60伤索罗亚进化为第二索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:trade_stack",
+      "choice_label": "新索罗亚克交易抽到第二PP与捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:pp_one",
+      "choice_label": "第一PP回收一恶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:pp_two",
+      "choice_label": "第二PP回收另一恶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:castle",
+      "choice_label": "N的城堡让莱希拉姆零撤退",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:retreat",
+      "choice_label": "换入重建完成的索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:counter_bloodmoon",
+      "choice_label": "捕捉剩120HP月月熊",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "12:rage_120",
+      "choice_label": "60伤索罗亚克复制力量愤怒120终结",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 12,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "69ddd3365a47248f4b37fa1f4f358a61c58f53d372eb0cc9f5e10764f0b13ea9"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:first_split",
+        "choice_label": "焚身加农炮90+90取得两个一奖",
+        "depth": 13,
+        "player_actions": 12,
+        "reason": "all_defenses_hold",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:ns_reply",
+              "choice_label": "对手索罗亚克反杀首攻者",
+              "depth": 13,
+              "player_actions": 11,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:fez_draw",
+                    "choice_label": "化危为吉取得担架、PP提升剂与城堡",
+                    "depth": 13,
+                    "player_actions": 11,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:cipher_stack",
+                          "choice_label": "暗码迷置顶第二张PP提升剂与捕捉器",
+                          "depth": 13,
+                          "player_actions": 10,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:recover_zoroark",
+                                "choice_label": "夜间担架回收弃牌区索罗亚克ex",
+                                "depth": 13,
+                                "player_actions": 9,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:evolve_backup",
+                                      "choice_label": "把60伤索罗亚进化为第二索罗亚克",
+                                      "depth": 13,
+                                      "player_actions": 8,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:trade_stack",
+                                            "choice_label": "新索罗亚克交易抽到第二PP与捕捉器",
+                                            "depth": 13,
+                                            "player_actions": 7,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:pp_one",
+                                                  "choice_label": "第一PP回收一恶",
+                                                  "depth": 13,
+                                                  "player_actions": 6,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:pp_two",
+                                                        "choice_label": "第二PP回收另一恶",
+                                                        "depth": 13,
+                                                        "player_actions": 5,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:castle",
+                                                              "choice_label": "N的城堡让莱希拉姆零撤退",
+                                                              "depth": 13,
+                                                              "player_actions": 4,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:retreat",
+                                                                    "choice_label": "换入重建完成的索罗亚克",
+                                                                    "depth": 13,
+                                                                    "player_actions": 3,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:counter_bloodmoon",
+                                                                          "choice_label": "捕捉剩120HP月月熊",
+                                                                          "depth": 13,
+                                                                          "player_actions": 2,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [
+                                                                              {
+                                                                                "choice_id": "12:rage_120",
+                                                                                "choice_label": "60伤索罗亚克复制力量愤怒120终结",
+                                                                                "depth": 13,
+                                                                                "player_actions": 1,
+                                                                                "reason": "production_witness_reached_goal",
+                                                                                "status": "PROVEN",
+                                                                                "tree": {
+                                                                                  "branches": [],
+                                                                                  "coverage_complete": true,
+                                                                                  "depth": 13,
+                                                                                  "player_actions": 0,
+                                                                                  "reason": "production_witness_reached_goal",
+                                                                                  "score": 4,
+                                                                                  "status": "PROVEN",
+                                                                                  "winning_choice_count": 0
+                                                                                }
+                                                                              }
+                                                                            ],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 13,
+                                                                            "player_actions": 1,
+                                                                            "reason": "player_has_forcing_choice",
+                                                                            "role": "player",
+                                                                            "selected_choice_id": "12:rage_120",
+                                                                            "selected_choice_label": "60伤索罗亚克复制力量愤怒120终结",
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 1
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 13,
+                                                                      "player_actions": 2,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:counter_bloodmoon",
+                                                                      "selected_choice_label": "捕捉剩120HP月月熊",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 13,
+                                                                "player_actions": 3,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:retreat",
+                                                                "selected_choice_label": "换入重建完成的索罗亚克",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 13,
+                                                          "player_actions": 4,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:castle",
+                                                          "selected_choice_label": "N的城堡让莱希拉姆零撤退",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 13,
+                                                    "player_actions": 5,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:pp_two",
+                                                    "selected_choice_label": "第二PP回收另一恶",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 13,
+                                              "player_actions": 6,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:pp_one",
+                                              "selected_choice_label": "第一PP回收一恶",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 13,
+                                        "player_actions": 7,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:trade_stack",
+                                        "selected_choice_label": "新索罗亚克交易抽到第二PP与捕捉器",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 13,
+                                  "player_actions": 8,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:evolve_backup",
+                                  "selected_choice_label": "把60伤索罗亚进化为第二索罗亚克",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 13,
+                            "player_actions": 9,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:recover_zoroark",
+                            "selected_choice_label": "夜间担架回收弃牌区索罗亚克ex",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 13,
+                      "player_actions": 10,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:cipher_stack",
+                      "selected_choice_label": "暗码迷置顶第二张PP提升剂与捕捉器",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 13,
+                "player_actions": 11,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:fez_draw",
+                "selected_choice_label": "化危为吉取得担架、PP提升剂与城堡",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 13,
+          "player_actions": 11,
+          "reason": "all_defenses_hold",
+          "role": "opponent",
+          "selected_choice_id": "01:ns_reply",
+          "selected_choice_label": "对手索罗亚克反杀首攻者",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 13,
+    "player_actions": 12,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:first_split",
+    "selected_choice_label": "焚身加农炮90+90取得两个一奖",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:first_split",
+      "choice_label": "焚身加农炮90+90取得两个一奖",
+      "depth": 13,
+      "player_actions": 12,
+      "reason": "all_defenses_hold",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:ns_reply",
+            "choice_label": "对手索罗亚克反杀首攻者",
+            "depth": 13,
+            "player_actions": 11,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:fez_draw",
+                  "choice_label": "化危为吉取得担架、PP提升剂与城堡",
+                  "depth": 13,
+                  "player_actions": 11,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:cipher_stack",
+                        "choice_label": "暗码迷置顶第二张PP提升剂与捕捉器",
+                        "depth": 13,
+                        "player_actions": 10,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:recover_zoroark",
+                              "choice_label": "夜间担架回收弃牌区索罗亚克ex",
+                              "depth": 13,
+                              "player_actions": 9,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:evolve_backup",
+                                    "choice_label": "把60伤索罗亚进化为第二索罗亚克",
+                                    "depth": 13,
+                                    "player_actions": 8,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:trade_stack",
+                                          "choice_label": "新索罗亚克交易抽到第二PP与捕捉器",
+                                          "depth": 13,
+                                          "player_actions": 7,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:pp_one",
+                                                "choice_label": "第一PP回收一恶",
+                                                "depth": 13,
+                                                "player_actions": 6,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:pp_two",
+                                                      "choice_label": "第二PP回收另一恶",
+                                                      "depth": 13,
+                                                      "player_actions": 5,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:castle",
+                                                            "choice_label": "N的城堡让莱希拉姆零撤退",
+                                                            "depth": 13,
+                                                            "player_actions": 4,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:retreat",
+                                                                  "choice_label": "换入重建完成的索罗亚克",
+                                                                  "depth": 13,
+                                                                  "player_actions": 3,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:counter_bloodmoon",
+                                                                        "choice_label": "捕捉剩120HP月月熊",
+                                                                        "depth": 13,
+                                                                        "player_actions": 2,
+                                                                        "reason": "player_has_forcing_choice",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [
+                                                                            {
+                                                                              "choice_id": "12:rage_120",
+                                                                              "choice_label": "60伤索罗亚克复制力量愤怒120终结",
+                                                                              "depth": 13,
+                                                                              "player_actions": 1,
+                                                                              "reason": "production_witness_reached_goal",
+                                                                              "status": "PROVEN",
+                                                                              "tree": {
+                                                                                "branches": [],
+                                                                                "coverage_complete": true,
+                                                                                "depth": 13,
+                                                                                "player_actions": 0,
+                                                                                "reason": "production_witness_reached_goal",
+                                                                                "score": 4,
+                                                                                "status": "PROVEN",
+                                                                                "winning_choice_count": 0
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 13,
+                                                                          "player_actions": 1,
+                                                                          "reason": "player_has_forcing_choice",
+                                                                          "role": "player",
+                                                                          "selected_choice_id": "12:rage_120",
+                                                                          "selected_choice_label": "60伤索罗亚克复制力量愤怒120终结",
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 1
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 13,
+                                                                    "player_actions": 2,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:counter_bloodmoon",
+                                                                    "selected_choice_label": "捕捉剩120HP月月熊",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 13,
+                                                              "player_actions": 3,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:retreat",
+                                                              "selected_choice_label": "换入重建完成的索罗亚克",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 13,
+                                                        "player_actions": 4,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:castle",
+                                                        "selected_choice_label": "N的城堡让莱希拉姆零撤退",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 13,
+                                                  "player_actions": 5,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:pp_two",
+                                                  "selected_choice_label": "第二PP回收另一恶",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 13,
+                                            "player_actions": 6,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:pp_one",
+                                            "selected_choice_label": "第一PP回收一恶",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 13,
+                                      "player_actions": 7,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:trade_stack",
+                                      "selected_choice_label": "新索罗亚克交易抽到第二PP与捕捉器",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 13,
+                                "player_actions": 8,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:evolve_backup",
+                                "selected_choice_label": "把60伤索罗亚进化为第二索罗亚克",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 13,
+                          "player_actions": 9,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:recover_zoroark",
+                          "selected_choice_label": "夜间担架回收弃牌区索罗亚克ex",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 13,
+                    "player_actions": 10,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:cipher_stack",
+                    "selected_choice_label": "暗码迷置顶第二张PP提升剂与捕捉器",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 13,
+              "player_actions": 11,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:fez_draw",
+              "selected_choice_label": "化危为吉取得担架、PP提升剂与城堡",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 13,
+        "player_actions": 11,
+        "reason": "all_defenses_hold",
+        "role": "opponent",
+        "selected_choice_id": "01:ns_reply",
+        "selected_choice_label": "对手索罗亚克反杀首攻者",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "69ddd3365a47248f4b37fa1f4f358a61c58f53d372eb0cc9f5e10764f0b13ea9",
+  "scenario_id": "n_zoroark_05",
+  "shortest_player_actions": 12,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

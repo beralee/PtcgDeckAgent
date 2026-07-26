@@ -1,5 +1,5 @@
 {
-  "profile_version": 12,
+  "profile_version": 22,
   "semantic_version": 2,
   "risk_posture": "balanced",
   "switch_margin": 45.0,
@@ -8,6 +8,7 @@
   "delta_response_token_budget": 180,
   "turn_visible_wait_budget_ms": 6500,
   "cold_request_estimate_ms": 5000,
+  "turn_model_judgment_mode": "required_first_main_window",
   "max_policy_nodes": 8,
   "protected_roles": [
     "next_attacker",
@@ -22,7 +23,8 @@
       "priority": 1,
       "goal": "minimum_resource_ko",
       "when_all": [
-        {"fact": "attack.ko_available", "op": "==", "value": true}
+        {"fact": "attack.ko_available", "op": "==", "value": true},
+        {"fact": "continuity.floor_met", "op": "==", "value": true}
       ],
       "prefer_routes": ["route:attack_ko"],
       "avoid_routes": ["route:information", "route:opening_search", "route:noctowl_search", "route:develop"],
@@ -30,6 +32,28 @@
     },
     {
       "priority": 2,
+      "goal": "post_attack_continuity",
+      "when_all": [
+        {"fact": "attack.ko_available", "op": "==", "value": true},
+        {"fact": "continuity.review_before_terminal", "op": "==", "value": true}
+      ],
+      "prefer_routes": ["route:stadium", "route:evolve", "route:noctowl_search", "route:develop", "route:information", "route:accelerate", "route:energy_commit"],
+      "avoid_routes": ["route:attack_ko", "route:attack_pressure", "route:end_turn"],
+      "preserve_roles": ["raging_bolt_attack_cost", "next_attacker", "teal_mask_energy_engine"]
+    },
+    {
+      "priority": 3,
+      "goal": "route_completion",
+      "when_all": [
+        {"fact": "fan_call.available", "op": "==", "value": true},
+        {"fact": "attack.ko_available", "op": "==", "value": false}
+      ],
+      "prefer_routes": ["route:noctowl_search", "route:accelerate", "route:energy_commit"],
+      "avoid_routes": ["route:attack_pressure", "route:end_turn"],
+      "preserve_roles": ["raging_bolt_attack_cost", "teal_mask_energy_engine", "next_attacker"]
+    },
+    {
+      "priority": 4,
       "goal": "prize_closeout",
       "when_all": [
         {"fact": "resources.prizes_remaining", "op": "<=", "value": 2},
@@ -40,17 +64,17 @@
       "preserve_roles": ["late_game_gust"]
     },
     {
-      "priority": 3,
+      "priority": 5,
       "goal": "next_attacker_continuity",
       "when_all": [
         {"fact": "attack.ready", "op": "==", "value": true}
       ],
       "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:accelerate"],
-      "avoid_routes": ["route:opening_search"],
+      "avoid_routes": [],
       "preserve_roles": ["next_attacker", "teal_mask_energy_engine", "recovery"]
     },
     {
-      "priority": 4,
+      "priority": 6,
       "goal": "typed_energy_continuity",
       "when_all": [
         {"fact": "turn.energy_available", "op": "==", "value": true}
@@ -60,7 +84,7 @@
       "preserve_roles": ["raging_bolt_attack_cost", "energy_access"]
     },
     {
-      "priority": 5,
+      "priority": 7,
       "goal": "bench_space_preservation",
       "when_all": [
         {"fact": "board.bench_full", "op": "==", "value": false}
@@ -70,7 +94,7 @@
       "preserve_roles": ["next_attacker", "teal_mask_energy_engine"]
     },
     {
-      "priority": 6,
+      "priority": 8,
       "goal": "low_deck_safety",
       "when_all": [
         {"fact": "resources.deck_low", "op": "==", "value": true}
@@ -88,17 +112,23 @@
       "route:accelerate": 35.0,
       "route:energy_commit": 25.0,
       "route:gust": 20.0,
-      "route:information": -60.0,
-      "route:opening_search": -70.0,
-      "route:noctowl_search": -45.0,
-      "route:develop": -20.0
+      "route:information": 90.0,
+      "route:opening_search": 110.0,
+      "route:noctowl_search": 220.0,
+      "route:stadium": 180.0,
+      "route:evolve": 160.0,
+      "route:develop": 80.0
     },
     "ready_ko_order": [
-      "attack_ko",
-      "gust",
-      "accelerate",
+      "stadium",
+      "evolve",
+      "noctowl_search",
+      "opening_search",
+      "develop",
       "information",
-      "develop"
+      "accelerate",
+      "gust",
+      "attack_ko"
     ],
     "attackless_order": [
       "accelerate",
@@ -107,16 +137,58 @@
       "information",
       "pivot"
     ],
-    "avoid_before_ready_attack": [
-      "opening_search",
-      "noctowl_search"
-    ],
-    "avoid_after_ko_secured": [
-      "information",
-      "opening_search",
-      "noctowl_search",
-      "develop"
-    ]
+    "avoid_before_ready_attack": [],
+    "avoid_after_ko_secured": []
+  },
+  "post_attack_continuity": {
+    "enabled": true,
+    "review_before_non_terminal_attack": true,
+    "review_during_main_phase": true,
+    "credible_response_mode": "active_ko_or_engine_loss",
+    "minimum_banked_damage_units": 3,
+    "minimum_live_engine_count": 1,
+    "minimum_energized_engine_count": 1,
+    "minimum_current_live_engine_count": 2,
+    "minimum_current_energized_engine_count": 2,
+    "minimum_search_engine_roots": 1,
+    "minimum_next_attacker_roots": 1,
+    "require_next_attacker_cost_ready": true,
+    "next_attacker_uids": ["CSV7C_154", "CSV8C_161"],
+    "required_attack_types": ["L", "F"],
+    "engine_uids": ["CSV8C_028"],
+    "engine_effect_ids": ["409898a79b38fe8ca279e7bdaf4fd52e"],
+    "engine_energy_symbols": ["G"],
+    "search_engine_root_uids": ["CSV9C_154", "CSV9.5C_141"],
+    "search_engine_uids": ["CSV9C_155"],
+    "tera_enabler_uids": ["CSV8C_028"],
+    "search_engine_root_search_uids": ["CSVH1C_043"],
+    "expansion_stadium_uids": ["CSV9C_207"],
+    "productive_basic_uids": ["CSV9C_154", "CSV9.5C_141", "CSV8C_028"],
+    "base_bench_capacity": 5,
+    "expanded_bench_capacity": 8,
+    "preserve_bench_slots": 1,
+    "critical_deck_threshold": 6,
+    "avoid_engine_setup_when_opponent_prizes_at_most": 2,
+    "force_existing_engine_ability_when_debt": true,
+    "force_engine_setup_when_missing": true,
+    "force_noctowl_search_when_debt": true,
+    "force_expansion_stadium_when_blocked": true,
+    "force_search_root_setup_when_missing": true,
+    "force_search_root_acquisition_when_attack_unready": true,
+    "force_search_engine_evolution_when_ready": true,
+    "force_tera_enabler_before_search_evolution": true,
+    "require_visible_search_engine_followup_for_forced_root": true,
+    "force_search_root_only_when_own_prizes_at_least": 5,
+    "force_capacity_only_for_immediate_engine_chain": true,
+    "allow_last_bench_slot_for_immediate_energy_engine": true,
+    "expansion_stadium_priority": 0,
+    "noctowl_search_priority": 5,
+    "tera_enabler_priority": 8,
+    "search_engine_evolution_priority": 10,
+    "search_root_acquisition_priority": 15,
+    "search_root_setup_priority": 20,
+    "existing_engine_ability_priority": 30,
+    "engine_setup_priority": 40
   },
   "safety": {
     "max_switch_gap": 75.0,
@@ -151,7 +223,28 @@
       ],
       "teal_mask_engine_effect_ids": [
         "409898a79b38fe8ca279e7bdaf4fd52e"
-      ]
+      ],
+      "minimum_lethal_discard_step_ids": ["discard_basic_energy"],
+      "minimum_lethal_attack_indexes": [1]
+    },
+    "tera_noctowl_search": {
+      "completion_gate_enabled": true,
+      "completion_damage_floor": 210,
+      "completion_pair_roles": ["supporter_acceleration", "energy_access"],
+      "completion_pair_bonus": 1500.0,
+      "continuity_pair_bonus": 3200.0,
+      "verified_pair_switch_margin": 120.0,
+      "verify_search_engine_root_acquisition": true,
+      "search_engine_root_search_uids": ["CSVH1C_043"],
+      "search_engine_root_target_uids": ["CSV9C_154", "CSV9.5C_141"],
+      "pair_roles_by_route": {
+        "route:noctowl_search": [
+          ["supporter_acceleration", "energy_access"],
+          ["energy_access", "energy_mover"],
+          ["gust", "energy_access"],
+          ["stadium", "pokemon_search"]
+        ]
+      }
     }
   },
   "noctowl_pair_roles": [

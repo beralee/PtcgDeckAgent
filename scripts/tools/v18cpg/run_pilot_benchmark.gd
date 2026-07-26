@@ -13,6 +13,8 @@ const RuleRootFixtureClientScript = preload("res://scripts/tools/v18cpg/V18CPGRu
 const DEFAULT_ANCHOR_ID := 575720
 const DEFAULT_SEED_BASE := 181800
 const DEFAULT_MAX_STEPS := 220
+const DEEPSEEK_DIRECT_ENDPOINT := "https://api.deepseek.com"
+const DEEPSEEK_DEFAULT_MODEL := "deepseek-v4-pro"
 
 
 func _ready() -> void:
@@ -32,11 +34,12 @@ func _run() -> void:
 	var fake_model_rule_root := bool(options.get("fake_model_rule_root", false))
 	var model_enabled := fake_model_rule_root or not bool(options.get("no_model", false)) and api_key != ""
 	print("===== V18CPG pilot paired benchmark =====")
-	print("decks=%s games_per_deck=%d seed_base=%d model_enabled=%s model=%s" % [
+	print("decks=%s games_per_deck=%d seed_base=%d model_enabled=%s provider=%s model=%s" % [
 		deck_ids,
 		int(options.get("games", 1)),
 		int(options.get("seed_base", DEFAULT_SEED_BASE)),
 		model_enabled,
+		str(options.get("provider", "deepseek")),
 		str(options.get("model", "")),
 	])
 	var reports: Array[Dictionary] = []
@@ -47,10 +50,11 @@ func _run() -> void:
 	var combined := {
 		"schema_version": 1,
 		"architecture": "V18CPG",
-		"comparison": "paired_same_seed_vs_rules_only_miraidon_anchor",
+		"comparison": "paired_same_seed_vs_rules_only_anchor",
 		"anchor_id": int(options.get("anchor_id", DEFAULT_ANCHOR_ID)),
 		"games_per_deck": int(options.get("games", 1)),
 		"seed_base": int(options.get("seed_base", DEFAULT_SEED_BASE)),
+		"provider": "fixture" if fake_model_rule_root else str(options.get("provider", "deepseek")),
 		"model": "deterministic_rule_root_fixture" if fake_model_rule_root else str(options.get("model", "")) if model_enabled else "disabled",
 		"model_enabled": model_enabled,
 		"fake_model_rule_root": fake_model_rule_root,
@@ -63,6 +67,9 @@ func _run() -> void:
 	}
 	var output_path := str(options.get("json_output", ""))
 	if output_path != "":
+		DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path(output_path.get_base_dir())
+		)
 		var file := FileAccess.open(output_path, FileAccess.WRITE)
 		if file != null:
 			# Keep benchmark artifacts parseable by Windows tooling regardless of
@@ -621,6 +628,11 @@ func _print_deck_report(report: Dictionary) -> void:
 
 
 func _parse_args(args: PackedStringArray) -> Dictionary:
+	var saved_config := _saved_battle_review_api_config()
+	var direct_config := _resolve_deepseek_direct_config(saved_config, {
+		"DEEPSEEK_API_KEY": OS.get_environment("DEEPSEEK_API_KEY"),
+		"V18CPG_MODEL": OS.get_environment("V18CPG_MODEL"),
+	})
 	var options := {
 		"deck_id": 0,
 		"anchor_id": DEFAULT_ANCHOR_ID,
@@ -628,10 +640,11 @@ func _parse_args(args: PackedStringArray) -> Dictionary:
 		"seed_base": DEFAULT_SEED_BASE,
 		"max_steps": DEFAULT_MAX_STEPS,
 		"json_output": "",
-		"endpoint": OS.get_environment("ZENMUX_ENDPOINT") if OS.get_environment("ZENMUX_ENDPOINT") != "" else "https://zenmux.ai/api/v1",
-		"api_key": OS.get_environment("ZENMUX_API_KEY"),
-		"model": OS.get_environment("V18CPG_MODEL") if OS.get_environment("V18CPG_MODEL") != "" else "deepseek-v4-flash",
-		"timeout_seconds": 30.0,
+		"provider": "deepseek",
+		"endpoint": str(direct_config.get("endpoint", DEEPSEEK_DIRECT_ENDPOINT)),
+		"api_key": str(direct_config.get("api_key", "")),
+		"model": str(direct_config.get("model", DEEPSEEK_DEFAULT_MODEL)),
+		"timeout_seconds": float(direct_config.get("timeout_seconds", 60.0)),
 		"wait_budget_seconds": 35.0,
 		"no_model": false,
 		"write_audit": false,
@@ -678,6 +691,50 @@ func _parse_args(args: PackedStringArray) -> Dictionary:
 		elif arg == "--ignore-profile-overrides":
 			options["ignore_profile_overrides"] = true
 	return options
+
+
+func _saved_battle_review_api_config() -> Dictionary:
+	var tree := get_tree()
+	if tree == null or tree.root == null:
+		return {}
+	var manager := tree.root.get_node_or_null("GameManager")
+	if manager == null or not manager.has_method("get_battle_review_api_config"):
+		return {}
+	var config: Variant = manager.call("get_battle_review_api_config")
+	return (config as Dictionary).duplicate(true) if config is Dictionary else {}
+
+
+func _resolve_deepseek_direct_config(
+	saved_config: Dictionary,
+	environment: Dictionary
+) -> Dictionary:
+	var provider := str(saved_config.get("provider", "")).strip_edges().to_lower()
+	var provider_configs: Dictionary = saved_config.get("provider_configs", {}) \
+		if saved_config.get("provider_configs", {}) is Dictionary else {}
+	var saved_deepseek: Dictionary = provider_configs.get("deepseek", {}) \
+		if provider_configs.get("deepseek", {}) is Dictionary else {}
+	var saved_key := str(saved_deepseek.get("api_key", "")).strip_edges()
+	var saved_model := str(saved_deepseek.get("model", "")).strip_edges()
+	if provider == "deepseek":
+		var active_key := str(saved_config.get("api_key", "")).strip_edges()
+		var active_model := str(saved_config.get("model", "")).strip_edges()
+		if active_key != "":
+			saved_key = active_key
+		if active_model != "":
+			saved_model = active_model
+	var environment_key := str(environment.get("DEEPSEEK_API_KEY", "")).strip_edges()
+	var environment_model := str(environment.get("V18CPG_MODEL", "")).strip_edges()
+	return {
+		# The pilot is a DeepSeek benchmark. Never inherit a ZenMux endpoint or
+		# credential merely because another provider is active in shared settings.
+		"provider": "deepseek",
+		"endpoint": DEEPSEEK_DIRECT_ENDPOINT,
+		"api_key": environment_key if environment_key != "" else saved_key,
+		"model": environment_model if environment_model != "" \
+			else saved_model if saved_model in ["deepseek-v4-flash", "deepseek-v4-pro"] \
+			else DEEPSEEK_DEFAULT_MODEL,
+		"timeout_seconds": maxf(1.0, float(saved_config.get("timeout_seconds", 60.0))),
+	}
 
 
 func _decision_logs_equal(left: Dictionary, right: Dictionary) -> bool:

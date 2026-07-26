@@ -9,17 +9,38 @@ var _failures: Array[String] = []
 
 func _initialize() -> void:
 	var profile := ProfileCatalogScript.get_profile_for_deck(800018497)
-	_check(int(profile.get("profile_version", 0)) >= 7, "round06 profile must be active")
-	_test_exact_engine_search(profile)
-	_test_negative_boundaries(profile)
-	_test_profile_isolation()
+	_check(int(profile.get("profile_version", 0)) >= 11, "the source-correct profile must be active")
+	_test_invalidated_legacy_route_is_removed(profile)
 	if _failures.is_empty():
-		print("V18CPG 800018497 round06 engine-before-completion: PASS")
+		print("V18CPG 800018497 invalidated engine route removal: PASS")
 		quit(0)
 		return
 	for failure: String in _failures:
 		push_error(failure)
 	quit(1)
+
+
+func _test_invalidated_legacy_route_is_removed(profile: Dictionary) -> void:
+	var annotated := CapabilityRegistryScript.new().annotate_frontier(
+		_frontier(),
+		_observation(),
+		_facts(),
+		profile,
+		{}
+	)
+	_check(
+		not bool(_annotation(annotated[1]).get("advances_profiled_engine_search", false)),
+		"the source-correct deck must not revive the invalidated exact Arven/Darkness route"
+	)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(profile)
+	_check(
+		str(strategy._find_module_verified_upgrade(annotated, _facts()).get(
+			"candidate_id",
+			""
+		)) != "candidate:arven",
+		"the invalidated artifact must not authorize Arven to replace the Rule floor"
+	)
 
 
 func _test_exact_engine_search(profile: Dictionary) -> void:

@@ -1,0 +1,652 @@
+{
+	"format_version": 1,
+	"scenario_revision": 2,
+	"scenarios": [
+		{
+			"id": "gholdengo_01",
+			"deck_key": "gholdengo",
+			"order": 1,
+			"title": "暗码迷的两张牌顶",
+			"focus": "先用暗码迷把能量输送PRO与超级能量回收置顶，再用战斗场赛富豪ex一次抽到两张；顺序反过来就失去确定性。",
+			"objective": "在2个我方回合内击倒开局时对手的两只猛雷鼓ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [
+					{"stack": ["CSV9C_096", "CSV4C_089"]}
+				],
+				"hand": ["CSV7C_191", "CSV7C_177", "CSV7C_177", "CSVE1C_MET"],
+				"discard": ["CSVE1C_LIG", "CSVE1C_GRA", "CSVE1C_FIR", "CSVE1C_WAT"],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113", "CSVH1C_043"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV7C_154"]},
+				"bench": [{"stack": ["CSV7C_154"], "damage": 40}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115", "CSV9C_207"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"validation_operations": [
+				"先使用暗码迷的解读，不提前发动战斗场的嘉奖硬币",
+				"从牌库选择能量输送PRO与超级能量回收置于牌库顶",
+				"发动战斗场赛富豪ex的嘉奖硬币，一次抽到置顶的两张牌",
+				"使用能量输送PRO取得仍在牌库中的不同属性基本能量",
+				"第一回合只弃掉击倒满血猛雷鼓ex所需的5张能量",
+				"领取2张奖赏并保留超级能量回收与两张弃牌费用",
+				"跨过规则AI回合后确认第二只猛雷鼓ex仍是指定目标",
+				"使用超级能量回收，弃掉两张友好宝芬并取回4张基本能量",
+				"第二次淘金潮弃4能量击倒已受40伤的猛雷鼓ex"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "嘉奖硬币是在暗码迷之前还是之后使用", "failure": "提前抽牌会浪费战斗场抽2的定向取牌窗口，路线不再可精算"},
+					{"choice": "第一击弃5张还是把手中能量全部弃掉", "failure": "过量弃能会让第二回合的回收与弃牌费用无法同时成立"}
+				],
+				"cross_turn_dependencies": ["第一回合必须同时完成首杀并保留第二回合回收卡及两张非能量手牌。"],
+				"resource_tensions": ["暗码迷占用支援者次数；嘉奖硬币的发动顺序决定能否准确拿到两个组件。"],
+				"learning_outcome": "掌握暗码迷置顶后由战斗场嘉奖硬币定向抽2的标准顺序。"
+			}
+		},
+		{
+			"id": "gholdengo_02",
+			"deck_key": "gholdengo",
+			"order": 2,
+			"title": "八属性必须四四分账",
+			"focus": "能量输送PRO拿到的8种属性能量必须精确分成两组4张；愿增猿负责把第二个目标压进200伤害档。",
+			"objective": "在2个我方回合内击倒开局时的厄诡椪ex与猛雷鼓ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"], "damage": 30},
+				"bench": [
+					{"stack": ["CSV8C_094"], "energy": ["CSVE1C_DAR"]},
+					{"stack": ["CSV9C_096", "CSV4C_089"]}
+				],
+				"hand": ["CSV9C_176", "CSV7C_177", "CSV7C_177", "CSV7C_191"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113", "CSVH1C_043"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV8C_028"], "damage": 10},
+				"bench": [{"stack": ["CSV7C_154"], "damage": 10}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"validation_operations": [
+				"发动愿增猿，把赛富豪ex身上的30伤害搬到备战猛雷鼓ex",
+				"使用能量输送PRO并选择8种不同属性基本能量",
+				"检查厄诡椪ex剩余200HP，只为第一击划出4张能量",
+				"保留另外4张不同属性能量在手牌",
+				"淘金潮弃4能量击倒厄诡椪ex",
+				"领取2张奖赏并跨过规则AI回合",
+				"确认猛雷鼓ex已有40伤、剩余200HP",
+				"第二回合不进行无意义滤抽",
+				"淘金潮弃保留的4能量完成第二次击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "愿增猿的30伤放到当前目标还是下回合目标", "failure": "放到厄诡椪会形成过量伤害，并让猛雷鼓仍需5能量"},
+					{"choice": "第一击支付4张还是5张能量", "failure": "多弃1张就会破坏第二回合无需检索的确定斩杀"}
+				],
+				"cross_turn_dependencies": ["第一回合留下的4张能量就是第二回合的完整攻击预算。"],
+				"resource_tensions": ["能量输送PRO只有一次；愿增猿只有一次搬伤，八张能量没有冗余。"],
+				"learning_outcome": "把伤害指示物视为一张价值50伤的虚拟能量，并做跨回合能量分账。"
+			}
+		},
+		{
+			"id": "gholdengo_03",
+			"deck_key": "gholdengo",
+			"order": 3,
+			"title": "超级回收的四张手牌税",
+			"focus": "两次超级能量回收共要支付4张非能量手牌；任何一次拿友好宝芬铺场，都会让第二次回收失去费用。",
+			"objective": "在2个我方回合内击倒两只指定猛雷鼓ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 10,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [{"stack": ["CSV9C_096", "CSV4C_089"]}],
+				"hand": ["CSV3C_115", "CSV3C_115", "CSV7C_177", "CSV7C_177", "CSV7C_177", "CSV7C_177", "CSVE1C_MET"],
+				"discard": ["CSVE1C_LIG", "CSVE1C_LIG", "CSVE1C_GRA", "CSVE1C_FIR", "CSVE1C_WAT", "CSVE1C_FIG", "CSVE1C_PSY", "CSVE1C_DAR"],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113", "CSVH1C_043"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV7C_154"]},
+				"bench": [{"stack": ["CSV7C_154"], "damage": 40}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV9C_207"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"validation_operations": [
+				"拒绝使用任何友好宝芬，先把4张都视为两次回收的费用",
+				"第一次超级能量回收只弃2张友好宝芬",
+				"从弃牌区取回4张基本能量",
+				"把原有钢能量与回收的4能量合并为第一击5张",
+				"淘金潮精确弃5能量击倒满血猛雷鼓ex",
+				"跨过规则AI回合并保留第二张回收与最后2张宝芬",
+				"第二次超级能量回收弃掉最后2张宝芬",
+				"只取回第二个目标所需的4张基本能量",
+				"淘金潮击倒剩余200HP的第二目标"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "友好宝芬是资源牌还是回收费用", "failure": "任意使用一张宝芬都会使第二次回收缺少两张可弃手牌"},
+					{"choice": "第一次回收后是否过量弃能", "failure": "第一击多弃会增加第二回合必须回收的数量并打破精确预算"}
+				],
+				"cross_turn_dependencies": ["第一回合结束时必须留下第二张超级能量回收和恰好两张非能量手牌。"],
+				"resource_tensions": ["四张宝芬看似能展开，实际上是两次回收不可替代的成本。"],
+				"learning_outcome": "先计算超级能量回收的手牌税，再决定哪些检索牌可以真正使用。"
+			}
+		},
+		{
+			"id": "gholdengo_04",
+			"deck_key": "gholdengo",
+			"order": 4,
+			"title": "愿增猿等于第五张能量",
+			"focus": "第二只猛雷鼓需要从240HP校正到200HP档；愿增猿的30伤与预置10伤共同节省第二回合的一张能量。",
+			"objective": "在2个我方回合内完成两次猛雷鼓ex击倒。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 10,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"], "damage": 30},
+				"bench": [
+					{"stack": ["CSV8C_094"], "energy": ["CSVE1C_DAR"]},
+					{"stack": ["CSV9C_096", "CSV4C_089"]}
+				],
+				"hand": ["CSV3C_115", "CSV3C_115", "CSV7C_177", "CSV7C_177", "CSV7C_177", "CSV7C_177", "CSVE1C_MET"],
+				"discard": ["CSVE1C_LIG", "CSVE1C_GRA", "CSVE1C_FIR", "CSVE1C_WAT", "CSVE1C_FIG", "CSVE1C_PSY", "CSVE1C_DAR"],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV7C_154"]},
+				"bench": [{"stack": ["CSV7C_154"], "damage": 10}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"validation_operations": [
+				"先确定满血前场需要5能量、后场当前仍需5能量",
+				"愿增猿从我方赛富豪ex搬走30伤",
+				"把30伤放到已有10伤的备战猛雷鼓ex",
+				"第一次超级能量回收支付2张非能量手牌并取回4能量",
+				"结合手中钢能量，以5能量完成第一击",
+				"跨过规则AI回合并重新确认第二目标剩余200HP",
+				"第二次超级能量回收继续保留足够弃牌费用",
+				"只取回4张基本能量",
+				"第二击以200伤精确完成击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "30伤应该放在满血前场还是已有10伤的后场", "failure": "放前场并不能把240降到200档，却会让第二目标继续需要5能量"},
+					{"choice": "是否把愿增猿当作可有可无的附加伤害", "failure": "忽略搬伤会让两回合总需求从9张能量上升到10张"}
+				],
+				"cross_turn_dependencies": ["第一回合的搬伤决定第二回合究竟需要4张还是5张能量。"],
+				"resource_tensions": ["愿增猿只能搬一次；两次回收与手牌税只能支撑9张攻击能量。"],
+				"learning_outcome": "学会按50伤一档换算愿增猿的搬伤价值。"
+			}
+		},
+		{
+			"id": "gholdengo_05",
+			"deck_key": "gholdengo",
+			"order": 5,
+			"title": "普通赛富豪的120桥接",
+			"focus": "第一回合让索财灵进化为普通赛富豪，以富裕打击的120伤完成首杀，把8张PRO能量全部留给第二回合的赛富豪ex。",
+			"objective": "在2个我方回合内击倒厄诡椪ex与猛雷鼓ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 9,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096"], "energy": ["CSVE1C_MET"], "turn_played": 6},
+				"bench": [
+					{"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]}
+				],
+				"hand": ["CSV9C_142", "CSV9C_176", "CSV1C_113", "CSV7C_177"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113", "CSVH1C_043"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV8C_028"], "damage": 90},
+				"bench": [{"stack": ["CSV7C_154"], "damage": 40}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV9C_207"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"tactic_pattern_ids": ["gholdengo_energy_search_pro_burst"],
+			"validation_operations": [
+				"把战斗场索财灵进化为普通赛富豪",
+				"确认本回合进化使富裕打击从30变为120伤",
+				"发动备战赛富豪ex的嘉奖硬币但不改变攻击手",
+				"使用能量输送PRO取得不同属性基本能量并全部保留",
+				"用富裕打击击倒只剩120HP的厄诡椪ex",
+				"领取2奖并跨过规则AI回合",
+				"第二回合使用宝可梦交替把赛富豪ex换到战斗场",
+				"核对猛雷鼓只剩200HP，不做多余滤抽",
+				"淘金潮只弃4能量完成第二次击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "索财灵进化为普通版还是把资源全交给ex", "failure": "忽略120伤桥接会在第一回合提前消耗至少3张PRO能量"},
+					{"choice": "第一回合是否用淘金潮", "failure": "用ex首杀会浪费已经预置好的120HP阈值并压缩第二回合能量"}
+				],
+				"cross_turn_dependencies": ["普通赛富豪第一回合零弃能首杀，才让第二回合保持完整的淘金潮弹药。"],
+				"resource_tensions": ["唯一普通赛富豪、唯一交替和唯一能量输送PRO都必须服务于不同回合。"],
+				"learning_outcome": "认识普通赛富豪不是弱化版ex，而是能保护手牌能量的精确伤害桥。"
+			}
+		},
+		{
+			"id": "gholdengo_06",
+			"deck_key": "gholdengo",
+			"order": 6,
+			"title": "铁包袱替你省下支援者",
+			"focus": "前场咕咕不是目标；用铁包袱逼出一只双奖宝可梦，把老大的指令留给第二回合追杀另一只。",
+			"objective": "在2个我方回合内击倒开局时位于备战区的猛雷鼓ex与厄诡椪ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 10,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [
+					{"stack": ["CSV6C_042"]},
+					{"stack": ["CSV9C_096", "CSV4C_089"]}
+				],
+				"hand": ["CSV9C_176", "CSVH1aC_023", "CSV7C_177", "CSV7C_177"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV3C_115"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV9C_154"]},
+				"bench": [
+					{"stack": ["CSV7C_154"], "damage": 40},
+					{"stack": ["CSV8C_028"], "damage": 10}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "bench", "index": 0},
+					{"player": 1, "zone": "bench", "index": 1}
+				]
+			},
+			"validation_operations": [
+				"不把老大的指令浪费在第一回合",
+				"发动备战铁包袱的强力吹风机并将铁包袱弃置",
+				"让对手从两只剩余200HP的双奖目标中选择新的战斗宝可梦",
+				"使用能量输送PRO取得8种属性能量",
+				"第一回合淘金潮只弃4能量击倒被吹出的目标",
+				"跨过规则AI回合并追踪另一只开局目标的新位置",
+				"第二回合使用老大的指令把另一只目标拉到战斗场",
+				"保留的4能量不经过回收直接成为第二击弹药",
+				"淘金潮完成第二只指定目标的击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "第一回合用铁包袱还是老大的指令", "failure": "先用老大会让第二回合没有确定的换位手段"},
+					{"choice": "铁包袱换位后是否重算目标位置", "failure": "只记格子不记宝可梦实例，会在第二回合追错目标"}
+				],
+				"cross_turn_dependencies": ["第一回合省下的老大，是第二回合无论AI如何晋升都能锁定剩余目标的保险。"],
+				"resource_tensions": ["铁包袱会自弃且仅能用一次；老大的指令也只有一张。"],
+				"learning_outcome": "把铁包袱当作不占支援者次数的换位资源，并跨回合追踪目标。"
+			}
+		},
+		{
+			"id": "gholdengo_07",
+			"deck_key": "gholdengo",
+			"order": 7,
+			"title": "阻碍之塔省下第五能量",
+			"focus": "勇气护符把梦幻ex抬到230HP；先开阻碍之塔关闭道具，才能让两次攻击都只支付4张能量。",
+			"objective": "在2个我方回合内击倒佩戴勇气护符的梦幻ex与沙奈朵ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018497,
+			"opponent_name": "沙奈朵",
+			"turn_number": 10,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [{"stack": ["CSV9C_096", "CSV4C_089"]}],
+				"hand": ["CSV8C_203", "CSV9C_176", "CSV7C_177", "CSV7C_177"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["151C_151"], "tool": "CSV1C_118"},
+				"bench": [{"stack": ["CSV2C_053", "CSV2C_054", "CSV2C_055"], "damage": 110}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"validation_operations": [
+				"比较勇气护符生效时梦幻ex的230HP与关闭后的180HP",
+				"先打出阻碍之塔关闭双方宝可梦道具效果",
+				"再使用能量输送PRO取得8种不同属性能量",
+				"第一击只划出4张能量而不是按230HP支付5张",
+				"淘金潮200伤击倒失去护符加成的梦幻ex",
+				"跨过规则AI回合并保持阻碍之塔在场",
+				"确认沙奈朵ex已有110伤、同样只剩200HP",
+				"拒绝替换竞技场或额外消耗能量",
+				"第二击弃余下4能量完成四奖"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "按卡面HP还是按当前有效HP计算", "failure": "忽略勇气护符会误判伤害，忽略阻碍之塔又会过量支付"},
+					{"choice": "阻碍之塔在检索前还是攻击后使用", "failure": "不开塔就攻击会差30伤且第一回合直接失败"}
+				],
+				"cross_turn_dependencies": ["阻碍之塔必须贯穿两个回合，第一击省下的第5张能量属于第二击预算。"],
+				"resource_tensions": ["8张PRO能量必须四四分配；竞技场是改变斩杀线而非装饰。"],
+				"learning_outcome": "先计算持续效果改变后的有效HP，再决定淘金潮的最小弃能数。"
+			}
+		},
+		{
+			"id": "gholdengo_08",
+			"deck_key": "gholdengo",
+			"order": 8,
+			"title": "奖差窗口的双重换位",
+			"focus": "先用反击捕捉器处理第一只备战目标，再用暗码迷同时拿到PRO与第二回合的老大；两种换位资源不能互换顺序。",
+			"objective": "在2个我方回合内击倒开局时位于备战区的猛雷鼓ex与厄诡椪ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 12,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [{"stack": ["CSV9C_096", "CSV4C_089"]}],
+				"hand": ["CSV6C_114", "CSV7C_191", "CSV7C_177", "CSV7C_177"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV2C_113", "CSVH1C_043"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV9C_154"]},
+				"bench": [
+					{"stack": ["CSV7C_154"], "damage": 40},
+					{"stack": ["CSV8C_028"], "damage": 10}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "bench", "index": 0},
+					{"player": 1, "zone": "bench", "index": 1}
+				]
+			},
+			"validation_operations": [
+				"确认我方剩余奖赏多于对手，反击捕捉器当前合法",
+				"先用暗码迷把能量输送PRO与老大的指令置顶",
+				"发动战斗场嘉奖硬币一次抽到两个跨回合组件",
+				"使用反击捕捉器拉出第一只备战双奖目标",
+				"使用能量输送PRO取得并划分8张不同属性能量",
+				"第一回合弃4能量完成第一次击倒",
+				"跨过AI回合后检查剩余指定目标当前所在区域",
+				"第二回合用保留的老大的指令拉出剩余目标",
+				"淘金潮弃余下4能量完成第二次击倒"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "哪次换位使用反击捕捉器，哪次使用老大", "failure": "奖差会在首杀后改变，把反击捕捉器留到第二回合可能失去合法窗口"},
+					{"choice": "暗码迷要找攻击资源还是只找当前回合的换位", "failure": "不同时取得PRO和老大，就无法覆盖AI晋升后的所有位置"}
+				],
+				"cross_turn_dependencies": ["首杀前的奖差窗口负责第一换位，暗码迷保存的老大负责第二换位。"],
+				"resource_tensions": ["两种换位各只有一次，反击捕捉器还受奖差约束。"],
+				"learning_outcome": "在奖差变化前使用反击捕捉器，并为下一回合预存不受奖差限制的换位。"
+			}
+		},
+		{
+			"id": "gholdengo_09",
+			"deck_key": "gholdengo",
+			"order": 9,
+			"title": "送奖之后的吉雉鸡重启",
+			"focus": "残局开始前我方刚有宝可梦被击倒；必须先用吉雉鸡ex补3，再把其中的暗码迷转换成确定的八能量路线。",
+			"objective": "在2个我方回合内击倒猛雷鼓ex与厄诡椪ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 10,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"last_knockout_turn_against": [9, -999],
+			"player": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [
+					{"stack": ["CSV8C_135"]},
+					{"stack": ["CSV9C_096", "CSV4C_089"]}
+				],
+				"hand": ["CSV7C_177"],
+				"discard": ["CSV9C_096", "CSV4C_089"],
+				"lost_zone": [],
+				"deck_top": ["CSV7C_191", "CSV9C_176", "CSV7C_177", "CSV3C_115", "CSVH1aC_023"]
+			},
+			"opponent": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV7C_154"], "damage": 40},
+				"bench": [{"stack": ["CSV8C_028"], "damage": 10}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"validation_operations": [
+				"识别上一对手回合的击倒记录已经开启化危为吉",
+				"先发动吉雉鸡ex抽3张，取得暗码迷、PRO与一张费用牌",
+				"使用暗码迷重排牌库顶的后续资源",
+				"再发动战斗场嘉奖硬币取得暗码迷指定的两张牌",
+				"使用能量输送PRO取得8种不同属性能量",
+				"第一回合弃4能量击倒剩余200HP的猛雷鼓ex",
+				"跨过规则AI回合并保留另外4张能量",
+				"第二回合克制继续发动滤抽的冲动",
+				"淘金潮弃4能量击倒剩余200HP的厄诡椪ex"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "先发动吉雉鸡还是先用嘉奖硬币", "failure": "先用硬币会只拿到暗码迷与PRO，缺少让暗码迷继续转化的手牌空间"},
+					{"choice": "第二回合是否继续使用所有抽牌特性", "failure": "已经握有精确4能量时继续滤抽只会引入误操作并破坏薄资源计划"}
+				],
+				"cross_turn_dependencies": ["上一回合送出的奖赏转化为本回合吉雉鸡补牌，并留下第二回合的完整4能量。"],
+				"resource_tensions": ["化危为吉窗口只存在这一回合；多个抽牌特性的先后顺序会改变确定信息。"],
+				"learning_outcome": "把被击倒后的吉雉鸡窗口接到暗码迷与嘉奖硬币，而不是无脑同时点完所有特性。"
+			}
+		},
+		{
+			"id": "gholdengo_10",
+			"deck_key": "gholdengo",
+			"order": 10,
+			"title": "零牌库的最后两次淘金潮",
+			"focus": "开局牌库为0；先用厉害钓竿放回3张，再由暗码迷决定前两张，第二回合自然抽完最后一张后必须停止嘉奖硬币。",
+			"objective": "避免牌库耗尽，并在2个我方回合内击倒两只猛雷鼓ex。",
+			"player_deck_id": 800016834,
+			"opponent_deck_id": 800018509,
+			"opponent_name": "猛雷鼓",
+			"turn_number": 14,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV9C_096", "CSV4C_089"], "energy": ["CSVE1C_MET"]},
+				"bench": [{"stack": ["CSV9C_096", "CSV4C_089"]}],
+				"hand": ["CSV1C_109", "CSV7C_191", "CSV3C_115", "CSV3C_115", "CSV7C_177", "CSV7C_177", "CSV7C_177", "CSV7C_177"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": [],
+				"deck_size": 0
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {"stack": ["CSV7C_154"]},
+				"bench": [{"stack": ["CSV7C_154"], "damage": 40}],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV6C_115"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"tactic_pattern_ids": ["gholdengo_cipher_coin_draw"],
+			"validation_operations": [
+				"确认牌库为0，任何抽牌动作前都必须先补回卡牌",
+				"使用厉害钓竿把2张基本能量与1只宝可梦放回牌库",
+				"使用暗码迷把两张能量固定在牌库顶",
+				"发动战斗场嘉奖硬币抽到这两张能量，牌库留下1张",
+				"第一次超级能量回收弃2张宝芬并取回4能量",
+				"第一击只弃5能量击倒满血猛雷鼓ex",
+				"跨过AI回合，第二回合自然抽走钓竿放回的最后1张宝可梦",
+				"禁止再次发动任何嘉奖硬币，改用第二张回收取得4能量",
+				"第二击弃4能量完成击倒并以空牌库结束"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "钓竿放回哪三张牌", "failure": "不足3张会在第二回合抽牌时输掉；没有两张能量又无法组成第一击"},
+					{"choice": "第二回合是否发动嘉奖硬币", "failure": "自然抽完最后一张后再抽牌会直接触发牌库耗尽"}
+				],
+				"cross_turn_dependencies": ["第一回合钓竿放回的第3张牌只负责支付第二回合的自然抽牌，不能被硬币提前抽走。"],
+				"resource_tensions": ["牌库张数、两次回收的弃牌费用和两次攻击能量必须同时精算。"],
+				"learning_outcome": "在终盘把抽牌特性视为有代价的动作，并用钓竿加暗码迷精确管理最后三张牌。"
+			}
+		}
+	]
+}

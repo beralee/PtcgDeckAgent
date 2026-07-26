@@ -68,7 +68,7 @@ func validate_response(
 	require_exact_root: bool = false
 ) -> Dictionary:
 	if str(response.get("status", "")) == "error":
-		return _invalid("transport_error")
+		return _invalid(_model_response_error_reason(response))
 	if not _has_only_keys(response, RESPONSE_KEYS):
 		return _invalid("response_additional_property")
 	var agenda_result := _validate_agenda_patch(response.get("agenda_patch", {}), response.has("agenda_patch"))
@@ -606,6 +606,21 @@ func _valid_token(value: String, allow_colon_dash: bool) -> bool:
 
 func _is_prefixed_string(value: Variant, prefix: String) -> bool:
 	return value is String and str(value).begins_with(prefix) and str(value).length() > prefix.length()
+
+
+func _model_response_error_reason(response: Dictionary) -> String:
+	var error_type := str(response.get("error_type", "")).strip_edges()
+	if error_type == "response_truncated":
+		return "response_truncated"
+	if error_type in [
+		"invalid_response_json",
+		"missing_choices",
+		"invalid_choice",
+		"missing_content",
+		"invalid_content_json",
+	]:
+		return "invalid_model_response"
+	return "transport_error"
 
 
 func _invalid(reason: String) -> Dictionary:

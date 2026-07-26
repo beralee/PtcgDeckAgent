@@ -1,0 +1,479 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 358,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 10,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:research_draw_seven_keys",
+      "choice_label": "博士抽满7张，把第7张老大一起收入手牌",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:energy_search_dark",
+      "choice_label": "能量输送检索愿增猿所需恶能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:attach_dark_munkidori",
+      "choice_label": "把检索恶能手贴给愿增猿",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:counter_first_gholdengo",
+      "choice_label": "反击捕捉器先拉出第一只剩210HP赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:munkidori_after_counter",
+      "choice_label": "捕捉后再搬30，把赛富豪校正到180",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_shadow_bullet",
+      "choice_label": "暗影子弹首杀并向第二目标铺30",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:gholdengo_reply",
+      "choice_label": "另一只赛富豪自然升场并以淘金潮反击",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:boss_second_gholdengo",
+      "choice_label": "第二回合用保留的老大抓出已铺到180的赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:second_shadow_bullet",
+      "choice_label": "第二次暗影子弹完成四奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 9,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "d24ade7f22bc3a02f478c8c6ffd754cb5bfdabd12cd31496d662421f040d79ac"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:research_draw_seven_keys",
+        "choice_label": "博士抽满7张，把第7张老大一起收入手牌",
+        "depth": 9,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:energy_search_dark",
+              "choice_label": "能量输送检索愿增猿所需恶能",
+              "depth": 9,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:attach_dark_munkidori",
+                    "choice_label": "把检索恶能手贴给愿增猿",
+                    "depth": 9,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:counter_first_gholdengo",
+                          "choice_label": "反击捕捉器先拉出第一只剩210HP赛富豪",
+                          "depth": 9,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:munkidori_after_counter",
+                                "choice_label": "捕捉后再搬30，把赛富豪校正到180",
+                                "depth": 9,
+                                "player_actions": 4,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_shadow_bullet",
+                                      "choice_label": "暗影子弹首杀并向第二目标铺30",
+                                      "depth": 9,
+                                      "player_actions": 3,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:gholdengo_reply",
+                                            "choice_label": "另一只赛富豪自然升场并以淘金潮反击",
+                                            "depth": 9,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:boss_second_gholdengo",
+                                                  "choice_label": "第二回合用保留的老大抓出已铺到180的赛富豪",
+                                                  "depth": 9,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:second_shadow_bullet",
+                                                        "choice_label": "第二次暗影子弹完成四奖",
+                                                        "depth": 9,
+                                                        "player_actions": 1,
+                                                        "reason": "production_witness_reached_goal",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [],
+                                                          "coverage_complete": true,
+                                                          "depth": 9,
+                                                          "player_actions": 0,
+                                                          "reason": "production_witness_reached_goal",
+                                                          "score": 4,
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 0
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 9,
+                                                    "player_actions": 1,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:second_shadow_bullet",
+                                                    "selected_choice_label": "第二次暗影子弹完成四奖",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 9,
+                                              "player_actions": 2,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:boss_second_gholdengo",
+                                              "selected_choice_label": "第二回合用保留的老大抓出已铺到180的赛富豪",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 9,
+                                        "player_actions": 2,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:gholdengo_reply",
+                                        "selected_choice_label": "另一只赛富豪自然升场并以淘金潮反击",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 9,
+                                  "player_actions": 3,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_shadow_bullet",
+                                  "selected_choice_label": "暗影子弹首杀并向第二目标铺30",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 9,
+                            "player_actions": 4,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:munkidori_after_counter",
+                            "selected_choice_label": "捕捉后再搬30，把赛富豪校正到180",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 9,
+                      "player_actions": 5,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:counter_first_gholdengo",
+                      "selected_choice_label": "反击捕捉器先拉出第一只剩210HP赛富豪",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 9,
+                "player_actions": 6,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:attach_dark_munkidori",
+                "selected_choice_label": "把检索恶能手贴给愿增猿",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 9,
+          "player_actions": 7,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:energy_search_dark",
+          "selected_choice_label": "能量输送检索愿增猿所需恶能",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 9,
+    "player_actions": 8,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:research_draw_seven_keys",
+    "selected_choice_label": "博士抽满7张，把第7张老大一起收入手牌",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:research_draw_seven_keys",
+      "choice_label": "博士抽满7张，把第7张老大一起收入手牌",
+      "depth": 9,
+      "player_actions": 8,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:energy_search_dark",
+            "choice_label": "能量输送检索愿增猿所需恶能",
+            "depth": 9,
+            "player_actions": 7,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:attach_dark_munkidori",
+                  "choice_label": "把检索恶能手贴给愿增猿",
+                  "depth": 9,
+                  "player_actions": 6,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:counter_first_gholdengo",
+                        "choice_label": "反击捕捉器先拉出第一只剩210HP赛富豪",
+                        "depth": 9,
+                        "player_actions": 5,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:munkidori_after_counter",
+                              "choice_label": "捕捉后再搬30，把赛富豪校正到180",
+                              "depth": 9,
+                              "player_actions": 4,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_shadow_bullet",
+                                    "choice_label": "暗影子弹首杀并向第二目标铺30",
+                                    "depth": 9,
+                                    "player_actions": 3,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:gholdengo_reply",
+                                          "choice_label": "另一只赛富豪自然升场并以淘金潮反击",
+                                          "depth": 9,
+                                          "player_actions": 2,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:boss_second_gholdengo",
+                                                "choice_label": "第二回合用保留的老大抓出已铺到180的赛富豪",
+                                                "depth": 9,
+                                                "player_actions": 2,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:second_shadow_bullet",
+                                                      "choice_label": "第二次暗影子弹完成四奖",
+                                                      "depth": 9,
+                                                      "player_actions": 1,
+                                                      "reason": "production_witness_reached_goal",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [],
+                                                        "coverage_complete": true,
+                                                        "depth": 9,
+                                                        "player_actions": 0,
+                                                        "reason": "production_witness_reached_goal",
+                                                        "score": 4,
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 0
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 9,
+                                                  "player_actions": 1,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:second_shadow_bullet",
+                                                  "selected_choice_label": "第二次暗影子弹完成四奖",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 9,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:boss_second_gholdengo",
+                                            "selected_choice_label": "第二回合用保留的老大抓出已铺到180的赛富豪",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 9,
+                                      "player_actions": 2,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:gholdengo_reply",
+                                      "selected_choice_label": "另一只赛富豪自然升场并以淘金潮反击",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 9,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_shadow_bullet",
+                                "selected_choice_label": "暗影子弹首杀并向第二目标铺30",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 9,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:munkidori_after_counter",
+                          "selected_choice_label": "捕捉后再搬30，把赛富豪校正到180",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 9,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:counter_first_gholdengo",
+                    "selected_choice_label": "反击捕捉器先拉出第一只剩210HP赛富豪",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 9,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:attach_dark_munkidori",
+              "selected_choice_label": "把检索恶能手贴给愿增猿",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 9,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:energy_search_dark",
+        "selected_choice_label": "能量输送检索愿增猿所需恶能",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "d24ade7f22bc3a02f478c8c6ffd754cb5bfdabd12cd31496d662421f040d79ac",
+  "scenario_id": "marnie_02",
+  "shortest_player_actions": 8,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

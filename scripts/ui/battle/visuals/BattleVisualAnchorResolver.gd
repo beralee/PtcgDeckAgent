@@ -4,10 +4,15 @@ extends RefCounted
 const OverlayGeometry := preload("res://scripts/ui/battle/BattleOverlayGeometry.gd")
 
 
-static func resolve_rect_in_overlay(scene: Object, overlay: Control, anchor_key: String) -> Rect2:
+static func resolve_rect_in_overlay(
+	scene: Object,
+	overlay: Control,
+	anchor_key: String,
+	view_player_override: int = -1
+) -> Rect2:
 	if scene == null or overlay == null:
 		return Rect2()
-	var control := _resolve_control(scene, anchor_key)
+	var control := _resolve_control(scene, anchor_key, view_player_override)
 	if control != null and is_instance_valid(control) and control.is_visible_in_tree():
 		var rect := OverlayGeometry.control_rect_in_overlay(overlay, control)
 		if rect.size.x > 1.0 and rect.size.y > 1.0:
@@ -21,7 +26,7 @@ static func scene_rect_in_overlay(scene: Object, overlay: Control) -> Rect2:
 	return Rect2(Vector2.ZERO, Vector2(1600, 900))
 
 
-static func _resolve_control(scene: Object, anchor_key: String) -> Control:
+static func _resolve_control(scene: Object, anchor_key: String, view_player_override: int = -1) -> Control:
 	if anchor_key == "":
 		return scene as Control
 	if anchor_key == "stadium":
@@ -32,20 +37,28 @@ static func _resolve_control(scene: Object, anchor_key: String) -> Control:
 		return _find(scene, anchor_key)
 	var player_index := int(parsed.get("player_index", -1))
 	var rest := str(parsed.get("rest", ""))
-	var view_player := int(scene.get("_view_player"))
+	var view_player := view_player_override if view_player_override >= 0 else int(scene.get("_view_player"))
 	var mine := player_index == view_player
 	if rest == "deck":
 		return scene.get("_my_deck_preview" if mine else "_opp_deck_preview") as Control
 	if rest == "discard":
 		return scene.get("_my_discard_preview" if mine else "_opp_discard_preview") as Control
 	if rest == "hand":
-		return scene.get("_hand_container") as Control if mine else scene.get("_opp_hand_bar") as Control
+		if mine:
+			return scene.get("_hand_container") as Control
+		var opponent_hand_bar := scene.get("_opp_hand_bar") as Control
+		if opponent_hand_bar != null and opponent_hand_bar.is_visible_in_tree():
+			return opponent_hand_bar
+		return scene.get("_opp_hand_lbl") as Control
 	if rest == "lost":
 		return scene.get("_my_lost_value" if mine else "_enemy_lost_value") as Control
 	if rest.begins_with("prize."):
 		var prize_index := int(rest.get_slice(".", 1))
 		if scene.has_method("_get_prize_slot_view"):
-			return scene.call("_get_prize_slot_view", player_index, prize_index) as Control
+			var prize_slot := scene.call("_get_prize_slot_view", player_index, prize_index) as Control
+			if prize_slot != null and prize_slot.is_visible_in_tree():
+				return prize_slot
+		return scene.get("_my_prize_hud_count" if mine else "_opp_prize_hud_count") as Control
 	if rest == "active" or rest.begins_with("active."):
 		return _slot_control(scene, "my_active" if mine else "opp_active")
 	if rest.begins_with("bench."):

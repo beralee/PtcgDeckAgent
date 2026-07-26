@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 349,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:fezandipiti_draw",
+      "choice_label": "化危为吉取得普通赛富豪、派帕与交替",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:evolve_regular",
+      "choice_label": "本回合进化普通赛富豪",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:arven_retrieval",
+      "choice_label": "派帕取得超级能量回收与进化TM",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:retrieval_four",
+      "choice_label": "回收第二回合的四色能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:rich_strike",
+      "choice_label": "富裕打击120完成首杀",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:quiet_ai_reply",
+      "choice_label": "猛雷鼓规则AI完整回合",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:switch_to_ex",
+      "choice_label": "宝可梦交替换入赛富豪ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:gold_rush_finish",
+      "choice_label": "淘金潮200完成第二次击倒",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 8,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "93c39c246bd79032f23c1884e7ce17bd8e7fbd04944336cb514566bd6e4d392e"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:fezandipiti_draw",
+        "choice_label": "化危为吉取得普通赛富豪、派帕与交替",
+        "depth": 8,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:evolve_regular",
+              "choice_label": "本回合进化普通赛富豪",
+              "depth": 8,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:arven_retrieval",
+                    "choice_label": "派帕取得超级能量回收与进化TM",
+                    "depth": 8,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:retrieval_four",
+                          "choice_label": "回收第二回合的四色能量",
+                          "depth": 8,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:rich_strike",
+                                "choice_label": "富裕打击120完成首杀",
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "all_defenses_hold",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:quiet_ai_reply",
+                                      "choice_label": "猛雷鼓规则AI完整回合",
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:switch_to_ex",
+                                            "choice_label": "宝可梦交替换入赛富豪ex",
+                                            "depth": 8,
+                                            "player_actions": 2,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:gold_rush_finish",
+                                                  "choice_label": "淘金潮200完成第二次击倒",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 4,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:gold_rush_finish",
+                                              "selected_choice_label": "淘金潮200完成第二次击倒",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 2,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:switch_to_ex",
+                                        "selected_choice_label": "宝可梦交替换入赛富豪ex",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 2,
+                                  "reason": "all_defenses_hold",
+                                  "role": "opponent",
+                                  "selected_choice_id": "05:quiet_ai_reply",
+                                  "selected_choice_label": "猛雷鼓规则AI完整回合",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:rich_strike",
+                            "selected_choice_label": "富裕打击120完成首杀",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:retrieval_four",
+                      "selected_choice_label": "回收第二回合的四色能量",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:arven_retrieval",
+                "selected_choice_label": "派帕取得超级能量回收与进化TM",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 6,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:evolve_regular",
+          "selected_choice_label": "本回合进化普通赛富豪",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 7,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:fezandipiti_draw",
+    "selected_choice_label": "化危为吉取得普通赛富豪、派帕与交替",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:fezandipiti_draw",
+      "choice_label": "化危为吉取得普通赛富豪、派帕与交替",
+      "depth": 8,
+      "player_actions": 7,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:evolve_regular",
+            "choice_label": "本回合进化普通赛富豪",
+            "depth": 8,
+            "player_actions": 6,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:arven_retrieval",
+                  "choice_label": "派帕取得超级能量回收与进化TM",
+                  "depth": 8,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:retrieval_four",
+                        "choice_label": "回收第二回合的四色能量",
+                        "depth": 8,
+                        "player_actions": 4,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:rich_strike",
+                              "choice_label": "富裕打击120完成首杀",
+                              "depth": 8,
+                              "player_actions": 3,
+                              "reason": "all_defenses_hold",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:quiet_ai_reply",
+                                    "choice_label": "猛雷鼓规则AI完整回合",
+                                    "depth": 8,
+                                    "player_actions": 2,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:switch_to_ex",
+                                          "choice_label": "宝可梦交替换入赛富豪ex",
+                                          "depth": 8,
+                                          "player_actions": 2,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:gold_rush_finish",
+                                                "choice_label": "淘金潮200完成第二次击倒",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 4,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:gold_rush_finish",
+                                            "selected_choice_label": "淘金潮200完成第二次击倒",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:switch_to_ex",
+                                      "selected_choice_label": "宝可梦交替换入赛富豪ex",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "all_defenses_hold",
+                                "role": "opponent",
+                                "selected_choice_id": "05:quiet_ai_reply",
+                                "selected_choice_label": "猛雷鼓规则AI完整回合",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:rich_strike",
+                          "selected_choice_label": "富裕打击120完成首杀",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:retrieval_four",
+                    "selected_choice_label": "回收第二回合的四色能量",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:arven_retrieval",
+              "selected_choice_label": "派帕取得超级能量回收与进化TM",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:evolve_regular",
+        "selected_choice_label": "本回合进化普通赛富豪",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "93c39c246bd79032f23c1884e7ce17bd8e7fbd04944336cb514566bd6e4d392e",
+  "scenario_id": "gholdengo_05",
+  "shortest_player_actions": 7,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

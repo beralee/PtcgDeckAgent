@@ -1,0 +1,1167 @@
+{
+  "format_version": 1,
+  "scenarios": {
+    "charizard_dragapult_01": [
+      {
+        "id": "charizard_dragapult_01_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "zoroark_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "require_attack": true
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_01_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_02": [
+      {
+        "id": "charizard_dragapult_02_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉先抽走糖果、喷火龙与头带",
+            "source": {
+              "zone": "bench",
+              "index": 4
+            },
+            "targets": []
+          },
+          {
+            "id": "tatsugiri_briar",
+            "kind": "use_ability",
+            "label": "揽客从顶6的三张支援者中保留白蕾雅",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "look_top_pick": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "retreat_tatsugiri",
+            "kind": "retreat",
+            "label": "弃火能撤退米立龙，换入复仇古玉鱼",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSV4C_129",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_02_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉先抽走糖果、喷火龙与头带",
+            "source": {
+              "zone": "bench",
+              "index": 4
+            },
+            "targets": []
+          },
+          {
+            "id": "tatsugiri_briar",
+            "kind": "use_ability",
+            "label": "揽客从顶6的三张支援者中保留白蕾雅",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "look_top_pick": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_03": [
+      {
+        "id": "charizard_dragapult_03_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_117",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "candy_first_charizard",
+            "kind": "play_trainer",
+            "label": "糖果进化备战小火龙，开启烈炎支配",
+            "card_uid": "CSVH1C_045",
+            "targets": [
+              {
+                "stage2_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV5C_075",
+                      "occurrence": 0
+                    }
+                  }
+                ],
+                "target_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "split_infernal_reign",
+            "kind": "use_ability",
+            "label": "烈炎支配把2火给古玉鱼、1火给喷火龙",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "energy_assignments": [
+                  {
+                    "source": {
+                      "$card": {
+                        "player": 0,
+                        "zone": "deck",
+                        "uid": "CSVE1C_FIR",
+                        "occurrence": 0
+                      }
+                    },
+                    "target": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "active"
+                      }
+                    }
+                  },
+                  {
+                    "source": {
+                      "$card": {
+                        "player": 0,
+                        "zone": "deck",
+                        "uid": "CSVE1C_FIR",
+                        "occurrence": 1
+                      }
+                    },
+                    "target": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "active"
+                      }
+                    }
+                  },
+                  {
+                    "source": {
+                      "$card": {
+                        "player": 0,
+                        "zone": "deck",
+                        "uid": "CSVE1C_FIR",
+                        "occurrence": 2
+                      }
+                    },
+                    "target": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_03_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_117",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_04": [
+      {
+        "id": "charizard_dragapult_04_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "zoroark_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "require_attack": true
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_04_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_05": [
+      {
+        "id": "charizard_dragapult_05_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "offer_prize",
+            "kind": "self_ko",
+            "label": "咒怨炸弹主动送1奖并把黑夜魔灵调到30HP",
+            "ability_source": {
+              "zone": "bench",
+              "index": 2
+            },
+            "damage_target": {
+              "zone": "bench",
+              "index": 0
+            }
+          },
+          {
+            "id": "counter_bloodmoon",
+            "kind": "play_trainer",
+            "label": "送奖后反击捕捉器才合法，抓出剩140HP月月熊",
+            "card_uid": "CSV6C_114",
+            "target_player": 1,
+            "target": {
+              "zone": "bench_remaining_hp",
+              "remaining_hp": 50
+            },
+            "context_key": "opponent_bench_target"
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_05_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_06": [
+      {
+        "id": "charizard_dragapult_06_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "unlock_klefki",
+            "kind": "retreat",
+            "label": "先让钥圈儿退回备战区，解除己方基础特性封锁",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSV4C_129",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_06_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "unlock_klefki",
+            "kind": "retreat",
+            "label": "先让钥圈儿退回备战区，解除己方基础特性封锁",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": [
+              {
+                "$card": {
+                  "player": 0,
+                  "zone": "active_energy",
+                  "uid": "CSV4C_129",
+                  "occurrence": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_07": [
+      {
+        "id": "charizard_dragapult_07_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "zoroark_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "require_attack": true
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_07_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_08": [
+      {
+        "id": "charizard_dragapult_08_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "zoroark_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "require_attack": true
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_08_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_09": [
+      {
+        "id": "charizard_dragapult_09_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "zoroark_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "require_attack": true
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_09_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ],
+    "charizard_dragapult_10": [
+      {
+        "id": "charizard_dragapult_10_research_now",
+        "category": "research_now",
+        "description": "大抽占用支援者并破坏白蕾雅终结窗口。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "chi_yu_revenge",
+            "kind": "attack",
+            "label": "嫉妒业火140击倒首只双奖目标",
+            "attack_index": 1,
+            "targets": []
+          },
+          {
+            "id": "zoroark_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "require_attack": true
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线未在期限内完成五奖"
+          }
+        ]
+      },
+      {
+        "id": "charizard_dragapult_10_skip_offer",
+        "category": "skip_offer",
+        "description": "没有完成送奖、增伤与白蕾雅条件的联动。",
+        "proof_steps": [
+          {
+            "id": "fez_hidden_three",
+            "kind": "use_ability",
+            "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "source": {
+              "zone": "bench",
+              "index": 3
+            },
+            "targets": []
+          },
+          {
+            "id": "quick_search_finisher",
+            "kind": "use_ability",
+            "label": "音速搜索取得仍藏在牌库里的终结组件",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "search_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV9C_202",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "错误次序在期限前结束"
+          }
+        ]
+      }
+    ]
+  }
+}

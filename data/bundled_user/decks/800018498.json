@@ -17,14 +17,14 @@
 			"source_url": "https://limitlesstcg.com/cards/SVI/84"
 		},
 		{
-			"card_index": "054",
+			"card_index": "030",
 			"card_type": "Pokemon",
 			"count": 2,
-			"effect_id": "773a7c5bc165bd5d75321bc7c29fdd25",
+			"effect_id": "4abd956bdf3e956fcf679120601760ff",
 			"name": "奇鲁莉安",
 			"name_en": "Kirlia",
-			"resolved_via": "exact_print",
-			"set_code": "CSV2C",
+			"resolved_via": "deck_rebuild",
+			"set_code": "CS6.5C",
 			"source_card_index": "85",
 			"source_language": "en",
 			"source_name": "Kirlia",

@@ -957,7 +957,8 @@ func _is_ui_blocking_ai() -> bool:
 		or _is_ai_exp_share_prompt()
 	)
 	return (
-		_draw_reveal_active
+		(_deck_training_controller != null and _deck_training_controller.is_modal_open())
+		or _draw_reveal_active
 		or _is_ai_action_pause_active()
 		or dialog_blocks_ai
 		or (_discard_overlay != null and _discard_overlay.visible)

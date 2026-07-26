@@ -1,0 +1,1670 @@
+{
+  "format_version": 1,
+  "scenarios": {
+    "n_zoroark_02": [
+      {
+        "id": "n_zoroark_02_repeat_reignite",
+        "category": "repeat_reignite",
+        "description": "健康索罗亚克剩280HP，120只打到160HP",
+        "proof_steps": [
+          {
+            "id": "reignite_120",
+            "kind": "attack",
+            "label": "按4张基本能量计算复燃120，击倒剩120HP月月熊",
+            "attack_index": 0,
+            "targets": [
+              {
+                "copied_attack": [
+                  {
+                    "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                    "source_zone": "bench",
+                    "attack_index": 0,
+                    "attack": {
+                      "name": "复燃",
+                      "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                      "cost": "CC",
+                      "damage": "30×",
+                      "is_vstar_power": false
+                    },
+                    "source_slot": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ns_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "对手索罗亚克复制力量愤怒反杀首攻者",
+            "require_attack": true
+          },
+          {
+            "id": "lure_iono",
+            "kind": "play_trainer",
+            "label": "诱导线：奇树重置冻结资源",
+            "card_uid": "CSV3C_123",
+            "targets": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "期限内未达到目标"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_02_count_reversal_as_basic",
+        "category": "count_reversal_as_basic",
+        "description": "复燃只检查Basic Energy，实际120而不是150",
+        "proof_steps": [
+          {
+            "id": "reignite_120",
+            "kind": "attack",
+            "label": "按4张基本能量计算复燃120，击倒剩120HP月月熊",
+            "attack_index": 0,
+            "targets": [
+              {
+                "copied_attack": [
+                  {
+                    "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                    "source_zone": "bench",
+                    "attack_index": 0,
+                    "attack": {
+                      "name": "复燃",
+                      "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                      "cost": "CC",
+                      "damage": "30×",
+                      "is_vstar_power": false
+                    },
+                    "source_slot": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ns_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "对手索罗亚克复制力量愤怒反杀首攻者",
+            "require_attack": true
+          },
+          {
+            "id": "lure_turo",
+            "kind": "play_trainer",
+            "label": "诱导线：弗图博士移走当前场位",
+            "card_uid": "CSV6C_125",
+            "targets": [
+              {
+                "self_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "复制源或攻击手已丢失"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_03": [
+      {
+        "id": "n_zoroark_03_draw_too_many_with_cleffa",
+        "category": "draw_too_many_with_cleffa",
+        "description": "能量转移提前进手，下一回合自然抽不再冻结且奇树诱导线可打乱",
+        "proof_steps": [
+          {
+            "id": "trade_cipher",
+            "kind": "use_ability",
+            "label": "备战索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle_switch",
+            "kind": "play_trainer",
+            "label": "暗码迷把城堡与能量转移置顶",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVH1aC_008",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线提前结束，冻结组件无法兑现"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_03_leave_dark_on_munk",
+        "category": "leave_dark_on_munk",
+        "description": "攻击费用只检查攻击者自身附着，索罗亚克仍只有1恶能",
+        "proof_steps": [
+          {
+            "id": "trade_cipher",
+            "kind": "use_ability",
+            "label": "备战索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle_switch",
+            "kind": "play_trainer",
+            "label": "暗码迷把城堡与能量转移置顶",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVH1aC_008",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线保留牌却错过本回合攻击"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_04": [
+      {
+        "id": "n_zoroark_04_turo_reshiram",
+        "category": "turo_reshiram",
+        "description": "莱希拉姆进入手牌后暗夜小丑没有力量愤怒可选",
+        "proof_steps": [
+          {
+            "id": "trade_cipher",
+            "kind": "use_ability",
+            "label": "第一只索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶N的城堡与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二只索罗亚克交易抽到城堡与PP提升剂",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "放下N的城堡",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "retreat_reshiram",
+            "kind": "retreat",
+            "label": "让莱希拉姆回到备战区，换入90伤索罗亚克",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线提前结束，冻结组件无法兑现"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_04_attack_before_source_benched",
+        "category": "attack_before_source_benched",
+        "description": "莱希拉姆仍在战斗场，不满足备战区来源条件",
+        "proof_steps": [
+          {
+            "id": "trade_cipher",
+            "kind": "use_ability",
+            "label": "第一只索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶N的城堡与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二只索罗亚克交易抽到城堡与PP提升剂",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "放下N的城堡",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "retreat_reshiram",
+            "kind": "retreat",
+            "label": "让莱希拉姆回到备战区，换入90伤索罗亚克",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线保留牌却错过本回合攻击"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_05": [
+      {
+        "id": "n_zoroark_05_recover_dark_instead",
+        "category": "recover_dark_instead",
+        "description": "索罗亚仍不能进化，PP提升剂也没有合法第二攻击手",
+        "proof_steps": [
+          {
+            "id": "first_split",
+            "kind": "attack",
+            "label": "焚身加农炮90+90取得两个一奖",
+            "attack_index": 0,
+            "targets": [
+              {
+                "copied_attack": [
+                  {
+                    "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                    "source_zone": "bench",
+                    "attack_index": 1,
+                    "attack": {
+                      "name": "焚身加农炮",
+                      "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                      "cost": "RRC",
+                      "damage": "90",
+                      "is_vstar_power": false
+                    },
+                    "source_slot": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "opponent_bench_damage_targets": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ns_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "对手索罗亚克反杀首攻者",
+            "require_attack": true
+          },
+          {
+            "id": "lure_iono",
+            "kind": "play_trainer",
+            "label": "诱导线：奇树重置冻结资源",
+            "card_uid": "CSV3C_123",
+            "targets": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "期限内未达到目标"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_05_pp_before_evolve",
+        "category": "pp_before_evolve",
+        "description": "索罗亚可收能但还没有暗夜小丑与交易，后续抽不到第二PP和捕捉器",
+        "proof_steps": [
+          {
+            "id": "first_split",
+            "kind": "attack",
+            "label": "焚身加农炮90+90取得两个一奖",
+            "attack_index": 0,
+            "targets": [
+              {
+                "copied_attack": [
+                  {
+                    "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                    "source_zone": "bench",
+                    "attack_index": 1,
+                    "attack": {
+                      "name": "焚身加农炮",
+                      "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                      "cost": "RRC",
+                      "damage": "90",
+                      "is_vstar_power": false
+                    },
+                    "source_slot": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "opponent_bench_damage_targets": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ns_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "对手索罗亚克反杀首攻者",
+            "require_attack": true
+          },
+          {
+            "id": "lure_turo",
+            "kind": "play_trainer",
+            "label": "诱导线：弗图博士移走当前场位",
+            "card_uid": "CSV6C_125",
+            "targets": [
+              {
+                "self_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "复制源或攻击手已丢失"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_06": [
+      {
+        "id": "n_zoroark_06_use_both_trades_early",
+        "category": "use_both_trades_early",
+        "description": "暗码迷置顶后没有可用交易抽取头带与捕捉器",
+        "proof_steps": [
+          {
+            "id": "first_trade",
+            "kind": "use_ability",
+            "label": "主攻索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_band_counter",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶不服输头带与反击捕捉器",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_117",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易兑现头带与捕捉器",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "attach_band",
+            "kind": "attach_tool",
+            "label": "给主攻索罗亚克附不服输头带",
+            "card_uid": "CSV1C_117",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "counter_fez",
+            "kind": "play_trainer",
+            "label": "反击捕捉器抓健康吉雉鸡",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 210
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线提前结束，冻结组件无法兑现"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_06_counter_without_band",
+        "category": "counter_without_band",
+        "description": "力量愤怒180打健康吉雉鸡210会残30",
+        "proof_steps": [
+          {
+            "id": "first_trade",
+            "kind": "use_ability",
+            "label": "主攻索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "active"
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_band_counter",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶不服输头带与反击捕捉器",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV1C_117",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV6C_114",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易兑现头带与捕捉器",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "attach_band",
+            "kind": "attach_tool",
+            "label": "给主攻索罗亚克附不服输头带",
+            "card_uid": "CSV1C_117",
+            "target": {
+              "zone": "active"
+            }
+          },
+          {
+            "id": "counter_fez",
+            "kind": "play_trainer",
+            "label": "反击捕捉器抓健康吉雉鸡",
+            "card_uid": "CSV6C_114",
+            "targets": [
+              {
+                "opponent_bench_target": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench_remaining_hp",
+                      "remaining_hp": 210
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线保留牌却错过本回合攻击"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_07": [
+      {
+        "id": "n_zoroark_07_use_reshiram_damage",
+        "category": "use_reshiram_damage",
+        "description": "复制招式的attacker仍是索罗亚克，实际读取90伤",
+        "proof_steps": [
+          {
+            "id": "first_trade",
+            "kind": "use_ability",
+            "label": "第一索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶N的城堡与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易兑现城堡",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "放下N的城堡",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "retreat",
+            "kind": "retreat",
+            "label": "莱希拉姆回到备战区，换入90伤索罗亚克",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线提前结束，冻结组件无法兑现"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_07_munk_before_second_rage",
+        "category": "munk_before_second_rage",
+        "description": "索罗亚克从130降到100伤，力量愤怒从260降到200，打不倒260HP对手",
+        "proof_steps": [
+          {
+            "id": "first_trade",
+            "kind": "use_ability",
+            "label": "第一索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶N的城堡与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易兑现城堡",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "放下N的城堡",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "retreat",
+            "kind": "retreat",
+            "label": "莱希拉姆回到备战区，换入90伤索罗亚克",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线保留牌却错过本回合攻击"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_08": [
+      {
+        "id": "n_zoroark_08_count_reversal",
+        "category": "count_reversal",
+        "description": "逆转能量是Special Energy，实际不计数",
+        "proof_steps": [
+          {
+            "id": "first_trade",
+            "kind": "use_ability",
+            "label": "第一索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶N的城堡与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易取得城堡",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "N的城堡零撤退",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "retreat",
+            "kind": "retreat",
+            "label": "换入首攻索罗亚克并保留达摩狒狒",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线提前结束，冻结组件无法兑现"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_08_choose_150_target",
+        "category": "choose_150_target",
+        "description": "实际120会残30并失去两回合四奖",
+        "proof_steps": [
+          {
+            "id": "first_trade",
+            "kind": "use_ability",
+            "label": "第一索罗亚克交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_castle",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶N的城堡与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "second_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易取得城堡",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "N的城堡零撤退",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "retreat",
+            "kind": "retreat",
+            "label": "换入首攻索罗亚克并保留达摩狒狒",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线保留牌却错过本回合攻击"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_09": [
+      {
+        "id": "n_zoroark_09_pp_to_active",
+        "category": "pp_to_active",
+        "description": "首攻者倒下时三张恶能全部进弃牌区，第二攻击手仍0能",
+        "proof_steps": [
+          {
+            "id": "active_trade",
+            "kind": "use_ability",
+            "label": "首攻索罗亚克在备战区交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_dark_pp",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶基本恶能与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "backup_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "prebank_pp",
+            "kind": "play_trainer",
+            "label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+            "card_uid": "CSV10C_190",
+            "targets": [
+              {
+                "ns_pp_up_assignment": [
+                  {
+                    "source": {
+                      "$card": {
+                        "player": 0,
+                        "zone": "discard",
+                        "uid": "CSVE1C_DAR",
+                        "occurrence": 0
+                      }
+                    },
+                    "target": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "N的城堡让前场莱希拉姆零撤退",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "first_handoff",
+            "kind": "retreat",
+            "label": "莱希拉姆换入双恶首攻索罗亚克",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线提前结束，冻结组件无法兑现"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_09_skip_prize_castle",
+        "category": "skip_prize_castle",
+        "description": "莱希拉姆前场没有能量且撤退费无法支付",
+        "proof_steps": [
+          {
+            "id": "active_trade",
+            "kind": "use_ability",
+            "label": "首攻索罗亚克在备战区交易取得暗码迷",
+            "source": {
+              "zone": "bench",
+              "index": 0
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV10C_144",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cipher_dark_pp",
+            "kind": "play_trainer",
+            "label": "暗码迷置顶基本恶能与PP提升剂",
+            "card_uid": "CSV7C_191",
+            "targets": [
+              {
+                "top_cards": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_215",
+                      "occurrence": 0
+                    }
+                  },
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSV10C_190",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "backup_trade",
+            "kind": "use_ability",
+            "label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+            "source": {
+              "zone": "bench",
+              "index": 1
+            },
+            "targets": [
+              {
+                "discard_card": [
+                  {
+                    "$card": {
+                      "player": 0,
+                      "zone": "hand",
+                      "uid": "CSV2C_127",
+                      "occurrence": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "prebank_pp",
+            "kind": "play_trainer",
+            "label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+            "card_uid": "CSV10C_190",
+            "targets": [
+              {
+                "ns_pp_up_assignment": [
+                  {
+                    "source": {
+                      "$card": {
+                        "player": 0,
+                        "zone": "discard",
+                        "uid": "CSVE1C_DAR",
+                        "occurrence": 0
+                      }
+                    },
+                    "target": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "castle",
+            "kind": "play_stadium",
+            "label": "N的城堡让前场莱希拉姆零撤退",
+            "card_uid": "CSV10C_215",
+            "targets": []
+          },
+          {
+            "id": "first_handoff",
+            "kind": "retreat",
+            "label": "莱希拉姆换入双恶首攻索罗亚克",
+            "target": {
+              "zone": "bench",
+              "index": 0
+            },
+            "energy_to_discard": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "诱导线保留牌却错过本回合攻击"
+          }
+        ]
+      }
+    ],
+    "n_zoroark_10": [
+      {
+        "id": "n_zoroark_10_band_while_ahead",
+        "category": "band_while_ahead",
+        "description": "我方首攻取2奖后暂时领先，头带直到被反杀才重新生效",
+        "proof_steps": [
+          {
+            "id": "first_split",
+            "kind": "attack",
+            "label": "焚身加农炮90+90先取两个一奖并弃双恶",
+            "attack_index": 0,
+            "targets": [
+              {
+                "copied_attack": [
+                  {
+                    "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                    "source_zone": "bench",
+                    "attack_index": 1,
+                    "attack": {
+                      "name": "焚身加农炮",
+                      "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                      "cost": "RRC",
+                      "damage": "90",
+                      "is_vstar_power": false
+                    },
+                    "source_slot": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "opponent_bench_damage_targets": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ns_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "对手索罗亚克反杀首攻者，使我方重新落后",
+            "require_attack": true
+          },
+          {
+            "id": "lure_iono",
+            "kind": "play_trainer",
+            "label": "诱导线：奇树重置冻结资源",
+            "card_uid": "CSV3C_123",
+            "targets": []
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "期限内未达到目标"
+          }
+        ]
+      },
+      {
+        "id": "n_zoroark_10_skip_black_belt",
+        "category": "skip_black_belt",
+        "description": "目标剩190HP，150会残40",
+        "proof_steps": [
+          {
+            "id": "first_split",
+            "kind": "attack",
+            "label": "焚身加农炮90+90先取两个一奖并弃双恶",
+            "attack_index": 0,
+            "targets": [
+              {
+                "copied_attack": [
+                  {
+                    "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                    "source_zone": "bench",
+                    "attack_index": 1,
+                    "attack": {
+                      "name": "焚身加农炮",
+                      "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                      "cost": "RRC",
+                      "damage": "90",
+                      "is_vstar_power": false
+                    },
+                    "source_slot": {
+                      "$slot": {
+                        "player": 0,
+                        "zone": "bench",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "opponent_bench_damage_targets": [
+                  {
+                    "$slot": {
+                      "player": 1,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ns_reply",
+            "kind": "fixed_rules_ai_turn",
+            "label": "对手索罗亚克反杀首攻者，使我方重新落后",
+            "require_attack": true
+          },
+          {
+            "id": "lure_turo",
+            "kind": "play_trainer",
+            "label": "诱导线：弗图博士移走当前场位",
+            "card_uid": "CSV6C_125",
+            "targets": [
+              {
+                "self_pokemon": [
+                  {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "deadline",
+            "kind": "end_turn",
+            "label": "复制源或攻击手已丢失"
+          }
+        ]
+      }
+    ]
+  }
+}

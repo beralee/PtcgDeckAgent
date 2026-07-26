@@ -100,6 +100,52 @@ func clear_test_overrides() -> void:
 	_builtin_mirror_dir_override = ""
 
 
+func import_custom_track_from_path(source_path: String, source_name: String = "") -> Dictionary:
+	var normalized_path := source_path.strip_edges()
+	if normalized_path == "":
+		return _custom_track_import_error("没有选择音乐文件。")
+	var source_file := FileAccess.open(normalized_path, FileAccess.READ)
+	if source_file == null:
+		return _custom_track_import_error("无法读取所选音乐文件。")
+	var bytes := source_file.get_buffer(source_file.get_length())
+	source_file.close()
+	var resolved_name := source_name.strip_edges()
+	if resolved_name == "":
+		resolved_name = normalized_path.get_file()
+	return import_custom_track_bytes(bytes, resolved_name)
+
+
+func import_custom_track_bytes(bytes: PackedByteArray, source_name: String = "") -> Dictionary:
+	if bytes.is_empty():
+		return _custom_track_import_error("所选音乐文件为空。")
+	var extension := _detect_audio_extension(bytes)
+	if extension == "":
+		return _custom_track_import_error("仅支持 OGG、MP3 或 WAV 音乐文件。")
+	ensure_custom_music_dir()
+	var stem := _safe_custom_track_stem(source_name)
+	if stem == "":
+		stem = "custom_bgm_%d" % int(Time.get_unix_time_from_system())
+	var file_name := "%s.%s" % [stem, extension]
+	var destination := get_custom_music_dir_path().trim_suffix("/").path_join(file_name)
+	var duplicate_index := 2
+	while FileAccess.file_exists(destination):
+		file_name = "%s-%d.%s" % [stem, duplicate_index, extension]
+		destination = get_custom_music_dir_path().trim_suffix("/").path_join(file_name)
+		duplicate_index += 1
+	var destination_file := FileAccess.open(destination, FileAccess.WRITE)
+	if destination_file == null:
+		return _custom_track_import_error("无法写入应用的自定义音乐目录。")
+	destination_file.store_buffer(bytes)
+	destination_file.close()
+	return {
+		"ok": true,
+		"track_id": "custom:%s" % file_name,
+		"path": destination,
+		"label": "自定义 | %s" % file_name.get_basename(),
+		"error": "",
+	}
+
+
 func get_available_battle_tracks() -> Array[Dictionary]:
 	var tracks: Array[Dictionary] = [{
 		"id": TRACK_ID_NONE,
@@ -303,6 +349,44 @@ func _load_stream_from_path(path: String) -> AudioStream:
 				var resource := load(path)
 				return resource if resource is AudioStream else null
 	return null
+
+
+func _detect_audio_extension(bytes: PackedByteArray) -> String:
+	if bytes.size() >= 4:
+		if bytes[0] == 0x4f and bytes[1] == 0x67 and bytes[2] == 0x67 and bytes[3] == 0x53:
+			return "ogg"
+		if bytes[0] == 0x49 and bytes[1] == 0x44 and bytes[2] == 0x33:
+			return "mp3"
+		if bytes[0] == 0xff and (bytes[1] & 0xe0) == 0xe0:
+			return "mp3"
+	if bytes.size() >= 12:
+		if (
+			bytes[0] == 0x52 and bytes[1] == 0x49 and bytes[2] == 0x46 and bytes[3] == 0x46
+			and bytes[8] == 0x57 and bytes[9] == 0x41 and bytes[10] == 0x56 and bytes[11] == 0x45
+		):
+			return "wav"
+	return ""
+
+
+func _safe_custom_track_stem(source_name: String) -> String:
+	var file_name := source_name.strip_edges().get_file()
+	var source_extension := file_name.get_extension().to_lower()
+	var stem := file_name.get_basename() if source_extension != "" else file_name
+	for token: String in ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]:
+		stem = stem.replace(token, "_")
+	while "__" in stem:
+		stem = stem.replace("__", "_")
+	return stem.strip_edges().substr(0, 80)
+
+
+func _custom_track_import_error(message: String) -> Dictionary:
+	return {
+		"ok": false,
+		"track_id": "",
+		"path": "",
+		"label": "",
+		"error": message,
+	}
 
 
 func _volume_db_from_percent(percent: int) -> float:

@@ -205,6 +205,47 @@ func test_watchdog_hard_fallback_aborts_ai_effect_and_ends_main_phase_turn() -> 
 	)
 
 
+func test_watchdog_releases_stale_running_flag_while_ai_owns_send_out_prompt() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._pending_choice = "send_out"
+		scene._dialog_data = {"player": 1}
+		scene._ai_running = true
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("opponent_play_card", 1000)
+		var result: Dictionary = watchdog.tick(13500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "release_stale_running_step", "A crashed AI card-play step must not leave the opponent turn permanently marked as running"),
+			assert_false(scene._ai_running, "Hard recovery should release the stale AI running flag"),
+			assert_false(scene._ai_step_scheduled, "Hard recovery should clear any stale deferred step"),
+			assert_eq(scene.maybe_calls, 1, "The recovered AI-owned prompt should be scheduled again"),
+		])
+		scene.free()
+		return checks
+	)
+
+
+func test_watchdog_releases_stale_running_flag_outside_main_phase_without_forcing_turn_end() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._gsm.game_state.phase = GameState.GamePhase.BETWEEN_TURNS
+		scene._ai_running = true
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("between_turns", 1000)
+		var result: Dictionary = watchdog.tick(13500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "release_stale_running_step", "A crashed non-main AI continuation must release the running latch instead of waiting forever"),
+			assert_false(scene._ai_running, "Non-main hard recovery should release the stale AI running flag"),
+			assert_eq(scene.maybe_calls, 1, "Non-main hard recovery should retry the normal AI scheduler"),
+			assert_eq(scene.end_turn_calls, 0, "Recovery outside MAIN must not manufacture an extra end-turn action"),
+		])
+		scene.free()
+		return checks
+	)
+
+
 func test_watchdog_hard_timeout_forces_llm_turn_back_to_rules() -> String:
 	return _with_vs_ai(func() -> String:
 		var scene := WatchdogScene.new()

@@ -1,0 +1,527 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 508,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 11,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:fezandipiti_draw",
+      "choice_label": "化危为吉取得暗码迷、老大与阻碍之塔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:play_jamming_tower",
+      "choice_label": "阻碍之塔关闭勇气护符",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:cipher_double_retrieval",
+      "choice_label": "暗码迷把两张超级能量回收置顶",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:coin_active",
+      "choice_label": "前场嘉奖硬币抽两张回收",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:retrieval_one",
+      "choice_label": "第一次回收四色能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_gold_rush",
+      "choice_label": "淘金潮200击倒失去护符加成的梦幻ex",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:rules_ai_reply",
+      "choice_label": "沙奈朵规则AI完整回合",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:boss_second_target",
+      "choice_label": "老大抓出剩200HP双奖目标",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:retrieval_two",
+      "choice_label": "第二次回收四色能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:second_gold_rush",
+      "choice_label": "淘金潮200完成第二次击倒",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 8,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "94ec5ba457274a4127cdfef1764cc01ce86867afa8db4580b61d8c81963bb526"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:fezandipiti_draw",
+        "choice_label": "化危为吉取得暗码迷、老大与阻碍之塔",
+        "depth": 10,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:play_jamming_tower",
+              "choice_label": "阻碍之塔关闭勇气护符",
+              "depth": 10,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:cipher_double_retrieval",
+                    "choice_label": "暗码迷把两张超级能量回收置顶",
+                    "depth": 10,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:coin_active",
+                          "choice_label": "前场嘉奖硬币抽两张回收",
+                          "depth": 10,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:retrieval_one",
+                                "choice_label": "第一次回收四色能量",
+                                "depth": 10,
+                                "player_actions": 5,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_gold_rush",
+                                      "choice_label": "淘金潮200击倒失去护符加成的梦幻ex",
+                                      "depth": 10,
+                                      "player_actions": 4,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:rules_ai_reply",
+                                            "choice_label": "沙奈朵规则AI完整回合",
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:boss_second_target",
+                                                  "choice_label": "老大抓出剩200HP双奖目标",
+                                                  "depth": 10,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:retrieval_two",
+                                                        "choice_label": "第二次回收四色能量",
+                                                        "depth": 10,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:second_gold_rush",
+                                                              "choice_label": "淘金潮200完成第二次击倒",
+                                                              "depth": 10,
+                                                              "player_actions": 1,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [],
+                                                                "coverage_complete": true,
+                                                                "depth": 10,
+                                                                "player_actions": 0,
+                                                                "reason": "production_witness_reached_goal",
+                                                                "score": 4,
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 0
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 10,
+                                                          "player_actions": 1,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:second_gold_rush",
+                                                          "selected_choice_label": "淘金潮200完成第二次击倒",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 10,
+                                                    "player_actions": 2,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:retrieval_two",
+                                                    "selected_choice_label": "第二次回收四色能量",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 10,
+                                              "player_actions": 3,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:boss_second_target",
+                                              "selected_choice_label": "老大抓出剩200HP双奖目标",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 10,
+                                        "player_actions": 3,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:rules_ai_reply",
+                                        "selected_choice_label": "沙奈朵规则AI完整回合",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 10,
+                                  "player_actions": 4,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_gold_rush",
+                                  "selected_choice_label": "淘金潮200击倒失去护符加成的梦幻ex",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 10,
+                            "player_actions": 5,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:retrieval_one",
+                            "selected_choice_label": "第一次回收四色能量",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 10,
+                      "player_actions": 6,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:coin_active",
+                      "selected_choice_label": "前场嘉奖硬币抽两张回收",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 10,
+                "player_actions": 7,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:cipher_double_retrieval",
+                "selected_choice_label": "暗码迷把两张超级能量回收置顶",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 10,
+          "player_actions": 8,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:play_jamming_tower",
+          "selected_choice_label": "阻碍之塔关闭勇气护符",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 10,
+    "player_actions": 9,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:fezandipiti_draw",
+    "selected_choice_label": "化危为吉取得暗码迷、老大与阻碍之塔",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:fezandipiti_draw",
+      "choice_label": "化危为吉取得暗码迷、老大与阻碍之塔",
+      "depth": 10,
+      "player_actions": 9,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:play_jamming_tower",
+            "choice_label": "阻碍之塔关闭勇气护符",
+            "depth": 10,
+            "player_actions": 8,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:cipher_double_retrieval",
+                  "choice_label": "暗码迷把两张超级能量回收置顶",
+                  "depth": 10,
+                  "player_actions": 7,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:coin_active",
+                        "choice_label": "前场嘉奖硬币抽两张回收",
+                        "depth": 10,
+                        "player_actions": 6,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:retrieval_one",
+                              "choice_label": "第一次回收四色能量",
+                              "depth": 10,
+                              "player_actions": 5,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_gold_rush",
+                                    "choice_label": "淘金潮200击倒失去护符加成的梦幻ex",
+                                    "depth": 10,
+                                    "player_actions": 4,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:rules_ai_reply",
+                                          "choice_label": "沙奈朵规则AI完整回合",
+                                          "depth": 10,
+                                          "player_actions": 3,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:boss_second_target",
+                                                "choice_label": "老大抓出剩200HP双奖目标",
+                                                "depth": 10,
+                                                "player_actions": 3,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:retrieval_two",
+                                                      "choice_label": "第二次回收四色能量",
+                                                      "depth": 10,
+                                                      "player_actions": 2,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:second_gold_rush",
+                                                            "choice_label": "淘金潮200完成第二次击倒",
+                                                            "depth": 10,
+                                                            "player_actions": 1,
+                                                            "reason": "production_witness_reached_goal",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [],
+                                                              "coverage_complete": true,
+                                                              "depth": 10,
+                                                              "player_actions": 0,
+                                                              "reason": "production_witness_reached_goal",
+                                                              "score": 4,
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 0
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 10,
+                                                        "player_actions": 1,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:second_gold_rush",
+                                                        "selected_choice_label": "淘金潮200完成第二次击倒",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 10,
+                                                  "player_actions": 2,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:retrieval_two",
+                                                  "selected_choice_label": "第二次回收四色能量",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 10,
+                                            "player_actions": 3,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:boss_second_target",
+                                            "selected_choice_label": "老大抓出剩200HP双奖目标",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 10,
+                                      "player_actions": 3,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:rules_ai_reply",
+                                      "selected_choice_label": "沙奈朵规则AI完整回合",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 10,
+                                "player_actions": 4,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_gold_rush",
+                                "selected_choice_label": "淘金潮200击倒失去护符加成的梦幻ex",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 10,
+                          "player_actions": 5,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:retrieval_one",
+                          "selected_choice_label": "第一次回收四色能量",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 10,
+                    "player_actions": 6,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:coin_active",
+                    "selected_choice_label": "前场嘉奖硬币抽两张回收",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 10,
+              "player_actions": 7,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:cipher_double_retrieval",
+              "selected_choice_label": "暗码迷把两张超级能量回收置顶",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 10,
+        "player_actions": 8,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:play_jamming_tower",
+        "selected_choice_label": "阻碍之塔关闭勇气护符",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "94ec5ba457274a4127cdfef1764cc01ce86867afa8db4580b61d8c81963bb526",
+  "scenario_id": "gholdengo_07",
+  "shortest_player_actions": 9,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

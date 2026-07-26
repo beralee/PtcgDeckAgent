@@ -67,6 +67,40 @@ func build(
 	return envelope
 
 
+func snapshot_public_state(game_state: GameState, player_index: int) -> Dictionary:
+	# Runtime event snapshots deliberately do not consume an observation version:
+	# they detect engine progress between a selected action and the next decision
+	# window. They expose the same public zones as `build`, but no legal actions,
+	# interaction candidates, hidden deck identities, or Prize identities.
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return {}
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return {}
+	var snapshot := {
+		"turn": {
+			"number": int(game_state.turn_number),
+			"current_player": int(game_state.current_player_index),
+			"viewer": player_index,
+			"phase": int(game_state.phase),
+			"first_player": int(game_state.first_player_index),
+			"quotas": {
+				"energy_available": not game_state.energy_attached_this_turn,
+				"supporter_available": not game_state.supporter_used_this_turn,
+				"stadium_available": not game_state.stadium_played_this_turn,
+				"retreat_available": not game_state.retreat_used_this_turn,
+				"vstar_available": player_index < game_state.vstar_power_used.size() \
+					and not bool(game_state.vstar_power_used[player_index]),
+			},
+		},
+		"own": _visible_own_player(game_state.players[player_index], game_state.turn_number),
+		"opponent": _visible_opponent(game_state.players[opponent_index], game_state.turn_number),
+		"stadium": _card_ref(game_state.stadium_card),
+	}
+	snapshot["public_state_hash"] = ContractsScript.stable_hash(snapshot)
+	return snapshot
+
+
 func _deterministic_attack_window_open(
 	game_state: GameState,
 	player: PlayerState,
@@ -307,6 +341,15 @@ func _display_name(data: CardData) -> String:
 func _is_tera(data: CardData) -> bool:
 	if data == null:
 		return false
-	var joined := "%s %s %s %s" % [data.mechanic, data.label, data.description, " ".join(data.is_tags)]
+	# Tera is card identity, not a word that happens to occur in rules text.
+	# Reading `description` made Noctowl look like a Tera Pokemon because Jewel
+	# Seeker mentions the condition, while Teal Mask Ogerpon's actual Tera marker
+	# lives in `ancient_trait` and was missed.
+	var joined := "%s %s %s %s" % [
+		data.ancient_trait,
+		data.mechanic,
+		data.label,
+		" ".join(data.is_tags),
+	]
 	var lowered := joined.to_lower()
 	return lowered.contains("tera") or joined.contains("太晶")

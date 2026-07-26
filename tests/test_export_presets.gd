@@ -9,10 +9,20 @@ const WEB_RELEASE_PLUGIN_CFG_PATH := "res://addons/web_release_post_export/plugi
 const WEB_RELEASE_PLUGIN_PATH := "res://addons/web_release_post_export/web_release_export_plugin.gd"
 const WEB_RELEASE_LAYOUT_PATH := "res://addons/web_release_post_export/web_release_layout.gd"
 const WEB_CUSTOM_SHELL_PATH := "res://web/ptcg_web_shell.html"
+const WEB_E2E_BRIDGE_PATH := "res://web/e2e/WebUiE2EBridge.gd"
 const WEB_USER_VISIT_BRIDGE_PATH := "res://web/userptcg_bridge.html"
 const REQUIRED_BUNDLED_FILTER := "data/**"
 const WEB_PRESET_NAME := "Web"
-const WEB_EXCLUDE_FILTERS := ["tests/**", "docs/**", ".tmp/**", ".godot_test_user/**", "addons/web_release_post_export/**"]
+const WEB_E2E_PRESET_NAME := "Web UI E2E"
+const WEB_EXCLUDE_FILTERS := ["tests/**", "docs/**", ".tmp/**", ".godot_test_user/**", "web/e2e/**", "addons/web_release_post_export/**"]
+const WEB_GENERATED_SOURCE_EXCLUDE_FILTERS := [
+	"output/**",
+	"assets/textures/vfx/ready_*/raw-sheet*.png",
+	"assets/textures/vfx/ready_*/charge-*.png",
+	"assets/textures/vfx/ready_*/animation.gif",
+	"assets/textures/vfx/ready_*/pipeline-meta.json",
+	"assets/textures/vfx/ready_*/prompt-used.txt",
+]
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
 const EXPECTED_APP_VERSION := "0.5.1"
 const EXPECTED_BUILD_NUMBER := "51"
@@ -51,6 +61,38 @@ func test_web_export_includes_bundled_user_data() -> String:
 		assert_true(web_block != "", "Web export preset should exist"),
 		assert_true(include_filter.split(",").has(REQUIRED_BUNDLED_FILTER), "Web export should include bundled data files such as card JSON and card image .bin files"),
 	])
+
+
+func test_web_production_excludes_test_bridge_and_e2e_preset_is_isolated() -> String:
+	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var production_block := _extract_preset_block(preset_text, WEB_PRESET_NAME)
+	var e2e_block := _extract_preset_block(preset_text, WEB_E2E_PRESET_NAME)
+	var production_features := _extract_string_value(production_block, "custom_features")
+	var production_excludes := _extract_string_value(production_block, "exclude_filter")
+	var e2e_features := _extract_string_value(e2e_block, "custom_features")
+	var e2e_includes := _extract_string_value(e2e_block, "include_filter")
+	var shell_text := FileAccess.get_file_as_string(WEB_CUSTOM_SHELL_PATH)
+
+	return run_checks([
+		assert_true(FileAccess.file_exists(WEB_E2E_BRIDGE_PATH), "The test-only semantic bridge should exist"),
+		assert_false(production_features.split(",").has("web_ui_e2e"), "Production Web must not enable the E2E feature"),
+		assert_true(production_excludes.split(",").has("web/e2e/**"), "Production Web must exclude every E2E bridge resource"),
+		assert_false(shell_text.contains("__PTCG_TEST__"), "The production custom shell must not expose a test hook"),
+		assert_true(e2e_block != "", "A separate Web UI E2E export preset should exist"),
+		assert_true(e2e_features.split(",").has("web_ui_e2e"), "Only the E2E preset should enable the test feature"),
+		assert_true(e2e_includes.split(",").has("web/e2e/**"), "The E2E preset should explicitly include its semantic bridge"),
+	])
+
+
+func test_web_exports_exclude_generated_source_artifacts() -> String:
+	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var production_excludes := _extract_string_value(_extract_preset_block(preset_text, WEB_PRESET_NAME), "exclude_filter").split(",")
+	var e2e_excludes := _extract_string_value(_extract_preset_block(preset_text, WEB_E2E_PRESET_NAME), "exclude_filter").split(",")
+	var checks: Array[String] = []
+	for filter: String in WEB_GENERATED_SOURCE_EXCLUDE_FILTERS:
+		checks.append(assert_true(production_excludes.has(filter), "Production Web should exclude non-runtime generated source: %s" % filter))
+		checks.append(assert_true(e2e_excludes.has(filter), "Web E2E should match the production resource budget exclusion: %s" % filter))
+	return run_checks(checks)
 
 
 func test_web_export_path_is_ide_friendly_and_plugin_versionizes_it() -> String:
@@ -135,8 +177,21 @@ func test_web_custom_shell_keeps_godot_and_pwa_hooks() -> String:
 	])
 
 
+func test_web_custom_shell_captures_early_lifecycle_and_runtime_errors() -> String:
+	var shell_text := FileAccess.get_file_as_string(WEB_CUSTOM_SHELL_PATH)
+
+	return run_checks([
+		assert_true(shell_text.contains("window.__ptcgLifecycleQueue"), "Custom shell should buffer lifecycle events before Godot installs its bridge"),
+		assert_true(shell_text.contains("window.__ptcgEarlyLifecycleBridge"), "Custom shell should expose an uninstallable early lifecycle bridge"),
+		assert_true(shell_text.contains("visibilitychange"), "Custom shell should capture early visibility changes"),
+		assert_true(shell_text.contains("unhandledrejection"), "Custom shell should capture rejected browser promises"),
+		assert_true(shell_text.contains("window.__ptcgLifecycleQueue.length > 100"), "Early lifecycle/error buffering should be bounded"),
+	])
+
+
 func test_web_custom_shell_has_click_start_and_ios_layout_guards() -> String:
 	var shell_text := FileAccess.get_file_as_string(WEB_CUSTOM_SHELL_PATH)
+	var normalized_shell_text := shell_text.replace("\r\n", "\n").replace("\r", "\n")
 
 	return run_checks([
 		assert_true(shell_text.contains("id=\"start-game\""), "Custom shell should gate startup behind an explicit player click"),
@@ -150,7 +205,7 @@ func test_web_custom_shell_has_click_start_and_ios_layout_guards() -> String:
 		assert_false(shell_text.contains("bestEffortFullscreen().then(bestEffortLandscapeOrientation)"), "Custom shell should not chain fullscreen before orientation lock"),
 		assert_true(shell_text.contains("AudioContext"), "Custom shell should unlock browser audio from the click gesture"),
 		assert_true(shell_text.contains("AUDIO_UNLOCK_TIMEOUT_MS"), "Audio unlock should have a bounded timeout on browsers that never settle resume()"),
-		assert_true(shell_text.contains("unlockAudioFromGesture();\n\t\tsetStage(TEXT_LOADING_DOWNLOAD);"), "Game startup should not await browser audio unlock"),
+		assert_true(normalized_shell_text.contains("unlockAudioFromGesture();\n\t\tsetStage(TEXT_LOADING_DOWNLOAD);"), "Game startup should not await browser audio unlock"),
 		assert_true(shell_text.contains("viewport-fit=cover"), "Custom shell should opt into iOS safe-area viewport handling"),
 		assert_true(shell_text.contains("user-scalable=no"), "Custom shell should prevent iOS double-tap zoom during play"),
 		assert_true(shell_text.contains("apple-mobile-web-app-capable"), "Custom shell should include iOS PWA meta"),

@@ -21,7 +21,17 @@ var _last_state_transition_signature: String = ""
 
 
 func setup(scene: Object) -> void:
+	if _scene is Control:
+		var previous := _scene as Control
+		var previous_callback := Callable(self, "_on_scene_resized")
+		if previous.resized.is_connected(previous_callback):
+			previous.resized.disconnect(previous_callback)
 	_scene = scene
+	if _scene is Control:
+		var scene_control := _scene as Control
+		var callback := Callable(self, "_on_scene_resized")
+		if not scene_control.resized.is_connected(callback):
+			scene_control.resized.connect(callback)
 
 
 func set_animators_for_tests(zone_animator: RefCounted, feedback_animator: RefCounted) -> void:
@@ -113,6 +123,12 @@ func clear(_reason: String = "") -> void:
 	_set_input_blocked(false)
 
 
+func _on_scene_resized() -> void:
+	if _active_event.is_empty() and _queue.is_empty():
+		return
+	clear("scene_resized")
+
+
 func pending_count() -> int:
 	return _queue.size() + (0 if _active_event.is_empty() else 1)
 
@@ -144,7 +160,15 @@ func _start_next() -> void:
 func _on_event_finished(expected_generation: int) -> void:
 	if expected_generation != _generation or _active_event.is_empty():
 		return
+	var completed_semantic := str(_active_event.get("semantic", ""))
 	_active_event.clear()
+	if (
+		completed_semantic == "knockout"
+		and _scene != null
+		and is_instance_valid(_scene)
+		and _scene.has_method("_refresh_field_after_visual_event")
+	):
+		_scene.call("_refresh_field_after_visual_event", completed_semantic)
 	_start_next()
 
 
@@ -162,10 +186,7 @@ func _compact_queue_if_needed() -> void:
 	var compacted: Array[Dictionary] = []
 	for event: Dictionary in _queue:
 		if not compacted.is_empty() and _can_merge(compacted.back(), event):
-			var previous: Dictionary = compacted.back()
-			previous["amount"] = int(previous.get("amount", 0)) + int(event.get("amount", 0))
-			previous["count"] = int(previous.get("count", 0)) + int(event.get("count", 0))
-			(previous.get("card_instance_ids", []) as Array).append_array(event.get("card_instance_ids", []))
+			compacted[compacted.size() - 1] = _merge_compatible_events(compacted.back(), event)
 			continue
 		compacted.append(event)
 	_queue = compacted
@@ -176,10 +197,28 @@ func _compact_queue_if_needed() -> void:
 func _can_merge(left: Dictionary, right: Dictionary) -> bool:
 	return (
 		str(left.get("kind", "")) == str(right.get("kind", ""))
+		and str(left.get("semantic", "")) == str(right.get("semantic", ""))
 		and str(left.get("source_zone", "")) == str(right.get("source_zone", ""))
 		and str(left.get("target_zone", "")) == str(right.get("target_zone", ""))
 		and str(left.get("slot_key", "")) == str(right.get("slot_key", ""))
+		and str(left.get("visibility", "")) == str(right.get("visibility", ""))
+		and int(left.get("player_index", -1)) == int(right.get("player_index", -1))
+		and int(left.get("owner_index", -1)) == int(right.get("owner_index", -1))
+		and int(left.get("view_player", -1)) == int(right.get("view_player", -1))
 	)
+
+
+func _merge_compatible_events(left: Dictionary, right: Dictionary) -> Dictionary:
+	if not _can_merge(left, right):
+		return left.duplicate(true)
+	var merged := left.duplicate(true)
+	merged["amount"] = int(left.get("amount", 0)) + int(right.get("amount", 0))
+	merged["count"] = int(left.get("count", 0)) + int(right.get("count", 0))
+	for array_key: String in ["card_instance_ids", "cards", "card_names"]:
+		var values: Array = (left.get(array_key, []) as Array).duplicate()
+		values.append_array(right.get(array_key, []))
+		merged[array_key] = values
+	return merged
 
 
 func _transition_signature(before: Dictionary, after: Dictionary) -> String:

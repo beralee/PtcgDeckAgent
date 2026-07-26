@@ -84,6 +84,7 @@ func _recover_if_needed(scene: Object, now: int, stalled_msec: int) -> Dictionar
 		var pending_choice := str(scene.get("_pending_choice"))
 		if pending_choice == "effect_interaction" and _ai_owns_next_decision(scene):
 			_log_recovery(scene, "abort_effect_and_end_turn", stalled_msec)
+			scene.set("_ai_running", false)
 			scene.set("_ai_step_scheduled", false)
 			scene.set("_ai_followup_requested", false)
 			scene.call("_reset_effect_interaction")
@@ -95,13 +96,30 @@ func _recover_if_needed(scene: Object, now: int, stalled_msec: int) -> Dictionar
 			scene.call("_maybe_run_ai")
 			_mark_recovery(now)
 			return {"action": "abort_effect", "stalled_msec": stalled_msec}
+		if pending_choice != "" and bool(scene.get("_ai_running")) and _ai_owns_next_decision(scene):
+			_log_recovery(scene, "release_stale_running_step", stalled_msec, "pending=%s" % pending_choice)
+			scene.set("_ai_running", false)
+			scene.set("_ai_step_scheduled", false)
+			scene.set("_ai_followup_requested", false)
+			scene.call("_maybe_run_ai")
+			_mark_recovery(now)
+			return {"action": "release_stale_running_step", "stalled_msec": stalled_msec}
 		if pending_choice == "" and _can_force_end_main_phase(scene):
 			_log_recovery(scene, "force_end_turn", stalled_msec)
+			scene.set("_ai_running", false)
 			scene.set("_ai_step_scheduled", false)
 			scene.set("_ai_followup_requested", false)
 			scene.call("_on_end_turn", _ai_player_index(scene))
 			_mark_recovery(now)
 			return {"action": "force_end_turn", "stalled_msec": stalled_msec}
+		if pending_choice == "" and bool(scene.get("_ai_running")) and _ai_owns_next_decision(scene):
+			_log_recovery(scene, "release_stale_running_step", stalled_msec, "phase=%d" % int(scene.get("_gsm").game_state.phase))
+			scene.set("_ai_running", false)
+			scene.set("_ai_step_scheduled", false)
+			scene.set("_ai_followup_requested", false)
+			scene.call("_maybe_run_ai")
+			_mark_recovery(now)
+			return {"action": "release_stale_running_step", "stalled_msec": stalled_msec}
 
 	if stalled_msec < SOFT_STALL_MSEC:
 		return {"action": "waiting", "stalled_msec": stalled_msec}

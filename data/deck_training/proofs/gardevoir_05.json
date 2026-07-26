@@ -1,0 +1,512 @@
+{
+	"exhaustive_defense": true,
+	"format_version": 1,
+	"metrics": {
+		"budget_reason": "",
+		"cache_hits": 0,
+		"elapsed_milliseconds": 793,
+		"inconclusive_leaves": 0,
+		"nodes_visited": 11,
+		"terminal_leaves": 1
+	},
+	"principal_variation": [
+		{
+			"choice_id": "00:flip_the_script_rod",
+			"choice_label": "化危为吉抽前三张并取得厉害钓竿",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "01:munkidori_first_threshold",
+			"choice_label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "02:first_miracle_force",
+			"choice_label": "奇迹之力190精确取得首2奖",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "03:gholdengo_reply_and_last_draw",
+			"choice_label": "赛富豪300反杀，第二回合自然抽到最后一张桌台市",
+			"role": "opponent",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "04:super_rod_scream_two_psychic",
+			"choice_label": "厉害钓竿回收吼叫尾与两张超能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "05:artazon_recovered_scream",
+			"choice_label": "桌台市把回填的吼叫尾直接放到新空出的备战位",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "06:embrace_scream_one",
+			"choice_label": "第一次精神拥抱给吼叫尾附超能并放20伤",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "07:embrace_scream_two",
+			"choice_label": "第二次精神拥抱给吼叫尾附超能并到40伤",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "08:retreat_munk_to_scream",
+			"choice_label": "愿增猿弃恶能撤退到新回收的吼叫尾",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "09:roaring_scream_eighty",
+			"choice_label": "凶暴吼叫80精确狙击130伤吉雉鸡ex",
+			"role": "player",
+			"status": "PROVEN"
+		}
+	],
+	"proof_tree": {
+		"branches": [
+			{
+				"choice_id": "00:flip_the_script_rod",
+				"choice_label": "化危为吉抽前三张并取得厉害钓竿",
+				"depth": 10,
+				"player_actions": 9,
+				"reason": "player_has_forcing_choice",
+				"status": "PROVEN",
+				"tree": {
+					"branches": [
+						{
+							"choice_id": "01:munkidori_first_threshold",
+							"choice_label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+							"depth": 10,
+							"player_actions": 8,
+							"reason": "player_has_forcing_choice",
+							"status": "PROVEN",
+							"tree": {
+								"branches": [
+									{
+										"choice_id": "02:first_miracle_force",
+										"choice_label": "奇迹之力190精确取得首2奖",
+										"depth": 10,
+										"player_actions": 7,
+										"reason": "all_defenses_hold",
+										"status": "PROVEN",
+										"tree": {
+											"branches": [
+												{
+													"choice_id": "03:gholdengo_reply_and_last_draw",
+													"choice_label": "赛富豪300反杀，第二回合自然抽到最后一张桌台市",
+													"depth": 10,
+													"player_actions": 6,
+													"reason": "player_has_forcing_choice",
+													"status": "PROVEN",
+													"tree": {
+														"branches": [
+															{
+																"choice_id": "04:super_rod_scream_two_psychic",
+																"choice_label": "厉害钓竿回收吼叫尾与两张超能",
+																"depth": 10,
+																"player_actions": 6,
+																"reason": "player_has_forcing_choice",
+																"status": "PROVEN",
+																"tree": {
+																	"branches": [
+																		{
+																			"choice_id": "05:artazon_recovered_scream",
+																			"choice_label": "桌台市把回填的吼叫尾直接放到新空出的备战位",
+																			"depth": 10,
+																			"player_actions": 5,
+																			"reason": "player_has_forcing_choice",
+																			"status": "PROVEN",
+																			"tree": {
+																				"branches": [
+																					{
+																						"choice_id": "06:embrace_scream_one",
+																						"choice_label": "第一次精神拥抱给吼叫尾附超能并放20伤",
+																						"depth": 10,
+																						"player_actions": 4,
+																						"reason": "player_has_forcing_choice",
+																						"status": "PROVEN",
+																						"tree": {
+																							"branches": [
+																								{
+																									"choice_id": "07:embrace_scream_two",
+																									"choice_label": "第二次精神拥抱给吼叫尾附超能并到40伤",
+																									"depth": 10,
+																									"player_actions": 3,
+																									"reason": "player_has_forcing_choice",
+																									"status": "PROVEN",
+																									"tree": {
+																										"branches": [
+																											{
+																												"choice_id": "08:retreat_munk_to_scream",
+																												"choice_label": "愿增猿弃恶能撤退到新回收的吼叫尾",
+																												"depth": 10,
+																												"player_actions": 2,
+																												"reason": "player_has_forcing_choice",
+																												"status": "PROVEN",
+																												"tree": {
+																													"branches": [
+																														{
+																															"choice_id": "09:roaring_scream_eighty",
+																															"choice_label": "凶暴吼叫80精确狙击130伤吉雉鸡ex",
+																															"depth": 10,
+																															"player_actions": 1,
+																															"reason": "production_witness_reached_goal",
+																															"status": "PROVEN",
+																															"tree": {
+																																"branches": [],
+																																"coverage_complete": true,
+																																"depth": 10,
+																																"player_actions": 0,
+																																"reason": "production_witness_reached_goal",
+																																"score": 4,
+																																"status": "PROVEN",
+																																"winning_choice_count": 0
+																															}
+																														}
+																													],
+																													"coverage_complete": true,
+																													"depth": 10,
+																													"player_actions": 1,
+																													"reason": "player_has_forcing_choice",
+																													"role": "player",
+																													"selected_choice_id": "09:roaring_scream_eighty",
+																													"selected_choice_label": "凶暴吼叫80精确狙击130伤吉雉鸡ex",
+																													"status": "PROVEN",
+																													"winning_choice_count": 1
+																												}
+																											}
+																										],
+																										"coverage_complete": true,
+																										"depth": 10,
+																										"player_actions": 2,
+																										"reason": "player_has_forcing_choice",
+																										"role": "player",
+																										"selected_choice_id": "08:retreat_munk_to_scream",
+																										"selected_choice_label": "愿增猿弃恶能撤退到新回收的吼叫尾",
+																										"status": "PROVEN",
+																										"winning_choice_count": 1
+																									}
+																								}
+																							],
+																							"coverage_complete": true,
+																							"depth": 10,
+																							"player_actions": 3,
+																							"reason": "player_has_forcing_choice",
+																							"role": "player",
+																							"selected_choice_id": "07:embrace_scream_two",
+																							"selected_choice_label": "第二次精神拥抱给吼叫尾附超能并到40伤",
+																							"status": "PROVEN",
+																							"winning_choice_count": 1
+																						}
+																					}
+																				],
+																				"coverage_complete": true,
+																				"depth": 10,
+																				"player_actions": 4,
+																				"reason": "player_has_forcing_choice",
+																				"role": "player",
+																				"selected_choice_id": "06:embrace_scream_one",
+																				"selected_choice_label": "第一次精神拥抱给吼叫尾附超能并放20伤",
+																				"status": "PROVEN",
+																				"winning_choice_count": 1
+																			}
+																		}
+																	],
+																	"coverage_complete": true,
+																	"depth": 10,
+																	"player_actions": 5,
+																	"reason": "player_has_forcing_choice",
+																	"role": "player",
+																	"selected_choice_id": "05:artazon_recovered_scream",
+																	"selected_choice_label": "桌台市把回填的吼叫尾直接放到新空出的备战位",
+																	"status": "PROVEN",
+																	"winning_choice_count": 1
+																}
+															}
+														],
+														"coverage_complete": true,
+														"depth": 10,
+														"player_actions": 6,
+														"reason": "player_has_forcing_choice",
+														"role": "player",
+														"selected_choice_id": "04:super_rod_scream_two_psychic",
+														"selected_choice_label": "厉害钓竿回收吼叫尾与两张超能",
+														"status": "PROVEN",
+														"winning_choice_count": 1
+													}
+												}
+											],
+											"coverage_complete": true,
+											"depth": 10,
+											"player_actions": 6,
+											"reason": "all_defenses_hold",
+											"role": "opponent",
+											"selected_choice_id": "03:gholdengo_reply_and_last_draw",
+											"selected_choice_label": "赛富豪300反杀，第二回合自然抽到最后一张桌台市",
+											"status": "PROVEN",
+											"winning_choice_count": 1
+										}
+									}
+								],
+								"coverage_complete": true,
+								"depth": 10,
+								"player_actions": 7,
+								"reason": "player_has_forcing_choice",
+								"role": "player",
+								"selected_choice_id": "02:first_miracle_force",
+								"selected_choice_label": "奇迹之力190精确取得首2奖",
+								"status": "PROVEN",
+								"winning_choice_count": 1
+							}
+						}
+					],
+					"coverage_complete": true,
+					"depth": 10,
+					"player_actions": 8,
+					"reason": "player_has_forcing_choice",
+					"role": "player",
+					"selected_choice_id": "01:munkidori_first_threshold",
+					"selected_choice_label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+					"status": "PROVEN",
+					"winning_choice_count": 1
+				}
+			}
+		],
+		"coverage_complete": true,
+		"depth": 10,
+		"player_actions": 9,
+		"reason": "player_has_forcing_choice",
+		"role": "player",
+		"selected_choice_id": "00:flip_the_script_rod",
+		"selected_choice_label": "化危为吉抽前三张并取得厉害钓竿",
+		"status": "PROVEN",
+		"winning_choice_count": 1
+	},
+	"provider": "production_rules_ai_witness_v2",
+	"reason": "player_has_forcing_choice",
+	"root_branches": [
+		{
+			"choice_id": "00:flip_the_script_rod",
+			"choice_label": "化危为吉抽前三张并取得厉害钓竿",
+			"depth": 10,
+			"player_actions": 9,
+			"reason": "player_has_forcing_choice",
+			"status": "PROVEN",
+			"tree": {
+				"branches": [
+					{
+						"choice_id": "01:munkidori_first_threshold",
+						"choice_label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+						"depth": 10,
+						"player_actions": 8,
+						"reason": "player_has_forcing_choice",
+						"status": "PROVEN",
+						"tree": {
+							"branches": [
+								{
+									"choice_id": "02:first_miracle_force",
+									"choice_label": "奇迹之力190精确取得首2奖",
+									"depth": 10,
+									"player_actions": 7,
+									"reason": "all_defenses_hold",
+									"status": "PROVEN",
+									"tree": {
+										"branches": [
+											{
+												"choice_id": "03:gholdengo_reply_and_last_draw",
+												"choice_label": "赛富豪300反杀，第二回合自然抽到最后一张桌台市",
+												"depth": 10,
+												"player_actions": 6,
+												"reason": "player_has_forcing_choice",
+												"status": "PROVEN",
+												"tree": {
+													"branches": [
+														{
+															"choice_id": "04:super_rod_scream_two_psychic",
+															"choice_label": "厉害钓竿回收吼叫尾与两张超能",
+															"depth": 10,
+															"player_actions": 6,
+															"reason": "player_has_forcing_choice",
+															"status": "PROVEN",
+															"tree": {
+																"branches": [
+																	{
+																		"choice_id": "05:artazon_recovered_scream",
+																		"choice_label": "桌台市把回填的吼叫尾直接放到新空出的备战位",
+																		"depth": 10,
+																		"player_actions": 5,
+																		"reason": "player_has_forcing_choice",
+																		"status": "PROVEN",
+																		"tree": {
+																			"branches": [
+																				{
+																					"choice_id": "06:embrace_scream_one",
+																					"choice_label": "第一次精神拥抱给吼叫尾附超能并放20伤",
+																					"depth": 10,
+																					"player_actions": 4,
+																					"reason": "player_has_forcing_choice",
+																					"status": "PROVEN",
+																					"tree": {
+																						"branches": [
+																							{
+																								"choice_id": "07:embrace_scream_two",
+																								"choice_label": "第二次精神拥抱给吼叫尾附超能并到40伤",
+																								"depth": 10,
+																								"player_actions": 3,
+																								"reason": "player_has_forcing_choice",
+																								"status": "PROVEN",
+																								"tree": {
+																									"branches": [
+																										{
+																											"choice_id": "08:retreat_munk_to_scream",
+																											"choice_label": "愿增猿弃恶能撤退到新回收的吼叫尾",
+																											"depth": 10,
+																											"player_actions": 2,
+																											"reason": "player_has_forcing_choice",
+																											"status": "PROVEN",
+																											"tree": {
+																												"branches": [
+																													{
+																														"choice_id": "09:roaring_scream_eighty",
+																														"choice_label": "凶暴吼叫80精确狙击130伤吉雉鸡ex",
+																														"depth": 10,
+																														"player_actions": 1,
+																														"reason": "production_witness_reached_goal",
+																														"status": "PROVEN",
+																														"tree": {
+																															"branches": [],
+																															"coverage_complete": true,
+																															"depth": 10,
+																															"player_actions": 0,
+																															"reason": "production_witness_reached_goal",
+																															"score": 4,
+																															"status": "PROVEN",
+																															"winning_choice_count": 0
+																														}
+																													}
+																												],
+																												"coverage_complete": true,
+																												"depth": 10,
+																												"player_actions": 1,
+																												"reason": "player_has_forcing_choice",
+																												"role": "player",
+																												"selected_choice_id": "09:roaring_scream_eighty",
+																												"selected_choice_label": "凶暴吼叫80精确狙击130伤吉雉鸡ex",
+																												"status": "PROVEN",
+																												"winning_choice_count": 1
+																											}
+																										}
+																									],
+																									"coverage_complete": true,
+																									"depth": 10,
+																									"player_actions": 2,
+																									"reason": "player_has_forcing_choice",
+																									"role": "player",
+																									"selected_choice_id": "08:retreat_munk_to_scream",
+																									"selected_choice_label": "愿增猿弃恶能撤退到新回收的吼叫尾",
+																									"status": "PROVEN",
+																									"winning_choice_count": 1
+																								}
+																							}
+																						],
+																						"coverage_complete": true,
+																						"depth": 10,
+																						"player_actions": 3,
+																						"reason": "player_has_forcing_choice",
+																						"role": "player",
+																						"selected_choice_id": "07:embrace_scream_two",
+																						"selected_choice_label": "第二次精神拥抱给吼叫尾附超能并到40伤",
+																						"status": "PROVEN",
+																						"winning_choice_count": 1
+																					}
+																				}
+																			],
+																			"coverage_complete": true,
+																			"depth": 10,
+																			"player_actions": 4,
+																			"reason": "player_has_forcing_choice",
+																			"role": "player",
+																			"selected_choice_id": "06:embrace_scream_one",
+																			"selected_choice_label": "第一次精神拥抱给吼叫尾附超能并放20伤",
+																			"status": "PROVEN",
+																			"winning_choice_count": 1
+																		}
+																	}
+																],
+																"coverage_complete": true,
+																"depth": 10,
+																"player_actions": 5,
+																"reason": "player_has_forcing_choice",
+																"role": "player",
+																"selected_choice_id": "05:artazon_recovered_scream",
+																"selected_choice_label": "桌台市把回填的吼叫尾直接放到新空出的备战位",
+																"status": "PROVEN",
+																"winning_choice_count": 1
+															}
+														}
+													],
+													"coverage_complete": true,
+													"depth": 10,
+													"player_actions": 6,
+													"reason": "player_has_forcing_choice",
+													"role": "player",
+													"selected_choice_id": "04:super_rod_scream_two_psychic",
+													"selected_choice_label": "厉害钓竿回收吼叫尾与两张超能",
+													"status": "PROVEN",
+													"winning_choice_count": 1
+												}
+											}
+										],
+										"coverage_complete": true,
+										"depth": 10,
+										"player_actions": 6,
+										"reason": "all_defenses_hold",
+										"role": "opponent",
+										"selected_choice_id": "03:gholdengo_reply_and_last_draw",
+										"selected_choice_label": "赛富豪300反杀，第二回合自然抽到最后一张桌台市",
+										"status": "PROVEN",
+										"winning_choice_count": 1
+									}
+								}
+							],
+							"coverage_complete": true,
+							"depth": 10,
+							"player_actions": 7,
+							"reason": "player_has_forcing_choice",
+							"role": "player",
+							"selected_choice_id": "02:first_miracle_force",
+							"selected_choice_label": "奇迹之力190精确取得首2奖",
+							"status": "PROVEN",
+							"winning_choice_count": 1
+						}
+					}
+				],
+				"coverage_complete": true,
+				"depth": 10,
+				"player_actions": 8,
+				"reason": "player_has_forcing_choice",
+				"role": "player",
+				"selected_choice_id": "01:munkidori_first_threshold",
+				"selected_choice_label": "愿增猿把首攻者30伤搬给40伤赛富豪",
+				"status": "PROVEN",
+				"winning_choice_count": 1
+			}
+		}
+	],
+	"root_role": "player",
+	"scenario_fingerprint": "e18dfe3a1875fe8549451026a29851cc8dd6a2a901bf656be81447a98a832909",
+	"shortest_player_actions": 9,
+	"solver_version": "deck-training-and-or-v2",
+	"status": "PROVEN",
+	"unique_root_solution": true,
+	"unsupported_reasons": []
+}

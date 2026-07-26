@@ -1,0 +1,512 @@
+{
+	"exhaustive_defense": true,
+	"format_version": 1,
+	"metrics": {
+		"budget_reason": "",
+		"cache_hits": 0,
+		"elapsed_milliseconds": 819,
+		"inconclusive_leaves": 0,
+		"nodes_visited": 11,
+		"terminal_leaves": 1
+	},
+	"principal_variation": [
+		{
+			"choice_id": "00:nest_csv8c_135",
+			"choice_label": "巢穴球只找吉雉鸡ex，建立隐藏三张桥牌",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "01:flip_the_script_bridges",
+			"choice_label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "02:attach_drawn_psychic_to_first",
+			"choice_label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "03:first_munkidori_thirty",
+			"choice_label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "04:first_miracle_force",
+			"choice_label": "奇迹之力190精确取得首2奖",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "05:gholdengo_reply",
+			"choice_label": "健康带钢能赛富豪升场并300击倒剩280HP沙奈朵",
+			"role": "opponent",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "06:second_embrace",
+			"choice_label": "第二只沙奈朵拥抱一次，从10伤变30伤并补第三能",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "07:second_munkidori_thirty",
+			"choice_label": "同一只愿增猿第二次把30伤搬给备战40伤赛富豪",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "08:counter_second_target",
+			"choice_label": "反击捕捉器抓出剩190HP的第二目标",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "09:second_miracle_force",
+			"choice_label": "第二次奇迹之力190精确完成4奖",
+			"role": "player",
+			"status": "PROVEN"
+		}
+	],
+	"proof_tree": {
+		"branches": [
+			{
+				"choice_id": "00:nest_csv8c_135",
+				"choice_label": "巢穴球只找吉雉鸡ex，建立隐藏三张桥牌",
+				"depth": 10,
+				"player_actions": 9,
+				"reason": "player_has_forcing_choice",
+				"status": "PROVEN",
+				"tree": {
+					"branches": [
+						{
+							"choice_id": "01:flip_the_script_bridges",
+							"choice_label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+							"depth": 10,
+							"player_actions": 8,
+							"reason": "player_has_forcing_choice",
+							"status": "PROVEN",
+							"tree": {
+								"branches": [
+									{
+										"choice_id": "02:attach_drawn_psychic_to_first",
+										"choice_label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+										"depth": 10,
+										"player_actions": 7,
+										"reason": "player_has_forcing_choice",
+										"status": "PROVEN",
+										"tree": {
+											"branches": [
+												{
+													"choice_id": "03:first_munkidori_thirty",
+													"choice_label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+													"depth": 10,
+													"player_actions": 6,
+													"reason": "player_has_forcing_choice",
+													"status": "PROVEN",
+													"tree": {
+														"branches": [
+															{
+																"choice_id": "04:first_miracle_force",
+																"choice_label": "奇迹之力190精确取得首2奖",
+																"depth": 10,
+																"player_actions": 5,
+																"reason": "all_defenses_hold",
+																"status": "PROVEN",
+																"tree": {
+																	"branches": [
+																		{
+																			"choice_id": "05:gholdengo_reply",
+																			"choice_label": "健康带钢能赛富豪升场并300击倒剩280HP沙奈朵",
+																			"depth": 10,
+																			"player_actions": 4,
+																			"reason": "player_has_forcing_choice",
+																			"status": "PROVEN",
+																			"tree": {
+																				"branches": [
+																					{
+																						"choice_id": "06:second_embrace",
+																						"choice_label": "第二只沙奈朵拥抱一次，从10伤变30伤并补第三能",
+																						"depth": 10,
+																						"player_actions": 4,
+																						"reason": "player_has_forcing_choice",
+																						"status": "PROVEN",
+																						"tree": {
+																							"branches": [
+																								{
+																									"choice_id": "07:second_munkidori_thirty",
+																									"choice_label": "同一只愿增猿第二次把30伤搬给备战40伤赛富豪",
+																									"depth": 10,
+																									"player_actions": 3,
+																									"reason": "player_has_forcing_choice",
+																									"status": "PROVEN",
+																									"tree": {
+																										"branches": [
+																											{
+																												"choice_id": "08:counter_second_target",
+																												"choice_label": "反击捕捉器抓出剩190HP的第二目标",
+																												"depth": 10,
+																												"player_actions": 2,
+																												"reason": "player_has_forcing_choice",
+																												"status": "PROVEN",
+																												"tree": {
+																													"branches": [
+																														{
+																															"choice_id": "09:second_miracle_force",
+																															"choice_label": "第二次奇迹之力190精确完成4奖",
+																															"depth": 10,
+																															"player_actions": 1,
+																															"reason": "production_witness_reached_goal",
+																															"status": "PROVEN",
+																															"tree": {
+																																"branches": [],
+																																"coverage_complete": true,
+																																"depth": 10,
+																																"player_actions": 0,
+																																"reason": "production_witness_reached_goal",
+																																"score": 4,
+																																"status": "PROVEN",
+																																"winning_choice_count": 0
+																															}
+																														}
+																													],
+																													"coverage_complete": true,
+																													"depth": 10,
+																													"player_actions": 1,
+																													"reason": "player_has_forcing_choice",
+																													"role": "player",
+																													"selected_choice_id": "09:second_miracle_force",
+																													"selected_choice_label": "第二次奇迹之力190精确完成4奖",
+																													"status": "PROVEN",
+																													"winning_choice_count": 1
+																												}
+																											}
+																										],
+																										"coverage_complete": true,
+																										"depth": 10,
+																										"player_actions": 2,
+																										"reason": "player_has_forcing_choice",
+																										"role": "player",
+																										"selected_choice_id": "08:counter_second_target",
+																										"selected_choice_label": "反击捕捉器抓出剩190HP的第二目标",
+																										"status": "PROVEN",
+																										"winning_choice_count": 1
+																									}
+																								}
+																							],
+																							"coverage_complete": true,
+																							"depth": 10,
+																							"player_actions": 3,
+																							"reason": "player_has_forcing_choice",
+																							"role": "player",
+																							"selected_choice_id": "07:second_munkidori_thirty",
+																							"selected_choice_label": "同一只愿增猿第二次把30伤搬给备战40伤赛富豪",
+																							"status": "PROVEN",
+																							"winning_choice_count": 1
+																						}
+																					}
+																				],
+																				"coverage_complete": true,
+																				"depth": 10,
+																				"player_actions": 4,
+																				"reason": "player_has_forcing_choice",
+																				"role": "player",
+																				"selected_choice_id": "06:second_embrace",
+																				"selected_choice_label": "第二只沙奈朵拥抱一次，从10伤变30伤并补第三能",
+																				"status": "PROVEN",
+																				"winning_choice_count": 1
+																			}
+																		}
+																	],
+																	"coverage_complete": true,
+																	"depth": 10,
+																	"player_actions": 4,
+																	"reason": "all_defenses_hold",
+																	"role": "opponent",
+																	"selected_choice_id": "05:gholdengo_reply",
+																	"selected_choice_label": "健康带钢能赛富豪升场并300击倒剩280HP沙奈朵",
+																	"status": "PROVEN",
+																	"winning_choice_count": 1
+																}
+															}
+														],
+														"coverage_complete": true,
+														"depth": 10,
+														"player_actions": 5,
+														"reason": "player_has_forcing_choice",
+														"role": "player",
+														"selected_choice_id": "04:first_miracle_force",
+														"selected_choice_label": "奇迹之力190精确取得首2奖",
+														"status": "PROVEN",
+														"winning_choice_count": 1
+													}
+												}
+											],
+											"coverage_complete": true,
+											"depth": 10,
+											"player_actions": 6,
+											"reason": "player_has_forcing_choice",
+											"role": "player",
+											"selected_choice_id": "03:first_munkidori_thirty",
+											"selected_choice_label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+											"status": "PROVEN",
+											"winning_choice_count": 1
+										}
+									}
+								],
+								"coverage_complete": true,
+								"depth": 10,
+								"player_actions": 7,
+								"reason": "player_has_forcing_choice",
+								"role": "player",
+								"selected_choice_id": "02:attach_drawn_psychic_to_first",
+								"selected_choice_label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+								"status": "PROVEN",
+								"winning_choice_count": 1
+							}
+						}
+					],
+					"coverage_complete": true,
+					"depth": 10,
+					"player_actions": 8,
+					"reason": "player_has_forcing_choice",
+					"role": "player",
+					"selected_choice_id": "01:flip_the_script_bridges",
+					"selected_choice_label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+					"status": "PROVEN",
+					"winning_choice_count": 1
+				}
+			}
+		],
+		"coverage_complete": true,
+		"depth": 10,
+		"player_actions": 9,
+		"reason": "player_has_forcing_choice",
+		"role": "player",
+		"selected_choice_id": "00:nest_csv8c_135",
+		"selected_choice_label": "巢穴球只找吉雉鸡ex，建立隐藏三张桥牌",
+		"status": "PROVEN",
+		"winning_choice_count": 1
+	},
+	"provider": "production_rules_ai_witness_v2",
+	"reason": "player_has_forcing_choice",
+	"root_branches": [
+		{
+			"choice_id": "00:nest_csv8c_135",
+			"choice_label": "巢穴球只找吉雉鸡ex，建立隐藏三张桥牌",
+			"depth": 10,
+			"player_actions": 9,
+			"reason": "player_has_forcing_choice",
+			"status": "PROVEN",
+			"tree": {
+				"branches": [
+					{
+						"choice_id": "01:flip_the_script_bridges",
+						"choice_label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+						"depth": 10,
+						"player_actions": 8,
+						"reason": "player_has_forcing_choice",
+						"status": "PROVEN",
+						"tree": {
+							"branches": [
+								{
+									"choice_id": "02:attach_drawn_psychic_to_first",
+									"choice_label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+									"depth": 10,
+									"player_actions": 7,
+									"reason": "player_has_forcing_choice",
+									"status": "PROVEN",
+									"tree": {
+										"branches": [
+											{
+												"choice_id": "03:first_munkidori_thirty",
+												"choice_label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+												"depth": 10,
+												"player_actions": 6,
+												"reason": "player_has_forcing_choice",
+												"status": "PROVEN",
+												"tree": {
+													"branches": [
+														{
+															"choice_id": "04:first_miracle_force",
+															"choice_label": "奇迹之力190精确取得首2奖",
+															"depth": 10,
+															"player_actions": 5,
+															"reason": "all_defenses_hold",
+															"status": "PROVEN",
+															"tree": {
+																"branches": [
+																	{
+																		"choice_id": "05:gholdengo_reply",
+																		"choice_label": "健康带钢能赛富豪升场并300击倒剩280HP沙奈朵",
+																		"depth": 10,
+																		"player_actions": 4,
+																		"reason": "player_has_forcing_choice",
+																		"status": "PROVEN",
+																		"tree": {
+																			"branches": [
+																				{
+																					"choice_id": "06:second_embrace",
+																					"choice_label": "第二只沙奈朵拥抱一次，从10伤变30伤并补第三能",
+																					"depth": 10,
+																					"player_actions": 4,
+																					"reason": "player_has_forcing_choice",
+																					"status": "PROVEN",
+																					"tree": {
+																						"branches": [
+																							{
+																								"choice_id": "07:second_munkidori_thirty",
+																								"choice_label": "同一只愿增猿第二次把30伤搬给备战40伤赛富豪",
+																								"depth": 10,
+																								"player_actions": 3,
+																								"reason": "player_has_forcing_choice",
+																								"status": "PROVEN",
+																								"tree": {
+																									"branches": [
+																										{
+																											"choice_id": "08:counter_second_target",
+																											"choice_label": "反击捕捉器抓出剩190HP的第二目标",
+																											"depth": 10,
+																											"player_actions": 2,
+																											"reason": "player_has_forcing_choice",
+																											"status": "PROVEN",
+																											"tree": {
+																												"branches": [
+																													{
+																														"choice_id": "09:second_miracle_force",
+																														"choice_label": "第二次奇迹之力190精确完成4奖",
+																														"depth": 10,
+																														"player_actions": 1,
+																														"reason": "production_witness_reached_goal",
+																														"status": "PROVEN",
+																														"tree": {
+																															"branches": [],
+																															"coverage_complete": true,
+																															"depth": 10,
+																															"player_actions": 0,
+																															"reason": "production_witness_reached_goal",
+																															"score": 4,
+																															"status": "PROVEN",
+																															"winning_choice_count": 0
+																														}
+																													}
+																												],
+																												"coverage_complete": true,
+																												"depth": 10,
+																												"player_actions": 1,
+																												"reason": "player_has_forcing_choice",
+																												"role": "player",
+																												"selected_choice_id": "09:second_miracle_force",
+																												"selected_choice_label": "第二次奇迹之力190精确完成4奖",
+																												"status": "PROVEN",
+																												"winning_choice_count": 1
+																											}
+																										}
+																									],
+																									"coverage_complete": true,
+																									"depth": 10,
+																									"player_actions": 2,
+																									"reason": "player_has_forcing_choice",
+																									"role": "player",
+																									"selected_choice_id": "08:counter_second_target",
+																									"selected_choice_label": "反击捕捉器抓出剩190HP的第二目标",
+																									"status": "PROVEN",
+																									"winning_choice_count": 1
+																								}
+																							}
+																						],
+																						"coverage_complete": true,
+																						"depth": 10,
+																						"player_actions": 3,
+																						"reason": "player_has_forcing_choice",
+																						"role": "player",
+																						"selected_choice_id": "07:second_munkidori_thirty",
+																						"selected_choice_label": "同一只愿增猿第二次把30伤搬给备战40伤赛富豪",
+																						"status": "PROVEN",
+																						"winning_choice_count": 1
+																					}
+																				}
+																			],
+																			"coverage_complete": true,
+																			"depth": 10,
+																			"player_actions": 4,
+																			"reason": "player_has_forcing_choice",
+																			"role": "player",
+																			"selected_choice_id": "06:second_embrace",
+																			"selected_choice_label": "第二只沙奈朵拥抱一次，从10伤变30伤并补第三能",
+																			"status": "PROVEN",
+																			"winning_choice_count": 1
+																		}
+																	}
+																],
+																"coverage_complete": true,
+																"depth": 10,
+																"player_actions": 4,
+																"reason": "all_defenses_hold",
+																"role": "opponent",
+																"selected_choice_id": "05:gholdengo_reply",
+																"selected_choice_label": "健康带钢能赛富豪升场并300击倒剩280HP沙奈朵",
+																"status": "PROVEN",
+																"winning_choice_count": 1
+															}
+														}
+													],
+													"coverage_complete": true,
+													"depth": 10,
+													"player_actions": 5,
+													"reason": "player_has_forcing_choice",
+													"role": "player",
+													"selected_choice_id": "04:first_miracle_force",
+													"selected_choice_label": "奇迹之力190精确取得首2奖",
+													"status": "PROVEN",
+													"winning_choice_count": 1
+												}
+											}
+										],
+										"coverage_complete": true,
+										"depth": 10,
+										"player_actions": 6,
+										"reason": "player_has_forcing_choice",
+										"role": "player",
+										"selected_choice_id": "03:first_munkidori_thirty",
+										"selected_choice_label": "愿增猿把首攻沙奈朵30伤搬给40伤前场赛富豪",
+										"status": "PROVEN",
+										"winning_choice_count": 1
+									}
+								}
+							],
+							"coverage_complete": true,
+							"depth": 10,
+							"player_actions": 7,
+							"reason": "player_has_forcing_choice",
+							"role": "player",
+							"selected_choice_id": "02:attach_drawn_psychic_to_first",
+							"selected_choice_label": "把化危为吉抽到的超能手贴给首攻沙奈朵",
+							"status": "PROVEN",
+							"winning_choice_count": 1
+						}
+					}
+				],
+				"coverage_complete": true,
+				"depth": 10,
+				"player_actions": 8,
+				"reason": "player_has_forcing_choice",
+				"role": "player",
+				"selected_choice_id": "01:flip_the_script_bridges",
+				"selected_choice_label": "化危为吉抽到能量转移、反击捕捉器和夜间担架",
+				"status": "PROVEN",
+				"winning_choice_count": 1
+			}
+		}
+	],
+	"root_role": "player",
+	"scenario_fingerprint": "4477aaadd0a95c3a0c5641d71b49587ab8c6b0fb4f18319c37e26c83d19822b7",
+	"shortest_player_actions": 9,
+	"solver_version": "deck-training-and-or-v2",
+	"status": "PROVEN",
+	"unique_root_solution": true,
+	"unsupported_reasons": []
+}

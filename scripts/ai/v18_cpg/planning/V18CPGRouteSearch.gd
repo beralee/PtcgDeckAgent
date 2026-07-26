@@ -79,7 +79,8 @@ func prune_frontier(candidate_pool: Array[Dictionary], max_routes: int = 8) -> A
 	# starvation at the ten-candidate transport boundary.
 	var verified_candidates: Array[Dictionary] = []
 	for candidate: Dictionary in candidate_pool:
-		if _has_verified_advantage(candidate):
+		if _has_verified_advantage(candidate) \
+				or _has_post_attack_continuity_priority(candidate):
 			verified_candidates.append(candidate)
 	verified_candidates.sort_custom(_sort_candidate)
 	for candidate: Dictionary in verified_candidates:
@@ -132,6 +133,12 @@ func _has_verified_advantage(candidate: Dictionary) -> bool:
 		if raw_annotation is Dictionary and bool((raw_annotation as Dictionary).get("verified_advantage", false)):
 			return true
 	return false
+
+
+func _has_post_attack_continuity_priority(candidate: Dictionary) -> bool:
+	var annotation: Variant = candidate.get("post_attack_continuity", {})
+	return annotation is Dictionary \
+		and bool((annotation as Dictionary).get("frontier_priority", false))
 
 
 func find_route(frontier: Array[Dictionary], route_id: String) -> Dictionary:
@@ -199,6 +206,8 @@ func _candidate(
 			"prizes_now": prizes_now,
 			"estimated_damage": damage,
 			"attack_ready": category.begins_with("attack"),
+			"attack_uptime_next_turn": false,
+			"continuity_debt_reduction": 0,
 			"information_gain": float(information.get("information_gain", 0.0)),
 			"board_development": 1.0 if category in ["develop", "evolve", "stadium"] else 0.0,
 			"future_flexibility": 0.8 if category in ["information", "noctowl_search", "tutor", "recover", "pivot"] else 0.3,

@@ -2325,9 +2325,28 @@ func test_ai_settings_switches_and_saves_independent_zenmux_and_deepseek_profile
 	var profiles := saved.get("provider_configs", {}) as Dictionary
 	var saved_zenmux := profiles.get("zenmux", {}) as Dictionary
 	var saved_deepseek := profiles.get("deepseek", {}) as Dictionary
+	var provider_parent := deepseek_button.get_parent() if deepseek_button != null else null
 	var result := run_checks([
 		assert_not_null(zenmux_button, "AI settings should expose the backward-compatible ZenMux provider button"),
 		assert_not_null(deepseek_button, "AI settings should expose a direct DeepSeek provider button"),
+		assert_true(zenmux_button is CheckBox, "ZenMux provider should use a radio-style CheckBox"),
+		assert_true(deepseek_button is CheckBox, "DeepSeek provider should use a radio-style CheckBox"),
+		assert_eq(deepseek_button.text if deepseek_button != null else "", "DeepSeek 直连", "DeepSeek radio should use the direct-connection label"),
+		assert_eq(zenmux_button.text if zenmux_button != null else "", "ZenMux（需翻墙）", "ZenMux radio should disclose its network requirement"),
+		assert_true(
+			provider_parent != null
+			and zenmux_button != null
+			and deepseek_button.get_index() < zenmux_button.get_index(),
+			"DeepSeek radio should appear before ZenMux"
+		),
+		assert_true(
+			zenmux_button != null
+			and deepseek_button != null
+			and zenmux_button.button_group != null
+			and zenmux_button.button_group == deepseek_button.button_group
+			and not zenmux_button.button_group.allow_unpress,
+			"Provider radios should share a mandatory one-of-two ButtonGroup"
+		),
 		assert_eq(switched_endpoint, "https://api.deepseek.com", "Switching to DeepSeek should fill the official base URL"),
 		assert_eq(switched_api_key, "", "A fresh DeepSeek profile must not reuse the ZenMux credential"),
 		assert_eq(",".join(deepseek_model_ids), "deepseek-v4-flash,deepseek-v4-pro", "Direct DeepSeek mode should only offer official DeepSeek models"),

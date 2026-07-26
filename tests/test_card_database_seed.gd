@@ -4,6 +4,56 @@ extends TestBase
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 
 
+func test_csvl1c036_037_and_csv95c100_are_complete_bundled_seed_assets() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest: Array[String] = db._load_bundled_manifest()
+	var specs := {
+		"CSVL1C_036": {
+			"set_code": "CSVL1C",
+			"card_index": "036",
+			"name_en": "Ting-Lu ex",
+			"effect_id": "6db296a19d741896c070fe471e92b8f3",
+		},
+		"CSVL1C_037": {
+			"set_code": "CSVL1C",
+			"card_index": "037",
+			"name_en": "Koraidon ex",
+			"effect_id": "94df9ff8b811a6ae267a87194abd5323",
+		},
+		"CSV9.5C_100": {
+			"set_code": "CSV9.5C",
+			"card_index": "100",
+			"name_en": "Ting-Lu",
+			"effect_id": "a1a72373d6d9233349e8a3ef92a0c14d",
+		},
+	}
+	var pooled_uids := {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var checks: Array[String] = []
+	for uid: String in specs:
+		var spec: Dictionary = specs[uid]
+		var set_code := str(spec.get("set_code", ""))
+		var card_index := str(spec.get("card_index", ""))
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase" % uid))
+		checks.append(assert_true(db.has_card(set_code, card_index), "%s should be recognized by CardDatabase.has_card" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should be returned by CardDatabase.get_all_cards" % uid))
+		if card != null:
+			checks.append(assert_eq(card.name_en, str(spec.get("name_en", "")), "%s should preserve the API English name" % uid))
+			checks.append(assert_eq(card.card_type, "Pokemon", "%s should remain a Pokemon" % uid))
+			checks.append(assert_eq(card.effect_id, str(spec.get("effect_id", "")), "%s should preserve the API effect id" % uid))
+	db.free()
+	return run_checks(checks)
+
+
 func test_csv1c_110_grabber_is_a_complete_bundled_seed_asset() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest: Array[String] = db._load_bundled_manifest()
@@ -109,6 +159,43 @@ func test_v18_limitless_rebuild_migrates_legacy_seed_without_overwriting_later_e
 		assert_false(contains_legacy_ref, "Migration should remove every LEN_* card reference"),
 		assert_false(changed_again, "A migrated 18.0 deck should not be rewritten again when display fields already match"),
 		assert_eq(preserved_count, int(first_entry.get("count", 0)), "Later user card-count edits should be preserved after the one-time migration"),
+	])
+
+
+func test_academy_gardevoir_seed_and_existing_install_migrate_to_refinement_kirlia() -> String:
+	var db := CardDatabaseScript.new()
+	var bundled_raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/decks/800018498.json"))
+	if not bundled_raw is Dictionary:
+		return "18.0 Academy Gardevoir bundled deck should parse"
+	var bundled := bundled_raw as Dictionary
+	var user_copy := bundled.duplicate(true)
+	var user_cards: Array = user_copy.get("cards", [])
+	for index: int in user_cards.size():
+		if not (user_cards[index] is Dictionary):
+			continue
+		var entry := (user_cards[index] as Dictionary).duplicate(true)
+		if str(entry.get("set_code", "")) == "CS6.5C" and str(entry.get("card_index", "")) == "030":
+			entry["set_code"] = "CSV2C"
+			entry["card_index"] = "054"
+			entry["effect_id"] = "773a7c5bc165bd5d75321bc7c29fdd25"
+			entry["resolved_via"] = "exact_print"
+			user_cards[index] = entry
+			break
+	user_copy["cards"] = user_cards
+	var unrelated_entry := (user_cards[0] as Dictionary).duplicate(true)
+	unrelated_entry["count"] = int(unrelated_entry.get("count", 0)) + 1
+	user_cards[0] = unrelated_entry
+	user_copy["cards"] = user_cards
+	var migrated: bool = db._merge_bundled_deck_migrations(bundled, user_copy)
+	var migrated_cards: Array = user_copy.get("cards", [])
+	return run_checks([
+		assert_eq(_raw_deck_entry_count(bundled, "CSV2C", "054"), 0, "Fresh installs must not seed the old Academy Kirlia"),
+		assert_eq(_raw_deck_entry_count(bundled, "CS6.5C", "030"), 2, "Fresh installs must seed two Refinement Kirlia"),
+		assert_true(migrated, "Existing Academy installs with the exact legacy Kirlia entry should migrate"),
+		assert_eq(_raw_deck_entry_count(user_copy, "CSV2C", "054"), 0, "Existing installs should remove the old Academy Kirlia"),
+		assert_eq(_raw_deck_entry_count(user_copy, "CS6.5C", "030"), 2, "Existing installs should receive the bundled Refinement Kirlia entry"),
+		assert_eq(int(((migrated_cards[0] as Dictionary).get("count", 0))), int(unrelated_entry.get("count", 0)), "Migration must preserve unrelated user card-count edits"),
+		assert_false(db._merge_bundled_deck_migrations(bundled, user_copy), "The targeted migration should be idempotent"),
 	])
 
 
@@ -2233,6 +2320,17 @@ func _first_basic_pokemon_entry(db: Object, deck: DeckData) -> Dictionary:
 				"card_index": card_index,
 			}
 	return {}
+
+
+func _raw_deck_entry_count(deck_data: Dictionary, set_code: String, card_index: String) -> int:
+	var total := 0
+	for raw_entry: Variant in deck_data.get("cards", []):
+		if not (raw_entry is Dictionary):
+			continue
+		var entry := raw_entry as Dictionary
+		if str(entry.get("set_code", "")) == set_code and str(entry.get("card_index", "")) == card_index:
+			total += int(entry.get("count", 0))
+	return total
 
 
 func _ace_spec_copy_count(db: Object, deck: DeckData) -> int:

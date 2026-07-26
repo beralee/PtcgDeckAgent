@@ -8,9 +8,11 @@ const AttackBenchDamageCounters = preload("res://scripts/effects/pokemon_effects
 const EffectApplyStatus = preload("res://scripts/effects/pokemon_effects/EffectApplyStatus.gd")
 const AbilityDiscardDrawAny = preload("res://scripts/effects/pokemon_effects/AbilityDiscardDrawAny.gd")
 const AbilityPsychicEmbrace = preload("res://scripts/effects/pokemon_effects/AbilityPsychicEmbrace.gd")
+const AbilityDrawToN = preload("res://scripts/effects/pokemon_effects/AbilityDrawToN.gd")
 const AttackClearOwnStatus = preload("res://scripts/effects/pokemon_effects/AttackClearOwnStatus.gd")
 const AbilityMoveDamageCountersToOpponent = preload("res://scripts/effects/pokemon_effects/AbilityMoveDamageCountersToOpponent.gd")
 const AttackSelfDamageCounterTargetDamage = preload("res://scripts/effects/pokemon_effects/AttackSelfDamageCounterTargetDamage.gd")
+const AttackCopyAttack = preload("res://scripts/effects/pokemon_effects/AttackCopyAttack.gd")
 const AttackSelfDamageCounterMultiplier = preload("res://scripts/effects/pokemon_effects/AttackSelfDamageCounterMultiplier.gd")
 const AttackSwitchSelfToBench = preload("res://scripts/effects/pokemon_effects/AttackSwitchSelfToBench.gd")
 const AbilityBasicLock = preload("res://scripts/effects/pokemon_effects/AbilityBasicLock.gd")
@@ -544,6 +546,156 @@ func test_scream_tail_no_counters_no_damage() -> String:
 
 	return run_checks([
 		assert_eq(target.damage_counters, 0, "凶暴吼叫：无指示物则伤害为0"),
+	])
+
+
+func test_scream_tail_limitless_english_attack_name_still_registers_damage_effect() -> String:
+	var gsm := _make_main_phase_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var scream_tail_cd := _make_basic_pokemon_data(
+		"吼叫尾",
+		"P",
+		90,
+		"Basic",
+		"",
+		"12c9416c64d1a8cfbbf0a3000a9f3d50"
+	)
+	scream_tail_cd.name_en = "Scream Tail"
+	scream_tail_cd.attacks = [
+		{"name": "Slap", "cost": "P", "damage": "30", "text": "", "is_vstar_power": false},
+		{
+			"name": "Roaring Scream",
+			"cost": "PC",
+			"damage": "",
+			"text": "This attack does 20 damage for each damage counter on this Pokemon.",
+			"is_vstar_power": false,
+		},
+	]
+	var attacker := _make_slot(scream_tail_cd, 0)
+	attacker.damage_counters = 60
+	attacker.attached_energy = [
+		CardInstance.create(_make_energy_data("Psychic Energy 1", "P"), 0),
+		CardInstance.create(_make_energy_data("Psychic Energy 2", "P"), 0),
+	]
+	player.active_pokemon = attacker
+	var target := opponent.bench[0]
+	target.get_card_data().hp = 200
+	gsm.effect_processor.register_pokemon_card(scream_tail_cd)
+
+	var registered_effects := gsm.effect_processor.get_attack_effects_for_slot(attacker, 1)
+	var attacked := gsm.use_attack(0, 1, [{"target_pokemon": [target]}])
+
+	return run_checks([
+		assert_eq(registered_effects.size(), 1, "Limitless/旧缓存英文招式名也必须注册吼叫尾的专属伤害效果"),
+		assert_true(
+			not registered_effects.is_empty() and registered_effects[0] is AttackSelfDamageCounterTargetDamage,
+			"吼叫尾效果应按卡牌身份绑定，不应依赖中文招式名"
+		),
+		assert_true(attacked, "英文数据的 Roaring Scream 应可正常结算"),
+		assert_eq(target.damage_counters, 120, "英文数据的吼叫尾有6个伤害指示物时应造成120伤害"),
+	])
+
+
+func test_gardevoir_ex_old_english_cache_still_registers_native_effects() -> String:
+	var card := _make_basic_pokemon_data(
+		"Gardevoir ex",
+		"P",
+		310,
+		"Stage 2",
+		"ex",
+		"bd134d7d84e9f1a837a74b061fcb5f40"
+	)
+	card.abilities = [{"name": "Psychic Embrace"}]
+	card.attacks = [{
+		"name": "Miracle Force",
+		"cost": "PPC",
+		"damage": "190",
+		"text": "This Pokemon recovers from all Special Conditions.",
+		"is_vstar_power": false,
+	}]
+	var processor := EffectProcessor.new()
+	var slot := _make_slot(card, 0)
+	processor.register_pokemon_card(card)
+	var attack_effects: Array = processor.get_attack_effects_for_slot(slot, 0)
+
+	return run_checks([
+		assert_true(
+			processor.get_effect(card.effect_id) is AbilityPsychicEmbrace,
+			"旧英文缓存的 Psychic Embrace 必须按 effect_id 注册"
+		),
+		assert_true(
+			attack_effects.size() == 1 and attack_effects[0] is AttackClearOwnStatus,
+			"旧英文缓存的 Miracle Force 必须保留解除特殊状态效果"
+		),
+	])
+
+
+func test_munkidori_old_english_cache_still_registers_native_effects() -> String:
+	var card := _make_basic_pokemon_data(
+		"Munkidori",
+		"P",
+		110,
+		"Basic",
+		"",
+		"66fee12502043db7d92b97b0d62b0f59"
+	)
+	card.abilities = [{"name": "Adrena-Brain"}]
+	card.attacks = [{
+		"name": "Mind Bend",
+		"cost": "PC",
+		"damage": "60",
+		"text": "Your opponent's Active Pokemon is now Confused.",
+		"is_vstar_power": false,
+	}]
+	var processor := EffectProcessor.new()
+	var slot := _make_slot(card, 0)
+	processor.register_pokemon_card(card)
+	var attack_effects: Array = processor.get_attack_effects_for_slot(slot, 0)
+
+	return run_checks([
+		assert_true(
+			processor.get_effect(card.effect_id) is AbilityMoveDamageCountersToOpponent,
+			"旧英文缓存的 Adrena-Brain 必须按 effect_id 注册"
+		),
+		assert_true(
+			attack_effects.size() == 1 and attack_effects[0] is EffectApplyStatus,
+			"旧英文缓存的 Mind Bend 必须保留混乱效果"
+		),
+	])
+
+
+func test_mew_ex_old_english_cache_still_registers_native_effects() -> String:
+	var card := _make_basic_pokemon_data(
+		"Mew ex",
+		"P",
+		180,
+		"Basic",
+		"ex",
+		"49669fcf461deacebeb5755c11ec51f1"
+	)
+	card.abilities = [{"name": "Restart"}]
+	card.attacks = [{
+		"name": "Genome Hacking",
+		"cost": "CCC",
+		"damage": "",
+		"text": "Choose 1 of your opponent's Active Pokemon's attacks and use it as this attack.",
+		"is_vstar_power": false,
+	}]
+	var processor := EffectProcessor.new()
+	var slot := _make_slot(card, 0)
+	processor.register_pokemon_card(card)
+	var attack_effects: Array = processor.get_attack_effects_for_slot(slot, 0)
+
+	return run_checks([
+		assert_true(
+			processor.get_effect(card.effect_id) is AbilityDrawToN,
+			"旧英文缓存的 Restart 必须按 effect_id 注册"
+		),
+		assert_true(
+			attack_effects.size() == 1 and attack_effects[0] is AttackCopyAttack,
+			"旧英文缓存的 Genome Hacking 必须保留复制招式效果"
+		),
 	])
 
 

@@ -87,6 +87,17 @@ static func commit_active_value(value: String, finished: bool = false) -> void:
 		_active_control_id = 0
 
 
+static func cancel_active(_reason: String = "platform_cancel") -> void:
+	var control := _active_control()
+	if control != null and control.has_meta(ACTIVE_META):
+		control.remove_meta(ACTIVE_META)
+	_active_control_ref = null
+	_active_control_id = 0
+	if _test_force_web or not is_web_runtime():
+		return
+	JavaScriptBridge.eval("window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.close && window.__ptcgDeckAgentTextInput.close();", true)
+
+
 static func _target_text_control(control: Control) -> Control:
 	if control is SpinBox:
 		var line_edit := (control as SpinBox).get_line_edit()
@@ -259,6 +270,17 @@ static func _install_script() -> String:
       };
       input.focus({ preventScroll: true });
       try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+    },
+    close: function() {
+      var input = this.input;
+      this.input = null;
+      this.id = 0;
+      if (!input) return;
+      input.oninput = null;
+      input.onchange = null;
+      input.onblur = null;
+      input.onkeydown = null;
+      if (input.parentNode) input.parentNode.removeChild(input);
     }
   };
 })();

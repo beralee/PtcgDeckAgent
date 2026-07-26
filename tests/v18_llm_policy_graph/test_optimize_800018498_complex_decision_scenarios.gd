@@ -9,7 +9,7 @@ const MANIFEST_PATH := "res://scripts/ai/v18_cpg/profiles/generated_semantic_man
 const REPORT_PATH := "res://tmp/v18cpg/optimization21/800018498/complex_decision_scenarios.json"
 
 const RALTS_UID := "CSV2C_053"
-const KIRLIA_UID := "CSV2C_054"
+const KIRLIA_UID := "CS6.5C_030"
 const GARDEVOIR_UID := "CSV2C_055"
 const DRIFLOON_UID := "CSV2C_060"
 const SCREAM_TAIL_UID := "CSV6C_065"

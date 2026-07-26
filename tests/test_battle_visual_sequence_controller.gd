@@ -28,10 +28,15 @@ class FakeAnimator extends RefCounted:
 
 
 class FakeScene extends Control:
+	var _view_player := 0
 	var visual_gate_changes: Array[bool] = []
+	var field_resync_semantics: Array[String] = []
 
 	func _set_battle_visual_input_blocked(blocked: bool) -> void:
 		visual_gate_changes.append(blocked)
+
+	func _refresh_field_after_visual_event(semantic: String) -> void:
+		field_resync_semantics.append(semantic)
 
 
 func _state() -> GameState:
@@ -75,6 +80,34 @@ func test_queue_runs_one_event_at_a_time_and_releases_input_after_the_last_compl
 	])
 	scene.free()
 
+	return result
+
+
+func test_knockout_completion_resyncs_field_after_transfer_overlay_is_removed() -> String:
+	var scene := FakeScene.new()
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("enqueue_events", [
+		{
+			"kind": "zone_transfer",
+			"semantic": "knockout",
+			"source_zone": "p1.bench.0.stack",
+			"target_zone": "p1.discard",
+		},
+	])
+	animator.finish_next()
+	var result := run_checks([
+		assert_eq(
+			scene.field_resync_semantics,
+			["knockout"],
+			"A completed Bench KO animation must repaint the committed field so the defeated card cannot remain visible"
+		),
+		assert_eq(int(controller.call("pending_count")), 0, "KO visual sequence should still finish normally"),
+		assert_false(bool(controller.call("is_active")), "KO field resync must not leave the visual controller active"),
+	])
+	scene.free()
 	return result
 
 
@@ -196,6 +229,91 @@ func test_nested_draw_keeps_temporarily_missing_trainer_identity_for_final_play_
 	])
 	controller.call("clear", "test_end")
 	scene.free()
+	return result
+
+
+func test_queue_compaction_preserves_exact_cards_names_visibility_owner_and_semantic() -> String:
+	var controller: RefCounted = ControllerScript.new()
+	var card_a := _card("A", 1)
+	var card_b := _card("B", 1)
+	var left := {
+		"kind": "zone_transfer",
+		"semantic": "search",
+		"player_index": 1,
+		"owner_index": 1,
+		"view_player": 0,
+		"source_zone": "p1.deck",
+		"target_zone": "p1.hand",
+		"visibility": "back",
+		"count": 1,
+		"card_instance_ids": [card_a.instance_id],
+		"cards": [card_a],
+		"card_names": ["A"],
+	}
+	var right := left.duplicate(true)
+	right["count"] = 1
+	right["card_instance_ids"] = [card_b.instance_id]
+	right["cards"] = [card_b]
+	right["card_names"] = ["B"]
+	var merged: Dictionary = controller.call("_merge_compatible_events", left, right)
+	var incompatible := right.duplicate(true)
+	incompatible["semantic"] = "draw"
+	return run_checks([
+		assert_eq(int(merged.get("count", 0)), 2, "Compaction should preserve the total card count"),
+		assert_eq(merged.get("card_instance_ids", []), [card_a.instance_id, card_b.instance_id], "Compaction should preserve exact instance order"),
+		assert_eq((merged.get("cards", []) as Array).size(), 2, "Compaction should preserve all visible CardInstance references"),
+		assert_eq(merged.get("card_names", []), ["A", "B"], "Compaction should preserve visible card names"),
+		assert_true(bool(controller.call("_can_merge", left, right)), "Identical motion contracts should be mergeable"),
+		assert_false(bool(controller.call("_can_merge", left, incompatible)), "Different semantics must never collapse into one misleading animation"),
+	])
+
+
+func test_view_change_clears_active_and_queued_visuals_before_the_new_side_is_rendered() -> String:
+	var state := _state()
+	var scene := FakeScene.new()
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("prime_snapshot", state, 0)
+	controller.call("enqueue_events", [
+		{"kind": "zone_transfer", "view_player": 0},
+		{"kind": "damage_delta", "view_player": 0},
+	])
+	scene._view_player = 1
+	controller.call("sync_after_refresh", state, 1)
+	var result := run_checks([
+		assert_eq(int(controller.call("pending_count")), 0, "Perspective changes must invalidate old-side animations"),
+		assert_false(bool(controller.call("is_active")), "No old-side Tween may survive a handover"),
+		assert_eq(scene.visual_gate_changes.slice(scene.visual_gate_changes.size() - 2), [true, false], "Perspective invalidation must release only the animation input gate"),
+	])
+	scene.free()
+	return result
+
+
+func test_scene_resize_cancels_only_pending_visual_playback() -> String:
+	var scene := FakeScene.new()
+	scene.size = Vector2(900, 1600)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	await tree.process_frame
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("enqueue_events", [
+		{"kind": "zone_transfer", "view_player": 0},
+		{"kind": "damage_delta", "view_player": 0},
+	])
+	scene.size = Vector2(1600, 900)
+	await tree.process_frame
+	var result := run_checks([
+		assert_eq(int(controller.call("pending_count")), 0, "A viewport/layout resize must invalidate old geometry"),
+		assert_false(bool(controller.call("is_active")), "No Tween using pre-resize coordinates may remain active"),
+		assert_eq(scene.visual_gate_changes.slice(scene.visual_gate_changes.size() - 2), [true, false], "Resize cancellation must release only the visual input gate"),
+	])
+	scene.queue_free()
+	await tree.process_frame
 	return result
 
 

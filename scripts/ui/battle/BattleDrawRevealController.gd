@@ -3,6 +3,7 @@ extends RefCounted
 
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const OverlayGeometry := preload("res://scripts/ui/battle/BattleOverlayGeometry.gd")
+const UiInteractionSessionScript := preload("res://scripts/ui/interactions/UiInteractionSession.gd")
 
 const HUMAN_CONFIRM_HINT := "Click to continue"
 const AI_HOLD_HINT := "AI drawing..."
@@ -13,9 +14,13 @@ const REVEAL_STAGGER_SECONDS := 0.08
 const FLY_TO_HAND_SECONDS := 0.08
 const DISCARD_FLY_SECONDS := 0.14
 const PRIZE_EXCHANGE_STAGGER_SECONDS := 0.05
+const OPENING_PRIZE_DEAL_SECONDS := 0.34
+const OPENING_PRIZE_HOLD_SECONDS := 0.12
 const BATCH_MAX_COLUMNS := 4
 const BATCH_CARD_GAP := Vector2.ZERO
 const BATCH_AREA_PADDING := Vector2(16.0, 16.0)
+const DRAW_REVEAL_GENERATION_META := "draw_reveal_generation"
+const DRAW_REVEAL_TIMEOUT_MSEC := 8000
 
 
 func enqueue_reveal(scene: Object, action: GameAction) -> void:
@@ -40,6 +45,7 @@ func enqueue_reveal(scene: Object, action: GameAction) -> void:
 func confirm_current_reveal(scene: Object) -> void:
 	if scene == null or scene.get("_draw_reveal_waiting_for_confirm") != true:
 		return
+	_mark_reveal_session_progress(scene)
 	_begin_fly_to_hand(scene)
 
 
@@ -81,6 +87,8 @@ func _start_next_reveal(scene: Object) -> void:
 		_finish_all_reveals(scene)
 		return
 	var action: GameAction = queue.pop_front() as GameAction
+	var reveal_generation := int(scene.get_meta(DRAW_REVEAL_GENERATION_META, 0)) + 1
+	scene.set_meta(DRAW_REVEAL_GENERATION_META, reveal_generation)
 	scene.set("_draw_reveal_queue", queue)
 	scene.set("_draw_reveal_current_action", action)
 	scene.set("_draw_reveal_active", true)
@@ -89,7 +97,8 @@ func _start_next_reveal(scene: Object) -> void:
 	scene.set("_draw_reveal_pending_hand_refresh", action.action_type == GameAction.ActionType.DRAW_CARD)
 	scene.set("_draw_reveal_allow_hand_refresh_during_fly", false)
 	scene.set("_draw_reveal_visible_instance_ids", [])
-	if _is_switching_ticket_action(action):
+	_open_reveal_session(scene, action, reveal_generation)
+	if _is_prize_exchange_action(action):
 		_begin_prize_exchange(scene, action)
 		return
 	if action.action_type == GameAction.ActionType.DRAW_CARD and action.player_index == int(scene.get("_view_player")) and scene.has_method("_refresh_hand"):
@@ -111,6 +120,22 @@ func _start_next_reveal(scene: Object) -> void:
 
 func build_prize_exchange_animation_plan(action: GameAction) -> Array[Dictionary]:
 	var phases: Array[Dictionary] = []
+	if _is_opening_prize_deal_action(action):
+		var opening_ids: Array = action.data.get("card_instance_ids", [])
+		var opening_count := int(action.data.get("count", 0))
+		if opening_count <= 0 or opening_ids.size() != opening_count:
+			return phases
+		phases.append(_prize_exchange_phase(
+			"opening_deck_to_prize",
+			"deck",
+			"prize",
+			opening_ids,
+			opening_count,
+			OPENING_PRIZE_DEAL_SECONDS,
+			OPENING_PRIZE_HOLD_SECONDS,
+			"摆放奖赏卡 · %d张" % opening_count
+		))
+		return phases
 	if not _is_switching_ticket_action(action):
 		return phases
 	var count := int(action.data.get("prize_count", 0))
@@ -167,6 +192,18 @@ func _is_switching_ticket_action(action: GameAction) -> bool:
 		and action.action_type == GameAction.ActionType.PLAY_TRAINER
 		and str(action.data.get("trainer_vfx", "")) == "switching_ticket"
 	)
+
+
+func _is_opening_prize_deal_action(action: GameAction) -> bool:
+	return (
+		action != null
+		and action.action_type == GameAction.ActionType.SETUP_SET_PRIZES
+		and bool(action.data.get("opening_deal", false))
+	)
+
+
+func _is_prize_exchange_action(action: GameAction) -> bool:
+	return _is_switching_ticket_action(action) or _is_opening_prize_deal_action(action)
 
 
 func _begin_prize_exchange(scene: Object, action: GameAction) -> void:
@@ -281,9 +318,24 @@ func _finish_prize_exchange(scene: Object) -> void:
 		return
 	var overlay := _ensure_overlay(scene)
 	_set_hint_text(overlay, "")
+	var action := scene.get("_draw_reveal_current_action") as GameAction
+	if _is_opening_prize_deal_action(action) and _is_portrait_reveal_layout(scene):
+		_pulse_opening_prize_target(scene, action.player_index)
 	if scene.has_method("_refresh_ui"):
 		scene.call("_refresh_ui")
 	_finish_current_reveal(scene)
+
+
+func _pulse_opening_prize_target(scene: Object, player_index: int) -> void:
+	var target := _portrait_prize_hud_anchor(scene, player_index)
+	if target == null or not is_instance_valid(target):
+		return
+	if not (scene is Node and (scene as Node).is_inside_tree()):
+		return
+	target.pivot_offset = target.size * 0.5
+	var tween := (scene as Node).create_tween()
+	tween.tween_property(target, "scale", Vector2(1.16, 1.16), 0.10).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(target, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 
 
 func _exchange_cards_from_ids(scene: Object, player_index: int, raw_ids: Array) -> Array[CardInstance]:
@@ -344,6 +396,9 @@ func _prize_exchange_zone_position(
 	if zone == "deck":
 		var centered_index := float(index) - float(total - 1) * 0.5
 		centered += Vector2(centered_index * 3.0, centered_index * 2.0)
+	elif zone == "prize" and _is_portrait_reveal_layout(scene):
+		var centered_index := float(index) - float(total - 1) * 0.5
+		centered += Vector2(centered_index * 2.2, centered_index * 0.8)
 	return centered
 
 
@@ -352,6 +407,10 @@ func _prize_exchange_zone_anchor(scene: Object, player_index: int, zone: String,
 		return scene.get("_my_deck_preview") as Control if player_index == int(scene.get("_view_player")) else scene.get("_opp_deck_preview") as Control
 	if zone != "prize":
 		return null
+	if _is_portrait_reveal_layout(scene):
+		var portrait_anchor := _portrait_prize_hud_anchor(scene, player_index)
+		if portrait_anchor != null:
+			return portrait_anchor
 	if scene.has_method("_get_prize_slot_view"):
 		var slot_variant: Variant = scene.call("_get_prize_slot_view", player_index, index)
 		if slot_variant is Control:
@@ -362,7 +421,21 @@ func _prize_exchange_zone_anchor(scene: Object, player_index: int, zone: String,
 	return null
 
 
+func _portrait_prize_hud_anchor(scene: Object, player_index: int) -> Control:
+	if scene == null:
+		return null
+	if scene is Node:
+		var panel_name := "MyHudLeft" if player_index == int(scene.get("_view_player")) else "OppHudLeft"
+		var panel := (scene as Node).find_child(panel_name, true, false) as Control
+		if panel != null and panel.visible:
+			return panel
+	if player_index == int(scene.get("_view_player")):
+		return scene.get("_my_prize_hud_count") as Control
+	return scene.get("_opp_prize_hud_count") as Control
+
+
 func _begin_single_card_reveal(scene: Object, card: CardInstance, player_index: int) -> void:
+	var reveal_generation := _draw_reveal_generation(scene)
 	var overlay: Control = _ensure_overlay(scene)
 	var card_view: BattleCardView = _create_reveal_card_view(scene, overlay, card, player_index)
 	var staged_views: Array[BattleCardView] = [card_view]
@@ -376,23 +449,24 @@ func _begin_single_card_reveal(scene: Object, card: CardInstance, player_index: 
 	if scene is Node and (scene as Node).is_inside_tree():
 		var tween: Tween = _create_reveal_tween(scene, card_view, _center_position(scene, card_view), reveal_scale, keep_face_down)
 		tween.finished.connect(func() -> void:
-			_enter_hold_state(scene, player_index)
+			_enter_hold_state(scene, player_index, reveal_generation)
 		)
 		return
 
 	card_view.position = _center_position(scene, card_view)
 	card_view.set_face_down(keep_face_down)
 	card_view.scale = reveal_scale
-	_enter_hold_state(scene, player_index)
+	_enter_hold_state(scene, player_index, reveal_generation)
 
 
 func _begin_batch_reveal(scene: Object, cards: Array[CardInstance], player_index: int) -> void:
+	var reveal_generation := _draw_reveal_generation(scene)
 	var overlay: Control = _ensure_overlay(scene)
 	overlay.visible = true
 	_set_hint_text(overlay, "")
 	var batch_scale: Vector2 = _batch_reveal_scale(scene, _make_probe_card_view(scene), cards.size())
 	if scene is Node and (scene as Node).is_inside_tree():
-		_reveal_batch_card(scene, overlay, cards, player_index, 0, batch_scale)
+		_reveal_batch_card(scene, overlay, cards, player_index, 0, batch_scale, reveal_generation)
 		return
 
 	var staged_views: Array[BattleCardView] = []
@@ -404,7 +478,7 @@ func _begin_batch_reveal(scene: Object, cards: Array[CardInstance], player_index
 		card_view.scale = batch_scale
 		staged_views.append(card_view)
 	scene.set("_draw_reveal_card_views", staged_views)
-	_enter_hold_state(scene, player_index)
+	_enter_hold_state(scene, player_index, reveal_generation)
 
 
 func _reveal_batch_card(
@@ -413,8 +487,11 @@ func _reveal_batch_card(
 	cards: Array[CardInstance],
 	player_index: int,
 	index: int,
-	batch_scale: Vector2
+	batch_scale: Vector2,
+	reveal_generation: int
 ) -> void:
+	if not _is_draw_reveal_generation_current(scene, reveal_generation):
+		return
 	var card_view: BattleCardView = _create_reveal_card_view(scene, overlay, cards[index], player_index)
 	var staged_views: Array[BattleCardView] = scene.get("_draw_reveal_card_views")
 	staged_views.append(card_view)
@@ -428,14 +505,19 @@ func _reveal_batch_card(
 		_should_keep_face_down(scene, player_index)
 	)
 	tween.finished.connect(func() -> void:
+		if not _is_draw_reveal_generation_current(scene, reveal_generation):
+			return
 		if index + 1 < cards.size():
-			_reveal_batch_card(scene, overlay, cards, player_index, index + 1, batch_scale)
+			_reveal_batch_card(scene, overlay, cards, player_index, index + 1, batch_scale, reveal_generation)
 		else:
-			_enter_hold_state(scene, player_index)
+			_enter_hold_state(scene, player_index, reveal_generation)
 	)
 
 
-func _enter_hold_state(scene: Object, player_index: int) -> void:
+func _enter_hold_state(scene: Object, player_index: int, reveal_generation: int = -1) -> void:
+	if reveal_generation >= 0 and not _is_draw_reveal_generation_current(scene, reveal_generation):
+		return
+	_mark_reveal_session_progress(scene)
 	var overlay: Control = _ensure_overlay(scene)
 	if _should_auto_continue(scene, player_index):
 		scene.set("_draw_reveal_auto_continue_pending", true)
@@ -445,7 +527,8 @@ func _enter_hold_state(scene: Object, player_index: int) -> void:
 			var timer: SceneTreeTimer = (scene as Node).get_tree().create_timer(_auto_continue_delay_seconds(scene, player_index))
 			scene.set("_draw_reveal_resume_timer", timer)
 			timer.timeout.connect(func() -> void:
-				run_auto_continue(scene)
+				if _is_draw_reveal_generation_current(scene, reveal_generation):
+					run_auto_continue(scene)
 			)
 	else:
 		scene.set("_draw_reveal_waiting_for_confirm", true)
@@ -454,6 +537,10 @@ func _enter_hold_state(scene: Object, player_index: int) -> void:
 
 
 func _begin_fly_to_hand(scene: Object) -> void:
+	var reveal_generation := _draw_reveal_generation(scene)
+	if not _is_draw_reveal_generation_current(scene, reveal_generation):
+		return
+	_mark_reveal_session_progress(scene)
 	scene.set("_draw_reveal_waiting_for_confirm", false)
 	scene.set("_draw_reveal_auto_continue_pending", false)
 	scene.set("_draw_reveal_resume_timer", null)
@@ -483,7 +570,7 @@ func _begin_fly_to_hand(scene: Object) -> void:
 				_mark_card_landed(scene, card_view, player_index, index + 1)
 			)
 		tween.finished.connect(func() -> void:
-			_finish_current_reveal(scene)
+			_finish_current_reveal(scene, reveal_generation)
 		)
 		return
 	for index: int in card_views.size():
@@ -491,10 +578,11 @@ func _begin_fly_to_hand(scene: Object) -> void:
 		if card_view == null:
 			continue
 		_mark_card_landed(scene, card_view, player_index, index + 1)
-	_finish_current_reveal(scene)
+	_finish_current_reveal(scene, reveal_generation)
 
 
 func _begin_discard_reveal(scene: Object, cards: Array[CardInstance], player_index: int) -> void:
+	var reveal_generation := _draw_reveal_generation(scene)
 	var overlay: Control = _ensure_overlay(scene)
 	overlay.visible = true
 	_set_hint_text(overlay, "")
@@ -528,11 +616,14 @@ func _begin_discard_reveal(scene: Object, cards: Array[CardInstance], player_ind
 			_mark_discard_card_landed(scene, card_view, player_index, index + 1)
 		)
 	tween.finished.connect(func() -> void:
-		_finish_current_reveal(scene)
+		_finish_current_reveal(scene, reveal_generation)
 	)
 
 
-func _finish_current_reveal(scene: Object) -> void:
+func _finish_current_reveal(scene: Object, expected_generation: int = -1) -> void:
+	if expected_generation >= 0 and not _is_draw_reveal_generation_current(scene, expected_generation):
+		return
+	_finish_reveal_session(scene, "current_reveal_finished")
 	_clear_card_views(scene)
 	scene.set("_draw_reveal_allow_hand_refresh_during_fly", false)
 	scene.set("_draw_reveal_visible_instance_ids", [])
@@ -544,6 +635,8 @@ func _finish_current_reveal(scene: Object) -> void:
 
 
 func _finish_all_reveals(scene: Object) -> void:
+	scene.set_meta(DRAW_REVEAL_GENERATION_META, int(scene.get_meta(DRAW_REVEAL_GENERATION_META, 0)) + 1)
+	_finish_reveal_session(scene, "all_reveals_finished")
 	scene.set("_draw_reveal_active", false)
 	scene.set("_draw_reveal_waiting_for_confirm", false)
 	scene.set("_draw_reveal_auto_continue_pending", false)
@@ -625,6 +718,8 @@ func _cards_from_action(scene: Object, action: GameAction) -> Array[CardInstance
 	if player_index < 0 or player_index >= gsm.game_state.players.size():
 		return []
 	var source_cards: Array[CardInstance] = gsm.game_state.players[player_index].hand
+	if action.action_type == GameAction.ActionType.SETUP_SET_PRIZES:
+		source_cards = gsm.game_state.players[player_index].prizes
 	if action.action_type == GameAction.ActionType.DISCARD and str(action.data.get("source_zone", "")) == "hand":
 		source_cards = gsm.game_state.players[player_index].discard_pile
 	var by_id: Dictionary = {}
@@ -665,8 +760,17 @@ func _build_overlay(scene: Object) -> Control:
 			var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
 				confirm_current_reveal(scene)
+				var viewport := overlay.get_viewport()
+				if viewport != null:
+					viewport.set_input_as_handled()
+		elif event is InputEventScreenTouch:
+			var touch_event := event as InputEventScreenTouch
+			if touch_event.pressed:
+				confirm_current_reveal(scene)
+				var viewport := overlay.get_viewport()
+				if viewport != null:
+					viewport.set_input_as_handled()
 	)
-
 	var shade: ColorRect = ColorRect.new()
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0, 0, 0, 0.35)
@@ -692,6 +796,61 @@ func _build_overlay(scene: Object) -> Control:
 	overlay.add_child(hint)
 
 	return overlay
+
+
+func _open_reveal_session(scene: Object, action: GameAction, reveal_generation: int) -> void:
+	var registry: UiInteractionSessionRegistry = scene.get("_ui_interaction_sessions") as UiInteractionSessionRegistry
+	if registry == null:
+		return
+	var current := registry.current_session()
+	if current != null and current.is_active() and current.owner != "draw_reveal":
+		return
+	registry.open_session(
+		"draw_reveal",
+		"draw_reveal",
+		"draw_reveal_animation_or_confirmation",
+		UiInteractionSessionScript.POLICY_SAFE_COMPLETE_PRESENTATION,
+		DRAW_REVEAL_TIMEOUT_MSEC,
+		{
+			"draw_generation": reveal_generation,
+			"player_index": action.player_index if action != null else -1,
+			"action_type": action.action_type if action != null else -1,
+		},
+		-1,
+		current != null
+	)
+
+
+func _mark_reveal_session_progress(scene: Object) -> void:
+	var registry: UiInteractionSessionRegistry = scene.get("_ui_interaction_sessions") as UiInteractionSessionRegistry
+	if registry == null:
+		return
+	var current := registry.current_session()
+	if current != null and current.owner == "draw_reveal":
+		current.mark_progress(-1, current.generation)
+
+
+func _finish_reveal_session(scene: Object, reason: String) -> void:
+	var registry: UiInteractionSessionRegistry = scene.get("_ui_interaction_sessions") as UiInteractionSessionRegistry
+	if registry == null:
+		return
+	var current := registry.current_session()
+	if current != null and current.owner == "draw_reveal":
+		registry.finish_current(current.session_id, current.generation, reason)
+
+
+func _draw_reveal_generation(scene: Object) -> int:
+	return int(scene.get_meta(DRAW_REVEAL_GENERATION_META, 0))
+
+
+func _is_draw_reveal_generation_current(scene: Object, expected_generation: int) -> bool:
+	return (
+		scene != null
+		and is_instance_valid(scene)
+		and expected_generation > 0
+		and _draw_reveal_generation(scene) == expected_generation
+		and bool(scene.get("_draw_reveal_active"))
+	)
 
 
 func _set_hint_text(overlay: Control, text: String) -> void:
@@ -993,9 +1152,7 @@ func _is_turn_start_draw_reveal(scene: Object) -> bool:
 
 
 func _back_texture_for_player(scene: Object, player_index: int) -> Texture2D:
-	if _is_hidden_opponent_reveal(scene, player_index):
-		return scene.get("_opponent_card_back_texture") as Texture2D
-	return scene.get("_player_card_back_texture") as Texture2D
+	return scene.get("_player_card_back_texture" if player_index == 0 else "_opponent_card_back_texture") as Texture2D
 
 
 func _set_visible_reveal_count(scene: Object, visible_count: int) -> void:

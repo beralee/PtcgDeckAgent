@@ -150,21 +150,36 @@ func ensure_field_interaction_panel(scene: Object) -> void:
 	var clear_button := Button.new()
 	clear_button.text = "清除"
 	clear_button.custom_minimum_size = Vector2(110, 34)
-	clear_button.pressed.connect(Callable(scene, "_on_field_interaction_clear_pressed"))
+	_connect_release_independent_button(
+		scene,
+		clear_button,
+		Callable(scene, "_on_field_interaction_clear_pressed"),
+		"field_interaction_clear"
+	)
 	buttons.add_child(clear_button)
 	scene.set("_field_interaction_clear_btn", clear_button)
 
 	var cancel_button := Button.new()
 	cancel_button.text = "取消"
 	cancel_button.custom_minimum_size = Vector2(110, 34)
-	cancel_button.pressed.connect(Callable(scene, "_on_field_interaction_cancel_pressed"))
+	_connect_release_independent_button(
+		scene,
+		cancel_button,
+		Callable(scene, "_on_field_interaction_cancel_pressed"),
+		"field_interaction_cancel"
+	)
 	buttons.add_child(cancel_button)
 	scene.set("_field_interaction_cancel_btn", cancel_button)
 
 	var confirm_button := Button.new()
 	confirm_button.text = "确认"
 	confirm_button.custom_minimum_size = Vector2(140, 34)
-	confirm_button.pressed.connect(Callable(scene, "_on_field_interaction_confirm_pressed"))
+	_connect_release_independent_button(
+		scene,
+		confirm_button,
+		Callable(scene, "_on_field_interaction_confirm_pressed"),
+		"field_interaction_confirm"
+	)
 	buttons.add_child(confirm_button)
 	scene.set("_field_interaction_confirm_btn", confirm_button)
 	raise_field_interaction_overlay(scene)
@@ -181,6 +196,27 @@ func raise_field_interaction_overlay(scene: Object) -> void:
 		var last_index := parent.get_child_count() - 1
 		if last_index >= 0 and overlay.get_index() != last_index:
 			parent.move_child(overlay, last_index)
+
+
+func _connect_release_independent_button(
+	scene: Object,
+	button: Button,
+	callback: Callable,
+	intent: String
+) -> void:
+	button.button_down.connect(func() -> void:
+		button.set_meta("activated_on_button_down", true)
+		if scene != null and scene.has_method("_begin_modal_pointer_drain"):
+			scene.call("_begin_modal_pointer_drain", intent)
+		callback.call()
+		button.call_deferred("set_meta", "activated_on_button_down", false)
+	)
+	button.pressed.connect(func() -> void:
+		if bool(button.get_meta("activated_on_button_down", false)):
+			button.set_meta("activated_on_button_down", false)
+			return
+		callback.call()
+	)
 
 
 func hide_field_interaction(scene: Object) -> void:
@@ -1340,8 +1376,12 @@ func handle_field_assignment_target_index(scene: Object, target_index: int) -> v
 	var min_assignments: int = int(interaction_data.get("min_select", 0))
 	var max_assignments: int = int(interaction_data.get("max_select", 0))
 	if (
+		(
+			bool(interaction_data.get("auto_confirm_at_max", false))
+			or (min_assignments > 0 and min_assignments == max_assignments)
+		)
+		and
 		not bool(interaction_data.get("field_assignment_require_confirm", false))
-		and min_assignments == max_assignments
 		and max_assignments > 0
 		and assignment_entries.size() == max_assignments
 	):

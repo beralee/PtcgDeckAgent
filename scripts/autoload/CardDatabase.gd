@@ -63,6 +63,11 @@ const BUNDLED_LIMITLESS_DISPLAY_REFRESH_DECK_IDS := {
 	800018502: true,
 	800018509: true,
 }
+const BUNDLED_DECK_CARD_REPLACEMENTS := {
+	800018498: {
+		"CSV2C_054": "CS6.5C_030",
+	},
+}
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
@@ -320,7 +325,9 @@ func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
 		return
 
 	var user_dict := user_data as Dictionary
-	var changed := _merge_bundled_limitless_deck_display_fields(bundled_data as Dictionary, user_dict)
+	var changed := _merge_bundled_deck_migrations(bundled_data as Dictionary, user_dict)
+	if _merge_bundled_limitless_deck_display_fields(bundled_data as Dictionary, user_dict):
+		changed = true
 	if bundled_strategy == "":
 		if changed:
 			_write_user_deck_dictionary(user_path, user_dict)
@@ -336,6 +343,48 @@ func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
 		return
 
 	_write_user_deck_dictionary(user_path, user_dict)
+
+
+func _merge_bundled_deck_migrations(bundled_data: Dictionary, user_dict: Dictionary) -> bool:
+	var deck_id := int(bundled_data.get("id", -1))
+	if deck_id != int(user_dict.get("id", -1)):
+		return false
+	if not BUNDLED_DECK_CARD_REPLACEMENTS.has(deck_id):
+		return false
+	var replacements: Dictionary = BUNDLED_DECK_CARD_REPLACEMENTS[deck_id]
+	var bundled_cards: Array = bundled_data.get("cards", []) if bundled_data.get("cards", []) is Array else []
+	var user_cards: Array = user_dict.get("cards", []) if user_dict.get("cards", []) is Array else []
+	var bundled_by_uid: Dictionary = {}
+	for raw_entry: Variant in bundled_cards:
+		if raw_entry is Dictionary:
+			var entry := raw_entry as Dictionary
+			bundled_by_uid[_deck_entry_uid(entry)] = entry
+	var changed := false
+	for index: int in user_cards.size():
+		if not (user_cards[index] is Dictionary):
+			continue
+		var user_entry := user_cards[index] as Dictionary
+		var old_uid := _deck_entry_uid(user_entry)
+		if not replacements.has(old_uid):
+			continue
+		var replacement_uid := str(replacements[old_uid])
+		if not bundled_by_uid.has(replacement_uid):
+			continue
+		var replacement := (bundled_by_uid[replacement_uid] as Dictionary).duplicate(true)
+		replacement["count"] = int(user_entry.get("count", replacement.get("count", 0)))
+		user_cards[index] = replacement
+		changed = true
+	if changed:
+		user_dict["cards"] = user_cards
+	return changed
+
+
+func _deck_entry_uid(entry: Dictionary) -> String:
+	var set_code := str(entry.get("set_code", "")).strip_edges()
+	var card_index := str(entry.get("card_index", "")).strip_edges()
+	if set_code == "" or card_index == "":
+		return ""
+	return "%s_%s" % [set_code, card_index]
 
 
 func _write_user_deck_dictionary(user_path: String, user_dict: Dictionary) -> void:

@@ -106,6 +106,8 @@ func test_battle_setup_populates_bgm_option() -> String:
 	var bgm_volume_slider := scene.get_node("%BgmVolumeSlider") as HSlider
 	var bgm_volume_value := scene.get_node("%BgmVolumeValue") as Label
 	var preview_button := scene.get_node("%BtnPreviewBgm") as Button
+	var import_button := scene.get_node_or_null("%BtnImportBgm") as Button
+	var rescan_button := scene.get_node_or_null("%BtnRescanBgm") as Button
 	var expected_prefix := ProjectSettings.globalize_path("user://custom_bgm")
 
 	var result := run_checks([
@@ -115,6 +117,8 @@ func test_battle_setup_populates_bgm_option() -> String:
 		assert_true(bgm_volume_slider != null, "应提供 BGM 音量滑块"),
 		assert_true(bgm_volume_value != null, "应提供 BGM 音量文本"),
 		assert_true(preview_button != null, "应提供 BGM 试听按钮"),
+		assert_true(import_button != null and import_button.text == "添加音乐", "Battle setup should offer a system-file-picker import action"),
+		assert_true(rescan_button != null and rescan_button.text == "重新扫描", "Battle setup should offer an explicit custom-music rescan action"),
 	])
 
 	_dispose_scene(scene)
@@ -213,6 +217,32 @@ func test_battle_setup_portrait_migrates_legacy_bgm_volume_100_to_20() -> String
 
 	_dispose_scene(scene)
 	_restore_settings_text(original_settings_text)
+	_restore_game_manager_state(gm_snapshot)
+	return result
+
+
+func test_battle_setup_portrait_music_picker_exposes_import_and_rescan_actions() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	scene.call("_show_battle_music_picker")
+
+	var overlay := scene.find_child("BattleMusicPickerOverlay", true, false) as Control
+	var action_row := scene.find_child("BattleMusicPickerActionRow", true, false) as HBoxContainer
+	var import_button := scene.find_child("BattleMusicPickerImportButton", true, false) as Button
+	var rescan_button := scene.find_child("BattleMusicPickerRescanButton", true, false) as Button
+	var result := run_checks([
+		assert_true(overlay != null and overlay.visible, "Portrait music picker should open as a visible overlay"),
+		assert_true(action_row != null, "Portrait music picker should keep import actions in one horizontal row"),
+		assert_true(import_button != null and import_button.get_parent() == action_row, "Portrait music picker should expose Add Music in its action row"),
+		assert_true(rescan_button != null and rescan_button.get_parent() == action_row, "Portrait music picker should expose Rescan in its action row"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y >= 120.0, "Portrait Add Music should remain touch friendly"),
+		assert_true(rescan_button != null and rescan_button.custom_minimum_size.y >= 120.0, "Portrait Rescan should remain touch friendly"),
+	])
+
+	_dispose_scene(scene)
 	_restore_game_manager_state(gm_snapshot)
 	return result
 

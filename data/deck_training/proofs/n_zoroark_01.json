@@ -1,0 +1,575 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 404,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 12,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:copy_immolating_cannon",
+      "choice_label": "复制焚身加农炮，以90+90双杀并弃掉索罗亚克双恶能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:dragapult_reply",
+      "choice_label": "多龙反杀首攻者并把铺伤交给两个30HP诱饵",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:fez_bridge",
+      "choice_label": "化危为吉取得第一张PP提升剂、N的城堡与恶能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:cipher_stack",
+      "choice_label": "暗码迷依次置顶第二张PP提升剂与反击捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:trade_stack",
+      "choice_label": "交易弃掉索罗亚，抽到PP提升剂与反击捕捉器",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:pp_up_first_dark",
+      "choice_label": "第一张PP提升剂把一张恶能贴给第二索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:pp_up_second_dark",
+      "choice_label": "第二张PP提升剂把另一张恶能贴给第二索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:play_n_castle",
+      "choice_label": "放下N的城堡清零莱希拉姆撤退费用",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:castle_retreat",
+      "choice_label": "莱希拉姆零能撤退，换入重建完成的索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:counter_fez",
+      "choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:copy_powerful_rage",
+      "choice_label": "复制力量愤怒，以自身100伤造成200并取得最后2奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 12,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "d71d5bdf8b665e62a09868a4af0b91a439cec02e9df61d86d12cc5bfceaf53ac"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:copy_immolating_cannon",
+        "choice_label": "复制焚身加农炮，以90+90双杀并弃掉索罗亚克双恶能",
+        "depth": 11,
+        "player_actions": 10,
+        "reason": "all_defenses_hold",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:dragapult_reply",
+              "choice_label": "多龙反杀首攻者并把铺伤交给两个30HP诱饵",
+              "depth": 11,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:fez_bridge",
+                    "choice_label": "化危为吉取得第一张PP提升剂、N的城堡与恶能",
+                    "depth": 11,
+                    "player_actions": 9,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:cipher_stack",
+                          "choice_label": "暗码迷依次置顶第二张PP提升剂与反击捕捉器",
+                          "depth": 11,
+                          "player_actions": 8,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:trade_stack",
+                                "choice_label": "交易弃掉索罗亚，抽到PP提升剂与反击捕捉器",
+                                "depth": 11,
+                                "player_actions": 7,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:pp_up_first_dark",
+                                      "choice_label": "第一张PP提升剂把一张恶能贴给第二索罗亚克",
+                                      "depth": 11,
+                                      "player_actions": 6,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:pp_up_second_dark",
+                                            "choice_label": "第二张PP提升剂把另一张恶能贴给第二索罗亚克",
+                                            "depth": 11,
+                                            "player_actions": 5,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:play_n_castle",
+                                                  "choice_label": "放下N的城堡清零莱希拉姆撤退费用",
+                                                  "depth": 11,
+                                                  "player_actions": 4,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:castle_retreat",
+                                                        "choice_label": "莱希拉姆零能撤退，换入重建完成的索罗亚克",
+                                                        "depth": 11,
+                                                        "player_actions": 3,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:counter_fez",
+                                                              "choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                                              "depth": 11,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:copy_powerful_rage",
+                                                                    "choice_label": "复制力量愤怒，以自身100伤造成200并取得最后2奖",
+                                                                    "depth": 11,
+                                                                    "player_actions": 1,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 11,
+                                                                      "player_actions": 0,
+                                                                      "reason": "production_witness_reached_goal",
+                                                                      "score": 4,
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 0
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 11,
+                                                                "player_actions": 1,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:copy_powerful_rage",
+                                                                "selected_choice_label": "复制力量愤怒，以自身100伤造成200并取得最后2奖",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 11,
+                                                          "player_actions": 2,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:counter_fez",
+                                                          "selected_choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 11,
+                                                    "player_actions": 3,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:castle_retreat",
+                                                    "selected_choice_label": "莱希拉姆零能撤退，换入重建完成的索罗亚克",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 11,
+                                              "player_actions": 4,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:play_n_castle",
+                                              "selected_choice_label": "放下N的城堡清零莱希拉姆撤退费用",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 11,
+                                        "player_actions": 5,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:pp_up_second_dark",
+                                        "selected_choice_label": "第二张PP提升剂把另一张恶能贴给第二索罗亚克",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 11,
+                                  "player_actions": 6,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:pp_up_first_dark",
+                                  "selected_choice_label": "第一张PP提升剂把一张恶能贴给第二索罗亚克",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 11,
+                            "player_actions": 7,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:trade_stack",
+                            "selected_choice_label": "交易弃掉索罗亚，抽到PP提升剂与反击捕捉器",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 11,
+                      "player_actions": 8,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:cipher_stack",
+                      "selected_choice_label": "暗码迷依次置顶第二张PP提升剂与反击捕捉器",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 11,
+                "player_actions": 9,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:fez_bridge",
+                "selected_choice_label": "化危为吉取得第一张PP提升剂、N的城堡与恶能",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 11,
+          "player_actions": 9,
+          "reason": "all_defenses_hold",
+          "role": "opponent",
+          "selected_choice_id": "01:dragapult_reply",
+          "selected_choice_label": "多龙反杀首攻者并把铺伤交给两个30HP诱饵",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 11,
+    "player_actions": 10,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:copy_immolating_cannon",
+    "selected_choice_label": "复制焚身加农炮，以90+90双杀并弃掉索罗亚克双恶能",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:copy_immolating_cannon",
+      "choice_label": "复制焚身加农炮，以90+90双杀并弃掉索罗亚克双恶能",
+      "depth": 11,
+      "player_actions": 10,
+      "reason": "all_defenses_hold",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:dragapult_reply",
+            "choice_label": "多龙反杀首攻者并把铺伤交给两个30HP诱饵",
+            "depth": 11,
+            "player_actions": 9,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:fez_bridge",
+                  "choice_label": "化危为吉取得第一张PP提升剂、N的城堡与恶能",
+                  "depth": 11,
+                  "player_actions": 9,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:cipher_stack",
+                        "choice_label": "暗码迷依次置顶第二张PP提升剂与反击捕捉器",
+                        "depth": 11,
+                        "player_actions": 8,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:trade_stack",
+                              "choice_label": "交易弃掉索罗亚，抽到PP提升剂与反击捕捉器",
+                              "depth": 11,
+                              "player_actions": 7,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:pp_up_first_dark",
+                                    "choice_label": "第一张PP提升剂把一张恶能贴给第二索罗亚克",
+                                    "depth": 11,
+                                    "player_actions": 6,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:pp_up_second_dark",
+                                          "choice_label": "第二张PP提升剂把另一张恶能贴给第二索罗亚克",
+                                          "depth": 11,
+                                          "player_actions": 5,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:play_n_castle",
+                                                "choice_label": "放下N的城堡清零莱希拉姆撤退费用",
+                                                "depth": 11,
+                                                "player_actions": 4,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:castle_retreat",
+                                                      "choice_label": "莱希拉姆零能撤退，换入重建完成的索罗亚克",
+                                                      "depth": 11,
+                                                      "player_actions": 3,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:counter_fez",
+                                                            "choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                                            "depth": 11,
+                                                            "player_actions": 2,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:copy_powerful_rage",
+                                                                  "choice_label": "复制力量愤怒，以自身100伤造成200并取得最后2奖",
+                                                                  "depth": 11,
+                                                                  "player_actions": 1,
+                                                                  "reason": "production_witness_reached_goal",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 11,
+                                                                    "player_actions": 0,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "score": 4,
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 0
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 11,
+                                                              "player_actions": 1,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:copy_powerful_rage",
+                                                              "selected_choice_label": "复制力量愤怒，以自身100伤造成200并取得最后2奖",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 11,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:counter_fez",
+                                                        "selected_choice_label": "反击捕捉器抓出剩200HP吉雉鸡",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 11,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:castle_retreat",
+                                                  "selected_choice_label": "莱希拉姆零能撤退，换入重建完成的索罗亚克",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 11,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:play_n_castle",
+                                            "selected_choice_label": "放下N的城堡清零莱希拉姆撤退费用",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 11,
+                                      "player_actions": 5,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:pp_up_second_dark",
+                                      "selected_choice_label": "第二张PP提升剂把另一张恶能贴给第二索罗亚克",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 11,
+                                "player_actions": 6,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:pp_up_first_dark",
+                                "selected_choice_label": "第一张PP提升剂把一张恶能贴给第二索罗亚克",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 11,
+                          "player_actions": 7,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:trade_stack",
+                          "selected_choice_label": "交易弃掉索罗亚，抽到PP提升剂与反击捕捉器",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 11,
+                    "player_actions": 8,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:cipher_stack",
+                    "selected_choice_label": "暗码迷依次置顶第二张PP提升剂与反击捕捉器",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 11,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:fez_bridge",
+              "selected_choice_label": "化危为吉取得第一张PP提升剂、N的城堡与恶能",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 11,
+        "player_actions": 9,
+        "reason": "all_defenses_hold",
+        "role": "opponent",
+        "selected_choice_id": "01:dragapult_reply",
+        "selected_choice_label": "多龙反杀首攻者并把铺伤交给两个30HP诱饵",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "d71d5bdf8b665e62a09868a4af0b91a439cec02e9df61d86d12cc5bfceaf53ac",
+  "scenario_id": "n_zoroark_01",
+  "shortest_player_actions": 10,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

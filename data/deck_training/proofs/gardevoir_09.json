@@ -1,0 +1,416 @@
+{
+	"exhaustive_defense": true,
+	"format_version": 1,
+	"metrics": {
+		"budget_reason": "",
+		"cache_hits": 0,
+		"elapsed_milliseconds": 1281,
+		"inconclusive_leaves": 0,
+		"nodes_visited": 9,
+		"terminal_leaves": 1
+	},
+	"principal_variation": [
+		{
+			"choice_id": "00:flip_candy_package",
+			"choice_label": "化危为吉抽到能量转移、糖果和沙奈朵",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "01:attach_psychic_to_backup_ralts",
+			"choice_label": "把抽到的超能手贴给30伤拉鲁拉丝",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "02:rare_candy_gardevoir",
+			"choice_label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "03:embrace_backup",
+			"choice_label": "新沙奈朵拥抱第三能并到50伤",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "04:first_miracle",
+			"choice_label": "奇迹之力190击倒130伤第一多龙",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "05:dragapult_reply",
+			"choice_label": "第二多龙200反杀首攻者并放置60点备战伤害",
+			"role": "opponent",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "06:munkidori_second",
+			"choice_label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+			"role": "player",
+			"status": "PROVEN"
+		},
+		{
+			"choice_id": "07:second_miracle",
+			"choice_label": "接棒沙奈朵190击倒130伤第二多龙",
+			"role": "player",
+			"status": "PROVEN"
+		}
+	],
+	"proof_tree": {
+		"branches": [
+			{
+				"choice_id": "00:flip_candy_package",
+				"choice_label": "化危为吉抽到能量转移、糖果和沙奈朵",
+				"depth": 8,
+				"player_actions": 7,
+				"reason": "player_has_forcing_choice",
+				"status": "PROVEN",
+				"tree": {
+					"branches": [
+						{
+							"choice_id": "01:attach_psychic_to_backup_ralts",
+							"choice_label": "把抽到的超能手贴给30伤拉鲁拉丝",
+							"depth": 8,
+							"player_actions": 6,
+							"reason": "player_has_forcing_choice",
+							"status": "PROVEN",
+							"tree": {
+								"branches": [
+									{
+										"choice_id": "02:rare_candy_gardevoir",
+										"choice_label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+										"depth": 8,
+										"player_actions": 5,
+										"reason": "player_has_forcing_choice",
+										"status": "PROVEN",
+										"tree": {
+											"branches": [
+												{
+													"choice_id": "03:embrace_backup",
+													"choice_label": "新沙奈朵拥抱第三能并到50伤",
+													"depth": 8,
+													"player_actions": 4,
+													"reason": "player_has_forcing_choice",
+													"status": "PROVEN",
+													"tree": {
+														"branches": [
+															{
+																"choice_id": "04:first_miracle",
+																"choice_label": "奇迹之力190击倒130伤第一多龙",
+																"depth": 8,
+																"player_actions": 3,
+																"reason": "all_defenses_hold",
+																"status": "PROVEN",
+																"tree": {
+																	"branches": [
+																		{
+																			"choice_id": "05:dragapult_reply",
+																			"choice_label": "第二多龙200反杀首攻者并放置60点备战伤害",
+																			"depth": 8,
+																			"player_actions": 2,
+																			"reason": "player_has_forcing_choice",
+																			"status": "PROVEN",
+																			"tree": {
+																				"branches": [
+																					{
+																						"choice_id": "06:munkidori_second",
+																						"choice_label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+																						"depth": 8,
+																						"player_actions": 2,
+																						"reason": "player_has_forcing_choice",
+																						"status": "PROVEN",
+																						"tree": {
+																							"branches": [
+																								{
+																									"choice_id": "07:second_miracle",
+																									"choice_label": "接棒沙奈朵190击倒130伤第二多龙",
+																									"depth": 8,
+																									"player_actions": 1,
+																									"reason": "production_witness_reached_goal",
+																									"status": "PROVEN",
+																									"tree": {
+																										"branches": [],
+																										"coverage_complete": true,
+																										"depth": 8,
+																										"player_actions": 0,
+																										"reason": "production_witness_reached_goal",
+																										"score": 4,
+																										"status": "PROVEN",
+																										"winning_choice_count": 0
+																									}
+																								}
+																							],
+																							"coverage_complete": true,
+																							"depth": 8,
+																							"player_actions": 1,
+																							"reason": "player_has_forcing_choice",
+																							"role": "player",
+																							"selected_choice_id": "07:second_miracle",
+																							"selected_choice_label": "接棒沙奈朵190击倒130伤第二多龙",
+																							"status": "PROVEN",
+																							"winning_choice_count": 1
+																						}
+																					}
+																				],
+																				"coverage_complete": true,
+																				"depth": 8,
+																				"player_actions": 2,
+																				"reason": "player_has_forcing_choice",
+																				"role": "player",
+																				"selected_choice_id": "06:munkidori_second",
+																				"selected_choice_label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+																				"status": "PROVEN",
+																				"winning_choice_count": 1
+																			}
+																		}
+																	],
+																	"coverage_complete": true,
+																	"depth": 8,
+																	"player_actions": 2,
+																	"reason": "all_defenses_hold",
+																	"role": "opponent",
+																	"selected_choice_id": "05:dragapult_reply",
+																	"selected_choice_label": "第二多龙200反杀首攻者并放置60点备战伤害",
+																	"status": "PROVEN",
+																	"winning_choice_count": 1
+																}
+															}
+														],
+														"coverage_complete": true,
+														"depth": 8,
+														"player_actions": 3,
+														"reason": "player_has_forcing_choice",
+														"role": "player",
+														"selected_choice_id": "04:first_miracle",
+														"selected_choice_label": "奇迹之力190击倒130伤第一多龙",
+														"status": "PROVEN",
+														"winning_choice_count": 1
+													}
+												}
+											],
+											"coverage_complete": true,
+											"depth": 8,
+											"player_actions": 4,
+											"reason": "player_has_forcing_choice",
+											"role": "player",
+											"selected_choice_id": "03:embrace_backup",
+											"selected_choice_label": "新沙奈朵拥抱第三能并到50伤",
+											"status": "PROVEN",
+											"winning_choice_count": 1
+										}
+									}
+								],
+								"coverage_complete": true,
+								"depth": 8,
+								"player_actions": 5,
+								"reason": "player_has_forcing_choice",
+								"role": "player",
+								"selected_choice_id": "02:rare_candy_gardevoir",
+								"selected_choice_label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+								"status": "PROVEN",
+								"winning_choice_count": 1
+							}
+						}
+					],
+					"coverage_complete": true,
+					"depth": 8,
+					"player_actions": 6,
+					"reason": "player_has_forcing_choice",
+					"role": "player",
+					"selected_choice_id": "01:attach_psychic_to_backup_ralts",
+					"selected_choice_label": "把抽到的超能手贴给30伤拉鲁拉丝",
+					"status": "PROVEN",
+					"winning_choice_count": 1
+				}
+			}
+		],
+		"coverage_complete": true,
+		"depth": 8,
+		"player_actions": 7,
+		"reason": "player_has_forcing_choice",
+		"role": "player",
+		"selected_choice_id": "00:flip_candy_package",
+		"selected_choice_label": "化危为吉抽到能量转移、糖果和沙奈朵",
+		"status": "PROVEN",
+		"winning_choice_count": 1
+	},
+	"provider": "production_rules_ai_witness_v2",
+	"reason": "player_has_forcing_choice",
+	"root_branches": [
+		{
+			"choice_id": "00:flip_candy_package",
+			"choice_label": "化危为吉抽到能量转移、糖果和沙奈朵",
+			"depth": 8,
+			"player_actions": 7,
+			"reason": "player_has_forcing_choice",
+			"status": "PROVEN",
+			"tree": {
+				"branches": [
+					{
+						"choice_id": "01:attach_psychic_to_backup_ralts",
+						"choice_label": "把抽到的超能手贴给30伤拉鲁拉丝",
+						"depth": 8,
+						"player_actions": 6,
+						"reason": "player_has_forcing_choice",
+						"status": "PROVEN",
+						"tree": {
+							"branches": [
+								{
+									"choice_id": "02:rare_candy_gardevoir",
+									"choice_label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+									"depth": 8,
+									"player_actions": 5,
+									"reason": "player_has_forcing_choice",
+									"status": "PROVEN",
+									"tree": {
+										"branches": [
+											{
+												"choice_id": "03:embrace_backup",
+												"choice_label": "新沙奈朵拥抱第三能并到50伤",
+												"depth": 8,
+												"player_actions": 4,
+												"reason": "player_has_forcing_choice",
+												"status": "PROVEN",
+												"tree": {
+													"branches": [
+														{
+															"choice_id": "04:first_miracle",
+															"choice_label": "奇迹之力190击倒130伤第一多龙",
+															"depth": 8,
+															"player_actions": 3,
+															"reason": "all_defenses_hold",
+															"status": "PROVEN",
+															"tree": {
+																"branches": [
+																	{
+																		"choice_id": "05:dragapult_reply",
+																		"choice_label": "第二多龙200反杀首攻者并放置60点备战伤害",
+																		"depth": 8,
+																		"player_actions": 2,
+																		"reason": "player_has_forcing_choice",
+																		"status": "PROVEN",
+																		"tree": {
+																			"branches": [
+																				{
+																					"choice_id": "06:munkidori_second",
+																					"choice_label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+																					"depth": 8,
+																					"player_actions": 2,
+																					"reason": "player_has_forcing_choice",
+																					"status": "PROVEN",
+																					"tree": {
+																						"branches": [
+																							{
+																								"choice_id": "07:second_miracle",
+																								"choice_label": "接棒沙奈朵190击倒130伤第二多龙",
+																								"depth": 8,
+																								"player_actions": 1,
+																								"reason": "production_witness_reached_goal",
+																								"status": "PROVEN",
+																								"tree": {
+																									"branches": [],
+																									"coverage_complete": true,
+																									"depth": 8,
+																									"player_actions": 0,
+																									"reason": "production_witness_reached_goal",
+																									"score": 4,
+																									"status": "PROVEN",
+																									"winning_choice_count": 0
+																								}
+																							}
+																						],
+																						"coverage_complete": true,
+																						"depth": 8,
+																						"player_actions": 1,
+																						"reason": "player_has_forcing_choice",
+																						"role": "player",
+																						"selected_choice_id": "07:second_miracle",
+																						"selected_choice_label": "接棒沙奈朵190击倒130伤第二多龙",
+																						"status": "PROVEN",
+																						"winning_choice_count": 1
+																					}
+																				}
+																			],
+																			"coverage_complete": true,
+																			"depth": 8,
+																			"player_actions": 2,
+																			"reason": "player_has_forcing_choice",
+																			"role": "player",
+																			"selected_choice_id": "06:munkidori_second",
+																			"selected_choice_label": "愿增猿把接棒沙奈朵30伤搬给100伤多龙",
+																			"status": "PROVEN",
+																			"winning_choice_count": 1
+																		}
+																	}
+																],
+																"coverage_complete": true,
+																"depth": 8,
+																"player_actions": 2,
+																"reason": "all_defenses_hold",
+																"role": "opponent",
+																"selected_choice_id": "05:dragapult_reply",
+																"selected_choice_label": "第二多龙200反杀首攻者并放置60点备战伤害",
+																"status": "PROVEN",
+																"winning_choice_count": 1
+															}
+														}
+													],
+													"coverage_complete": true,
+													"depth": 8,
+													"player_actions": 3,
+													"reason": "player_has_forcing_choice",
+													"role": "player",
+													"selected_choice_id": "04:first_miracle",
+													"selected_choice_label": "奇迹之力190击倒130伤第一多龙",
+													"status": "PROVEN",
+													"winning_choice_count": 1
+												}
+											}
+										],
+										"coverage_complete": true,
+										"depth": 8,
+										"player_actions": 4,
+										"reason": "player_has_forcing_choice",
+										"role": "player",
+										"selected_choice_id": "03:embrace_backup",
+										"selected_choice_label": "新沙奈朵拥抱第三能并到50伤",
+										"status": "PROVEN",
+										"winning_choice_count": 1
+									}
+								}
+							],
+							"coverage_complete": true,
+							"depth": 8,
+							"player_actions": 5,
+							"reason": "player_has_forcing_choice",
+							"role": "player",
+							"selected_choice_id": "02:rare_candy_gardevoir",
+							"selected_choice_label": "稀有糖果把30伤拉鲁拉丝直升沙奈朵ex",
+							"status": "PROVEN",
+							"winning_choice_count": 1
+						}
+					}
+				],
+				"coverage_complete": true,
+				"depth": 8,
+				"player_actions": 6,
+				"reason": "player_has_forcing_choice",
+				"role": "player",
+				"selected_choice_id": "01:attach_psychic_to_backup_ralts",
+				"selected_choice_label": "把抽到的超能手贴给30伤拉鲁拉丝",
+				"status": "PROVEN",
+				"winning_choice_count": 1
+			}
+		}
+	],
+	"root_role": "player",
+	"scenario_fingerprint": "dd123e8aabf6a428eb33b7b8ae1e5202df6fa5c3871361da8c489e706c90c6a0",
+	"shortest_player_actions": 7,
+	"solver_version": "deck-training-and-or-v2",
+	"status": "PROVEN",
+	"unique_root_solution": true,
+	"unsupported_reasons": []
+}

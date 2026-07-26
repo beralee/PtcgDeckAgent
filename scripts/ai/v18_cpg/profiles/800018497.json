@@ -1,6 +1,6 @@
 {
-  "profile_version": 8,
-  "semantic_version": 1,
+  "profile_version": 11,
+  "semantic_version": 2,
   "risk_posture": "balanced",
   "switch_margin": 78.0,
   "expected_regret_threshold": 105.0,
@@ -8,6 +8,7 @@
   "delta_response_token_budget": 170,
   "turn_visible_wait_budget_ms": 6500,
   "cold_request_estimate_ms": 5000,
+  "turn_model_judgment_mode": "required_first_main_window",
   "max_policy_nodes": 6,
   "public_flow": {
     "hand_reset_to_deck_uids": ["CSV3C_123"]
@@ -26,6 +27,18 @@
     "recovery",
     "bench_space"
   ],
+  "semantic_role_overrides": {
+    "CSV2C_055": {"add": ["ability_engine", "energy_accelerator", "psychic_embrace_engine"]},
+    "CSV8C_094": {"add": ["damage_counter_mover", "darkness_activation_target"]},
+    "CSV6C_065": {"add": ["bench_sniper", "damage_scaler", "single_prize_attacker"]},
+    "CSV10C_082": {"add": ["dragon_weakness_field", "matchup_breakpoint", "attacker"]},
+    "151C_151": {"add": ["copy_source", "free_pivot", "comeback_draw"]},
+    "CSV8C_135": {"add": ["comeback_draw"]},
+    "CSV1C_118": {"add": ["embrace_damage_budget_expander"]},
+    "CSV5C_124": {"add": ["combo_tutor"]},
+    "CSVE1C_PSY": {"add": ["psychic_embrace_fuel"]},
+    "CSVE1C_DAR": {"add": ["munkidori_dark_access"]}
+  },
   "strategic_priorities": [
     {
       "priority": 1,
@@ -106,27 +119,18 @@
           "embrace_damage_per_assignment": 20
         }
       },
-      "profiled_engine_search_uid": "CSV1C_123",
-      "profiled_engine_followup_search_uid": "CSV1C_112",
-      "profiled_engine_followup_required_tool_uid": "CSV5C_119",
-      "profiled_engine_search_active_uid": "CSV10C_082",
-      "profiled_engine_search_required_hand_uids": ["CS6.5C_030", "CSVH1C_045"],
-      "profiled_engine_search_own_prizes_remaining": 6,
-      "profiled_engine_search_opponent_prizes_remaining": 6,
-      "profiled_engine_search_required_bench_free": 5,
-      "profiled_engine_search_completion_symbol": "D",
-      "profiled_engine_search_min_hand_completion_energy": 2,
-      "profiled_engine_search_opponent_active_uid": "CSV6C_051",
-      "profiled_engine_search_opponent_active_remaining_hp": 230,
-      "profiled_retreat_bridge_active_uid": "CS6.5C_030",
-      "profiled_retreat_bridge_engine_uid": "CSV2C_055",
-      "profiled_retreat_bridge_attacker_uid": "CSV6C_065",
-      "profiled_retreat_bridge_manual_symbol": "D",
-      "profiled_retreat_bridge_required_hand_uids": ["CSV1C_123", "CSV3C_123", "CSV8C_094"],
-      "profiled_retreat_bridge_own_prizes_remaining": 6,
-      "profiled_retreat_bridge_opponent_prizes_remaining": 6,
-      "profiled_retreat_bridge_opponent_active_uid": "CSV6C_051",
-      "profiled_retreat_bridge_opponent_active_remaining_hp": 90
+      "dragon_weakness_field": {
+        "field_uid": "CSV10C_082",
+        "attacker_uids": ["CSV2C_055"],
+        "dragon_target_uids": ["CSV7C_154", "CSV8C_161"],
+        "weakness_multiplier": 2
+      },
+      "active_gardevoir_public_ko": {
+        "attacker_uid": "CSV2C_055",
+        "attack_cost": ["P", "P", "C"],
+        "attack_damage": 190,
+        "damage_per_assignment": 20
+      }
     },
     "damage_counter_control": {
       "attack_cost_by_uid": {

@@ -532,8 +532,18 @@ func setup_complete(player_index: int) -> bool:
 			prize.face_up = false
 			prizes.append(prize)
 		player.set_prizes(prizes)
+		var prize_instance_ids: Array[int] = []
+		for prize: CardInstance in prizes:
+			prize_instance_ids.append(prize.instance_id)
 		_log_action(GameAction.ActionType.SETUP_SET_PRIZES, pi,
-			{"count": prizes.size()}, "玩家%d摆放6张奖赏卡" % (pi + 1))
+			{
+				"count": prizes.size(),
+				"card_instance_ids": prize_instance_ids,
+				"source_zone": "deck",
+				"target_zone": "prize",
+				"opening_deal": true,
+			},
+			"玩家%d摆放6张奖赏卡" % (pi + 1))
 
 	# 开始第一回合
 	_start_turn()
@@ -1757,6 +1767,8 @@ func play_basic_to_bench(
 	card: CardInstance,
 	auto_trigger_bench_ability: bool = true
 ) -> bool:
+	if card != null and card.card_data != null:
+		effect_processor.register_pokemon_card(card.card_data)
 	if not rule_validator.can_play_basic_to_bench(game_state, player_index, card, effect_processor):
 		return false
 

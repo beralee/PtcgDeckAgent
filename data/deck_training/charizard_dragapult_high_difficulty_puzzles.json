@@ -1,0 +1,6949 @@
+{
+  "format_version": 1,
+  "scenarios": [
+    {
+      "id": "charizard_dragapult_01",
+      "deck_key": "charizard_dragapult",
+      "order": 1,
+      "revision": 3,
+      "title": "复仇不是过渡：古玉鱼倒下才开启三奖终结",
+      "focus": "古玉鱼140拿双奖、主动送奖、再以恶喷330和白蕾雅拿3奖。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 21,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        20,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV3C_123",
+          "CSVH1aC_023",
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV6C_114",
+          "CSV8C_183",
+          "CSV10C_215",
+          "CSV10C_190"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "古玉鱼140拿双奖、主动送奖、再以恶喷330和白蕾雅拿3奖。"
+      },
+      "design_contract": {
+        "learning_axis": "charizard_damage_scaling",
+        "combo_id": "chiyu_revenge_briar",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_01_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_01_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "chiyu_revenge_briar_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 11,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_02",
+      "deck_key": "charizard_dragapult",
+      "order": 2,
+      "revision": 3,
+      "title": "顶6只有一个答案：米立龙先拿白蕾雅",
+      "focus": "在三张支援者诱饵中选择白蕾雅，撤退后完成两攻击手交接。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 22,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        21,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV8C_160"
+          ],
+          "energy": [
+            "CSV4C_129"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV5C_022"
+            ],
+            "energy": [
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ]
+          },
+          {
+            "stack": [
+              "151C_004"
+            ]
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV1C_121",
+          "CSV9C_202",
+          "CSV3C_123",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSVH1aC_023",
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV8C_183",
+          "CSV10C_215",
+          "CSV10C_190",
+          "CSV6C_114"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉先抽走糖果、喷火龙与头带",
+        "揽客从顶6的三张支援者中保留白蕾雅",
+        "弃火能撤退米立龙，换入复仇古玉鱼",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "在三张支援者诱饵中选择白蕾雅，撤退后完成两攻击手交接。"
+      },
+      "design_contract": {
+        "learning_axis": "tatsugiri_supporter_scan",
+        "combo_id": "tatsugiri_briar_scan",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉先抽走糖果、喷火龙与头带",
+            "揽客从顶6的三张支援者中保留白蕾雅",
+            "弃火能撤退米立龙，换入复仇古玉鱼",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "揽客",
+            "reason": "先移走顶3非支援者。"
+          },
+          {
+            "order": 2,
+            "source": "揽客 top 6与次回合比雕",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV1C_121",
+              "CSV3C_123",
+              "CSV6C_114"
+            ],
+            "must_precede": "支援者选择",
+            "reason": "看见两张高诱惑抽牌支援者，同时保留次回合捕捉节点。"
+          },
+          {
+            "order": 3,
+            "source": "揽客正确选择",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "任何洗牌",
+            "reason": "最后从三张支援者中拿白蕾雅。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉先抽走糖果、喷火龙与头带",
+          "sequence": [
+            "化危为吉先抽走糖果、喷火龙与头带",
+            "揽客从顶6的三张支援者中保留白蕾雅",
+            "弃火能撤退米立龙，换入复仇古玉鱼",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV1C_121",
+            "CSV3C_123",
+            "CSV6C_114",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_02_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_02_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "米立龙必须先看顶6支援者再撤退。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "tatsugiri_briar_scan_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV1C_121",
+            "CSV3C_123",
+            "CSV6C_114",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉先抽走糖果、喷火龙与头带",
+            "揽客从顶6的三张支援者中保留白蕾雅",
+            "弃火能撤退米立龙，换入复仇古玉鱼",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 12,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉先抽走糖果、喷火龙与头带",
+          "source": {
+            "zone": "bench",
+            "index": 4
+          },
+          "targets": []
+        },
+        {
+          "id": "tatsugiri_briar",
+          "kind": "use_ability",
+          "label": "揽客从顶6的三张支援者中保留白蕾雅",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "look_top_pick": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "retreat_tatsugiri",
+          "kind": "retreat",
+          "label": "弃火能撤退米立龙，换入复仇古玉鱼",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": [
+            {
+              "$card": {
+                "player": 0,
+                "zone": "active_energy",
+                "uid": "CSV4C_129",
+                "occurrence": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_03",
+      "deck_key": "charizard_dragapult",
+      "order": 3,
+      "revision": 3,
+      "title": "三张火能不能全给恶喷：烈炎支配分流",
+      "focus": "第一回合烈炎支配2火给古玉鱼、1火给喷火龙，跨回合保留第二攻击费用。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 23,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        22,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": []
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": [
+              "CSVE1C_FIR"
+            ]
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123",
+          "CSVH1aC_023"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV10C_215",
+          "CSV10C_190",
+          "CSV6C_114",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "糖果进化备战小火龙，开启烈炎支配",
+        "烈炎支配把2火给古玉鱼、1火给喷火龙",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "第一回合烈炎支配2火给古玉鱼、1火给喷火龙，跨回合保留第二攻击费用。"
+      },
+      "design_contract": {
+        "learning_axis": "infernal_reign_split",
+        "combo_id": "infernal_split_handoff",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "糖果进化备战小火龙，开启烈炎支配",
+            "烈炎支配把2火给古玉鱼、1火给喷火龙",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "糖果进化备战小火龙，开启烈炎支配",
+            "烈炎支配把2火给古玉鱼、1火给喷火龙",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_03_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_03_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 1,
+            "acquired": 1,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "infernal_split_handoff_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "糖果进化备战小火龙，开启烈炎支配",
+            "烈炎支配把2火给古玉鱼、1火给喷火龙",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 11,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV1C_117",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "candy_first_charizard",
+          "kind": "play_trainer",
+          "label": "糖果进化备战小火龙，开启烈炎支配",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "bench",
+                    "index": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "split_infernal_reign",
+          "kind": "use_ability",
+          "label": "烈炎支配把2火给古玉鱼、1火给喷火龙",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 2
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_04",
+      "deck_key": "charizard_dragapult",
+      "order": 4,
+      "revision": 3,
+      "title": "50比130更难：彷徨夜灵的最小送奖",
+      "focus": "只用50档改变奖差，保留黑夜魔灵130的机会成本并完成五奖。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 24,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        23,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123",
+          "CSVH1aC_023",
+          "CSV6C_125"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV10C_190",
+          "CSV6C_114",
+          "CSV8C_183",
+          "CSV10C_215"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "只用50档改变奖差，保留黑夜魔灵130的机会成本并完成五奖。"
+      },
+      "design_contract": {
+        "learning_axis": "dusknoir_damage_choice",
+        "combo_id": "dusclops_fifty_window",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_082",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_04_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_04_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "彷徨夜灵50送奖并避免过量。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "dusclops_fifty_window_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 11,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_05",
+      "deck_key": "charizard_dragapult",
+      "order": 5,
+      "revision": 3,
+      "title": "捕捉器必须等自爆：送奖后的首杀窗口",
+      "focus": "先主动送奖使反击捕捉器合法，再抓出剩140HP双奖目标。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 25,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        24,
+        -999
+      ],
+      "tactic_pattern_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_klefki_basic_ability_counter"
+      ],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV6C_114",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV4C_044"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "damage": 160
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123",
+          "CSVH1aC_023",
+          "CSV6C_125",
+          "CSV7C_191"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV6C_114",
+          "CSV8C_183",
+          "CSV10C_215",
+          "CSV10C_190"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "咒怨炸弹主动送1奖并把黑夜魔灵调到30HP",
+        "送奖后反击捕捉器才合法，抓出剩140HP月月熊",
+        "嫉妒业火140击倒首只双奖目标",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "先主动送奖使反击捕捉器合法，再抓出剩140HP双奖目标。"
+      },
+      "design_contract": {
+        "learning_axis": "counter_catcher_closeout",
+        "combo_id": "offer_then_counter",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "咒怨炸弹主动送1奖并把黑夜魔灵调到30HP",
+            "送奖后反击捕捉器才合法，抓出剩140HP月月熊",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV6C_114": "送奖后抓出首回合双奖目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV6C_114"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "咒怨炸弹主动送1奖并把黑夜魔灵调到30HP",
+            "送奖后反击捕捉器才合法，抓出剩140HP月月熊",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_05_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_05_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 160,
+            "planned_counter_damage": 0,
+            "remaining_hp": 50,
+            "final_damage": 50,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 190,
+            "planned_counter_damage": 0,
+            "remaining_hp": 90,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 210
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "offer_then_counter_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "咒怨炸弹主动送1奖并把黑夜魔灵调到30HP",
+            "送奖后反击捕捉器才合法，抓出剩140HP月月熊",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 9,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "咒怨炸弹主动送1奖并把黑夜魔灵调到30HP",
+          "ability_source": {
+            "zone": "bench",
+            "index": 2
+          },
+          "damage_target": {
+            "zone": "bench",
+            "index": 0
+          }
+        },
+        {
+          "id": "counter_bloodmoon",
+          "kind": "play_trainer",
+          "label": "送奖后反击捕捉器才合法，抓出剩140HP月月熊",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 50
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_06",
+      "deck_key": "charizard_dragapult",
+      "order": 6,
+      "revision": 3,
+      "title": "钥圈儿也锁自己：先封后解再爆发",
+      "focus": "钥圈儿撤退前化危为吉非法，必须先解除封锁再进入抽牌与复仇链。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 26,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        25,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV1C_060"
+          ],
+          "energy": [
+            "CSV4C_129"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV5C_022"
+            ],
+            "energy": [
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ]
+          },
+          {
+            "stack": [
+              "151C_004"
+            ]
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV9C_198",
+          "CSV3C_123",
+          "CSVH1aC_023",
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV8C_183",
+          "CSV10C_215",
+          "CSV10C_190",
+          "CSV6C_114"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "先让钥圈儿退回备战区，解除己方基础特性封锁",
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "钥圈儿撤退前化危为吉非法，必须先解除封锁再进入抽牌与复仇链。"
+      },
+      "design_contract": {
+        "learning_axis": "klefki_lock_unlock",
+        "combo_id": "klefki_unlock_combo",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "先让钥圈儿退回备战区，解除己方基础特性封锁",
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "先让钥圈儿退回备战区，解除己方基础特性封锁",
+          "sequence": [
+            "先让钥圈儿退回备战区，解除己方基础特性封锁",
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_06_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_06_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "钥圈儿先封锁双方基础特性，撤退后才允许化危为吉。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "klefki_unlock_combo_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "先让钥圈儿退回备战区，解除己方基础特性封锁",
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 12,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "unlock_klefki",
+          "kind": "retreat",
+          "label": "先让钥圈儿退回备战区，解除己方基础特性封锁",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": [
+            {
+              "$card": {
+                "player": 0,
+                "zone": "active_energy",
+                "uid": "CSV4C_129",
+                "occurrence": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_07",
+      "deck_key": "charizard_dragapult",
+      "order": 7,
+      "revision": 3,
+      "title": "博士研究是陷阱：七抽反而丢掉唯一解",
+      "focus": "随机大抽会毁掉跨回合组件；正确线用吉雉鸡与比雕逐层取得。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 27,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        26,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV3C_123",
+          "CSVH1aC_023",
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV10C_215",
+          "CSV10C_190",
+          "CSV6C_114",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "随机大抽会毁掉跨回合组件；正确线用吉雉鸡与比雕逐层取得。"
+      },
+      "design_contract": {
+        "learning_axis": "quick_search_order",
+        "combo_id": "research_lure_hold",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_07_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_07_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "research_lure_hold_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 11,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_08",
+      "deck_key": "charizard_dragapult",
+      "order": 8,
+      "revision": 3,
+      "title": "差的正是30：不服输头带精确跨320",
+      "focus": "燃烧黑暗在对手已拿4奖时只有300，必须保留落后奖差与头带补30。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 28,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        27,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSVH1aC_023",
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV10C_190",
+          "CSV6C_114",
+          "CSV8C_183",
+          "CSV10C_215"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "燃烧黑暗在对手已拿4奖时只有300，必须保留落后奖差与头带补30。"
+      },
+      "design_contract": {
+        "learning_axis": "charizard_damage_scaling",
+        "combo_id": "defiance_exact_thirty",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_08_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_08_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "defiance_exact_thirty_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 11,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_09",
+      "deck_key": "charizard_dragapult",
+      "order": 9,
+      "revision": 3,
+      "title": "先送、再死、最后三奖：白蕾雅时点题",
+      "focus": "自爆与古玉鱼被反杀共同把对手从4奖推进2奖，早一拍或晚一拍都不能用白蕾雅。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 29,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        28,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV1C_117",
+          "CSV9C_202",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV6C_125",
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123",
+          "CSVH1aC_023"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV6C_114",
+          "CSV8C_183",
+          "CSV10C_215",
+          "CSV10C_190"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "第二回合音速搜索取得反击捕捉器",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "自爆与古玉鱼被反杀共同把对手从4奖推进2奖，早一拍或晚一拍都不能用白蕾雅。"
+      },
+      "design_contract": {
+        "learning_axis": "briar_three_prize",
+        "combo_id": "briar_exact_window",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV6C_114": "避开90HP诱饵，抓满血坚硬束带目标"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV1C_112"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV5C_075",
+              "CSV1C_117"
+            ],
+            "must_precede": "咒怨炸弹",
+            "reason": "先拿到跨回合保留的进化与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "中间公开信息节点",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV6C_114",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "第二回合进化",
+            "reason": "补齐捕捉牌或确认牌库仍有火能。"
+          },
+          {
+            "order": 3,
+            "source": "终结组件公开兑现",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "最后确认终结支援者，不能初始握在手中。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "hidden_reveal": [
+            "CSV9C_202"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_09_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_09_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "briar_exact_window_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV5C_075",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR",
+            "CSV9C_202"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "第二回合音速搜索取得反击捕捉器",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV9C_202",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 11,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "second_quick_counter",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得反击捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fresh_zoroark",
+          "kind": "play_trainer",
+          "label": "反击捕捉器避开90HP诱饵，抓出满血坚硬束带索罗亚克",
+          "card_uid": "CSV6C_114",
+          "target_player": 1,
+          "target": {
+            "zone": "bench_remaining_hp",
+            "remaining_hp": 280
+          },
+          "context_key": "opponent_bench_target"
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    },
+    {
+      "id": "charizard_dragapult_10",
+      "deck_key": "charizard_dragapult",
+      "order": 10,
+      "revision": 3,
+      "title": "弃牌区才是第二副手牌：钓竿回填重建",
+      "focus": "第二回合按音速搜索钓竿、回填喷火龙、再用高级球检索和糖果进化。",
+      "objective": "两回合完成首回合双奖交换，并在第二回合以白蕾雅取得3奖，共拿5奖。",
+      "player_deck_id": 800025404,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "18.0 N的索罗亚克",
+      "turn_number": 30,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        29,
+        -999
+      ],
+      "tactic_pattern_ids": [
+        "charizard_dusknoir_briar_window",
+        "charizard_defiance_damage_threshold"
+      ],
+      "player": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV5C_022"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "151C_004"
+            ],
+            "energy": []
+          },
+          {
+            "stack": [
+              "151C_016",
+              "CSV4C_101"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082",
+              "CSV8C_083"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV1C_060"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV6C_125",
+          "CSV5C_119",
+          "CSV1C_126",
+          "151C_004"
+        ],
+        "discard": [
+          "CSV5C_075",
+          "CSVE1C_FIR",
+          "CSVE1C_FIR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSVH1C_045",
+          "CSV1C_117",
+          "CSV1C_112",
+          "CSV9C_202"
+        ]
+      },
+      "opponent": {
+        "prize_count": 4,
+        "active": {
+          "stack": [
+            "CSV8C_135"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "tool": "CSV2C_114"
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV4C_044"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_191",
+          "CSV7C_177",
+          "CSV9C_198",
+          "CSV3C_123",
+          "CSVH1aC_023",
+          "CSV6C_125"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV8C_183",
+          "CSV10C_215",
+          "CSV10C_190",
+          "CSV6C_114"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 5
+      },
+      "validation_operations": [
+        "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+        "音速搜索取得仍藏在牌库里的终结组件",
+        "嫉妒业火140击倒首只双奖目标",
+        "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+        "第二回合音速搜索取得厉害钓竿",
+        "钓竿把喷火龙与两张火能放回牌库",
+        "高级球弃两张诱饵，检索刚回填的喷火龙",
+        "糖果把自动晋升的小火龙进化成喷火龙ex",
+        "烈炎支配从牌库精确附着2张火能",
+        "奖差落后时给喷火龙装不服输头带",
+        "确认对手恰好剩2奖后使用白蕾雅",
+        "燃烧黑暗完成坚硬束带目标并取得3奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 5,
+        "decision_points": [
+          {
+            "choice": "是否先使用博士的研究",
+            "failure": "会弃掉跨回合组件并让隐藏牌序失效。"
+          },
+          {
+            "choice": "50/130自爆、捕捉与支援者的先后",
+            "failure": "奖差或白蕾雅恰好2奖的窗口被永久错过。"
+          },
+          {
+            "choice": "第二回合能量与头带的归属",
+            "failure": "燃烧黑暗只有300，无法击倒320HP多龙。"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合自爆送奖和古玉鱼双奖击倒共同建立第二回合白蕾雅窗口。",
+          "首攻古玉鱼被反杀后，小火龙才能自动晋升并把对手推进恰好剩2奖。"
+        ],
+        "resource_tensions": [
+          "博士研究看似能看到更多牌，实际会丢失糖果、喷火龙或白蕾雅。",
+          "音速搜索会洗牌，必须在需要固定顶牌的特性之后使用。"
+        ],
+        "learning_outcome": "第二回合按音速搜索钓竿、回填喷火龙、再用高级球检索和糖果进化。"
+      },
+      "design_contract": {
+        "learning_axis": "rod_jet_rebuild",
+        "combo_id": "rod_ultra_candy_rebuild",
+        "deck_identity": "自爆恶喷通过主动送奖改变燃烧黑暗、反击捕捉器、不服输头带与白蕾雅四个条件，再用大比鸟精确检索闭合两回合五奖。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方备战区满场",
+            "所有解题关键牌初始不在手牌",
+            "古玉鱼满足上回合己方被招式击倒条件"
+          ],
+          "ordered_steps": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "第二回合音速搜索取得厉害钓竿",
+            "钓竿把喷火龙与两张火能放回牌库",
+            "高级球弃两张诱饵，检索刚回填的喷火龙",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "payoff": "两回合5奖，其中第二回合白蕾雅三奖。",
+          "reordered_failure": "洗牌、送奖、支援者、进化或头带任一步骤交换都会关闭奖差或330伤害式。"
+        },
+        "engine_cards_in_play": [
+          "CSV5C_022",
+          "CSV4C_101",
+          "CSV8C_083",
+          "CSV8C_135",
+          "151C_004"
+        ],
+        "key_cards": [
+          "CSVH1C_045",
+          "CSV5C_075",
+          "CSV9C_202",
+          "CSV1C_117",
+          "CSV1C_109",
+          "CSV1C_112"
+        ],
+        "key_card_roles": {
+          "CSVH1C_045": "把自动晋升的小火龙直接进化",
+          "CSV5C_075": "第二回合太晶终结攻击手",
+          "CSV9C_202": "对手剩2奖时把双奖击倒改成三奖",
+          "CSV1C_117": "把300补到330并穿过坚硬束带",
+          "CSV1C_109": "回填弃牌区喷火龙与火能",
+          "CSV1C_112": "检索回填后的喷火龙"
+        },
+        "initial_hand_decoys": [
+          "CSV1C_121",
+          "CSV3C_123",
+          "CSV7C_177",
+          "CSV6C_125"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV1C_121",
+            "CSV6C_125"
+          ],
+          "redundant_cards": [
+            "CSV7C_177",
+            "CSV5C_119"
+          ],
+          "plausible_openings": [
+            "直接博士研究",
+            "先奇树",
+            "先高级球",
+            "先音速搜索",
+            "先自爆",
+            "先撤退钥圈儿"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "化危为吉 draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSVH1C_045",
+              "CSV1C_117"
+            ],
+            "must_precede": "首回合攻击",
+            "reason": "先保留糖果与阈值组件。"
+          },
+          {
+            "order": 2,
+            "source": "第一回合音速搜索",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV9C_202"
+            ],
+            "must_precede": "白蕾雅窗口",
+            "reason": "先把终结支援者从牌库取出并跨回合保留。"
+          },
+          {
+            "order": 3,
+            "source": "化危为吉第三张",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV1C_112"
+            ],
+            "must_precede": "厉害钓竿",
+            "reason": "高级球初始隐藏，必须由小抽牌节点取得。"
+          },
+          {
+            "order": 4,
+            "source": "音速搜索→钓竿回填",
+            "acquisition_kind": "recovery",
+            "reveals": [
+              "CSV1C_109",
+              "CSV5C_075",
+              "CSVE1C_FIR",
+              "CSVE1C_FIR"
+            ],
+            "must_precede": "神奇糖果",
+            "reason": "回填、再检索、再进化，顺序不可交换。"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "sequence": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "第二回合音速搜索取得厉害钓竿",
+            "钓竿把喷火龙与两张火能放回牌库",
+            "高级球弃两张诱饵，检索刚回填的喷火龙",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "draw_trace": [
+            "CSVH1C_045",
+            "CSV1C_117",
+            "CSV9C_202",
+            "CSV1C_112",
+            "CSV1C_109",
+            "CSV5C_075",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ],
+          "hidden_reveal": [
+            "CSV1C_112"
+          ],
+          "order_sensitive_pair": [
+            "送奖/取奖",
+            "白蕾雅"
+          ],
+          "exact_reason": "只有先把对手推进恰好剩2奖、同时保留支援者次数和头带，330伤三奖终结才成立。"
+        },
+        "bait_lines": [
+          {
+            "id": "research_now",
+            "opening": "立即使用博士的研究",
+            "looks_good_because": "手牌有7张且能一次看7张新牌",
+            "gained_information": "随机七抽",
+            "draw_trace": [
+              "CSV1C_121",
+              "seven random cards"
+            ],
+            "consumed_resource": "唯一支援者次数与当前跨回合手牌",
+            "fails_because": "白蕾雅不能在终结回合使用，或糖果/头带被弃掉。",
+            "failed_equation": "330伤但只取2奖，5奖目标少1奖",
+            "negative_probe_id": "charizard_dragapult_10_research_now"
+          },
+          {
+            "id": "skip_offer",
+            "opening": "不使用咒怨炸弹直接攻击",
+            "looks_good_because": "避免主动送奖",
+            "gained_information": "保留一只进化宝可梦",
+            "draw_trace": [
+              "no prize offer"
+            ],
+            "consumed_resource": "燃烧黑暗30伤、反击窗口和白蕾雅条件",
+            "fails_because": "对手第二回合不会恰好剩2奖，喷火龙也少30伤。",
+            "failed_equation": "270/300 < 320 且白蕾雅不可用",
+            "negative_probe_id": "charizard_dragapult_10_skip_offer"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "古玉鱼承担首回合复仇140并故意被反杀。",
+          "player.bench.0": "小火龙是首攻者倒下后的自动晋升位，随后用糖果进化为第二攻击手。",
+          "player.bench.1": "大比鸟ex提供每回合唯一一次任意牌检索，错误检索会洗掉牌序。",
+          "player.bench.2": "黑夜魔灵130送奖并为后续目标预置伤害。",
+          "player.bench.3": "吉雉鸡ex在前一回合我方宝可梦昏厥后提供第一层隐藏三抽。",
+          "player.bench.4": "钥圈儿/米立龙是合法场位与诱导路线，不是装饰。",
+          "opponent.active": "剩140HP的吉雉鸡ex要求古玉鱼满足复仇条件才能精确击倒。",
+          "opponent.bench.0": "60伤索罗亚克ex会自动晋升，复制力量愤怒120反杀古玉鱼。",
+          "opponent.bench.1": "满血坚硬束带索罗亚克是第二回合必须捕捉的300伤阈值目标。",
+          "opponent.bench.2": "莱希拉姆提供AI反杀所需的力量愤怒。",
+          "opponent.bench.3": "愿增猿是错误单奖目标。",
+          "opponent.bench.4": "皮宝宝是错误零撤退目标。"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 140,
+            "final_damage": 140,
+            "payment": "送奖会覆盖复仇标记，因此反击捕捉题只按基础50；其他题按50+复仇90",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 280,
+            "final_damage": 300,
+            "payment": "反击题攻击90HP现役目标；其他题以330穿过坚硬束带减伤30",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "Chi-Yu Jealousy Burn",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "Charizard Burning Darkness",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "rod_ultra_candy_rebuild_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Pidgeot Quick Search",
+            "Tatsugiri remaining cards",
+            "Super Rod and Ultra Ball where authored"
+          ],
+          "reveal_sequence": [
+            "CSVH1C_045",
+            "CSV1C_117",
+            "CSV9C_202",
+            "CSV1C_112",
+            "CSV1C_109",
+            "CSV5C_075",
+            "CSVE1C_FIR",
+            "CSVE1C_FIR"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "关键进化、头带和白蕾雅都不在初始手牌，对手还拥有满血320HP多龙。",
+          "comeback_chain": [
+            "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+            "音速搜索取得仍藏在牌库里的终结组件",
+            "嫉妒业火140击倒首只双奖目标",
+            "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+            "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+            "第二回合音速搜索取得厉害钓竿",
+            "钓竿把喷火龙与两张火能放回牌库",
+            "高级球弃两张诱饵，检索刚回填的喷火龙",
+            "糖果把自动晋升的小火龙进化成喷火龙ex",
+            "烈炎支配从牌库精确附着2张火能",
+            "奖差落后时给喷火龙装不服输头带",
+            "确认对手恰好剩2奖后使用白蕾雅",
+            "燃烧黑暗完成坚硬束带目标并取得3奖"
+          ],
+          "finisher": "最后取得重建钥匙或白蕾雅，以330伤精确跨过320HP并一次拿3奖。",
+          "finisher_card": "CSV1C_112",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合合计5奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 6,
+          "energy_origins": [
+            "古玉鱼双火来自此前两次手贴，或题面烈炎支配明确分配。",
+            "多龙的火超能来自前两回合设置。"
+          ],
+          "damage_origins": [
+            "吉雉鸡ex的70伤来自上回合公开攻击，剩140符合古玉鱼复仇线。",
+            "索罗亚克的130伤由题内咒怨炸弹产生。"
+          ],
+          "prize_history": [
+            "双方此前完成一次奖赏交换。",
+            "题内每次送奖、击倒和额外取奖均由生产规则结算。"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 12,
+          "irreversible_decisions": 4,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "fez_hidden_three",
+          "kind": "use_ability",
+          "label": "化危为吉抽出隐藏的糖果、喷火龙与第三组件",
+          "source": {
+            "zone": "bench",
+            "index": 3
+          },
+          "targets": []
+        },
+        {
+          "id": "quick_search_finisher",
+          "kind": "use_ability",
+          "label": "音速搜索取得仍藏在牌库里的终结组件",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV9C_202",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chi_yu_revenge",
+          "kind": "attack",
+          "label": "嫉妒业火140击倒首只双奖目标",
+          "attack_index": 1,
+          "targets": []
+        },
+        {
+          "id": "zoroark_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "60伤索罗亚克晋升并复制力量愤怒120反杀古玉鱼",
+          "require_attack": true
+        },
+        {
+          "id": "offer_prize",
+          "kind": "self_ko",
+          "label": "对手拿到第3奖后再咒怨炸弹，把现役索罗亚克调到90HP并推进白蕾雅2奖窗口",
+          "ability_source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "damage_target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "quick_search_rod",
+          "kind": "use_ability",
+          "label": "第二回合音速搜索取得厉害钓竿",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "search_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV1C_109",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rod_charizard_fire",
+          "kind": "play_trainer",
+          "label": "钓竿把喷火龙与两张火能放回牌库",
+          "card_uid": "CSV1C_109",
+          "targets": [
+            {
+              "cards_to_return": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "discard",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "discard",
+                    "uid": "CSVE1C_FIR",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "discard",
+                    "uid": "CSVE1C_FIR",
+                    "occurrence": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ultra_recovered_charizard",
+          "kind": "play_trainer",
+          "label": "高级球弃两张诱饵，检索刚回填的喷火龙",
+          "card_uid": "CSV1C_112",
+          "targets": [
+            {
+              "discard_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV1C_121",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV3C_123",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "search_pokemon": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "candy_second_charizard",
+          "kind": "play_trainer",
+          "label": "糖果把自动晋升的小火龙进化成喷火龙ex",
+          "card_uid": "CSVH1C_045",
+          "targets": [
+            {
+              "stage2_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV5C_075",
+                    "occurrence": 0
+                  }
+                }
+              ],
+              "target_pokemon": [
+                {
+                  "$slot": {
+                    "player": 0,
+                    "zone": "active"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infernal_reign_two",
+          "kind": "use_ability",
+          "label": "烈炎支配从牌库精确附着2张火能",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "energy_assignments": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                },
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "deck",
+                      "uid": "CSVE1C_FIR",
+                      "occurrence": 1
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_defiance",
+          "kind": "attach_tool",
+          "label": "奖差落后时给喷火龙装不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "play_briar",
+          "kind": "play_trainer",
+          "label": "确认对手恰好剩2奖后使用白蕾雅",
+          "card_uid": "CSV9C_202",
+          "targets": []
+        },
+        {
+          "id": "burning_darkness",
+          "kind": "attack",
+          "label": "燃烧黑暗完成坚硬束带目标并取得3奖",
+          "attack_index": 0,
+          "targets": []
+        }
+      ]
+    }
+  ]
+}

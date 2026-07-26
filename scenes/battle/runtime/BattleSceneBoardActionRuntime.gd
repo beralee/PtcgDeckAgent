@@ -234,6 +234,8 @@ func _portrait_bench_grid_hit_slot_id_for_screen_position(screen_position: Vecto
 
 
 func _consume_modal_slot_input_if_needed(event: InputEvent, source: String = "") -> bool:
+	if _consume_modal_pointer_sequence_if_needed(event, source, "modal_slot_input_consumed"):
+		return true
 	if _modal_input_slot_suppress_until_msec > 0:
 		if Time.get_ticks_msec() > _modal_input_slot_suppress_until_msec:
 			_modal_input_slot_suppress_until_msec = 0
@@ -247,6 +249,27 @@ func _consume_modal_slot_input_if_needed(event: InputEvent, source: String = "")
 	if _consume_modal_origin_slot_echo(event, source):
 		return true
 	return false
+
+
+func _consume_modal_pointer_sequence_if_needed(
+	event: InputEvent,
+	source: String = "",
+	log_channel: String = "modal_pointer_input_consumed"
+) -> bool:
+	if (
+		_battle_pointer_input_router == null
+		or not _battle_pointer_input_router.should_block(event, "battle_board")
+	):
+		return false
+	_cancel_slot_touch_long_press(false)
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+	_runtime_log(
+		log_channel,
+		"source=%s event=%s mode=pointer_sequence" % [source, event.get_class()]
+	)
+	return true
 
 
 func _consume_modal_origin_slot_echo(event: InputEvent, source: String = "") -> bool:
@@ -273,20 +296,14 @@ func _consume_modal_origin_slot_echo(event: InputEvent, source: String = "") -> 
 
 
 func _consume_modal_hud_input_if_needed(event: InputEvent, source: String = "") -> bool:
-	if _consume_modal_slot_input_if_needed(event, source):
-		return true
-	if _modal_input_finished_at_msec <= 0:
-		return false
-	if Time.get_ticks_msec() > _modal_input_finished_at_msec + MODAL_HAND_RELEASE_FALLBACK_WINDOW_MSEC:
-		return false
-	if not _is_slot_followup_click_event(event):
-		return false
-	_cancel_slot_touch_long_press(false)
-	var viewport := get_viewport()
-	if viewport != null:
-		viewport.set_input_as_handled()
-	_runtime_log("modal_hud_input_consumed", "source=%s event=%s" % [source, event.get_class()])
-	return true
+	# HUD entry points must reject only the tail of the physical sequence that
+	# closed the previous modal. A global time window made legitimate, independent
+	# Android taps appear dead for up to 1.4 seconds.
+	return _consume_modal_pointer_sequence_if_needed(
+		event,
+		source,
+		"modal_hud_input_consumed"
+	)
 
 
 
@@ -726,6 +743,7 @@ func _stop_battle_discussion_flash() -> void:
 func _can_accept_live_action() -> bool:
 	return (
 		not _is_review_mode()
+		and not (_deck_training_controller != null and _deck_training_controller.is_modal_open())
 		and not _is_board_modal_overlay_visible()
 		and not _draw_reveal_active
 		and not _ai_llm_waiting
@@ -1279,6 +1297,7 @@ func _try_play_to_bench(player_index: int, card: CardInstance, slot_id: String) 
 			"anchor_key": slot_id,
 		})
 		return
+	_gsm.effect_processor.register_pokemon_card(card.card_data)
 	var bench_effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
 	var bench_steps: Array[Dictionary] = []
 	var is_bench_enter_ability := bench_effect != null and bench_effect.has_method("is_bench_enter_ability") and bool(bench_effect.call("is_bench_enter_ability"))
@@ -1712,12 +1731,18 @@ func _sync_battle_scene_context_runtime() -> void:
 
 func _build_game_state_machine() -> GameStateMachine:
 	var gsm := GameStateMachine.new()
+	_bind_game_state_machine_signals(gsm)
+	return gsm
+
+
+func _bind_game_state_machine_signals(gsm: GameStateMachine) -> void:
+	if gsm == null:
+		return
 	gsm.state_changed.connect(Callable(self, "_on_state_changed"))
 	gsm.action_logged.connect(Callable(self, "_on_action_logged"))
 	gsm.player_choice_required.connect(Callable(self, "_on_player_choice_required"))
 	gsm.game_over.connect(Callable(self, "_on_game_over"))
 	gsm.coin_flipper.coin_flipped.connect(Callable(self, "_on_coin_flipped"))
-	return gsm
 
 
 
@@ -2492,6 +2517,19 @@ func _refresh_ui() -> void:
 	_check_ready_vfx_triggers()
 	_sync_battle_action_intents()
 	call_deferred("_sync_battle_action_intents")
+
+
+func _refresh_field_after_visual_event(semantic: String) -> void:
+	if semantic != "knockout" or _gsm == null or _gsm.game_state == null:
+		return
+	# POKEMON_CHECK first publishes its phase and only then commits Knock Out
+	# removals. A targeted Bench attack can therefore leave an older field frame
+	# underneath the transfer overlay. Repaint only the field from the committed
+	# GameState after the KO overlay has finished; rule state and modal flow stay
+	# untouched.
+	_ensure_battle_display_coordinator()
+	_battle_display_coordinator.call("refresh_field")
+	_sync_card_foil_effects()
 
 
 func _sync_battle_visual_snapshot_before_refresh() -> void:

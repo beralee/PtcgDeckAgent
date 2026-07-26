@@ -4,6 +4,9 @@ extends Node
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const UiRuntimeProfileResolverScript := preload("res://scripts/ui/runtime/UiRuntimeProfileResolver.gd")
+const BrowserLifecycleBridgeScript := preload("res://scripts/ui/web/BrowserLifecycleBridge.gd")
+const WebUiFeatureGateScript := preload("res://scripts/ui/web/WebUiFeatureGate.gd")
 
 signal non_battle_layout_mode_changed(mode: String)
 
@@ -48,6 +51,9 @@ var battle_bgm_volume_percent: int = 20
 var battle_layout_mode: String = "auto"
 var non_battle_layout_mode: String = "landscape"
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var ui_runtime_profile: UiRuntimeProfile = null
+var browser_lifecycle_bridge: BrowserLifecycleBridge = null
+var _web_ui_e2e_bridge: Node = null
 
 ## 当前游戏状态（对战中有效）
 var game_state: GameState = null
@@ -59,6 +65,7 @@ const SCENE_BATTLE_SETUP := "res://scenes/battle_setup/BattleSetup.tscn"
 const SCENE_BATTLE := "res://scenes/battle/BattleScene.tscn"
 const SCENE_DECK_EDITOR := "res://scenes/deck_editor/DeckEditor.tscn"
 const SCENE_REPLAY_BROWSER := "res://scenes/replay_browser/ReplayBrowser.tscn"
+const SCENE_DECK_TRAINING := "res://scenes/deck_training/DeckTrainingBrowser.tscn"
 const SCENE_SETTINGS := "res://scenes/settings/Settings.tscn"
 const SCENE_TOURNAMENT_DECK_SELECT := "res://scenes/tournament/TournamentDeckSelect.tscn"
 const SCENE_TOURNAMENT_SETUP := "res://scenes/tournament/TournamentSetup.tscn"
@@ -67,6 +74,7 @@ const SCENE_TOURNAMENT_STANDINGS := "res://scenes/tournament/TournamentStandings
 const NAVIGATION_PREWARM_SCENES: Array[String] = [
 	SCENE_BATTLE_SETUP,
 	SCENE_DECK_MANAGER,
+	SCENE_DECK_TRAINING,
 ]
 const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
 const CANONICAL_BATTLE_REVIEW_USER_DIR_NAME := "PTCG Train"
@@ -76,6 +84,7 @@ const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DESKTOP_RENDER_CAP_SIZE := Vector2i(1920, 1080)
+const NAVIGATION_PREWARM_AWAIT_TIMEOUT_MSEC := 4000
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
 const BATTLE_BGM_VOLUME_USER_SET_KEY := "battle_bgm_volume_user_set"
 const BATTLE_LAYOUT_AUTO := "auto"
@@ -135,6 +144,8 @@ const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 ]
 
 var _battle_replay_launch: Dictionary = {}
+var _deck_training_launch: Dictionary = {}
+var _deck_training_selected_deck_key := "dragapult"
 var _deck_editor_deck_id: int = -1
 var _deck_editor_return_context: Dictionary = {}
 var tournament_selected_player_deck_id: int = -1
@@ -144,6 +155,7 @@ var tournament_battle_in_progress: bool = false
 var suppress_scene_navigation_for_tests: bool = false
 var last_requested_scene_path: String = ""
 var _touch_button_bridge_candidate: Button = null
+var _web_cancelled_pointer_release_until_msec: int = 0
 var _navigation_prewarm_requested: Dictionary = {}
 var _navigation_prewarm_resources: Dictionary = {}
 var _pending_scene_change_path: String = ""
@@ -155,6 +167,9 @@ var _battle_setup_startup_input_shield_reason: String = ""
 
 
 func _ready() -> void:
+	refresh_ui_runtime_profile()
+	_ensure_browser_lifecycle_bridge()
+	_ensure_web_ui_e2e_bridge()
 	_connect_desktop_render_resolution_cap()
 	load_non_battle_layout_preferences()
 	load_battle_setup_preferences()
@@ -173,7 +188,101 @@ func _connect_desktop_render_resolution_cap() -> void:
 
 
 func _on_root_window_size_changed() -> void:
+	refresh_ui_runtime_profile()
 	apply_desktop_render_resolution_cap()
+
+
+func refresh_ui_runtime_profile(viewport_size: Vector2 = Vector2.ZERO, user_agent: String = "") -> UiRuntimeProfile:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = _current_non_battle_layout_viewport_size()
+	ui_runtime_profile = UiRuntimeProfileResolverScript.resolve(
+		OS.get_name(),
+		_runtime_feature_flags(),
+		DisplayServer.get_name(),
+		size,
+		user_agent
+	)
+	return ui_runtime_profile
+
+
+func get_ui_runtime_profile() -> UiRuntimeProfile:
+	if ui_runtime_profile == null:
+		return refresh_ui_runtime_profile()
+	return ui_runtime_profile
+
+
+func resolve_ui_runtime_profile_for_context(
+	os_name: String,
+	feature_flags: Dictionary,
+	display_server_name: String,
+	viewport_size: Vector2 = Vector2.ZERO,
+	user_agent: String = "",
+	overrides: Dictionary = {}
+) -> UiRuntimeProfile:
+	return UiRuntimeProfileResolverScript.resolve(
+		os_name,
+		feature_flags,
+		display_server_name,
+		viewport_size,
+		user_agent,
+		overrides
+	)
+
+
+func _ensure_browser_lifecycle_bridge() -> void:
+	var profile := get_ui_runtime_profile()
+	if profile == null or not profile.is_web():
+		return
+	if browser_lifecycle_bridge == null or not is_instance_valid(browser_lifecycle_bridge):
+		browser_lifecycle_bridge = BrowserLifecycleBridgeScript.new()
+		browser_lifecycle_bridge.name = "BrowserLifecycleBridge"
+		add_child(browser_lifecycle_bridge)
+		browser_lifecycle_bridge.transient_input_cancel_requested.connect(_on_browser_transient_input_cancel_requested)
+		browser_lifecycle_bridge.viewport_change_requested.connect(_on_browser_viewport_change_requested)
+		browser_lifecycle_bridge.runtime_error_received.connect(_on_browser_runtime_error_received)
+	browser_lifecycle_bridge.install()
+
+
+func _ensure_web_ui_e2e_bridge() -> void:
+	if not OS.has_feature("web_ui_e2e") or _web_ui_e2e_bridge != null:
+		return
+	var bridge_script: Script = load("res://web/e2e/WebUiE2EBridge.gd") as Script
+	if bridge_script == null:
+		push_error("WEB_UI_E2E bridge feature is enabled but its script is unavailable")
+		return
+	_web_ui_e2e_bridge = bridge_script.new() as Node
+	if _web_ui_e2e_bridge == null:
+		push_error("WEB_UI_E2E bridge could not be instantiated")
+		return
+	_web_ui_e2e_bridge.name = "WebUiE2EBridge"
+	add_child(_web_ui_e2e_bridge)
+
+
+func _on_browser_transient_input_cancel_requested(reason: String) -> void:
+	_touch_button_bridge_candidate = null
+	_web_cancelled_pointer_release_until_msec = Time.get_ticks_msec() + 1500
+	var tree := _scene_tree_or_null()
+	var current_scene := tree.current_scene if tree != null else null
+	if current_scene != null:
+		NonBattleTouchBridgeScript.clear_transient_input_state(current_scene, reason)
+		if current_scene.has_method("_cancel_transient_platform_input"):
+			current_scene.call("_cancel_transient_platform_input", reason)
+
+
+func _on_browser_viewport_change_requested(payload: Dictionary) -> void:
+	var size := Vector2(float(payload.get("width", 0.0)), float(payload.get("height", 0.0)))
+	refresh_ui_runtime_profile(size)
+	var tree := _scene_tree_or_null()
+	var current_scene := tree.current_scene if tree != null else null
+	if current_scene != null and current_scene.has_method("_on_browser_viewport_changed"):
+		current_scene.call("_on_browser_viewport_changed", payload.duplicate(true))
+
+
+func _on_browser_runtime_error_received(error_kind: String, payload: Dictionary) -> void:
+	var detail := payload.duplicate(true)
+	detail["kind"] = error_kind
+	printerr("WEB_RUNTIME_ERROR %s" % JSON.stringify(detail))
 
 
 func _ensure_desktop_window_size() -> void:
@@ -362,7 +471,7 @@ func apply_desktop_render_resolution_cap(window_size: Vector2i = Vector2i.ZERO) 
 	if size.x <= 0 or size.y <= 0:
 		return
 	_applying_desktop_render_resolution_cap = true
-	if _should_apply_desktop_render_resolution_cap("", {}, "", size):
+	if _should_apply_desktop_render_resolution_cap("", {}, "", size, DisplayServer.window_get_mode()):
 		root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 		root.content_scale_size = _desktop_render_size_for_window_size(size)
 	else:
@@ -389,11 +498,18 @@ func _should_apply_desktop_render_resolution_cap(
 	os_name: String = "",
 	feature_flags: Dictionary = {},
 	display_server_name: String = "",
-	window_size: Vector2i = Vector2i.ZERO
+	window_size: Vector2i = Vector2i.ZERO,
+	window_mode: int = -1
 ) -> bool:
 	if _is_web_runtime(os_name, feature_flags, display_server_name):
 		return false
 	if _is_mobile_runtime_for_context(os_name, feature_flags):
+		return false
+	if window_mode in [
+		DisplayServer.WINDOW_MODE_MAXIMIZED,
+		DisplayServer.WINDOW_MODE_FULLSCREEN,
+		DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN,
+	]:
 		return false
 	if window_size.x <= 0 or window_size.y <= 0:
 		return false
@@ -582,14 +698,7 @@ func default_non_battle_layout_mode_for_first_run(
 
 
 func _runtime_feature_flags() -> Dictionary:
-	return {
-		"mobile": OS.has_feature("mobile"),
-		"android": OS.has_feature("android"),
-		"ios": OS.has_feature("ios"),
-		"web": OS.has_feature("web"),
-		"web_android": OS.has_feature("web_android"),
-		"web_ios": OS.has_feature("web_ios"),
-	}
+	return UiRuntimeProfileResolverScript.runtime_feature_flags()
 
 
 func _current_non_battle_layout_viewport_size() -> Vector2:
@@ -606,9 +715,16 @@ func _current_non_battle_layout_viewport_size() -> Vector2:
 
 
 func _input(event: InputEvent) -> void:
+	if WebUiFeatureGateScript.web_input_adapter_v2_enabled(ui_runtime_profile):
+		if _consume_cancelled_web_pointer_release(event):
+			_mark_touch_button_bridge_handled()
+			return
 	# BattleScene owns its complete pointer pipeline. The compatibility bridge is a
 	# non-battle fallback and must never bypass battle modal input isolation.
 	if _has_active_battle_scene():
+		_touch_button_bridge_candidate = null
+		return
+	if WebUiFeatureGateScript.web_input_adapter_v2_enabled(ui_runtime_profile):
 		_touch_button_bridge_candidate = null
 		return
 	if event is InputEventScreenTouch:
@@ -619,6 +735,31 @@ func _input(event: InputEvent) -> void:
 		var mouse_button := event as InputEventMouseButton
 		if _should_bridge_mouse_button_touch_echo(mouse_button):
 			_handle_touch_button_bridge_at_position(mouse_button.position, mouse_button.pressed)
+
+
+func _consume_cancelled_web_pointer_release(event: InputEvent, now_msec: int = -1) -> bool:
+	var now := now_msec if now_msec >= 0 else Time.get_ticks_msec()
+	if _web_cancelled_pointer_release_until_msec <= 0:
+		return false
+	if now > _web_cancelled_pointer_release_until_msec:
+		_web_cancelled_pointer_release_until_msec = 0
+		return false
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if mouse_button.pressed:
+			_web_cancelled_pointer_release_until_msec = 0
+			return false
+		_web_cancelled_pointer_release_until_msec = 0
+		return true
+	if event is InputEventScreenTouch:
+		if (event as InputEventScreenTouch).pressed:
+			_web_cancelled_pointer_release_until_msec = 0
+			return false
+		_web_cancelled_pointer_release_until_msec = 0
+		return true
+	return false
 
 
 func _should_bridge_mouse_button_touch_echo(mouse_button: InputEventMouseButton, os_name: String = "", feature_flags: Dictionary = {}) -> bool:
@@ -856,6 +997,13 @@ func should_await_prewarm_status_for_scene_change(status: int) -> bool:
 	return status == ResourceLoader.THREAD_LOAD_IN_PROGRESS
 
 
+func _should_continue_awaiting_prewarm(status: int, elapsed_msec: int) -> bool:
+	return (
+		should_await_prewarm_status_for_scene_change(status)
+		and elapsed_msec < NAVIGATION_PREWARM_AWAIT_TIMEOUT_MSEC
+	)
+
+
 func _request_navigation_resource_prewarm(path: String) -> void:
 	if path == "" or _navigation_prewarm_requested.has(path) or _navigation_prewarm_resources.has(path):
 		return
@@ -896,12 +1044,17 @@ func _should_await_requested_prewarm_for_path(path: String) -> bool:
 
 
 func _await_prewarmed_scene(path: String) -> PackedScene:
+	var started_msec := Time.get_ticks_msec()
 	while _navigation_prewarm_requested.has(path):
 		var status := ResourceLoader.load_threaded_get_status(path)
 		if status == ResourceLoader.THREAD_LOAD_LOADED:
 			return _take_prewarmed_scene(path)
 		if status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
 			_navigation_prewarm_requested.erase(path)
+			return null
+		if not _should_continue_awaiting_prewarm(status, Time.get_ticks_msec() - started_msec):
+			_navigation_prewarm_requested.erase(path)
+			push_warning("GameManager: prewarm timed out for %s; falling back to direct scene loading" % path)
 			return null
 		await get_tree().process_frame
 	return _take_prewarmed_scene(path)
@@ -982,6 +1135,62 @@ func consume_deck_editor_return_context() -> Dictionary:
 
 func goto_replay_browser() -> void:
 	goto_scene(SCENE_REPLAY_BROWSER)
+
+
+func goto_deck_training() -> void:
+	goto_scene(SCENE_DECK_TRAINING)
+
+
+func set_deck_training_selected_deck_key(deck_key: String) -> void:
+	var normalized := deck_key.strip_edges()
+	if normalized != "":
+		_deck_training_selected_deck_key = normalized
+
+
+func get_deck_training_selected_deck_key() -> String:
+	return _deck_training_selected_deck_key
+
+
+func start_deck_training(scenario_id: String) -> bool:
+	var normalized_id := scenario_id.strip_edges()
+	if normalized_id == "":
+		return false
+	var catalog_script := load("res://scripts/training/DeckTrainingCatalog.gd")
+	var scenario: Dictionary = catalog_script.get_scenario(normalized_id) if catalog_script != null else {}
+	if scenario.is_empty():
+		return false
+	set_deck_training_selected_deck_key(str(scenario.get("deck_key", "dragapult")))
+	var player_deck_id := int(scenario.get("player_deck_id", 0))
+	var opponent_deck_id := int(scenario.get("opponent_deck_id", 0))
+	selected_deck_ids = [player_deck_id, opponent_deck_id]
+	current_mode = GameMode.VS_AI
+	first_player_choice = 0
+	ai_difficulty = 3
+	ai_deck_strategy = "generic"
+	reset_ai_selection()
+	ai_selection["display_name"] = "%s（训练规则 AI）" % str(scenario.get("opponent_name", "18.0 对手"))
+	_battle_replay_launch = {}
+	_deck_training_launch = {
+		"scenario_id": normalized_id,
+		"player_deck_id": player_deck_id,
+		"opponent_deck_id": opponent_deck_id,
+	}
+	goto_battle()
+	return true
+
+
+func peek_deck_training_launch() -> Dictionary:
+	return _deck_training_launch.duplicate(true)
+
+
+func consume_deck_training_launch() -> Dictionary:
+	var launch := _deck_training_launch.duplicate(true)
+	_deck_training_launch = {}
+	return launch
+
+
+func clear_deck_training_launch() -> void:
+	_deck_training_launch = {}
 
 
 func goto_settings() -> void:
@@ -1152,14 +1361,53 @@ func get_battle_review_api_config() -> Dictionary:
 
 func get_llm_opponent_battle_review_api_config() -> Dictionary:
 	var canonical_path := _canonical_battle_review_api_config_path()
+	var canonical_config: Dictionary = {}
 	if canonical_path != "" and FileAccess.file_exists(canonical_path):
-		var canonical_config := _load_battle_review_api_config_from_path(canonical_path)
+		canonical_config = _load_battle_review_api_config_from_path(canonical_path)
+	return _resolve_llm_opponent_battle_review_api_config(
+		get_battle_review_api_config(),
+		canonical_config,
+		canonical_path
+	)
+
+
+func _resolve_llm_opponent_battle_review_api_config(
+	project_source: Dictionary,
+	canonical_source: Dictionary = {},
+	canonical_path: String = ""
+) -> Dictionary:
+	var project_config := _deepseek_direct_llm_opponent_config(project_source)
+	if str(project_config.get("api_key", "")).strip_edges() != "":
+		project_config["config_source_path"] = BATTLE_REVIEW_API_CONFIG_PATH
+		return project_config
+	if not canonical_source.is_empty():
+		var canonical_config := _deepseek_direct_llm_opponent_config(canonical_source)
 		if str(canonical_config.get("api_key", "")).strip_edges() != "":
 			canonical_config["config_source_path"] = canonical_path
 			return canonical_config
-	var config := get_battle_review_api_config()
-	config["config_source_path"] = BATTLE_REVIEW_API_CONFIG_PATH
-	return config
+	project_config["config_source_path"] = BATTLE_REVIEW_API_CONFIG_PATH
+	return project_config
+
+
+func _deepseek_direct_llm_opponent_config(config: Dictionary) -> Dictionary:
+	var direct := config.duplicate(true)
+	var provider := normalize_battle_review_provider(str(config.get("provider", "")))
+	var provider_configs: Dictionary = config.get("provider_configs", {}) \
+		if config.get("provider_configs", {}) is Dictionary else {}
+	var deepseek_profile: Dictionary = provider_configs.get(AI_PROVIDER_DEEPSEEK, {}) \
+		if provider_configs.get(AI_PROVIDER_DEEPSEEK, {}) is Dictionary else {}
+	var source: Dictionary = config if provider == AI_PROVIDER_DEEPSEEK else deepseek_profile
+	direct["provider"] = AI_PROVIDER_DEEPSEEK
+	direct["endpoint"] = DEEPSEEK_DEFAULT_ENDPOINT
+	direct["api_key"] = _battle_review_config_text(source.get("api_key", ""), "")
+	direct["model"] = normalize_battle_review_model_for_provider(
+		_battle_review_config_text(
+			source.get("model", DEFAULT_BATTLE_REVIEW_MODEL),
+			DEFAULT_BATTLE_REVIEW_MODEL
+		),
+		AI_PROVIDER_DEEPSEEK
+	)
+	return direct
 
 
 func _load_battle_review_api_config_from_path(path: String) -> Dictionary:

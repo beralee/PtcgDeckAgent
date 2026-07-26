@@ -1,0 +1,623 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 398,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 13,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:fez_draw_sada_boss_noctowl",
+      "choice_label": "化危为吉抽奥琳、老大与猫头夜鹰",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:evolve_noctowl",
+      "choice_label": "猫头夜鹰进化咕咕",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:jewel_prime_switch",
+      "choice_label": "寻找宝石取得顶尖捕捉器与能量转移",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:sada_lightning_backup_grass_first",
+      "choice_label": "奥琳把雷能给接棒手、草能给首攻者",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:dance_active",
+      "choice_label": "前场厄诡椪舞到2草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:dance_bench",
+      "choice_label": "备战厄诡椪舞到2草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:switch_first_grass_to_backup",
+      "choice_label": "能量转移把首攻者草能交给接棒手",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:prime_first_target",
+      "choice_label": "顶尖捕捉器换入10HP猛雷鼓并抓出第一只无道具索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:first_exact_280",
+      "choice_label": "首攻弃自身雷斗与被换下厄诡椪两草",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:n_reply",
+      "choice_label": "带坚硬束带的索罗亚克自然升场并击倒首攻者",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:boss_second_target",
+      "choice_label": "老大的指令避开坚硬束带前场并抓出另一只无道具索罗亚克",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "11:second_exact_280",
+      "choice_label": "接棒猛雷鼓弃自身雷斗草与厄诡椪一草",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 10,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "28001532ad81c1a15b463a07108b4beeb10ffb20bf63031ff3dfd8bbfaeb8c0f"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:fez_draw_sada_boss_noctowl",
+        "choice_label": "化危为吉抽奥琳、老大与猫头夜鹰",
+        "depth": 12,
+        "player_actions": 11,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:evolve_noctowl",
+              "choice_label": "猫头夜鹰进化咕咕",
+              "depth": 12,
+              "player_actions": 10,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:jewel_prime_switch",
+                    "choice_label": "寻找宝石取得顶尖捕捉器与能量转移",
+                    "depth": 12,
+                    "player_actions": 9,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:sada_lightning_backup_grass_first",
+                          "choice_label": "奥琳把雷能给接棒手、草能给首攻者",
+                          "depth": 12,
+                          "player_actions": 8,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:dance_active",
+                                "choice_label": "前场厄诡椪舞到2草",
+                                "depth": 12,
+                                "player_actions": 7,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:dance_bench",
+                                      "choice_label": "备战厄诡椪舞到2草",
+                                      "depth": 12,
+                                      "player_actions": 6,
+                                      "reason": "player_has_forcing_choice",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:switch_first_grass_to_backup",
+                                            "choice_label": "能量转移把首攻者草能交给接棒手",
+                                            "depth": 12,
+                                            "player_actions": 5,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:prime_first_target",
+                                                  "choice_label": "顶尖捕捉器换入10HP猛雷鼓并抓出第一只无道具索罗亚克",
+                                                  "depth": 12,
+                                                  "player_actions": 4,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:first_exact_280",
+                                                        "choice_label": "首攻弃自身雷斗与被换下厄诡椪两草",
+                                                        "depth": 12,
+                                                        "player_actions": 3,
+                                                        "reason": "all_defenses_hold",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:n_reply",
+                                                              "choice_label": "带坚硬束带的索罗亚克自然升场并击倒首攻者",
+                                                              "depth": 12,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:boss_second_target",
+                                                                    "choice_label": "老大的指令避开坚硬束带前场并抓出另一只无道具索罗亚克",
+                                                                    "depth": 12,
+                                                                    "player_actions": 2,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [
+                                                                        {
+                                                                          "choice_id": "11:second_exact_280",
+                                                                          "choice_label": "接棒猛雷鼓弃自身雷斗草与厄诡椪一草",
+                                                                          "depth": 12,
+                                                                          "player_actions": 1,
+                                                                          "reason": "production_witness_reached_goal",
+                                                                          "status": "PROVEN",
+                                                                          "tree": {
+                                                                            "branches": [],
+                                                                            "coverage_complete": true,
+                                                                            "depth": 12,
+                                                                            "player_actions": 0,
+                                                                            "reason": "production_witness_reached_goal",
+                                                                            "score": 4,
+                                                                            "status": "PROVEN",
+                                                                            "winning_choice_count": 0
+                                                                          }
+                                                                        }
+                                                                      ],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 12,
+                                                                      "player_actions": 1,
+                                                                      "reason": "player_has_forcing_choice",
+                                                                      "role": "player",
+                                                                      "selected_choice_id": "11:second_exact_280",
+                                                                      "selected_choice_label": "接棒猛雷鼓弃自身雷斗草与厄诡椪一草",
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 1
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 12,
+                                                                "player_actions": 2,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:boss_second_target",
+                                                                "selected_choice_label": "老大的指令避开坚硬束带前场并抓出另一只无道具索罗亚克",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 12,
+                                                          "player_actions": 2,
+                                                          "reason": "all_defenses_hold",
+                                                          "role": "opponent",
+                                                          "selected_choice_id": "09:n_reply",
+                                                          "selected_choice_label": "带坚硬束带的索罗亚克自然升场并击倒首攻者",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 12,
+                                                    "player_actions": 3,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:first_exact_280",
+                                                    "selected_choice_label": "首攻弃自身雷斗与被换下厄诡椪两草",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 12,
+                                              "player_actions": 4,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:prime_first_target",
+                                              "selected_choice_label": "顶尖捕捉器换入10HP猛雷鼓并抓出第一只无道具索罗亚克",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 12,
+                                        "player_actions": 5,
+                                        "reason": "player_has_forcing_choice",
+                                        "role": "player",
+                                        "selected_choice_id": "06:switch_first_grass_to_backup",
+                                        "selected_choice_label": "能量转移把首攻者草能交给接棒手",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 12,
+                                  "player_actions": 6,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:dance_bench",
+                                  "selected_choice_label": "备战厄诡椪舞到2草",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 12,
+                            "player_actions": 7,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:dance_active",
+                            "selected_choice_label": "前场厄诡椪舞到2草",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 12,
+                      "player_actions": 8,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:sada_lightning_backup_grass_first",
+                      "selected_choice_label": "奥琳把雷能给接棒手、草能给首攻者",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 12,
+                "player_actions": 9,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:jewel_prime_switch",
+                "selected_choice_label": "寻找宝石取得顶尖捕捉器与能量转移",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 12,
+          "player_actions": 10,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:evolve_noctowl",
+          "selected_choice_label": "猫头夜鹰进化咕咕",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 12,
+    "player_actions": 11,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:fez_draw_sada_boss_noctowl",
+    "selected_choice_label": "化危为吉抽奥琳、老大与猫头夜鹰",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:fez_draw_sada_boss_noctowl",
+      "choice_label": "化危为吉抽奥琳、老大与猫头夜鹰",
+      "depth": 12,
+      "player_actions": 11,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:evolve_noctowl",
+            "choice_label": "猫头夜鹰进化咕咕",
+            "depth": 12,
+            "player_actions": 10,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:jewel_prime_switch",
+                  "choice_label": "寻找宝石取得顶尖捕捉器与能量转移",
+                  "depth": 12,
+                  "player_actions": 9,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:sada_lightning_backup_grass_first",
+                        "choice_label": "奥琳把雷能给接棒手、草能给首攻者",
+                        "depth": 12,
+                        "player_actions": 8,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:dance_active",
+                              "choice_label": "前场厄诡椪舞到2草",
+                              "depth": 12,
+                              "player_actions": 7,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:dance_bench",
+                                    "choice_label": "备战厄诡椪舞到2草",
+                                    "depth": 12,
+                                    "player_actions": 6,
+                                    "reason": "player_has_forcing_choice",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:switch_first_grass_to_backup",
+                                          "choice_label": "能量转移把首攻者草能交给接棒手",
+                                          "depth": 12,
+                                          "player_actions": 5,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:prime_first_target",
+                                                "choice_label": "顶尖捕捉器换入10HP猛雷鼓并抓出第一只无道具索罗亚克",
+                                                "depth": 12,
+                                                "player_actions": 4,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:first_exact_280",
+                                                      "choice_label": "首攻弃自身雷斗与被换下厄诡椪两草",
+                                                      "depth": 12,
+                                                      "player_actions": 3,
+                                                      "reason": "all_defenses_hold",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:n_reply",
+                                                            "choice_label": "带坚硬束带的索罗亚克自然升场并击倒首攻者",
+                                                            "depth": 12,
+                                                            "player_actions": 2,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:boss_second_target",
+                                                                  "choice_label": "老大的指令避开坚硬束带前场并抓出另一只无道具索罗亚克",
+                                                                  "depth": 12,
+                                                                  "player_actions": 2,
+                                                                  "reason": "player_has_forcing_choice",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [
+                                                                      {
+                                                                        "choice_id": "11:second_exact_280",
+                                                                        "choice_label": "接棒猛雷鼓弃自身雷斗草与厄诡椪一草",
+                                                                        "depth": 12,
+                                                                        "player_actions": 1,
+                                                                        "reason": "production_witness_reached_goal",
+                                                                        "status": "PROVEN",
+                                                                        "tree": {
+                                                                          "branches": [],
+                                                                          "coverage_complete": true,
+                                                                          "depth": 12,
+                                                                          "player_actions": 0,
+                                                                          "reason": "production_witness_reached_goal",
+                                                                          "score": 4,
+                                                                          "status": "PROVEN",
+                                                                          "winning_choice_count": 0
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 12,
+                                                                    "player_actions": 1,
+                                                                    "reason": "player_has_forcing_choice",
+                                                                    "role": "player",
+                                                                    "selected_choice_id": "11:second_exact_280",
+                                                                    "selected_choice_label": "接棒猛雷鼓弃自身雷斗草与厄诡椪一草",
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 1
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 12,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:boss_second_target",
+                                                              "selected_choice_label": "老大的指令避开坚硬束带前场并抓出另一只无道具索罗亚克",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 12,
+                                                        "player_actions": 2,
+                                                        "reason": "all_defenses_hold",
+                                                        "role": "opponent",
+                                                        "selected_choice_id": "09:n_reply",
+                                                        "selected_choice_label": "带坚硬束带的索罗亚克自然升场并击倒首攻者",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 12,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:first_exact_280",
+                                                  "selected_choice_label": "首攻弃自身雷斗与被换下厄诡椪两草",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 12,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:prime_first_target",
+                                            "selected_choice_label": "顶尖捕捉器换入10HP猛雷鼓并抓出第一只无道具索罗亚克",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 12,
+                                      "player_actions": 5,
+                                      "reason": "player_has_forcing_choice",
+                                      "role": "player",
+                                      "selected_choice_id": "06:switch_first_grass_to_backup",
+                                      "selected_choice_label": "能量转移把首攻者草能交给接棒手",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 12,
+                                "player_actions": 6,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:dance_bench",
+                                "selected_choice_label": "备战厄诡椪舞到2草",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 12,
+                          "player_actions": 7,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:dance_active",
+                          "selected_choice_label": "前场厄诡椪舞到2草",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 12,
+                    "player_actions": 8,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:sada_lightning_backup_grass_first",
+                    "selected_choice_label": "奥琳把雷能给接棒手、草能给首攻者",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 12,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:jewel_prime_switch",
+              "selected_choice_label": "寻找宝石取得顶尖捕捉器与能量转移",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 12,
+        "player_actions": 10,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:evolve_noctowl",
+        "selected_choice_label": "猫头夜鹰进化咕咕",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "28001532ad81c1a15b463a07108b4beeb10ffb20bf63031ff3dfd8bbfaeb8c0f",
+  "scenario_id": "raging_bolt_09",
+  "shortest_player_actions": 11,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

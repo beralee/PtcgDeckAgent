@@ -1,0 +1,5860 @@
+{
+  "format_version": 1,
+  "scenario_revision": 3,
+  "scenarios": [
+    {
+      "id": "n_zoroark_02",
+      "deck_key": "n_zoroark",
+      "order": 2,
+      "revision": 3,
+      "title": "工具箱不是四选一：120之后必须换成90+90",
+      "focus": "第一回合根据对手弃牌区4张基本能量复制复燃120；第二回合不能继续对健康主攻手使用复燃，而要捕捉两个一奖基础宝可梦，改复制焚身加农炮完成90+90。特殊能量逆转能量不计入复燃。",
+      "objective": "两回合分别选择复燃与焚身加农炮，累计取得4奖。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "N的索罗亚克",
+      "turn_number": 11,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_144",
+            "CSV10C_145"
+          ],
+          "energy": [
+            "CSVE1C_DAR",
+            "CSVE1C_DAR"
+          ],
+          "damage": 260
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV7C_191",
+          "CSV10C_215",
+          "CSVE1C_DAR",
+          "CSV8C_176",
+          "CSV6C_114",
+          "CSV8C_183"
+        ]
+      },
+      "opponent": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV8C_172"
+          ],
+          "damage": 140
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 100
+          },
+          {
+            "stack": [
+              "CSV10C_144"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_114"
+        ],
+        "discard": [
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSV2C_128"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV2C_127",
+          "CSV10C_215",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "数清弃牌区4张基本恶能与1张特殊逆转能量",
+        "复制复燃120精确击倒月月熊",
+        "接受对手力量愤怒反杀",
+        "化危为吉取得暗码迷与城堡",
+        "暗码迷先于交易",
+        "确认第二索罗亚克自动晋升并可使用交易",
+        "反击捕捉器抓索罗亚",
+        "改选焚身加农炮",
+        "前场90击倒索罗亚",
+        "后场90击倒火红不倒翁"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "第一回合复制哪招",
+            "failure": "90无法击倒120HP月月熊"
+          },
+          {
+            "choice": "第二回合是否重复复燃",
+            "failure": "120不能击倒健康双奖主攻手"
+          },
+          {
+            "choice": "捕捉与备战伤害目标",
+            "failure": "必须同时命中70与80HP两个一奖目标"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "第一回合根据对手弃牌区4张基本能量复制复燃120；第二回合不能继续对健康主攻手使用复燃，而要捕捉两个一奖基础宝可梦，改复制焚身加农炮完成90+90。特殊能量逆转能量不计入复燃。"
+      },
+      "design_contract": {
+        "learning_axis": "night_joker_toolbox",
+        "combo_id": "reignite_then_immolating_mode_switch",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "复燃按4张基本能量造成120",
+            "接受首攻者被反杀并让第二索罗亚克自动晋升",
+            "化危为吉后暗码迷置顶",
+            "战斗场交易兑现捕捉器",
+            "捕捉两只一奖目标",
+            "焚身加农炮90+90"
+          ],
+          "payoff": "两回合分别选择复燃与焚身加农炮，累计取得4奖。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "冻结第二回合牌顶",
+          "CSV6C_114": "抓出70HP前场目标"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "second-turn natural draw",
+            "acquisition_kind": "natural_draw",
+            "reveals": [
+              "CSV1C_111"
+            ],
+            "must_precede": "Fezandipiti",
+            "reason": "移走牌顶杂牌"
+          },
+          {
+            "order": 2,
+            "source": "Fezandipiti ex draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV10C_215",
+              "CSVE1C_DAR"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得控制器与城堡"
+          },
+          {
+            "order": 3,
+            "source": "Ciphermaniac then Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV6C_114",
+              "CSV8C_183"
+            ],
+            "must_precede": "Immolating Cannon",
+            "reason": "取得隐藏捕捉器"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "化危为吉先清牌顶",
+          "sequence": [
+            "化危为吉先清牌顶",
+            "暗码迷置顶捕捉器",
+            "自动晋升的索罗亚克交易抽取",
+            "捕捉双目标",
+            "焚身加农炮双杀"
+          ],
+          "draw_trace": [
+            "CSV1C_111",
+            "CSV7C_191",
+            "CSV10C_215",
+            "CSVE1C_DAR",
+            "CSV6C_114",
+            "CSV8C_183"
+          ],
+          "hidden_reveal": [
+            "CSV6C_114"
+          ],
+          "order_sensitive_pair": [
+            "暗码迷",
+            "交易"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "repeat_reignite",
+            "opening": "第二回合继续复制复燃",
+            "looks_good_because": "复燃首回合刚取得2奖",
+            "gained_information": "120 damage",
+            "draw_trace": [
+              "120 damage"
+            ],
+            "consumed_resource": "第二次攻击",
+            "fails_because": "健康索罗亚克剩280HP，120只打到160HP",
+            "failed_equation": "2+0=2，目标4",
+            "negative_probe_id": "n_zoroark_02_repeat_reignite"
+          },
+          {
+            "id": "count_reversal_as_basic",
+            "opening": "把逆转能量也算作基本能量",
+            "looks_good_because": "弃牌区视觉上有5张能量",
+            "gained_information": "CSVE1C_DAR、CSV2C_128",
+            "draw_trace": [
+              "CSVE1C_DAR",
+              "CSV2C_128"
+            ],
+            "consumed_resource": "正确伤害档",
+            "fails_because": "复燃只检查Basic Energy，实际120而不是150",
+            "failed_equation": "150预期-120实际=30误差",
+            "negative_probe_id": "n_zoroark_02_count_reversal_as_basic"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "260伤首攻索罗亚克负责复燃120并确保被20伤反击击倒",
+          "opponent.active": "剩120HP月月熊验证复燃计数",
+          "player.bench.0": "莱希拉姆保留为另一种复制选项",
+          "player.bench.1": "双恶第二索罗亚克自动晋升并负责90+90",
+          "player.bench.2": "达摩狒狒提供两种题眼招式",
+          "player.bench.3": "吉雉鸡提供第二信息节点",
+          "player.bench.4": "愿增猿是错误能量归属诱饵",
+          "opponent.bench.0": "100伤索罗亚克反杀首攻者",
+          "opponent.bench.1": "70HP索罗亚是第二回合前场目标",
+          "opponent.bench.2": "80HP火红不倒翁是后场目标",
+          "opponent.bench.3": "吉雉鸡是错误双奖目标",
+          "opponent.bench.4": "莱希拉姆保证AI反击招式"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 140,
+            "planned_counter_damage": 0,
+            "remaining_hp": 120,
+            "final_damage": 120,
+            "payment": "4 Basic Energy x 30",
+            "overkill": 0
+          },
+          {
+            "target": "second N's Zorua",
+            "printed_hp": 70,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 70,
+            "final_damage": 90,
+            "payment": "Immolating Cannon active",
+            "overkill": 20
+          },
+          {
+            "target": "second N's Darumaka",
+            "printed_hp": 80,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 80,
+            "final_damage": 90,
+            "payment": "Immolating Cannon bench",
+            "overkill": 10
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "first Night Joker",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "second Night Joker then Immolating discard",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 2,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 0
+          }
+        ],
+        "luck_contract": {
+          "kind": "reignite_then_immolating_mode_switch_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV1C_111",
+            "CSV7C_191",
+            "CSV10C_215",
+            "CSVE1C_DAR",
+            "CSV6C_114",
+            "CSV8C_183"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "复燃按4张基本能量造成120",
+            "接受首攻者被反杀并让第二索罗亚克自动晋升",
+            "化危为吉后暗码迷置顶",
+            "战斗场交易兑现捕捉器",
+            "捕捉两只一奖目标",
+            "焚身加农炮90+90"
+          ],
+          "finisher": "在第3信息节点取得抓出70HP前场目标，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSV6C_114",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合分别选择复燃与焚身加农炮，累计取得4奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 6,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "reignite_120",
+          "kind": "attack",
+          "label": "按4张基本能量计算复燃120，击倒剩120HP月月熊",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "复燃",
+                    "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                    "cost": "CC",
+                    "damage": "30×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 2
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ns_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "对手索罗亚克复制力量愤怒反杀首攻者",
+          "require_attack": true
+        },
+        {
+          "id": "fez_draw",
+          "kind": "use_ability",
+          "label": "化危为吉取得暗码迷、城堡与杂牌",
+          "source": {
+            "zone": "bench",
+            "index": 2
+          },
+          "targets": []
+        },
+        {
+          "id": "cipher_counter",
+          "kind": "play_trainer",
+          "label": "暗码迷把反击捕捉器与担架置顶",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV8C_183",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trade_counter",
+          "kind": "use_ability",
+          "label": "自动晋升的第二索罗亚克交易抽到捕捉器与担架",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "counter_zorua",
+          "kind": "play_trainer",
+          "label": "捕捉70HP索罗亚作为前场90目标",
+          "card_uid": "CSV6C_114",
+          "targets": [
+            {
+              "opponent_bench_target": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 70
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "split_finish",
+          "kind": "attack",
+          "label": "焚身加农炮90+90带走索罗亚与火红不倒翁",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 1,
+                  "attack": {
+                    "name": "焚身加农炮",
+                    "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                    "cost": "RRC",
+                    "damage": "90",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "opponent_bench_damage_targets": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 80
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_03",
+      "deck_key": "n_zoroark",
+      "order": 3,
+      "revision": 3,
+      "title": "恶能在错误的人身上：皮宝宝留下的下一张",
+      "focus": "索罗亚克已有1恶能，第二恶能却附在愿增猿上。第一回合必须用交易取得暗码迷，再让皮宝宝只抽到置顶第一张N的城堡，把第二张能量转移保留成下回合自然抽；皮宝宝倒下后索罗亚克自动晋升，随后必须把愿增猿的恶能移动到战斗场索罗亚克才能复制复燃90。",
+      "objective": "两回合完成牌顶跨回合保留、能量所有者修正与2奖精确击倒。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018506,
+      "opponent_name": "自爆多龙",
+      "turn_number": 12,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV4C_044"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ],
+            "energy": [
+              "CSVE1C_DAR"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV1C_111",
+          "CSV8C_176",
+          "CSV10C_215",
+          "CSVH1aC_008"
+        ]
+      },
+      "opponent": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 230
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          },
+          {
+            "stack": [
+              "CSV9.5C_004"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "CSV6C_114",
+          "CSV4C_117",
+          "CSV7C_177",
+          "CSV7C_177"
+        ],
+        "discard": [
+          "CSVE1C_PSY",
+          "CSVE1C_PSY",
+          "CSVE1C_FIR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "CSV6C_114",
+          "CSV1C_113"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 2
+      },
+      "validation_operations": [
+        "交易弃索罗亚",
+        "抽到暗码迷",
+        "城堡在能量转移之前置顶",
+        "皮宝宝只抽1张",
+        "多龙击倒皮宝宝",
+        "索罗亚克自动晋升",
+        "自然抽能量转移",
+        "从愿增猿移动基本恶能到战斗场",
+        "复燃只数3张基本能量"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "皮宝宝前保留几张手牌",
+            "failure": "少于6会把能量转移提前抽走并破坏跨回合冻结"
+          },
+          {
+            "choice": "移动哪张能量",
+            "failure": "愿增猿的恶能必须去索罗亚克而非莱希拉姆"
+          },
+          {
+            "choice": "能量转移的目标区域",
+            "failure": "自动晋升后必须选择战斗场索罗亚克，不能仍按旧备战索引"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "索罗亚克已有1恶能，第二恶能却附在愿增猿上。第一回合必须用交易取得暗码迷，再让皮宝宝只抽到置顶第一张N的城堡，把第二张能量转移保留成下回合自然抽；皮宝宝倒下后索罗亚克自动晋升，随后必须把愿增猿的恶能移动到战斗场索罗亚克才能复制复燃90。"
+      },
+      "design_contract": {
+        "learning_axis": "dark_energy_owner",
+        "combo_id": "cleffa_one_draw_preserves_energy_switch",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "交易取得暗码迷",
+            "暗码迷依次置顶城堡与能量转移",
+            "控制手牌为6让皮宝宝只抽1",
+            "接受皮宝宝倒下并让索罗亚克晋升",
+            "自然抽能量转移",
+            "移动愿增猿恶能到战斗场",
+            "复燃90"
+          ],
+          "payoff": "两回合完成牌顶跨回合保留、能量所有者修正与2奖精确击倒。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV10C_215",
+          "CSVH1aC_008"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "控制跨回合两张牌顶",
+          "CSV10C_215": "控制皮宝宝只抽一张并留下第二张",
+          "CSVH1aC_008": "把错误所有者的恶能移动到索罗亚克"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "N's Zoroark ex Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV1C_111"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得牌顶控制器"
+          },
+          {
+            "order": 2,
+            "source": "Cleffa Grasping Draw to 7",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV10C_215"
+            ],
+            "must_precede": "opponent turn",
+            "reason": "只抽第一张并保留第二张"
+          },
+          {
+            "order": 3,
+            "source": "second-turn natural draw",
+            "acquisition_kind": "natural_draw",
+            "reveals": [
+              "CSVH1aC_008"
+            ],
+            "must_precede": "Night Joker",
+            "reason": "取得隐藏的能量所有权修正牌"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "把手牌精确控制为6",
+          "sequence": [
+            "把手牌精确控制为6",
+            "皮宝宝只抽城堡",
+            "自然抽能量转移",
+            "索罗亚克晋升后移动恶能",
+            "复燃攻击"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSVH1aC_008"
+          ],
+          "hidden_reveal": [
+            "CSVH1aC_008"
+          ],
+          "order_sensitive_pair": [
+            "皮宝宝抱抱抽牌",
+            "下回合自然抽"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "draw_too_many_with_cleffa",
+            "opening": "先打掉一张额外手牌再用皮宝宝",
+            "looks_good_because": "手牌越少看似抽得越赚",
+            "gained_information": "CSV10C_215、CSVH1aC_008、random-third",
+            "draw_trace": [
+              "CSV10C_215",
+              "CSVH1aC_008",
+              "random-third"
+            ],
+            "consumed_resource": "跨回合自然抽",
+            "fails_because": "能量转移提前进手，下一回合自然抽不再冻结且奇树诱导线可打乱",
+            "failed_equation": "冻结节点2张变成未知牌",
+            "negative_probe_id": "n_zoroark_03_draw_too_many_with_cleffa"
+          },
+          {
+            "id": "leave_dark_on_munk",
+            "opening": "不使用能量转移直接撤退",
+            "looks_good_because": "索罗亚克与愿增猿合计已有2恶能",
+            "gained_information": "CSVE1C_DAR、CSVE1C_DAR",
+            "draw_trace": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "consumed_resource": "能量所有权",
+            "fails_because": "攻击费用只检查攻击者自身附着，索罗亚克仍只有1恶能",
+            "failed_equation": "1D<暗夜小丑2D",
+            "negative_probe_id": "n_zoroark_03_leave_dark_on_munk"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "皮宝宝控制抽牌数量并承接一奖",
+          "opponent.active": "剩90HP多龙既是AI攻击手也是终结目标",
+          "player.bench.0": "莱希拉姆保留为备用复制源",
+          "player.bench.1": "一恶索罗亚克在皮宝宝倒下后自动晋升",
+          "player.bench.2": "愿增猿持有错位恶能",
+          "player.bench.3": "达摩狒狒提供复燃",
+          "player.bench.4": "吉雉鸡是大抽诱饵",
+          "opponent.bench.0": "多龙梅西亚吸收铺伤",
+          "opponent.bench.1": "多龙奇是错误复燃目标",
+          "opponent.bench.2": "吉雉鸡是捕捉诱饵",
+          "opponent.bench.3": "愿增猿无恶能不能搬伤",
+          "opponent.bench.4": "含羞苞制造物品封锁压力"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "damaged Dragapult ex",
+            "printed_hp": 320,
+            "hp_modifiers": 0,
+            "existing_damage": 230,
+            "planned_counter_damage": 0,
+            "remaining_hp": 90,
+            "final_damage": 90,
+            "payment": "3 opponent Basic Energy x 30",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "after Energy Switch",
+            "starting_attached": 1,
+            "acquired": 1,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "cleffa_one_draw_preserves_energy_switch_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSVH1aC_008"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "交易取得暗码迷",
+            "暗码迷依次置顶城堡与能量转移",
+            "控制手牌为6让皮宝宝只抽1",
+            "接受皮宝宝倒下并让索罗亚克晋升",
+            "自然抽能量转移",
+            "移动愿增猿恶能到战斗场",
+            "复燃90"
+          ],
+          "finisher": "在第3信息节点取得把错误所有者的恶能移动到索罗亚克，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSVH1aC_008",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合完成牌顶跨回合保留、能量所有者修正与2奖精确击倒。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 5,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "trade_cipher",
+          "kind": "use_ability",
+          "label": "备战索罗亚克交易取得暗码迷",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cipher_castle_switch",
+          "kind": "play_trainer",
+          "label": "暗码迷把城堡与能量转移置顶",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_215",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSVH1aC_008",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cleffa_draw",
+          "kind": "attack",
+          "label": "皮宝宝抽到城堡并把能量转移留给下回合自然抽",
+          "attack_index": 0,
+          "targets": []
+        },
+        {
+          "id": "dragapult_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "剩90HP多龙击倒皮宝宝",
+          "require_attack": true
+        },
+        {
+          "id": "move_dark",
+          "kind": "play_trainer",
+          "label": "把愿增猿的恶能移动给自动晋升的索罗亚克",
+          "card_uid": "CSVH1aC_008",
+          "targets": [
+            {
+              "energy_assignment": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "bench_energy",
+                      "index": 1,
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reignite_finish",
+          "kind": "attack",
+          "label": "复燃按对手3张基本能量造成90精确终结",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "复燃",
+                    "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                    "cost": "CC",
+                    "damage": "30×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 2
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_04",
+      "deck_key": "n_zoroark",
+      "order": 4,
+      "revision": 3,
+      "title": "复制源必须在备战区：先把莱希拉姆送回去",
+      "focus": "N的莱希拉姆在战斗场时不能被暗夜小丑复制。必须通过两只索罗亚克的交易链取得N的城堡，零撤退后让莱希拉姆回到备战区；90伤索罗亚克先打180，含羞苞再补10伤，使第二次力量愤怒变成200。",
+      "objective": "保留同一张莱希拉姆作为公开复制源，两回合取得4奖。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018506,
+      "opponent_name": "自爆多龙",
+      "turn_number": 13,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_166"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 90
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV1C_111",
+          "CSV8C_176",
+          "CSV10C_215",
+          "CSV10C_190"
+        ],
+        "prizes": [
+          "CSVH1aC_023"
+        ]
+      },
+      "opponent": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV8C_172"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV9.5C_004"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "damage": 10
+          },
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158",
+              "CSV8C_159"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_157"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "CSV6C_114",
+          "CSV4C_117",
+          "CSV7C_177",
+          "CSV7C_177"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "CSV6C_114",
+          "CSV7C_177"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "第一只交易取得暗码迷",
+        "第二只交易留到暗码之后",
+        "放下N的城堡",
+        "莱希拉姆零撤退",
+        "确认莱希拉姆回到备战区",
+        "力量愤怒180",
+        "从奖赏卡取得老大",
+        "含羞苞造成10伤",
+        "老大抓吉雉鸡",
+        "力量愤怒200"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "如何清空莱希拉姆前场",
+            "failure": "弗图博士会删除唯一复制源"
+          },
+          {
+            "choice": "两只交易的使用顺序",
+            "failure": "第二只必须留在暗码迷之后"
+          },
+          {
+            "choice": "第二回合老大目标",
+            "failure": "健康多龙320无法被200击倒"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "N的莱希拉姆在战斗场时不能被暗夜小丑复制。必须通过两只索罗亚克的交易链取得N的城堡，零撤退后让莱希拉姆回到备战区；90伤索罗亚克先打180，含羞苞再补10伤，使第二次力量愤怒变成200。"
+      },
+      "design_contract": {
+        "learning_axis": "bench_identity_preservation",
+        "combo_id": "castle_returns_reshiram_copy_identity",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "第一交易取得暗码迷",
+            "暗码迷置顶城堡",
+            "第二交易兑现",
+            "城堡零撤退把莱希拉姆送回备战",
+            "力量愤怒180",
+            "奖赏区取得老大",
+            "含羞苞补10伤",
+            "力量愤怒200"
+          ],
+          "payoff": "保留同一张莱希拉姆作为公开复制源，两回合取得4奖。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV10C_215",
+          "CSVH1aC_023"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "建立双交易牌顶链",
+          "CSV10C_215": "把莱希拉姆从前场送回备战",
+          "CSVH1aC_023": "首杀后从奖赏卡取得的最终抓杀牌"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "first N's Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV1C_111"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得控制器"
+          },
+          {
+            "order": 2,
+            "source": "second N's Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "retreat",
+            "reason": "兑现城堡"
+          },
+          {
+            "order": 3,
+            "source": "first knockout Prize pickup",
+            "acquisition_kind": "prize_pickup",
+            "reveals": [
+              "CSVH1aC_023",
+              "implicit-second-prize"
+            ],
+            "must_precede": "second attack",
+            "reason": "取得隐藏老大"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "两只交易分工",
+          "sequence": [
+            "两只交易分工",
+            "城堡零撤退",
+            "保留莱希拉姆身份",
+            "首杀取老大",
+            "第二次力量愤怒"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSVH1aC_023",
+            "implicit-second-prize"
+          ],
+          "hidden_reveal": [
+            "CSVH1aC_023"
+          ],
+          "order_sensitive_pair": [
+            "N的城堡",
+            "莱希拉姆撤退"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "turo_reshiram",
+            "opening": "用弗图博士回收前场莱希拉姆",
+            "looks_good_because": "既能清前场又能保存宝可梦",
+            "gained_information": "CSV10C_166",
+            "draw_trace": [
+              "CSV10C_166"
+            ],
+            "consumed_resource": "唯一复制源",
+            "fails_because": "莱希拉姆进入手牌后暗夜小丑没有力量愤怒可选",
+            "failed_equation": "复制源数量1-1=0",
+            "negative_probe_id": "n_zoroark_04_turo_reshiram"
+          },
+          {
+            "id": "attack_before_source_benched",
+            "opening": "不撤退就尝试暗夜小丑",
+            "looks_good_because": "索罗亚克已带双恶",
+            "gained_information": "CSV10C_145、CSV10C_166",
+            "draw_trace": [
+              "CSV10C_145",
+              "CSV10C_166"
+            ],
+            "consumed_resource": "备战身份",
+            "fails_because": "莱希拉姆仍在战斗场，不满足备战区来源条件",
+            "failed_equation": "合法力量愤怒选项=0",
+            "negative_probe_id": "n_zoroark_04_attack_before_source_benched"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "前场莱希拉姆必须回到备战区",
+          "opponent.active": "剩180HP月月熊是首个双奖",
+          "player.bench.0": "90伤双恶索罗亚克是连续攻击手",
+          "player.bench.1": "第二索罗亚克负责暗码后的抽取",
+          "player.bench.2": "达摩狒狒提供错误招式选项",
+          "player.bench.3": "吉雉鸡是无效大抽诱饵",
+          "player.bench.4": "愿增猿提示不要移动90伤",
+          "opponent.bench.0": "含羞苞在AI回合增加10伤",
+          "opponent.bench.1": "剩200HP吉雉鸡是第二双奖",
+          "opponent.bench.2": "带能多龙是错误老大目标",
+          "opponent.bench.3": "多龙梅西亚是一奖诱饵",
+          "opponent.bench.4": "无恶愿增猿不能改变伤害线"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 80,
+            "planned_counter_damage": 0,
+            "remaining_hp": 180,
+            "final_damage": 180,
+            "payment": "9 damage counters x 20",
+            "overkill": 0
+          },
+          {
+            "target": "second Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 10,
+            "planned_counter_damage": 0,
+            "remaining_hp": 200,
+            "final_damage": 200,
+            "payment": "10 damage counters x 20",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "both Night Joker attacks",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "castle_returns_reshiram_copy_identity_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSVH1aC_023",
+            "implicit-second-prize"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "第一交易取得暗码迷",
+            "暗码迷置顶城堡",
+            "第二交易兑现",
+            "城堡零撤退把莱希拉姆送回备战",
+            "力量愤怒180",
+            "奖赏区取得老大",
+            "含羞苞补10伤",
+            "力量愤怒200"
+          ],
+          "finisher": "在第3信息节点取得首杀后从奖赏卡取得的最终抓杀牌，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSVH1aC_023",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "保留同一张莱希拉姆作为公开复制源，两回合取得4奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 8,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "trade_cipher",
+          "kind": "use_ability",
+          "label": "第一只索罗亚克交易取得暗码迷",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cipher_castle",
+          "kind": "play_trainer",
+          "label": "暗码迷置顶N的城堡与PP提升剂",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_215",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_190",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "second_trade",
+          "kind": "use_ability",
+          "label": "第二只索罗亚克交易抽到城堡与PP提升剂",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV2C_127",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "castle",
+          "kind": "play_stadium",
+          "label": "放下N的城堡",
+          "card_uid": "CSV10C_215",
+          "targets": []
+        },
+        {
+          "id": "retreat_reshiram",
+          "kind": "retreat",
+          "label": "让莱希拉姆回到备战区，换入90伤索罗亚克",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": []
+        },
+        {
+          "id": "first_rage",
+          "kind": "attack",
+          "label": "复制力量愤怒180击倒月月熊",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "budew_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "含羞苞花粉10把索罗亚克推到100伤",
+          "require_attack": true
+        },
+        {
+          "id": "boss_fez",
+          "kind": "play_trainer",
+          "label": "使用奖赏卡中的老大抓剩200HP吉雉鸡",
+          "card_uid": "CSVH1aC_023",
+          "targets": [
+            {
+              "opponent_bench_target": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 200
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "second_rage",
+          "kind": "attack",
+          "label": "复制力量愤怒200终结吉雉鸡",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_05",
+      "deck_key": "n_zoroark",
+      "order": 5,
+      "revision": 3,
+      "title": "第一只倒下后：担架重建、双PP再点火",
+      "focus": "首攻索罗亚克用焚身加农炮双杀并弃双恶，随后被反杀。第二回合不能只找能量，必须先用夜间担架回收索罗亚克ex、进化60伤索罗亚，再让新出现的交易兑现暗码迷置顶的第二张PP提升剂与反击捕捉器。",
+      "objective": "从弃牌区重建第二条索罗亚克线并在两回合取得4奖。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "N的索罗亚克",
+      "turn_number": 14,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [
+        "n_castle_pp_booster_handoff"
+      ],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_144",
+            "CSV10C_145"
+          ],
+          "energy": [
+            "CSVE1C_DAR",
+            "CSVE1C_DAR"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV1C_111",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [
+          "CSV10C_145"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV8C_183",
+          "CSV10C_190",
+          "CSV10C_215",
+          "CSVE1C_DAR",
+          "CSV10C_190",
+          "CSV6C_114"
+        ]
+      },
+      "opponent": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV10C_144"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_040"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 100
+          },
+          {
+            "stack": [
+              "CSV8C_172"
+            ],
+            "damage": 140
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_114"
+        ],
+        "discard": [
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV2C_127",
+          "CSV10C_215",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "焚身加农炮90+90",
+        "双恶进入弃牌区",
+        "首攻者被反杀",
+        "化危为吉三张",
+        "暗码迷置顶",
+        "担架选索罗亚克而非恶能",
+        "进化60伤索罗亚",
+        "新交易抽2",
+        "两次PP分别附能",
+        "城堡撤退",
+        "反击捕捉器",
+        "力量愤怒120"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "担架回收宝可梦还是能量",
+            "failure": "必须回收唯一进化件"
+          },
+          {
+            "choice": "何时使用新索罗亚克交易",
+            "failure": "必须在暗码迷置顶后"
+          },
+          {
+            "choice": "PP提升剂附给谁",
+            "failure": "两张都必须给新索罗亚克"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "首攻索罗亚克用焚身加农炮双杀并弃双恶，随后被反杀。第二回合不能只找能量，必须先用夜间担架回收索罗亚克ex、进化60伤索罗亚，再让新出现的交易兑现暗码迷置顶的第二张PP提升剂与反击捕捉器。"
+      },
+      "design_contract": {
+        "learning_axis": "zoroark_rebuild",
+        "combo_id": "night_stretcher_evolve_double_pp_rebuild",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "焚身加农炮双杀并弃双恶",
+            "首攻者被反杀",
+            "化危为吉取得担架/PP/城堡",
+            "暗码迷置顶第二PP与捕捉器",
+            "担架回收索罗亚克ex",
+            "进化60伤索罗亚",
+            "新交易兑现",
+            "双PP回能",
+            "城堡交接",
+            "力量愤怒120"
+          ],
+          "payoff": "从弃牌区重建第二条索罗亚克线并在两回合取得4奖。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV8C_183",
+          "CSV10C_190",
+          "CSV10C_215",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "冻结重建末端两张牌",
+          "CSV8C_183": "从弃牌区取回索罗亚克ex",
+          "CSV10C_190": "两张副本重装双恶",
+          "CSV10C_215": "莱希拉姆零撤退",
+          "CSV6C_114": "抓出120HP双奖目标"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "second-turn natural draw",
+            "acquisition_kind": "natural_draw",
+            "reveals": [
+              "CSV7C_191"
+            ],
+            "must_precede": "Fezandipiti",
+            "reason": "先取得暗码迷"
+          },
+          {
+            "order": 2,
+            "source": "Fezandipiti ex draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV8C_183",
+              "CSV10C_190",
+              "CSV10C_215"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得重建前半段"
+          },
+          {
+            "order": 3,
+            "source": "new Zoroark Trade after Ciphermaniac",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV10C_190",
+              "CSV6C_114"
+            ],
+            "must_precede": "double PP Up",
+            "reason": "取得重建后半段与终结捕捉器"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "担架回收进化件",
+          "sequence": [
+            "担架回收进化件",
+            "进化后才获得新的交易",
+            "交易抽第二PP与捕捉器",
+            "双PP回能",
+            "城堡交接",
+            "力量愤怒终结"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV8C_183",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV6C_114"
+          ],
+          "hidden_reveal": [
+            "CSV6C_114"
+          ],
+          "order_sensitive_pair": [
+            "夜间担架进化",
+            "新索罗亚克交易"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "recover_dark_instead",
+            "opening": "夜间担架回收基本恶能",
+            "looks_good_because": "能量是眼前最明显的缺口",
+            "gained_information": "CSVE1C_DAR",
+            "draw_trace": [
+              "CSVE1C_DAR"
+            ],
+            "consumed_resource": "唯一索罗亚克进化件",
+            "fails_because": "索罗亚仍不能进化，PP提升剂也没有合法第二攻击手",
+            "failed_equation": "攻击手数量0",
+            "negative_probe_id": "n_zoroark_05_recover_dark_instead"
+          },
+          {
+            "id": "pp_before_evolve",
+            "opening": "先使用PP提升剂",
+            "looks_good_because": "弃牌区已有双恶",
+            "gained_information": "CSV10C_190、CSVE1C_DAR",
+            "draw_trace": [
+              "CSV10C_190",
+              "CSVE1C_DAR"
+            ],
+            "consumed_resource": "备战N进化目标",
+            "fails_because": "索罗亚可收能但还没有暗夜小丑与交易，后续抽不到第二PP和捕捉器",
+            "failed_equation": "有效交易节点0",
+            "negative_probe_id": "n_zoroark_05_pp_before_evolve"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "双恶首攻者负责90+90并把恶能送弃牌区",
+          "opponent.active": "70HP索罗亚是首个一奖",
+          "player.bench.0": "莱希拉姆承接昏厥和提供力量愤怒",
+          "player.bench.1": "60伤索罗亚是待重建核心",
+          "player.bench.2": "达摩狒狒提供首攻",
+          "player.bench.3": "吉雉鸡抽取担架与PP",
+          "player.bench.4": "愿增猿是回收错误目标诱饵",
+          "opponent.bench.0": "80HP火红不倒翁是后场一奖",
+          "opponent.bench.1": "100伤索罗亚克反杀首攻者",
+          "opponent.bench.2": "剩120HP月月熊是终结双奖",
+          "opponent.bench.3": "莱希拉姆支撑AI反击",
+          "opponent.bench.4": "吉雉鸡是错误捕捉目标"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first N's Zorua",
+            "printed_hp": 70,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 70,
+            "final_damage": 90,
+            "payment": "Immolating Cannon active",
+            "overkill": 20
+          },
+          {
+            "target": "first N's Darumaka",
+            "printed_hp": 80,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 80,
+            "final_damage": 90,
+            "payment": "Immolating Cannon bench",
+            "overkill": 10
+          },
+          {
+            "target": "second Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 140,
+            "planned_counter_damage": 0,
+            "remaining_hp": 120,
+            "final_damage": 120,
+            "payment": "6 damage counters x 20",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "first Immolating Cannon",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 2,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 0
+          },
+          {
+            "checkpoint": "rebuilt Night Joker",
+            "starting_attached": 0,
+            "acquired": 2,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "night_stretcher_evolve_double_pp_rebuild_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV8C_183",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV6C_114"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "焚身加农炮双杀并弃双恶",
+            "首攻者被反杀",
+            "化危为吉取得担架/PP/城堡",
+            "暗码迷置顶第二PP与捕捉器",
+            "担架回收索罗亚克ex",
+            "进化60伤索罗亚",
+            "新交易兑现",
+            "双PP回能",
+            "城堡交接",
+            "力量愤怒120"
+          ],
+          "finisher": "在第3信息节点取得抓出120HP双奖目标，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSV6C_114",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "从弃牌区重建第二条索罗亚克线并在两回合取得4奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 12,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "first_split",
+          "kind": "attack",
+          "label": "焚身加农炮90+90取得两个一奖",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 1,
+                  "attack": {
+                    "name": "焚身加农炮",
+                    "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                    "cost": "RRC",
+                    "damage": "90",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 2
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "opponent_bench_damage_targets": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench",
+                    "index": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ns_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "对手索罗亚克反杀首攻者",
+          "require_attack": true
+        },
+        {
+          "id": "fez_draw",
+          "kind": "use_ability",
+          "label": "化危为吉取得担架、PP提升剂与城堡",
+          "source": {
+            "zone": "bench",
+            "index": 2
+          },
+          "targets": []
+        },
+        {
+          "id": "cipher_stack",
+          "kind": "play_trainer",
+          "label": "暗码迷置顶第二张PP提升剂与捕捉器",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_190",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "recover_zoroark",
+          "kind": "play_trainer",
+          "label": "夜间担架回收弃牌区索罗亚克ex",
+          "card_uid": "CSV8C_183",
+          "targets": [
+            {
+              "night_stretcher_choice": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "discard",
+                    "uid": "CSV10C_145",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "evolve_backup",
+          "kind": "evolve",
+          "label": "把60伤索罗亚进化为第二索罗亚克",
+          "card_uid": "CSV10C_145",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          }
+        },
+        {
+          "id": "trade_stack",
+          "kind": "use_ability",
+          "label": "新索罗亚克交易抽到第二PP与捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pp_one",
+          "kind": "play_trainer",
+          "label": "第一PP回收一恶",
+          "card_uid": "CSV10C_190",
+          "targets": [
+            {
+              "ns_pp_up_assignment": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pp_two",
+          "kind": "play_trainer",
+          "label": "第二PP回收另一恶",
+          "card_uid": "CSV10C_190",
+          "targets": [
+            {
+              "ns_pp_up_assignment": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "castle",
+          "kind": "play_stadium",
+          "label": "N的城堡让莱希拉姆零撤退",
+          "card_uid": "CSV10C_215",
+          "targets": []
+        },
+        {
+          "id": "retreat",
+          "kind": "retreat",
+          "label": "换入重建完成的索罗亚克",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": []
+        },
+        {
+          "id": "counter_bloodmoon",
+          "kind": "play_trainer",
+          "label": "捕捉剩120HP月月熊",
+          "card_uid": "CSV6C_114",
+          "targets": [
+            {
+              "opponent_bench_target": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 120
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rage_120",
+          "kind": "attack",
+          "label": "60伤索罗亚克复制力量愤怒120终结",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 3
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_06",
+      "deck_key": "n_zoroark",
+      "order": 6,
+      "revision": 3,
+      "title": "两次交易各有工作：先找暗码，再兑现双组件",
+      "focus": "随机手牌里没有捕捉器和伤害补正。主攻索罗亚克的交易只能负责找到暗码迷，第二只索罗亚克的交易必须保留到暗码迷把不服输头带与反击捕捉器置顶之后；首回合210精确双奖，物品封锁后改用焚身加农炮收两个一奖。",
+      "objective": "用暗码迷与两次独立交易完成四奖路线。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018506,
+      "opponent_name": "自爆多龙",
+      "turn_number": 15,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_144",
+            "CSV10C_145"
+          ],
+          "energy": [
+            "CSVE1C_DAR",
+            "CSVE1C_DAR"
+          ],
+          "damage": 90
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV1C_111",
+          "CSV8C_176",
+          "CSV1C_117",
+          "CSV6C_114"
+        ]
+      },
+      "opponent": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV9.5C_004"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_157"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158",
+              "CSV8C_159"
+            ],
+            "damage": 90
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "CSV6C_114",
+          "CSV4C_117",
+          "CSV7C_177",
+          "CSV7C_177"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "CSV6C_114",
+          "CSV1C_113"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "第一交易只使用一次",
+        "暗码迷选头带与捕捉器",
+        "第二交易抽2",
+        "头带附主攻",
+        "捕捉健康吉雉鸡",
+        "力量愤怒180+30",
+        "含羞苞攻击10",
+        "物品封锁下不依赖物品",
+        "改复制焚身加农炮",
+        "90+90双杀"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "哪只索罗亚克先交易",
+            "failure": "必须保留第二节点兑现置顶"
+          },
+          {
+            "choice": "暗码迷选哪两张",
+            "failure": "捕捉器和头带缺一都会少2奖"
+          },
+          {
+            "choice": "第二回合复制哪招",
+            "failure": "力量愤怒200只能处理一个目标，无法达到4奖"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "随机手牌里没有捕捉器和伤害补正。主攻索罗亚克的交易只能负责找到暗码迷，第二只索罗亚克的交易必须保留到暗码迷把不服输头带与反击捕捉器置顶之后；首回合210精确双奖，物品封锁后改用焚身加农炮收两个一奖。"
+      },
+      "design_contract": {
+        "learning_axis": "cipher_trade_stack",
+        "combo_id": "two_trades_cipher_band_counter",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "第一交易取得暗码迷",
+            "暗码迷置顶头带与捕捉器",
+            "第二交易兑现双组件",
+            "头带加成力量愤怒210",
+            "承受花粉10",
+            "封物品下切换焚身加农炮",
+            "90+90双杀"
+          ],
+          "payoff": "用暗码迷与两次独立交易完成四奖路线。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "把随机手牌变成可控牌顶",
+          "CSV1C_117": "奖差下补足30伤",
+          "CSV6C_114": "抓出健康210HP吉雉鸡"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "active Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV1C_111"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得暗码迷"
+          },
+          {
+            "order": 2,
+            "source": "Ciphermaniac full-deck selection",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV1C_117",
+              "CSV6C_114"
+            ],
+            "must_precede": "second Trade",
+            "reason": "指定双组件"
+          },
+          {
+            "order": 3,
+            "source": "bench Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV1C_117",
+              "CSV6C_114"
+            ],
+            "must_precede": "first attack",
+            "reason": "兑现隐藏捕捉器"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "第一交易只找暗码迷",
+          "sequence": [
+            "第一交易只找暗码迷",
+            "第二交易留到置顶后",
+            "头带与捕捉器同时到手",
+            "力量愤怒210",
+            "焚身加农炮90+90"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSV1C_117",
+            "CSV6C_114"
+          ],
+          "hidden_reveal": [
+            "CSV6C_114"
+          ],
+          "order_sensitive_pair": [
+            "第一只交易",
+            "第二只交易"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "use_both_trades_early",
+            "opening": "暗码迷前连续发动两次交易",
+            "looks_good_because": "一次抽4张看起来最强",
+            "gained_information": "CSV7C_191、CSV1C_111、CSV8C_176、random",
+            "draw_trace": [
+              "CSV7C_191",
+              "CSV1C_111",
+              "CSV8C_176",
+              "random"
+            ],
+            "consumed_resource": "第二交易节点",
+            "fails_because": "暗码迷置顶后没有可用交易抽取头带与捕捉器",
+            "failed_equation": "置顶2-可用抽牌0=2张滞留",
+            "negative_probe_id": "n_zoroark_06_use_both_trades_early"
+          },
+          {
+            "id": "counter_without_band",
+            "opening": "只拿捕捉器不拿头带",
+            "looks_good_because": "捕捉器直接提供双奖目标",
+            "gained_information": "CSV6C_114",
+            "draw_trace": [
+              "CSV6C_114"
+            ],
+            "consumed_resource": "30伤补正",
+            "fails_because": "力量愤怒180打健康吉雉鸡210会残30",
+            "failed_equation": "210-180=30",
+            "negative_probe_id": "n_zoroark_06_counter_without_band"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "90伤双恶主攻承担两次不同复制招式",
+          "opponent.active": "含羞苞是反击捕捉器前的前场掩护",
+          "player.bench.0": "莱希拉姆提供首攻力量愤怒",
+          "player.bench.1": "第二索罗亚克保留交易节点",
+          "player.bench.2": "达摩狒狒提供封物品后的90+90",
+          "player.bench.3": "吉雉鸡是错误大抽",
+          "player.bench.4": "愿增猿提示奖差但不搬伤",
+          "opponent.bench.0": "健康吉雉鸡是210精确目标",
+          "opponent.bench.1": "第二含羞苞承接AI回合与第二攻",
+          "opponent.bench.2": "70HP多龙梅西亚是后场90目标",
+          "opponent.bench.3": "230HP多龙是错误复制目标",
+          "opponent.bench.4": "愿增猿无恶不能改线"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Fezandipiti ex",
+            "printed_hp": 210,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 210,
+            "final_damage": 210,
+            "payment": "9 counters x20 + Defiance Band30",
+            "overkill": 0
+          },
+          {
+            "target": "second Budew",
+            "printed_hp": 30,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 30,
+            "final_damage": 90,
+            "payment": "Immolating Cannon active",
+            "overkill": 60
+          },
+          {
+            "target": "second Dreepy",
+            "printed_hp": 70,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 70,
+            "final_damage": 90,
+            "payment": "Immolating Cannon bench",
+            "overkill": 20
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "first Night Joker",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "second Immolating Cannon",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 2,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 0
+          }
+        ],
+        "luck_contract": {
+          "kind": "two_trades_cipher_band_counter_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSV1C_117",
+            "CSV6C_114"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "第一交易取得暗码迷",
+            "暗码迷置顶头带与捕捉器",
+            "第二交易兑现双组件",
+            "头带加成力量愤怒210",
+            "承受花粉10",
+            "封物品下切换焚身加农炮",
+            "90+90双杀"
+          ],
+          "finisher": "在第3信息节点取得抓出健康210HP吉雉鸡，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSV6C_114",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "用暗码迷与两次独立交易完成四奖路线。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 7,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "first_trade",
+          "kind": "use_ability",
+          "label": "主攻索罗亚克交易取得暗码迷",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cipher_band_counter",
+          "kind": "play_trainer",
+          "label": "暗码迷置顶不服输头带与反击捕捉器",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV1C_117",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV6C_114",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "second_trade",
+          "kind": "use_ability",
+          "label": "第二索罗亚克交易兑现头带与捕捉器",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV2C_127",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_band",
+          "kind": "attach_tool",
+          "label": "给主攻索罗亚克附不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "counter_fez",
+          "kind": "play_trainer",
+          "label": "反击捕捉器抓健康吉雉鸡",
+          "card_uid": "CSV6C_114",
+          "targets": [
+            {
+              "opponent_bench_target": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 210
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rage_210",
+          "kind": "attack",
+          "label": "力量愤怒180加头带30精确击倒吉雉鸡",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "budew_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "含羞苞攻击10并封锁物品",
+          "require_attack": true
+        },
+        {
+          "id": "immolating_finish",
+          "kind": "attack",
+          "label": "物品封锁下改复制焚身加农炮，90+90双杀",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 1,
+                  "attack": {
+                    "name": "焚身加农炮",
+                    "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                    "cost": "RRC",
+                    "damage": "90",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "opponent_bench_damage_targets": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 70
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_07",
+      "deck_key": "n_zoroark",
+      "order": 7,
+      "revision": 3,
+      "title": "愤怒看的是谁：90伤、40反击、再变260",
+      "focus": "暗夜小丑复制力量愤怒时读取攻击者N的索罗亚克ex自身伤害，而不是备战莱希拉姆。90伤先造成180；对手20伤索罗亚克复制同招只打40，却把我方累积到130伤，第二次力量愤怒因此变成260并反杀。",
+      "objective": "读懂复制攻击的伤害归属，用对手的低伤反击把第二次攻击推到260并取得4奖。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "N的索罗亚克",
+      "turn_number": 16,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_166"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 90
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV1C_111",
+          "CSV8C_176",
+          "CSV10C_215",
+          "CSV10C_190"
+        ]
+      },
+      "opponent": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV8C_172"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 20
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_114"
+        ],
+        "discard": [
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV2C_127",
+          "CSV10C_215",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "第一交易取得暗码迷",
+        "第二交易留到置顶后",
+        "城堡零撤退",
+        "莱希拉姆进入备战区",
+        "读取索罗亚克90伤",
+        "首攻180",
+        "对手20伤只造成40",
+        "我方累积130伤",
+        "第二攻260",
+        "累计4奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "力量愤怒读取谁的伤害",
+            "failure": "按莱希拉姆计算会完全误判"
+          },
+          {
+            "choice": "是否让40反击发生",
+            "failure": "没有额外40伤，第二次只有180"
+          },
+          {
+            "choice": "第二回合是否搬伤治疗",
+            "failure": "治疗会把260伤害降到200"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "暗夜小丑复制力量愤怒时读取攻击者N的索罗亚克ex自身伤害，而不是备战莱希拉姆。90伤先造成180；对手20伤索罗亚克复制同招只打40，却把我方累积到130伤，第二次力量愤怒因此变成260并反杀。"
+      },
+      "design_contract": {
+        "learning_axis": "reshiram_damage_copy",
+        "combo_id": "powerful_rage_attacker_damage_recalculation",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "双交易取得城堡",
+            "莱希拉姆回备战",
+            "90伤索罗亚克打180",
+            "承受对手40反击",
+            "重新读取130伤",
+            "力量愤怒260反杀"
+          ],
+          "payoff": "读懂复制攻击的伤害归属，用对手的低伤反击把第二次攻击推到260并取得4奖。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV10C_215"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "控制城堡牌顶",
+          "CSV10C_215": "把莱希拉姆变回合法复制源"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "first Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV1C_111"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得控制器"
+          },
+          {
+            "order": 2,
+            "source": "Ciphermaniac selection",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "second Trade",
+            "reason": "确认城堡在牌顶"
+          },
+          {
+            "order": 3,
+            "source": "second Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "retreat",
+            "reason": "取得隐藏城堡"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "两次交易拆分",
+          "sequence": [
+            "两次交易拆分",
+            "城堡让莱希拉姆回备战",
+            "按90伤算180",
+            "接受40反击",
+            "按130伤重算260"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190"
+          ],
+          "hidden_reveal": [
+            "CSV10C_215"
+          ],
+          "order_sensitive_pair": [
+            "莱希拉姆回到备战区",
+            "第一次力量愤怒"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "use_reshiram_damage",
+            "opening": "按备战莱希拉姆0伤计算",
+            "looks_good_because": "招式文字印在莱希拉姆上",
+            "gained_information": "CSV10C_166、0 counters",
+            "draw_trace": [
+              "CSV10C_166",
+              "0 counters"
+            ],
+            "consumed_resource": "攻击者归属",
+            "fails_because": "复制招式的attacker仍是索罗亚克，实际读取90伤",
+            "failed_equation": "错误预览0，实际180",
+            "negative_probe_id": "n_zoroark_07_use_reshiram_damage"
+          },
+          {
+            "id": "munk_before_second_rage",
+            "opening": "第二回合先用愿增猿搬30伤",
+            "looks_good_because": "搬伤能削弱对手并治疗主攻",
+            "gained_information": "move 30",
+            "draw_trace": [
+              "move 30"
+            ],
+            "consumed_resource": "自身伤害倍率",
+            "fails_because": "索罗亚克从130降到100伤，力量愤怒从260降到200，打不倒260HP对手",
+            "failed_equation": "260-200=60",
+            "negative_probe_id": "n_zoroark_07_munk_before_second_rage"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "莱希拉姆必须先回备战",
+          "opponent.active": "剩180HP月月熊验证90伤倍率",
+          "player.bench.0": "90伤双恶索罗亚克是倍率主体",
+          "player.bench.1": "第二索罗亚克负责兑现城堡",
+          "player.bench.2": "达摩狒狒提供错误复制选项",
+          "player.bench.3": "吉雉鸡是无效抽牌诱饵",
+          "player.bench.4": "愿增猿是降低自身倍率的陷阱",
+          "opponent.bench.0": "20伤索罗亚克以40反击并成为260HP目标",
+          "opponent.bench.1": "莱希拉姆让AI合法复制力量愤怒",
+          "opponent.bench.2": "火红不倒翁是错误一奖目标",
+          "opponent.bench.3": "吉雉鸡是错误双奖目标",
+          "opponent.bench.4": "愿增猿没有恶能不能改线"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 80,
+            "planned_counter_damage": 0,
+            "remaining_hp": 180,
+            "final_damage": 180,
+            "payment": "player Zoroark 9 counters x20",
+            "overkill": 0
+          },
+          {
+            "target": "opponent N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 20,
+            "planned_counter_damage": 0,
+            "remaining_hp": 260,
+            "final_damage": 260,
+            "payment": "player Zoroark 13 counters x20",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "two Powerful Rage copies",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "powerful_rage_attacker_damage_recalculation_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "双交易取得城堡",
+            "莱希拉姆回备战",
+            "90伤索罗亚克打180",
+            "承受对手40反击",
+            "重新读取130伤",
+            "力量愤怒260反杀"
+          ],
+          "finisher": "在第3信息节点取得把莱希拉姆变回合法复制源，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSV10C_215",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "读懂复制攻击的伤害归属，用对手的低伤反击把第二次攻击推到260并取得4奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 7,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "first_trade",
+          "kind": "use_ability",
+          "label": "第一索罗亚克交易取得暗码迷",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cipher_castle",
+          "kind": "play_trainer",
+          "label": "暗码迷置顶N的城堡与PP提升剂",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_215",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_190",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "second_trade",
+          "kind": "use_ability",
+          "label": "第二索罗亚克交易兑现城堡",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV2C_127",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "castle",
+          "kind": "play_stadium",
+          "label": "放下N的城堡",
+          "card_uid": "CSV10C_215",
+          "targets": []
+        },
+        {
+          "id": "retreat",
+          "kind": "retreat",
+          "label": "莱希拉姆回到备战区，换入90伤索罗亚克",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": []
+        },
+        {
+          "id": "rage_180",
+          "kind": "attack",
+          "label": "力量愤怒读取索罗亚克90伤，造成180",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ns_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "20伤对手索罗亚克复制力量愤怒40，把我方推到130伤",
+          "require_attack": true
+        },
+        {
+          "id": "rage_260",
+          "kind": "attack",
+          "label": "第二次力量愤怒读取130伤，造成260反杀",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_08",
+      "deck_key": "n_zoroark",
+      "order": 8,
+      "revision": 3,
+      "title": "五张能量只有四张算数：复燃的类型审计",
+      "focus": "对手弃牌区有4张基本恶能与1张逆转能量。复燃不是数所有能量，而是严格造成4×30=120。第一回合击倒剩120HP月月熊；对手160伤索罗亚克反杀后自身也正好剩120HP，第二索罗亚克再用同一计数完成双奖。",
+      "objective": "两回合两次按基本能量类型精确计算复燃120，取得4奖。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "N的索罗亚克",
+      "turn_number": 17,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_166"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 80
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV1C_111",
+          "CSV8C_176",
+          "CSV10C_215",
+          "CSV10C_190"
+        ]
+      },
+      "opponent": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV8C_172"
+          ],
+          "damage": 140
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 160
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_114"
+        ],
+        "discard": [
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSV2C_128"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV2C_127",
+          "CSV10C_215",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "双交易链",
+        "N的城堡",
+        "达摩狒狒留在备战",
+        "识别4张基本能量",
+        "排除逆转能量",
+        "首攻120",
+        "接受反杀",
+        "第二攻击手自动接棒",
+        "第二攻120",
+        "累计4奖"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "弃牌区能量如何分类",
+            "failure": "特殊能量不能计入"
+          },
+          {
+            "choice": "首攻目标HP档",
+            "failure": "只能选择120而非150"
+          },
+          {
+            "choice": "是否保留达摩狒狒",
+            "failure": "第二回合仍需同一复制源"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "对手弃牌区有4张基本恶能与1张逆转能量。复燃不是数所有能量，而是严格造成4×30=120。第一回合击倒剩120HP月月熊；对手160伤索罗亚克反杀后自身也正好剩120HP，第二索罗亚克再用同一计数完成双奖。"
+      },
+      "design_contract": {
+        "learning_axis": "darmanitan_discard_count",
+        "combo_id": "reignite_basic_not_special_energy_count",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "双交易取得城堡",
+            "莱希拉姆零撤退",
+            "审计弃牌区能量类型",
+            "第一次复燃120",
+            "接受高伤索罗亚克反杀",
+            "第二攻击手接棒",
+            "第二次复燃120"
+          ],
+          "payoff": "两回合两次按基本能量类型精确计算复燃120，取得4奖。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV10C_215"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "控制城堡牌顶",
+          "CSV10C_215": "零撤退保留达摩狒狒复制源"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "first Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV1C_111"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得控制器"
+          },
+          {
+            "order": 2,
+            "source": "Ciphermaniac selection",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "second Trade",
+            "reason": "确认城堡"
+          },
+          {
+            "order": 3,
+            "source": "second Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "first Reignite",
+            "reason": "取得隐藏城堡"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "先把达摩狒狒留在备战",
+          "sequence": [
+            "先把达摩狒狒留在备战",
+            "城堡交接",
+            "只数基本恶能",
+            "两次复燃120"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190"
+          ],
+          "hidden_reveal": [
+            "CSV10C_215"
+          ],
+          "order_sensitive_pair": [
+            "能量类型审计",
+            "选择复燃目标"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "count_reversal",
+            "opening": "把逆转能量计入复燃",
+            "looks_good_because": "弃牌区共5张能量",
+            "gained_information": "CSVE1C_DAR、CSV2C_128",
+            "draw_trace": [
+              "CSVE1C_DAR",
+              "CSV2C_128"
+            ],
+            "consumed_resource": "类型过滤",
+            "fails_because": "逆转能量是Special Energy，实际不计数",
+            "failed_equation": "5×30预期150，实际4×30=120",
+            "negative_probe_id": "n_zoroark_08_count_reversal"
+          },
+          {
+            "id": "choose_150_target",
+            "opening": "捕捉剩150HP目标",
+            "looks_good_because": "错误计数看起来正好斩杀",
+            "gained_information": "150 HP",
+            "draw_trace": [
+              "150 HP"
+            ],
+            "consumed_resource": "捕捉窗口",
+            "fails_because": "实际120会残30并失去两回合四奖",
+            "failed_equation": "150-120=30",
+            "negative_probe_id": "n_zoroark_08_choose_150_target"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "莱希拉姆是零撤退前场",
+          "opponent.active": "剩120HP月月熊是第一计数靶",
+          "player.bench.0": "80伤首攻索罗亚克",
+          "player.bench.1": "双恶第二索罗亚克接棒",
+          "player.bench.2": "达摩狒狒是两回合共同复制源",
+          "player.bench.3": "吉雉鸡是错误抽牌路线",
+          "player.bench.4": "愿增猿不能改变弃牌计数",
+          "opponent.bench.0": "剩120HP高伤索罗亚克是第二靶兼反击手",
+          "opponent.bench.1": "莱希拉姆支撑AI高伤反击",
+          "opponent.bench.2": "火红不倒翁是错误一奖",
+          "opponent.bench.3": "吉雉鸡是150误算诱饵",
+          "opponent.bench.4": "愿增猿无恶能不能改线"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 140,
+            "planned_counter_damage": 0,
+            "remaining_hp": 120,
+            "final_damage": 120,
+            "payment": "4 Basic Energy x30",
+            "overkill": 0
+          },
+          {
+            "target": "opponent N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 160,
+            "planned_counter_damage": 0,
+            "remaining_hp": 120,
+            "final_damage": 120,
+            "payment": "4 Basic Energy x30",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "first Reignite",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "second Reignite",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "reignite_basic_not_special_energy_count_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "双交易取得城堡",
+            "莱希拉姆零撤退",
+            "审计弃牌区能量类型",
+            "第一次复燃120",
+            "接受高伤索罗亚克反杀",
+            "第二攻击手接棒",
+            "第二次复燃120"
+          ],
+          "finisher": "在第3信息节点取得零撤退保留达摩狒狒复制源，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSV10C_215",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "两回合两次按基本能量类型精确计算复燃120，取得4奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 7,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "first_trade",
+          "kind": "use_ability",
+          "label": "第一索罗亚克交易取得暗码迷",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cipher_castle",
+          "kind": "play_trainer",
+          "label": "暗码迷置顶N的城堡与PP提升剂",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_215",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_190",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "second_trade",
+          "kind": "use_ability",
+          "label": "第二索罗亚克交易取得城堡",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV2C_127",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "castle",
+          "kind": "play_stadium",
+          "label": "N的城堡零撤退",
+          "card_uid": "CSV10C_215",
+          "targets": []
+        },
+        {
+          "id": "retreat",
+          "kind": "retreat",
+          "label": "换入首攻索罗亚克并保留达摩狒狒",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": []
+        },
+        {
+          "id": "reignite_120_first",
+          "kind": "attack",
+          "label": "只数4张基本恶能，复燃120击倒月月熊",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "复燃",
+                    "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                    "cost": "CC",
+                    "damage": "30×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 1
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ns_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "160伤对手索罗亚克反杀首攻者",
+          "require_attack": true
+        },
+        {
+          "id": "reignite_120_second",
+          "kind": "attack",
+          "label": "第二索罗亚克再次复燃120击倒剩120HP对手",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "复燃",
+                    "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                    "cost": "CC",
+                    "damage": "30×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_09",
+      "deck_key": "n_zoroark",
+      "order": 9,
+      "revision": 3,
+      "title": "一张先存、一张奖区接力：PP提升剂与城堡交棒",
+      "focus": "莱希拉姆在前场，两只索罗亚克分别是双恶首攻者与0恶接班人。暗码迷→第二交易取得N的城堡和PP提升剂：PP先给接班人预存1恶，城堡让莱希拉姆零撤退交出首攻位。首杀从奖赏区拿到能量转移；首攻者倒下后，接班索罗亚克自动晋升，再把愿增猿的恶能移入战斗场补足第二恶。",
+      "objective": "用PP提升剂预存、N的城堡第一次交棒与奖赏区能量转移第二次交棒，完成两次120双奖攻击。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "N的索罗亚克",
+      "turn_number": 18,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [
+        "n_castle_pp_booster_handoff"
+      ],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_166"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "damage": 60
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ],
+            "energy": [
+              "CSVE1C_DAR"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [
+          "CSVE1C_DAR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV7C_191",
+          "CSV1C_111",
+          "CSV8C_176",
+          "CSV10C_215",
+          "CSV10C_190"
+        ],
+        "prizes": [
+          "CSVH1aC_008"
+        ]
+      },
+      "opponent": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV8C_172"
+          ],
+          "damage": 140
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 160
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_114"
+        ],
+        "discard": [
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV2C_127",
+          "CSV10C_215",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "首攻交易",
+        "暗码迷置顶恶能与PP",
+        "备战交易",
+        "恶能手贴首攻",
+        "PP贴备战",
+        "力量愤怒120首杀",
+        "从奖区取得PP与城堡",
+        "接受首攻者被反杀",
+        "第二PP贴备战",
+        "城堡零撤退",
+        "第二攻120"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "第一张PP附给谁",
+            "failure": "必须预存给备战而非当前主攻"
+          },
+          {
+            "choice": "首杀取哪两张奖赏",
+            "failure": "第二PP与城堡缺一不可"
+          },
+          {
+            "choice": "城堡何时使用",
+            "failure": "必须等莱希拉姆承接昏厥后完成交棒"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "莱希拉姆在前场，两只索罗亚克分别是双恶首攻者与0恶接班人。暗码迷→第二交易取得N的城堡和PP提升剂：PP先给接班人预存1恶，城堡让莱希拉姆零撤退交出首攻位。首杀从奖赏区拿到能量转移；首攻者倒下后，接班索罗亚克自动晋升，再把愿增猿的恶能移入战斗场补足第二恶。"
+      },
+      "design_contract": {
+        "learning_axis": "pp_castle_handoff",
+        "combo_id": "pp_prebank_prize_castle_handoff",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "首攻者在备战交易取得暗码迷",
+            "暗码迷置顶城堡与PP",
+            "第二交易兑现",
+            "PP预存给接班索罗亚克",
+            "城堡让莱希拉姆零撤退",
+            "首攻120取双奖",
+            "首攻者被反杀",
+            "奖赏区能量转移把愿增猿恶能送给自动晋升者",
+            "第二次力量愤怒120"
+          ],
+          "payoff": "用PP提升剂预存、N的城堡第一次交棒与奖赏区能量转移第二次交棒，完成两次120双奖攻击。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV7C_191",
+          "CSV10C_215",
+          "CSV10C_190",
+          "CSVH1aC_008"
+        ],
+        "key_card_roles": {
+          "CSV7C_191": "冻结城堡与PP",
+          "CSV10C_215": "让莱希拉姆零撤退完成第一次交棒",
+          "CSV10C_190": "给接班攻击手预存第一恶",
+          "CSVH1aC_008": "首杀后从奖赏区取得并补足第二恶"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "active Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV7C_191",
+              "CSV1C_111"
+            ],
+            "must_precede": "Ciphermaniac",
+            "reason": "取得控制器"
+          },
+          {
+            "order": 2,
+            "source": "Ciphermaniac selection",
+            "acquisition_kind": "effect_reveal",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "bench Trade",
+            "reason": "指定城堡和预存牌"
+          },
+          {
+            "order": 3,
+            "source": "bench Zoroark Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV10C_215",
+              "CSV10C_190"
+            ],
+            "must_precede": "first attack",
+            "reason": "兑现第一阶段"
+          },
+          {
+            "order": 4,
+            "source": "first knockout Prize pickup",
+            "acquisition_kind": "prize_pickup",
+            "reveals": [
+              "CSVH1aC_008",
+              "implicit-second-prize"
+            ],
+            "must_precede": "second attack",
+            "reason": "取得隐藏的能量所有权修正牌"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "PP给接班人预存第一恶",
+          "sequence": [
+            "PP给接班人预存第一恶",
+            "城堡让莱希拉姆交出首攻位",
+            "首杀拿能量转移",
+            "接受首攻者倒下",
+            "从愿增猿移动第二恶",
+            "接班索罗亚克完成攻击"
+          ],
+          "draw_trace": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSVH1aC_008",
+            "implicit-second-prize"
+          ],
+          "hidden_reveal": [
+            "CSVH1aC_008"
+          ],
+          "order_sensitive_pair": [
+            "PP提升剂预存",
+            "奖赏区能量转移补足"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "pp_to_active",
+            "opening": "第一张PP也贴给首攻索罗亚克",
+            "looks_good_because": "当前攻击手最缺能量",
+            "gained_information": "CSV10C_190、CSVE1C_DAR",
+            "draw_trace": [
+              "CSV10C_190",
+              "CSVE1C_DAR"
+            ],
+            "consumed_resource": "备战预存",
+            "fails_because": "首攻者倒下时三张恶能全部进弃牌区，第二攻击手仍0能",
+            "failed_equation": "第二攻击手0D<2D",
+            "negative_probe_id": "n_zoroark_09_pp_to_active"
+          },
+          {
+            "id": "skip_prize_castle",
+            "opening": "首杀后不拿城堡奖赏位",
+            "looks_good_because": "另一奖赏牌可能提供更多手牌",
+            "gained_information": "CSV10C_190、other prize",
+            "draw_trace": [
+              "CSV10C_190",
+              "other prize"
+            ],
+            "consumed_resource": "零撤退交棒",
+            "fails_because": "莱希拉姆前场没有能量且撤退费无法支付",
+            "failed_equation": "合法换入次数0",
+            "negative_probe_id": "n_zoroark_09_skip_prize_castle"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "1恶60伤首攻者等待手贴",
+          "opponent.active": "剩120HP月月熊是第一双奖",
+          "player.bench.0": "莱希拉姆承接昏厥并提供力量愤怒",
+          "player.bench.1": "0恶60伤备战攻击手接受两段PP",
+          "player.bench.2": "达摩狒狒是错误复制路线",
+          "player.bench.3": "吉雉鸡是大抽诱饵",
+          "player.bench.4": "愿增猿会诱导把恶能留在辅助位",
+          "opponent.bench.0": "剩120HP高伤索罗亚克是反击手与第二双奖",
+          "opponent.bench.1": "莱希拉姆支撑AI反击",
+          "opponent.bench.2": "火红不倒翁是一奖诱饵",
+          "opponent.bench.3": "吉雉鸡是错误目标",
+          "opponent.bench.4": "愿增猿无恶能不能改线"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 140,
+            "planned_counter_damage": 0,
+            "remaining_hp": 120,
+            "final_damage": 120,
+            "payment": "6 counters x20",
+            "overkill": 0
+          },
+          {
+            "target": "opponent N's Zoroark ex",
+            "printed_hp": 280,
+            "hp_modifiers": 0,
+            "existing_damage": 160,
+            "planned_counter_damage": 0,
+            "remaining_hp": 120,
+            "final_damage": 120,
+            "payment": "6 counters x20",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "first Night Joker",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          },
+          {
+            "checkpoint": "backup after first PP pre-bank",
+            "starting_attached": 0,
+            "acquired": 1,
+            "spent_or_discarded": 0,
+            "attack_requirement": 1,
+            "remaining_for_next_turn": 1
+          },
+          {
+            "checkpoint": "backup after Energy Switch",
+            "starting_attached": 1,
+            "acquired": 1,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "pp_prebank_prize_castle_handoff_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV7C_191",
+            "CSV1C_111",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSV10C_215",
+            "CSV10C_190",
+            "CSVH1aC_008",
+            "implicit-second-prize"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "首攻者在备战交易取得暗码迷",
+            "暗码迷置顶城堡与PP",
+            "第二交易兑现",
+            "PP预存给接班索罗亚克",
+            "城堡让莱希拉姆零撤退",
+            "首攻120取双奖",
+            "首攻者被反杀",
+            "奖赏区能量转移把愿增猿恶能送给自动晋升者",
+            "第二次力量愤怒120"
+          ],
+          "finisher": "在第4信息节点取得首杀后从奖赏区取得并补足第二恶，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSVH1aC_008",
+          "finisher_checkpoint_order": 4,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "用PP提升剂预存、N的城堡第一次交棒与奖赏区能量转移第二次交棒，完成两次120双奖攻击。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 9,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "active_trade",
+          "kind": "use_ability",
+          "label": "首攻索罗亚克在备战区交易取得暗码迷",
+          "source": {
+            "zone": "bench",
+            "index": 0
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cipher_dark_pp",
+          "kind": "play_trainer",
+          "label": "暗码迷置顶基本恶能与PP提升剂",
+          "card_uid": "CSV7C_191",
+          "targets": [
+            {
+              "top_cards": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_215",
+                    "occurrence": 0
+                  }
+                },
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "deck",
+                    "uid": "CSV10C_190",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "backup_trade",
+          "kind": "use_ability",
+          "label": "第二索罗亚克交易抽到N的城堡与PP提升剂",
+          "source": {
+            "zone": "bench",
+            "index": 1
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV2C_127",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prebank_pp",
+          "kind": "play_trainer",
+          "label": "第一PP把弃牌区恶能预存给备战索罗亚克",
+          "card_uid": "CSV10C_190",
+          "targets": [
+            {
+              "ns_pp_up_assignment": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "discard",
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 1
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "castle",
+          "kind": "play_stadium",
+          "label": "N的城堡让前场莱希拉姆零撤退",
+          "card_uid": "CSV10C_215",
+          "targets": []
+        },
+        {
+          "id": "first_handoff",
+          "kind": "retreat",
+          "label": "莱希拉姆换入双恶首攻索罗亚克",
+          "target": {
+            "zone": "bench",
+            "index": 0
+          },
+          "energy_to_discard": []
+        },
+        {
+          "id": "first_rage",
+          "kind": "attack",
+          "label": "60伤首攻者力量愤怒120击倒月月熊",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ns_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "160伤对手索罗亚克反杀首攻者",
+          "require_attack": true
+        },
+        {
+          "id": "energy_switch_finish",
+          "kind": "play_trainer",
+          "label": "奖赏卡能量转移把愿增猿恶能送给自动晋升的第二索罗亚克",
+          "card_uid": "CSVH1aC_008",
+          "targets": [
+            {
+              "energy_assignment": [
+                {
+                  "source": {
+                    "$card": {
+                      "player": 0,
+                      "zone": "bench_energy",
+                      "index": 2,
+                      "uid": "CSVE1C_DAR",
+                      "occurrence": 0
+                    }
+                  },
+                  "target": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "active"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "second_rage",
+          "kind": "attack",
+          "label": "第二索罗亚克力量愤怒120击倒剩120HP对手",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "力量愤怒",
+                    "text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+                    "cost": "RL",
+                    "damage": "20×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 3
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_zoroark_10",
+      "deck_key": "n_zoroark",
+      "order": 10,
+      "revision": 3,
+      "title": "三个加数缺一不可：120+30+40=190",
+      "focus": "第一回合焚身加农炮双杀后，对手反杀双奖索罗亚克，使我方再次落后。不服输头带因此重新生效；第二回合先用化危为吉拿到头带与捕捉器，再用自动晋升索罗亚克的交易抽到空手道王。复燃120、头带30、空手道王40合计190精确击倒月月熊。",
+      "objective": "主动经营奖差并叠加复燃、头带和空手道王三个伤害层，累计取得4奖。",
+      "player_deck_id": 800018502,
+      "opponent_deck_id": 800018502,
+      "opponent_name": "N的索罗亚克",
+      "turn_number": 19,
+      "first_player_index": 0,
+      "turn_limit": 2,
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "tactic_pattern_ids": [
+        "n_zoroark_karate_defiance_ex_counter"
+      ],
+      "player": {
+        "prize_count": 6,
+        "active": {
+          "stack": [
+            "CSV10C_144",
+            "CSV10C_145"
+          ],
+          "energy": [
+            "CSVE1C_DAR",
+            "CSVE1C_DAR"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_040",
+              "CSV10C_041"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177",
+          "CSV8C_183",
+          "CSV2C_114",
+          "CSV2C_127"
+        ],
+        "discard": [],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV1C_117",
+          "CSV6C_114",
+          "CSV10C_215",
+          "CSV9.5C_188",
+          "CSV8C_176"
+        ]
+      },
+      "opponent": {
+        "prize_count": 5,
+        "active": {
+          "stack": [
+            "CSV10C_144"
+          ]
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV10C_040"
+            ]
+          },
+          {
+            "stack": [
+              "CSV10C_144",
+              "CSV10C_145"
+            ],
+            "energy": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "damage": 100
+          },
+          {
+            "stack": [
+              "CSV8C_172"
+            ],
+            "damage": 70
+          },
+          {
+            "stack": [
+              "CSV10C_166"
+            ]
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ]
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV7C_177",
+          "CSV2C_114",
+          "CSV2C_114"
+        ],
+        "discard": [
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR",
+          "CSVE1C_DAR"
+        ],
+        "lost_zone": [],
+        "deck_top": [
+          "CSV1C_111",
+          "CSV2C_127",
+          "CSV10C_215",
+          "CSV8C_183"
+        ]
+      },
+      "goal": {
+        "type": "prizes",
+        "count": 4
+      },
+      "validation_operations": [
+        "焚身加农炮90+90",
+        "首攻双恶弃置",
+        "对手反杀双奖",
+        "确认我方重新落后",
+        "化危为吉抽3",
+        "暗码迷置顶",
+        "交易抽头带与捕捉器",
+        "附不服输头带",
+        "使用空手道王",
+        "捕捉月月熊",
+        "城堡零撤退",
+        "复燃120+30+40"
+      ],
+      "challenge": {
+        "difficulty": "expert",
+        "payoff_value": 4,
+        "decision_points": [
+          {
+            "choice": "何时判断头带生效",
+            "failure": "必须在对手反杀后重新检查奖差"
+          },
+          {
+            "choice": "支援者使用谁",
+            "failure": "空手道王是不可替代的40伤层"
+          },
+          {
+            "choice": "捕捉哪个目标",
+            "failure": "只有剩190HP宝可梦ex同时吃到三层并被击倒"
+          }
+        ],
+        "cross_turn_dependencies": [
+          "第一回合的攻击、弃能、奖差或站位直接决定第二回合是否存在合法终结线",
+          "隐藏牌必须按三个以上信息节点依次兑现，不能用一次大抽替代"
+        ],
+        "resource_tensions": [
+          "交易、支援者次数、恶能归属与备战复制源都只有一个正确分配",
+          "错误抽牌路线即使看到更多牌，也会失去冻结牌序或终结窗口"
+        ],
+        "learning_outcome": "第一回合焚身加农炮双杀后，对手反杀双奖索罗亚克，使我方再次落后。不服输头带因此重新生效；第二回合先用化危为吉拿到头带与捕捉器，再用自动晋升索罗亚克的交易抽到空手道王。复燃120、头带30、空手道王40合计190精确击倒月月熊。"
+      },
+      "design_contract": {
+        "learning_axis": "karate_defiance_stack",
+        "combo_id": "reignite_defiance_black_belt_exact_190",
+        "deck_identity": "N的索罗亚克以备战区N宝可梦作为招式工具箱，用暗码迷控制牌顶、交易兑现隐藏组件，并通过PP提升剂、城堡和能量移动完成精确交接。",
+        "solution_key_inventory_complete": true,
+        "combo_contract": {
+          "prerequisites": [
+            "双方满场且奖差、伤害与能量均已冻结",
+            "所有解题关键牌初始不在手牌",
+            "至少保留一个合法的备战N宝可梦复制源"
+          ],
+          "ordered_steps": [
+            "焚身加农炮先取2奖",
+            "对手反杀2奖使我方落后",
+            "化危为吉取得头带与捕捉器",
+            "交易取得空手道王",
+            "附头带",
+            "使用空手道王",
+            "捕捉190HP宝可梦ex",
+            "复燃120+30+40"
+          ],
+          "payoff": "主动经营奖差并叠加复燃、头带和空手道王三个伤害层，累计取得4奖。",
+          "reordered_failure": "任一抽牌、能量、撤退、复制源或捕捉步骤提前，都会破坏唯一伤害式或支付式。"
+        },
+        "engine_cards_in_play": [
+          "CSV10C_145",
+          "CSV10C_166",
+          "CSV10C_041"
+        ],
+        "key_cards": [
+          "CSV9.5C_188",
+          "CSV1C_117",
+          "CSV6C_114"
+        ],
+        "key_card_roles": {
+          "CSV9.5C_188": "交易第三节点取得、对前场宝可梦ex加40",
+          "CSV1C_117": "落后时加30",
+          "CSV6C_114": "抓出190HP终结目标"
+        },
+        "initial_hand_decoys": [
+          "CSV10C_144",
+          "CSV3C_123",
+          "CSV6C_125",
+          "CSV7C_177"
+        ],
+        "random_hand_profile": {
+          "functional_categories": [
+            "Pokemon",
+            "Supporter",
+            "Item",
+            "Tool",
+            "Stadium"
+          ],
+          "awkward_cards": [
+            "CSV10C_144",
+            "CSV2C_127"
+          ],
+          "redundant_cards": [
+            "CSV6C_125",
+            "CSV7C_177"
+          ],
+          "plausible_openings": [
+            "直接攻击",
+            "先用奇树",
+            "先用弗图博士",
+            "先发动交易",
+            "先处理场地",
+            "先回收弃牌"
+          ]
+        },
+        "draw_checkpoints": [
+          {
+            "order": 1,
+            "source": "second-turn natural draw",
+            "acquisition_kind": "natural_draw",
+            "reveals": [
+              "CSV1C_111"
+            ],
+            "must_precede": "Fezandipiti",
+            "reason": "清走牌顶杂牌"
+          },
+          {
+            "order": 2,
+            "source": "Fezandipiti ex draw 3",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV1C_117",
+              "CSV6C_114",
+              "CSV10C_215"
+            ],
+            "must_precede": "Trade",
+            "reason": "取得头带与捕捉器"
+          },
+          {
+            "order": 3,
+            "source": "active N's Zoroark ex Trade",
+            "acquisition_kind": "ability_draw",
+            "reveals": [
+              "CSV9.5C_188",
+              "CSV8C_176"
+            ],
+            "must_precede": "final attack",
+            "reason": "取得隐藏空手道王"
+          }
+        ],
+        "winning_draw_route": {
+          "opening": "先让对手反杀恢复落后",
+          "sequence": [
+            "先让对手反杀恢复落后",
+            "化危为吉取得头带与捕捉器",
+            "交易取得空手道王",
+            "三层伤害相加",
+            "复燃190"
+          ],
+          "draw_trace": [
+            "CSV1C_111",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSV10C_215",
+            "CSV9.5C_188",
+            "CSV8C_176"
+          ],
+          "hidden_reveal": [
+            "CSV9.5C_188"
+          ],
+          "order_sensitive_pair": [
+            "对手反杀恢复奖差",
+            "附不服输头带"
+          ],
+          "exact_reason": "正确线逐层清走无关牌、固定牌顶并保留最后的攻击或捕捉窗口；诱导线只要交换两个节点就会少一张牌、一个能量或一个合法目标。"
+        },
+        "bait_lines": [
+          {
+            "id": "band_while_ahead",
+            "opening": "第一回合就把不服输头带当作30伤",
+            "looks_good_because": "头带文字提供固定伤害印象",
+            "gained_information": "CSV1C_117",
+            "draw_trace": [
+              "CSV1C_117"
+            ],
+            "consumed_resource": "奖差条件",
+            "fails_because": "我方首攻取2奖后暂时领先，头带直到被反杀才重新生效",
+            "failed_equation": "领先时加成0",
+            "negative_probe_id": "n_zoroark_10_band_while_ahead"
+          },
+          {
+            "id": "skip_black_belt",
+            "opening": "只用复燃与不服输头带",
+            "looks_good_because": "120+30已经达到常见150档",
+            "gained_information": "CSVE1C_DAR、CSV1C_117",
+            "draw_trace": [
+              "CSVE1C_DAR",
+              "CSV1C_117"
+            ],
+            "consumed_resource": "空手道王40",
+            "fails_because": "目标剩190HP，150会残40",
+            "failed_equation": "190-(120+30)=40",
+            "negative_probe_id": "n_zoroark_10_skip_black_belt"
+          }
+        ],
+        "board_capacity": {
+          "player_bench": 5,
+          "opponent_bench": 5
+        },
+        "board_roles": {
+          "player.active": "双恶首攻者先用90+90并送出2奖",
+          "opponent.active": "70HP索罗亚是首个一奖",
+          "player.bench.0": "莱希拉姆承接反杀并通过城堡撤退",
+          "player.bench.1": "双恶第二索罗亚克叠加三层伤害",
+          "player.bench.2": "达摩狒狒提供两回合招式",
+          "player.bench.3": "吉雉鸡提供暗码迷与空手道王",
+          "player.bench.4": "愿增猿是错误搬伤捷径",
+          "opponent.bench.0": "80HP火红不倒翁是后场一奖",
+          "opponent.bench.1": "100伤索罗亚克反杀双奖主攻",
+          "opponent.bench.2": "剩190HP月月熊是三层精确目标",
+          "opponent.bench.3": "莱希拉姆支撑AI反击",
+          "opponent.bench.4": "吉雉鸡是错误捕捉目标"
+        },
+        "board_exemptions": [],
+        "board_exemption_reasons": {},
+        "damage_math": [
+          {
+            "target": "first N's Zorua",
+            "printed_hp": 70,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 70,
+            "final_damage": 90,
+            "payment": "Immolating Cannon active",
+            "overkill": 20
+          },
+          {
+            "target": "first N's Darumaka",
+            "printed_hp": 80,
+            "hp_modifiers": 0,
+            "existing_damage": 0,
+            "planned_counter_damage": 0,
+            "remaining_hp": 80,
+            "final_damage": 90,
+            "payment": "Immolating Cannon bench",
+            "overkill": 10
+          },
+          {
+            "target": "final Bloodmoon Ursaluna ex",
+            "printed_hp": 260,
+            "hp_modifiers": 0,
+            "existing_damage": 70,
+            "planned_counter_damage": 0,
+            "remaining_hp": 190,
+            "final_damage": 190,
+            "payment": "Reignite120 + Defiance Band30 + Black Belt40",
+            "overkill": 0
+          }
+        ],
+        "energy_math": [
+          {
+            "checkpoint": "first Immolating Cannon",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 2,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 0
+          },
+          {
+            "checkpoint": "second Reignite",
+            "starting_attached": 2,
+            "acquired": 0,
+            "spent_or_discarded": 0,
+            "attack_requirement": 2,
+            "remaining_for_next_turn": 2
+          }
+        ],
+        "luck_contract": {
+          "kind": "reignite_defiance_black_belt_exact_190_frozen_hidden_order",
+          "deterministic": true,
+          "shuffle_points": [
+            "Ciphermaniac controlled shuffle",
+            "Iono lure only"
+          ],
+          "reveal_sequence": [
+            "CSV1C_111",
+            "CSV1C_117",
+            "CSV6C_114",
+            "CSV10C_215",
+            "CSV9.5C_188",
+            "CSV8C_176"
+          ],
+          "same_state_for_all_routes": true
+        },
+        "climax_contract": {
+          "apparent_dead_end": "手牌看似随机，关键攻击牌、移动牌或捕捉牌都不在手里，场上还存在能量与复制源错位。",
+          "comeback_chain": [
+            "焚身加农炮先取2奖",
+            "对手反杀2奖使我方落后",
+            "化危为吉取得头带与捕捉器",
+            "交易取得空手道王",
+            "附头带",
+            "使用空手道王",
+            "捕捉190HP宝可梦ex",
+            "复燃120+30+40"
+          ],
+          "finisher": "在第3信息节点取得交易第三节点取得、对前场宝可梦ex加40，把此前所有资源转换成精确取奖。",
+          "finisher_card": "CSV9.5C_188",
+          "finisher_checkpoint_order": 3,
+          "filtering_checkpoints_before_finisher": 2,
+          "finisher_was_hidden": true,
+          "exact_payoff": "主动经营奖差并叠加复燃、头带和空手道王三个伤害层，累计取得4奖。"
+        },
+        "board_history": {
+          "elapsed_turns": 5,
+          "energy_origins": [
+            "双恶能来自此前两回合手贴或题面明确的PP提升剂加速",
+            "关键能量的移动与弃置均由证明步骤记录"
+          ],
+          "damage_origins": [
+            "双方伤害均来自此前公开攻击，数值为10的整数倍且没有超出最大HP",
+            "题面伤害用于建立唯一斩杀档"
+          ],
+          "prize_history": [
+            "双方在残局前已按题面奖差交换奖赏",
+            "第一回合与第二回合的取奖顺序共同构成目标"
+          ]
+        },
+        "witness": {
+          "player_turns": 2,
+          "minimum_meaningful_actions": 7,
+          "irreversible_decisions": 3,
+          "one_turn_shortcut_refuted": true
+        }
+      },
+      "proof_steps": [
+        {
+          "id": "first_split",
+          "kind": "attack",
+          "label": "焚身加农炮90+90先取两个一奖并弃双恶",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 1,
+                  "attack": {
+                    "name": "焚身加农炮",
+                    "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                    "cost": "RRC",
+                    "damage": "90",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 2
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "opponent_bench_damage_targets": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench",
+                    "index": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ns_reply",
+          "kind": "fixed_rules_ai_turn",
+          "label": "对手索罗亚克反杀首攻者，使我方重新落后",
+          "require_attack": true
+        },
+        {
+          "id": "fez_draw",
+          "kind": "use_ability",
+          "label": "化危为吉取得不服输头带、反击捕捉器与杂牌",
+          "source": {
+            "zone": "bench",
+            "index": 2
+          },
+          "targets": []
+        },
+        {
+          "id": "trade_black_belt",
+          "kind": "use_ability",
+          "label": "自动晋升的第二索罗亚克交易抽到空手道王",
+          "source": {
+            "zone": "active"
+          },
+          "targets": [
+            {
+              "discard_card": [
+                {
+                  "$card": {
+                    "player": 0,
+                    "zone": "hand",
+                    "uid": "CSV10C_144",
+                    "occurrence": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "attach_band",
+          "kind": "attach_tool",
+          "label": "给战斗场第二索罗亚克附不服输头带",
+          "card_uid": "CSV1C_117",
+          "target": {
+            "zone": "active"
+          }
+        },
+        {
+          "id": "black_belt",
+          "kind": "play_trainer",
+          "label": "使用空手道王的修炼，对ex再加40",
+          "card_uid": "CSV9.5C_188",
+          "targets": []
+        },
+        {
+          "id": "counter_bloodmoon",
+          "kind": "play_trainer",
+          "label": "反击捕捉器抓出剩190HP月月熊",
+          "card_uid": "CSV6C_114",
+          "targets": [
+            {
+              "opponent_bench_target": [
+                {
+                  "$slot": {
+                    "player": 1,
+                    "zone": "bench_remaining_hp",
+                    "remaining_hp": 190
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reignite_190",
+          "kind": "attack",
+          "label": "复燃120+头带30+空手道王40=190精确终结",
+          "attack_index": 0,
+          "targets": [
+            {
+              "copied_attack": [
+                {
+                  "source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+                  "source_zone": "bench",
+                  "attack_index": 0,
+                  "attack": {
+                    "name": "复燃",
+                    "text": "造成对手弃牌区中基本能量张数×30伤害。",
+                    "cost": "CC",
+                    "damage": "30×",
+                    "is_vstar_power": false
+                  },
+                  "source_slot": {
+                    "$slot": {
+                      "player": 0,
+                      "zone": "bench",
+                      "index": 1
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

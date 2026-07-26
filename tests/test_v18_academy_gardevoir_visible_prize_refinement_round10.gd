@@ -13,7 +13,7 @@ func test_visible_scream_tail_prize_stops_refinement_churn() -> String:
 	var scream := _slot(_card("CSV6C_065"), 0)
 	scream.damage_counters = 40
 	scream.attached_energy.assign([_energy("P"), _energy("P")])
-	var kirlia := _slot(_card("CSV2C_054"), 0)
+	var kirlia := _slot(_card("CS6.5C_030"), 0)
 	player.active_pokemon = scream
 	player.bench.append(kirlia)
 	state.players[1].active_pokemon = _slot(_defender(70), 1)

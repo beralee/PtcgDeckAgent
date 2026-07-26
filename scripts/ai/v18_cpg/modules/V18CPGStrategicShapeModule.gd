@@ -97,6 +97,50 @@ func verify_route_advantage(
 	facts: Dictionary,
 	profile: Dictionary
 ) -> Dictionary:
+	var dragon_weakness_field := _dragon_weakness_field_annotation(selected)
+	var top_dragon_weakness_field := _dragon_weakness_field_annotation(local_top)
+	if _module_id == "gardevoir_embrace" \
+			and bool(dragon_weakness_field.get("advances_immediate_dragon_ko", false)) \
+			and not bool(top_dragon_weakness_field.get("advances_immediate_dragon_ko", false)) \
+			and bool(local_top.get("engine_rule_floor_exact", false)) \
+			and str(dragon_weakness_field.get("context_key", "")) != "":
+		return {
+			"verified": true,
+			"reason": "public_field_weakness_turns_ready_attack_into_immediate_dragon_ko",
+			"certificate_kind": "public_dragon_weakness_field_immediate_ko",
+			"evidence_kind": "public_exact_same_turn_field_effect_and_attack",
+			"interaction_owner": "not_required",
+			"context_key": str(dragon_weakness_field.get("context_key", "")),
+			"field_uid": str(dragon_weakness_field.get("field_uid", "")),
+			"attacker_uid": str(dragon_weakness_field.get("attacker_uid", "")),
+			"opponent_uid": str(dragon_weakness_field.get("opponent_uid", "")),
+			"base_damage": int(dragon_weakness_field.get("base_damage", 0)),
+			"weakness_damage": int(dragon_weakness_field.get("weakness_damage", 0)),
+			"opponent_remaining_hp": int(
+				dragon_weakness_field.get("opponent_remaining_hp", 0)
+			),
+		}
+	var active_gardevoir_completion := _active_gardevoir_completion_annotation(selected)
+	var top_active_gardevoir_completion := _active_gardevoir_completion_annotation(local_top)
+	if _module_id == "gardevoir_embrace" \
+			and bool(active_gardevoir_completion.get("advances_active_gardevoir_ko_completion", false)) \
+			and not bool(top_active_gardevoir_completion.get("advances_active_gardevoir_ko_completion", false)):
+		return {
+			"verified": true,
+			"reason": "public_psychic_embrace_completes_active_gardevoir_ko_cost",
+			"certificate_kind": "public_active_gardevoir_attack_completion",
+			"evidence_kind": "public_exact_repeated_single_step_reobserve",
+			"interaction_owner": "public_active_gardevoir_completion_target",
+			"assignments_needed": int(
+				active_gardevoir_completion.get("assignments_needed", 0)
+			),
+			"psychic_energy_in_discard": int(
+				active_gardevoir_completion.get("psychic_energy_in_discard", 0)
+			),
+			"opponent_remaining_hp": int(
+				active_gardevoir_completion.get("opponent_remaining_hp", 0)
+			),
+		}
 	var visible_stage2_hold := _preserve_visible_stage2_setup_annotation(selected)
 	var top_visible_stage2_hold := _preserve_visible_stage2_setup_annotation(local_top)
 	if _module_id == "damage_counter_control" \
@@ -386,11 +430,39 @@ func verify_route_advantage(
 			and bool(selected_attachment.get("deterministic_attack_window_open", false)) \
 			and bool(selected_attachment.get("completes_required_types", false)) \
 			and not bool(top_attachment.get("completes_required_types", false)) \
-			and not bool(facts.get("attack", {}).get("ready", false)) \
+			and (
+				not bool(facts.get("attack", {}).get("ready", false))
+				or bool(selected_attachment.get("upgrades_public_ko", false))
+			) \
 			and not bool(facts.get("attack", {}).get("ko_available", false)) \
 			and str(local_top.get("route_id", "")) not in ["route:attack_ko", "route:attack_pressure"] \
 			and not bool(top_outcome.get("win_now", false)) \
 			and int(top_outcome.get("prizes_now", 0)) <= int(selected_outcome.get("prizes_now", 0)):
+		var selected_ref: Dictionary = selected.get("action_ref", {}) \
+			if selected.get("action_ref", {}) is Dictionary else {}
+		var top_ref: Dictionary = local_top.get("action_ref", {}) \
+			if local_top.get("action_ref", {}) is Dictionary else {}
+		var selected_target := str(selected_ref.get("target", ""))
+		var top_target := str(top_ref.get("target", ""))
+		if _module_id == "stage2_chain" \
+				and bool(selected_attachment.get("upgrades_public_ko", false)) \
+				and bool(local_top.get("engine_rule_floor_exact", false)) \
+				and str(local_top.get("route_id", "")) == "route:evolve" \
+				and str(local_top.get("action_kind", "")) == "evolve" \
+				and selected_target != "" \
+				and top_target != "" \
+				and selected_target != top_target:
+			return {
+				"verified": true,
+				"reason": "public_active_ko_cost_completion_commutes_before_independent_bench_evolve",
+				"certificate_kind": "public_active_ko_cost_before_independent_bench_evolve",
+				"evidence_kind": "public_exact_same_turn_ko_and_independent_action",
+				"interaction_owner": "not_required",
+				"selected_target_slot_id": selected_target,
+				"independent_evolve_target_slot_id": top_target,
+				"projected_damage": int(selected_attachment.get("projected_damage_after_completion", 0)),
+				"opponent_remaining_hp": int(selected_attachment.get("opponent_active_remaining_hp", 0)),
+			}
 		return {
 			"verified": true,
 			"reason": "profiled_typed_attachment_closes_public_attack_cost_gap",
@@ -533,6 +605,15 @@ func pick_verified_interaction_override(
 			items, step, context, profile, certificate_kind
 		)
 	if _module_id == "gardevoir_embrace":
+		var active_completion_override := _active_gardevoir_completion_interaction_override(
+			items,
+			step,
+			context,
+			profile,
+			certificate_kind
+		)
+		if bool(active_completion_override.get("handled", false)):
+			return active_completion_override
 		var engine_hold_override := _profiled_engine_hold_interaction_override(
 			items, step, context, profile, certificate_kind
 		)
@@ -1344,6 +1425,7 @@ func _public_snapshot(
 		var slot: Dictionary = raw_slot
 		var pokemon: Dictionary = slot.get("pokemon", {}) if slot.get("pokemon", {}) is Dictionary else {}
 		var attached_symbols: Array[String] = []
+		var attached_cards: Array[Dictionary] = []
 		for raw_role: Variant in _roles_for_ref(pokemon, semantic_manifest):
 			var role := str(raw_role)
 			role_counts[role] = int(role_counts.get(role, 0)) + 1
@@ -1352,9 +1434,11 @@ func _public_snapshot(
 				var symbol := _energy_symbol(raw_energy as Dictionary)
 				energy_by_symbol[symbol] = int(energy_by_symbol.get(symbol, 0)) + 1
 				attached_symbols.append(symbol)
+				attached_cards.append(_exact_public_card(raw_energy as Dictionary))
 		slot_energy[str(slot.get("slot_id", ""))] = {
 			"pokemon_uid": str(pokemon.get("uid", "")).strip_edges().to_upper(),
 			"attached_symbols": attached_symbols,
+			"attached_cards": attached_cards,
 		}
 		slot_state[str(slot.get("slot_id", ""))] = {
 			"pokemon_uid": str(pokemon.get("uid", "")).strip_edges().to_upper(),
@@ -1460,6 +1544,24 @@ func _annotation_for(
 			annotation["evolution_progress"] = route_id == "route:evolve"
 			annotation["setup_debt"] = not bool(snapshot.get("attack_ready", false))
 			annotation["decision_hints"] = ["preserve_evolution_roots", "resolve_stage2_dependency_order"]
+			var typed_attachment: Dictionary = annotation.get("typed_attachment", {}) \
+				if annotation.get("typed_attachment", {}) is Dictionary else {}
+			if bool(typed_attachment.get("target_is_active", false)) \
+					and bool(typed_attachment.get("completes_required_types", false)) \
+					and bool(typed_attachment.get("deterministic_attack_window_open", false)):
+				annotation["verified_advantage"] = true
+				annotation["verified_advantage_kind"] = \
+					"public_active_ko_cost_before_independent_bench_evolve" \
+					if bool(typed_attachment.get("upgrades_public_ko", false)) \
+					else "public_typed_attack_cost_completion"
+				annotation["verified_evidence_kind"] = "public_exact_active_typed_cost"
+				annotation["decision_hints"] = [
+					"complete_public_ko_before_independent_development" \
+						if bool(typed_attachment.get("upgrades_public_ko", false)) \
+						else "complete_active_attack_cost_before_independent_development",
+					"preserve_evolution_roots",
+					"resolve_stage2_dependency_order",
+				]
 			var search_before_pivot := _profiled_stage2_search_before_pivot_for_route(route, snapshot, profile)
 			annotation["profiled_stage2_search_before_pivot"] = search_before_pivot
 			if bool(search_before_pivot.get("advances_profiled_stage2_search_before_pivot", false)):
@@ -1550,6 +1652,16 @@ func _annotation_for(
 			annotation["decision_hints"] = ["bind_counter_source_and_target", "preserve_counter_engine", "build_profiled_counter_engine_before_trivial_attack", "complete_public_counter_mover_final_prizes", "preserve_safe_counter_mover_prefix_before_secured_ko", "hold_harmful_second_gust"]
 		"gardevoir_embrace":
 			annotation["psychic_energy_in_discard"] = int(snapshot.get("psychic_energy_in_discard", 0))
+			var dragon_weakness_field := _dragon_weakness_field_for_route(
+				route,
+				snapshot,
+				profile
+			)
+			var active_gardevoir_completion := _active_gardevoir_completion_for_route(
+				route,
+				snapshot,
+				profile
+			)
 			var active_gardevoir_suffix := _profiled_active_gardevoir_ko_suffix_for_route(
 				route,
 				snapshot,
@@ -1561,13 +1673,30 @@ func _annotation_for(
 			var profiled_engine_search := _profiled_engine_search_for_route(route, snapshot, profile)
 			var tool_closeout := _prize_scaler_tool_for_route(route, snapshot, profile)
 			var embrace_closeout := _prize_scaler_embrace_for_route(route, snapshot, profile)
+			annotation["dragon_weakness_field"] = dragon_weakness_field
+			annotation["active_gardevoir_completion"] = active_gardevoir_completion
 			annotation["profiled_active_gardevoir_ko_suffix"] = active_gardevoir_suffix
 			annotation["profiled_engine_hold"] = profiled_engine_hold
 			annotation["profiled_retreat_bridge"] = profiled_retreat_bridge
 			annotation["profiled_engine_search"] = profiled_engine_search
 			annotation["prize_scaler_tool"] = tool_closeout
 			annotation["prize_scaler_embrace"] = embrace_closeout
-			if bool(active_gardevoir_suffix.get("advances_profiled_active_gardevoir_ko_suffix", false)):
+			if bool(dragon_weakness_field.get("advances_immediate_dragon_ko", false)):
+				annotation["verified_advantage"] = true
+				annotation["verified_advantage_kind"] = \
+					"public_dragon_weakness_field_immediate_ko"
+				annotation["verified_evidence_kind"] = \
+					"public_exact_same_turn_field_effect_and_attack"
+			elif bool(active_gardevoir_completion.get(
+				"advances_active_gardevoir_ko_completion",
+				false
+			)):
+				annotation["verified_advantage"] = true
+				annotation["verified_advantage_kind"] = \
+					"public_active_gardevoir_attack_completion"
+				annotation["verified_evidence_kind"] = \
+					"public_exact_repeated_single_step_reobserve"
+			elif bool(active_gardevoir_suffix.get("advances_profiled_active_gardevoir_ko_suffix", false)):
 				annotation["verified_advantage"] = true
 				annotation["verified_advantage_kind"] = "profiled_visible_engine_hold"
 				annotation["verified_evidence_kind"] = "public_action_bound_single_step_reobserve"
@@ -1588,7 +1717,12 @@ func _annotation_for(
 				annotation["verified_advantage_kind"] = "public_prize_scaler_tool_closeout"
 			elif bool(embrace_closeout.get("diagnostic_projected_future_sequence", false)):
 				annotation["route_warning"] = "unbound_future_embrace_sequence_is_diagnostic_only"
-			annotation["decision_hints"] = ["respect_damage_budget", "complete_attack_cost_exactly", "tutor_hp_expansion_before_embrace_when_it_unlocks_final_prizes"]
+			annotation["decision_hints"] = [
+				"respect_damage_budget",
+				"complete_attack_cost_exactly",
+				"bench_dragon_weakness_field_before_attacking_when_it_creates_a_ko",
+				"tutor_hp_expansion_before_embrace_when_it_unlocks_final_prizes",
+			]
 		"control_recycle":
 			annotation["non_damage_victory_live"] = bool(snapshot.get("deck_low", false))
 			annotation["decision_hints"] = ["measure_both_deck_clocks", "preserve_recovery_loop"]
@@ -1774,7 +1908,64 @@ func _exact_public_card(card: Dictionary) -> Dictionary:
 		"effect_id": str(card.get("effect_id", "")).strip_edges().to_lower(),
 		"instance_id": int(card.get("instance_id", -1)),
 		"type": str(card.get("type", "")),
+		"energy_type": str(card.get("energy_type", "")),
+		"energy_provides": str(card.get("energy_provides", "")),
 	}
+
+
+func _active_gardevoir_completion_interaction_override(
+	items: Array,
+	step: Dictionary,
+	context: Dictionary,
+	profile: Dictionary,
+	certificate_kind: String
+) -> Dictionary:
+	if certificate_kind != "public_active_gardevoir_attack_completion" \
+			or str(step.get("id", "")).strip_edges().to_lower() != "embrace_target" \
+			or int(step.get("min_select", 1)) != 1 \
+			or int(step.get("max_select", 0)) != 1:
+		return {"handled": false, "items": []}
+	var observation: Dictionary = context.get("v18cpg_observation", {}) \
+		if context.get("v18cpg_observation", {}) is Dictionary else {}
+	var facts: Dictionary = context.get("v18cpg_facts", {}) \
+		if context.get("v18cpg_facts", {}) is Dictionary else {}
+	var snapshot := _public_snapshot(observation, facts, {})
+	var route := {
+		"action_kind": "use_ability",
+		"action_ref": {
+			"source_card": {
+				"uid": str(
+					_module_parameters(profile).get(
+						"active_gardevoir_public_ko",
+						{}
+					).get("attacker_uid", "")
+				)
+			}
+		}
+	}
+	var certificate := _active_gardevoir_completion_for_route(route, snapshot, profile)
+	if not bool(certificate.get("advances_active_gardevoir_ko_completion", false)):
+		return {"handled": false, "items": []}
+	var attacker_uid := str(certificate.get("attacker_uid", "")).strip_edges().to_upper()
+	var visible_attacker_count := 0
+	var states: Dictionary = snapshot.get("slot_state", {}) \
+		if snapshot.get("slot_state", {}) is Dictionary else {}
+	for raw_state: Variant in states.values():
+		if raw_state is Dictionary \
+				and str((raw_state as Dictionary).get("pokemon_uid", "")).to_upper() \
+					== attacker_uid:
+			visible_attacker_count += 1
+	if visible_attacker_count != 1:
+		return {"handled": false, "items": []}
+	for item: Variant in items:
+		if item is PokemonSlot and _interaction_item_uid(item) == attacker_uid:
+			return {
+				"handled": true,
+				"items": [item],
+				"reason": "public_active_gardevoir_attack_completion_target",
+				"certificate_kind": certificate_kind,
+			}
+	return {"handled": false, "items": []}
 
 
 func _slot_instance_id(slot_id: String) -> int:
@@ -1814,18 +2005,48 @@ func _typed_attachment_for_route(route: Dictionary, snapshot: Dictionary, profil
 	var autonomous_uids: Array[String] = []
 	for raw_uid: Variant in parameters.get("autonomous_same_quota_completion_uids", []):
 		autonomous_uids.append(str(raw_uid).strip_edges().to_upper())
-	var attached: Array[String] = []
-	for raw_symbol: Variant in target.get("attached_symbols", []):
-		var symbol := EnergySymbolsScript.canonical(raw_symbol)
-		if symbol != "other":
-			attached.append(symbol)
+	var attached_cards: Array[Dictionary] = []
+	for raw_card: Variant in target.get("attached_cards", []):
+		if raw_card is Dictionary:
+			attached_cards.append((raw_card as Dictionary).duplicate(true))
+	var attached := _typed_payment_symbols(attached_cards, parameters)
 	var missing_before := _missing_required_symbols(required, attached)
 	var card: Dictionary = action_ref.get("card", {}) if action_ref.get("card", {}) is Dictionary else {}
-	var attached_symbol := EnergySymbolsScript.from_card(card)
-	var after := attached.duplicate()
-	if attached_symbol != "other":
-		after.append(attached_symbol)
+	var after_cards := attached_cards.duplicate(true)
+	after_cards.append(_exact_public_card(card))
+	var after := _typed_payment_symbols(after_cards, parameters)
+	var attached_symbol := _typed_energy_symbol(
+		_exact_public_card(card),
+		_count_special_energy_cards(after_cards),
+		parameters
+	)
 	var missing_after := _missing_required_symbols(required, after)
+	var fixed_damage_by_uid: Dictionary = parameters.get(
+		"fixed_damage_after_cost_completion_by_uid",
+		{}
+	) if parameters.get("fixed_damage_after_cost_completion_by_uid", {}) is Dictionary else {}
+	var projected_damage := maxi(0, int(fixed_damage_by_uid.get(target_uid, 0)))
+	var opponent_active: Dictionary = snapshot.get("opponent_active", {}) \
+		if snapshot.get("opponent_active", {}) is Dictionary else {}
+	var opponent_pokemon: Dictionary = opponent_active.get("pokemon", {}) \
+		if opponent_active.get("pokemon", {}) is Dictionary else {}
+	var opponent_uid := str(opponent_pokemon.get("uid", "")).strip_edges().to_upper()
+	var opponent_hp := maxi(0, int(opponent_active.get("remaining_hp", 0)))
+	var allowed_ko_targets: Array[String] = []
+	for raw_uid: Variant in parameters.get("cost_completion_ko_target_uids", []):
+		var allowed_uid := str(raw_uid).strip_edges().to_upper()
+		if allowed_uid != "" and allowed_uid not in allowed_ko_targets:
+			allowed_ko_targets.append(allowed_uid)
+	var completes_cost := not required.is_empty() and missing_after.is_empty()
+	var upgrades_public_ko := target_slot_id != "" \
+		and target_slot_id == str(snapshot.get("own_active_slot_id", "")) \
+		and completes_cost \
+		and bool(snapshot.get("deterministic_attack_window_open", false)) \
+		and not bool(snapshot.get("ko_available", false)) \
+		and projected_damage > int(snapshot.get("attack_max_damage", 0)) \
+		and opponent_hp > 0 \
+		and projected_damage >= opponent_hp \
+		and opponent_uid in allowed_ko_targets
 	return {
 		"target_slot_id": target_slot_id,
 		"target_uid": target_uid,
@@ -1840,8 +2061,12 @@ func _typed_attachment_for_route(route: Dictionary, snapshot: Dictionary, profil
 		"deterministic_attack_window_open": bool(
 			snapshot.get("deterministic_attack_window_open", false)
 		),
+		"projected_damage_after_completion": projected_damage,
+		"opponent_active_uid": opponent_uid,
+		"opponent_active_remaining_hp": opponent_hp,
+		"upgrades_public_ko": upgrades_public_ko,
 		"adds_missing_required_type": missing_after.size() < missing_before.size(),
-		"completes_required_types": not required.is_empty() and missing_after.is_empty(),
+		"completes_required_types": completes_cost,
 	}
 
 
@@ -1857,10 +2082,49 @@ func _missing_required_symbols(required: Array[String], attached: Array[String])
 			continue
 		var index := available.find(symbol)
 		if index < 0:
+			index = available.find("ANY")
+		if index < 0:
 			missing.append(symbol)
 		else:
 			available.remove_at(index)
 	return missing
+
+
+func _typed_payment_symbols(
+	cards: Array[Dictionary],
+	parameters: Dictionary
+) -> Array[String]:
+	var result: Array[String] = []
+	var special_count := _count_special_energy_cards(cards)
+	for card: Dictionary in cards:
+		var symbol := _typed_energy_symbol(card, special_count, parameters)
+		if symbol != "other":
+			result.append(symbol)
+	return result
+
+
+func _typed_energy_symbol(
+	card: Dictionary,
+	attached_special_count: int,
+	parameters: Dictionary
+) -> String:
+	var uid := str(card.get("uid", "")).strip_edges().to_upper()
+	var conditional_any_uids: Array[String] = []
+	for raw_uid: Variant in parameters.get("conditional_any_type_energy_uids", []):
+		var configured_uid := str(raw_uid).strip_edges().to_upper()
+		if configured_uid != "" and configured_uid not in conditional_any_uids:
+			conditional_any_uids.append(configured_uid)
+	if uid in conditional_any_uids:
+		return "ANY" if attached_special_count == 1 else "C"
+	return EnergySymbolsScript.from_card(card)
+
+
+func _count_special_energy_cards(cards: Array[Dictionary]) -> int:
+	var count := 0
+	for card: Dictionary in cards:
+		if str(card.get("type", "")).strip_edges().to_lower() == "special energy":
+			count += 1
+	return count
 
 
 func _attackless_duplicate_gust_hold_annotation(candidate: Dictionary) -> Dictionary:
@@ -3220,6 +3484,186 @@ func _profiled_active_gardevoir_ko_suffix_annotation(candidate: Dictionary) -> D
 		if annotations.get("gardevoir_embrace", {}) is Dictionary else {}
 	return own_annotation.get("profiled_active_gardevoir_ko_suffix", {}) \
 		if own_annotation.get("profiled_active_gardevoir_ko_suffix", {}) is Dictionary else {}
+
+
+func _dragon_weakness_field_annotation(candidate: Dictionary) -> Dictionary:
+	var annotations: Dictionary = candidate.get("module_annotations", {}) \
+		if candidate.get("module_annotations", {}) is Dictionary else {}
+	var own_annotation: Dictionary = annotations.get("gardevoir_embrace", {}) \
+		if annotations.get("gardevoir_embrace", {}) is Dictionary else {}
+	return own_annotation.get("dragon_weakness_field", {}) \
+		if own_annotation.get("dragon_weakness_field", {}) is Dictionary else {}
+
+
+func _active_gardevoir_completion_annotation(candidate: Dictionary) -> Dictionary:
+	var annotations: Dictionary = candidate.get("module_annotations", {}) \
+		if candidate.get("module_annotations", {}) is Dictionary else {}
+	var own_annotation: Dictionary = annotations.get("gardevoir_embrace", {}) \
+		if annotations.get("gardevoir_embrace", {}) is Dictionary else {}
+	return own_annotation.get("active_gardevoir_completion", {}) \
+		if own_annotation.get("active_gardevoir_completion", {}) is Dictionary else {}
+
+
+func _active_gardevoir_completion_for_route(
+	route: Dictionary,
+	snapshot: Dictionary,
+	profile: Dictionary
+) -> Dictionary:
+	if _module_id != "gardevoir_embrace" \
+			or str(route.get("action_kind", "")) != "use_ability":
+		return {}
+	var parameters := _module_parameters(profile)
+	var config: Dictionary = parameters.get("active_gardevoir_public_ko", {}) \
+		if parameters.get("active_gardevoir_public_ko", {}) is Dictionary else {}
+	var attacker_uid := str(config.get("attacker_uid", "")).strip_edges().to_upper()
+	var attack_cost: Array[String] = []
+	for raw_symbol: Variant in config.get("attack_cost", []):
+		attack_cost.append(EnergySymbolsScript.canonical(raw_symbol))
+	var attack_damage := maxi(0, int(config.get("attack_damage", 0)))
+	var damage_per_assignment := maxi(0, int(config.get("damage_per_assignment", 20)))
+	if attacker_uid == "" or attack_cost.is_empty() or attack_damage <= 0 \
+			or damage_per_assignment <= 0:
+		return {}
+	var action_ref: Dictionary = route.get("action_ref", {}) \
+		if route.get("action_ref", {}) is Dictionary else {}
+	var source_card: Dictionary = action_ref.get("source_card", {}) \
+		if action_ref.get("source_card", {}) is Dictionary else {}
+	var source_uid := str(source_card.get("uid", "")).strip_edges().to_upper()
+	var active_slot_id := str(snapshot.get("own_active_slot_id", ""))
+	var states: Dictionary = snapshot.get("slot_state", {}) \
+		if snapshot.get("slot_state", {}) is Dictionary else {}
+	var energies: Dictionary = snapshot.get("slot_energy", {}) \
+		if snapshot.get("slot_energy", {}) is Dictionary else {}
+	var active: Dictionary = states.get(active_slot_id, {}) \
+		if states.get(active_slot_id, {}) is Dictionary else {}
+	var active_energy: Dictionary = energies.get(active_slot_id, {}) \
+		if energies.get(active_slot_id, {}) is Dictionary else {}
+	var attached_symbols: Array[String] = []
+	for raw_symbol: Variant in active_energy.get("attached_symbols", []):
+		attached_symbols.append(EnergySymbolsScript.canonical(raw_symbol))
+	var assignments_needed := _psychic_assignments_to_pay_cost(
+		attached_symbols,
+		attack_cost
+	)
+	var psychic_discard := maxi(0, int(snapshot.get("psychic_energy_in_discard", 0)))
+	var remaining_hp := maxi(0, int(active.get("remaining_hp", 0)))
+	var safe_assignments := maxi(
+		0,
+		int(floor(float(remaining_hp - 1) / float(damage_per_assignment)))
+	)
+	var opponent_active: Dictionary = snapshot.get("opponent_active", {}) \
+		if snapshot.get("opponent_active", {}) is Dictionary else {}
+	var opponent_remaining_hp := maxi(0, int(opponent_active.get("remaining_hp", 0)))
+	var advances := source_uid == attacker_uid \
+		and str(active.get("pokemon_uid", "")).strip_edges().to_upper() == attacker_uid \
+		and assignments_needed > 0 \
+		and psychic_discard >= assignments_needed \
+		and safe_assignments >= assignments_needed \
+		and opponent_remaining_hp > 0 \
+		and opponent_remaining_hp <= attack_damage \
+		and bool(snapshot.get("deterministic_attack_window_open", false)) \
+		and not bool(snapshot.get("attack_ready", false))
+	return {
+		"attacker_uid": attacker_uid,
+		"active_slot_id": active_slot_id,
+		"attack_cost": attack_cost,
+		"attack_damage": attack_damage,
+		"attached_symbols": attached_symbols,
+		"assignments_needed": assignments_needed,
+		"psychic_energy_in_discard": psychic_discard,
+		"safe_assignments": safe_assignments,
+		"opponent_remaining_hp": opponent_remaining_hp,
+		"advances_active_gardevoir_ko_completion": advances,
+	}
+
+
+func _psychic_assignments_to_pay_cost(
+	attached_symbols: Array[String],
+	attack_cost: Array[String]
+) -> int:
+	var available := attached_symbols.duplicate()
+	var specific_missing := 0
+	var colorless_required := 0
+	for required: String in attack_cost:
+		if required == "C":
+			colorless_required += 1
+			continue
+		var match_index := available.find(required)
+		if match_index >= 0:
+			available.remove_at(match_index)
+		elif required == "P":
+			specific_missing += 1
+		else:
+			return 999
+	var psychic_after_specific := specific_missing
+	var leftover_after_specific := maxi(0, available.size())
+	var colorless_missing := maxi(0, colorless_required - leftover_after_specific)
+	return psychic_after_specific + colorless_missing
+
+
+func _dragon_weakness_field_for_route(
+	route: Dictionary,
+	snapshot: Dictionary,
+	profile: Dictionary
+) -> Dictionary:
+	if _module_id != "gardevoir_embrace" \
+			or str(route.get("action_kind", "")) != "play_basic_to_bench":
+		return {}
+	var parameters := _module_parameters(profile)
+	var config: Dictionary = parameters.get("dragon_weakness_field", {}) \
+		if parameters.get("dragon_weakness_field", {}) is Dictionary else {}
+	var field_uid := str(config.get("field_uid", "")).strip_edges().to_upper()
+	var weakness_multiplier := maxi(1, int(config.get("weakness_multiplier", 2)))
+	var attacker_uids := _uid_counts(config.get("attacker_uids", []))
+	var target_uids := _uid_counts(config.get("dragon_target_uids", []))
+	if field_uid == "" or attacker_uids.is_empty() or target_uids.is_empty() \
+			or weakness_multiplier <= 1:
+		return {}
+	var action_ref: Dictionary = route.get("action_ref", {}) \
+		if route.get("action_ref", {}) is Dictionary else {}
+	var card: Dictionary = action_ref.get("card", {}) \
+		if action_ref.get("card", {}) is Dictionary else {}
+	var action_uid := str(card.get("uid", "")).strip_edges().to_upper()
+	var own_states: Dictionary = snapshot.get("slot_state", {}) \
+		if snapshot.get("slot_state", {}) is Dictionary else {}
+	var own_active: Dictionary = own_states.get(str(snapshot.get("own_active_slot_id", "")), {}) \
+		if own_states.get(str(snapshot.get("own_active_slot_id", "")), {}) is Dictionary else {}
+	var attacker_uid := str(own_active.get("pokemon_uid", "")).strip_edges().to_upper()
+	var opponent_active: Dictionary = snapshot.get("opponent_active", {}) \
+		if snapshot.get("opponent_active", {}) is Dictionary else {}
+	var opponent_pokemon: Dictionary = opponent_active.get("pokemon", {}) \
+		if opponent_active.get("pokemon", {}) is Dictionary else {}
+	var opponent_uid := str(opponent_pokemon.get("uid", "")).strip_edges().to_upper()
+	var base_damage := maxi(0, int(snapshot.get("attack_max_damage", 0)))
+	var weakness_damage := base_damage * weakness_multiplier
+	var opponent_remaining_hp := maxi(0, int(opponent_active.get("remaining_hp", 0)))
+	var exact_breakpoint := base_damage > 0 \
+		and opponent_remaining_hp > base_damage \
+		and opponent_remaining_hp <= weakness_damage
+	var advances := action_uid == field_uid \
+		and int(snapshot.get("bench_slots_free", 0)) > 0 \
+		and attacker_uids.has(attacker_uid) \
+		and target_uids.has(opponent_uid) \
+		and bool(snapshot.get("attack_ready", false)) \
+		and not bool(snapshot.get("ko_available", false)) \
+		and exact_breakpoint
+	return {
+		"field_uid": field_uid,
+		"attacker_uid": attacker_uid,
+		"opponent_uid": opponent_uid,
+		"base_damage": base_damage,
+		"weakness_multiplier": weakness_multiplier,
+		"weakness_damage": weakness_damage,
+		"opponent_remaining_hp": opponent_remaining_hp,
+		"context_key": "%s|%s|%s|%d|%d" % [
+			field_uid,
+			attacker_uid,
+			opponent_uid,
+			base_damage,
+			opponent_remaining_hp,
+		],
+		"advances_immediate_dragon_ko": advances,
+	}
 
 
 func _profiled_active_gardevoir_ko_suffix_for_route(

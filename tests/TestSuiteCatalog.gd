@@ -168,6 +168,19 @@ static func _collect_test_files(root_dir: String, relative_dir: String, files: A
 		if dir.current_is_dir():
 			_collect_test_files(root_dir, child_relative, files)
 		elif entry.begins_with("test_") and entry.ends_with(".gd"):
-			files.append(child_relative)
+			var script_path := "%s/%s" % [root_dir, child_relative]
+			if _script_declares_suite_test_method(script_path):
+				files.append(child_relative)
 		entry = dir.get_next()
 	dir.list_dir_end()
+
+
+static func _script_declares_suite_test_method(script_path: String) -> bool:
+	var file := FileAccess.open(script_path, FileAccess.READ)
+	if file == null:
+		return false
+	var source := file.get_as_text()
+	var method_pattern := RegEx.new()
+	if method_pattern.compile("(?m)^[\\t ]*(?:static[\\t ]+)?func[\\t ]+test_[A-Za-z0-9_]*[\\t ]*\\(") != OK:
+		return false
+	return method_pattern.search(source) != null

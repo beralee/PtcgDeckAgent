@@ -9,7 +9,19 @@ var _dialog_card_touch_bridge_touch_index: int = -1
 
 func _ready() -> void:
 	set_process(false)
+	if _battle_pointer_input_router != null:
+		var runtime_profile: UiRuntimeProfile = (
+			GameManager.get_ui_runtime_profile()
+			if GameManager != null and GameManager.has_method("get_ui_runtime_profile")
+			else null
+		)
+		_battle_pointer_input_router.configure(
+			runtime_profile != null
+			and runtime_profile.mobile_like
+		)
+	_ensure_modal_pointer_drain_shield()
 	_init_battle_runtime_log()
+	_setup_ui_interaction_watchdog()
 	_btn_end_turn.pressed.connect(_on_end_turn)
 	_hud_end_turn_btn.pressed.connect(_on_end_turn)
 	_btn_stadium_action.pressed.connect(_on_stadium_action_pressed)
@@ -28,12 +40,12 @@ func _ready() -> void:
 	_btn_back.pressed.connect(_on_back_pressed)
 	_btn_battle_layout.pressed.connect(_on_battle_layout_pressed)
 	_btn_battle_more.pressed.connect(_on_battle_more_pressed)
-	_dialog_confirm.pressed.connect(_on_dialog_confirm)
-	_dialog_cancel.pressed.connect(_on_dialog_cancel)
 	_dialog_confirm.gui_input.connect(_on_dialog_confirm_input)
 	_dialog_cancel.gui_input.connect(_on_dialog_cancel_input)
 	_dialog_confirm.button_down.connect(_on_dialog_confirm_button_down)
 	_dialog_cancel.button_down.connect(_on_dialog_cancel_button_down)
+	_dialog_confirm.pressed.connect(_on_dialog_confirm)
+	_dialog_cancel.pressed.connect(_on_dialog_cancel)
 	_handover_btn.pressed.connect(_on_handover_confirmed)
 	_handover_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_handover_panel.z_index = HANDOVER_OVERLAY_Z_INDEX
@@ -103,19 +115,22 @@ func _ready() -> void:
 	_coin_ok_btn.pressed.connect(func() -> void:
 		_coin_overlay.visible = false
 	)
-	var detail_close_callable := Callable(self, "_hide_card_detail")
-	if not _detail_close_btn.pressed.is_connected(detail_close_callable):
-		_detail_close_btn.pressed.connect(detail_close_callable)
-	if not _detail_close_btn.button_down.is_connected(detail_close_callable):
-		_detail_close_btn.button_down.connect(detail_close_callable)
-	var discard_close_callable := Callable(self, "_close_discard_collection_viewer").bind("close_button")
-	if not _discard_close_btn.pressed.is_connected(discard_close_callable):
-		_discard_close_btn.pressed.connect(discard_close_callable)
+	var detail_close_pressed_callable := Callable(self, "_on_detail_close_pressed")
+	if not _detail_close_btn.pressed.is_connected(detail_close_pressed_callable):
+		_detail_close_btn.pressed.connect(detail_close_pressed_callable)
+	var detail_close_down_callable := Callable(self, "_on_detail_close_button_down")
+	if not _detail_close_btn.button_down.is_connected(detail_close_down_callable):
+		_detail_close_btn.button_down.connect(detail_close_down_callable)
+	var discard_close_pressed_callable := Callable(self, "_on_discard_close_pressed")
+	if not _discard_close_btn.pressed.is_connected(discard_close_pressed_callable):
+		_discard_close_btn.pressed.connect(discard_close_pressed_callable)
 	# Android browsers and a few devices can lose the release event while the
 	# card gallery is cancelling a drag. Closing on button_down gives the modal
-	# a reliable touch exit without waiting for the release/pressed pair.
-	if not _discard_close_btn.button_down.is_connected(discard_close_callable):
-		_discard_close_btn.button_down.connect(discard_close_callable)
+	# a reliable touch exit. The pointer-drain shield keeps the remaining physical
+	# sequence from reaching the board after the overlay disappears.
+	var discard_close_down_callable := Callable(self, "_on_discard_close_button_down")
+	if not _discard_close_btn.button_down.is_connected(discard_close_down_callable):
+		_discard_close_btn.button_down.connect(discard_close_down_callable)
 	var discard_overlay_input_callable := Callable(self, "_on_discard_overlay_gui_input")
 	if not _discard_overlay.gui_input.is_connected(discard_overlay_input_callable):
 		_discard_overlay.gui_input.connect(discard_overlay_input_callable)
@@ -137,11 +152,10 @@ func _ready() -> void:
 
 	# Discard pile interactions
 	_bind_discard_hud_openers()
+	_bind_discard_preview_open_control(_opp_discard_preview, "opponent", "对方弃牌区")
+	_bind_discard_preview_open_control(_my_discard_preview, "my", "己方弃牌区")
 	_bind_lost_zone_hud_openers()
 	if _opp_discard_preview != null:
-		_opp_discard_preview.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-			_show_discard_pile(1 - _view_player, "对方弃牌区")
-		)
 		_opp_discard_preview.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
 			if ci != null:
 				_show_card_detail_for_instance(ci)
@@ -150,9 +164,6 @@ func _ready() -> void:
 				_show_card_detail(cd)
 		)
 	if _my_discard_preview != null:
-		_my_discard_preview.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-			_show_discard_pile(_view_player, "己方弃牌区")
-		)
 		_my_discard_preview.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
 			if ci != null:
 				_show_card_detail_for_instance(ci)
@@ -182,6 +193,14 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	_cancel_transient_platform_input("scene_exit")
+	if _ui_interaction_sessions != null:
+		_ui_interaction_sessions.invalidate("scene_exit")
+	if _ui_interaction_watchdog != null:
+		_ui_interaction_watchdog.release()
+	if _deck_training_controller != null:
+		_deck_training_controller.release()
+		_deck_training_controller = null
 	_release_game_state_machine()
 	_release_battle_runtime_resources()
 	BattleMusicManager.stop_battle_music()
@@ -292,6 +311,8 @@ func _release_runtime_dynamic_nodes() -> void:
 	_draw_reveal_overlay = null
 	_queue_free_runtime_node(_attack_vfx_overlay)
 	_attack_vfx_overlay = null
+	_queue_free_runtime_node(_modal_pointer_drain_shield)
+	_modal_pointer_drain_shield = null
 	_queue_free_runtime_node(_ready_vfx_overlay)
 	_ready_vfx_overlay = null
 	_queue_free_runtime_node(_field_interaction_overlay)
@@ -436,6 +457,19 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var pointer_observation := _observe_battle_pointer_event(event)
+	if _update_modal_pointer_drain(event, pointer_observation):
+		var drain_viewport := get_viewport()
+		if drain_viewport != null:
+			drain_viewport.set_input_as_handled()
+		return
+	if _try_handle_battle_hud_touch_input(event):
+		var hud_touch_viewport := get_viewport()
+		if hud_touch_viewport != null:
+			hud_touch_viewport.set_input_as_handled()
+		return
+	if _route_web_battle_pointer_event(event):
+		return
 	if _try_close_discard_collection_from_cancel(event):
 		var discard_cancel_viewport := get_viewport()
 		if discard_cancel_viewport != null:
@@ -470,6 +504,319 @@ func _input(event: InputEvent) -> void:
 			viewport.set_input_as_handled()
 
 
+func _observe_battle_pointer_event(event: InputEvent) -> Dictionary:
+	if _battle_pointer_input_router == null:
+		return {}
+	return _battle_pointer_input_router.observe(event)
+
+
+func _configure_battle_pointer_input_for_tests(merge_touch_mouse_echo: bool) -> void:
+	if _battle_pointer_input_router != null:
+		_battle_pointer_input_router.configure(merge_touch_mouse_echo)
+
+
+func _claim_modal_pointer_event(event: InputEvent, intent: String) -> bool:
+	if _battle_pointer_input_router == null:
+		return false
+	return _battle_pointer_input_router.claim_event(event, intent, "battle_modal")
+
+
+func _claim_current_modal_pointer_sequence(intent: String) -> bool:
+	if _battle_pointer_input_router == null:
+		return false
+	return _battle_pointer_input_router.claim_current(intent, "battle_modal")
+
+
+func _try_handle_battle_hud_touch_input(event: InputEvent) -> bool:
+	var pointer_position := Vector2(-1.0, -1.0)
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed:
+			return false
+		pointer_position = touch.position
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if (
+			not mouse_button.pressed
+			or mouse_button.button_index != MOUSE_BUTTON_LEFT
+		):
+			return false
+		pointer_position = (
+			mouse_button.global_position
+			if mouse_button.global_position != Vector2.ZERO
+			else mouse_button.position
+		)
+	else:
+		return false
+	if _is_board_modal_overlay_visible():
+		return false
+	for descriptor: Dictionary in [
+		{
+			"control": find_child("OppDiscardHudPanel", true, false),
+			"side": "opponent",
+			"title": "对方弃牌区",
+		},
+		{
+			"control": find_child("MyDiscardHudPanel", true, false),
+			"side": "my",
+			"title": "己方弃牌区",
+		},
+	]:
+		var discard_control := descriptor.get("control", null) as Control
+		if not _battle_hud_control_contains_touch(discard_control, pointer_position):
+			continue
+		_on_discard_open_control_input(
+			event,
+			str(descriptor.get("side", "my")),
+			str(descriptor.get("title", "弃牌区"))
+		)
+		return _discard_overlay != null and _discard_overlay.visible
+	for descriptor: Dictionary in [
+		{
+			"control": find_child("InfoEnemyLost", true, false),
+			"enemy": true,
+		},
+		{
+			"control": find_child("InfoMyLost", true, false),
+			"enemy": false,
+		},
+	]:
+		var lost_control := descriptor.get("control", null) as Control
+		if not _battle_hud_control_contains_touch(lost_control, pointer_position):
+			continue
+		_on_lost_zone_open_control_input(event, bool(descriptor.get("enemy", false)))
+		return _discard_overlay != null and _discard_overlay.visible
+	return false
+
+
+func _battle_hud_control_contains_touch(control: Control, screen_position: Vector2) -> bool:
+	if not PointerGeometryScript.control_is_pointer_visible(control):
+		return false
+	# _input receives Godot's logical viewport coordinate. With canvas_items
+	# stretch, get_global_transform_with_canvas() includes the physical-screen
+	# scale and therefore belongs to a different coordinate space. Resolve the
+	# HUD rectangle in battle-local logical coordinates, matching the established
+	# portrait Bench hit-test path.
+	var battle_rect := _control_rect_in_battle_local(control)
+	if (
+		battle_rect.size.x <= 0.0
+		or battle_rect.size.y <= 0.0
+	):
+		return false
+	if battle_rect.has_point(screen_position):
+		return true
+	# Some forced-orientation builds keep a landscape logical viewport and rotate
+	# the battle root. Their touch position must be converted once; Android builds
+	# that already report post-rotation logical coordinates are handled above.
+	if _rotated_portrait_canvas_active:
+		return battle_rect.has_point(_screen_position_to_battle_local(screen_position))
+	return false
+
+
+func _ensure_modal_pointer_drain_shield() -> void:
+	if (
+		_modal_pointer_drain_shield != null
+		and is_instance_valid(_modal_pointer_drain_shield)
+	):
+		return
+	var shield := Control.new()
+	shield.name = "ModalPointerDrainShield"
+	shield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shield.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shield.focus_mode = Control.FOCUS_NONE
+	shield.z_as_relative = false
+	shield.z_index = MODAL_POINTER_DRAIN_SHIELD_Z_INDEX
+	shield.visible = false
+	shield.gui_input.connect(_on_modal_pointer_drain_shield_input)
+	add_child(shield)
+	_modal_pointer_drain_shield = shield
+
+
+func _begin_modal_pointer_drain(intent: String) -> bool:
+	var resolved_intent := intent.strip_edges()
+	if resolved_intent == "":
+		resolved_intent = "modal_commit"
+	if not _claim_current_modal_pointer_sequence(resolved_intent):
+		return false
+	return _show_modal_pointer_drain_shield(resolved_intent)
+
+
+func _begin_modal_pointer_drain_for_event(
+	event: InputEvent,
+	intent: String
+) -> bool:
+	var resolved_intent := intent.strip_edges()
+	if resolved_intent == "":
+		resolved_intent = "modal_commit"
+	if not _claim_modal_pointer_event(event, resolved_intent):
+		return false
+	return _show_modal_pointer_drain_shield(resolved_intent)
+
+
+func _show_modal_pointer_drain_shield(resolved_intent: String) -> bool:
+	_ensure_modal_pointer_drain_shield()
+	if _modal_pointer_drain_shield == null:
+		return false
+	_modal_pointer_drain_release_pending = false
+	_modal_pointer_drain_intent = resolved_intent
+	_modal_pointer_drain_shield.mouse_filter = Control.MOUSE_FILTER_STOP
+	_modal_pointer_drain_shield.visible = true
+	_modal_pointer_drain_shield.z_as_relative = false
+	_modal_pointer_drain_shield.z_index = MODAL_POINTER_DRAIN_SHIELD_Z_INDEX
+	if _modal_pointer_drain_shield.get_parent() == self:
+		move_child(_modal_pointer_drain_shield, get_child_count() - 1)
+	_runtime_log("modal_pointer_drain_started", "intent=%s" % resolved_intent)
+	return true
+
+
+func _end_modal_pointer_drain(reason: String = "complete") -> void:
+	_modal_pointer_drain_release_pending = false
+	if (
+		_modal_pointer_drain_shield == null
+		or not is_instance_valid(_modal_pointer_drain_shield)
+	):
+		_modal_pointer_drain_intent = ""
+		return
+	var finished_intent := _modal_pointer_drain_intent
+	_modal_pointer_drain_shield.visible = false
+	_modal_pointer_drain_shield.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_modal_pointer_drain_intent = ""
+	_runtime_log(
+		"modal_pointer_drain_finished",
+		"intent=%s reason=%s" % [finished_intent, reason]
+	)
+
+
+func _update_modal_pointer_drain(
+	event: InputEvent,
+	observation: Dictionary
+) -> bool:
+	if (
+		_modal_pointer_drain_shield == null
+		or not is_instance_valid(_modal_pointer_drain_shield)
+		or not _modal_pointer_drain_shield.visible
+	):
+		return false
+	if not (
+		event is InputEventScreenTouch
+		or event is InputEventScreenDrag
+		or event is InputEventMouseButton
+		or event is InputEventMouseMotion
+	):
+		return false
+	var sequence_variant: Variant = observation.get("sequence", null)
+	var sequence := sequence_variant as Object if sequence_variant is Object else null
+	var owned_by_modal := (
+		sequence != null
+		and str(sequence.get("owner")) == "battle_modal"
+		and str(sequence.get("consumed_intent")) != ""
+	)
+	var is_press := false
+	var is_release := false
+	if event is InputEventScreenTouch:
+		is_press = (event as InputEventScreenTouch).pressed
+		is_release = not is_press
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		is_press = mouse_button.pressed
+		is_release = not is_press
+	if is_press and not owned_by_modal:
+		# A newly observed physical press is independent. Remove the drain shield
+		# synchronously, before Godot performs GUI hit testing for this event.
+		_end_modal_pointer_drain("new_pointer_sequence")
+		return false
+	if not owned_by_modal:
+		# Keep swallowing orphan tails while the barrier is armed. They cannot be
+		# proven to belong to a new gesture because no new press was observed.
+		return true
+	if is_release and event is InputEventMouseButton:
+		var sequence_state := str(sequence.get("state"))
+		if sequence_state != "active" and not _modal_pointer_drain_release_pending:
+			# Defer removal so this release is still delivered to the shield, not
+			# to a Control that never received its matching press.
+			_modal_pointer_drain_release_pending = true
+			call_deferred("_end_modal_pointer_drain", "compatibility_mouse_tail_complete")
+	return true
+
+
+func _on_modal_pointer_drain_shield_input(_event: InputEvent) -> void:
+	if _modal_pointer_drain_shield == null or not _modal_pointer_drain_shield.visible:
+		return
+	_modal_pointer_drain_shield.accept_event()
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _route_web_battle_pointer_event(event: InputEvent) -> bool:
+	var runtime_profile: UiRuntimeProfile = GameManager.get_ui_runtime_profile() if GameManager != null and GameManager.has_method("get_ui_runtime_profile") else null
+	if not WebUiFeatureGateScript.web_input_adapter_v2_enabled(runtime_profile):
+		return false
+	if not (event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion):
+		return false
+	var normalized := _web_battle_input_adapter.ingest(event)
+	var should_swallow := bool(normalized.get("suppressed", false))
+	# After blur/pointercancel, an orphan touch release belongs to the cancelled
+	# sequence and must not reach a newly opened modal underneath it.
+	if (event is InputEventScreenTouch or event is InputEventScreenDrag) and not bool(normalized.get("deliver", false)):
+		should_swallow = true
+	if should_swallow:
+		var viewport := get_viewport()
+		if viewport != null:
+			viewport.set_input_as_handled()
+	return should_swallow
+
+
+func _cancel_transient_platform_input(reason: String = "platform_cancel") -> void:
+	_end_modal_pointer_drain(reason)
+	if _battle_pointer_input_router != null:
+		_battle_pointer_input_router.cancel_all(reason)
+	if _web_battle_input_adapter != null:
+		_web_battle_input_adapter.cancel_all(reason)
+	_clear_dialog_card_touch_bridge()
+	_prize_touch_press_contexts.clear()
+	if _slot_touch_long_press_timer != null:
+		_slot_touch_long_press_timer.stop()
+	_cancel_slot_touch_long_press(true)
+	_cancel_slot_mouse_action_press(true)
+	if _battle_drag_scroll_coordinator != null and _battle_drag_scroll_coordinator.has_method("clear_transient_input_capture"):
+		_battle_drag_scroll_coordinator.call("clear_transient_input_capture", reason)
+
+
+func _on_browser_viewport_changed(_payload: Dictionary = {}) -> void:
+	_on_viewport_size_changed()
+
+
+func _setup_ui_interaction_watchdog() -> void:
+	if _ui_interaction_watchdog != null and is_instance_valid(_ui_interaction_watchdog):
+		return
+	_ui_interaction_watchdog = UiInteractionWatchdogScript.new()
+	_ui_interaction_watchdog.name = "UiInteractionWatchdog"
+	add_child(_ui_interaction_watchdog)
+	_ui_interaction_watchdog.setup(_ui_interaction_sessions, Callable(self, "_on_ui_interaction_watchdog_recovery"))
+
+
+func _on_ui_interaction_watchdog_recovery(session: UiInteractionSession) -> void:
+	if session == null:
+		return
+	_runtime_log("ui_interaction_watchdog", JSON.stringify(session.snapshot()))
+	match session.completion_policy:
+		UiInteractionSessionScript.POLICY_SAFE_COMPLETE_PRESENTATION:
+			if session.interaction_type == "draw_reveal" and _battle_draw_reveal_controller != null:
+				_battle_draw_reveal_controller.call("_finish_all_reveals", self)
+		UiInteractionSessionScript.POLICY_REBUILD_REQUIRED_HUMAN_PROMPT:
+			if session.interaction_type == "effect_step" and _battle_effect_interaction_controller != null:
+				_battle_effect_interaction_controller.call("renew_effect_interaction_session", self)
+				_battle_effect_interaction_controller.call("show_next_effect_interaction_step", self)
+		UiInteractionSessionScript.POLICY_AI_FALLBACK:
+			if session.interaction_type == "effect_step":
+				_reset_effect_interaction()
+				_refresh_ui()
+				_maybe_run_ai()
+
+
 func _try_close_discard_collection_from_cancel(event: InputEvent) -> bool:
 	if _discard_overlay == null or not _discard_overlay.visible:
 		return false
@@ -485,6 +832,8 @@ func _try_close_discard_collection_from_cancel(event: InputEvent) -> bool:
 
 func _on_discard_overlay_gui_input(event: InputEvent) -> void:
 	if _discard_overlay == null or not _discard_overlay.visible:
+		return
+	if _consume_modal_hud_input_if_needed(event, "discard_collection_backdrop"):
 		return
 	var pointer_position := Vector2.ZERO
 	if event is InputEventScreenTouch:
@@ -502,6 +851,7 @@ func _on_discard_overlay_gui_input(event: InputEvent) -> void:
 	var discard_box := get_node_or_null("DiscardOverlay/DiscardCenter/DiscardBox") as Control
 	if discard_box != null and discard_box.get_global_rect().has_point(pointer_position):
 		return
+	_begin_modal_pointer_drain("discard_backdrop_close")
 	_close_discard_collection_viewer("backdrop")
 	var viewport := get_viewport()
 	if viewport != null:
@@ -522,6 +872,24 @@ func _close_discard_collection_viewer(reason: String = "close") -> void:
 	# or steal the close interaction.
 	if is_inside_tree():
 		call_deferred("_maybe_run_ai")
+
+
+func _on_detail_close_button_down() -> void:
+	_begin_modal_pointer_drain("detail_close")
+	_hide_card_detail()
+
+
+func _on_detail_close_pressed() -> void:
+	_hide_card_detail()
+
+
+func _on_discard_close_button_down() -> void:
+	_begin_modal_pointer_drain("discard_close")
+	_close_discard_collection_viewer("close_button_down")
+
+
+func _on_discard_close_pressed() -> void:
+	_close_discard_collection_viewer("close_button")
 
 
 func _try_handle_library_search_board_touch_input(event: InputEvent) -> bool:
@@ -1311,6 +1679,9 @@ func _apply_portrait_top_action_compact_label(button: Button) -> void:
 		return
 	if not button.has_meta("_portrait_previous_top_action_text"):
 		button.set_meta("_portrait_previous_top_action_text", button.text)
+	if button.has_meta("portrait_compact_text_override"):
+		button.text = str(button.get_meta("portrait_compact_text_override"))
+		return
 	match String(button.name):
 		"BtnOpponentHand":
 			button.text = "对手"
@@ -2108,6 +2479,11 @@ func _refresh_deck_shuffle_detection(gs: GameState) -> void:
 func _on_state_changed(_new_phase: GameState.GamePhase) -> void:
 	_capture_battle_recording_context_if_ready()
 	_refresh_ui()
+	if _deck_training_controller != null:
+		var training_status := _deck_training_controller.on_state_changed()
+		if bool(training_status.get("completed", false)) or bool(training_status.get("failed", false)):
+			_runtime_log("deck_training_terminal", JSON.stringify(training_status))
+			return
 	_check_two_player_handover()
 	_maybe_run_ai()
 	_runtime_log("state_changed", _state_snapshot())
@@ -2152,6 +2528,13 @@ func _on_action_logged(action: GameAction) -> void:
 		action.data["draw_source"] = "turn_start"
 		_record_turn_start_snapshot_after_draw(action)
 	if (
+		action != null
+		and action.action_type == GameAction.ActionType.SETUP_SET_PRIZES
+		and bool(action.data.get("opening_deal", false))
+		and not _is_review_mode()
+	):
+		_battle_draw_reveal_controller.call("enqueue_reveal", self, action)
+	elif (
 		action != null
 		and action.action_type == GameAction.ActionType.DRAW_CARD
 		and _gsm != null
@@ -2211,6 +2594,8 @@ func _on_action_logged(action: GameAction) -> void:
 		"description": _format_action_description_for_display(action.description),
 		"resolved_player_index": action.player_index,
 	})
+	if _deck_training_controller != null:
+		_deck_training_controller.on_action_logged(action)
 
 
 
@@ -2313,6 +2698,11 @@ func _update_prize_title(label: Label, player_index: int, default_text: String, 
 
 func _on_game_over(winner_index: int, reason: String) -> void:
 	_runtime_log("game_over", "winner=%d reason=%s" % [winner_index, reason])
+	if _deck_training_controller != null:
+		_clear_prize_selection()
+		_refresh_ui()
+		_deck_training_controller.on_game_over(winner_index, reason)
+		return
 	# Finalize the tournament result while its battle identity is still intact.
 	# The result screen may remain open for a long time (or the app may resume),
 	# so its return route must not depend on the mutable in-progress flag.
@@ -2421,6 +2811,10 @@ func _on_stadium_area_input(event: InputEvent) -> void:
 func _on_back_pressed() -> void:
 	if _is_field_interaction_active():
 		return
+	if _deck_training_controller != null:
+		GameManager.clear_deck_training_launch()
+		GameManager.goto_deck_training()
+		return
 	_pending_choice = "confirm_exit"
 	_show_dialog("确认退出对战？当前进度不会保存。", ["确认退出", "取消"], {})
 	_dialog_cancel.visible = false
@@ -2428,6 +2822,11 @@ func _on_back_pressed() -> void:
 
 
 func _on_zeus_help_pressed() -> void:
+	if _deck_training_controller != null:
+		if _is_field_interaction_active():
+			return
+		_deck_training_controller.show_stage_goal()
+		return
 	if not _can_accept_live_action() or _gsm == null or _gsm.game_state == null or _is_field_interaction_active():
 		return
 	if _view_player < 0 or _view_player >= _gsm.game_state.players.size():

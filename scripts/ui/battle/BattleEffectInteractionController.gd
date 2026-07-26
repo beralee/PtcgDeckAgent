@@ -1,8 +1,12 @@
 class_name BattleEffectInteractionController
 extends RefCounted
 
+const UiInteractionSessionScript := preload("res://scripts/ui/interactions/UiInteractionSession.gd")
+
 const EFFECT_GENERATION_META := "pending_effect_interaction_generation"
 const EFFECT_RESPONSE_META := "effect_interaction_response"
+const HUMAN_EFFECT_TIMEOUT_MSEC := 15000
+const AI_EFFECT_TIMEOUT_MSEC := 12000
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -37,6 +41,7 @@ func start_effect_interaction(
 		"__interaction_generation": interaction_generation,
 		BaseEffect.INTERACTION_INTENTS_KEY: {},
 	})
+	renew_effect_interaction_session(scene)
 	scene.call(
 		"_runtime_log",
 		"start_effect_interaction",
@@ -209,6 +214,7 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		return
 	step = _apply_contextual_step_exclusions(scene, pending_effect_step_index, pending_effect_steps, step)
 	var chooser_player: int = resolve_effect_step_chooser_player(scene, step)
+	_ensure_effect_interaction_session(scene, chooser_player, pending_effect_step_index)
 	if (
 		GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
 		and chooser_player >= 0
@@ -347,6 +353,7 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"requires_explicit_empty_selection",
 		"force_confirm",
 		"cancel_resolves_empty",
+		"auto_confirm_at_max",
 	]:
 		if step.has(passthrough_key):
 			dialog_data[passthrough_key] = step.get(passthrough_key)
@@ -584,6 +591,7 @@ func ensure_empty_search_preview_fallback(
 
 
 func reset_effect_interaction(scene: Object) -> void:
+	_finish_effect_interaction_session(scene, "effect_reset")
 	scene.call("_runtime_log", "reset_effect_interaction", scene.call("_effect_state_snapshot"))
 	scene.remove_meta(EFFECT_RESPONSE_META)
 	var clearing_effect_dialog: bool = str(scene.get("_pending_choice")) == "effect_interaction"
@@ -618,6 +626,75 @@ func reset_effect_interaction(scene: Object) -> void:
 		var dialog_overlay: Panel = scene.get("_dialog_overlay")
 		if dialog_overlay != null:
 			dialog_overlay.visible = false
+
+
+func renew_effect_interaction_session(scene: Object) -> void:
+	if scene == null:
+		return
+	var step_index := int(scene.get("_pending_effect_step_index"))
+	var steps: Array[Dictionary] = scene.get("_pending_effect_steps")
+	if step_index < 0 or step_index >= steps.size():
+		return
+	var chooser := resolve_effect_step_chooser_player(scene, steps[step_index])
+	_ensure_effect_interaction_session(scene, chooser, step_index, true)
+
+
+func _ensure_effect_interaction_session(
+	scene: Object,
+	chooser_player: int,
+	step_index: int,
+	force_replace: bool = false
+) -> void:
+	var registry: UiInteractionSessionRegistry = scene.get("_ui_interaction_sessions") as UiInteractionSessionRegistry
+	if registry == null:
+		return
+	var ai_owned := _is_ai_owned_chooser(scene, chooser_player)
+	var owner := "effect_ai" if ai_owned else "effect_human"
+	var current := registry.current_session()
+	if current != null and current.is_active():
+		if (
+			not force_replace
+			and current.owner == owner
+			and current.interaction_type == "effect_step"
+			and int(current.metadata.get("step_index", -1)) == step_index
+		):
+			current.mark_progress(-1, current.generation)
+			return
+		if not current.owner.begins_with("effect_"):
+			return
+		registry.finish_current(current.session_id, current.generation, "effect_step_transition")
+	var policy := UiInteractionSessionScript.POLICY_AI_FALLBACK if ai_owned else UiInteractionSessionScript.POLICY_REBUILD_REQUIRED_HUMAN_PROMPT
+	registry.open_session(
+		owner,
+		"effect_step",
+		"ai_effect_choice" if ai_owned else "human_effect_choice",
+		policy,
+		AI_EFFECT_TIMEOUT_MSEC if ai_owned else HUMAN_EFFECT_TIMEOUT_MSEC,
+		{
+			"step_index": step_index,
+			"chooser_player": chooser_player,
+			"effect_generation": int(scene.get_meta(EFFECT_GENERATION_META, 0)),
+			"effect_kind": str(scene.get("_pending_effect_kind")),
+		}
+	)
+
+
+func _finish_effect_interaction_session(scene: Object, reason: String) -> void:
+	var registry: UiInteractionSessionRegistry = scene.get("_ui_interaction_sessions") as UiInteractionSessionRegistry
+	if registry == null:
+		return
+	var current := registry.current_session()
+	if current != null and current.owner.begins_with("effect_"):
+		registry.finish_current(current.session_id, current.generation, reason)
+
+
+func _is_ai_owned_chooser(scene: Object, chooser_player: int) -> bool:
+	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+		return false
+	var ai_opponent: Variant = scene.get("_ai_opponent")
+	if ai_opponent != null:
+		return chooser_player == int(ai_opponent.player_index)
+	return chooser_player == 1
 
 
 func _finish_effect_interaction(scene: Object) -> void:

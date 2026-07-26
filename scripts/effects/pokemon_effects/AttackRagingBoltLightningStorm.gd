@@ -45,6 +45,27 @@ func get_attack_interaction_steps(
 	}]
 
 
+func validate_attack_interaction(
+	attacker: PokemonSlot,
+	attack_index: int,
+	targets: Array,
+	state: GameState
+) -> Dictionary:
+	if attacker == null or state == null or not applies_to_attack_index(attack_index):
+		return interaction_validation_error("Lightning Storm attacker or attack index is invalid")
+	var top := attacker.get_top_card()
+	if top == null or top.owner_index < 0 or top.owner_index >= state.players.size():
+		return interaction_validation_error("Lightning Storm attacker owner is invalid")
+	var legal_targets: Array = state.players[1 - top.owner_index].get_all_pokemon()
+	return validate_context_selection(
+		get_interaction_context(targets),
+		STEP_ID,
+		legal_targets,
+		1,
+		1
+	)
+
+
 func execute_attack(
 	attacker: PokemonSlot,
 	defender: PokemonSlot,

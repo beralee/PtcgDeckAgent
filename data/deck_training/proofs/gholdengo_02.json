@@ -1,0 +1,431 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 349,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 9,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:coin_active",
+      "choice_label": "前场嘉奖硬币抽暗码迷与派帕诱饵",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:cipher_pro_retrieval",
+      "choice_label": "暗码迷把PRO置顶并放置洗牌伪装牌",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:munkidori_second_target",
+      "choice_label": "愿增猿把第二目标校正到200HP",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:coin_bench",
+      "choice_label": "备战嘉奖硬币只抽PRO",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:energy_search_pro",
+      "choice_label": "能量输送PRO取得八种基本能量",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_gold_rush",
+      "choice_label": "第一组四色能量完成200伤",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:ogerpon_reply",
+      "choice_label": "猛雷鼓规则AI完整回合",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:second_gold_rush",
+      "choice_label": "第二组四色能量完成200伤",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 8,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "af8e14b26c088e6f530eb965c6de20271e9a9ae8d6f7f06fcf8b3084923edbf2"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:coin_active",
+        "choice_label": "前场嘉奖硬币抽暗码迷与派帕诱饵",
+        "depth": 8,
+        "player_actions": 7,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:cipher_pro_retrieval",
+              "choice_label": "暗码迷把PRO置顶并放置洗牌伪装牌",
+              "depth": 8,
+              "player_actions": 6,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:munkidori_second_target",
+                    "choice_label": "愿增猿把第二目标校正到200HP",
+                    "depth": 8,
+                    "player_actions": 5,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:coin_bench",
+                          "choice_label": "备战嘉奖硬币只抽PRO",
+                          "depth": 8,
+                          "player_actions": 4,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:energy_search_pro",
+                                "choice_label": "能量输送PRO取得八种基本能量",
+                                "depth": 8,
+                                "player_actions": 3,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_gold_rush",
+                                      "choice_label": "第一组四色能量完成200伤",
+                                      "depth": 8,
+                                      "player_actions": 2,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:ogerpon_reply",
+                                            "choice_label": "猛雷鼓规则AI完整回合",
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:second_gold_rush",
+                                                  "choice_label": "第二组四色能量完成200伤",
+                                                  "depth": 8,
+                                                  "player_actions": 1,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [],
+                                                    "coverage_complete": true,
+                                                    "depth": 8,
+                                                    "player_actions": 0,
+                                                    "reason": "production_witness_reached_goal",
+                                                    "score": 2,
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 0
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 8,
+                                              "player_actions": 1,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:second_gold_rush",
+                                              "selected_choice_label": "第二组四色能量完成200伤",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 8,
+                                        "player_actions": 1,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:ogerpon_reply",
+                                        "selected_choice_label": "猛雷鼓规则AI完整回合",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 8,
+                                  "player_actions": 2,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_gold_rush",
+                                  "selected_choice_label": "第一组四色能量完成200伤",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 8,
+                            "player_actions": 3,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:energy_search_pro",
+                            "selected_choice_label": "能量输送PRO取得八种基本能量",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 8,
+                      "player_actions": 4,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:coin_bench",
+                      "selected_choice_label": "备战嘉奖硬币只抽PRO",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 8,
+                "player_actions": 5,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:munkidori_second_target",
+                "selected_choice_label": "愿增猿把第二目标校正到200HP",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 8,
+          "player_actions": 6,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:cipher_pro_retrieval",
+          "selected_choice_label": "暗码迷把PRO置顶并放置洗牌伪装牌",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 8,
+    "player_actions": 7,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:coin_active",
+    "selected_choice_label": "前场嘉奖硬币抽暗码迷与派帕诱饵",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:coin_active",
+      "choice_label": "前场嘉奖硬币抽暗码迷与派帕诱饵",
+      "depth": 8,
+      "player_actions": 7,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:cipher_pro_retrieval",
+            "choice_label": "暗码迷把PRO置顶并放置洗牌伪装牌",
+            "depth": 8,
+            "player_actions": 6,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:munkidori_second_target",
+                  "choice_label": "愿增猿把第二目标校正到200HP",
+                  "depth": 8,
+                  "player_actions": 5,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:coin_bench",
+                        "choice_label": "备战嘉奖硬币只抽PRO",
+                        "depth": 8,
+                        "player_actions": 4,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:energy_search_pro",
+                              "choice_label": "能量输送PRO取得八种基本能量",
+                              "depth": 8,
+                              "player_actions": 3,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_gold_rush",
+                                    "choice_label": "第一组四色能量完成200伤",
+                                    "depth": 8,
+                                    "player_actions": 2,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:ogerpon_reply",
+                                          "choice_label": "猛雷鼓规则AI完整回合",
+                                          "depth": 8,
+                                          "player_actions": 1,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:second_gold_rush",
+                                                "choice_label": "第二组四色能量完成200伤",
+                                                "depth": 8,
+                                                "player_actions": 1,
+                                                "reason": "production_witness_reached_goal",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [],
+                                                  "coverage_complete": true,
+                                                  "depth": 8,
+                                                  "player_actions": 0,
+                                                  "reason": "production_witness_reached_goal",
+                                                  "score": 2,
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 0
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 8,
+                                            "player_actions": 1,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:second_gold_rush",
+                                            "selected_choice_label": "第二组四色能量完成200伤",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 8,
+                                      "player_actions": 1,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:ogerpon_reply",
+                                      "selected_choice_label": "猛雷鼓规则AI完整回合",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 8,
+                                "player_actions": 2,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_gold_rush",
+                                "selected_choice_label": "第一组四色能量完成200伤",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 8,
+                          "player_actions": 3,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:energy_search_pro",
+                          "selected_choice_label": "能量输送PRO取得八种基本能量",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 8,
+                    "player_actions": 4,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:coin_bench",
+                    "selected_choice_label": "备战嘉奖硬币只抽PRO",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 8,
+              "player_actions": 5,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:munkidori_second_target",
+              "selected_choice_label": "愿增猿把第二目标校正到200HP",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 8,
+        "player_actions": 6,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:cipher_pro_retrieval",
+        "selected_choice_label": "暗码迷把PRO置顶并放置洗牌伪装牌",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "af8e14b26c088e6f530eb965c6de20271e9a9ae8d6f7f06fcf8b3084923edbf2",
+  "scenario_id": "gholdengo_02",
+  "shortest_player_actions": 7,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

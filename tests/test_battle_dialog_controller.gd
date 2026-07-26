@@ -1385,3 +1385,39 @@ func test_library_search_board_source_card_is_read_only() -> String:
 	])
 	scene.free()
 	return result
+
+
+func test_assignment_at_max_auto_confirms_unless_effect_requires_review() -> String:
+	var controller := BattleDialogControllerScript.new()
+	return run_checks([
+		assert_true(
+			bool(controller.call("should_auto_confirm_assignment", {
+				"min_select": 0,
+				"max_select": 2,
+				"auto_confirm_at_max": true,
+			}, 2)),
+			"Optional assignment effects should complete as soon as every allowed assignment is made",
+		),
+		assert_false(
+			bool(controller.call("should_auto_confirm_assignment", {
+				"min_select": 1,
+				"max_select": 1,
+				"field_assignment_require_confirm": true,
+			}, 1)),
+			"Effects such as Energy Switch that require route review must keep the explicit confirm step",
+		),
+		assert_false(
+			bool(controller.call("should_auto_confirm_assignment", {
+				"min_select": 0,
+				"max_select": 2,
+			}, 1)),
+			"An incomplete optional assignment must remain editable",
+		),
+		assert_false(
+			bool(controller.call("should_auto_confirm_assignment", {
+				"min_select": 0,
+				"max_select": 2,
+			}, 2)),
+			"Assignment effects must opt in before reaching max skips their review step",
+		),
+	])

@@ -260,6 +260,53 @@ const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
+	window.__ptcgLifecycleQueue = Array.isArray(window.__ptcgLifecycleQueue) ? window.__ptcgLifecycleQueue : [];
+	if (!window.__ptcgEarlyLifecycleBridge) {
+		const earlyListeners = [];
+		function queueLifecycleEvent(eventName, payload) {
+			window.__ptcgLifecycleQueue.push({ event: eventName, payload: payload || {} });
+			if (window.__ptcgLifecycleQueue.length > 100) {
+				window.__ptcgLifecycleQueue.shift();
+			}
+		}
+		function listenEarly(target, eventName, handler) {
+			target.addEventListener(eventName, handler, true);
+			earlyListeners.push([target, eventName, handler]);
+		}
+		listenEarly(window, 'error', function (event) {
+			queueLifecycleEvent('runtime_error', {
+				kind: 'error',
+				message: String(event.message || ''),
+				source: String(event.filename || ''),
+				line: Number(event.lineno || 0),
+				column: Number(event.colno || 0),
+				stack: event.error && event.error.stack ? String(event.error.stack) : ''
+			});
+		});
+		listenEarly(window, 'unhandledrejection', function (event) {
+			const reason = event.reason;
+			queueLifecycleEvent('runtime_error', {
+				kind: 'unhandledrejection',
+				message: String(reason && reason.message ? reason.message : reason || ''),
+				stack: reason && reason.stack ? String(reason.stack) : ''
+			});
+		});
+		listenEarly(window, 'pagehide', function (event) {
+			queueLifecycleEvent('pagehide', { persisted: !!event.persisted });
+		});
+		listenEarly(document, 'visibilitychange', function () {
+			queueLifecycleEvent(document.hidden ? 'visibility_hidden' : 'visibility_visible', { hidden: !!document.hidden });
+		});
+		window.__ptcgEarlyLifecycleBridge = {
+			uninstall: function () {
+				earlyListeners.forEach(function (item) {
+					try { item[0].removeEventListener(item[1], item[2], true); } catch (_error) {}
+				});
+				earlyListeners.length = 0;
+			}
+		};
+	}
+
 	const TEXT_UNKNOWN_ERROR = '\u53d1\u751f\u672a\u77e5\u9519\u8bef\u3002';
 	const TEXT_START_FAILED = '\u542f\u52a8\u5931\u8d25';
 	const TEXT_RETRY = '\u8bf7\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5\uff1b\u5982\u679c\u4ecd\u5931\u8d25\uff0c\u8bf7\u6362 Safari \u6216 Chrome \u6253\u5f00\u3002';

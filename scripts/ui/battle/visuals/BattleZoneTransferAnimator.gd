@@ -19,7 +19,7 @@ func handles(event: Dictionary) -> bool:
 func build_motion_plan(event: Dictionary, viewport_size: Vector2, portrait: bool) -> Dictionary:
 	var semantic := str(event.get("semantic", "zone_transfer"))
 	var count := maxi(1, int(event.get("count", (event.get("card_instance_ids", []) as Array).size())))
-	var visible_count := mini(MAX_VISIBLE_CARDS, count)
+	var visible_count := mini(3 if portrait else MAX_VISIBLE_CARDS, count)
 	var phases: Array[Dictionary] = []
 	match semantic:
 		"trainer_play":
@@ -82,8 +82,9 @@ func play_event(scene: Object, event: Dictionary, completed: Callable) -> void:
 	var anchor_keys := resolve_anchor_keys(event)
 	var source_key := str(anchor_keys.get("source", ""))
 	var target_key := str(anchor_keys.get("target", ""))
-	var source_rect := AnchorResolverScript.resolve_rect_in_overlay(scene, overlay, source_key)
-	var target_rect := AnchorResolverScript.resolve_rect_in_overlay(scene, overlay, target_key)
+	var event_view_player := int(event.get("view_player", scene.get("_view_player")))
+	var source_rect := AnchorResolverScript.resolve_rect_in_overlay(scene, overlay, source_key, event_view_player)
+	var target_rect := AnchorResolverScript.resolve_rect_in_overlay(scene, overlay, target_key, event_view_player)
 	var fallback_rect := AnchorResolverScript.scene_rect_in_overlay(scene, overlay)
 	if source_rect.size == Vector2.ZERO:
 		source_rect = Rect2(fallback_rect.get_center() - Vector2(42, 59), Vector2(84, 118))
@@ -93,7 +94,14 @@ func play_event(scene: Object, event: Dictionary, completed: Callable) -> void:
 	var cards: Array = cards_variant if cards_variant is Array else []
 	var visible_count := int(plan.get("visible_card_count", 1))
 	visible_count = maxi(1, mini(visible_count, MAX_VISIBLE_CARDS))
-	var motion_card_size := resolve_motion_card_size(scene, source_rect, target_rect, portrait)
+	var motion_card_size := resolve_motion_card_size(
+		scene,
+		source_rect,
+		target_rect,
+		portrait,
+		str(event.get("semantic", "")),
+		visible_count
+	)
 	var moving_views: Array[BattleCardView] = []
 	for index: int in range(visible_count):
 		var card: CardInstance = cards[index] as CardInstance if index < cards.size() else null
@@ -181,14 +189,26 @@ func resolve_motion_card_size(
 	scene: Object,
 	source_rect: Rect2,
 	target_rect: Rect2,
-	portrait: bool
+	portrait: bool,
+	semantic: String = "",
+	visible_count: int = 1
 ) -> Vector2:
 	if portrait:
 		var field_size_variant: Variant = scene.get("_field_active_card_size") if scene != null else null
 		if field_size_variant is Vector2:
 			var field_size := field_size_variant as Vector2
 			if field_size.x > 1.0 and field_size.y > 1.0:
-				return field_size
+				if semantic == "":
+					return field_size
+				var target_height := field_size.y
+				if semantic in ["attach_energy", "move_energy", "discard_energy", "attach_tool"]:
+					target_height = minf(target_height * 0.58, 168.0)
+				elif semantic in ["draw", "redraw", "search", "mill", "hand_reset", "take_prize", "discard"]:
+					target_height = minf(target_height * (0.58 if visible_count >= 3 else 0.68), 180.0 if visible_count >= 3 else 210.0)
+				else:
+					target_height = minf(target_height * 0.82, 240.0)
+				target_height = maxf(target_height, 126.0)
+				return Vector2(roundf(target_height * 0.716), roundf(target_height))
 		var portrait_height := maxf(source_rect.size.y, target_rect.size.y)
 		portrait_height = clampf(portrait_height, 170.0, 300.0)
 		return Vector2(roundf(portrait_height * 0.716), roundf(portrait_height))
@@ -218,12 +238,17 @@ func _create_card_view(scene: Object, event: Dictionary, card: CardInstance, tar
 	view.set_clickable(false)
 	if str(event.get("visibility", "face")) != "face":
 		view.set_face_down(true)
-		var player_index := int(event.get("player_index", -1))
-		var view_player := int(scene.get("_view_player"))
-		var texture: Texture2D = scene.get("_player_card_back_texture" if player_index == view_player else "_opponent_card_back_texture") as Texture2D
+		var owner_index := int(event.get("owner_index", event.get("player_index", -1)))
+		var texture: Texture2D = _card_back_texture_for_owner(scene, owner_index)
 		if texture != null:
 			view.set_back_texture(texture)
 	return view
+
+
+func _card_back_texture_for_owner(scene: Object, owner_index: int) -> Texture2D:
+	if scene == null:
+		return null
+	return scene.get("_player_card_back_texture" if owner_index == 0 else "_opponent_card_back_texture") as Texture2D
 
 
 func _ensure_overlay(scene: Object) -> Control:

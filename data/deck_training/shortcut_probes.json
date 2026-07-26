@@ -1,0 +1,2194 @@
+{
+	"format_version": 1,
+	"scenarios": {
+		"dragapult_gardevoir_01": [
+			{
+				"id": "dragapult_01_munk_wrong_target",
+				"category": "munkidori_spends_threshold_on_already_spreadable_target",
+				"description": "把30伤搬给本来就只剩60HP的月月熊，会让健康吉雉鸡在200攻击后残10。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽三键", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "evolve", "kind": "evolve", "label": "进化多龙", "card_uid": "CSV8C_159", "target": {"zone": "bench", "index": 0}},
+					{"id": "attach", "kind": "attach_energy", "label": "给多龙贴火能", "card_uid": "CSVE1C_FIR", "target": {"zone": "bench", "index": 0}},
+					{"id": "arven", "kind": "play_trainer", "label": "派帕取得反击捕捉器与滑板", "card_uid": "CSV1C_123", "targets": [{"search_item": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}], "search_tool": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV7C_185", "occurrence": 0}}]}]},
+					{"id": "end", "kind": "end_turn", "label": "送出黑夜魔灵"},
+					{"id": "reply", "kind": "fixed_rules_ai_turn", "label": "月月熊击倒黑夜魔灵", "require_attack": true},
+					{"id": "move_wrong", "kind": "munkidori", "label": "诱导线：把30伤搬给剩60HP月月熊", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "counter", "kind": "play_trainer", "label": "仍抓出健康吉雉鸡", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 210}}]}]},
+					{"id": "attack_short", "kind": "attack", "label": "200让吉雉鸡残10", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 30}, "amount": 30}, {"target": {"zone": "bench", "index": 1}, "amount": 30}]}
+				]
+			},
+			{
+				"id": "dragapult_01_spread_wrong_target",
+				"category": "spread_tracks_old_index_instead_of_swapped_active",
+				"description": "正确击倒吉雉鸡，却把60伤放给无关备战多龙，退居备战的月月熊仍剩60HP。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽三键", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "evolve", "kind": "evolve", "label": "进化多龙", "card_uid": "CSV8C_159", "target": {"zone": "bench", "index": 0}},
+					{"id": "attach", "kind": "attach_energy", "label": "给多龙贴火能", "card_uid": "CSVE1C_FIR", "target": {"zone": "bench", "index": 0}},
+					{"id": "arven", "kind": "play_trainer", "label": "派帕取得反击捕捉器与滑板", "card_uid": "CSV1C_123", "targets": [{"search_item": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}], "search_tool": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV7C_185", "occurrence": 0}}]}]},
+					{"id": "end", "kind": "end_turn", "label": "送出黑夜魔灵"},
+					{"id": "reply", "kind": "fixed_rules_ai_turn", "label": "月月熊击倒黑夜魔灵", "require_attack": true},
+					{"id": "move", "kind": "munkidori", "label": "正确把30伤搬给吉雉鸡", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 210}, "amount": 30},
+					{"id": "counter", "kind": "play_trainer", "label": "抓出180HP吉雉鸡", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 180}}]}]},
+					{"id": "attack_wrong_spread", "kind": "attack", "label": "诱导线：200击倒吉雉鸡但60铺给无关多龙", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_02": [
+			{
+				"id": "dragapult_02_move_only_ten",
+				"category": "munkidori_under_moves_first_spread_target",
+				"description": "愿增猿只搬1个指示物，目标仍剩50HP，最终3个指示物不足以击倒。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽组件", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "evolve", "kind": "evolve", "label": "进化前场多龙", "card_uid": "CSV8C_159", "target": {"zone": "active"}},
+					{"id": "attach", "kind": "attach_energy", "label": "贴火能", "card_uid": "CSVE1C_FIR", "target": {"zone": "active"}},
+					{"id": "end", "kind": "end_turn", "label": "承受含羞苞封锁"},
+					{"id": "reply", "kind": "fixed_rules_ai_turn", "label": "含羞苞攻击", "require_attack": true},
+					{"id": "move_ten", "kind": "munkidori", "label": "诱导线：只搬10伤", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 10},
+					{"id": "blast", "kind": "self_ko", "label": "黑夜魔灵仍击倒双奖多龙", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 130}},
+					{"id": "attack", "kind": "attack", "label": "3+3后第一只多龙梅西亚残20", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 50}, "amount": 30}, {"target": {"zone": "bench_remaining_hp", "remaining_hp": 30}, "amount": 30}]}
+				]
+			},
+			{
+				"id": "dragapult_02_stack_all_spread",
+				"category": "phantom_dive_overkills_one_spread_target",
+				"description": "把6个指示物全部堆给同一只多龙梅西亚，另一只目标存活。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽组件", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "evolve", "kind": "evolve", "label": "进化前场多龙", "card_uid": "CSV8C_159", "target": {"zone": "active"}},
+					{"id": "attach", "kind": "attach_energy", "label": "贴火能", "card_uid": "CSVE1C_FIR", "target": {"zone": "active"}},
+					{"id": "end", "kind": "end_turn", "label": "承受含羞苞封锁"},
+					{"id": "reply", "kind": "fixed_rules_ai_turn", "label": "含羞苞攻击", "require_attack": true},
+					{"id": "move", "kind": "munkidori", "label": "正确搬30制造双30HP", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 30},
+					{"id": "blast", "kind": "self_ko", "label": "黑夜魔灵击倒双奖多龙", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 130}},
+					{"id": "attack_stack", "kind": "attack", "label": "诱导线：六豆全部堆同一目标", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 0}, "amount": 30}, {"target": {"zone": "bench", "index": 0}, "amount": 30}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_03": [
+			{
+				"id": "dragapult_03_research_loses_boss_window",
+				"category": "supporter_quota_draw_order",
+				"description": "博士研究虽然直接看到更多牌，却占掉老大的指令窗口；第一回合只能收两个单奖，第二回合双奖后累计仍只有4奖。",
+				"proof_steps": [
+					{"id": "research_first", "kind": "play_trainer", "label": "诱导线：博士研究先抽7", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "munk_active_single", "kind": "munkidori", "label": "只能把30伤搬给单奖前场愿增猿", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "two_single_prizes", "kind": "attack", "label": "击倒前场愿增猿并以60击倒多龙梅西亚", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "对手多龙反击", "require_attack": true},
+					{"id": "second_munk", "kind": "munkidori", "label": "第二回合仍把230HP多龙校准到200", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 230}, "amount": 30},
+					{"id": "counter_second_dragapult", "kind": "play_trainer", "label": "反击捕捉器抓出双奖多龙", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 200}}]}]},
+					{"id": "only_four_prizes", "kind": "attack", "label": "第二次攻击后累计仅4奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]}
+				]
+			},
+			{
+				"id": "dragapult_03_recon_bottoms_boss",
+				"category": "recon_topdeck_order",
+				"description": "侦察指令贪拿第二回合反击捕捉器会把第一回合老大沉底；化危为吉随后再也抽不到老大，奖赏上限同样只有4。",
+				"proof_steps": [
+					{"id": "recon_counter", "kind": "use_ability", "label": "诱导线：侦察指令拿反击捕捉器并把老大沉底", "source": {"zone": "bench", "index": 3}, "targets": [{"look_top_pick": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}]}]},
+					{"id": "flip_without_boss", "kind": "use_ability", "label": "化危为吉已抽不到老大", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{"id": "munk_active_single", "kind": "munkidori", "label": "只能校准单奖前场愿增猿", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "two_single_prizes", "kind": "attack", "label": "第一回合最多取得两个单奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "对手多龙反击", "require_attack": true},
+					{"id": "second_munk", "kind": "munkidori", "label": "第二回合校准双奖多龙", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 230}, "amount": 30},
+					{"id": "counter_second_dragapult", "kind": "play_trainer", "label": "使用已取得的反击捕捉器", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 200}}]}]},
+					{"id": "only_four_prizes", "kind": "attack", "label": "第二次攻击后累计仅4奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_04": [
+			{
+				"id": "dragapult_04_research_loses_boss_window",
+				"category": "supporter_quota_and_prize_map",
+				"description": "博士研究能抽到接棒组件，却占掉老大窗口；首回合只能击倒两个单奖，第二回合双奖后累计4奖。",
+				"proof_steps": [
+					{"id": "research_first", "kind": "play_trainer", "label": "诱导线：先博士研究抽7", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "evolve_backup", "kind": "evolve", "label": "仍完成后备进化", "card_uid": "CSV8C_159", "target": {"zone": "bench", "index": 0}},
+					{"id": "attach_neo_upper", "kind": "attach_energy", "label": "仍把ACE贴给后备", "card_uid": "CSV7C_203", "target": {"zone": "bench", "index": 0}},
+					{"id": "first_only_two", "kind": "attack", "label": "只能击倒单奖前场和60HP多龙梅西亚", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 60}]},
+					{"id": "ko_first_attacker", "kind": "fixed_rules_ai_turn", "label": "规则AI击倒第一只多龙", "require_attack": true},
+					{"id": "dusknoir_active_dragapult", "kind": "self_ko", "label": "黑夜魔灵给前场多龙130伤", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "active"}},
+					{"id": "only_four", "kind": "attack", "label": "第二只多龙击倒双奖后累计仅4奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 0}, "amount": 60}]}
+				]
+			},
+			{
+				"id": "dragapult_04_recon_bottoms_neo_upper",
+				"category": "recon_topdeck_order",
+				"description": "侦察指令先拿进化会把唯一新冲天能量沉底；首攻虽能取得3奖，第一只倒下后接棒多龙没有攻击费用。",
+				"proof_steps": [
+					{"id": "recon_dragapult", "kind": "use_ability", "label": "诱导线：侦察指令拿多龙并把ACE沉底", "source": {"zone": "bench", "index": 0}, "targets": [{"look_top_pick": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV8C_159", "occurrence": 0}}]}]},
+					{"id": "flip_after_recon", "kind": "use_ability", "label": "化危为吉只能抽到老大和其他牌", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{"id": "evolve_unpowered_backup", "kind": "evolve", "label": "后备进化但没有能量", "card_uid": "CSV8C_159", "target": {"zone": "bench", "index": 0}},
+					{"id": "boss_fez", "kind": "play_trainer", "label": "老大抓出吉雉鸡", "card_uid": "CSVH1aC_023", "target_player": 1, "target": {"zone": "bench", "index": 0}, "context_key": "opponent_bench_target"},
+					{"id": "first_attack_three", "kind": "attack", "label": "第一只多龙取得3奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 60}]},
+					{"id": "ko_first_attacker", "kind": "fixed_rules_ai_turn", "label": "规则AI击倒第一只多龙", "require_attack": true},
+					{"id": "dusknoir_active_dragapult", "kind": "self_ko", "label": "即使黑夜魔灵放130也没有攻击费用", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "active"}},
+					{"id": "no_second_attack", "kind": "end_turn", "label": "无能量接棒多龙只能结束回合"}
+				]
+			}
+		],
+		"dragapult_gardevoir_05": [
+			{
+				"id": "dragapult_05_research_wrong_old_active",
+				"category": "supporter_quota_position_setup",
+				"description": "博士研究占用老大窗口，健康愿增猿保持前场；第二回合即使抓杀吉雉鸡，六豆打到旧前场愿增猿也只让其剩50HP。",
+				"proof_steps": [
+					{"id": "research_first", "kind": "play_trainer", "label": "诱导线：博士研究先抽到双捕捉", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "leave_munk_active", "kind": "end_turn", "label": "无法再用老大，只能让健康愿增猿留在前场"},
+					{"id": "quiet_reply", "kind": "fixed_rules_ai_turn", "label": "愿增猿没有攻击能量，规则AI结束回合", "require_attack": false},
+					{"id": "dusknoir_opens_counter", "kind": "self_ko", "label": "黑夜魔灵向健康多龙放130并送1奖", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench", "index": 2}},
+					{"id": "counter_fez", "kind": "play_trainer", "label": "反击捕捉器抓出吉雉鸡", "card_uid": "CSV6C_114", "target_player": 1, "target": {"zone": "bench", "index": 1}, "context_key": "opponent_bench_target"},
+					{"id": "munk_survives", "kind": "attack", "label": "200击倒吉雉鸡，但60不足以击倒换回末位的愿增猿", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 4}, "amount": 60}]}
+				]
+			},
+			{
+				"id": "dragapult_05_counter_single_prize",
+				"category": "wrong_gust_prize_value",
+				"description": "正确建立月月熊旧前场并开启反击捕捉器后，若贪抓健康多龙梅西亚，前场只值1奖；加上后场月月熊也只有3奖。",
+				"proof_steps": [
+					{"id": "flip_gust_pair", "kind": "use_ability", "label": "化危为吉抽到双捕捉", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{"id": "boss_bloodmoon", "kind": "play_trainer", "label": "老大把60HP月月熊设为旧前场", "card_uid": "CSVH1aC_023", "target_player": 1, "target": {"zone": "bench", "index": 0}, "context_key": "opponent_bench_target"},
+					{"id": "offer_bloodmoon_attack", "kind": "end_turn", "label": "结束回合"},
+					{"id": "bloodmoon_reply", "kind": "fixed_rules_ai_turn", "label": "月月熊使用血月", "require_attack": true},
+					{"id": "dusknoir_opens_counter", "kind": "self_ko", "label": "黑夜魔灵自爆开窗", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench", "index": 1}},
+					{"id": "counter_dreepy", "kind": "play_trainer", "label": "诱导线：反击捕捉器抓健康多龙梅西亚", "card_uid": "CSV6C_114", "target_player": 1, "target": {"zone": "bench", "index": 2}, "context_key": "opponent_bench_target"},
+					{"id": "only_three_prizes", "kind": "attack", "label": "前场1奖加后场月月熊2奖，总计3奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 4}, "amount": 60}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_06": [
+			{
+				"id": "dragapult_06_recon_before_fez",
+				"category": "recon_window_order",
+				"description": "侦察指令先看顶2时只能在多龙与唯一火能之间保留一张；拿进化会把火能沉底，当前多龙即使进化也无法攻击。",
+				"proof_steps": [
+					{"id": "recon_dragapult", "kind": "use_ability", "label": "诱导线：侦察先拿多龙并把火能沉底", "source": {"zone": "bench", "index": 0}, "targets": [{"look_top_pick": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV8C_159", "occurrence": 0}}]}]},
+					{"id": "fez_after_recon", "kind": "use_ability", "label": "化危为吉只能抽到老大、反击捕捉器和夜间担架", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{"id": "evolve_without_fire", "kind": "evolve", "label": "前场完成进化但缺火能", "card_uid": "CSV8C_159", "target": {"zone": "active"}},
+					{"id": "boss_fez", "kind": "play_trainer", "label": "即使老大抓出吉雉鸡也无法攻击", "card_uid": "CSVH1aC_023", "target_player": 1, "target": {"zone": "bench", "index": 0}, "context_key": "opponent_bench_target"},
+					{"id": "miss_first_attack", "kind": "end_turn", "label": "缺少火能，只能错过第一攻"},
+					{"id": "quiet_reply", "kind": "fixed_rules_ai_turn", "label": "吉雉鸡无能量，规则AI结束回合", "require_attack": false},
+					{"id": "deadline", "kind": "end_turn", "label": "第二回合仍无法追回5奖期限"}
+				]
+			},
+			{
+				"id": "dragapult_06_research_loses_boss",
+				"category": "supporter_quota_draw_order",
+				"description": "博士研究一次取得全部五张顶牌，却占用老大窗口；第一回合只能取得两个单奖，第二回合双奖后累计4奖。",
+				"proof_steps": [
+					{"id": "research_all_keys", "kind": "play_trainer", "label": "诱导线：博士研究一次抽到全部关键牌", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "evolve_active", "kind": "evolve", "label": "前场多龙奇进化", "card_uid": "CSV8C_159", "target": {"zone": "active"}},
+					{"id": "attach_fire", "kind": "attach_energy", "label": "手贴火能", "card_uid": "CSVE1C_FIR", "target": {"zone": "active"}},
+					{"id": "only_two_singles", "kind": "attack", "label": "只能击倒单奖愿增猿与60HP多龙梅西亚", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench_remaining_hp", "remaining_hp": 60}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "健康多龙晋升并反击", "require_attack": true},
+					{"id": "counter_damaged_dragapult", "kind": "play_trainer", "label": "第二回合抓出剩200HP多龙", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 200}}]}]},
+					{"id": "only_four", "kind": "attack", "label": "第二攻双奖后累计仅4奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 2}, "amount": 60}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_07": [
+			{
+				"id": "dragapult_07_recon_bottoms_hawlucha",
+				"category": "recon_draw_order_loses_spread_seed",
+				"description": "先用侦察指令拿反击捕捉器会把摔角鹰人沉底；两轮各30+30之后，两只70HP多龙梅西亚仍各剩10HP。",
+				"proof_steps": [
+					{"id": "recon_counter", "kind": "use_ability", "label": "诱导线：侦察先拿反击捕捉器并沉底摔角鹰人", "source": {"zone": "bench", "index": 3}, "targets": [{"look_top_pick": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}]}]},
+					{"id": "fez_without_hawlucha", "kind": "use_ability", "label": "化危为吉已无法取得摔角鹰人", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{"id": "dusknoir_make_space", "kind": "self_ko", "label": "黑夜魔灵自爆开反击窗口", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench", "index": 4}},
+					{"id": "counter_damaged_dragapult", "kind": "play_trainer", "label": "反击捕捉器抓出剩200HP多龙", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 200}}]}]},
+					{"id": "first_three_three", "kind": "attack", "label": "第一轮只能各放30", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 30}, {"target": {"zone": "bench", "index": 2}, "amount": 30}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "健康多龙晋升并反击", "require_attack": true},
+					{"id": "boss_fezandipiti", "kind": "play_trainer", "label": "老大抓出剩200HP吉雉鸡", "card_uid": "CSVH1aC_023", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 3}}]}]},
+					{"id": "only_four_prizes", "kind": "attack", "label": "第二轮各30后两只多龙梅西亚仍各剩10HP", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 0}, "amount": 30}, {"target": {"zone": "bench", "index": 1}, "amount": 30}]}
+				]
+			},
+			{
+				"id": "dragapult_07_hawlucha_seeds_wrong_target",
+				"category": "hawlucha_target_precision",
+				"description": "飞身入场把一个10伤浪费在月月熊后，未播种的多龙梅西亚在两轮3+3后残10HP，最终只能取得5奖。",
+				"proof_steps": [
+					{"id": "flip_hawlucha_counter", "kind": "use_ability", "label": "化危为吉抽到摔角鹰人与反击捕捉器", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{"id": "dusknoir_make_space", "kind": "self_ko", "label": "黑夜魔灵自爆腾位", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench", "index": 4}},
+					{"id": "bench_hawlucha", "kind": "play_basic_to_bench", "label": "把摔角鹰人放入新空位", "card_uid": "CSV1C_079", "auto_trigger_bench_ability": false},
+					{"id": "seed_wrong_pair", "kind": "use_ability", "label": "诱导线：只给一只多龙梅西亚播种，另一个10伤浪费在月月熊", "source": {"zone": "bench", "index": 4}, "targets": [{"opponent_bench_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}, {"$slot": {"player": 1, "zone": "bench", "index": 4}}]}]},
+					{"id": "counter_damaged_dragapult", "kind": "play_trainer", "label": "反击捕捉器抓出剩200HP多龙", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 200}}]}]},
+					{"id": "first_three_three", "kind": "attack", "label": "第一轮仍按3+3", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 30}, {"target": {"zone": "bench", "index": 2}, "amount": 30}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "健康多龙晋升并反击", "require_attack": true},
+					{"id": "boss_fezandipiti", "kind": "play_trainer", "label": "老大抓出剩200HP吉雉鸡", "card_uid": "CSVH1aC_023", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 3}}]}]},
+					{"id": "only_five_prizes", "kind": "attack", "label": "第二轮后仅播种的多龙梅西亚被击倒", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 0}, "amount": 30}, {"target": {"zone": "bench", "index": 1}, "amount": 30}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_08": [
+			{
+				"id": "dragapult_08_research_sees_boss_but_spends_supporter",
+				"category": "large_draw_consumes_hidden_finisher_window",
+				"description": "博士一次抽到老大看似最强，但已经消耗支援者次数；当前奖差又不允许反击捕捉器，只能击倒两个单奖目标。",
+				"proof_steps": [
+					{"id": "budew_pollen", "kind": "attack", "label": "含羞苞正确完成花粉10与物品封锁", "attack_index": 0, "bench_assignments": []},
+					{"id": "dreepy_reply", "kind": "fixed_rules_ai_turn", "label": "多龙梅西亚击倒含羞苞", "require_attack": true},
+					{"id": "research_first", "kind": "play_trainer", "label": "诱导线：博士研究一次抽到包含老大的7张牌", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "only_two_singles", "kind": "attack", "label": "无法再用老大，只能击倒前场与一个备战单奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 30}, {"target": {"zone": "bench", "index": 0}, "amount": 30}]}
+				]
+			},
+			{
+				"id": "dragapult_08_iono_breaks_boss_epoch",
+				"category": "shuffle_and_supporter_quota_loses_gust",
+				"description": "奇树既重置冻结的老大位置又消耗支援者次数；即使重抽碰到老大也无法在本回合使用。",
+				"proof_steps": [
+					{"id": "budew_pollen", "kind": "attack", "label": "含羞苞正确完成花粉10与物品封锁", "attack_index": 0, "bench_assignments": []},
+					{"id": "dreepy_reply", "kind": "fixed_rules_ai_turn", "label": "多龙梅西亚击倒含羞苞", "require_attack": true},
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树重置双方手牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "only_two_singles", "kind": "attack", "label": "没有抓出吉雉鸡，最多击倒两个单奖目标", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 30}, {"target": {"zone": "bench", "index": 0}, "amount": 30}]}
+				]
+			},
+			{
+				"id": "dragapult_08_skip_pollen_loses_ten",
+				"category": "action_deletion_breaks_exact_spread",
+				"description": "直接结束第一回合会同时失去花粉10点与物品封锁；第二回合即使找到老大，旧前场也无法被30点铺伤击倒。",
+				"proof_steps": [
+					{"id": "skip_pollen", "kind": "end_turn", "label": "诱导线：不使用痒痒花粉直接结束回合"},
+					{"id": "dreepy_reply", "kind": "fixed_rules_ai_turn", "label": "对手完成展开并击倒含羞苞", "require_attack": true},
+					{"id": "fez_draw_three", "kind": "use_ability", "label": "化危为吉抽3", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "recon_boss", "kind": "use_ability", "label": "侦察指令仍取得老大", "source": {"zone": "bench", "index": 1}, "targets": [{"look_top_pick": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVH1aC_023", "occurrence": 0}}]}]},
+					{"id": "boss_fezandipiti", "kind": "play_trainer", "label": "老大抓出吉雉鸡", "card_uid": "CSVH1aC_023", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "only_three_prizes", "kind": "attack", "label": "缺少花粉10，旧前场无法与另一个多龙梅西亚同时昏厥", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 0}, "amount": 30}, {"target": {"zone": "bench", "index": 4}, "amount": 30}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_09": [
+			{
+				"id": "dragapult_09_recon_splits_rebuild_pair",
+				"category": "recon_before_fez_loses_one_of_two_required_cards",
+				"description": "侦察指令先看顶2时只能在接棒进化与唯一火能量中保留一张；随后化危为吉也无法让第二只多龙完成攻击支付。",
+				"proof_steps": [
+					{"id": "first_three_prizes", "kind": "attack", "label": "第一只多龙正确取得3奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "健康多龙反杀第一攻击手", "require_attack": true},
+					{"id": "recon_dragapult", "kind": "use_ability", "label": "诱导线：侦察先拿多龙并把唯一火能沉底", "source": {"zone": "bench", "index": 1}, "targets": [{"look_top_pick": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV8C_159", "occurrence": 0}}]}]},
+					{"id": "fez_after_recon", "kind": "use_ability", "label": "化危为吉只能抽到担架、老大与奇树", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "evolve_without_fire", "kind": "evolve", "label": "前场完成进化但缺唯一火能", "card_uid": "CSV8C_159", "target": {"zone": "active"}},
+					{"id": "miss_second_attack", "kind": "end_turn", "label": "只有超能，无法使用幻影潜袭"}
+				]
+			},
+			{
+				"id": "dragapult_09_research_rebuilds_but_loses_boss",
+				"category": "research_rebuilds_attacker_but_consumes_gust_window",
+				"description": "博士能一次取得进化、火能和老大，但支援者次数已被消耗；接棒多龙只能面对健康320HP多龙，200伤无法取得最后2奖。",
+				"proof_steps": [
+					{"id": "first_three_prizes", "kind": "attack", "label": "第一只多龙正确取得3奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "健康多龙反杀第一攻击手", "require_attack": true},
+					{"id": "research_all", "kind": "play_trainer", "label": "诱导线：博士一次抽齐接棒组件与老大", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "evolve_backup", "kind": "evolve", "label": "前场多龙奇进化", "card_uid": "CSV8C_159", "target": {"zone": "active"}},
+					{"id": "attach_fire", "kind": "attach_energy", "label": "给接棒多龙手贴火能", "card_uid": "CSVE1C_FIR", "target": {"zone": "active"}},
+					{"id": "healthy_dragapult_survives", "kind": "attack", "label": "无法再用老大，200打健康多龙后仍剩120HP", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 2}, "amount": 60}]}
+				]
+			}
+		],
+		"dragapult_gardevoir_10": [
+			{
+				"id": "dragapult_10_research_finds_energy_but_loses_boss",
+				"category": "research_pays_bloodmoon_but_consumes_gust_window",
+				"description": "博士能抽到第二能与老大，却已经消耗支援者次数；血月只能打健康320HP前场，240后仍剩80HP。",
+				"proof_steps": [
+					{"id": "munk_double_threshold", "kind": "munkidori", "label": "愿增猿正确校准首攻与反杀线", "ability_source": {"zone": "bench", "index": 2}, "damage_source": {"zone": "active"}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_three_prizes", "kind": "attack", "label": "多龙正确取得3奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "对手反杀主攻并把血月降费到2", "require_attack": true},
+					{"id": "research_energy_boss", "kind": "play_trainer", "label": "诱导线：博士一次抽到第二能与老大", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "attach_second_psychic", "kind": "attach_energy", "label": "给月月熊补第二能", "card_uid": "CSVE1C_PSY", "target": {"zone": "active"}},
+					{"id": "healthy_dragapult_survives", "kind": "attack", "label": "不能再用老大，血月240后健康多龙仍剩80HP", "attack_index": 0, "bench_assignments": []}
+				]
+			},
+			{
+				"id": "dragapult_10_iono_breaks_energy_boss_epoch",
+				"category": "iono_shuffles_discounted_closeout_resources",
+				"description": "奇树重置第二能与老大的冻结位置并消耗支援者次数；即使重抽到其中之一，也无法同时完成支付与抓杀。",
+				"proof_steps": [
+					{"id": "munk_double_threshold", "kind": "munkidori", "label": "愿增猿正确校准首攻与反杀线", "ability_source": {"zone": "bench", "index": 2}, "damage_source": {"zone": "active"}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_three_prizes", "kind": "attack", "label": "多龙正确取得3奖", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "对手反杀主攻并把血月降费到2", "require_attack": true},
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树重置血月终结资源", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "deadline", "kind": "end_turn", "label": "支援者窗口已用，无法保证同时取得第二能与老大"}
+				]
+			},
+			{
+				"id": "dragapult_10_munk_wrong_target",
+				"category": "munkidori_double_threshold_targeting",
+				"description": "把30伤搬给第二回合目标会让首个230HP月月熊仍残30；第一回合只取得一个单奖，也不会触发月月熊接棒降费线。",
+				"proof_steps": [
+					{"id": "munk_wrong_target", "kind": "munkidori", "label": "诱导线：把30伤提前搬给备战终结目标", "ability_source": {"zone": "bench", "index": 2}, "damage_source": {"zone": "active"}, "damage_target": {"zone": "bench", "index": 2}, "amount": 30},
+					{"id": "active_bloodmoon_survives", "kind": "attack", "label": "首个230HP月月熊承受200后仍剩30HP", "attack_index": 1, "bench_assignments": [{"target": {"zone": "bench", "index": 1}, "amount": 60}]},
+					{"id": "quiet_reply", "kind": "fixed_rules_ai_turn", "label": "无能月月熊无法反杀主攻", "require_attack": false},
+					{"id": "deadline", "kind": "end_turn", "label": "两回合期限内只取得1奖"}
+				]
+			}
+		],
+		"gholdengo_01": [
+			{
+				"id": "gholdengo_01_research_first",
+				"category": "supporter_quota_draw_order",
+				"description": "先用奇树重置手牌会消耗支援者次数；之后即使抽到派帕也不能取得第一张超级能量回收。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先使用奇树", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "coin_after_iono", "kind": "use_ability", "label": "奇树后才使用前场嘉奖硬币", "source": {"zone": "active"}, "targets": []},
+					{
+						"id": "only_retrieval",
+						"kind": "play_trainer",
+						"label": "只剩一张可用的超级能量回收",
+						"card_uid": "CSV3C_115",
+						"targets": [
+							{
+								"discard_cards": [
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSV1C_123", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVH1aC_023", "occurrence": 0}}
+								],
+								"recover_energy": [
+									{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_LIG", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_LIG", "occurrence": 1}},
+									{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_GRA", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_FIR", "occurrence": 0}}
+								]
+							}
+						]
+					},
+					{
+						"id": "underpay_first_attack",
+						"kind": "attack",
+						"label": "只能弃4能量，猛雷鼓残留40HP",
+						"attack_index": 0,
+						"targets": [
+							{
+								"discard_basic_energy": [
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_LIG", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_LIG", "occurrence": 1}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_FIR", "occurrence": 0}}
+								]
+							}
+						]
+					},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{"id": "second_turn_no_resources", "kind": "end_turn", "label": "第二回合没有第二张回收，只能结束"}
+				]
+			},
+			{
+				"id": "gholdengo_01_nest_first",
+				"category": "premature_shuffle",
+				"description": "先用高级球寻找索财灵会重洗牌库，破坏派帕、老大与回收的冻结牌顶。",
+				"proof_steps": [
+					{
+						"id": "nest_first",
+						"kind": "play_trainer",
+						"label": "诱导线：先使用高级球",
+						"card_uid": "CSV1C_112",
+						"targets": [
+							{
+								"discard_cards": [
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSV3C_123", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSV7C_177", "occurrence": 0}}
+								],
+								"search_pokemon": [
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSV9C_096", "occurrence": 0}}
+								]
+							}
+						]
+					},
+					{"id": "coin_active_after_shuffle", "kind": "use_ability", "label": "洗牌后使用前场嘉奖硬币", "source": {"zone": "active"}, "targets": []},
+					{"id": "coin_bench_after_shuffle", "kind": "use_ability", "label": "再使用备战嘉奖硬币", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "give_up_first_turn", "kind": "end_turn", "label": "没有确定取得派帕与两张回收，结束回合"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{"id": "give_up_second_turn", "kind": "end_turn", "label": "第二回合仍无法完成两个击倒"}
+				]
+			}
+		],
+		"gholdengo_02": [
+			{
+				"id": "gholdengo_02_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "先用奇树会同时消耗暗码迷的支援者窗口并破坏冻结顶牌，两个回合都无法取得完整四奖。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先使用奇树", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_without_pro", "kind": "end_turn", "label": "本回合无法再使用暗码迷，只能结束"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{"id": "second_turn_still_short", "kind": "end_turn", "label": "第二回合仍无法完成两个击倒"}
+				]
+			},
+			{
+				"id": "gholdengo_02_bench_coin_first",
+				"category": "draw_count_order",
+				"description": "备战硬币先抽1会让两只硬币都在暗码迷置顶前用完；PRO只能第二回合自然抽，截止前只够击倒一个目标。",
+				"proof_steps": [
+					{"id": "bench_coin_first", "kind": "use_ability", "label": "诱导线：备战嘉奖硬币先抽1", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "active_coin_second", "kind": "use_ability", "label": "前场嘉奖硬币再抽2", "source": {"zone": "active"}, "targets": []},
+					{
+						"id": "cipher_too_late",
+						"kind": "play_trainer",
+						"label": "两只硬币用完后才用暗码迷",
+						"card_uid": "CSV7C_191",
+						"targets": [
+							{
+								"top_cards": [
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSV9C_176", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSV3C_115", "occurrence": 0}}
+								]
+							}
+						]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有抽牌特性可取PRO，只能结束"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{
+						"id": "late_munkidori",
+						"kind": "use_ability",
+						"label": "第二回合才搬伤",
+						"source": {"zone": "bench", "index": 1},
+						"targets": [
+							{
+								"source_pokemon": [{"$slot": {"player": 0, "zone": "active"}}],
+								"target_damage_counters": [{"target": {"$slot": {"player": 1, "zone": "bench", "index": 0}}, "amount": 30}]
+							}
+						]
+					},
+					{
+						"id": "late_pro",
+						"kind": "play_trainer",
+						"label": "第二回合自然抽到PRO",
+						"card_uid": "CSV9C_176",
+						"targets": [
+							{
+								"csv9c176_energy": [
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_MET", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_LIG", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_GRA", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_FIR", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_WAT", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_FIG", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_PSY", "occurrence": 0}}
+								]
+							}
+						]
+					},
+					{
+						"id": "only_knockout",
+						"kind": "attack",
+						"label": "截止前只能完成第一次200伤击倒",
+						"attack_index": 0,
+						"targets": [
+							{
+								"discard_basic_energy": [
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_MET", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_DAR", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_LIG", "occurrence": 0}},
+									{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}
+								]
+							}
+						]
+					}
+				]
+			}
+		],
+		"gholdengo_03": [
+			{
+				"id": "gholdengo_03_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会占用暗码迷的支援者窗口并重置冻结牌顶，两个回合内无法取得双回收与双杀。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "本回合失去暗码迷窗口"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "第二回合仍不能完成两次击倒"}
+				]
+			},
+			{
+				"id": "gholdengo_03_fezandipiti_first",
+				"category": "draw_engine_order",
+				"description": "吉雉鸡先抽3再用硬币，会让两个抽牌引擎都在暗码迷置顶前耗尽；双回收最早只能分跨两个自然抽。",
+				"proof_steps": [
+					{"id": "fez_first", "kind": "use_ability", "label": "诱导线：化危为吉先抽3", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "coin_second", "kind": "use_ability", "label": "前场嘉奖硬币再抽2", "source": {"zone": "active"}, "targets": []},
+					{
+						"id": "cipher_too_late",
+						"kind": "play_trainer",
+						"label": "抽牌引擎耗尽后才把双回收置顶",
+						"card_uid": "CSV7C_191",
+						"targets": [{"top_cards": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV3C_115", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV3C_115", "occurrence": 1}}
+						]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "本回合拿不到回收"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "自然抽只取得一张回收，截止前不足双杀"}
+				]
+			}
+		],
+		"gholdengo_04": [
+			{
+				"id": "gholdengo_04_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会洗掉化危为吉的三张冻结关键牌并占用派帕窗口，首回合无法构成五能淘金潮。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "本回合失去派帕桥接"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不能完成两只目标"}
+				]
+			},
+			{
+				"id": "gholdengo_04_munkidori_active",
+				"category": "wrong_damage_target",
+				"description": "把30伤放到当前满血目标仍需五能且造成10点过量，第二只猛雷鼓会以230HP逃出第四色能量的斩杀线。",
+				"step_overrides": {
+					"munkidori_second_target": {
+						"label": "诱导线：把30伤放到当前目标",
+						"targets": [{
+							"source_pokemon": [{"$slot": {"player": 0, "zone": "active"}}],
+							"target_damage_counters": [{"target": {"$slot": {"player": 1, "zone": "active"}}, "amount": 30}]
+						}]
+					}
+				}
+			}
+		],
+		"gholdengo_05": [
+			{
+				"id": "gholdengo_05_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会洗掉普通赛富豪、派帕与交替，并占用本回合派帕窗口。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "本回合无法闭合120桥接"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不能完成两个指定击倒"}
+				]
+			},
+			{
+				"id": "gholdengo_05_delay_rich_strike",
+				"category": "same_turn_evolution_window",
+				"description": "进化后不立即攻击会失去富裕打击的+90，本来精确120的首杀在下一回合只剩30。",
+				"proof_steps": [
+					{"id": "fezandipiti_draw", "kind": "use_ability", "label": "化危为吉取得普通赛富豪、派帕与交替", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "evolve_regular", "kind": "evolve", "label": "进化普通赛富豪", "card_uid": "CSV9C_142", "target": {"zone": "active"}},
+					{"id": "end_instead_of_attack", "kind": "end_turn", "label": "诱导线：为了保守而结束进化回合"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "late_rich_strike", "kind": "attack", "label": "下一回合富裕打击只剩30", "attack_index": 0, "targets": []}
+				]
+			}
+		],
+		"gholdengo_06": [
+			{
+				"id": "gholdengo_06_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会同时洗掉派帕、老大与第二回收，并占用首回合支援者。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "bundle_blower", "kind": "use_ability", "label": "铁包袱仍可吹风但没有伤害资源", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "首回合不能形成击倒"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不足4奖"}
+				]
+			},
+			{
+				"id": "gholdengo_06_boss_before_bundle",
+				"category": "gust_order",
+				"description": "先老大再使用铁包袱会让对手重新选择前场，第二回合也失去唯一确定捕捉。",
+				"proof_steps": [
+					{"id": "coin_active", "kind": "use_ability", "label": "前场硬币抽派帕与老大", "source": {"zone": "active"}, "targets": []},
+					{
+						"id": "boss_first",
+						"kind": "play_trainer",
+						"label": "诱导线：第一回合先用老大",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "bundle_after_boss", "kind": "use_ability", "label": "铁包袱让对手重新选择前场", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "派帕窗口已被老大占用"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "第二回合没有老大完成双杀"}
+				]
+			}
+		],
+		"gholdengo_07": [
+			{
+				"id": "gholdengo_07_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会洗掉暗码迷、老大与阻碍之塔，并占用本回合暗码迷窗口。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "本回合没有塔与回收"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不足4奖"}
+				]
+			},
+			{
+				"id": "gholdengo_07_coin_before_cipher",
+				"category": "draw_engine_order",
+				"description": "前场硬币若在暗码迷之前使用，双回收置顶后没有抽牌特性可在首回合取得。",
+				"proof_steps": [
+					{"id": "coin_first", "kind": "use_ability", "label": "诱导线：前场嘉奖硬币先抽2", "source": {"zone": "active"}, "targets": []},
+					{"id": "fez_second", "kind": "use_ability", "label": "化危为吉再抽3", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{"id": "tower", "kind": "play_stadium", "label": "仍然打出阻碍之塔", "card_uid": "CSV8C_203", "targets": []},
+					{
+						"id": "cipher_too_late",
+						"kind": "play_trainer",
+						"label": "抽牌特性耗尽后才置顶双回收",
+						"card_uid": "CSV7C_191",
+						"targets": [{"top_cards": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV3C_115", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV3C_115", "occurrence": 1}}
+						]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "首回合拿不到回收"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "自然抽只取得一张回收"}
+				]
+			}
+		],
+		"gholdengo_08": [
+			{
+				"id": "gholdengo_08_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会洗掉暗码迷、反击捕捉器与老大，并占用暗码迷窗口。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "首回合没有捕捉与PRO"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不足4奖"}
+				]
+			},
+			{
+				"id": "gholdengo_08_boss_first",
+				"category": "prize_gap_gust_order",
+				"description": "先用老大取得2奖后奖差追平，反击捕捉器在第二回合失去合法条件。",
+				"proof_steps": [
+					{"id": "fezandipiti_draw", "kind": "use_ability", "label": "化危为吉取得暗码迷、反击捕捉器与老大", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{
+						"id": "boss_first",
+						"kind": "play_trainer",
+						"label": "诱导线：先用老大拉第一目标",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "暗码迷窗口已被老大占用"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "反击捕捉器路线无法闭合"}
+				]
+			}
+		],
+		"gholdengo_09": [
+			{
+				"id": "gholdengo_09_iono_first",
+				"category": "supporter_and_topdeck_reset",
+				"description": "奇树先动会洗掉暗码迷、老大与第一回收，并占用暗码迷窗口。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：奇树先重置", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "复起窗口被浪费"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不足4奖"}
+				]
+			},
+			{
+				"id": "gholdengo_09_coin_first",
+				"category": "draw_engine_order",
+				"description": "前场硬币先抽2、吉雉鸡再抽3，会让暗码迷置顶第二回收时所有当前回合抽牌特性都已耗尽。",
+				"proof_steps": [
+					{"id": "coin_first", "kind": "use_ability", "label": "诱导线：前场嘉奖硬币先抽2", "source": {"zone": "active"}, "targets": []},
+					{"id": "fez_second", "kind": "use_ability", "label": "化危为吉再抽3", "source": {"zone": "bench", "index": 0}, "targets": []},
+					{
+						"id": "cipher_too_late",
+						"kind": "play_trainer",
+						"label": "抽牌特性耗尽后才置顶第二回收",
+						"card_uid": "CSV7C_191",
+						"targets": [{"top_cards": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV3C_115", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV5C_119", "occurrence": 0}}
+						]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "本回合拿不到第二回收"},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "自然抽只来得及完成一次回收"}
+				]
+			}
+		],
+		"gholdengo_10": [
+			{
+				"id": "gholdengo_10_iono_after_prizes",
+				"category": "zero_deck_supporter_reset",
+				"description": "第二回合先用奇树会把奖赏取得的钓竿、暗码迷和自然抽到的交替一起洗回牌库，失去确定两能终结。",
+				"proof_steps": [
+					{"id": "rich_strike_first", "kind": "attack", "label": "富裕打击120先取2奖", "attack_index": 0, "targets": []},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{"id": "iono_second_turn", "kind": "play_trainer", "label": "诱导线：牌库归零后先用奇树", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "无法保证本回合重建并完成100伤"}
+				]
+			},
+			{
+				"id": "gholdengo_10_one_energy_top",
+				"category": "wrong_topdeck_rebuild",
+				"description": "暗码迷若把能量与索财灵置顶，前场硬币虽抽2却只有1张伤害能量，淘金潮只能打50。",
+				"proof_steps": [
+					{"id": "rich_strike_first", "kind": "attack", "label": "富裕打击120先取2奖", "attack_index": 0, "targets": []},
+					{"id": "ai_reply", "kind": "fixed_rules_ai_turn", "label": "规则AI回合", "require_attack": false},
+					{
+						"id": "super_rod_rebuild",
+						"kind": "play_trainer",
+						"label": "厉害钓竿回填两能一宝可梦",
+						"card_uid": "CSV1C_109",
+						"targets": [{"cards_to_return": [
+							{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_GRA", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "discard", "uid": "CSV9C_096", "occurrence": 0}}
+						]}]
+					},
+					{
+						"id": "cipher_energy_pokemon",
+						"kind": "play_trainer",
+						"label": "诱导线：置顶1能量与索财灵",
+						"card_uid": "CSV7C_191",
+						"targets": [{"top_cards": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV9C_096", "occurrence": 0}}
+						]}]
+					},
+					{
+						"id": "switch_to_ex",
+						"kind": "play_trainer",
+						"label": "宝可梦交替换入赛富豪ex",
+						"card_uid": "CSV1C_113",
+						"targets": [{"self_switch_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "coin_active", "kind": "use_ability", "label": "前场硬币抽到1能量与索财灵", "source": {"zone": "active"}, "targets": []},
+					{
+						"id": "gold_rush_fifty",
+						"kind": "attack",
+						"label": "只有1能量的淘金潮只能造成50",
+						"attack_index": 0,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_LIG", "occurrence": 0}}
+						]}]
+					}
+				]
+			}
+		],
+		"raging_bolt_01": [
+			{
+				"id": "raging_bolt_01_iono_first",
+				"category": "supporter_quota_and_topdeck_reset",
+				"description": "先使用奇树会同时消耗奥琳的支援者窗口并重洗三张隐藏桥牌；即使整理了手牌也无法在两个回合内完成两次击倒。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先使用奇树整理九张杂乱手牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "奥琳窗口已被占用，只能结束首回合"},
+					{"id": "marnie_reply", "kind": "fixed_rules_ai_turn", "label": "玛俐规则AI完成回合并击倒10HP前场", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "第二回合无法补回两次击倒所需的9张弃能预算"}
+				]
+			},
+			{
+				"id": "raging_bolt_01_ultra_ball_first",
+				"category": "premature_shuffle_and_energy_loss",
+				"description": "高级球先弃两张草能并洗牌，既破坏奥琳/老大/能量转移顺序，又让第二回合最多只剩四张场上能量。",
+				"proof_steps": [
+					{
+						"id": "ultra_ball_first",
+						"kind": "play_trainer",
+						"label": "诱导线：高级球先弃两草并找普通猛雷鼓",
+						"card_uid": "CSV1C_112",
+						"targets": [{
+							"discard_cards": [
+								{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}},
+								{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 1}}
+							],
+							"search_pokemon": [
+								{"$card": {"player": 0, "zone": "deck", "uid": "CSV8C_161", "occurrence": 0}}
+							]
+						}]
+					},
+					{
+						"id": "dance_after_shuffle",
+						"kind": "use_ability",
+						"label": "洗牌后碧草之舞只能随机抽一张",
+						"source": {"zone": "bench", "index": 1},
+						"targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有确定取得奥琳与能量转移，结束首回合"},
+					{"id": "marnie_reply", "kind": "fixed_rules_ai_turn", "label": "玛俐规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "四能上限无法完成第二个五能档位"}
+				]
+			}
+		],
+		"raging_bolt_02": [
+			{
+				"id": "raging_bolt_02_iono_first",
+				"category": "supporter_quota_and_hidden_evolution",
+				"description": "先使用奇树会洗掉牌顶猫头夜鹰并占用奥琳的支援者次数，寻找宝石—容器—奥琳链无法在首回合闭合。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树寻找进化牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "猫头夜鹰与奥琳链失去确定性"},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前无法完成两个280击倒"}
+				]
+			},
+			{
+				"id": "raging_bolt_02_sada_fighting_to_active",
+				"category": "wrong_acceleration_owner",
+				"description": "容器虽然正确弃斗，但奥琳把斗能给了仅剩20HP的前场；首杀后斗能随前场进入弃牌区，接棒攻击手缺斗而不能攻击。",
+				"proof_steps": [
+					{
+						"id": "dance_into_noctowl",
+						"kind": "use_ability",
+						"label": "碧草之舞抽猫头夜鹰",
+						"source": {"zone": "bench", "index": 1},
+						"targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]
+					},
+					{"id": "evolve_noctowl", "kind": "evolve", "label": "进化猫头夜鹰", "card_uid": "CSV9C_155", "target": {"zone": "bench", "index": 2}},
+					{
+						"id": "jewel_vessel_sada",
+						"kind": "use_ability",
+						"label": "寻找宝石取得容器与奥琳",
+						"source": {"zone": "bench", "index": 2},
+						"targets": [{"csv9c_noctowl_trainers": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_115", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_121", "occurrence": 0}}
+						]}]
+					},
+					{
+						"id": "vessel_fighting",
+						"kind": "play_trainer",
+						"label": "容器正确弃斗并取得草雷",
+						"card_uid": "CSV6C_115",
+						"targets": [{
+							"discard_cards": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_FIG", "occurrence": 0}}],
+							"search_energy": [
+								{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_GRA", "occurrence": 0}},
+								{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_LIG", "occurrence": 0}}
+							]
+						}]
+					},
+					{
+						"id": "sada_wrong_owner",
+						"kind": "play_trainer",
+						"label": "诱导线：斗能错误附给必死前场",
+						"card_uid": "CSV6C_121",
+						"targets": [{"sada_assignments": [
+							{
+								"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_FIG", "occurrence": 0}},
+								"target": {"$slot": {"player": 0, "zone": "active"}}
+							},
+							{
+								"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_GRA", "occurrence": 0}},
+								"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+							}
+						]}]
+					},
+					{
+						"id": "first_exact_280",
+						"kind": "attack",
+						"label": "首攻仍能弃4能完成280",
+						"attack_index": 1,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 1}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 0}}
+						]}]
+					},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI击倒前场", "require_attack": true},
+					{
+						"id": "boss_second_zoroark",
+						"kind": "play_trainer",
+						"label": "奖赏老大抓出第二只索罗亚克",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "manual_grass", "kind": "attach_energy", "label": "只能再手贴草能，仍然缺斗", "card_uid": "CSVE1C_GRA", "target": {"zone": "active"}},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "雷草攻击手无法宣言需要雷斗的极雷轰"}
+				]
+			}
+		],
+		"raging_bolt_03": [
+			{
+				"id": "raging_bolt_03_iono_first",
+				"category": "supporter_quota_and_hidden_crispin",
+				"description": "先使用奇树会洗掉冻结牌顶赤松并消耗本回合支援者次数；爬地翅只能手贴1个斗能，无法使用烫伤怒涛。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树整理杂乱手牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "缺少第二斗，无法宣言烫伤怒涛"},
+					{"id": "tera_box_reply", "kind": "fixed_rules_ai_turn", "label": "太晶盒规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前不可能完成两次击倒"}
+				]
+			},
+			{
+				"id": "raging_bolt_03_crispin_wrong_attributes",
+				"category": "crispin_attribute_assignment",
+				"description": "赤松把斗能加入手牌、草能附给爬地翅，看似保留了灵活性；手贴斗能后爬地翅仍只有草斗，无法支付双斗。",
+				"proof_steps": [
+					{
+						"id": "dance_into_crispin",
+						"kind": "use_ability",
+						"label": "碧草之舞抽到赤松",
+						"source": {"zone": "bench", "index": 2},
+						"targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]
+					},
+					{
+						"id": "crispin_wrong_attributes",
+						"kind": "play_trainer",
+						"label": "诱导线：赤松把斗能入手、草能附给爬地翅",
+						"card_uid": "CSV9C_196",
+						"targets": [{
+							"csv9c196_energy_to_hand": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_FIG", "occurrence": 0}}],
+							"csv9c196_energy_attachment": [{
+								"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_GRA", "occurrence": 0}},
+								"target": {"$slot": {"player": 0, "zone": "bench", "index": 1}}
+							}]
+						}]
+					},
+					{"id": "manual_fighting", "kind": "attach_energy", "label": "给爬地翅手贴斗能后仍为草斗", "card_uid": "CSVE1C_FIG", "target": {"zone": "bench", "index": 1}},
+					{"id": "zero_retreat", "kind": "retreat", "label": "借天际线换入爬地翅", "target": {"zone": "bench", "index": 1}, "energy_to_discard": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "双斗费用不满足，不能攻击"},
+					{"id": "tera_box_reply", "kind": "fixed_rules_ai_turn", "label": "太晶盒规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "两回合四奖目标失败"}
+				]
+			}
+		],
+		"raging_bolt_04": [
+			{
+				"id": "raging_bolt_04_iono_first",
+				"category": "hidden_energy_switch_shuffle",
+				"description": "先奇树会洗掉能量转移；普通猛雷鼓维持2能，只能对剩余80HP的吉雉鸡ex造成60。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先使用奇树", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有第三能，无法完成备战击倒"},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "只剩一次我方攻击，3奖目标失败"}
+				]
+			},
+			{
+				"id": "raging_bolt_04_switch_to_ex",
+				"category": "wrong_energy_switch_target",
+				"description": "舞抽能量转移后把草能交给猛雷鼓ex，会让普通猛雷鼓的落雷风暴保持60伤，首回合无法击倒吉雉鸡ex。",
+				"proof_steps": [
+					{
+						"id": "dance_into_energy_switch",
+						"kind": "use_ability",
+						"label": "碧草之舞抽到能量转移",
+						"source": {"zone": "bench", "index": 1},
+						"targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]
+					},
+					{
+						"id": "switch_grass_to_ex",
+						"kind": "play_trainer",
+						"label": "诱导线：把草能交给猛雷鼓ex",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+						}]}]
+					},
+					{
+						"id": "snipe_sixty",
+						"kind": "attack",
+						"label": "落雷风暴只有60，吉雉鸡ex剩20HP",
+						"attack_index": 0,
+						"targets": [{"raging_bolt_lightning_storm_target": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}]}]
+					},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI击倒普通猛雷鼓", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合未取奖，截止前至多2奖"}
+				]
+			}
+		],
+		"raging_bolt_05": [
+			{
+				"id": "raging_bolt_05_iono_first",
+				"category": "area_zero_hidden_topdeck",
+				"description": "先奇树会洗掉冻结牌顶零之大空洞；初始备战区已经5格，三只临时宝可梦无法进场，猫头夜鹰与安全裁剪课程链不会成立。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：满手基础宝可梦时先用奇树", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有大空洞，备战上限仍为5"},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI完成回合并击倒20HP前场", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "两个我方攻击回合均未完成，四奖目标失败"}
+				]
+			},
+			{
+				"id": "raging_bolt_05_trim_ogerpon",
+				"category": "area_zero_wrong_trim_owner",
+				"description": "完整兑现扩场、猫头夜鹰、担架和双舞后，错误裁掉带草能的厄诡椪；最终极雷轰只能解析出3张可弃能量，造成210并让索罗亚克剩70HP。",
+				"step_overrides": {
+					"replace_and_trim": {
+						"label": "诱导线：换塔时裁掉带草能厄诡椪、爬地翅与吉雉鸡",
+						"targets": [{"csv9c207_zero_area_discard_p0": [
+							{"$slot": {"player": 0, "zone": "bench", "index": 0}},
+							{"$slot": {"player": 0, "zone": "bench", "index": 5}},
+							{"$slot": {"player": 0, "zone": "bench", "index": 6}}
+						]}]
+					}
+				}
+			}
+		],
+		"raging_bolt_06": [
+			{
+				"id": "raging_bolt_06_iono_first",
+				"category": "crispin_hidden_topdeck_and_supporter_quota",
+				"description": "先奇树会洗掉冻结牌顶赤松；前场缺斗且第二只厄诡椪没有草能可舞，首回合无法形成280。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树寻找两种属性能量", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "赤松与第二舞链已经断开"},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前没有完成两次击倒"}
+				]
+			},
+			{
+				"id": "raging_bolt_06_crispin_fighting_hand",
+				"category": "crispin_reversed_energy_roles",
+				"description": "赤松把斗能入手、草能附前场后，只能把本回合手贴改给前场以勉强首杀；后备猛雷鼓留下单斗，奖赏双草也无法补出雷斗费用。",
+				"proof_steps": [
+					{"id": "dance_one_crispin", "kind": "use_ability", "label": "第一舞抽到赤松", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{
+						"id": "crispin_wrong_split",
+						"kind": "play_trainer",
+						"label": "诱导线：赤松把斗能入手、草能附前场",
+						"card_uid": "CSV9C_196",
+						"targets": [{
+							"csv9c196_energy_to_hand": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_FIG", "occurrence": 0}}],
+							"csv9c196_energy_attachment": [{
+								"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_GRA", "occurrence": 0}},
+								"target": {"$slot": {"player": 0, "zone": "active"}}
+							}]
+						}]
+					},
+					{"id": "manual_fighting_active", "kind": "attach_energy", "label": "为保证首攻只能把斗能手贴前场", "card_uid": "CSVE1C_FIG", "target": {"zone": "active"}},
+					{
+						"id": "first_exact_280",
+						"kind": "attack",
+						"label": "弃前场三能与第一只厄诡椪草能完成首杀",
+						"attack_index": 1,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_GRA", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 0}}
+						]}]
+					},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "第二只索罗亚克升场并击倒首攻者", "require_attack": true},
+					{"id": "dance_one_second_turn", "kind": "use_ability", "label": "第一张奖赏草能用于碧草之舞", "source": {"zone": "bench", "index": 0}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "dance_two_second_turn", "kind": "use_ability", "label": "第二张奖赏草能用于碧草之舞", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "接棒猛雷鼓只有斗草草，缺雷而不能攻击"}
+				]
+			}
+		],
+		"raging_bolt_07": [
+			{
+				"id": "raging_bolt_07_iono_first",
+				"category": "latias_route_hidden_energy_switch",
+				"description": "先奇树会洗掉能量转移；后备猛雷鼓无法取得第三能，首回合和第二回合的五能预算都不能同时成立。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树寻找换位牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "能量转移隐藏路线已被洗掉"},
+					{"id": "marnie_reply", "kind": "fixed_rules_ai_turn", "label": "玛俐规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前无法完成两个320HP击倒"}
+				]
+			},
+			{
+				"id": "raging_bolt_07_pay_retreat",
+				"category": "ignored_latias_free_retreat",
+				"description": "双舞与能量转移都正确后仍按厄诡椪卡面支付1草撤退，首攻只能弃4能造成280；长毛巨魔剩40HP。",
+				"proof_steps": [
+					{"id": "dance_active_switch", "kind": "use_ability", "label": "前场厄诡椪舞草抽能量转移", "source": {"zone": "active"}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "dance_bench_fifth", "kind": "use_ability", "label": "第二只厄诡椪舞到2草", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{
+						"id": "switch_grass_to_backup",
+						"kind": "play_trainer",
+						"label": "先把1草交给后备猛雷鼓",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_GRA", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+						}]}]
+					},
+					{
+						"id": "pay_retreat_despite_latias",
+						"kind": "retreat",
+						"label": "诱导线：无视天际线并支付最后1草撤退",
+						"target": {"zone": "bench", "index": 2},
+						"energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_GRA", "occurrence": 0}}]
+					},
+					{
+						"id": "first_only_280",
+						"kind": "attack",
+						"label": "只能弃首攻雷斗与第二厄诡椪两草，造成280",
+						"attack_index": 1,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 1}}
+						]}]
+					},
+					{"id": "marnie_reply", "kind": "fixed_rules_ai_turn", "label": "玛俐规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合未取奖，四奖目标失败"}
+				]
+			}
+		],
+		"raging_bolt_08": [
+			{
+				"id": "raging_bolt_08_iono_after_fez",
+				"category": "supporter_quota_after_concealed_draw",
+				"description": "化危为吉虽然已经把奥琳拿进手牌，但紧接着使用奇树会消耗本回合唯一支援者次数并洗掉能量转移；后备猛雷鼓无法形成雷斗草接棒。",
+				"proof_steps": [
+					{"id": "fez_draw_sada_boss", "kind": "use_ability", "label": "化危为吉先拿到奥琳、诱饵老大与担架", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{"id": "iono_after_fez", "kind": "play_trainer", "label": "诱导线：拿到奥琳后仍先使用奇树扩充手牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "奥琳窗口与隐藏能量转移均已失去"},
+					{"id": "marnie_reply", "kind": "fixed_rules_ai_turn", "label": "玛俐规则AI完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前无法完成两个双奖击倒"}
+				]
+			},
+			{
+				"id": "raging_bolt_08_sada_reversed",
+				"category": "sada_reversed_energy_roles",
+				"description": "奥琳把雷能交给20HP前场、草能交给后备看似照顾当前攻击，实际把唯一雷能随首攻者一起送掉；第二回合接棒者即使双舞也只有斗草草草，无法宣言极雷轰。",
+				"proof_steps": [
+					{"id": "fez_draw_sada_boss", "kind": "use_ability", "label": "化危为吉取得奥琳、诱饵老大与担架", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{
+						"id": "sada_reversed",
+						"kind": "play_trainer",
+						"label": "诱导线：奥琳把雷能交给必死前场、草能交给后备",
+						"card_uid": "CSV6C_121",
+						"targets": [{"sada_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_LIG", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_GRA", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}}
+						]}]
+					},
+					{"id": "dance_one_first", "kind": "use_ability", "label": "第一只厄诡椪舞草", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "dance_two_first", "kind": "use_ability", "label": "第二只厄诡椪舞草", "source": {"zone": "bench", "index": 2}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{
+						"id": "first_280",
+						"kind": "attack",
+						"label": "弃前场原有雷斗与两只厄诡椪草能完成首杀",
+						"attack_index": 1,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 2, "uid": "CSVE1C_GRA", "occurrence": 0}}
+						]}]
+					},
+					{"id": "marnie_reply", "kind": "fixed_rules_ai_turn", "label": "捣蛋小妖10伤击倒首攻者", "require_attack": true},
+					{"id": "dance_one_second", "kind": "use_ability", "label": "奖赏草能驱动第一舞", "source": {"zone": "bench", "index": 0}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "dance_two_second", "kind": "use_ability", "label": "奖赏草能驱动第二舞", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "后备只有斗草草草，缺雷而不能攻击"}
+				]
+			}
+		],
+		"raging_bolt_09": [
+			{
+				"id": "raging_bolt_09_boss_first",
+				"category": "gust_supporter_quota",
+				"description": "化危为吉拿到老大后立即使用，虽然能抓出第一只索罗亚克，却占用奥琳窗口；后备猛雷鼓仍只有斗能，无法形成跨回合雷斗费用。",
+				"proof_steps": [
+					{"id": "fez_draw_sada_boss_noctowl", "kind": "use_ability", "label": "化危为吉抽奥琳、老大与猫头夜鹰", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{
+						"id": "boss_first",
+						"kind": "play_trainer",
+						"label": "诱导线：先用老大抓出第一只无道具索罗亚克",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "奥琳的双目标附能窗口已经失去"},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前无法完成两次双奖击倒"}
+				]
+			},
+			{
+				"id": "raging_bolt_09_spend_backup_lightning",
+				"category": "gust_route_wrong_energy_owner",
+				"description": "完整找到顶尖捕捉器并完成奥琳—能量转移后，首攻若把接棒手雷能当作第4张燃料，第二回合即使仍有4能也缺少极雷轰的雷费用。",
+				"proof_steps": [
+					{"id": "fez_draw_sada_boss_noctowl", "kind": "use_ability", "label": "化危为吉抽奥琳、老大与猫头夜鹰", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{"id": "evolve_noctowl", "kind": "evolve", "label": "猫头夜鹰进化咕咕", "card_uid": "CSV9C_155", "target": {"zone": "bench", "index": 2}},
+					{
+						"id": "jewel_prime_switch",
+						"kind": "use_ability",
+						"label": "寻找宝石取得顶尖捕捉器与能量转移",
+						"source": {"zone": "bench", "index": 2},
+						"targets": [{"csv9c_noctowl_trainers": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV7C_180", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSVH1aC_008", "occurrence": 0}}
+						]}]
+					},
+					{
+						"id": "sada_lightning_backup_grass_first",
+						"kind": "play_trainer",
+						"label": "奥琳把雷能给接棒手、草能给首攻者",
+						"card_uid": "CSV6C_121",
+						"targets": [{"sada_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_LIG", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}},
+							{"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_GRA", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 4}}}
+						]}]
+					},
+					{"id": "dance_active", "kind": "use_ability", "label": "前场厄诡椪舞到2草", "source": {"zone": "active"}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "dance_bench", "kind": "use_ability", "label": "备战厄诡椪舞到1草", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{
+						"id": "switch_first_grass_to_backup",
+						"kind": "play_trainer",
+						"label": "能量转移把首攻者草能交给接棒手",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 4, "uid": "CSVE1C_GRA", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+						}]}]
+					},
+					{
+						"id": "prime_first_target",
+						"kind": "play_trainer",
+						"label": "顶尖捕捉器换入10HP猛雷鼓并抓出第一目标",
+						"card_uid": "CSV7C_180",
+						"targets": [{
+							"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}],
+							"own_bench_target": [{"$slot": {"player": 0, "zone": "bench", "index": 4}}]
+						}]
+					},
+					{
+						"id": "spend_backup_lightning",
+						"kind": "attack",
+						"label": "诱导线：首攻把接棒手雷能当作第4张燃料",
+						"attack_index": 1,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 0, "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 4, "uid": "CSVE1C_GRA", "occurrence": 0}}
+						]}]
+					},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "带坚硬束带的索罗亚克复制复燃击倒首攻者", "require_attack": true},
+					{
+						"id": "boss_second_target",
+						"kind": "play_trainer",
+						"label": "老大避开坚硬束带抓出第二目标",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "接棒手缺雷，不能宣言极雷轰"}
+				]
+			}
+		],
+		"raging_bolt_10": [
+			{
+				"id": "raging_bolt_10_iono_first",
+				"category": "area_zero_hidden_draw_and_supporter_quota",
+				"description": "先用奇树整理三只暂时放不下的基础宝可梦，会同时洗掉零之大空洞、能量转移与老大，并关闭化危为吉后仍需保留的确定牌序。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树重置拥挤手牌", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "扩场、预付血月与第二回合捕捉链已经断开"},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "N规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前无法完成索罗亚克加吉雉鸡四奖"}
+				]
+			},
+			{
+				"id": "raging_bolt_10_spend_bloodmoon_grass",
+				"category": "bloodmoon_future_cost_spent_as_burst_fuel",
+				"description": "完整扩到8格并把草能转给月月熊后，若首攻把这张草当作第4张极雷轰燃料，对手反杀使血月降到1能时反而恰好无能可付。",
+				"proof_steps": [
+					{"id": "fez_draw_area_switch_boss", "kind": "use_ability", "label": "化危为吉抽零之大空洞、能量转移与老大", "source": {"zone": "bench", "index": 4}, "targets": []},
+					{"id": "play_area_zero", "kind": "play_stadium", "label": "零之大空洞把备战上限扩到8", "card_uid": "CSV9C_207", "targets": []},
+					{"id": "bench_hoothoot", "kind": "play_basic_to_bench", "label": "第6格放下咕咕", "card_uid": "CSV9C_154"},
+					{"id": "bench_regular_bolt", "kind": "play_basic_to_bench", "label": "第7格放下普通猛雷鼓", "card_uid": "CSV8C_161"},
+					{"id": "bench_mew", "kind": "play_basic_to_bench", "label": "第8格放下梦幻", "card_uid": "151C_151"},
+					{"id": "dance_one", "kind": "use_ability", "label": "第一只厄诡椪舞到2草", "source": {"zone": "bench", "index": 0}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{"id": "dance_two", "kind": "use_ability", "label": "第二只厄诡椪舞到2草", "source": {"zone": "bench", "index": 1}, "targets": [{"basic_energy_from_hand": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_GRA", "occurrence": 0}}]}]},
+					{
+						"id": "switch_grass_to_bloodmoon",
+						"kind": "play_trainer",
+						"label": "能量转移先把一草交给月月熊",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_GRA", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 2}}
+						}]}]
+					},
+					{
+						"id": "spend_bloodmoon_grass",
+						"kind": "attack",
+						"label": "诱导线：首攻把月月熊草能作为第4张极雷轰燃料",
+						"attack_index": 1,
+						"targets": [{"discard_basic_energy": [
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_LIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_FIG", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 0, "uid": "CSVE1C_GRA", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "bench_energy", "index": 2, "uid": "CSVE1C_GRA", "occurrence": 0}}
+						]}]
+					},
+					{"id": "n_reply", "kind": "fixed_rules_ai_turn", "label": "带坚硬束带的索罗亚克复制复燃击倒首攻者", "require_attack": true},
+					{
+						"id": "replace_and_trim",
+						"kind": "play_stadium",
+						"label": "阻碍之塔替换大空洞并裁掉咕咕与普通猛雷鼓",
+						"card_uid": "CSV8C_203",
+						"targets": [{"csv9c207_zero_area_discard_p0": [
+							{"$slot": {"player": 0, "zone": "bench", "index": 4}},
+							{"$slot": {"player": 0, "zone": "bench", "index": 5}}
+						]}]
+					},
+					{
+						"id": "boss_fezandipiti",
+						"kind": "play_trainer",
+						"label": "老大的指令抓出吉雉鸡ex",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "zero_retreat_to_bloodmoon", "kind": "retreat", "label": "借天际线零撤退换入无能量月月熊", "target": {"zone": "bench", "index": 1}, "energy_to_discard": []},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "血月已降到1能，却恰好没有能量可支付"}
+				]
+			}
+		],
+		"marnie_01": [
+			{
+				"id": "marnie_01_iono_first",
+				"category": "hidden_evolution_draw_shuffled",
+				"description": "奇树保留手牌看似比博士稳健，但会洗掉冻结牌顶的长毛巨魔与愿增猿恶能；两次庞克泵感接棒无法启动。",
+				"proof_steps": [
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：先用奇树保留训练家资源", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "第一只进化件与愿增猿手贴已经失去"},
+					{"id": "charizard_reply", "kind": "fixed_rules_ai_turn", "label": "恶喷规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前无法完成两次双奖击倒"}
+				]
+			},
+			{
+				"id": "marnie_01_attach_dark_to_grimmsnarl",
+				"category": "non_marnie_energy_owner",
+				"description": "博士正确抽到进化件后若把唯一手贴恶能给长毛巨魔，愿增猿因不属于玛俐的宝可梦而无法从庞克泵感取能；首目标会剩10HP。",
+				"proof_steps": [
+					{"id": "research_draw_grimmsnarl_dark", "kind": "play_trainer", "label": "博士的研究抽到长毛巨魔与恶能", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "evolve_first_grimmsnarl", "kind": "evolve", "label": "从手牌进化前场诈唬魔", "card_uid": "CSV10C_148", "target": {"zone": "active"}},
+					{
+						"id": "first_punk_up_split",
+						"kind": "use_ability",
+						"label": "首次庞克泵感只取3能并按2/1分配",
+						"source": {"zone": "active"},
+						"targets": [{"marnies_punk_up_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 1}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 2}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}}
+						]}]
+					},
+					{"id": "attach_dark_wrong", "kind": "attach_energy", "label": "诱导线：把博士抽到的恶能继续贴给长毛巨魔", "card_uid": "CSVE1C_DAR", "target": {"zone": "active"}},
+					{"id": "first_shadow_bullet_short", "kind": "attack", "label": "没有亢奋脑力校正，暗影子弹后多龙剩10HP", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 2}}]}]},
+					{"id": "charizard_reply", "kind": "fixed_rules_ai_turn", "label": "恶喷规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合没有取奖，四奖目标失败"}
+				]
+			}
+		],
+		"marnie_02": [
+			{
+				"id": "marnie_02_iono_misses_boss",
+				"category": "six_card_draw_loses_seventh_card_finisher",
+				"description": "奇树看似能干扰赛富豪的4能手牌，但己方剩6奖只抽6张，正好漏掉第7张老大；随后能量输送洗牌，第二回合不再有确定捕捉手段。",
+				"proof_steps": [
+					{"id": "iono_draw_six", "kind": "play_trainer", "label": "诱导线：奇树只抽到冻结牌顶前6张", "card_uid": "CSV3C_123", "targets": []},
+					{
+						"id": "energy_search_dark",
+						"kind": "play_trainer",
+						"label": "能量输送取得恶能并洗掉第7张老大",
+						"card_uid": "CSVH1C_035",
+						"targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]
+					},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "把恶能手贴给愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 0}},
+					{
+						"id": "counter_first_gholdengo",
+						"kind": "play_trainer",
+						"label": "反击捕捉器拉出第一只赛富豪",
+						"card_uid": "CSV6C_114",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "munkidori_after_counter", "kind": "munkidori", "label": "搬30完成第一只180斩杀线", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_shadow_bullet", "kind": "attack", "label": "首杀并向第二目标铺30", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪规则AI完成反击", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有确定老大，第二只180HP目标仍在备战区"}
+				]
+			},
+			{
+				"id": "marnie_02_munkidori_before_counter",
+				"category": "damage_move_before_gust",
+				"description": "愿增猿一可用就搬伤看似稳妥，但30伤会落在当前索财灵而不是捕捉后的赛富豪；第一只目标会以30HP存活。",
+				"proof_steps": [
+					{"id": "research_draw_seven_keys", "kind": "play_trainer", "label": "博士抽满7张关键组件", "card_uid": "CSV1C_121", "targets": []},
+					{
+						"id": "energy_search_dark",
+						"kind": "play_trainer",
+						"label": "能量输送检索愿增猿恶能",
+						"card_uid": "CSVH1C_035",
+						"targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]
+					},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "把恶能手贴给愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 0}},
+					{"id": "munkidori_too_early", "kind": "munkidori", "label": "诱导线：先把30伤搬到当前索财灵", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{
+						"id": "counter_after_damage",
+						"kind": "play_trainer",
+						"label": "之后才用反击捕捉器拉赛富豪",
+						"card_uid": "CSV6C_114",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "first_shadow_bullet_short", "kind": "attack", "label": "180伤后赛富豪仍剩30HP", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "第一回合未取奖，截止前无法完成四奖"}
+				]
+			}
+		],
+		"marnie_03": [
+			{
+				"id": "marnie_03_research_allows_revenge",
+				"category": "larger_draw_fails_to_disrupt_energy_hand",
+				"description": "博士虽然比剩4奖的奇树多抽3张，但对手保留6张基本能量；第一只赛富豪倒下后，接棒赛富豪以300伤淘金潮击倒唯一主攻手。",
+				"proof_steps": [
+					{"id": "research_draw_seven", "kind": "play_trainer", "label": "诱导线：博士抽7但不干扰对手6能手牌", "card_uid": "CSV1C_121", "targets": []},
+					{
+						"id": "counter_first_gholdengo",
+						"kind": "play_trainer",
+						"label": "反击捕捉器拉出已有30伤的赛富豪",
+						"card_uid": "CSV6C_114",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "first_munkidori_thirty", "kind": "munkidori", "label": "第一只愿增猿搬30", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "second_munkidori_twenty", "kind": "munkidori", "label": "第二只愿增猿搬20", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "active"}, "amount": 20},
+					{"id": "first_shadow_bullet", "kind": "attack", "label": "首杀并向第二目标铺30", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}]}]},
+					{"id": "full_hand_gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "保留6能手牌的赛富豪以300伤反杀", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "唯一长毛巨魔已倒下，无法完成第二次180伤攻击"}
+				]
+			},
+			{
+				"id": "marnie_03_sixty_then_forty",
+				"category": "cross_turn_damage_counter_overpayment",
+				"description": "第一回合把两只愿增猿都搬满30会在首杀上浪费10伤，并把第二回合可搬预算压到40；第二只赛富豪最终剩10HP。",
+				"proof_steps": [
+					{"id": "iono_disrupt_draw_four", "kind": "play_trainer", "label": "奇树完成正确抽牌与干扰", "card_uid": "CSV3C_123", "targets": []},
+					{
+						"id": "counter_first_gholdengo",
+						"kind": "play_trainer",
+						"label": "反击捕捉器拉出首目标",
+						"card_uid": "CSV6C_114",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "first_munkidori_thirty", "kind": "munkidori", "label": "第一只愿增猿搬30", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "second_munkidori_overpay_thirty", "kind": "munkidori", "label": "诱导线：第二只愿增猿也搬满30", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_shadow_bullet_overkill", "kind": "attack", "label": "首杀过量10伤并向第二目标铺30", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}]}]},
+					{"id": "disrupted_gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "被干扰的赛富豪完成回合"},
+					{
+						"id": "boss_second_gholdengo",
+						"kind": "play_trainer",
+						"label": "老大抓出已铺30的第二目标",
+						"card_uid": "CSVH1aC_023",
+						"targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]
+					},
+					{"id": "first_munkidori_second_turn", "kind": "munkidori", "label": "第二回合第一只愿增猿搬30", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "second_munkidori_only_ten", "kind": "munkidori", "label": "第二只愿增猿只能搬完剩余10", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "active"}, "amount": 10},
+					{"id": "second_shadow_bullet_short", "kind": "attack", "label": "第二次180伤后目标恰好剩10HP", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]}
+				]
+			}
+		],
+		"marnie_04": [
+			{
+				"id": "marnie_04_iono_misses_counter",
+				"category": "six_card_draw_misses_item_gust",
+				"description": "奇树只抽6张，漏掉第7张反击捕捉器。即使完成担架、糖果和两次泵感，也只能先击倒当前一奖猛雷鼓，两回合最多取得3奖。",
+				"proof_steps": [
+					{"id": "iono_draw_six", "kind": "play_trainer", "label": "诱导线：奇树只抽到前6张，漏掉反击捕捉器", "card_uid": "CSV3C_123", "targets": []},
+					{
+						"id": "stretcher_grimmsnarl",
+						"kind": "play_trainer",
+						"label": "夜间担架取回长毛巨魔",
+						"card_uid": "CSV8C_183",
+						"targets": [{"night_stretcher_choice": [{"$card": {"player": 0, "zone": "discard", "uid": "CSV10C_148", "occurrence": 0}}]}]
+					},
+					{
+						"id": "rare_candy_first_grimmsnarl",
+						"kind": "play_trainer",
+						"label": "神奇糖果完成跳阶进化",
+						"card_uid": "CSVH1C_045",
+						"targets": [{
+							"stage2_card": [{"$card": {"player": 0, "zone": "hand", "uid": "CSV10C_148", "occurrence": 0}}],
+							"target_pokemon": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]
+						}]
+					},
+					{
+						"id": "first_punk_up_split",
+						"kind": "use_ability",
+						"label": "首次泵感按2/1分配3能",
+						"source": {"zone": "bench", "index": 0},
+						"targets": [{"marnies_punk_up_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 1}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 2}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 1}}}
+						]}]
+					},
+					{"id": "budew_free_retreat", "kind": "retreat", "label": "含羞苞0撤退换入长毛巨魔", "target": {"zone": "bench", "index": 0}, "energy_to_discard": []},
+					{"id": "ko_one_prize_raging_bolt", "kind": "attack", "label": "没有捕捉器，只能击倒当前一奖猛雷鼓", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 4}}]}]},
+					{"id": "raging_bolt_reply", "kind": "fixed_rules_ai_turn", "label": "猛雷鼓ex反杀首攻者", "require_attack": true},
+					{"id": "evolve_second_grimmsnarl", "kind": "evolve", "label": "首张奖赏长毛巨魔进化接棒诈唬魔", "card_uid": "CSV10C_148", "target": {"zone": "active"}},
+					{
+						"id": "second_punk_up",
+						"kind": "use_ability",
+						"label": "第二次泵感补1能",
+						"source": {"zone": "active"},
+						"targets": [{"marnies_punk_up_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}}
+						]}]
+					},
+					{"id": "second_shadow_bullet_short_prizes", "kind": "attack", "label": "第二回合最多再拿2奖，总计仍只有3奖", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]}
+				]
+			},
+			{
+				"id": "marnie_04_stretcher_wrong_card",
+				"category": "recovery_choice_loses_evolution_trigger",
+				"description": "夜间担架取回恶能看似能启动愿增猿，但唯一长毛巨魔仍在弃牌区；神奇糖果没有二阶手牌目标，庞克泵感与180伤攻击都无法出现。",
+				"proof_steps": [
+					{"id": "research_draw_recovery_package", "kind": "play_trainer", "label": "博士抽到担架、糖果和反击捕捉器", "card_uid": "CSV1C_121", "targets": []},
+					{
+						"id": "stretcher_dark_energy",
+						"kind": "play_trainer",
+						"label": "诱导线：夜间担架取回恶能而非长毛巨魔",
+						"card_uid": "CSV8C_183",
+						"targets": [{"night_stretcher_choice": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]
+					},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "把取回恶能手贴给愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 2}},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "手中没有长毛巨魔，神奇糖果与泵感均无法启动"},
+					{"id": "raging_bolt_reply", "kind": "fixed_rules_ai_turn", "label": "猛雷鼓规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前仍没有180伤攻击手"}
+				]
+			}
+		],
+		"marnie_05": [
+			{
+				"id": "marnie_05_iono_one_prize",
+				"category": "five_card_draw_misses_seventh_card_gust",
+				"description": "我方从5奖开始，奇树只抽5张，漏掉第7张反击捕捉器。即使完成进化、愿增猿搬伤与暗影子弹铺伤，首回合也只能击倒当前一奖含羞苞，无法组成2+3奖。",
+				"proof_steps": [
+					{"id": "iono_draw_five", "kind": "play_trainer", "label": "诱导线：奇树只抽冻结牌顶前5张", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "evolve_first_grimmsnarl", "kind": "evolve", "label": "前场诈唬魔进化", "card_uid": "CSV10C_148", "target": {"zone": "active"}},
+					{
+						"id": "first_punk_up_two_one",
+						"kind": "use_ability",
+						"label": "首次泵感仍按2/1准备两条攻击线",
+						"source": {"zone": "active"},
+						"targets": [{"marnies_punk_up_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 1}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 2}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}}
+						]}]
+					},
+					{"id": "attach_dark_to_munkidori", "kind": "attach_energy", "label": "把恶能手贴愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 1}},
+					{"id": "munkidori_tunes_second_dragapult", "kind": "munkidori", "label": "愿增猿把第二只糖果多龙补到70伤", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 280}, "amount": 30},
+					{"id": "ko_only_budew", "kind": "attack", "label": "没有捕捉器，只能击倒当前一奖含羞苞", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 4}}]}]},
+					{"id": "charizard_reply", "kind": "fixed_rules_ai_turn", "label": "只取1奖后燃烧黑暗不足以击倒首攻者"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "截止前最多只有1奖，远低于5奖目标"}
+				]
+			},
+			{
+				"id": "marnie_05_no_backup_energy",
+				"category": "energy_overinvestment_breaks_tool_attack",
+				"description": "首次庞克泵感把3张恶能全给首攻者看似更稳，但接棒诈唬魔没有退化所需的1无色；首攻被精确反杀后，即使奖赏拿到进化与学习器也无法发动退化。",
+				"proof_steps": [
+					{"id": "research_draw_seven_keys", "kind": "play_trainer", "label": "博士抽满7张关键组件", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "evolve_first_grimmsnarl", "kind": "evolve", "label": "前场诈唬魔进化", "card_uid": "CSV10C_148", "target": {"zone": "active"}},
+					{
+						"id": "first_punk_up_all_active",
+						"kind": "use_ability",
+						"label": "诱导线：首次泵感把3能全部堆给首攻者",
+						"source": {"zone": "active"},
+						"targets": [{"marnies_punk_up_assignments": [
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 1}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+							{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 2}}, "target": {"$slot": {"player": 0, "zone": "active"}}}
+						]}]
+					},
+					{"id": "attach_dark_to_munkidori", "kind": "attach_energy", "label": "把博士抽到的恶能手贴愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 1}},
+					{"id": "munkidori_tunes_second_dragapult", "kind": "munkidori", "label": "愿增猿把第二只糖果多龙补到70伤", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 280}, "amount": 30},
+					{"id": "counter_first_dragapult", "kind": "play_trainer", "label": "反击捕捉器拉出首只多龙", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "first_shadow_bullet", "kind": "attack", "label": "首杀并把后排恶喷补到70伤", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 4}}]}]},
+					{"id": "charizard_reply", "kind": "fixed_rules_ai_turn", "label": "恶喷精确反杀首攻者", "require_attack": true},
+					{"id": "munkidori_retreat_to_backup", "kind": "retreat", "label": "被迫让唯一有能量的愿增猿升场，再弃掉该恶能撤退到接棒诈唬魔", "target": {"zone": "bench", "index": 0}, "energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_DAR", "occurrence": 0}}]},
+					{"id": "evolve_second_grimmsnarl", "kind": "evolve", "label": "奖赏长毛巨魔进化无能量的接棒手", "card_uid": "CSV10C_148", "target": {"zone": "active"}},
+					{"id": "attach_tm_devolution", "kind": "attach_tool", "label": "附着退化学习器但仍缺攻击费用", "card_uid": "CSV5C_120", "target": {"zone": "active"}},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "接棒手0能，不能发动退化，截止时只有2奖"}
+				]
+			}
+		],
+		"marnie_06": [
+			{
+				"id": "marnie_06_iono_misses_counter",
+				"category": "six_card_draw_misses_seventh_card_gust",
+				"description": "奇树只抽6张，虽然拿到能量输送和老大，却漏掉第7张反击捕捉器；首回合只能击倒当前一奖索财灵，两回合奖赏上限降到3。",
+				"proof_steps": [
+					{"id": "iono_draw_six", "kind": "play_trainer", "label": "诱导线：奇树只抽前6张并漏掉捕捉器", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "energy_search_dark", "kind": "play_trainer", "label": "能量输送取得恶能", "card_uid": "CSVH1C_035", "targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "手贴恶能给愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 0}},
+					{"id": "munkidori_current_gimmighoul", "kind": "munkidori", "label": "没有捕捉器，只能把30搬给当前索财灵", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "ko_only_gimmighoul", "kind": "attack", "label": "首回合仅取得1奖，并向赛富豪铺30", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪规则AI完成反击", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "第二回合即使再击倒一只赛富豪也只有3奖，低于4奖目标"}
+				]
+			},
+			{
+				"id": "marnie_06_munk_before_counter",
+				"category": "damage_move_before_gust_breaks_check_math",
+				"description": "愿增猿在捕捉前把30搬给索财灵，会让首个赛富豪只有40既有伤；180攻击和冻结帷幕10合计仅230，仍差30HP。",
+				"proof_steps": [
+					{"id": "research_draw_seven", "kind": "play_trainer", "label": "博士抽满7张", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "energy_search_dark", "kind": "play_trainer", "label": "能量输送取得恶能", "card_uid": "CSVH1C_035", "targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "手贴恶能给愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 0}},
+					{"id": "munkidori_too_early", "kind": "munkidori", "label": "诱导线：捕捉前先把30搬给当前索财灵", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "counter_first_gholdengo", "kind": "play_trainer", "label": "之后才拉出已有40伤的赛富豪", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "first_shadow_bullet_short", "kind": "attack", "label": "180加检查10后仍差30HP", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 1}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "未被击倒的赛富豪完成其规则AI回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合0奖，截止前无法完成两只ex击倒"}
+				]
+			}
+		],
+		"marnie_07": [
+			{
+				"id": "marnie_07_iono_misses_boss",
+				"category": "four_card_draw_misses_seventh_card_finisher",
+				"description": "我方剩4奖时奇树只抽4张，虽然取得能量输送，却漏掉第7张老大。谢米仍能保护三只愿增猿，但第二回合无法抓出70伤的双奖索罗亚克。",
+				"proof_steps": [
+					{"id": "iono_draw_four", "kind": "play_trainer", "label": "诱导线：奇树只抽冻结牌顶前4张", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "energy_search_dark", "kind": "play_trainer", "label": "能量输送取得愿增猿恶能", "card_uid": "CSVH1C_035", "targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "手贴恶能给第一只愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 0}},
+					{"id": "wait_for_flamebody", "kind": "end_turn", "label": "结束回合等待焚身加农炮"},
+					{"id": "darmanitan_flamebody_reply", "kind": "opponent_attack", "label": "达摩狒狒出招，谢米保护三只愿增猿", "attack_index": 1, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有老大，无法暴露双奖目标，截止前不足4奖"}
+				]
+			},
+			{
+				"id": "marnie_07_dark_to_grimmsnarl",
+				"category": "manual_attachment_owner_breaks_exact_math",
+				"description": "把能量输送找出的恶能贴给已有双恶的长毛巨魔，会让第一只愿增猿无能。后两只愿增猿虽可各取1奖，但索罗亚克只有70+180=250伤，仍剩30HP。",
+				"proof_steps": [
+					{"id": "research_draw_seven", "kind": "play_trainer", "label": "博士抽满7张取得能量输送与老大", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "energy_search_dark", "kind": "play_trainer", "label": "能量输送取得恶能", "card_uid": "CSVH1C_035", "targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "attach_dark_wrong_owner", "kind": "attach_energy", "label": "诱导线：把恶能贴给已经满足费用的长毛巨魔", "card_uid": "CSVE1C_DAR", "target": {"zone": "active"}},
+					{"id": "wait_for_flamebody", "kind": "end_turn", "label": "结束回合等待焚身加农炮"},
+					{"id": "darmanitan_flamebody_reply", "kind": "opponent_attack", "label": "达摩狒狒出招，谢米保护备战区", "attack_index": 1, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "boss_damaged_zoroark", "kind": "play_trainer", "label": "老大抓出70伤索罗亚克", "card_uid": "CSVH1aC_023", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "second_munkidori_takes_prize", "kind": "munkidori", "label": "第二只愿增猿击倒对手愿增猿", "ability_source": {"zone": "bench", "index": 2}, "damage_target": {"zone": "bench", "index": 1}, "amount": 30},
+					{"id": "third_munkidori_takes_prize", "kind": "munkidori", "label": "第三只愿增猿击倒皮宝宝", "ability_source": {"zone": "bench", "index": 3}, "damage_target": {"zone": "bench", "index": 0}, "amount": 30},
+					{"id": "shadow_bullet_short", "kind": "attack", "label": "缺少第一只愿增猿30伤，索罗亚克承受180后仍剩30HP", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]}
+				]
+			}
+		],
+		"marnie_08": [
+			{
+				"id": "marnie_08_iono_misses_keys",
+				"category": "four_card_draw_misses_fifth_and_seventh_keys",
+				"description": "我方剩4奖时奇树只抽4张，正好漏掉第5张能量输送与第7张退化学习器。两次双雪妖女检查仍会发生，但0伤赛富豪只到40且没有退化终结。",
+				"proof_steps": [
+					{"id": "iono_draw_four", "kind": "play_trainer", "label": "诱导线：奇树只抽冻结牌顶前4张", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn_for_check", "kind": "end_turn", "label": "没有愿增猿恶能，只能结束回合等待第一次检查"},
+					{"id": "gholdengo_reply_and_second_check", "kind": "fixed_rules_ai_turn", "label": "赛富豪反击并触发第二次检查", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有退化学习器，四奖路线无法结算"}
+				]
+			},
+			{
+				"id": "marnie_08_munk_wrong_target",
+				"category": "damage_correction_on_already_tuned_target",
+				"description": "把愿增猿30伤搬给已有30伤的赛富豪，会让该目标过量到100；唯一0伤目标两次双帷幕后只有40，退化成70HP索财灵仍剩30。",
+				"proof_steps": [
+					{"id": "research_draw_keys", "kind": "play_trainer", "label": "博士抽满7张取得能量输送与退化学习器", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "energy_search_dark", "kind": "play_trainer", "label": "能量输送取得愿增猿恶能", "card_uid": "CSVH1C_035", "targets": [{"search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "attach_dark_munkidori", "kind": "attach_energy", "label": "手贴恶能给愿增猿", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 0}},
+					{"id": "munkidori_wrong_gholdengo", "kind": "munkidori", "label": "诱导线：把30搬给已经有30伤的赛富豪", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench", "index": 0}, "amount": 30},
+					{"id": "end_first_turn_for_check", "kind": "end_turn", "label": "结束回合触发第一次双冻结帷幕"},
+					{"id": "gholdengo_reply_and_second_check", "kind": "fixed_rules_ai_turn", "label": "赛富豪反击并触发第二次双冻结帷幕", "require_attack": true},
+					{"id": "attach_tm_devolution", "kind": "attach_tool", "label": "第二回合附着退化学习器", "card_uid": "CSV5C_120", "target": {"zone": "active"}},
+					{"id": "devolution_only_three", "kind": "granted_attack", "label": "退化只能击倒三只70伤索财灵，0伤起步目标仍剩30HP", "source": {"zone": "active"}, "granted_attack_index": 0, "targets": []}
+				]
+			}
+		],
+		"marnie_09": [
+			{
+				"id": "marnie_09_iono_misses_boss",
+				"category": "six_card_draw_misses_seventh_card_second_gust",
+				"description": "奇树只抽6张，能取得尖钉镇道馆与反击捕捉器，却漏掉第7张老大。两次道馆进化都能完成，但第二回合无法抓出首回合铺到80伤的赛富豪。",
+				"proof_steps": [
+					{"id": "iono_draw_six", "kind": "play_trainer", "label": "诱导线：奇树只抽前6张并漏掉老大", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "play_spikemuth", "kind": "play_stadium", "label": "打出尖钉镇道馆", "card_uid": "CSV10C_216", "targets": []},
+					{"id": "first_spikemuth_search", "kind": "use_stadium", "label": "第一回合道馆检索首只长毛巨魔", "targets": [{"spikemuth_gym_marnies_pokemon": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV10C_148", "occurrence": 0}}]}]},
+					{"id": "evolve_first_grimmsnarl", "kind": "evolve", "label": "前场诈唬魔进化", "card_uid": "CSV10C_148", "target": {"zone": "active"}},
+					{"id": "first_punk_up_two_one", "kind": "use_ability", "label": "首次泵感按2/1分能", "source": {"zone": "active"}, "targets": [{"marnies_punk_up_assignments": [
+						{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+						{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 1}}, "target": {"$slot": {"player": 0, "zone": "active"}}},
+						{"source": {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 2}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}}
+					]}]},
+					{"id": "counter_first_gholdengo", "kind": "play_trainer", "label": "反击捕捉器拉出首目标", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "munkidori_first_target", "kind": "munkidori", "label": "愿增猿搬30到首目标", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_shadow_bullet", "kind": "attack", "label": "首杀并给第二目标铺30", "attack_index": 0, "targets": [{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}]},
+					{"id": "gholdengo_exact_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪精确反杀首攻者", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "奇树既漏掉老大又削弱了反击；无论首攻者是否存活，铺伤双奖目标仍在备战区，截止时只有2奖"}
+				]
+			},
+			{
+				"id": "marnie_09_stadium_wrong_search",
+				"category": "stadium_searches_unplayable_basic_instead_of_evolution",
+				"description": "尖钉镇道馆能找任意玛俐的宝可梦。满备战区时检索第三只捣蛋小妖看似增加资源，实际上既不能打出，也消耗了本回合唯一道馆动作，前场诈唬魔无法进化。",
+				"proof_steps": [
+					{"id": "research_draw_stadium_gusts", "kind": "play_trainer", "label": "博士抽满7张取得道馆与换位卡", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "play_spikemuth", "kind": "play_stadium", "label": "打出尖钉镇道馆", "card_uid": "CSV10C_216", "targets": []},
+					{"id": "wrong_spikemuth_search", "kind": "use_stadium", "label": "诱导线：道馆检索满场无法打出的第三只捣蛋小妖", "targets": [{"spikemuth_gym_marnies_pokemon": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV10C_146", "occurrence": 0}}]}]},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有长毛巨魔，前场无法进化、泵能或攻击"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪规则AI完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "两回合内无法补回首回合0奖缺口"}
+				]
+			}
+		],
+		"marnie_10": [
+			{
+				"id": "marnie_10_iono_misses_secret_box",
+				"category": "six_card_draw_misses_seventh_secret_box",
+				"description": "奇树看似既能抽牌又能破坏赛富豪六能手牌，但剩6奖只抽6张，秘密箱恰好停在第7张。没有四类桥牌，含羞苞无法进化攻击，雪妖女、诈唬魔、道馆预取与跨回合老大全部缺失。",
+				"proof_steps": [
+					{"id": "iono_draw_six", "kind": "play_trainer", "label": "诱导线：奇树只抽到秘密箱之前的6张", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有秘密箱、能量与进化学习器，首回合0奖"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合并击倒含羞苞", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "第二回合仍无长毛巨魔与五奖资源链"}
+				]
+			},
+			{
+				"id": "marnie_10_rescue_board_blocks_tm",
+				"category": "premature_tool_occupies_tm_evolution_slot",
+				"description": "0撤退含羞苞附紧急滑板看似安全，实际永久占据本题唯一可以发动进化学习器的前场道具槽。之后即使博士取得秘密箱并完成四类检索，也无法建立雪妖女与诈唬魔。",
+				"proof_steps": [
+					{"id": "attach_wrong_tool", "kind": "attach_tool", "label": "诱导线：先给本来0撤退的含羞苞附紧急滑板", "card_uid": "CSV7C_185", "target": {"zone": "active"}},
+					{"id": "research_seventh_secret_box", "kind": "play_trainer", "label": "博士仍抽到第7张秘密箱", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "secret_box_four_bridges", "kind": "play_trainer", "label": "秘密箱取得正确四类资源，但进化学习器已无处附着", "card_uid": "CSV8C_176", "targets": [{"discard_cards": [
+						{"$card": {"player": 0, "zone": "hand", "uid": "CSV6C_115", "occurrence": 0}},
+						{"$card": {"player": 0, "zone": "hand", "uid": "CSVH1C_043", "occurrence": 0}},
+						{"$card": {"player": 0, "zone": "hand", "uid": "CSV8C_183", "occurrence": 0}}
+					], "search_item": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVH1C_035", "occurrence": 0}}],
+					"search_tool": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV5C_119", "occurrence": 0}}],
+					"search_supporter": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVH1aC_023", "occurrence": 0}}],
+					"search_stadium": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV10C_216", "occurrence": 0}}]}]},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "道具槽被占，无法发动进化招式，首回合0奖"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有雪妖女双检查与诈唬魔接棒，无法取得5奖"}
+				]
+			}
+		],
+		"gardevoir_01": [
+			{
+				"id": "gardevoir_01_research_blocks_arven",
+				"category": "research_draws_bridge_but_consumes_supporter_window",
+				"description": "博士会把派帕抽进手牌，却同时占用本回合唯一支援者次数。没有派帕就不能同时取得反击捕捉器和勇气护符，首杀目标与第二回合六次拥抱至少丢失一边。",
+				"proof_steps": [
+					{"id": "research_first", "kind": "play_trainer", "label": "诱导线：博士先抽7并占用派帕窗口", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有捕捉器，前场索财灵不是双奖目标"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有勇气护符与首回合三能回流，无法取得4奖"}
+				]
+			},
+			{
+				"id": "gardevoir_01_ultra_ball_shuffles_arven",
+				"category": "premature_shuffle_breaks_fezandipiti_topdeck",
+				"description": "高级球看似能压缩牌库并取得宝可梦，但会先洗掉化危为吉冻结的派帕。即使随后抽3，也不再存在确定的捕捉器＋护符桥。",
+				"proof_steps": [
+					{"id": "ultra_ball_first", "kind": "play_trainer", "label": "诱导线：高级球先弃两张并洗掉派帕", "card_uid": "CSV1C_112", "targets": [{"discard_cards": [
+						{"$card": {"player": 0, "zone": "hand", "uid": "CSV6C_115", "occurrence": 0}},
+						{"$card": {"player": 0, "zone": "hand", "uid": "CSVH1C_043", "occurrence": 0}}
+					], "search_pokemon": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV8C_094", "occurrence": 0}}]}]},
+					{"id": "flip_after_shuffle", "kind": "use_ability", "label": "洗牌后再化危为吉，派帕不再是确定牌顶", "source": {"zone": "bench", "index": 4}, "targets": []},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "没有确定派帕桥，无法同时取得捕捉器与护符"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "两回合最多只取得一只双奖"}
+				]
+			}
+		],
+		"gardevoir_02": [
+			{
+				"id": "gardevoir_02_ralts_attack_wastes_turn",
+				"category": "manual_attach_enables_low_damage_attack_instead_of_energy_reuse",
+				"description": "手贴恶能让拉鲁拉丝满足超＋无色费用，看似可以保留两只沙奈朵，但精神射击只有30。它既没有首杀，也不会公开奖赏区老大，两回合目标直接失效。",
+				"proof_steps": [
+					{"id": "attach_dark_ralts", "kind": "attach_energy", "label": "诱导线：给拉鲁拉丝手贴恶能支付无色", "card_uid": "CSVE1C_DAR", "target": {"zone": "active"}},
+					{"id": "ralts_attack_30", "kind": "attack", "label": "精神射击只造成30，首回合0奖", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "老大仍在奖赏区，两回合最多取得2奖"}
+				]
+			},
+			{
+				"id": "gardevoir_02_boss_healthy_fez",
+				"category": "prize_boss_targets_attractive_but_wrong_two_prizer",
+				"description": "首杀后老大公开，健康吉雉鸡ex看似比赛富豪更容易击倒，但它有210HP，奇迹之力固定190会残20。唯一老大必须用于70伤赛富豪。",
+				"proof_steps": [
+					{"id": "retreat_ralts", "kind": "retreat", "label": "拉鲁拉丝弃超能撤退", "target": {"zone": "bench", "index": 0}, "energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_PSY", "occurrence": 0}}]},
+					{"id": "first_embrace", "kind": "use_ability", "label": "第一只沙奈朵取回第三能", "source": {"zone": "active"}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "active"}}]}]},
+					{"id": "first_attack", "kind": "attack", "label": "190首杀并取得奖赏老大", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "健康赛富豪反杀首攻者", "require_attack": true},
+					{"id": "second_embrace", "kind": "use_ability", "label": "升场第二只沙奈朵取回第三能并产生20伤", "source": {"zone": "active"}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "active"}}]}]},
+					{"id": "munkidori_move_twenty", "kind": "munkidori", "label": "愿增猿先把20伤搬给正确赛富豪，使吉雉鸡成为唯一剩210HP目标", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 210}, "amount": 20},
+					{"id": "boss_wrong_fez", "kind": "play_trainer", "label": "诱导线：老大抓健康吉雉鸡ex", "card_uid": "CSVH1aC_023", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 210}}]}]},
+					{"id": "miracle_force_short", "kind": "attack", "label": "奇迹之力190让吉雉鸡残20，累计只有2奖", "attack_index": 0, "targets": []}
+				]
+			}
+		],
+		"gardevoir_03": [
+			{
+				"id": "gardevoir_03_switch_wrong_attacker",
+				"category": "energy_switch_prepares_future_attacker_but_strands_current_attack",
+				"description": "把拉鲁拉丝超能转给备战沙奈朵看似在保全接棒资源，却让当前前场仍只有2能，无法在首回合使用奇迹之力。",
+				"proof_steps": [
+					{"id": "flip_the_script", "kind": "use_ability", "label": "化危为吉抽到两张桥牌", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{
+						"id": "switch_to_second_gardevoir",
+						"kind": "play_trainer",
+						"label": "诱导线：把拉鲁拉丝超能转给备战第二只沙奈朵",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_PSY", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+						}]}]
+					},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "前场只有2能，首回合不能使用奇迹之力"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪合法完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "两回合最多完成一次双奖击倒"}
+				]
+			},
+			{
+				"id": "gardevoir_03_move_damage_wrong_target",
+				"category": "munkidori_preloads_future_target_but_misses_current_threshold",
+				"description": "把首包30伤搬给健康备战赛富豪看似提前削弱AI攻击手，但当前40伤目标仍剩220HP，190攻击会残30。",
+				"proof_steps": [
+					{"id": "flip_the_script", "kind": "use_ability", "label": "化危为吉抽到两张桥牌", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{
+						"id": "switch_to_active",
+						"kind": "play_trainer",
+						"label": "正确把拉鲁拉丝超能转给前场沙奈朵",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_PSY", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "active"}}
+						}]}]
+					},
+					{"id": "move_to_healthy_bench", "kind": "munkidori", "label": "诱导线：把30伤搬给健康带钢能备战赛富豪", "ability_source": {"zone": "bench", "index": 2}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 260}, "amount": 30},
+					{"id": "miracle_force_short", "kind": "attack", "label": "奇迹之力190让当前目标残30，首回合0奖", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪合法完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有首杀就无法达成4奖"}
+				]
+			}
+		],
+		"gardevoir_04": [
+			{
+				"id": "gardevoir_04_switch_to_munk",
+				"category": "energy_switch_pays_retreat_but_strands_scream_tail",
+				"description": "把沙奈朵超能转给即将撤退的愿增猿看似能回收弃牌资源，但吼叫尾最终只有手贴的一张超能，不能攻击。",
+				"proof_steps": [
+					{"id": "flip_the_script", "kind": "use_ability", "label": "化危为吉抽到无伤附能双桥", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{
+						"id": "switch_to_active_munk",
+						"kind": "play_trainer",
+						"label": "诱导线：把沙奈朵超能转给前场愿增猿",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_PSY", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "active"}}
+						}]}]
+					},
+					{"id": "attach_psychic_scream", "kind": "attach_energy", "label": "只给吼叫尾手贴一张超能", "card_uid": "CSVE1C_PSY", "target": {"zone": "bench", "index": 0}},
+					{"id": "retreat_to_scream", "kind": "retreat", "label": "愿增猿弃超能、保留恶能撤退到吼叫尾", "target": {"zone": "bench", "index": 0}, "energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_PSY", "occurrence": 0}}]},
+					{"id": "end_first_turn", "kind": "end_turn", "label": "吼叫尾只有1超能，无法攻击"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合0奖使4奖目标失败"}
+				]
+			},
+			{
+				"id": "gardevoir_04_snipe_wrong_active",
+				"category": "scream_tail_targets_active_attacker_instead_of_prize_route",
+				"description": "吼叫尾攻击前场看似能压制攻击手，但160加已有40伤仍差60，浪费唯一首回合攻击。",
+				"proof_steps": [
+					{"id": "flip_the_script", "kind": "use_ability", "label": "化危为吉抽到无伤附能双桥", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{
+						"id": "switch_to_scream",
+						"kind": "play_trainer",
+						"label": "正确把沙奈朵超能转给吼叫尾",
+						"card_uid": "CSVH1aC_008",
+						"targets": [{"energy_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_PSY", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+						}]}]
+					},
+					{"id": "attach_psychic", "kind": "attach_energy", "label": "手贴第二张超能给吼叫尾", "card_uid": "CSVE1C_PSY", "target": {"zone": "bench", "index": 0}},
+					{"id": "retreat_to_scream", "kind": "retreat", "label": "愿增猿弃超能、保留恶能撤退到吼叫尾", "target": {"zone": "bench", "index": 0}, "energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_PSY", "occurrence": 0}}]},
+					{"id": "attack_wrong_active", "kind": "attack", "label": "诱导线：凶暴吼叫160攻击前场赛富豪并残60", "attack_index": 1, "targets": [{"target_pokemon": [{"$slot": {"player": 1, "zone": "active"}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪反杀吼叫尾", "require_attack": true},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "两回合最多取得2奖"}
+				]
+			}
+		],
+		"gardevoir_05": [
+			{
+				"id": "gardevoir_05_research_loses_artazon",
+				"category": "research_draws_rod_but_discards_search_bridge_and_last_safe_draw",
+				"description": "博士一次拿到钓竿和桌台市，却把牌库抽成0；下一次自然抽牌失败发生在玩家能使用钓竿之前。",
+				"proof_steps": [
+					{"id": "research_all_four", "kind": "play_trainer", "label": "诱导线：博士研究直接抽完冻结牌库", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "munkidori_first", "kind": "munkidori", "label": "愿增猿仍校准首个190阈值", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_attack", "kind": "attack", "label": "奇迹之力取得首2奖", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪反杀首攻者", "require_attack": true},
+					{"id": "rod_scream", "kind": "play_trainer", "label": "虽能用钓竿回收吼叫尾，但桌台市已被博士弃掉", "card_uid": "CSV1C_109", "targets": [{"cards_to_return": [
+						{"$card": {"player": 0, "zone": "discard", "uid": "CSV6C_065", "occurrence": 0}},
+						{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}},
+						{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 1}}
+					]}]},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "没有确定检索桥，终结攻击手不可达"}
+				]
+			},
+			{
+				"id": "gardevoir_05_rod_energies_only",
+				"category": "super_rod_maximizes_energy_but_omits_only_attacker",
+				"description": "回收三张超能看似最安全地防止牌库耗尽，却让吼叫尾留在弃牌，桌台市没有攻击手可找。",
+				"proof_steps": [
+					{"id": "flip_the_script", "kind": "use_ability", "label": "化危为吉取得厉害钓竿", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "munkidori_first", "kind": "munkidori", "label": "愿增猿校准首个190阈值", "ability_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "first_attack", "kind": "attack", "label": "奇迹之力取得首2奖", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪反杀并自然抽空", "require_attack": true},
+					{"id": "rod_three_energy", "kind": "play_trainer", "label": "诱导线：厉害钓竿只回收三张超能", "card_uid": "CSV1C_109", "targets": [{"cards_to_return": [
+						{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}},
+						{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 1}},
+						{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 2}}
+					]}]},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "牌库只有能量，桌台市无法找出吼叫尾"}
+				]
+			}
+		],
+		"gardevoir_06": [
+			{
+				"id": "gardevoir_06_discard_counter",
+				"category": "vessel_preserves_energy_but_discards_cross_turn_gust",
+				"description": "容器弃反击捕捉器并保留超能看似资源更多，但手贴不会制造20伤，且第二回合无捕捉手段。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽到三张关键资源", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "vessel_discard_counter", "kind": "play_trainer", "label": "诱导线：容器弃反击捕捉器", "card_uid": "CSV6C_115", "targets": [{"discard_cards": [{"$card": {"player": 0, "zone": "hand", "uid": "CSV6C_114", "occurrence": 0}}], "search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_PSY", "occurrence": 0}}, {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "attach_psychic", "kind": "attach_energy", "label": "把保留的超能手贴给首攻者", "card_uid": "CSVE1C_PSY", "target": {"zone": "active"}},
+					{"id": "attack_short", "kind": "attack", "label": "奇迹之力190让50伤目标残20", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合0奖且捕捉器已弃，目标失败"}
+				]
+			},
+			{
+				"id": "gardevoir_06_counter_healthy",
+				"category": "counter_catcher_removes_reply_but_misses_exact_target",
+				"description": "首回合抓健康反击手看似能保护沙奈朵，但20搬伤加190仍只到210，健康赛富豪残50。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽到三张关键资源", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "vessel", "kind": "play_trainer", "label": "正确弃超能并检索两能", "card_uid": "CSV6C_115", "targets": [{"discard_cards": [{"$card": {"player": 0, "zone": "hand", "uid": "CSVE1C_PSY", "occurrence": 0}}], "search_energy": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_PSY", "occurrence": 0}}, {"$card": {"player": 0, "zone": "deck", "uid": "CSVE1C_DAR", "occurrence": 0}}]}]},
+					{"id": "embrace", "kind": "use_ability", "label": "拥抱取回第三能并制造20伤", "source": {"zone": "active"}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "active"}}]}]},
+					{"id": "move_twenty_healthy", "kind": "munkidori", "label": "把20伤搬给健康带钢能赛富豪", "ability_source": {"zone": "bench", "index": 1}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 260}, "amount": 20},
+					{"id": "counter_healthy", "kind": "play_trainer", "label": "诱导线：反击捕捉器抓出该健康赛富豪", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 240}}]}]},
+					{"id": "attack_short", "kind": "attack", "label": "190后健康赛富豪残50", "attack_index": 0, "targets": []},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合"},
+					{"id": "end_second_turn", "kind": "end_turn", "label": "首回合0奖，两回合无法取得4奖"}
+				]
+			}
+		],
+		"gardevoir_07": [
+			{
+				"id": "gardevoir_07_no_charm_five_embrace",
+				"category": "arven_searches_future_tool_but_misses_current_hp_budget",
+				"description": "不拿护符只做5次拥抱，虽然保留后续工具价值，但吼叫尾搬伤后仅70伤、输出140，吉雉鸡残40。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉翻出派帕", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "arven_tm", "kind": "play_trainer", "label": "诱导线：派帕取得反击捕捉器与进化学习器", "card_uid": "CSV1C_123", "targets": [{"search_item": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}], "search_tool": [{"$card": {"player": 0, "zone": "deck", "uid": "CSVH1C_043", "occurrence": 0}}]}]},
+					{"id": "embrace_1", "kind": "use_ability", "label": "第1次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_2", "kind": "use_ability", "label": "第2次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_3", "kind": "use_ability", "label": "第3次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_4", "kind": "use_ability", "label": "第4次拥抱到80伤", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "move_30", "kind": "munkidori", "label": "愿增猿搬30给前场", "ability_source": {"zone": "active"}, "damage_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "active"}, "amount": 30},
+					{"id": "embrace_5", "kind": "use_ability", "label": "第5次拥抱后吼叫尾70伤", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "retreat", "kind": "retreat", "label": "愿增猿撤退到吼叫尾", "target": {"zone": "bench", "index": 0}, "energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_DAR", "occurrence": 0}}]},
+					{"id": "attack_140", "kind": "attack", "label": "凶暴吼叫140让吉雉鸡残40", "attack_index": 1, "targets": [{"target_pokemon": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 180}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪完成回合", "require_attack": true},
+					{"id": "end_second", "kind": "end_turn", "label": "首回合0奖，两回合无法4奖"}
+				]
+			},
+			{
+				"id": "gardevoir_07_move_to_first_target",
+				"category": "munkidori_overkills_snipe_target_but_loses_next_threshold",
+				"description": "把30伤也堆给吉雉鸡会让首杀更轻松，却使前场赛富豪第二回合仍只受40伤、被190打后残30。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉翻出派帕", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "arven", "kind": "play_trainer", "label": "派帕取得护符", "card_uid": "CSV1C_123", "targets": [{"search_item": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}], "search_tool": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV1C_118", "occurrence": 0}}]}]},
+					{"id": "charm", "kind": "attach_tool", "label": "给吼叫尾附护符", "card_uid": "CSV1C_118", "target": {"zone": "bench", "index": 0}},
+					{"id": "embrace_1", "kind": "use_ability", "label": "第1次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_2", "kind": "use_ability", "label": "第2次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_3", "kind": "use_ability", "label": "第3次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_4", "kind": "use_ability", "label": "第4次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "move_wrong", "kind": "munkidori", "label": "诱导线：把30伤搬给30伤吉雉鸡", "ability_source": {"zone": "active"}, "damage_source": {"zone": "bench", "index": 0}, "damage_target": {"zone": "bench_remaining_hp", "remaining_hp": 180}, "amount": 30},
+					{"id": "embrace_5", "kind": "use_ability", "label": "第5次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "embrace_6", "kind": "use_ability", "label": "第6次拥抱", "source": {"zone": "bench", "index": 1}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "retreat", "kind": "retreat", "label": "愿增猿撤退", "target": {"zone": "bench", "index": 0}, "energy_to_discard": [{"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_DAR", "occurrence": 0}}]},
+					{"id": "attack", "kind": "attack", "label": "吼叫尾过量击倒吉雉鸡", "attack_index": 1, "targets": [{"target_pokemon": [{"$slot": {"player": 1, "zone": "bench_remaining_hp", "remaining_hp": 150}}]}]},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "前场赛富豪反杀吼叫尾", "require_attack": true},
+					{"id": "end_second", "kind": "end_turn", "label": "前场仍剩220HP，第二回合190不足"}
+				]
+			}
+		],
+		"gardevoir_08": [
+			{
+				"id": "gardevoir_08_switch_wrong_gardevoir",
+				"category": "energy_switch_secures_handoff_but_strands_current_attacker",
+				"description": "把超能转给接棒沙奈朵看似稳健，却让当前首攻者只有2能，第一回合无法使用奇迹之力。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽到桥牌", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{"id": "switch_wrong", "kind": "play_trainer", "label": "诱导线：转移超能给第二只沙奈朵", "card_uid": "CSVH1aC_008", "targets": [{"energy_assignment": [{"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_PSY", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}}]}]},
+					{"id": "end_first", "kind": "end_turn", "label": "首攻者2能无法攻击"},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "多龙完成回合"},
+					{"id": "end_second", "kind": "end_turn", "label": "两回合最多击倒一只多龙"}
+				]
+			},
+			{
+				"id": "gardevoir_08_counter_fez",
+				"category": "counter_targets_lower_hp_non_dragon_but_loses_weakness",
+				"description": "健康吉雉鸡只有210HP却不是龙，妖精领域不改写其弱点；190仍会残20。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽到桥牌", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{"id": "switch", "kind": "play_trainer", "label": "正确补首攻第三能", "card_uid": "CSVH1aC_008", "targets": [{"energy_assignment": [{"source": {"$card": {"player": 0, "zone": "bench_energy", "index": 1, "uid": "CSVE1C_PSY", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "active"}}}]}]},
+					{"id": "arven", "kind": "play_trainer", "label": "派帕取得反击捕捉器", "card_uid": "CSV1C_123", "targets": [{"search_item": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}], "search_tool": [{"$card": {"player": 0, "zone": "deck", "uid": "CSV1C_118", "occurrence": 0}}]}]},
+					{"id": "counter_fez", "kind": "play_trainer", "label": "诱导线：抓出健康吉雉鸡ex", "card_uid": "CSV6C_114", "targets": [{"opponent_bench_target": [{"$slot": {"player": 1, "zone": "bench", "index": 3}}]}]},
+					{"id": "attack_190", "kind": "attack", "label": "吉雉鸡不吃龙弱点，190后残20", "attack_index": 0, "targets": []},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "对手完成回合"},
+					{"id": "end_second", "kind": "end_turn", "label": "首回合0奖，无法完成4奖"}
+				]
+			}
+		],
+		"gardevoir_09": [
+			{
+				"id": "gardevoir_09_kirlia_dies_to_spread",
+				"category": "normal_evolution_preserves_engine_but_enters_exact_spread_ko",
+				"description": "奇鲁莉安提供滤抽价值，却以30伤剩60HP，正好被幻影潜袭的60点备战伤害击倒。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽到糖果三键", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "switch", "kind": "play_trainer", "label": "仍把第4能转给拉鲁拉丝", "card_uid": "CSVH1aC_008", "targets": [{"energy_assignment": [{"source": {"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_PSY", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}}]}]},
+					{"id": "evolve_kirlia", "kind": "evolve", "label": "诱导线：正常进化为手中奇鲁莉安", "card_uid": "CSV2C_054", "target": {"zone": "bench", "index": 0}},
+					{"id": "first_attack", "kind": "attack", "label": "首攻沙奈朵击倒第一多龙", "attack_index": 0, "targets": []},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "多龙200反杀并以60点精确击倒奇鲁莉安", "require_attack": true},
+					{"id": "end_second", "kind": "end_turn", "label": "接棒攻击手已被备战伤害击倒"}
+				]
+			},
+			{
+				"id": "gardevoir_09_switch_to_munk",
+				"category": "energy_switch_protects_active_surplus_but_underpowers_candy_attacker",
+				"description": "把多余超能转给愿增猿后，糖果沙奈朵只能从1能拥抱到2能，无法在第二回合攻击。",
+				"proof_steps": [
+					{"id": "flip", "kind": "use_ability", "label": "化危为吉抽到糖果三键", "source": {"zone": "bench", "index": 2}, "targets": []},
+					{"id": "switch_wrong", "kind": "play_trainer", "label": "诱导线：把第4能转给愿增猿", "card_uid": "CSVH1aC_008", "targets": [{"energy_assignment": [{"source": {"$card": {"player": 0, "zone": "active_energy", "uid": "CSVE1C_PSY", "occurrence": 0}}, "target": {"$slot": {"player": 0, "zone": "bench", "index": 1}}}]}]},
+					{"id": "candy", "kind": "play_trainer", "label": "糖果直升拉鲁拉丝", "card_uid": "CSVH1C_045", "targets": [{"basic_pokemon": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}], "stage2_pokemon": [{"$card": {"player": 0, "zone": "hand", "uid": "CSV2C_055", "occurrence": 0}}]}]},
+					{"id": "embrace_once", "kind": "use_ability", "label": "只能拥抱到2能", "source": {"zone": "bench", "index": 0}, "targets": [{"embrace_energy": [{"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_PSY", "occurrence": 0}}], "embrace_target": [{"$slot": {"player": 0, "zone": "bench", "index": 0}}]}]},
+					{"id": "first_attack", "kind": "attack", "label": "首攻者击倒第一多龙", "attack_index": 0, "targets": []},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "多龙反杀首攻者", "require_attack": true},
+					{"id": "end_second", "kind": "end_turn", "label": "接棒沙奈朵只有2能，无法使用奇迹之力"}
+				]
+			}
+		],
+		"gardevoir_10": [
+			{
+				"id": "gardevoir_10_fez_before_mew",
+				"category": "fez_draws_more_now_but_closes_mew_threshold_before_arven",
+				"description": "降到2手牌后先用吉雉鸡抽3，手牌变5且只看到前三张；梦幻失效，派帕停在下一张。",
+				"proof_steps": [
+					{"id": "charm", "kind": "attach_tool", "label": "附护符降手", "card_uid": "CSV1C_118", "target": {"zone": "bench", "index": 1}},
+					{"id": "dark", "kind": "attach_energy", "label": "附恶能降手", "card_uid": "CSVE1C_DAR", "target": {"zone": "bench", "index": 4}},
+					{"id": "tm", "kind": "attach_tool", "label": "给拉鲁拉丝附进化学习器降到2手牌", "card_uid": "CSV5C_119", "target": {"zone": "bench", "index": 2}},
+					{"id": "fez_first", "kind": "use_ability", "label": "诱导线：吉雉鸡先抽前三张", "source": {"zone": "bench", "index": 3}, "targets": []},
+					{"id": "end_first", "kind": "end_turn", "label": "手牌5张，梦幻不能抽到下一张派帕"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪合法完成回合"},
+					{"id": "end_second", "kind": "end_turn", "label": "首攻者仍只有2能，无法完成4奖"}
+				]
+			},
+			{
+				"id": "gardevoir_10_research_first",
+				"category": "research_sees_arven_but_consumes_its_supporter_window",
+				"description": "博士一次抽7会看到派帕与老大，却占用唯一支援者次数，而且能量转移仍在第8张。",
+				"proof_steps": [
+					{"id": "research_first", "kind": "play_trainer", "label": "诱导线：直接博士研究抽前7张", "card_uid": "CSV1C_121", "targets": []},
+					{"id": "end_first", "kind": "end_turn", "label": "派帕在手但本回合不能再用，首攻者缺第三能"},
+					{"id": "gholdengo_reply", "kind": "fixed_rules_ai_turn", "label": "赛富豪合法完成回合"},
+					{"id": "end_second", "kind": "end_turn", "label": "首回合0奖，两回合无法4奖"}
+				]
+			}
+		],
+		"n_zoroark_01": [
+			{
+				"id": "n_zoroark_01_trade_before_cipher",
+				"category": "trade_consumed_before_cipher_topdeck",
+				"description": "先交易只会抽到当前两张杂牌；之后暗码迷虽然能把第二张PP提升剂与反击捕捉器置顶，但本回合已经没有抽取它们的能力节点。",
+				"proof_steps": [
+					{
+						"id": "copy_immolating_cannon",
+						"kind": "attack",
+						"label": "正确完成焚身加农炮90+90双杀",
+						"attack_index": 0,
+						"targets": [
+							{"copied_attack": [{
+								"source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+								"source_zone": "bench",
+								"attack_index": 1,
+								"attack": {"name": "焚身加农炮", "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]", "cost": "RRC", "damage": "90", "is_vstar_power": false},
+								"source_slot": {"$slot": {"player": 0, "zone": "bench", "index": 2}}
+							}]},
+							{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}
+						]
+					},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "多龙反杀首攻者", "require_attack": true},
+					{"id": "fez_bridge", "kind": "use_ability", "label": "化危为吉取得第一张PP提升剂与城堡", "source": {"zone": "bench", "index": 1}, "targets": []},
+					{
+						"id": "trade_too_early",
+						"kind": "use_ability",
+						"label": "诱导线：暗码迷前先交易，只抽到当前牌顶杂牌",
+						"source": {"zone": "bench", "index": 0},
+						"targets": [{"discard_card": [{"$card": {"player": 0, "zone": "hand", "uid": "CSV10C_144", "occurrence": 0}}]}]
+					},
+					{
+						"id": "cipher_after_trade",
+						"kind": "play_trainer",
+						"label": "暗码迷现在才把第二张PP提升剂和捕捉器置顶",
+						"card_uid": "CSV7C_191",
+						"targets": [{"top_cards": [
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV10C_190", "occurrence": 0}},
+							{"$card": {"player": 0, "zone": "deck", "uid": "CSV6C_114", "occurrence": 0}}
+						]}]
+					},
+					{
+						"id": "only_one_pp_up",
+						"kind": "play_trainer",
+						"label": "手中仅有的一张PP提升剂只能贴回一恶能",
+						"card_uid": "CSV10C_190",
+						"targets": [{"ns_pp_up_assignment": [{
+							"source": {"$card": {"player": 0, "zone": "discard", "uid": "CSVE1C_DAR", "occurrence": 0}},
+							"target": {"$slot": {"player": 0, "zone": "bench", "index": 0}}
+						}]}]
+					},
+					{"id": "deadline", "kind": "end_turn", "label": "第二攻击手只有一恶能，期限内无法使用暗夜小丑"}
+				]
+			},
+			{
+				"id": "n_zoroark_01_iono_breaks_stack",
+				"category": "iono_consumes_cipher_supporter_and_frozen_route",
+				"description": "奇树看似能重抽四张并干扰对手，但会把自然抽到的暗码迷连同冻结牌序洗回牌库；本回合也不能再用暗码迷，无法保证双PP提升剂与捕捉器同时到手。",
+				"proof_steps": [
+					{
+						"id": "copy_immolating_cannon",
+						"kind": "attack",
+						"label": "正确完成焚身加农炮90+90双杀",
+						"attack_index": 0,
+						"targets": [
+							{"copied_attack": [{
+								"source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+								"source_zone": "bench",
+								"attack_index": 1,
+								"attack": {"name": "焚身加农炮", "text": "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]", "cost": "RRC", "damage": "90", "is_vstar_power": false},
+								"source_slot": {"$slot": {"player": 0, "zone": "bench", "index": 2}}
+							}]},
+							{"opponent_bench_damage_targets": [{"$slot": {"player": 1, "zone": "bench", "index": 0}}]}
+						]
+					},
+					{"id": "dragapult_reply", "kind": "fixed_rules_ai_turn", "label": "多龙反杀首攻者", "require_attack": true},
+					{"id": "iono_first", "kind": "play_trainer", "label": "诱导线：直接奇树洗掉暗码迷与冻结牌序", "card_uid": "CSV3C_123", "targets": []},
+					{"id": "deadline", "kind": "end_turn", "label": "支援者次数已用，无法再完成暗码迷到交易的确定路线"}
+				]
+			}
+		]
+	}
+}

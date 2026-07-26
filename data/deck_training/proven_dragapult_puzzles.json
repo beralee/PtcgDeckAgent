@@ -1,0 +1,216 @@
+{
+	"format_version": 1,
+	"scenarios": [
+		{
+			"id": "dragapult_gardevoir_01",
+			"deck_key": "dragapult",
+			"order": 1,
+			"title": "送一奖换四奖：反击双杀",
+			"focus": "故意让对手月月熊击倒黑夜魔灵，再利用伤害校正、反击捕捉器与幻影潜袭完成双ex同时击倒",
+			"objective": "在2个我方回合内击倒开局时对手前场月月熊与第1只备战吉雉鸡ex，共拿4奖。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 8,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV8C_081", "CSV8C_082", "CSV8C_083"]},
+				"bench": [
+					{"stack": ["CSV8C_157", "CSV8C_158"], "energy": ["CSVE1C_PSY"], "damage": 30},
+					{"stack": ["CSV8C_094"], "energy": ["CSV1C_127"]}
+				],
+				"hand": ["CSV8C_159", "CSVE1C_FIR", "CSV6C_114"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV1C_121", "CSV7C_177"]
+			},
+			"opponent": {
+				"prize_count": 4,
+				"active": {
+					"stack": ["CSV8C_172"],
+					"energy": ["CSV1C_127", "CSV1C_127", "CSV1C_127", "CSVE1C_FIR", "CSVE1C_PSY"],
+					"damage": 200
+				},
+				"bench": [
+					{"stack": ["CSV8C_135"]},
+					{"stack": ["CSV8C_157"]}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV1C_112"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0}
+				]
+			},
+			"proof_contract_id": "dragapult_borrowed_damage_v1",
+			"validation_operations": [
+				"把备战多龙奇进化为多龙巴鲁托ex",
+				"把基本火能量贴给备战多龙，补齐幻影潜袭",
+				"保留前场黑夜魔灵并结束回合",
+				"承受规则AI的血月攻击，让黑夜魔灵被击倒",
+				"把多龙巴鲁托ex换到前场",
+				"愿增猿把我方场上的30伤搬到对手第1只备战吉雉鸡ex",
+				"使用反击捕捉器把吉雉鸡ex拉到前场",
+				"幻影潜袭击倒前场，并把全部60伤放到刚退到备战区的旧前场"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "是否接受黑夜魔灵被击倒", "failure": "不送出黑夜魔灵就无法把月月熊留成换位后的60HP备战目标"},
+					{"choice": "愿增猿与幻影潜袭分别把伤害放在哪里", "failure": "30伤必须校正吉雉鸡，60伤必须收掉退到备战区的月月熊，放反就少2奖"}
+				],
+				"cross_turn_dependencies": ["第一回合准备的攻击手必须活过规则AI回合；黑夜魔灵被击倒后才能得到正确的前场与奖差窗口"],
+				"resource_tensions": ["唯一火能必须留给多龙，唯一反击捕捉器必须在愿增猿校正伤害后使用"],
+				"learning_outcome": "主动送1奖制造反击窗口，并计算换位后旧前场的新备战位置"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_02",
+			"deck_key": "dragapult",
+			"order": 2,
+			"title": "两回合五奖：封锁下的四点清场",
+			"focus": "第一回合只准备能量与进化，跨过含羞苞的道具封锁后，用咒怨炸弹和幻影潜袭完成2+1+1+1",
+			"objective": "在2个我方回合内击倒开局时对手的4只指定宝可梦，共取得5奖价值。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 10,
+			"first_player_index": 0,
+			"turn_limit": 2,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV8C_157", "CSV8C_158"], "energy": ["CSVE1C_PSY"], "damage": 30},
+				"bench": [
+					{"stack": ["CSV8C_081", "CSV8C_082", "CSV8C_083"]},
+					{"stack": ["CSV8C_094"], "energy": ["CSV1C_127"]}
+				],
+				"hand": ["CSV8C_159", "CSVE1C_FIR"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV1C_121"]
+			},
+			"opponent": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV9.5C_004"]},
+				"bench": [
+					{"stack": ["CSV8C_157", "CSV8C_158", "CSV8C_159"], "damage": 190},
+					{"stack": ["CSV8C_157"], "damage": 10},
+					{"stack": ["CSV8C_157"], "damage": 40}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV1C_112"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 4,
+				"targets": [
+					{"player": 1, "zone": "active"},
+					{"player": 1, "zone": "bench", "index": 0},
+					{"player": 1, "zone": "bench", "index": 1},
+					{"player": 1, "zone": "bench", "index": 2}
+				]
+			},
+			"proof_contract_id": "dragapult_five_prize_clear_v1",
+			"validation_operations": [
+				"把多龙奇进化为多龙巴鲁托ex",
+				"贴基本火能量补齐幻影潜袭",
+				"结束回合并承受含羞苞的道具封锁",
+				"愿增猿把我方多龙身上的30伤搬到60HP的多龙梅西亚",
+				"黑夜魔灵用咒怨炸弹精确击倒剩130HP的双奖多龙",
+				"领取2张奖赏并保持前场不变",
+				"幻影潜袭击倒含羞苞",
+				"把6个指示物按3+3放到两只各剩30HP的多龙梅西亚"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 5,
+				"decision_points": [
+					{"choice": "第一回合是否提前消耗任何道具路线", "failure": "含羞苞封锁后的第二回合必须只靠场上特性与攻击闭合，错误准备会失去五奖"},
+					{"choice": "30搬伤、130炸弹和最终3+3铺伤如何对应四个目标", "failure": "四个阈值中任意一个错配都会至少少拿1奖"}
+				],
+				"cross_turn_dependencies": ["第一回合必须先完成进化与能量准备，第二回合在道具封锁下只能使用场上资源"],
+				"resource_tensions": ["愿增猿只有一次搬伤，黑夜魔灵只有一次自爆，幻影潜袭只有6个指示物"],
+				"learning_outcome": "将130、200、30和3+3四组伤害同时映射到2+1+1+1奖赏图"
+			}
+		},
+		{
+			"id": "dragapult_gardevoir_03",
+			"deck_key": "dragapult",
+			"order": 3,
+			"title": "一回合四奖：换位后的六豆",
+			"focus": "先校正被拉出的双奖目标，再计算反击捕捉器交换前后两个目标的位置，完成200+60双杀",
+			"objective": "在1个我方回合内击倒开局时对手的两只备战多龙巴鲁托ex，共拿4奖。",
+			"player_deck_id": 800018506,
+			"opponent_deck_id": 800018506,
+			"opponent_name": "自爆多龙",
+			"turn_number": 12,
+			"first_player_index": 0,
+			"turn_limit": 1,
+			"player": {
+				"prize_count": 6,
+				"active": {"stack": ["CSV8C_157", "CSV8C_158"], "damage": 30},
+				"bench": [
+					{"stack": ["CSV8C_157", "CSV8C_158"], "energy": ["CSVE1C_PSY"]},
+					{"stack": ["CSV8C_094"], "energy": ["CSV1C_127"]}
+				],
+				"hand": ["CSV8C_159", "CSVE1C_FIR", "CSV6C_114", "CSV1C_113"],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV1C_121"]
+			},
+			"opponent": {
+				"prize_count": 3,
+				"active": {"stack": ["CSV8C_157"]},
+				"bench": [
+					{"stack": ["CSV8C_172"], "damage": 30},
+					{"stack": ["CSV8C_135"], "damage": 150}
+				],
+				"hand": [],
+				"discard": [],
+				"lost_zone": [],
+				"deck_top": ["CSV1C_112"]
+			},
+			"goal": {
+				"type": "target_knockouts",
+				"required": 2,
+				"targets": [
+					{"player": 1, "zone": "bench", "index": 0},
+					{"player": 1, "zone": "bench", "index": 1}
+				]
+			},
+			"proof_contract_id": "dragapult_gust_spread_mate_v1",
+			"validation_operations": [
+				"愿增猿把前场多龙奇身上的30伤搬到对手第1只备战多龙",
+				"用反击捕捉器把该多龙拉到前场",
+				"把备战多龙奇进化为多龙巴鲁托ex",
+				"贴基本火能量补齐幻影潜袭",
+				"使用宝可梦交替把前场多龙奇换到备战区",
+				"让多龙巴鲁托ex成为前场",
+				"幻影潜袭以200伤击倒被拉出的双奖目标",
+				"把全部60伤放到另一只仅剩60HP的备战多龙"
+			],
+			"challenge": {
+				"difficulty": "expert",
+				"payoff_value": 4,
+				"decision_points": [
+					{"choice": "愿增猿的30伤要放在哪只多龙", "failure": "不把230HP目标校正到200HP，前场攻击无法击倒"},
+					{"choice": "反击捕捉器换位后6个指示物要点哪个备战格", "failure": "旧前场进入的是被交换格，真正剩60HP的目标仍在另一个格，点错即少2奖"}
+				],
+				"cross_turn_dependencies": ["这是单回合将死题，不允许把任何一步推迟到下一回合"],
+				"resource_tensions": ["手贴、换位、捕捉与搬伤都只有一次；任一资源投错对象就无法攻击或无法双杀"],
+				"learning_outcome": "掌握反击捕捉器交换后的场位追踪，以及200前场加60后场的精确四奖图"
+			}
+		}
+	]
+}

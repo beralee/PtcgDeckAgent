@@ -111,6 +111,12 @@ const SCREENSHOT_DECKS := [
 		"source_id": "BV1qpN26rErY@06:45",
 		"source_url": VIDEO_URL + "?t=405",
 		"clone_deck_id": 602769,
+		"adjustments": [
+			{"ref": "CS5aC_113", "delta": -1},
+			{"ref": "CS5bC_125", "delta": -1},
+			{"ref": "CSV8C_183", "delta": 1},
+			{"ref": "CSVH1aC_023", "delta": 1},
+		],
 	},
 	{
 		"id": 18000519,

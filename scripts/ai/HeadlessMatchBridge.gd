@@ -104,6 +104,7 @@ func get_pending_prompt_owner() -> int:
 func can_resolve_pending_prompt() -> bool:
 	return _pending_choice == "mulligan_extra_draw" \
 		or _pending_choice == "take_prize" \
+		or _pending_choice == "send_out" \
 		or _pending_choice.begins_with("setup_active_") \
 		or _pending_choice.begins_with("setup_bench_")
 
@@ -125,6 +126,8 @@ func resolve_pending_prompt() -> bool:
 			resolved = _resolve_mulligan_extra_draw(dialog_data)
 		"take_prize":
 			resolved = _resolve_take_prize(dialog_data)
+		"send_out":
+			resolved = _resolve_send_out(dialog_data)
 		_ when pending_choice.begins_with("setup_active_"):
 			resolved = _resolve_setup_active(dialog_data)
 		_ when pending_choice.begins_with("setup_bench_"):

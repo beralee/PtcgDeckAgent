@@ -1,0 +1,66 @@
+{
+    "name":  "古鼎鹿",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【斗】 沙尘生成 \n选择自己弃牌区中最多2张「基本【斗】能量」，附着于自己的1只宝可梦身上。\n\n【斗】【斗】【斗】 傲慢冲击 220\n如果这只宝可梦身上放置有4个及以上伤害指示物的话，则这个招式失败。\n\n",
+    "yoren_code":  "P1003",
+    "set_code":  "CSV9.5C",
+    "card_index":  "100",
+    "set_code_en":  "PAR",
+    "card_index_en":  "109",
+    "name_en":  "Ting-Lu",
+    "name_zh":  "",
+    "artist":  "AKIRA EGAWA",
+    "rarity":  "R",
+    "release_date":  "2026-06-12T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "a1a72373d6d9233349e8a3ef92a0c14d",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9.5C/100.png",
+    "image_local_path":  "user://cards/images/CSV9.5C/100.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV9.5C/100",
+    "source_set_code":  "CSV9.5C",
+    "source_card_index":  "100",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Basic",
+    "hp":  140,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  4,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "沙尘生成",
+                        "text":  "选择自己弃牌区中最多2张「基本【斗】能量」，附着于自己的1只宝可梦身上。",
+                        "cost":  "F",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "傲慢冲击",
+                        "text":  "如果这只宝可梦身上放置有4个及以上伤害指示物的话，则这个招式失败。",
+                        "cost":  "FFF",
+                        "damage":  "220",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

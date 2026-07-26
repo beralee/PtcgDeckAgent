@@ -1,0 +1,575 @@
+{
+  "exhaustive_defense": true,
+  "format_version": 1,
+  "metrics": {
+    "budget_reason": "",
+    "cache_hits": 0,
+    "elapsed_milliseconds": 382,
+    "inconclusive_leaves": 0,
+    "nodes_visited": 12,
+    "terminal_leaves": 1
+  },
+  "principal_variation": [
+    {
+      "choice_id": "00:research_draw_grimmsnarl_dark",
+      "choice_label": "博士的研究抽到长毛巨魔与恶能",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "01:evolve_first_grimmsnarl",
+      "choice_label": "从手牌进化前场诈唬魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "02:first_punk_up_split",
+      "choice_label": "首次庞克泵感只取3能并按2/1分配",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "03:attach_dark_munkidori",
+      "choice_label": "把博士抽到的恶能手贴给愿增猿",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "04:munkidori_exact_ten",
+      "choice_label": "愿增猿只搬10伤校正双方血线",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "05:first_shadow_bullet",
+      "choice_label": "暗影子弹180首杀并给吉雉鸡30",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "06:charizard_reply",
+      "choice_label": "喷火龙按奖赏差造成240击倒首攻",
+      "role": "opponent",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "07:evolve_second_grimmsnarl",
+      "choice_label": "奖赏长毛巨魔进化接棒诈唬魔",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "08:second_punk_up",
+      "choice_label": "第二次庞克泵感补1恶能给接棒手",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "09:boss_second_target",
+      "choice_label": "奖赏老大抓出已被铺30的第二只多龙",
+      "role": "player",
+      "status": "PROVEN"
+    },
+    {
+      "choice_id": "10:second_shadow_bullet",
+      "choice_label": "第二次暗影子弹180完成四奖",
+      "role": "player",
+      "status": "PROVEN"
+    }
+  ],
+  "promotion": {
+    "authoring": {
+      "authored_operation_count": 11,
+      "errors": [],
+      "ok": true
+    },
+    "errors": [],
+    "ok": true,
+    "proof": {
+      "errors": [],
+      "ok": true,
+      "scenario_fingerprint": "ec0e3f1ce0e629ec957db147fbb670eca3b00a38df466e9f9e9c284b15fc135f"
+    }
+  },
+  "proof_tree": {
+    "branches": [
+      {
+        "choice_id": "00:research_draw_grimmsnarl_dark",
+        "choice_label": "博士的研究抽到长毛巨魔与恶能",
+        "depth": 11,
+        "player_actions": 10,
+        "reason": "player_has_forcing_choice",
+        "status": "PROVEN",
+        "tree": {
+          "branches": [
+            {
+              "choice_id": "01:evolve_first_grimmsnarl",
+              "choice_label": "从手牌进化前场诈唬魔",
+              "depth": 11,
+              "player_actions": 9,
+              "reason": "player_has_forcing_choice",
+              "status": "PROVEN",
+              "tree": {
+                "branches": [
+                  {
+                    "choice_id": "02:first_punk_up_split",
+                    "choice_label": "首次庞克泵感只取3能并按2/1分配",
+                    "depth": 11,
+                    "player_actions": 8,
+                    "reason": "player_has_forcing_choice",
+                    "status": "PROVEN",
+                    "tree": {
+                      "branches": [
+                        {
+                          "choice_id": "03:attach_dark_munkidori",
+                          "choice_label": "把博士抽到的恶能手贴给愿增猿",
+                          "depth": 11,
+                          "player_actions": 7,
+                          "reason": "player_has_forcing_choice",
+                          "status": "PROVEN",
+                          "tree": {
+                            "branches": [
+                              {
+                                "choice_id": "04:munkidori_exact_ten",
+                                "choice_label": "愿增猿只搬10伤校正双方血线",
+                                "depth": 11,
+                                "player_actions": 6,
+                                "reason": "player_has_forcing_choice",
+                                "status": "PROVEN",
+                                "tree": {
+                                  "branches": [
+                                    {
+                                      "choice_id": "05:first_shadow_bullet",
+                                      "choice_label": "暗影子弹180首杀并给吉雉鸡30",
+                                      "depth": 11,
+                                      "player_actions": 5,
+                                      "reason": "all_defenses_hold",
+                                      "status": "PROVEN",
+                                      "tree": {
+                                        "branches": [
+                                          {
+                                            "choice_id": "06:charizard_reply",
+                                            "choice_label": "喷火龙按奖赏差造成240击倒首攻",
+                                            "depth": 11,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "status": "PROVEN",
+                                            "tree": {
+                                              "branches": [
+                                                {
+                                                  "choice_id": "07:evolve_second_grimmsnarl",
+                                                  "choice_label": "奖赏长毛巨魔进化接棒诈唬魔",
+                                                  "depth": 11,
+                                                  "player_actions": 4,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "status": "PROVEN",
+                                                  "tree": {
+                                                    "branches": [
+                                                      {
+                                                        "choice_id": "08:second_punk_up",
+                                                        "choice_label": "第二次庞克泵感补1恶能给接棒手",
+                                                        "depth": 11,
+                                                        "player_actions": 3,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "status": "PROVEN",
+                                                        "tree": {
+                                                          "branches": [
+                                                            {
+                                                              "choice_id": "09:boss_second_target",
+                                                              "choice_label": "奖赏老大抓出已被铺30的第二只多龙",
+                                                              "depth": 11,
+                                                              "player_actions": 2,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "status": "PROVEN",
+                                                              "tree": {
+                                                                "branches": [
+                                                                  {
+                                                                    "choice_id": "10:second_shadow_bullet",
+                                                                    "choice_label": "第二次暗影子弹180完成四奖",
+                                                                    "depth": 11,
+                                                                    "player_actions": 1,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "status": "PROVEN",
+                                                                    "tree": {
+                                                                      "branches": [],
+                                                                      "coverage_complete": true,
+                                                                      "depth": 11,
+                                                                      "player_actions": 0,
+                                                                      "reason": "production_witness_reached_goal",
+                                                                      "score": 4,
+                                                                      "status": "PROVEN",
+                                                                      "winning_choice_count": 0
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "coverage_complete": true,
+                                                                "depth": 11,
+                                                                "player_actions": 1,
+                                                                "reason": "player_has_forcing_choice",
+                                                                "role": "player",
+                                                                "selected_choice_id": "10:second_shadow_bullet",
+                                                                "selected_choice_label": "第二次暗影子弹180完成四奖",
+                                                                "status": "PROVEN",
+                                                                "winning_choice_count": 1
+                                                              }
+                                                            }
+                                                          ],
+                                                          "coverage_complete": true,
+                                                          "depth": 11,
+                                                          "player_actions": 2,
+                                                          "reason": "player_has_forcing_choice",
+                                                          "role": "player",
+                                                          "selected_choice_id": "09:boss_second_target",
+                                                          "selected_choice_label": "奖赏老大抓出已被铺30的第二只多龙",
+                                                          "status": "PROVEN",
+                                                          "winning_choice_count": 1
+                                                        }
+                                                      }
+                                                    ],
+                                                    "coverage_complete": true,
+                                                    "depth": 11,
+                                                    "player_actions": 3,
+                                                    "reason": "player_has_forcing_choice",
+                                                    "role": "player",
+                                                    "selected_choice_id": "08:second_punk_up",
+                                                    "selected_choice_label": "第二次庞克泵感补1恶能给接棒手",
+                                                    "status": "PROVEN",
+                                                    "winning_choice_count": 1
+                                                  }
+                                                }
+                                              ],
+                                              "coverage_complete": true,
+                                              "depth": 11,
+                                              "player_actions": 4,
+                                              "reason": "player_has_forcing_choice",
+                                              "role": "player",
+                                              "selected_choice_id": "07:evolve_second_grimmsnarl",
+                                              "selected_choice_label": "奖赏长毛巨魔进化接棒诈唬魔",
+                                              "status": "PROVEN",
+                                              "winning_choice_count": 1
+                                            }
+                                          }
+                                        ],
+                                        "coverage_complete": true,
+                                        "depth": 11,
+                                        "player_actions": 4,
+                                        "reason": "all_defenses_hold",
+                                        "role": "opponent",
+                                        "selected_choice_id": "06:charizard_reply",
+                                        "selected_choice_label": "喷火龙按奖赏差造成240击倒首攻",
+                                        "status": "PROVEN",
+                                        "winning_choice_count": 1
+                                      }
+                                    }
+                                  ],
+                                  "coverage_complete": true,
+                                  "depth": 11,
+                                  "player_actions": 5,
+                                  "reason": "player_has_forcing_choice",
+                                  "role": "player",
+                                  "selected_choice_id": "05:first_shadow_bullet",
+                                  "selected_choice_label": "暗影子弹180首杀并给吉雉鸡30",
+                                  "status": "PROVEN",
+                                  "winning_choice_count": 1
+                                }
+                              }
+                            ],
+                            "coverage_complete": true,
+                            "depth": 11,
+                            "player_actions": 6,
+                            "reason": "player_has_forcing_choice",
+                            "role": "player",
+                            "selected_choice_id": "04:munkidori_exact_ten",
+                            "selected_choice_label": "愿增猿只搬10伤校正双方血线",
+                            "status": "PROVEN",
+                            "winning_choice_count": 1
+                          }
+                        }
+                      ],
+                      "coverage_complete": true,
+                      "depth": 11,
+                      "player_actions": 7,
+                      "reason": "player_has_forcing_choice",
+                      "role": "player",
+                      "selected_choice_id": "03:attach_dark_munkidori",
+                      "selected_choice_label": "把博士抽到的恶能手贴给愿增猿",
+                      "status": "PROVEN",
+                      "winning_choice_count": 1
+                    }
+                  }
+                ],
+                "coverage_complete": true,
+                "depth": 11,
+                "player_actions": 8,
+                "reason": "player_has_forcing_choice",
+                "role": "player",
+                "selected_choice_id": "02:first_punk_up_split",
+                "selected_choice_label": "首次庞克泵感只取3能并按2/1分配",
+                "status": "PROVEN",
+                "winning_choice_count": 1
+              }
+            }
+          ],
+          "coverage_complete": true,
+          "depth": 11,
+          "player_actions": 9,
+          "reason": "player_has_forcing_choice",
+          "role": "player",
+          "selected_choice_id": "01:evolve_first_grimmsnarl",
+          "selected_choice_label": "从手牌进化前场诈唬魔",
+          "status": "PROVEN",
+          "winning_choice_count": 1
+        }
+      }
+    ],
+    "coverage_complete": true,
+    "depth": 11,
+    "player_actions": 10,
+    "reason": "player_has_forcing_choice",
+    "role": "player",
+    "selected_choice_id": "00:research_draw_grimmsnarl_dark",
+    "selected_choice_label": "博士的研究抽到长毛巨魔与恶能",
+    "status": "PROVEN",
+    "winning_choice_count": 1
+  },
+  "provider": "production_rules_ai_witness_v2",
+  "reason": "player_has_forcing_choice",
+  "root_branches": [
+    {
+      "choice_id": "00:research_draw_grimmsnarl_dark",
+      "choice_label": "博士的研究抽到长毛巨魔与恶能",
+      "depth": 11,
+      "player_actions": 10,
+      "reason": "player_has_forcing_choice",
+      "status": "PROVEN",
+      "tree": {
+        "branches": [
+          {
+            "choice_id": "01:evolve_first_grimmsnarl",
+            "choice_label": "从手牌进化前场诈唬魔",
+            "depth": 11,
+            "player_actions": 9,
+            "reason": "player_has_forcing_choice",
+            "status": "PROVEN",
+            "tree": {
+              "branches": [
+                {
+                  "choice_id": "02:first_punk_up_split",
+                  "choice_label": "首次庞克泵感只取3能并按2/1分配",
+                  "depth": 11,
+                  "player_actions": 8,
+                  "reason": "player_has_forcing_choice",
+                  "status": "PROVEN",
+                  "tree": {
+                    "branches": [
+                      {
+                        "choice_id": "03:attach_dark_munkidori",
+                        "choice_label": "把博士抽到的恶能手贴给愿增猿",
+                        "depth": 11,
+                        "player_actions": 7,
+                        "reason": "player_has_forcing_choice",
+                        "status": "PROVEN",
+                        "tree": {
+                          "branches": [
+                            {
+                              "choice_id": "04:munkidori_exact_ten",
+                              "choice_label": "愿增猿只搬10伤校正双方血线",
+                              "depth": 11,
+                              "player_actions": 6,
+                              "reason": "player_has_forcing_choice",
+                              "status": "PROVEN",
+                              "tree": {
+                                "branches": [
+                                  {
+                                    "choice_id": "05:first_shadow_bullet",
+                                    "choice_label": "暗影子弹180首杀并给吉雉鸡30",
+                                    "depth": 11,
+                                    "player_actions": 5,
+                                    "reason": "all_defenses_hold",
+                                    "status": "PROVEN",
+                                    "tree": {
+                                      "branches": [
+                                        {
+                                          "choice_id": "06:charizard_reply",
+                                          "choice_label": "喷火龙按奖赏差造成240击倒首攻",
+                                          "depth": 11,
+                                          "player_actions": 4,
+                                          "reason": "player_has_forcing_choice",
+                                          "status": "PROVEN",
+                                          "tree": {
+                                            "branches": [
+                                              {
+                                                "choice_id": "07:evolve_second_grimmsnarl",
+                                                "choice_label": "奖赏长毛巨魔进化接棒诈唬魔",
+                                                "depth": 11,
+                                                "player_actions": 4,
+                                                "reason": "player_has_forcing_choice",
+                                                "status": "PROVEN",
+                                                "tree": {
+                                                  "branches": [
+                                                    {
+                                                      "choice_id": "08:second_punk_up",
+                                                      "choice_label": "第二次庞克泵感补1恶能给接棒手",
+                                                      "depth": 11,
+                                                      "player_actions": 3,
+                                                      "reason": "player_has_forcing_choice",
+                                                      "status": "PROVEN",
+                                                      "tree": {
+                                                        "branches": [
+                                                          {
+                                                            "choice_id": "09:boss_second_target",
+                                                            "choice_label": "奖赏老大抓出已被铺30的第二只多龙",
+                                                            "depth": 11,
+                                                            "player_actions": 2,
+                                                            "reason": "player_has_forcing_choice",
+                                                            "status": "PROVEN",
+                                                            "tree": {
+                                                              "branches": [
+                                                                {
+                                                                  "choice_id": "10:second_shadow_bullet",
+                                                                  "choice_label": "第二次暗影子弹180完成四奖",
+                                                                  "depth": 11,
+                                                                  "player_actions": 1,
+                                                                  "reason": "production_witness_reached_goal",
+                                                                  "status": "PROVEN",
+                                                                  "tree": {
+                                                                    "branches": [],
+                                                                    "coverage_complete": true,
+                                                                    "depth": 11,
+                                                                    "player_actions": 0,
+                                                                    "reason": "production_witness_reached_goal",
+                                                                    "score": 4,
+                                                                    "status": "PROVEN",
+                                                                    "winning_choice_count": 0
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "coverage_complete": true,
+                                                              "depth": 11,
+                                                              "player_actions": 1,
+                                                              "reason": "player_has_forcing_choice",
+                                                              "role": "player",
+                                                              "selected_choice_id": "10:second_shadow_bullet",
+                                                              "selected_choice_label": "第二次暗影子弹180完成四奖",
+                                                              "status": "PROVEN",
+                                                              "winning_choice_count": 1
+                                                            }
+                                                          }
+                                                        ],
+                                                        "coverage_complete": true,
+                                                        "depth": 11,
+                                                        "player_actions": 2,
+                                                        "reason": "player_has_forcing_choice",
+                                                        "role": "player",
+                                                        "selected_choice_id": "09:boss_second_target",
+                                                        "selected_choice_label": "奖赏老大抓出已被铺30的第二只多龙",
+                                                        "status": "PROVEN",
+                                                        "winning_choice_count": 1
+                                                      }
+                                                    }
+                                                  ],
+                                                  "coverage_complete": true,
+                                                  "depth": 11,
+                                                  "player_actions": 3,
+                                                  "reason": "player_has_forcing_choice",
+                                                  "role": "player",
+                                                  "selected_choice_id": "08:second_punk_up",
+                                                  "selected_choice_label": "第二次庞克泵感补1恶能给接棒手",
+                                                  "status": "PROVEN",
+                                                  "winning_choice_count": 1
+                                                }
+                                              }
+                                            ],
+                                            "coverage_complete": true,
+                                            "depth": 11,
+                                            "player_actions": 4,
+                                            "reason": "player_has_forcing_choice",
+                                            "role": "player",
+                                            "selected_choice_id": "07:evolve_second_grimmsnarl",
+                                            "selected_choice_label": "奖赏长毛巨魔进化接棒诈唬魔",
+                                            "status": "PROVEN",
+                                            "winning_choice_count": 1
+                                          }
+                                        }
+                                      ],
+                                      "coverage_complete": true,
+                                      "depth": 11,
+                                      "player_actions": 4,
+                                      "reason": "all_defenses_hold",
+                                      "role": "opponent",
+                                      "selected_choice_id": "06:charizard_reply",
+                                      "selected_choice_label": "喷火龙按奖赏差造成240击倒首攻",
+                                      "status": "PROVEN",
+                                      "winning_choice_count": 1
+                                    }
+                                  }
+                                ],
+                                "coverage_complete": true,
+                                "depth": 11,
+                                "player_actions": 5,
+                                "reason": "player_has_forcing_choice",
+                                "role": "player",
+                                "selected_choice_id": "05:first_shadow_bullet",
+                                "selected_choice_label": "暗影子弹180首杀并给吉雉鸡30",
+                                "status": "PROVEN",
+                                "winning_choice_count": 1
+                              }
+                            }
+                          ],
+                          "coverage_complete": true,
+                          "depth": 11,
+                          "player_actions": 6,
+                          "reason": "player_has_forcing_choice",
+                          "role": "player",
+                          "selected_choice_id": "04:munkidori_exact_ten",
+                          "selected_choice_label": "愿增猿只搬10伤校正双方血线",
+                          "status": "PROVEN",
+                          "winning_choice_count": 1
+                        }
+                      }
+                    ],
+                    "coverage_complete": true,
+                    "depth": 11,
+                    "player_actions": 7,
+                    "reason": "player_has_forcing_choice",
+                    "role": "player",
+                    "selected_choice_id": "03:attach_dark_munkidori",
+                    "selected_choice_label": "把博士抽到的恶能手贴给愿增猿",
+                    "status": "PROVEN",
+                    "winning_choice_count": 1
+                  }
+                }
+              ],
+              "coverage_complete": true,
+              "depth": 11,
+              "player_actions": 8,
+              "reason": "player_has_forcing_choice",
+              "role": "player",
+              "selected_choice_id": "02:first_punk_up_split",
+              "selected_choice_label": "首次庞克泵感只取3能并按2/1分配",
+              "status": "PROVEN",
+              "winning_choice_count": 1
+            }
+          }
+        ],
+        "coverage_complete": true,
+        "depth": 11,
+        "player_actions": 9,
+        "reason": "player_has_forcing_choice",
+        "role": "player",
+        "selected_choice_id": "01:evolve_first_grimmsnarl",
+        "selected_choice_label": "从手牌进化前场诈唬魔",
+        "status": "PROVEN",
+        "winning_choice_count": 1
+      }
+    }
+  ],
+  "root_role": "player",
+  "scenario_fingerprint": "ec0e3f1ce0e629ec957db147fbb670eca3b00a38df466e9f9e9c284b15fc135f",
+  "scenario_id": "marnie_01",
+  "shortest_player_actions": 10,
+  "solver_version": "deck-training-and-or-v2",
+  "status": "PROVEN",
+  "unique_root_solution": true,
+  "unsupported_reasons": []
+}

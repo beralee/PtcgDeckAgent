@@ -70,6 +70,10 @@ func summary() -> Dictionary:
 	var rejected_calls := 0
 	var model_owned_action_results := 0
 	var response_turns: Dictionary = {}
+	var required_judgment_turns: Dictionary = {}
+	var requested_judgment_turns: Dictionary = {}
+	var resolved_judgment_turns: Dictionary = {}
+	var accepted_judgment_turns: Dictionary = {}
 	var routes: Dictionary = {}
 	var event_types: Dictionary = {}
 	var payload_sizes: Array[float] = []
@@ -88,6 +92,12 @@ func summary() -> Dictionary:
 		var event_type := str(record.get("event_type", ""))
 		if event_type != "":
 			event_types[event_type] = int(event_types.get(event_type, 0)) + 1
+		var record_turn_id := int(record.get("turn_id", -1))
+		if event_type == "turn_model_judgment_opened" \
+				and bool(record.get("turn_model_judgment_required", false)):
+			required_judgment_turns[record_turn_id] = true
+		elif event_type == "turn_model_judgment_requested":
+			requested_judgment_turns[record_turn_id] = true
 		if event_type == "action_result" and owner in MODEL_ACTION_OWNERS:
 			# Count attempts, not only successes.  A failed model-owned attempt can
 			# still alter the host loop (including causing an implicit turn end), so
@@ -98,7 +108,11 @@ func summary() -> Dictionary:
 			routes[route_id] = int(routes.get(route_id, 0)) + 1
 		if event_type == "policy_response":
 			calls += 1
-			response_turns[int(record.get("turn_id", -1))] = true
+			response_turns[record_turn_id] = true
+			if bool(record.get("turn_model_judgment", false)):
+				resolved_judgment_turns[record_turn_id] = true
+				if bool(record.get("accepted", false)):
+					accepted_judgment_turns[record_turn_id] = true
 			if bool(record.get("accepted", false)):
 				accepted_calls += 1
 			else:
@@ -116,6 +130,14 @@ func summary() -> Dictionary:
 		turn_wait_values.append(float(value))
 	turn_wait_values.sort()
 	payload_sizes.sort()
+	var missing_request_turn_ids := _missing_sorted_turn_ids(
+		required_judgment_turns,
+		requested_judgment_turns
+	)
+	var unresolved_turn_ids := _missing_sorted_turn_ids(
+		required_judgment_turns,
+		resolved_judgment_turns
+	)
 	return {
 		"records": _records.size(),
 		"action_owners": owners,
@@ -128,6 +150,16 @@ func summary() -> Dictionary:
 		"model_owned_action_results": model_owned_action_results,
 		"model_acceptance_rate": float(accepted_calls) / float(maxi(calls, 1)),
 		"calls_per_request_turn": float(calls) / float(maxi(response_turns.size(), 1)),
+		"turn_model_judgment_required_turns": required_judgment_turns.size(),
+		"turn_model_judgment_requested_turns": requested_judgment_turns.size(),
+		"turn_model_judgment_resolved_turns": resolved_judgment_turns.size(),
+		"turn_model_judgment_accepted_turns": accepted_judgment_turns.size(),
+		"turn_model_judgment_request_coverage": float(requested_judgment_turns.size()) \
+			/ float(maxi(required_judgment_turns.size(), 1)),
+		"turn_model_judgment_resolution_coverage": float(resolved_judgment_turns.size()) \
+			/ float(maxi(required_judgment_turns.size(), 1)),
+		"turn_model_judgment_missing_request_turn_ids": missing_request_turn_ids,
+		"turn_model_judgment_unresolved_turn_ids": unresolved_turn_ids,
 		"routes": routes,
 		"event_types": event_types,
 		"visible_wait_p50_ms": _percentile(waits, 0.50),
@@ -141,6 +173,16 @@ func summary() -> Dictionary:
 		"payload_p95_bytes": _percentile(payload_sizes, 0.95),
 		"payload_samples_bytes": payload_sizes.duplicate(),
 	}
+
+
+func _missing_sorted_turn_ids(required: Dictionary, covered: Dictionary) -> Array[int]:
+	var missing: Array[int] = []
+	for raw_turn_id: Variant in required.keys():
+		var turn_id := int(raw_turn_id)
+		if not covered.has(turn_id):
+			missing.append(turn_id)
+	missing.sort()
+	return missing
 
 
 func _percentile(values: Array[float], quantile: float) -> float:
