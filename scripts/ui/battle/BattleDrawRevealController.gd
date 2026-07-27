@@ -14,8 +14,6 @@ const REVEAL_STAGGER_SECONDS := 0.08
 const FLY_TO_HAND_SECONDS := 0.08
 const DISCARD_FLY_SECONDS := 0.14
 const PRIZE_EXCHANGE_STAGGER_SECONDS := 0.05
-const OPENING_PRIZE_DEAL_SECONDS := 0.34
-const OPENING_PRIZE_HOLD_SECONDS := 0.12
 const BATCH_MAX_COLUMNS := 4
 const BATCH_CARD_GAP := Vector2.ZERO
 const BATCH_AREA_PADDING := Vector2(16.0, 16.0)
@@ -120,22 +118,6 @@ func _start_next_reveal(scene: Object) -> void:
 
 func build_prize_exchange_animation_plan(action: GameAction) -> Array[Dictionary]:
 	var phases: Array[Dictionary] = []
-	if _is_opening_prize_deal_action(action):
-		var opening_ids: Array = action.data.get("card_instance_ids", [])
-		var opening_count := int(action.data.get("count", 0))
-		if opening_count <= 0 or opening_ids.size() != opening_count:
-			return phases
-		phases.append(_prize_exchange_phase(
-			"opening_deck_to_prize",
-			"deck",
-			"prize",
-			opening_ids,
-			opening_count,
-			OPENING_PRIZE_DEAL_SECONDS,
-			OPENING_PRIZE_HOLD_SECONDS,
-			"摆放奖赏卡 · %d张" % opening_count
-		))
-		return phases
 	if not _is_switching_ticket_action(action):
 		return phases
 	var count := int(action.data.get("prize_count", 0))
@@ -194,16 +176,8 @@ func _is_switching_ticket_action(action: GameAction) -> bool:
 	)
 
 
-func _is_opening_prize_deal_action(action: GameAction) -> bool:
-	return (
-		action != null
-		and action.action_type == GameAction.ActionType.SETUP_SET_PRIZES
-		and bool(action.data.get("opening_deal", false))
-	)
-
-
 func _is_prize_exchange_action(action: GameAction) -> bool:
-	return _is_switching_ticket_action(action) or _is_opening_prize_deal_action(action)
+	return _is_switching_ticket_action(action)
 
 
 func _begin_prize_exchange(scene: Object, action: GameAction) -> void:
@@ -318,24 +292,9 @@ func _finish_prize_exchange(scene: Object) -> void:
 		return
 	var overlay := _ensure_overlay(scene)
 	_set_hint_text(overlay, "")
-	var action := scene.get("_draw_reveal_current_action") as GameAction
-	if _is_opening_prize_deal_action(action) and _is_portrait_reveal_layout(scene):
-		_pulse_opening_prize_target(scene, action.player_index)
 	if scene.has_method("_refresh_ui"):
 		scene.call("_refresh_ui")
 	_finish_current_reveal(scene)
-
-
-func _pulse_opening_prize_target(scene: Object, player_index: int) -> void:
-	var target := _portrait_prize_hud_anchor(scene, player_index)
-	if target == null or not is_instance_valid(target):
-		return
-	if not (scene is Node and (scene as Node).is_inside_tree()):
-		return
-	target.pivot_offset = target.size * 0.5
-	var tween := (scene as Node).create_tween()
-	tween.tween_property(target, "scale", Vector2(1.16, 1.16), 0.10).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(target, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 
 
 func _exchange_cards_from_ids(scene: Object, player_index: int, raw_ids: Array) -> Array[CardInstance]:
@@ -741,6 +700,8 @@ func _ensure_overlay(scene: Object) -> Control:
 	scene.set("_draw_reveal_overlay", overlay)
 	if overlay.get_parent() == null and scene is Node:
 		(scene as Node).add_child(overlay)
+	if scene.has_method("_register_ios_web_hud_touch_root"):
+		scene.call("_register_ios_web_hud_touch_root", overlay)
 	if scene.has_method("_apply_portrait_popup_text_metrics"):
 		scene.call("_apply_portrait_popup_text_metrics")
 	return overlay

@@ -272,7 +272,11 @@ func _on_browser_transient_input_cancel_requested(reason: String) -> void:
 
 func _on_browser_viewport_change_requested(payload: Dictionary) -> void:
 	var size := Vector2(float(payload.get("width", 0.0)), float(payload.get("height", 0.0)))
-	refresh_ui_runtime_profile(size)
+	var user_agent := str(payload.get("user_agent", ""))
+	var browser_platform := str(payload.get("platform", "")).strip_edges().to_lower()
+	if browser_platform == "macintel" and int(payload.get("max_touch_points", 0)) > 1:
+		user_agent = "%s iPad" % user_agent
+	refresh_ui_runtime_profile(size, user_agent)
 	var tree := _scene_tree_or_null()
 	var current_scene := tree.current_scene if tree != null else null
 	if current_scene != null and current_scene.has_method("_on_browser_viewport_changed"):

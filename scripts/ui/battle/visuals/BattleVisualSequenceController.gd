@@ -7,6 +7,7 @@ const ZoneAnimatorScript := preload("res://scripts/ui/battle/visuals/BattleZoneT
 const FeedbackAnimatorScript := preload("res://scripts/ui/battle/visuals/BattleStateFeedbackAnimator.gd")
 
 const SOFT_QUEUE_LIMIT := 48
+const FIELD_RESYNC_EVENT_KINDS := ["damage_delta", "heal_delta", "status_delta"]
 
 var _scene: Object = null
 var _zone_animator: RefCounted = ZoneAnimatorScript.new()
@@ -88,6 +89,7 @@ func sync_after_refresh(game_state: GameState, view_player: int) -> Array[Dictio
 		_baseline_snapshot = after
 		return []
 	var events: Array[Dictionary] = EventBuilderScript.build(_baseline_snapshot, captured_after, null, view_player)
+	events = _without_unattributed_card_motion(events)
 	_baseline_snapshot = after
 	_last_state_transition_signature = transition
 	enqueue_events(events)
@@ -146,6 +148,7 @@ func _start_next() -> void:
 		return
 	if _queue.is_empty():
 		_set_input_blocked(false)
+		_notify_sequence_idle()
 		return
 	_active_event = _queue.pop_front()
 	var animator := _animator_for_event(_active_event)
@@ -160,15 +163,17 @@ func _start_next() -> void:
 func _on_event_finished(expected_generation: int) -> void:
 	if expected_generation != _generation or _active_event.is_empty():
 		return
+	var completed_kind := str(_active_event.get("kind", ""))
 	var completed_semantic := str(_active_event.get("semantic", ""))
+	var field_resync_reason := completed_semantic if completed_semantic != "" else completed_kind
 	_active_event.clear()
 	if (
-		completed_semantic == "knockout"
+		(field_resync_reason == "knockout" or completed_kind in FIELD_RESYNC_EVENT_KINDS)
 		and _scene != null
 		and is_instance_valid(_scene)
 		and _scene.has_method("_refresh_field_after_visual_event")
 	):
-		_scene.call("_refresh_field_after_visual_event", completed_semantic)
+		_scene.call("_refresh_field_after_visual_event", field_resync_reason)
 	_start_next()
 
 
@@ -238,6 +243,20 @@ func _filter_suppressed_events(events: Array[Dictionary], suppressed_semantics: 
 	return filtered
 
 
+func _without_unattributed_card_motion(events: Array[Dictionary]) -> Array[Dictionary]:
+	var filtered: Array[Dictionary] = []
+	for event: Dictionary in events:
+		if str(event.get("kind", "")) in ["zone_transfer", "stack_change", "field_move"]:
+			continue
+		filtered.append(event)
+	return filtered
+
+
 func _set_input_blocked(blocked: bool) -> void:
 	if _scene != null and _scene.has_method("_set_battle_visual_input_blocked"):
 		_scene.call("_set_battle_visual_input_blocked", blocked)
+
+
+func _notify_sequence_idle() -> void:
+	if _scene != null and _scene.has_method("_on_battle_visual_sequence_idle"):
+		_scene.call("_on_battle_visual_sequence_idle")

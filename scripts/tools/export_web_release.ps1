@@ -35,14 +35,18 @@ function Read-AppVersion {
 	$versionMatch = [regex]::Match($text, 'const\s+VERSION\s*:=\s*"([^"]+)"')
 	$displayMatch = [regex]::Match($text, 'const\s+DISPLAY_VERSION\s*:=\s*"([^"]+)"')
 	$buildMatch = [regex]::Match($text, 'const\s+BUILD_NUMBER\s*:=\s*(\d+)')
+	$webVersionMatch = [regex]::Match($text, 'const\s+WEB_VERSION\s*:=\s*"([^"]+)"')
+	$webDisplayMatch = [regex]::Match($text, 'const\s+WEB_DISPLAY_VERSION\s*:=\s*"([^"]+)"')
+	$webBuildMatch = [regex]::Match($text, 'const\s+WEB_BUILD_NUMBER\s*:=\s*(\d+)')
 	$channelMatch = [regex]::Match($text, 'const\s+CHANNEL\s*:=\s*"([^"]+)"')
 	if (-not $versionMatch.Success) {
 		throw "Unable to read VERSION from $versionPath"
 	}
+	$releaseVersion = if ($webVersionMatch.Success) { $webVersionMatch.Groups[1].Value } else { $versionMatch.Groups[1].Value }
 	return @{
-		Version = $versionMatch.Groups[1].Value
-		DisplayVersion = if ($displayMatch.Success) { $displayMatch.Groups[1].Value } else { "v$($versionMatch.Groups[1].Value)" }
-		BuildNumber = if ($buildMatch.Success) { [int]$buildMatch.Groups[1].Value } else { 0 }
+		Version = $releaseVersion
+		DisplayVersion = if ($webDisplayMatch.Success) { $webDisplayMatch.Groups[1].Value } elseif ($displayMatch.Success -and -not $webVersionMatch.Success) { $displayMatch.Groups[1].Value } else { "v$releaseVersion" }
+		BuildNumber = if ($webBuildMatch.Success) { [int]$webBuildMatch.Groups[1].Value } elseif ($buildMatch.Success) { [int]$buildMatch.Groups[1].Value } else { 0 }
 		Channel = if ($channelMatch.Success) { $channelMatch.Groups[1].Value } else { "stable" }
 	}
 }

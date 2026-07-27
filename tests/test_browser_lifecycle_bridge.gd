@@ -14,6 +14,8 @@ func test_lifecycle_bridge_install_script_covers_browser_cancellation_and_errors
 		assert_true(script.contains("pointercancel"), "Bridge should observe pointer cancellation"),
 		assert_true(script.contains("touchcancel"), "Bridge should observe touch cancellation"),
 		assert_true(script.contains("visualViewport"), "Bridge should observe the mobile visual viewport"),
+		assert_true(script.contains("navigator.userAgent"), "Bridge should provide the browser identity to the centralized runtime profile"),
+		assert_true(script.contains("navigator.maxTouchPoints"), "Bridge should expose iPad touch capability even when Safari requests a desktop user agent"),
 		assert_true(script.contains("unhandledrejection"), "Bridge should capture rejected browser promises"),
 		assert_true(script.contains("removeEventListener"), "Bridge must support deterministic listener cleanup"),
 		assert_true(script.contains("__ptcgLifecycleQueue"), "Bridge should drain errors captured before Godot starts"),

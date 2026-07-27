@@ -505,6 +505,8 @@ func _ensure_match_end_screen(scene: Object) -> void:
 	overlay.z_index = 140
 	overlay.visible = false
 	overlay.add_theme_stylebox_override("panel", _match_end_overlay_style())
+	if scene.has_method("_register_ios_web_hud_touch_root"):
+		scene.call("_register_ios_web_hud_touch_root", overlay)
 	root.add_child(overlay)
 	scene.set("_match_end_overlay", overlay)
 

@@ -4161,6 +4161,46 @@ func test_battle_scene_draw_reveal_blocks_ai_progression() -> String:
 	])
 
 
+func test_battle_visual_sequence_keeps_live_player_actions_available_while_cosmetic_cards_finish() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_battle_visual_input_blocked", true)
+	var can_act: Variant = battle_scene.call("_can_accept_live_action")
+
+	return assert_eq(
+		can_act,
+		true,
+		"Committed GameState should remain interactive while non-modal card-transfer visuals finish"
+	)
+
+
+func test_battle_visual_sequence_does_not_override_real_draw_reveal_lock() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_battle_visual_input_blocked", true)
+	battle_scene.set("_draw_reveal_active", true)
+	var can_act: Variant = battle_scene.call("_can_accept_live_action")
+
+	return assert_eq(
+		can_act,
+		false,
+		"An unresolved draw reveal must keep blocking live actions even while cosmetic visuals are non-blocking"
+	)
+
+
+func test_battle_visual_sequence_blocks_ai_from_building_a_stale_card_backlog() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_battle_visual_input_blocked", true)
+	var ai_blocked: Variant = battle_scene.call("_is_ui_blocking_ai")
+	GameManager.current_mode = previous_mode
+
+	return assert_eq(
+		ai_blocked,
+		true,
+		"AI must wait for the current card animation before resolving and queuing its next action"
+	)
+
+
 func test_battle_scene_draw_reveal_shade_does_not_swallow_confirm_click() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()

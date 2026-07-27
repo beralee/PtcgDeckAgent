@@ -19,8 +19,9 @@ static func build(
 	var moved_slots: Dictionary = _detect_moved_slots(before, after)
 	var consumed_card_ids: Dictionary = {}
 	_append_stack_changes(events, before, after, action, view_player, moved_slots, consumed_card_ids, order_ref)
-	_append_field_moves(events, before, after, moved_slots, consumed_card_ids, order_ref)
-	_append_zone_transfers(events, before, after, action, view_player, consumed_card_ids, order_ref)
+	if action == null or action.action_type != GameAction.ActionType.EVOLVE:
+		_append_field_moves(events, before, after, moved_slots, consumed_card_ids, order_ref)
+		_append_zone_transfers(events, before, after, action, view_player, consumed_card_ids, order_ref)
 	_normalize_hand_reset_sequences(events)
 	_append_slot_deltas(events, before, after, order_ref)
 	_append_shuffle_events(events, before, after, order_ref)
@@ -103,21 +104,21 @@ static func _append_stack_changes(
 		if added.is_empty() and removed.is_empty():
 			continue
 		var ids: Array = added if not added.is_empty() else removed
-		for card_id_variant: Variant in ids:
-			consumed_card_ids[int(card_id_variant)] = true
 		var slot_player_index := int(after_slot.get("player_index", before_slot.get("player_index", -1)))
 		var action_target_runtime_id := _evolution_target_runtime_id(action)
-		if (
-			action != null
-			and action.action_type == GameAction.ActionType.EVOLVE
-			and (
-				slot_player_index != action.player_index
+		if action != null and action.action_type == GameAction.ActionType.EVOLVE:
+			var evolution_instance_id := _evolution_instance_id(action)
+			if (
+				evolution_instance_id < 0
+				or slot_player_index != action.player_index
 				or (action_target_runtime_id != -1 and runtime_id != action_target_runtime_id)
-			)
-		):
-			# A delayed/stale stack delta must not masquerade as part of this
-			# Evolution and animate another player's Pokemon.
-			continue
+				or not added.has(evolution_instance_id)
+			):
+				continue
+			ids = [evolution_instance_id]
+			removed = []
+		for card_id_variant: Variant in ids:
+			consumed_card_ids[int(card_id_variant)] = true
 		var source_zone := _first_location(before, ids)
 		var target_zone := _first_location(after, ids)
 		var card_snapshots := _card_snapshots(after if not added.is_empty() else before, ids)
@@ -472,6 +473,16 @@ static func _evolution_target_runtime_id(action: GameAction) -> int:
 	if action == null or action.action_type != GameAction.ActionType.EVOLVE:
 		return -1
 	return int(action.data.get("target_slot_runtime_id", -1))
+
+
+static func _evolution_instance_id(action: GameAction) -> int:
+	if action == null or action.action_type != GameAction.ActionType.EVOLVE:
+		return -1
+	var explicit_id := int(action.data.get("evolution_instance_id", -1))
+	if explicit_id >= 0:
+		return explicit_id
+	var ids: Array = action.data.get("card_instance_ids", [])
+	return int(ids[0]) if ids.size() == 1 else -1
 
 
 static func _transfer_semantic(

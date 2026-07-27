@@ -1562,6 +1562,11 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	processor.register_effect("8e1fa2c9018db938084c94c7c970d419", EffectBossOrders.new())
 	# 奇树
 	processor.register_effect("af514f82d182aeae5327b2c360df703d", EffectIono.new())
+	# 紫竽：自己的手牌洗回牌库；对手剩余3奖及以下时抽8，否则抽4
+	processor.register_effect(
+		"a3c4d099d726c7dfa4393e7e218661db",
+		_instantiate_effect("res://scripts/effects/trainer_effects/CSV9C200Lacey.gd")
+	)
 	processor.register_effect("8be6a0e0835e0caba9acb7bf8e9c9ce0", _instantiate_effect(EffectCherensCareEffect))
 	# 博士的研究：弃掉手牌，摸7张
 	processor.register_effect("aecd80ca2722885c3d062a2255346f3e", EffectDrawCards.new(7, true))

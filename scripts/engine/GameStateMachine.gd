@@ -1821,6 +1821,8 @@ func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: Pok
 	_log_action(GameAction.ActionType.EVOLVE, player_index,
 		{
 			"evolution": evolution.card_data.name,
+			"evolution_instance_id": evolution.instance_id,
+			"card_instance_ids": [evolution.instance_id],
 			"base": base_name,
 			"target_slot_runtime_id": target_slot_runtime_id,
 		},

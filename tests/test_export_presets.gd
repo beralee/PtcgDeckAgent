@@ -12,10 +12,25 @@ const WEB_CUSTOM_SHELL_PATH := "res://web/ptcg_web_shell.html"
 const WEB_E2E_BRIDGE_PATH := "res://web/e2e/WebUiE2EBridge.gd"
 const WEB_USER_VISIT_BRIDGE_PATH := "res://web/userptcg_bridge.html"
 const REQUIRED_BUNDLED_FILTER := "data/**"
+const RELEASE_PRESET_NAMES := ["Windows Desktop", "macOS", "Android", "Web", "iOS"]
 const WEB_PRESET_NAME := "Web"
 const WEB_E2E_PRESET_NAME := "Web UI E2E"
-const WEB_EXCLUDE_FILTERS := ["tests/**", "docs/**", ".tmp/**", ".godot_test_user/**", "web/e2e/**", "addons/web_release_post_export/**"]
-const WEB_GENERATED_SOURCE_EXCLUDE_FILTERS := [
+const RELEASE_DEVELOPMENT_EXCLUDE_FILTERS := [
+	"tests/**",
+	"docs/**",
+	".tmp/**",
+	"tmp/**",
+	".godot_test_user/**",
+	"output/**",
+	"artifacts/**",
+	".codex/**",
+	".codex-remote-attachments/**",
+	".pytest_cache/**",
+	"tools/**",
+	"community/**",
+	"addons/web_release_post_export/**",
+]
+const RELEASE_GENERATED_SOURCE_EXCLUDE_FILTERS := [
 	"output/**",
 	"assets/textures/vfx/ready_*/raw-sheet*.png",
 	"assets/textures/vfx/ready_*/charge-*.png",
@@ -23,9 +38,16 @@ const WEB_GENERATED_SOURCE_EXCLUDE_FILTERS := [
 	"assets/textures/vfx/ready_*/pipeline-meta.json",
 	"assets/textures/vfx/ready_*/prompt-used.txt",
 ]
+const RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS := [
+	"assets/ui/442c5098-10bf-45ad-9274-a0852fc9cdaf.png",
+	"assets/ui/2c531051-f7e6-4abf-95c3-30e2d05d2cd7.png",
+	"assets/ui/8187aae7-e467-446f-bcd8-544468eae16b.png",
+]
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
-const EXPECTED_APP_VERSION := "0.5.1"
-const EXPECTED_BUILD_NUMBER := "51"
+const EXPECTED_APP_VERSION := "0.5.2"
+const EXPECTED_BUILD_NUMBER := "52"
+const EXPECTED_WEB_VERSION := "0.5.2.1"
+const EXPECTED_WEB_BUILD_NUMBER := "521"
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 
@@ -41,6 +63,9 @@ func test_release_version_metadata_is_consistent_across_platforms() -> String:
 		assert_eq(str(AppVersionScript.VERSION), EXPECTED_APP_VERSION, "Runtime version should match the release version"),
 		assert_eq(str(AppVersionScript.DISPLAY_VERSION), "v%s" % EXPECTED_APP_VERSION, "Display version should match the release version"),
 		assert_eq(str(AppVersionScript.BUILD_NUMBER), EXPECTED_BUILD_NUMBER, "Runtime build number should match mobile exports"),
+		assert_eq(str(AppVersionScript.WEB_VERSION), EXPECTED_WEB_VERSION, "Web runtime should expose its patch release version"),
+		assert_eq(str(AppVersionScript.WEB_DISPLAY_VERSION), "v%s" % EXPECTED_WEB_VERSION, "Web display version should match the Web release"),
+		assert_eq(str(AppVersionScript.WEB_BUILD_NUMBER), EXPECTED_WEB_BUILD_NUMBER, "Web build number should match the Web release"),
 		assert_eq(_extract_string_value(windows_options, "application/file_version"), "%s.0" % EXPECTED_APP_VERSION, "Windows file version should match the release version"),
 		assert_eq(_extract_string_value(windows_options, "application/product_version"), "%s.0" % EXPECTED_APP_VERSION, "Windows product version should match the release version"),
 		assert_eq(_extract_string_value(mac_options, "application/short_version"), EXPECTED_APP_VERSION, "macOS short version should match the release version"),
@@ -89,7 +114,7 @@ func test_web_exports_exclude_generated_source_artifacts() -> String:
 	var production_excludes := _extract_string_value(_extract_preset_block(preset_text, WEB_PRESET_NAME), "exclude_filter").split(",")
 	var e2e_excludes := _extract_string_value(_extract_preset_block(preset_text, WEB_E2E_PRESET_NAME), "exclude_filter").split(",")
 	var checks: Array[String] = []
-	for filter: String in WEB_GENERATED_SOURCE_EXCLUDE_FILTERS:
+	for filter: String in RELEASE_GENERATED_SOURCE_EXCLUDE_FILTERS:
 		checks.append(assert_true(production_excludes.has(filter), "Production Web should exclude non-runtime generated source: %s" % filter))
 		checks.append(assert_true(e2e_excludes.has(filter), "Web E2E should match the production resource budget exclusion: %s" % filter))
 	return run_checks(checks)
@@ -106,7 +131,7 @@ func test_web_export_path_is_ide_friendly_and_plugin_versionizes_it() -> String:
 		assert_true(app_version != "", "App version should be readable"),
 		assert_false(export_path.contains("/releases/"), "IDE Web export path should stay easy to select; the post-export plugin should create releases/<version> automatically"),
 		assert_true(export_path.ends_with("/PtcgDeckAgent.html"), "Web export should use the stable PtcgDeckAgent basename for versioned assets"),
-		assert_true(plugin_text.contains("prepare_release_directory(export_file_path, AppVersion.VERSION)"), "Post-export plugin should normalize flat IDE exports into a CDN-safe release slug"),
+		assert_true(plugin_text.contains("prepare_release_directory(export_file_path, AppVersion.WEB_VERSION)"), "Post-export plugin should normalize flat IDE exports with the Web-specific release slug"),
 	])
 
 
@@ -212,6 +237,10 @@ func test_web_custom_shell_has_click_start_and_ios_layout_guards() -> String:
 		assert_false(shell_text.contains("100dvh"), "Custom shell should avoid dynamic viewport height while Android canvas sizing is being stabilized"),
 		assert_true(shell_text.contains("safe-area-inset"), "Custom shell should account for iOS safe areas"),
 		assert_true(shell_text.contains("--ptcg-safe-top: env(safe-area-inset-top"), "Web shell should expose the iOS top safe inset as a shared canvas variable"),
+		assert_true(shell_text.contains("isIpadBrowserViewport"), "Web shell should identify iPad Safari before applying tablet-only viewport corrections"),
+		assert_true(shell_text.contains("--ptcg-visible-height"), "Web shell should expose the iPad visual viewport height to the canvas"),
+		assert_true(shell_text.contains("window.visualViewport.addEventListener('resize', syncIpadVisualViewport)"), "iPad canvas height should follow Safari toolbar resize events"),
+		assert_true(shell_text.contains("window.visualViewport.addEventListener('scroll', syncIpadVisualViewport)"), "iPad canvas origin should follow visual viewport offset changes"),
 		assert_true(shell_text.contains("top: var(--ptcg-safe-top)"), "Game canvas itself should start below the iOS top safe area"),
 		assert_true(shell_text.contains("left: var(--ptcg-safe-left)"), "Game canvas itself should start after the iOS left safe area"),
 		assert_true(shell_text.contains("calc(100% - var(--ptcg-safe-left) - var(--ptcg-safe-right))"), "Game canvas width should exclude both horizontal safe areas"),
@@ -279,14 +308,30 @@ func test_web_user_visit_static_bridge_posts_cloud_function() -> String:
 func test_web_export_excludes_development_only_files() -> String:
 	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
 	var web_block := _extract_preset_block(preset_text, WEB_PRESET_NAME)
-	var windows_block := _extract_preset_block(preset_text, "Windows Desktop")
 	var web_exclude_filter := _extract_string_value(web_block, "exclude_filter")
 	var web_filters := web_exclude_filter.split(",")
 	var checks: Array[String] = []
-	for filter: String in WEB_EXCLUDE_FILTERS:
+	for filter: String in RELEASE_DEVELOPMENT_EXCLUDE_FILTERS:
 		checks.append(assert_true(web_filters.has(filter), "Web export should exclude development-only path %s" % filter))
+	checks.append(assert_true(web_filters.has("web/e2e/**"), "Production Web should exclude its E2E bridge"))
 	checks.append(assert_true(web_filters.has(DUPLICATE_APP_ICON_FILTER), "Web export should omit the unreferenced duplicate 1024px app icon"))
-	checks.append(assert_eq(_extract_string_value(windows_block, "exclude_filter"), DUPLICATE_APP_ICON_FILTER, "Windows full export should only omit the unreferenced duplicate 1024px app icon"))
+	return run_checks(checks)
+
+
+func test_all_release_exports_share_the_production_resource_budget() -> String:
+	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var checks: Array[String] = []
+	for preset_name: String in RELEASE_PRESET_NAMES:
+		var preset_block := _extract_preset_block(preset_text, preset_name)
+		var filters := _extract_string_value(preset_block, "exclude_filter").split(",")
+		checks.append(assert_true(preset_block != "", "%s release preset should exist" % preset_name))
+		for filter: String in RELEASE_DEVELOPMENT_EXCLUDE_FILTERS:
+			checks.append(assert_true(filters.has(filter), "%s should exclude development-only path %s" % [preset_name, filter]))
+		for filter: String in RELEASE_GENERATED_SOURCE_EXCLUDE_FILTERS:
+			checks.append(assert_true(filters.has(filter), "%s should exclude generated VFX source %s" % [preset_name, filter]))
+		for filter: String in RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS:
+			checks.append(assert_true(filters.has(filter), "%s should omit unreferenced large image %s" % [preset_name, filter]))
+		checks.append(assert_true(filters.has(DUPLICATE_APP_ICON_FILTER), "%s should omit the duplicate app icon" % preset_name))
 	return run_checks(checks)
 
 
@@ -296,6 +341,7 @@ func test_web_release_script_generates_versioned_manifests() -> String:
 	return run_checks([
 		assert_true(script_text != "", "Web release script should exist"),
 		assert_true(script_text.contains("AppVersion.gd"), "Web release script should read the app version"),
+		assert_true(script_text.contains("WEB_VERSION"), "Web release script should prefer the Web-specific patch version"),
 		assert_true(script_text.contains("--export-release"), "Web release script should run Godot's Web export"),
 		assert_true(script_text.contains("latest-web.json"), "Web release script should write the moving latest pointer"),
 		assert_true(script_text.contains("release-manifest.json"), "Web release script should write a versioned release manifest"),

@@ -722,6 +722,7 @@ res://data/bundled_user/cards/CSV9C_190.json
 res://data/bundled_user/cards/CSV9C_192.json
 res://data/bundled_user/cards/CSV9C_196.json
 res://data/bundled_user/cards/CSV9C_198.json
+res://data/bundled_user/cards/CSV9C_200.json
 res://data/bundled_user/cards/CSV9C_202.json
 res://data/bundled_user/cards/CSV9C_204.json
 res://data/bundled_user/cards/CSV9C_205.json
@@ -1462,6 +1463,7 @@ res://data/bundled_user/cards/images/CSV9C/190.png.bin
 res://data/bundled_user/cards/images/CSV9C/192.png.bin
 res://data/bundled_user/cards/images/CSV9C/196.png.bin
 res://data/bundled_user/cards/images/CSV9C/198.png.bin
+res://data/bundled_user/cards/images/CSV9C/200.png.bin
 res://data/bundled_user/cards/images/CSV9C/202.png.bin
 res://data/bundled_user/cards/images/CSV9C/204.png.bin
 res://data/bundled_user/cards/images/CSV9C/205.png.bin

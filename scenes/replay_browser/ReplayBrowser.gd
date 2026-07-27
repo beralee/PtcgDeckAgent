@@ -20,15 +20,20 @@ const HUD_BUTTON_COMPACT_FONT_SIZE := 21
 const HUD_BUTTON_MIN_HEIGHT := 63.0
 const HUD_BUTTON_COMPACT_MIN_HEIGHT := 57.0
 const HUD_BUTTON_TEXT_HORIZONTAL_PADDING := 34.0
+const REPLAY_DELETE_ENTRIES_PER_FRAME := 48
 
 var _record_index: RefCounted = MatchRecordIndexScript.new()
 var _replay_locator: RefCounted = BattleReplayLocatorScript.new()
 var _auto_navigate_to_battle: bool = true
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _current_non_battle_layout_context: Dictionary = {}
+var _replay_delete_jobs: Array[Dictionary] = []
+var _replay_delete_paths: Dictionary = {}
+var _replay_delete_refresh_needed := false
 
 
 func _ready() -> void:
+	set_process(false)
 	_apply_hud_theme()
 	_connect_non_battle_layout_signal()
 	%BtnBack.pressed.connect(_on_back_pressed)
@@ -55,7 +60,8 @@ func _connect_non_battle_layout_signal() -> void:
 
 func _on_non_battle_layout_mode_changed(_mode: String) -> void:
 	_apply_non_battle_layout()
-	_render_rows()
+	if _replay_delete_jobs.is_empty():
+		_render_rows()
 	call_deferred("_apply_non_battle_layout")
 
 
@@ -223,6 +229,8 @@ func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
 
 
 func _on_back_pressed() -> void:
+	if not _replay_delete_jobs.is_empty():
+		return
 	GameManager.goto_main_menu()
 
 
@@ -398,7 +406,8 @@ func _on_delete_pressed(row: Dictionary, row_widget: Control) -> void:
 	if not DirAccess.dir_exists_absolute(global_dir):
 		row_widget.queue_free()
 		return
-	_remove_directory_recursive(global_dir)
+	if not _schedule_replay_directory_delete(global_dir, row_widget):
+		return
 	row_widget.queue_free()
 	# 如果列表为空，显示空提示
 	await get_tree().process_frame
@@ -413,21 +422,94 @@ func _on_delete_pressed(row: Dictionary, row_widget: Control) -> void:
 		list_container.add_child(empty_label)
 
 
-func _remove_directory_recursive(dir_path: String) -> void:
-	var dir := DirAccess.open(dir_path)
-	if dir == null:
+func _schedule_replay_directory_delete(dir_path: String, row_widget: Control) -> bool:
+	if _replay_delete_paths.has(dir_path):
+		return false
+	var root_dir := DirAccess.open(dir_path)
+	if root_dir == null:
+		return false
+	root_dir.list_dir_begin()
+	_replay_delete_paths[dir_path] = true
+	var delete_button := row_widget.find_child("DeleteButton", true, false) as Button
+	if delete_button != null:
+		delete_button.disabled = true
+		delete_button.text = "删除中…"
+	var replay_button := row_widget.find_child("ReplayButton", true, false) as Button
+	if replay_button != null:
+		replay_button.disabled = true
+	_replay_delete_jobs.append({
+		"root_path": dir_path,
+		"stack": [{"path": dir_path, "dir": root_dir}],
+	})
+	%BtnBack.disabled = true
+	set_process(true)
+	return true
+
+
+func _process(_delta: float) -> void:
+	if _replay_delete_jobs.is_empty():
+		set_process(false)
+		%BtnBack.disabled = false
 		return
-	dir.list_dir_begin()
-	while true:
-		var entry := dir.get_next()
-		if entry == "":
+	var remaining_budget := REPLAY_DELETE_ENTRIES_PER_FRAME
+	var completed_jobs: Array[Dictionary] = []
+	for job: Dictionary in _replay_delete_jobs:
+		if remaining_budget <= 0:
 			break
+		var consumed := _process_replay_delete_job(job, remaining_budget)
+		remaining_budget -= consumed
+		var stack := job.get("stack") as Array
+		if stack == null or stack.is_empty():
+			completed_jobs.append(job)
+	for job: Dictionary in completed_jobs:
+		var root_path := str(job.get("root_path", ""))
+		if bool(job.get("failed", false)) or DirAccess.dir_exists_absolute(root_path):
+			_replay_delete_refresh_needed = true
+		_replay_delete_paths.erase(root_path)
+		_replay_delete_jobs.erase(job)
+	if _replay_delete_jobs.is_empty():
+		set_process(false)
+		%BtnBack.disabled = false
+		if _replay_delete_refresh_needed:
+			_replay_delete_refresh_needed = false
+			_render_rows()
+
+
+func _process_replay_delete_job(job: Dictionary, budget: int) -> int:
+	var stack := job.get("stack") as Array
+	if stack == null:
+		return 0
+	var consumed := 0
+	while consumed < budget and not stack.is_empty():
+		var frame_index := stack.size() - 1
+		var frame := stack[frame_index] as Dictionary
+		var current_dir := frame.get("dir") as DirAccess
+		var current_path := str(frame.get("path", ""))
+		if current_dir == null:
+			current_dir = DirAccess.open(current_path)
+			if current_dir == null:
+				if DirAccess.dir_exists_absolute(current_path):
+					job["failed"] = true
+				stack.pop_back()
+				consumed += 1
+				continue
+			current_dir.list_dir_begin()
+			frame["dir"] = current_dir
+			stack[frame_index] = frame
+		var entry := current_dir.get_next()
+		consumed += 1
+		if entry == "":
+			current_dir.list_dir_end()
+			if DirAccess.remove_absolute(current_path) != OK and DirAccess.dir_exists_absolute(current_path):
+				job["failed"] = true
+			stack.pop_back()
+			continue
 		if entry == "." or entry == "..":
 			continue
-		var full_path := dir_path.path_join(entry)
-		if dir.current_is_dir():
-			_remove_directory_recursive(full_path)
+		var full_path := current_path.path_join(entry)
+		if current_dir.current_is_dir():
+			stack.append({"path": full_path, "dir": null})
 		else:
-			DirAccess.remove_absolute(full_path)
-	dir.list_dir_end()
-	DirAccess.remove_absolute(dir_path)
+			if DirAccess.remove_absolute(full_path) != OK and FileAccess.file_exists(full_path):
+				job["failed"] = true
+	return consumed

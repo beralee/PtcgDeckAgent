@@ -1,0 +1,208 @@
+{
+  "format_version": 1,
+  "puzzle_id": "marnie_07",
+  "deck_id": "800018501",
+  "revision": 4,
+  "profile": "precision",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "谢米挡不住伤害指示物",
+  "objective": "正确判断花之纱幔，只为可防的备战招式伤害分配场位。",
+  "strategy_id": "v18_800018501_marnies_grimmsnarl",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "谢米挡不住伤害指示物",
+      "fingerprint": "对手同时公开焚身加农炮的90点备战招式伤害与幻影潜袭的伤害指示物路线；备战区只余1格。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "本题面对焚身加农炮，把最后空位给谢米保护雪妖女；同时把幻影潜袭指示物计入下一题的HP预算，不把谢米视作万能盾。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“正确判断花之纱幔，只为可防的备战招式伤害分配场位。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "正确判断花之纱幔，只为可防的备战招式伤害分配场位。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手前场公开招式写明对备战造成90点伤害。",
+      "deadline": "对手下一回合结束前",
+      "impact": "这是谢米真正能阻止的公开威胁；伤害指示物则必须另算。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "认定谢米也能挡幻影潜袭",
+      "actor": "player",
+      "axis": "effect_semantics",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "effect_semantics 延迟失败",
+      "outcome": "failure",
+      "reason": "放置伤害指示物不是招式伤害，保护不会生效。",
+      "failure_axis": "effect_semantics",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "不铺谢米并保留空位",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "resource_assignment 延迟失败",
+      "outcome": "failure",
+      "reason": "焚身加农炮会直接击倒雪妖女，失去检查伤害。",
+      "failure_axis": "resource_assignment",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "最后一个备战空位",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "对手攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "一次保护语义判断",
+      "resource_type": "rule_semantics",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "选择部署路线时",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "雪妖女20HP生存余量",
+      "resource_type": "hp_budget",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "对手回合结束前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "正确判断花之纱幔，只为可防的备战招式伤害分配场位。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "not_required",
+    "negative_probe_axes": [
+      "effect_semantics",
+      "resource_assignment"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

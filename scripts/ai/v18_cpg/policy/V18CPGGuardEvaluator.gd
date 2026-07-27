@@ -12,9 +12,12 @@ func evaluate_all(clauses: Array, facts: Dictionary) -> bool:
 
 
 func evaluate(clause: Dictionary, facts: Dictionary) -> bool:
-	var path := str(clause.get("fact", ""))
+	var path := ContractsScript.canonical_fact_path(
+		str(clause.get("fact", ""))
+	)
 	var op := str(clause.get("op", ""))
-	if path not in ContractsScript.REGISTERED_FACT_PATHS or op not in ContractsScript.GUARD_OPERATORS:
+	if path not in ContractsScript.branchable_fact_paths(facts) \
+			or op not in ContractsScript.GUARD_OPERATORS:
 		return false
 	var lookup := _lookup(facts, path)
 	var exists := bool(lookup.get("exists", false))

@@ -1062,7 +1062,7 @@ func test_training_ui_uses_intro_restart_and_grade_only_result() -> String:
 		assert_true(controller_source.contains("button.text = \"重开\""), "Training should replace the AI button with restart"),
 		assert_false(controller_source.contains("_full_information_reveal"), "Result must not reveal hidden cards"),
 		assert_true(browser_scene.contains("DeckSelector"), "Training list should place deck radio options at the top"),
-		assert_true(browser_script.contains("CheckBox.new()"), "Deck selection should use mutually exclusive radio controls"),
+		assert_true(browser_script.contains("Button.new()") and browser_script.contains("button.toggle_mode = true"), "Deck selection should use mutually exclusive HUD radio controls"),
 		assert_true(browser_script.contains("best_grade"), "Puzzle rows should display the persisted best grade"),
 	])
 

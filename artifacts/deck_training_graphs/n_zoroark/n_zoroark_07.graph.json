@@ -1,0 +1,208 @@
+{
+  "format_version": 1,
+  "puzzle_id": "n_zoroark_07",
+  "deck_id": "800018502",
+  "revision": 4,
+  "profile": "precision",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "90伤与40搬伤只差一个断点",
+  "objective": "让N的莱希拉姆保持90伤，用愿增猿搬40后复制力量愤怒精确击倒300HP目标。",
+  "strategy_id": "v18_800018502_ns_zoroark",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "90伤与40搬伤只差一个断点",
+      "fingerprint": "莱希拉姆有130伤；愿增猿可搬最多30一次，另有一次治疗10；目标300HP。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "先治疗10再由愿增猿搬30，使莱希拉姆保留90伤；力量愤怒造成260，再叠加不服输头带40档完成300。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“让N的莱希拉姆保持90伤，用愿增猿搬40后复制力量愤怒精确击倒300HP目标。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "让N的莱希拉姆保持90伤，用愿增猿搬40后复制力量愤怒精确击倒300HP目标。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手后排公开有10点补伤来源。",
+      "deadline": "对手下一回合结束前",
+      "impact": "莱希拉姆若保留100伤会在对手回合被补刀并失去复制源。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "把莱希拉姆伤害全搬走",
+      "actor": "player",
+      "axis": "damage_state",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "damage_state 延迟失败",
+      "outcome": "failure",
+      "reason": "复制招式倍率下降，最终少90伤。",
+      "failure_axis": "damage_state",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "不治疗直接搬30",
+      "actor": "player",
+      "axis": "damage_mapping",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "damage_mapping 延迟失败",
+      "outcome": "failure",
+      "reason": "保留100伤会越过所需资源并让莱希拉姆进入对手10点补刀线。",
+      "failure_axis": "damage_mapping",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "莱希拉姆90伤状态",
+      "resource_type": "damage_state",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "攻击宣言时",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "一次30点搬伤",
+      "resource_type": "damage_counter_budget",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一次10点治疗",
+      "resource_type": "hp_budget",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "搬伤前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "让N的莱希拉姆保持90伤，用愿增猿搬40后复制力量愤怒精确击倒300HP目标。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "not_required",
+    "negative_probe_axes": [
+      "damage_state",
+      "damage_mapping"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

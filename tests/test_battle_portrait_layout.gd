@@ -528,6 +528,43 @@ func test_portrait_metrics_fit_five_hand_cards_on_fold_safe_width() -> String:
 	])
 
 
+func test_ipad_web_short_portrait_keeps_the_complete_hand_card_inside_the_visible_frame() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var viewport_size := Vector2(810, 970)
+	var scene: Control = BattleScene.instantiate()
+	scene.call("_apply_portrait_layout", viewport_size)
+	scene.call("_apply_portrait_layout", viewport_size)
+	scene.call("_finalize_portrait_layout_constraints")
+
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var hand_area := scene.find_child("HandArea", true, false) as Control
+	var hand_scroll := scene.find_child("HandScroll", true, false) as Control
+	var hand_container := scene.find_child("HandContainer", true, false) as Control
+	var hand_rect := _battle_local_rect(scene, hand_area)
+	var hand_scroll_rect := _battle_local_rect(scene, hand_scroll)
+	var play_card_size: Vector2 = scene.get("_play_card_size")
+	var frame_bottom := frame_rect.position.y + frame_rect.size.y
+	var result := run_checks([
+		assert_true(
+			hand_rect.position.y + hand_rect.size.y <= frame_bottom + 0.5,
+			"iPad Web portrait hand area must stay fully inside the browser-visible frame: %s within %s" % [str(hand_rect), str(frame_rect)]
+		),
+		assert_true(
+			hand_scroll_rect.size.y >= play_card_size.y,
+			"iPad Web portrait hand viewport must show at least one complete card: scroll %.1f, card %.1f" % [hand_scroll_rect.size.y, play_card_size.y]
+		),
+		assert_true(
+			hand_container != null and hand_container.custom_minimum_size.y >= play_card_size.y,
+			"iPad Web portrait hand content must preserve the complete card height"
+		),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
 func test_portrait_metrics_compensate_for_android_expand_logical_width() -> String:
 	var controller := BattleLayoutControllerScript.new()
 	var content_rect: Rect2 = controller.call("portrait_content_rect", Vector2(1600, 2844))
@@ -658,6 +695,67 @@ func test_landscape_bench_slot_gap_is_one_pixel() -> String:
 		assert_eq(opp_bench.get_theme_constant("separation") if opp_bench != null else -1, 1, "Landscape opponent bench slots should use a one-pixel gap"),
 	])
 	scene.queue_free()
+	return result
+
+
+func test_landscape_area_zero_keeps_log_backdrop_and_root_geometry_stable() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_LANDSCAPE
+	var viewport_size := Vector2(1366, 768)
+	var scene: Control = BattleScene.instantiate()
+	var backdrop := TextureRect.new()
+	backdrop.name = "BattleBackdrop"
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_SCALE
+	scene.add_child(backdrop)
+	scene.move_child(backdrop, 0)
+	var my_bench := scene.find_child("MyBench", true, false) as HBoxContainer
+	var opp_bench := scene.find_child("OppBench", true, false) as HBoxContainer
+	scene.call("_ensure_bench_container_panel_capacity", my_bench, "MyBench", "MyBenchLbl", 8)
+	scene.call("_ensure_bench_container_panel_capacity", opp_bench, "OppBench", "OppBenchLbl", 8)
+
+	var gsm := GameStateMachine.new()
+	var game_state := GameState.new()
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		var tera_card := _make_basic_pokemon_card("Tera Active %d" % player_index)
+		tera_card.ancient_trait = "Tera"
+		var active_slot := PokemonSlot.new()
+		active_slot.pokemon_stack.append(CardInstance.create(tera_card, player_index))
+		player.active_pokemon = active_slot
+		game_state.players.append(player)
+	var stadium_data := _make_stadium_card("Area Zero Underdepths")
+	stadium_data.effect_id = AreaZeroUnderdepthsScript.EFFECT_ID
+	game_state.stadium_card = CardInstance.create(stadium_data, 0)
+	game_state.stadium_owner_index = 0
+	game_state.current_player_index = 0
+	game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state = game_state
+	scene.set("_gsm", gsm)
+
+	var display_sizes: Dictionary = scene.call("_current_bench_display_sizes")
+	scene.call("_sync_bench_slot_visibility", display_sizes)
+	scene.call("_apply_landscape_layout", viewport_size)
+
+	var log_panel := scene.find_child("LogPanel", true, false) as Control
+	var last_my_bench := scene.find_child("MyBench7", true, false) as Control
+	var last_opp_bench := scene.find_child("OppBench7", true, false) as Control
+	var expected_log_width := 136.0
+	var expected_backdrop_width := viewport_size.x - expected_log_width
+	var result := run_checks([
+		assert_eq(int(display_sizes.get("my", 0)), 8, "Area Zero should expose all eight player Bench slots in landscape"),
+		assert_eq(int(display_sizes.get("opp", 0)), 8, "Area Zero should expose all eight opponent Bench slots in landscape"),
+		assert_true(last_my_bench != null and last_my_bench.visible, "Area Zero player slot eight should remain visible after landscape relayout"),
+		assert_true(last_opp_bench != null and last_opp_bench.visible, "Area Zero opponent slot eight should remain visible after landscape relayout"),
+		assert_true(log_panel != null and absf(log_panel.custom_minimum_size.x - expected_log_width) <= 0.5, "Area Zero must not narrow the landscape log and indirectly stretch the backdrop"),
+		assert_true(absf(backdrop.size.x - expected_backdrop_width) <= 0.5, "Area Zero must preserve the landscape backdrop rectangle instead of pulling it sideways"),
+		assert_eq(scene.position, Vector2.ZERO, "Area Zero relayout must keep the battle root at the viewport origin"),
+		assert_eq(scene.size, viewport_size, "Area Zero relayout must keep the battle root locked to the Windows landscape viewport"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
 	return result
 
 
@@ -1463,7 +1561,14 @@ func test_portrait_llm_wait_hud_anchors_to_hand_hud_top_center() -> String:
 		assert_true(absf(wait_center_x - hand_center_x) <= 2.0, "Portrait LLM wait HUD should be horizontally centered on the hand HUD"),
 		assert_true(wait_rect.position.y >= hand_rect.position.y - 1.0 and wait_rect.position.y <= hand_rect.position.y + 18.0, "Portrait LLM wait HUD should sit on the upper edge of the hand HUD"),
 		assert_true(wait_font_size >= 56, "Portrait LLM wait HUD font should be at least four times the old 14px mobile size"),
-		assert_true(wait_rect.size.y >= float(wait_font_size) + 14.0, "Portrait LLM wait HUD should reserve enough height for the enlarged thinking text"),
+		assert_true(
+			wait_rect.size.y >= float(wait_font_size) + 14.0,
+			"Portrait LLM wait HUD should reserve enough height for the enlarged thinking text: %.1f >= %.1f (hand %.1f)" % [
+				wait_rect.size.y,
+				float(wait_font_size) + 14.0,
+				hand_rect.size.y,
+			]
+		),
 		assert_eq(wait_label.max_lines_visible if wait_label != null else 0, 1, "Portrait LLM wait HUD should remain a single-line overlay label"),
 		assert_false(turn_visible_during_wait, "LLM wait HUD should hide the normal top turn text while active"),
 		assert_true(turn_visible_after_wait, "LLM wait HUD should restore the normal top turn text when it stops"),

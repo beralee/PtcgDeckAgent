@@ -1,6 +1,12 @@
 class_name V18CPGPrizeGraphSolver
 extends RefCounted
 
+const PrizeClockSolverScript = preload(
+	"res://scripts/ai/v18_cpg/planning/V18CPGPrizeClockSolver.gd"
+)
+
+var _prize_clock = PrizeClockSolverScript.new()
+
 
 func solve(observation: Dictionary, facts: Dictionary) -> Dictionary:
 	var own: Dictionary = observation.get("own", {}) if observation.get("own", {}) is Dictionary else {}
@@ -17,8 +23,10 @@ func solve(observation: Dictionary, facts: Dictionary) -> Dictionary:
 	var own_active: Dictionary = own.get("active", {}) if own.get("active", {}) is Dictionary else {}
 	var opponent_energy := _board_energy_count(opponent)
 	var credible_counter_ko := not own_active.is_empty() and opponent_energy >= 2
+	var attack_window := _prize_clock.solve(observation, facts)
+	var compact_clock := _prize_clock.compact_baseline(attack_window)
 	return {
-		"schema_version": 2,
+		"schema_version": 3,
 		"own_prizes_remaining": own_remaining,
 		"opponent_prizes_remaining": opponent_remaining,
 		"current_prize_swing": prize_swing,
@@ -28,6 +36,49 @@ func solve(observation: Dictionary, facts: Dictionary) -> Dictionary:
 		"two_turn_prize_swing": prize_swing + maximum_visible_prize,
 		"credible_counter_ko": credible_counter_ko,
 		"target_lanes": target_lanes,
+		"current_attack_window_open": bool(compact_clock.get(
+			"current_attack_window_open",
+			false
+		)),
+		"own_fastest_finish_tick": int(compact_clock.get(
+			"own_fastest_finish_tick",
+			0
+		)),
+		"own_robust_finish_tick": int(compact_clock.get(
+			"own_robust_finish_tick",
+			0
+		)),
+		"opponent_fastest_finish_tick": int(compact_clock.get(
+			"opponent_fastest_finish_tick",
+			0
+		)),
+		"opponent_robust_finish_tick": int(compact_clock.get(
+			"opponent_robust_finish_tick",
+			0
+		)),
+		"race_margin": int(compact_clock.get("race_margin", 0)),
+		"opponent_wins_next_window": bool(compact_clock.get(
+			"opponent_wins_next_window",
+			false
+		)),
+		"continuity_debt_cost_ticks": int(compact_clock.get(
+			"continuity_debt_cost_ticks",
+			0
+		)),
+		"credible_gust": bool(compact_clock.get("credible_gust", false)),
+		"public_gust_exhausted": bool(compact_clock.get(
+			"public_gust_exhausted",
+			false
+		)),
+		"own_robust_prize_sequence": compact_clock.get(
+			"own_robust_prize_sequence",
+			[]
+		),
+		"opponent_robust_prize_sequence": compact_clock.get(
+			"opponent_robust_prize_sequence",
+			[]
+		),
+		"liability_map": attack_window.get("liability_map", []),
 	}
 
 

@@ -19,7 +19,7 @@ static func build_payload(current_id: String = "", exclude_ids: PackedStringArra
 	return {
 		"current_id": current_id.strip_edges(),
 		"exclude_ids": Array(exclude_ids),
-		"app_version": str(metadata.get("app_version", AppVersionScript.DISPLAY_VERSION)),
+		"app_version": str(metadata.get("app_version", AppVersionScript.current_display_version())),
 		"platform": str(metadata.get("platform", OS.get_name())),
 		"source": str(metadata.get("source", "deck_manager_recommendation")),
 		"requested_at": int(metadata.get("requested_at", Time.get_unix_time_from_system())),
@@ -63,7 +63,7 @@ func fetch_next_recommendation(current_id: String = "", exclude_ids: PackedStrin
 	var body := JSON.stringify(build_payload(current_id, exclude_ids, metadata))
 	var headers := PackedStringArray([
 		"Content-Type: application/json; charset=utf-8",
-		"User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION,
+		"User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version(),
 	])
 
 	_is_fetching = true

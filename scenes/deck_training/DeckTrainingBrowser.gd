@@ -10,7 +10,7 @@ const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/No
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 @onready var _root_margin: MarginContainer = %RootMargin
-@onready var _deck_selector: HFlowContainer = %DeckSelector
+@onready var _deck_selector: GridContainer = %DeckSelector
 @onready var _scenario_list: VBoxContainer = %ScenarioList
 @onready var _status_label: Label = %StatusLabel
 @onready var _back_button: Button = %BackButton
@@ -18,6 +18,7 @@ const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBatt
 
 var _selected_deck_key := "dragapult"
 var _deck_button_group := ButtonGroup.new()
+var _deck_radio_buttons: Array[Button] = []
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _current_layout_context: Dictionary = {}
 
@@ -40,19 +41,75 @@ func _ready() -> void:
 			GameManager.non_battle_layout_mode_changed.connect(callback)
 
 
+func _input(event: InputEvent) -> void:
+	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
 func _build_deck_selector() -> void:
 	for child: Node in _deck_selector.get_children():
+		_deck_selector.remove_child(child)
 		child.queue_free()
+	_deck_radio_buttons.clear()
+	_deck_button_group.allow_unpress = false
 	for option: Dictionary in CatalogScript.deck_options():
-		var button := CheckBox.new()
-		button.text = str(option.get("name", ""))
+		var button := Button.new()
+		var deck_key := str(option.get("key", "deck"))
+		button.name = "DeckTrainingHudRadio_%s" % deck_key
+		button.toggle_mode = true
 		button.button_group = _deck_button_group
 		button.custom_minimum_size = Vector2(172, 50)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.clip_text = true
+		button.set_meta("deck_training_hud_radio", true)
+		button.set_meta("deck_training_deck_key", deck_key)
+		button.set_meta("deck_training_deck_name", str(option.get("name", "")))
 		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(18))
-		button.button_pressed = str(option.get("key", "")) == _selected_deck_key
-		button.pressed.connect(_on_deck_selected.bind(str(option.get("key", ""))))
+		button.pressed.connect(_on_deck_selected.bind(deck_key))
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 		_deck_selector.add_child(button)
+		_deck_radio_buttons.append(button)
+	_refresh_deck_radio_buttons()
+
+
+func _refresh_deck_radio_buttons() -> void:
+	for button: Button in _deck_radio_buttons:
+		if button == null:
+			continue
+		var selected := str(button.get_meta("deck_training_deck_key", "")) == _selected_deck_key
+		button.button_pressed = selected
+		button.text = "%s %s" % [
+			"◉" if selected else "○",
+			str(button.get_meta("deck_training_deck_name", "")),
+		]
+		_style_deck_radio_button(button, selected)
+
+
+func _style_deck_radio_button(button: Button, selected: bool) -> void:
+	if button == null:
+		return
+	button.add_theme_color_override("font_color", Color(0.05, 0.10, 0.13, 1.0) if selected else Color(0.88, 0.98, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(0.05, 0.10, 0.13, 1.0) if selected else Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color(0.05, 0.10, 0.13, 1.0))
+	button.add_theme_stylebox_override("normal", _deck_radio_style(selected, false))
+	button.add_theme_stylebox_override("hover", _deck_radio_style(selected, true))
+	button.add_theme_stylebox_override("pressed", _deck_radio_style(true, true))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _deck_radio_style(selected: bool, emphasized: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.22, 0.83, 1.0, 0.92) if selected else Color(0.02, 0.055, 0.08, 0.90)
+	if emphasized:
+		style.bg_color = Color(0.17, 0.72, 0.88, 0.96) if selected else Color(0.04, 0.12, 0.16, 0.96)
+	style.border_color = Color(0.36, 0.92, 1.0, 0.90 if selected or emphasized else 0.48)
+	style.set_border_width_all(2 if selected else 1)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 9
+	style.content_margin_bottom = 9
+	return style
 
 
 func _build_scenario_list() -> void:
@@ -113,6 +170,10 @@ func _make_scenario_card(scenario: Dictionary, progress_variant: Variant) -> Con
 	box.add_child(detail)
 	var start_button := Button.new()
 	start_button.name = "DeckTrainingScenarioStartButton"
+	start_button.set_meta(
+		"ui_test_id",
+		"DeckTrainingScenarioStartButton_%s" % str(scenario.get("id", ""))
+	)
 	start_button.text = "开始训练"
 	start_button.custom_minimum_size = Vector2(0, 58)
 	start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -201,17 +262,16 @@ func _apply_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = 
 	_replay_button.custom_minimum_size.x = secondary_height * 1.72 if portrait else 116.0
 
 	var available_width := maxf(240.0, size.x - float(horizontal_margin * 2))
-	var deck_button_width := available_width \
-		if not portrait or available_width < 720.0 \
-		else (available_width - float(section_gap)) * 0.5
+	_deck_selector.columns = 2 if portrait else 4
+	var deck_button_width := (available_width - float(section_gap)) * 0.5 if portrait else 172.0
 	_deck_selector.add_theme_constant_override("h_separation", section_gap if portrait else 12)
 	_deck_selector.add_theme_constant_override("v_separation", section_gap if portrait else 10)
 	for child: Node in _deck_selector.get_children():
-		if child is not CheckBox:
+		if child is not Button:
 			continue
-		var deck_button := child as CheckBox
+		var deck_button := child as Button
 		deck_button.custom_minimum_size = Vector2(
-			deck_button_width if portrait else 172.0,
+			deck_button_width,
 			secondary_height if portrait else 50.0
 		)
 		deck_button.add_theme_font_size_override("font_size", button_font if portrait else HudThemeScript.scaled_font_size(18))
@@ -266,7 +326,10 @@ func _on_non_battle_layout_mode_changed(_mode: String) -> void:
 
 
 func _on_deck_selected(deck_key: String) -> void:
+	if not CatalogScript.DECKS.has(deck_key):
+		return
 	_selected_deck_key = deck_key
+	_refresh_deck_radio_buttons()
 	GameManager.set_deck_training_selected_deck_key(deck_key)
 	_build_scenario_list()
 

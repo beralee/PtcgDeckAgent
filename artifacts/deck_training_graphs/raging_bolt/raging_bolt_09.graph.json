@@ -1,0 +1,367 @@
+{
+  "format_version": 1,
+  "puzzle_id": "raging_bolt_09",
+  "deck_id": "800018509",
+  "revision": 4,
+  "profile": "composite",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "顶尖捕捉器先，老大后",
+  "objective": "两回合拿5奖：ACE SPEC抓三奖目标，第二回合老大抓两奖目标，并防止对手反抓终局。",
+  "strategy_id": "v18_800018509_raging_bolt_ogerpon",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "顶尖捕捉器先，老大后",
+      "fingerprint": "顶尖捕捉器与老大都在手；玩家需要奥琳博士完成首轮能量；对手公开老大与一只三奖后排。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "顶尖捕捉器完成首轮非支援者抓杀，把支援者窗口给奥琳博士；拿奖后用奇树/后续资源处理公开老大，次轮再用老大。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“两回合拿5奖：ACE SPEC抓三奖目标，第二回合老大抓两奖目标，并防止对手反抓终局。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "两回合拿5奖：ACE SPEC抓三奖目标，第二回合老大抓两奖目标，并防止对手反抓终局。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手手牌公开老大，可抓掉一只两奖草椪结束比赛。",
+      "deadline": "对手下一回合结束前",
+      "impact": "首轮攻击还必须保留打断或让易死目标离开可抓范围。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "首轮直接用老大抓三奖",
+      "actor": "player",
+      "axis": "supporter_window",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "supporter_window 延迟失败",
+      "outcome": "failure",
+      "reason": "失去奥琳博士，本回合伤害不足70。",
+      "failure_axis": "supporter_window",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "顶尖捕捉器抓两奖目标",
+      "actor": "player",
+      "axis": "prize_planning",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "prize_planning 延迟失败",
+      "outcome": "failure",
+      "reason": "浪费唯一三奖窗口，第二回合总奖赏不够结束。",
+      "failure_axis": "prize_planning",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_3",
+      "kind": "action",
+      "label": "首轮把所有能量弃光",
+      "actor": "player",
+      "axis": "energy_ownership",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_3",
+      "kind": "terminal",
+      "label": "energy_ownership 延迟失败",
+      "outcome": "failure",
+      "reason": "三奖到手但第二回合没有接力伤害。",
+      "failure_axis": "energy_ownership",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "唯一ACE SPEC抓杀",
+      "resource_type": "gust_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "最后一个接力空位",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "对手回应前",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一次奥琳博士窗口",
+      "resource_type": "supporter_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首轮攻击前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "两回合拿5奖：ACE SPEC抓三奖目标，第二回合老大抓两奖目标，并防止对手反抓终局。"
+    },
+    {
+      "id": "g_survival",
+      "kind": "invariant",
+      "label": "survival",
+      "category": "survival",
+      "assertion": "对手的可信回复结算后，玩家仍未输且至少保留一条核心引擎或攻击线。"
+    },
+    {
+      "id": "g_handoff",
+      "kind": "invariant",
+      "label": "handoff",
+      "category": "handoff",
+      "assertion": "进入第二个玩家回合时存在合法攻击手、能量来源与必要目标访问。"
+    },
+    {
+      "id": "g_disruption",
+      "kind": "invariant",
+      "label": "disruption",
+      "category": "disruption",
+      "assertion": "在推进奖赏的同时处理题面公开或可推导的对手终局资源。"
+    },
+    {
+      "id": "g_deny_opponent_win",
+      "kind": "invariant",
+      "label": "deny_opponent_win",
+      "category": "deny_opponent_win",
+      "assertion": "对手任一枚举回复都不能在下一检查点直接宣告获胜。"
+    },
+    {
+      "id": "s1",
+      "kind": "state",
+      "label": "首轮承诺完成，进入对手回应",
+      "fingerprint": "正确路线已兑现当前进度；仍需覆盖：对手手牌公开老大，可抓掉一只两奖草椪结束比赛。",
+      "checkpoint": "opponent_turn_1_start"
+    },
+    {
+      "id": "d_reply",
+      "kind": "opponent_decision",
+      "label": "覆盖所有题面可信高影响回复",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "对手手牌公开老大，可抓掉一只两奖草椪结束比赛。；回复集合来自公开手牌、场上招式或已冻结策略。"
+    },
+    {
+      "id": "a_reply_1",
+      "kind": "action",
+      "label": "奇树压手后击倒首攻",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_1",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "a_reply_2",
+      "kind": "action",
+      "label": "老大抓草椪逼玩家立即输",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_2",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_3",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_3",
+      "to": "f_bad_3",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_survival",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_handoff",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_disruption",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_deny_opponent_win",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "s1",
+      "type": "resolves"
+    },
+    {
+      "from": "s1",
+      "to": "d_reply",
+      "type": "opens"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_1",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_1",
+      "to": "s2_1",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_1",
+      "to": "g_success",
+      "type": "reaches"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_2",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_2",
+      "to": "s2_2",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_2",
+      "to": "g_success",
+      "type": "reaches"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 4,
+    "opponent_reply_coverage": "all",
+    "negative_probe_axes": [
+      "supporter_window",
+      "prize_planning",
+      "energy_ownership"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

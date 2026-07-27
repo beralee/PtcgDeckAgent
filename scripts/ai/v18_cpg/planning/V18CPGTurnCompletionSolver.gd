@@ -116,6 +116,10 @@ func build(
 				),
 				"priority": int(continuity_effect.get("priority", 1000)) \
 					if bool(continuity_effect.get("reduces_debt", false)) \
+						or bool(continuity_effect.get(
+							"progresses_debt",
+							false
+						)) \
 					else _productive_priority(reason),
 			})
 		productive.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
@@ -185,7 +189,8 @@ func _productive_reason(
 	facts: Dictionary,
 	continuity_effect: Dictionary = {}
 ) -> String:
-	if bool(continuity_effect.get("reduces_debt", false)):
+	if bool(continuity_effect.get("reduces_debt", false)) \
+			or bool(continuity_effect.get("progresses_debt", false)):
 		return str(continuity_effect.get(
 			"reason",
 			"public_post_attack_continuity_gain"

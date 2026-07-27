@@ -70,7 +70,7 @@ func check_latest() -> int:
 	_is_checking = true
 	var err := _http_request.request(
 		ENDPOINT_URL,
-		PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION]),
+		PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version()]),
 		HTTPClient.METHOD_GET
 	)
 	if err != OK:

@@ -1,0 +1,208 @@
+{
+  "format_version": 1,
+  "puzzle_id": "charizard_dragapult_07",
+  "deck_id": "800025404",
+  "revision": 4,
+  "profile": "precision",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "博士研究会丢掉唯一答案",
+  "objective": "不用随机7抽，靠音速搜索与现有手牌确定取得糖果、喷火龙和火能。",
+  "strategy_id": "v17_bomb_charizard",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "博士研究会丢掉唯一答案",
+      "fingerprint": "手中博士研究会丢弃唯一白蕾雅与回收；大比鸟ex可搜任意卡；另一检索可找宝可梦。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "用宝可梦检索找喷火龙ex，音速搜索拿糖果；保留白蕾雅与回收，不使用博士研究。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“不用随机7抽，靠音速搜索与现有手牌确定取得糖果、喷火龙和火能。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "不用随机7抽，靠音速搜索与现有手牌确定取得糖果、喷火龙和火能。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手公开将在下回合把玩家手牌压到2张。",
+      "deadline": "对手下一回合结束前",
+      "impact": "必须在当前回合把确定组件转成场上状态，而非用随机抽牌换概率。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "先博士研究7张",
+      "actor": "player",
+      "axis": "discard_ownership",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "discard_ownership 延迟失败",
+      "outcome": "failure",
+      "reason": "抽牌更多但白蕾雅与唯一回收永久丢失。",
+      "failure_axis": "discard_ownership",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "音速搜索拿喷火龙ex",
+      "actor": "player",
+      "axis": "search_ownership",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "search_ownership 延迟失败",
+      "outcome": "failure",
+      "reason": "随后没有任何来源取得糖果，手牌组件互相错位。",
+      "failure_axis": "search_ownership",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "一次任意卡检索",
+      "resource_type": "search_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "进化前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "唯一白蕾雅",
+      "resource_type": "supporter_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "终局回合",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "唯一弃牌回收",
+      "resource_type": "recycle_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首攻倒下后",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "不用随机7抽，靠音速搜索与现有手牌确定取得糖果、喷火龙和火能。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "not_required",
+    "negative_probe_axes": [
+      "discard_ownership",
+      "search_ownership"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

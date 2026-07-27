@@ -6,12 +6,30 @@ const RuleProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18Profil
 
 const PILOT_DECK_IDS: Array[int] = [800018509, 800017643, 800015934]
 const BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID := {
+	18000230: "graph_ready_experimental",
+	18000625: "graph_ready_experimental",
+	800015734: "graph_ready_experimental",
 	800015934: "roi5_complete_noninferior",
+	800016834: "graph_ready_experimental",
+	800017047: "graph_ready_experimental",
+	800017097: "graph_ready_experimental",
+	800017407: "graph_ready_experimental",
+	800017631: "graph_ready_experimental",
+	800017643: "graph_ready_experimental",
+	800018105: "graph_ready_experimental",
+	800018359: "graph_ready_experimental",
 	800018497: "roi10_complete_strictly_better",
+	800018498: "graph_ready_experimental",
 	800018499: "roi5_complete_noninferior",
+	800018500: "graph_ready_experimental",
 	800018501: "roi5_complete_strictly_better",
 	800018502: "roi5_complete_strictly_better",
 	800018509: "roi5_complete_noninferior",
+	800018539: "graph_ready_experimental",
+	800018543: "graph_ready_experimental",
+	800018880: "graph_ready_experimental",
+	800019125: "graph_ready_experimental",
+	800033475: "graph_ready_experimental",
 }
 const ALL_DECK_IDS: Array[int] = [
 	18000230, 18000625, 800015734, 800015934, 800016834, 800017047,
@@ -55,6 +73,9 @@ const PROFILE_OVERRIDE_KEYS: Array[String] = [
 	"initial_response_token_budget",
 	"delta_response_token_budget",
 	"turn_visible_wait_budget_ms",
+	"turn_visible_wait_growth_ms",
+	"turn_visible_wait_growth_every_turns",
+	"turn_visible_wait_budget_cap_ms",
 	"cold_request_estimate_ms",
 	"turn_model_judgment_mode",
 	"max_policy_nodes",
@@ -68,6 +89,8 @@ const PROFILE_OVERRIDE_KEYS: Array[String] = [
 	"module_parameters",
 	"local_action_certificate_parameters",
 	"post_attack_continuity",
+	"prize_clock_extension",
+	"route_value_graph_v3",
 ]
 
 const _PILOTS := {
@@ -142,7 +165,9 @@ static func get_profile_for_deck(deck_id: int, include_override: bool = true) ->
 	profile["requires_model"] = true
 	profile["battle_setup_available"] = BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.has(deck_id)
 	profile["promotion_status"] = str(BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.get(deck_id, "experimental"))
-	profile["experimental"] = not bool(profile["battle_setup_available"])
+	# BattleSetup availability means the isolated graph/runtime contract is
+	# complete.  It must not be confused with statistical promotion evidence.
+	profile["experimental"] = str(profile["promotion_status"]).contains("experimental")
 	profile["profile_version"] = 1
 	profile["semantic_version"] = 1
 	profile["schema_version"] = ContractsScript.SCHEMA_VERSION
@@ -150,8 +175,22 @@ static func get_profile_for_deck(deck_id: int, include_override: bool = true) ->
 	profile["initial_response_token_budget"] = 450
 	profile["delta_response_token_budget"] = 220
 	profile["turn_visible_wait_budget_ms"] = 6500
+	profile["turn_visible_wait_growth_ms"] = 1500
+	profile["turn_visible_wait_growth_every_turns"] = 2
+	profile["turn_visible_wait_budget_cap_ms"] = 18000
 	profile["cold_request_estimate_ms"] = 5000
+	profile["turn_model_judgment_mode"] = "required_first_main_window"
 	profile["max_policy_nodes"] = ContractsScript.DEFAULT_MAX_POLICY_NODES
+	profile["route_value_graph_v3"] = {
+		"enabled": false,
+		"shadow_enabled": true,
+		"default_bundle_depth": 3,
+		"max_bundle_depth": 4,
+		"beam_width": 16,
+		"internal_candidate_cap": 48,
+		"model_frontier_min": 4,
+		"model_frontier_max": 8,
+	}
 	# A profile override may intentionally tune bounded response budgets and
 	# schema node limits, but never identity, runtime kind, or rule ownership.
 	if include_override:

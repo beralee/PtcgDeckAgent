@@ -1,0 +1,314 @@
+{
+  "format_version": 1,
+  "puzzle_id": "n_zoroark_03",
+  "deck_id": "800018502",
+  "revision": 4,
+  "profile": "deployment",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "PP提升剂不能贴给工具箱",
+  "objective": "让本回合索罗亚克ex满足双恶，并给第二只N宝可梦准备下回合攻击。",
+  "strategy_id": "v18_800018502_ns_zoroark",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "PP提升剂不能贴给工具箱",
+      "fingerprint": "弃牌区2恶能；PP提升剂只能附给备战N宝可梦；索罗亚克ex当前1恶；最后空位可给N索罗亚或N达摩狒狒。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "最后空位给第二只N索罗亚，PP提升剂把恶能附给它；手贴第二恶给当前索罗亚克，建立双线。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“让本回合索罗亚克ex满足双恶，并给第二只N宝可梦准备下回合攻击。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "让本回合索罗亚克ex满足双恶，并给第二只N宝可梦准备下回合攻击。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手公开可击倒当前索罗亚克ex。",
+      "deadline": "对手下一回合结束前",
+      "impact": "加速必须落在会成为下一只攻击手的N宝可梦，而非只提供复制文本的工具。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "PP提升剂给N的莱希拉姆复制源",
+      "actor": "player",
+      "axis": "energy_ownership",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "energy_ownership 延迟失败",
+      "outcome": "failure",
+      "reason": "复制源不需攻击，能量不能帮助当前索罗亚克支付双恶。",
+      "failure_axis": "energy_ownership",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "最后空位给非N吉雉鸡ex",
+      "actor": "player",
+      "axis": "effect_legality",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "effect_legality 延迟失败",
+      "outcome": "failure",
+      "reason": "PP提升剂没有合法目标且接力线消失。",
+      "failure_axis": "effect_legality",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "最后一个N宝可梦空位",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "PP提升剂前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "一次PP提升剂加速",
+      "resource_type": "acceleration_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一次手贴",
+      "resource_type": "manual_attachment",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "当前索罗亚克攻击前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "让本回合索罗亚克ex满足双恶，并给第二只N宝可梦准备下回合攻击。"
+    },
+    {
+      "id": "g_survival",
+      "kind": "invariant",
+      "label": "survival",
+      "category": "survival",
+      "assertion": "对手的可信回复结算后，玩家仍未输且至少保留一条核心引擎或攻击线。"
+    },
+    {
+      "id": "g_handoff",
+      "kind": "invariant",
+      "label": "handoff",
+      "category": "handoff",
+      "assertion": "进入第二个玩家回合时存在合法攻击手、能量来源与必要目标访问。"
+    },
+    {
+      "id": "s1",
+      "kind": "state",
+      "label": "首轮承诺完成，进入对手回应",
+      "fingerprint": "正确路线已兑现当前进度；仍需覆盖：对手公开可击倒当前索罗亚克ex。",
+      "checkpoint": "opponent_turn_1_start"
+    },
+    {
+      "id": "d_reply",
+      "kind": "opponent_decision",
+      "label": "覆盖所有题面可信高影响回复",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "对手公开可击倒当前索罗亚克ex。；回复集合来自公开手牌、场上招式或已冻结策略。"
+    },
+    {
+      "id": "a_reply_1",
+      "kind": "action",
+      "label": "击倒当前索罗亚克",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_1",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "a_reply_2",
+      "kind": "action",
+      "label": "老大抓预备N索罗亚",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_2",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_survival",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_handoff",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "s1",
+      "type": "resolves"
+    },
+    {
+      "from": "s1",
+      "to": "d_reply",
+      "type": "opens"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_1",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_1",
+      "to": "s2_1",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_1",
+      "to": "g_success",
+      "type": "reaches"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_2",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_2",
+      "to": "s2_2",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_2",
+      "to": "g_success",
+      "type": "reaches"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "all",
+    "negative_probe_axes": [
+      "energy_ownership",
+      "effect_legality"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

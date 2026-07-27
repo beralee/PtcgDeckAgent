@@ -667,6 +667,28 @@ func test_build_pool_includes_bundled_scramble_switch_in_item_category() -> Stri
 	return run_checks(checks)
 
 
+func test_build_pool_includes_bundled_lacey_in_supporter_category() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var supporter_cards: Array = pool_by_category[1] if pool_by_category.size() > 1 else []
+	var found: CardData = null
+	for card: CardData in supporter_cards:
+		if card.get_uid() == "CSV9C_200":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "DeckEditor Supporter tab should include bundle-only CSV9C_200"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name), "紫竽", "DeckEditor should keep Lacey's Chinese name"))
+		checks.append(assert_eq(str(found.name_en), "Lacey", "DeckEditor should keep Lacey's English name"))
+		checks.append(assert_eq(str(found.card_type), "Supporter", "Lacey should be listed under the Supporter tab"))
+		checks.append(assert_eq(str(found.effect_id), "a3c4d099d726c7dfa4393e7e218661db", "Lacey should keep its implemented effect id"))
+	editor.free()
+	return run_checks(checks)
+
+
 func test_build_pool_includes_requested_bundled_pokemon_cards() -> String:
 	var editor: Control = DeckEditorScript.new()
 	editor.call("_build_pool")

@@ -104,7 +104,9 @@ func play_event(scene: Object, event: Dictionary, completed: Callable) -> void:
 	)
 	var moving_views: Array[BattleCardView] = []
 	for index: int in range(visible_count):
-		var card: CardInstance = cards[index] as CardInstance if index < cards.size() else null
+		var card := _resolved_event_card(event, index)
+		if str(event.get("visibility", "face")) == "face" and card == null:
+			continue
 		var view := _create_card_view(scene, event, card, motion_card_size)
 		overlay.add_child(view)
 		var start := _fanned_position(source_rect, view.size, index, visible_count, portrait)
@@ -183,6 +185,17 @@ func resolve_anchor_keys(event: Dictionary) -> Dictionary:
 		if exact_target_key != "":
 			target_key = exact_target_key
 	return {"source": source_key, "target": target_key}
+
+
+func _resolved_event_card(event: Dictionary, index: int) -> CardInstance:
+	var cards: Array = event.get("cards", []) if event.get("cards", []) is Array else []
+	var card: CardInstance = cards[index] as CardInstance if index >= 0 and index < cards.size() else null
+	if card == null or str(event.get("visibility", "face")) != "face":
+		return card
+	var expected_ids: Array = event.get("card_instance_ids", []) if event.get("card_instance_ids", []) is Array else []
+	if index < 0 or index >= expected_ids.size():
+		return card
+	return card if card.instance_id == int(expected_ids[index]) else null
 
 
 func resolve_motion_card_size(

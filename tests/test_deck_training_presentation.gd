@@ -6,6 +6,8 @@ const CatalogScript := preload("res://scripts/training/DeckTrainingCatalog.gd")
 const PresentationScript := preload("res://scripts/training/DeckTrainingPresentation.gd")
 const ControllerScript := preload("res://scripts/training/DeckTrainingBattleController.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const IosWebHudTouchAdapterScript := preload("res://scripts/ui/battle/interactions/IosWebHudTouchAdapter.gd")
+const UiRuntimeProfileScript := preload("res://scripts/ui/runtime/UiRuntimeProfile.gd")
 
 
 class TrainingSceneStub:
@@ -142,8 +144,8 @@ func test_training_browser_portrait_matches_deck_center_metrics() -> String:
 	var status := scene.find_child("StatusLabel", true, false) as Label
 	var back := scene.find_child("BackButton", true, false) as Button
 	var replay := scene.find_child("ReplayButton", true, false) as Button
-	var selector := scene.find_child("DeckSelector", true, false) as HFlowContainer
-	var deck_button := selector.get_child(0) as CheckBox if selector != null and selector.get_child_count() > 0 else null
+	var selector := scene.find_child("DeckSelector", true, false) as GridContainer
+	var deck_button := selector.get_child(0) as Button if selector != null and selector.get_child_count() > 0 else null
 	var scenario_list := scene.find_child("ScenarioList", true, false) as VBoxContainer
 	var card := scenario_list.get_child(0) as PanelContainer if scenario_list != null and scenario_list.get_child_count() > 0 else null
 	var scenario_title := card.find_child("DeckTrainingScenarioTitle", true, false) as Label if card != null else null
@@ -173,6 +175,138 @@ func test_training_browser_portrait_matches_deck_center_metrics() -> String:
 	return checks
 
 
+func test_training_deck_selector_uses_readable_hud_radio_buttons_and_short_names() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var previous_key := GameManager.get_deck_training_selected_deck_key()
+	GameManager.set_deck_training_selected_deck_key("dragapult")
+	var scene := (load("res://scenes/deck_training/DeckTrainingBrowser.tscn") as PackedScene).instantiate()
+	tree.root.add_child(scene)
+	await tree.process_frame
+	await tree.process_frame
+	scene.call("_apply_layout_for_tests", Vector2(430, 932), "portrait")
+	var selector := scene.find_child("DeckSelector", true, false) as GridContainer
+	var option_names: Array[String] = []
+	for option: Dictionary in CatalogScript.deck_options():
+		option_names.append(str(option.get("name", "")))
+	var first_button := selector.get_child(0) as BaseButton if selector != null and selector.get_child_count() > 0 else null
+	var selected_button: Button = null
+	var next_button: Button = null
+	if selector != null:
+		for child: Node in selector.get_children():
+			var deck_button := child as Button
+			if deck_button == null:
+				continue
+			if deck_button.button_pressed:
+				selected_button = deck_button
+			elif next_button == null:
+				next_button = deck_button
+	var normal_style := first_button.get_theme_stylebox("normal") if first_button != null else null
+	var pressed_style := first_button.get_theme_stylebox("pressed") if first_button != null else null
+	var normal_fill: Color = normal_style.bg_color if normal_style is StyleBoxFlat else Color.TRANSPARENT
+	var pressed_fill: Color = pressed_style.bg_color if pressed_style is StyleBoxFlat else Color.TRANSPARENT
+	var unselected_font_color: Color = next_button.get_theme_color("font_color") if next_button != null else Color.TRANSPARENT
+	var selected_font_color: Color = selected_button.get_theme_color("font_color") if selected_button != null else Color.TRANSPARENT
+	var checks: Array[String] = [
+		assert_true(option_names.has("玛毛"), "Marnie training deck should use the requested 玛毛 short name"),
+		assert_false(option_names.has("玛俐"), "The old 玛俐 training short name should no longer be exposed"),
+		assert_true(option_names.has("N索"), "N's Zoroark training deck should use the requested N索 short name"),
+		assert_false(option_names.has("N"), "The ambiguous N-only training short name should no longer be exposed"),
+		assert_not_null(selector, "Training deck selector should use the same GridContainer radio layout as tournament size"),
+		assert_true(selector != null and selector.columns == 2, "Training deck radios should use two columns in portrait like tournament size"),
+		assert_not_null(first_button, "Training deck selector should render a radio choice"),
+		assert_eq(first_button.get_class() if first_button != null else "", "Button", "Training radio choices should use HUD toggle buttons instead of native dark CheckBox chrome"),
+		assert_true(first_button != null and first_button.toggle_mode, "Training deck HUD choices must keep radio toggle semantics"),
+		assert_not_null(first_button.button_group if first_button != null else null, "Training deck HUD choices must remain mutually exclusive"),
+		assert_true(first_button != null and bool(first_button.get_meta("deck_training_hud_radio", false)), "Training deck choices should declare the shared HUD radio treatment"),
+		assert_true(selected_button != null and selected_button.text.begins_with("◉ "), "The current training deck should expose an explicit selected radio glyph"),
+		assert_true(next_button != null and next_button.text.begins_with("○ "), "Unselected training decks should expose an explicit empty radio glyph"),
+		assert_true(normal_style is StyleBoxFlat and normal_fill.a >= 0.85, "Unselected training deck choices need an opaque HUD surface"),
+		assert_true(pressed_style is StyleBoxFlat and pressed_fill != normal_fill, "Selected training deck choices need a visibly distinct HUD surface"),
+		assert_true(unselected_font_color.get_luminance() >= 0.75 and unselected_font_color.a >= 0.95, "Unselected training deck labels must stay bright and readable on Android portrait"),
+		assert_true(selected_font_color.get_luminance() <= 0.20 and selected_font_color.a >= 0.95, "Selected training deck labels should use the tournament radio's dark-on-cyan contrast"),
+	]
+	if selected_button != null and next_button != null:
+		var next_key := str(next_button.get_meta("deck_training_deck_key", ""))
+		next_button.pressed.emit()
+		checks.append(assert_true(next_button.button_pressed, "Selecting another training deck should move the radio selection"))
+		checks.append(assert_false(selected_button.button_pressed, "Selecting another training deck should clear the previous radio selection"))
+		checks.append(assert_true(next_button.text.begins_with("◉ "), "The newly selected deck should refresh to the selected radio glyph"))
+		checks.append(assert_true(selected_button.text.begins_with("○ "), "The previous deck should refresh to the empty radio glyph"))
+		checks.append(assert_eq(GameManager.get_deck_training_selected_deck_key(), next_key, "Radio selection should persist the chosen training deck"))
+	var result := run_checks(checks)
+	scene.queue_free()
+	await tree.process_frame
+	GameManager.set_deck_training_selected_deck_key(previous_key)
+	return result
+
+
+func test_training_browser_portrait_scrolls_from_android_screen_drag() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene := (load("res://scenes/deck_training/DeckTrainingBrowser.tscn") as PackedScene).instantiate()
+	tree.root.add_child(scene)
+	await tree.process_frame
+	await tree.process_frame
+	scene.call("_apply_layout_for_tests", Vector2(430, 932), "portrait")
+	await tree.process_frame
+	var scroll := scene.find_child("Scroll", true, false) as ScrollContainer
+	if scroll == null:
+		scene.queue_free()
+		await tree.process_frame
+		return "Training browser must expose its scenario ScrollContainer"
+	if not scene.has_method("_input"):
+		scene.queue_free()
+		await tree.process_frame
+		return "Training browser must forward Android touch input to the non-battle touch bridge"
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	scroll.scroll_vertical = 0
+	var scenario_list := scene.find_child("ScenarioList", true, false) as VBoxContainer
+	var first_card := scenario_list.get_child(0) as PanelContainer if scenario_list != null and scenario_list.get_child_count() > 0 else null
+	var start_button := first_card.get_meta("start_button", null) as Button if first_card != null else null
+	if start_button != null:
+		scroll.ensure_control_visible(start_button)
+		await tree.process_frame
+	var visible_button_rect := (
+		scroll.get_global_rect().intersection(start_button.get_global_rect())
+		if start_button != null
+		else Rect2()
+	)
+	var start := visible_button_rect.get_center() if visible_button_rect.has_area() else scroll.get_global_rect().get_center()
+	var pressed_state := {"count": 0}
+	if start_button != null:
+		start_button.pressed.connect(func() -> void:
+			pressed_state["count"] = int(pressed_state.get("count", 0)) + 1
+		)
+	var scroll_before_drag := scroll.scroll_vertical
+	var press := InputEventScreenTouch.new()
+	press.index = 0
+	press.position = start
+	press.pressed = true
+	scene.call("_input", press)
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = start - Vector2(0, 180)
+	drag.relative = Vector2(0, -180)
+	scene.call("_input", drag)
+	var release := InputEventScreenTouch.new()
+	release.index = 0
+	release.position = drag.position
+	release.pressed = false
+	scene.call("_input", release)
+	var scrolled_value := scroll.scroll_vertical
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	var checks := run_checks([
+		assert_true(
+			scrolled_value > scroll_before_drag,
+			"Android ScreenTouch + ScreenDrag should move the training scenario list without relying on mouse emulation"
+		),
+		assert_eq(int(pressed_state.get("count", 0)), 0, "Dragging from a Start Training button must cancel its tap instead of launching a stage"),
+	])
+	scene.queue_free()
+	await tree.process_frame
+	return checks
+
+
 func test_training_browser_returns_to_compact_landscape_metrics_after_rotation() -> String:
 	var tree := Engine.get_main_loop() as SceneTree
 	var scene := (load("res://scenes/deck_training/DeckTrainingBrowser.tscn") as PackedScene).instantiate()
@@ -186,8 +320,8 @@ func test_training_browser_returns_to_compact_landscape_metrics_after_rotation()
 	var title := scene.find_child("Title", true, false) as Label
 	var back := scene.find_child("BackButton", true, false) as Button
 	var replay := scene.find_child("ReplayButton", true, false) as Button
-	var selector := scene.find_child("DeckSelector", true, false) as HFlowContainer
-	var deck_button := selector.get_child(0) as CheckBox if selector != null and selector.get_child_count() > 0 else null
+	var selector := scene.find_child("DeckSelector", true, false) as GridContainer
+	var deck_button := selector.get_child(0) as Button if selector != null and selector.get_child_count() > 0 else null
 	var scenario_list := scene.find_child("ScenarioList", true, false) as VBoxContainer
 	var card := scenario_list.get_child(0) as PanelContainer if scenario_list != null and scenario_list.get_child_count() > 0 else null
 	var start_button := card.get_meta("start_button", null) as Button if card != null else null
@@ -197,6 +331,7 @@ func test_training_browser_returns_to_compact_landscape_metrics_after_rotation()
 		assert_eq(title.get_theme_font_size("font_size"), 30, "Landscape should restore the original title size"),
 		assert_eq(back.custom_minimum_size, Vector2(92, 48), "Landscape should restore the compact Back button"),
 		assert_eq(replay.custom_minimum_size, Vector2(116, 48), "Landscape should restore the compact Replay button"),
+		assert_true(selector != null and selector.columns == 4, "Landscape training deck radios should use four columns like tournament size"),
 		assert_eq(deck_button.custom_minimum_size if deck_button != null else Vector2.ZERO, Vector2(172, 50), "Landscape should restore compact deck choices"),
 		assert_eq(start_button.custom_minimum_size.y if start_button != null else 0.0, 58.0, "Landscape should restore the compact Start Training button"),
 		assert_false(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Landscape should restore a visible vertical scrollbar"),
@@ -287,6 +422,100 @@ func test_training_battle_overlays_match_deck_center_portrait_metrics() -> Strin
 	scene.queue_free()
 	await tree.process_frame
 	return run_checks(checks)
+
+
+func test_training_intro_long_copy_stays_inside_portrait_and_keeps_start_action_visible() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene := TrainingSceneStub.new()
+	tree.root.add_child(scene)
+	await tree.process_frame
+	var scenario := CatalogScript.get_scenario("raging_bolt_02").duplicate(true)
+	scenario["title"] = "超长残局标题：%s" % "先计算伤害再规划抽牌与换位".repeat(12)
+	var goal: Dictionary = scenario.get("goal", {}).duplicate(true)
+	goal["summary"] = "在资源极少且双方备战区填满的复杂场面中，严格按照正确顺序完成滤抽、能量规划、换位和最终击倒".repeat(8)
+	scenario["goal"] = goal
+	var controller := ControllerScript.new()
+	controller.setup(scene, null, scenario, {})
+	controller.apply_layout(Vector2(430, 932))
+	await tree.process_frame
+
+	var context: Dictionary = NonBattleLayoutControllerScript.new().build_context(Vector2(430, 932), "portrait", true)
+	var intro_panel := scene.find_child("DeckTrainingIntroPanel", true, false) as PanelContainer
+	var intro_scroll := scene.find_child("StageIntroBodyScroll", true, false) as ScrollContainer
+	var intro_title := scene.find_child("StageIntroTitle", true, false) as Label
+	var intro_limit := scene.find_child("StageIntroLimit", true, false) as Label
+	var intro_confirm := scene.find_child("StageIntroConfirmButton", true, false) as Button
+	var panel_minimum := intro_panel.get_combined_minimum_size() if intro_panel != null else Vector2.INF
+	var checks: Array[String] = [
+		assert_true(panel_minimum.x <= float(context.get("content_width", 0.0)), "Long intro copy must not force the portrait HUD beyond the phone safe width"),
+		assert_true(panel_minimum.y <= 900.0, "Long intro copy must scroll instead of forcing the portrait HUD beyond the phone height"),
+		assert_not_null(intro_scroll, "Portrait intro should constrain long copy in a scrollable body"),
+		assert_true(intro_title != null and intro_title.autowrap_mode != TextServer.AUTOWRAP_OFF, "Long scenario titles must wrap inside the HUD"),
+		assert_true(intro_limit != null and intro_limit.autowrap_mode != TextServer.AUTOWRAP_OFF, "Intro rule copy must wrap inside the HUD"),
+		assert_true(intro_confirm != null and intro_confirm.visible, "Start Training must remain visible for long scenarios"),
+		assert_false(intro_scroll != null and intro_scroll.is_ancestor_of(intro_confirm), "Start Training must stay in the pinned footer instead of scrolling off-screen"),
+	]
+	if intro_confirm != null:
+		intro_confirm.pressed.emit()
+		await tree.process_frame
+		await tree.process_frame
+	checks.append(assert_true(controller.get("_intro_overlay") == null, "The pinned Start Training action must still dismiss the intro HUD"))
+	checks.append(assert_eq(scene.maybe_run_ai_calls, 1, "The pinned Start Training action must still enter the training turn"))
+	controller.release()
+	scene.queue_free()
+	await tree.process_frame
+	return run_checks(checks)
+
+
+func test_training_intro_start_responds_to_ios_web_touch_without_native_pressed() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene := TrainingSceneStub.new()
+	scene.size = Vector2(430, 932)
+	tree.root.add_child(scene)
+	await tree.process_frame
+	var controller := ControllerScript.new()
+	controller.setup(scene, null, CatalogScript.get_scenario("raging_bolt_02"), {})
+	controller.apply_layout(Vector2(430, 932))
+	await tree.process_frame
+	var overlay := scene.find_child("DeckTrainingIntroOverlay", true, false) as Control
+	var confirm := scene.find_child("StageIntroConfirmButton", true, false) as Button
+	var overlay_marked := (
+		overlay != null
+		and bool(overlay.get_meta(IosWebHudTouchAdapterScript.HUD_TOUCH_ROOT_META, false))
+	)
+	var adapter := IosWebHudTouchAdapterScript.new()
+	adapter.configure(UiRuntimeProfileScript.new({
+		"host_kind": UiRuntimeProfile.HOST_WEB,
+		"pointer_mode": UiRuntimeProfile.POINTER_TOUCH,
+		"mobile_like": true,
+		"feature_flags": {"web": true, "web_ios": true},
+	}))
+	var center := confirm.get_global_rect().get_center() if confirm != null else Vector2.ZERO
+	var press := InputEventScreenTouch.new()
+	press.index = 0
+	press.position = center
+	press.pressed = true
+	var release := InputEventScreenTouch.new()
+	release.index = 0
+	release.position = center
+	release.pressed = false
+	var press_handled := adapter.handle_event(scene, press)
+	var release_handled := adapter.handle_event(scene, release)
+	await tree.process_frame
+	await tree.process_frame
+	var checks := run_checks([
+		assert_true(
+			overlay_marked,
+			"The training intro must opt into the isolated iOS Web HUD touch path"
+		),
+		assert_true(press_handled and release_handled, "The iOS Web adapter should own the full Start Training touch"),
+		assert_true(controller.get("_intro_overlay") == null, "The raw iOS Web touch should dismiss the training intro"),
+		assert_eq(scene.maybe_run_ai_calls, 1, "The raw iOS Web touch should enter the training turn exactly once"),
+	])
+	controller.release()
+	scene.queue_free()
+	await tree.process_frame
+	return checks
 
 
 func test_training_battle_overlays_restore_compact_landscape_metrics() -> String:

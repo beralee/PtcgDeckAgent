@@ -6,7 +6,14 @@ const ContractsScript = preload("res://scripts/ai/v18_cpg/schema/V18CPGContracts
 
 func compare(previous: Dictionary, current: Dictionary, previous_facts: Dictionary = {}, current_facts: Dictionary = {}) -> Dictionary:
 	var changed_facts: Array[String] = []
-	for path: String in ContractsScript.REGISTERED_FACT_PATHS:
+	var comparable_fact_paths := ContractsScript.branchable_fact_paths(
+		previous_facts
+	)
+	for path: String in ContractsScript.branchable_fact_paths(current_facts):
+		if path not in comparable_fact_paths:
+			comparable_fact_paths.append(path)
+	comparable_fact_paths.sort()
+	for path: String in comparable_fact_paths:
 		var before: Variant = _fact(previous_facts, path)
 		var after: Variant = _fact(current_facts, path)
 		if before != after:
@@ -16,7 +23,9 @@ func compare(previous: Dictionary, current: Dictionary, previous_facts: Dictiona
 	var legal_changed := previous_actions != current_actions
 	var material := false
 	for path: String in changed_facts:
-		if path in [
+		if path.begins_with("continuity.") \
+				or path.begins_with("prize_clock.") \
+				or path in [
 			"attack.ready",
 			"attack.ko_available",
 			"attack.max_damage",

@@ -20,9 +20,9 @@ static func build_payload(metadata: Dictionary = {}) -> Dictionary:
 		"visit_id": str(metadata.get("visit_id", _make_event_id("visit"))),
 		"client_id": str(metadata.get("client_id", _load_or_create_client_id())),
 		"source": str(metadata.get("source", "startup")),
-		"app_version": str(metadata.get("app_version", AppVersionScript.DISPLAY_VERSION)),
-		"version": str(metadata.get("version", AppVersionScript.VERSION)),
-		"build_number": int(metadata.get("build_number", AppVersionScript.BUILD_NUMBER)),
+		"app_version": str(metadata.get("app_version", AppVersionScript.current_display_version())),
+		"version": str(metadata.get("version", AppVersionScript.current_version())),
+		"build_number": int(metadata.get("build_number", AppVersionScript.current_build_number())),
 		"channel": str(metadata.get("channel", AppVersionScript.CHANNEL)),
 		"platform": str(metadata.get("platform", OS.get_name())),
 		"locale": str(metadata.get("locale", TranslationServer.get_locale())),
@@ -42,7 +42,7 @@ static func endpoint_url_for_runtime(os_name: String = "", feature_flags: Dictio
 static func request_headers_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> PackedStringArray:
 	var headers := PackedStringArray(["Content-Type: application/json; charset=utf-8"])
 	if not _is_web_runtime_for_context(os_name, feature_flags, display_server_name):
-		headers.append("User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION)
+		headers.append("User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version())
 	return headers
 
 

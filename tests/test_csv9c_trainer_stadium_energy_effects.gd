@@ -23,6 +23,7 @@ const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.
 const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
 
 const EFFECT_ID_ONLY_TERA_ID := "5d5d2589f2d9c19ef7364714766600d4"
+const LACEY_EFFECT_ID := "a3c4d099d726c7dfa4393e7e218661db"
 
 
 func _make_state() -> GameState:
@@ -131,11 +132,61 @@ func test_csv9c_remote_trainer_stadium_energy_effect_ids_register() -> String:
 		"4622932a419f939cc537e765a5bbe543",
 		"cf3124da3d7bf217f7969b6ae4e60e38",
 		"257e65746310895c10fff95ce172415d",
+		LACEY_EFFECT_ID,
 	]
 	var checks: Array[String] = []
 	for effect_id: String in remote_fixed_ids:
 		checks.append(assert_true(processor.has_effect(effect_id), "%s should register as a CSV9C fixed effect alias" % effect_id))
 	return run_checks(checks)
+
+
+func test_csv9c_200_lacey_draws_four_when_opponent_has_four_prizes() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var lacey := CardInstance.create(_trainer("紫竽", "Supporter", LACEY_EFFECT_ID), 0)
+	var old_hand_a := CardInstance.create(_trainer("Old Hand A", "Item"), 0)
+	var old_hand_b := CardInstance.create(_trainer("Old Hand B", "Item"), 0)
+	player.hand = [lacey, old_hand_a, old_hand_b]
+	player.deck.clear()
+	for i: int in 10:
+		player.deck.append(CardInstance.create(_trainer("Deck %d" % i, "Item"), 0))
+	_prizes(opponent, 4)
+
+	var played := gsm.play_trainer(0, lacey, [])
+
+	return run_checks([
+		assert_true(played, "Lacey should resolve through the normal Supporter play path"),
+		assert_eq(player.hand.size(), 4, "Lacey should draw four cards while the opponent has four prizes"),
+		assert_eq(player.deck.size(), 8, "Lacey should shuffle the two other hand cards into the deck before drawing four"),
+		assert_true(lacey in player.discard_pile, "The played Lacey should be discarded instead of shuffled into the deck"),
+		assert_false(old_hand_a in player.discard_pile, "Other hand cards should be shuffled into the deck, not discarded"),
+		assert_false(old_hand_b in player.discard_pile, "Every other hand card should avoid the discard pile"),
+	])
+
+
+func test_csv9c_200_lacey_draws_eight_at_three_prize_boundary() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var lacey := CardInstance.create(_trainer("Lacey", "Supporter", LACEY_EFFECT_ID), 0)
+	var old_hand := CardInstance.create(_trainer("Old Hand", "Item"), 0)
+	player.hand = [lacey, old_hand]
+	player.deck.clear()
+	for i: int in 10:
+		player.deck.append(CardInstance.create(_trainer("Deck %d" % i, "Item"), 0))
+	_prizes(opponent, 3)
+
+	var played := gsm.play_trainer(0, lacey, [])
+
+	return run_checks([
+		assert_true(played, "Lacey should be usable when the opponent has three prizes"),
+		assert_eq(player.hand.size(), 8, "Exactly three opponent prizes should activate Lacey's eight-card draw"),
+		assert_eq(player.deck.size(), 3, "Lacey should shuffle one other hand card in, then draw eight"),
+		assert_true(lacey in player.discard_pile, "The Supporter itself must remain outside the shuffled hand"),
+	])
 
 
 func test_csv9c_metadata_matches_tcg_missing_fields() -> String:

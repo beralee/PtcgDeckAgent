@@ -17,6 +17,8 @@ func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 func mark_modal_input_consumed(scene: Object, reason: String = "field_interaction", suppress_slot_input: bool = true) -> void:
 	if scene == null:
 		return
+	if scene.has_method("_mark_ui_interaction_progress"):
+		scene.call("_mark_ui_interaction_progress", reason)
 	if scene.has_method("_finish_modal_input_interaction"):
 		scene.call("_finish_modal_input_interaction", reason, "arm" if suppress_slot_input else "clear")
 	elif not suppress_slot_input and scene.has_method("_mark_modal_input_consumed_without_slot_suppression"):
@@ -48,6 +50,8 @@ func ensure_field_interaction_panel(scene: Object) -> void:
 	overlay.z_as_relative = false
 	overlay.z_index = FIELD_INTERACTION_OVERLAY_Z_INDEX
 	(scene as Node).add_child(overlay)
+	if scene.has_method("_register_ios_web_hud_touch_root"):
+		scene.call("_register_ios_web_hud_touch_root", overlay)
 	scene.set("_field_interaction_overlay", overlay)
 
 	var layout := VBoxContainer.new()
@@ -1510,6 +1514,7 @@ func on_counter_distribution_amount_chosen(scene: Object, amount: int) -> void:
 
 
 func handle_counter_distribution_target(scene: Object, target_index: int) -> void:
+	mark_modal_input_consumed(scene, "counter_distribution_target")
 	var selected_amount: int = int(scene.get("_field_interaction_assignment_selected_source_index"))
 	if selected_amount <= 0:
 		scene.call("_log", "请先选择要放置的伤害指示物数量")

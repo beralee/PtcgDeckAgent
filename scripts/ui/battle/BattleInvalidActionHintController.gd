@@ -91,6 +91,8 @@ func _ensure_overlay() -> void:
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_theme_stylebox_override("panel", _overlay_style())
 	_scene.add_child(overlay)
+	if _scene.has_method("_register_ios_web_hud_touch_root"):
+		_scene.call("_register_ios_web_hud_touch_root", overlay)
 
 	var center := Control.new()
 	center.name = "InvalidActionCenter"

@@ -11,7 +11,9 @@ const ContractsScript = preload("res://scripts/ai/v18_cpg/schema/V18CPGContracts
 const ProfileCatalogScript = preload("res://scripts/ai/v18_cpg/V18CPGProfileCatalog.gd")
 const ObservationGatewayScript = preload("res://scripts/ai/v18_cpg/observation/V18CPGObservationGateway.gd")
 const BeliefStateScript = preload("res://scripts/ai/v18_cpg/observation/V18CPGBeliefState.gd")
+const MaterialDeltaScript = preload("res://scripts/ai/v18_cpg/observation/V18CPGMaterialDelta.gd")
 const PolicyValidatorScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGPolicyValidator.gd")
+const PolicyGraphScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGPolicyGraph.gd")
 const NoctowlSearchScript = preload("res://scripts/ai/v18_cpg/modules/V18CPGTeraNoctowlSearch.gd")
 const RouteSearchScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGRouteSearch.gd")
 const StrategyScript = preload("res://scripts/ai/v18_cpg/V18ConditionalPolicyStrategy.gd")
@@ -22,6 +24,7 @@ const InteractionPolicyScript = preload("res://scripts/ai/v18_cpg/execution/V18C
 const InformationValueScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGInformationValueSolver.gd")
 const VisibleWaitBudgetScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGVisibleWaitBudget.gd")
 const DecisionClientScript = preload("res://scripts/ai/v18_cpg/network/V18CPGDecisionClient.gd")
+const DecisionAuditScript = preload("res://scripts/ai/v18_cpg/audit/V18CPGDecisionAudit.gd")
 const RngIsolatedTransportScript = preload(
 	"res://scripts/ai/v18_cpg/network/V18CPGRngIsolatedDeepSeekClient.gd"
 )
@@ -63,6 +66,8 @@ func _initialize() -> void:
 	_test_typed_interaction_policy()
 	_test_information_value()
 	_test_information_epoch_reopening()
+	_test_request_fact_contract_is_the_runtime_guard_contract()
+	_test_audit_separates_shadow_acceptance_from_execution_ownership()
 	_test_typed_profile_policy()
 	_test_compact_wire_contract()
 	_test_strict_compact_response_validation()
@@ -150,7 +155,8 @@ func _test_compact_wire_contract() -> void:
 			and system_text.contains("limits.max_policy_nodes is the absolute node maximum") \
 			and system_text.contains("macro_actions[0] must both exactly equal") \
 			and system_text.contains("propose_typed_route is root-only") \
-			and system_text.contains("Default to exactly one select_candidate route node") \
+			and system_text.contains("Use a one-node policy only when") \
+			and system_text.contains("bounded 2-4 action graph") \
 			and system_text.contains("predictably opens draw, hidden-deck search") \
 			and system_text.contains("otherwise=replan") \
 			and system_text.contains("may replace the Rule floor even across a large score gap") \
@@ -504,6 +510,47 @@ func _test_strict_compact_response_validation() -> void:
 			and (disconnected_validation.get("policy", {}).get("nodes", []) as Array).size() == 1,
 		"strict validation must remove semantically dead nodes without inventing graph edges"
 	)
+	var oversized_graph := multi_checkpoint.duplicate(true)
+	oversized_graph["policy"]["nodes"][4]["otherwise"] = "node:overflow_one"
+	oversized_graph["policy"]["nodes"].append({
+		"node_id": "node:overflow_one",
+		"kind": "terminal",
+	})
+	oversized_graph["policy"]["nodes"].append({
+		"node_id": "node:overflow_two",
+		"kind": "terminal",
+	})
+	var oversized_validation := validator.validate_response(
+		oversized_graph, allowed_routes, 8, allowed_candidates, true
+	)
+	_check(
+		bool(oversized_validation.get("valid", false))
+			and int(oversized_validation.get(
+				"canonicalized_overflow_nodes",
+				0
+			)) == 2
+			and (oversized_validation.get(
+				"policy",
+				{}
+			).get("nodes", []) as Array).size() <= 8,
+		"an otherwise valid graph within the defensive hard bound must prune overflow tails instead of discarding the whole model response"
+	)
+	if bool(oversized_validation.get("valid", false)):
+		var truncated_nodes: Array = oversized_validation.get(
+			"policy",
+			{}
+		).get("nodes", [])
+		var truncated_checkpoint: Dictionary = {}
+		for raw_node: Variant in truncated_nodes:
+			if raw_node is Dictionary \
+					and str((raw_node as Dictionary).get("node_id", "")) \
+						== "node:check_two":
+				truncated_checkpoint = raw_node as Dictionary
+				break
+		_check(
+			str(truncated_checkpoint.get("otherwise", "")) == "replan",
+			"pruning an unavailable overflow target must fail closed at the existing checkpoint"
+		)
 
 	var extra_checkpoint := multi_checkpoint.duplicate(true)
 	extra_checkpoint["policy"]["nodes"][1]["summary"] = "free text"
@@ -585,6 +632,21 @@ func _test_profiles() -> void:
 	_check(ProfileCatalogScript.get_profile_for_deck(800015934).get("modules", []) == [
 		"tera_noctowl_search", "energy_burst", "cycle_pivot"
 	], "Tord toolbox must compose search, energy, and pivot shapes")
+	var raging_profile := ProfileCatalogScript.get_profile_for_deck(800018509)
+	_check(
+		str(raging_profile.get("prize_clock_extension", {}).get("kind", ""))
+			== "raging_bolt",
+		"Raging Bolt profile overrides must expose the prize-clock extension in production"
+	)
+	_check(
+		int(raging_profile.get("turn_visible_wait_budget_ms", 0)) == 7500
+			and int(raging_profile.get("turn_visible_wait_growth_ms", 0)) == 1500
+			and int(raging_profile.get("turn_visible_wait_budget_cap_ms", 0)) == 18000
+			and int(ProfileCatalogScript.get_profile_for_deck(
+				800017643
+			).get("turn_visible_wait_growth_ms", 0)) == 1500,
+		"Raging Bolt must allow the observed direct-provider p95 while retaining bounded turn-progressive thinking time"
+	)
 	_check(ProfileCatalogScript.list_variant_metadata(false).is_empty(), "feature flag off must expose no V18CPG variants")
 
 
@@ -1115,6 +1177,40 @@ func _test_rule_floor_and_route_safety() -> void:
 		tord_strategy._should_shadow_exact_rule_root({"valid": true, "reason": "matches_rules_floor"}),
 		"a model response that selects the exact Rule root must retain only its future graph"
 	)
+	var tied_information_frontier: Array[Dictionary] = [{
+		"candidate_id": "candidate:rule_information",
+		"route_id": "route:information",
+		"checkpoint_after": "information_result",
+		"base_score": 500.0,
+	}, {
+		"candidate_id": "candidate:model_information",
+		"route_id": "route:information",
+		"checkpoint_after": "information_result",
+		"base_score": 500.0,
+	}]
+	_check(
+		tord_strategy._should_review_deferred_rule_root_for_verified_upgrade(
+			false,
+			tied_information_frontier[1],
+			tied_information_frontier,
+			{
+				"valid": false,
+				"reason": "same_route_switch_without_verified_advantage",
+			},
+			true
+		),
+		"an ambiguous information root deferred to Rule must run the same deterministic verified-upgrade review as an exact Rule shadow"
+	)
+	_check(
+		tord_strategy._should_review_deferred_rule_root_for_verified_upgrade(
+			true,
+			tied_information_frontier[0],
+			tied_information_frontier,
+			{"valid": true, "reason": "matches_rules_floor"},
+			false
+		),
+		"an optional or delta Rule-root shadow must not suppress a deterministic verified-local upgrade"
+	)
 	_check(
 		not tord_strategy._has_model_execution_certificate({"valid": true, "reason": "validated_switch"}) \
 			and tord_strategy._has_model_execution_certificate({"valid": true, "reason": "module_verified_advantage"}),
@@ -1356,6 +1452,42 @@ func _test_information_value() -> void:
 	)
 	var fast := wait_budget.may_request(1800, [700.0, 900.0], 2, 12000, 6500)
 	_check(bool(fast.get("allowed", false)), "fast or cached models may still replan repeatedly inside the same budget")
+	var early_budget: int = wait_budget.budget_for_turn(6500, 2, 1000, 2, 10500)
+	var late_budget: int = wait_budget.budget_for_turn(6500, 6, 1000, 2, 10500)
+	var capped_budget: int = wait_budget.budget_for_turn(6500, 99, 1000, 2, 10500)
+	_check(
+		early_budget == 6500 and late_budget == 8500 and capped_budget == 10500,
+		"visible thinking time must stay fast early, grow every game round, and remain bounded"
+	)
+	var audited_late_replan := wait_budget.may_request(
+		2296,
+		[5740.0],
+		1,
+		late_budget,
+		5000
+	)
+	_check(
+		bool(audited_late_replan.get("allowed", false))
+			and int(audited_late_replan.get("remaining_ms", 0)) == 6204,
+		"turn six must retain enough budget for one compact high-value replan after the audited stale response"
+	)
+	var audit := DecisionAuditScript.new()
+	audit.configure("test", "stage_waits", false)
+	audit.record({"turn_id": 2, "visible_wait_ms": 6200})
+	audit.record({"turn_id": 4, "visible_wait_ms": 7400})
+	audit.record({"turn_id": 8, "visible_wait_ms": 9900})
+	var wait_summary := audit.summary()
+	_check(
+		float(wait_summary.get("early_turn_visible_wait_p95_ms", 0.0))
+				== 6200.0
+			and float(wait_summary.get(
+				"middle_turn_visible_wait_p95_ms",
+				0.0
+			)) == 7400.0
+			and float(wait_summary.get("late_turn_visible_wait_p95_ms", 0.0))
+				== 9900.0,
+		"latency audit must keep early, middle, and late-game wait buckets separate"
+	)
 
 
 func _test_information_epoch_reopening() -> void:
@@ -1396,11 +1528,51 @@ func _test_information_epoch_reopening() -> void:
 	)
 	var shadowed_information := completed_information.duplicate(true)
 	shadowed_information["owner"] = "local_gate"
+	var installed_graph: Variant = strategy.get("_policy_graph")
+	installed_graph.install({
+		"root_node_id": "node:root",
+		"nodes": [{
+			"node_id": "node:root",
+			"kind": "route",
+			"route_ref": {
+				"mode": "select_candidate",
+				"route_id": "route:information",
+				"candidate_id": "candidate:draw",
+			},
+			"next_node_id": "node:checkpoint",
+		}, {
+			"node_id": "node:checkpoint",
+			"kind": "checkpoint",
+			"branches": [],
+			"otherwise": "replan",
+		}],
+	}, "model_shadow_rule_root")
 	_check(
-		strategy._should_reopen_information_epoch(
+		not strategy._should_reopen_information_epoch(
 			"model_shadow_rule_root", shadowed_information, same_size_search, information_frontier
 		),
-		"an exact Rule-root shadow must checkpoint from its actual local action owner"
+		"an accepted model shadow with a declared successor must keep graph provenance across its Rule-owned information root"
+	)
+	installed_graph.install({
+		"root_node_id": "node:root",
+		"nodes": [{
+			"node_id": "node:root",
+			"kind": "route",
+			"route_ref": {
+				"mode": "select_candidate",
+				"route_id": "route:information",
+				"candidate_id": "candidate:draw",
+			},
+		}],
+	}, "model_shadow_rule_root")
+	_check(
+		strategy._should_reopen_information_epoch(
+			"model_shadow_rule_root",
+			shadowed_information,
+			same_size_search,
+			information_frontier
+		),
+		"a one-node Rule-owned shadow has no model continuation and must reopen the verified-local information epoch"
 	)
 	var failed_information := completed_information.duplicate(true)
 	failed_information["success"] = false
@@ -1471,6 +1643,473 @@ func _test_information_epoch_reopening() -> void:
 	_check(
 		strategy._request_deadline_due(12750),
 		"the visible-wait budget must become a hard in-flight deadline"
+	)
+
+
+func _test_request_fact_contract_is_the_runtime_guard_contract() -> void:
+	var facts := {
+		"continuity": {
+			"search_engine_roots": 1,
+			"bench_capacity": 8,
+			"expansion_active": true,
+			"current_energized_engine_count": 2,
+		},
+		"attack": {"ready": false},
+		"opponent_hidden": {"hand_uid": "must_never_be_branchable"},
+	}
+	var allowed_fact_paths: Array[String] = ContractsScript.branchable_fact_paths(
+		facts
+	)
+	for expected_path: String in [
+		"continuity.search_engine_roots",
+		"continuity.bench_capacity",
+		"continuity.expansion_active",
+		"continuity.current_energized_engine_count",
+	]:
+		_check(
+			expected_path in allowed_fact_paths,
+			"every public fact leaf sent to the model must be valid for a checkpoint guard: %s"
+				% expected_path
+		)
+	_check(
+		"opponent_hidden.hand_uid" not in allowed_fact_paths,
+		"unregistered or hidden namespaces must never become branchable"
+	)
+	var response := {
+		"policy": {
+			"root_node_id": "node:root",
+			"nodes": [
+				{
+					"node_id": "node:root",
+					"kind": "route",
+					"route_ref": {
+						"mode": "select_candidate",
+						"route_id": "route:noctowl_search",
+						"candidate_id": "candidate:noctowl",
+					},
+					"next_node_id": "node:after_search",
+				},
+				{
+					"node_id": "node:after_search",
+					"kind": "checkpoint",
+					"branches": [{
+						"when_all": [{
+							"fact": "continuity.search_engine_roots",
+							"op": ">=",
+							"value": 1,
+						}],
+						"next_node_id": "node:develop",
+					}],
+					"otherwise": "replan",
+				},
+				{
+					"node_id": "node:develop",
+					"kind": "route",
+					"route_ref": {
+						"mode": "follow_route",
+						"route_id": "route:develop",
+					},
+				},
+			],
+		},
+	}
+	var validation := PolicyValidatorScript.new().validate_response(
+		response,
+		["route:noctowl_search", "route:develop"],
+		8,
+		["candidate:noctowl"],
+		true,
+		allowed_fact_paths
+	)
+	_check(
+		bool(validation.get("valid", false)),
+		"validator must accept a guard over a public fact leaf present in this exact request"
+	)
+	var route_fact_paths := allowed_fact_paths.duplicate()
+	route_fact_paths.append("route.available.develop")
+	route_fact_paths.append("route.model_switch_allowed.develop")
+	var missing_route_guard := PolicyValidatorScript.new().validate_response(
+		response,
+		["route:noctowl_search", "route:develop"],
+		8,
+		["candidate:noctowl"],
+		true,
+		route_fact_paths
+	)
+	_check(
+		not bool(missing_route_guard.get("valid", true))
+			and str(missing_route_guard.get("reason", "")) \
+				== "missing_follow_route_availability_guard",
+		"a future macro route must prove that the route still exists in the reobserved frontier"
+	)
+	var route_guarded_response := response.duplicate(true)
+	route_guarded_response["policy"]["nodes"][1]["branches"][0]["when_all"].append({
+		"fact": "route.available.develop",
+		"op": "==",
+		"value": true,
+	})
+	var availability_only_validation := PolicyValidatorScript.new().validate_response(
+		route_guarded_response,
+		["route:noctowl_search", "route:develop"],
+		8,
+		["candidate:noctowl"],
+		true,
+		route_fact_paths
+	)
+	_check(
+		not bool(availability_only_validation.get("valid", true))
+			and str(availability_only_validation.get("reason", "")) \
+				== "missing_follow_route_switch_guard",
+		"route existence alone must not authorize a future model switch that the runtime safety gate will reject"
+	)
+	route_guarded_response["policy"]["nodes"][1]["branches"][0]["when_all"].append({
+		"fact": "route.model_switch_allowed.develop",
+		"op": "==",
+		"value": true,
+	})
+	var route_guarded_validation := PolicyValidatorScript.new().validate_response(
+		route_guarded_response,
+		["route:noctowl_search", "route:develop"],
+		8,
+		["candidate:noctowl"],
+		true,
+		route_fact_paths
+	)
+	_check(
+		bool(route_guarded_validation.get("valid", false)),
+		"an exact route-availability plus model-switch guard must make the follow-up executable"
+	)
+	var wire_alias_response := response.duplicate(true)
+	wire_alias_response["policy"]["nodes"][1]["branches"][0]["when_all"][0]["fact"] = \
+		"facts.continuity.energized_engine_count"
+	var wire_alias_validation := PolicyValidatorScript.new().validate_response(
+		wire_alias_response,
+		["route:noctowl_search", "route:develop"],
+		8,
+		["candidate:noctowl"],
+		true,
+		allowed_fact_paths
+	)
+	_check(
+		bool(wire_alias_validation.get("valid", false))
+			and str(wire_alias_validation.get(
+				"policy",
+				{}
+			).get("nodes", [])[1].get(
+				"branches",
+				[]
+			)[0].get("when_all", [])[0].get("fact", "")) \
+				== "continuity.current_energized_engine_count",
+		"safe wire-only fact prefixes and the legacy energized-engine alias must canonicalize before validation"
+	)
+	if bool(validation.get("valid", false)):
+		var graph := PolicyGraphScript.new()
+		graph.install(
+			validation.get("policy", {}),
+			"model_shadow_rule_root"
+		)
+		var transition := graph.advance_after_observation(
+			facts,
+			["route:develop"],
+			[]
+		)
+		_check(
+			str(transition.get("status", "")) == "route"
+				and str(transition.get("route_id", "")) == "route:develop",
+			"the same request-scoped fact contract must also drive graph execution"
+		)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile({
+		"deck_id": 800018509,
+		"safety": {"max_switch_gap": 20.0},
+	})
+	var decision_right_facts: Dictionary = strategy._with_route_decision_right_facts(
+		{"resources": {"deck_low": false}},
+		[
+			{
+				"candidate_id": "candidate:rule",
+				"route_id": "route:develop",
+				"base_score": 100.0,
+				"local_score": 100.0,
+				"engine_rule_floor_exact": true,
+				"outcome": {},
+				"module_annotations": {},
+			},
+			{
+				"candidate_id": "candidate:allowed",
+				"route_id": "route:energy_commit",
+				"base_score": 90.0,
+				"local_score": 90.0,
+				"outcome": {},
+				"module_annotations": {},
+			},
+			{
+				"candidate_id": "candidate:blocked_same_route",
+				"route_id": "route:energy_commit",
+				"base_score": -100.0,
+				"local_score": -100.0,
+				"outcome": {},
+				"module_annotations": {},
+			},
+			{
+				"candidate_id": "candidate:blocked",
+				"route_id": "route:end_turn",
+				"base_score": -100.0,
+				"local_score": -100.0,
+				"outcome": {"terminal": true},
+				"module_annotations": {},
+			},
+		]
+	)
+	_check(
+		bool(decision_right_facts.get("route", {}).get(
+			"model_switch_allowed",
+			{}
+		).get("energy_commit", false))
+			and not bool(decision_right_facts.get("route", {}).get(
+				"model_switch_allowed",
+				{}
+			).get("end_turn", true)),
+		"the Base graph must expose the same route-switch decision right that runtime safety will enforce"
+	)
+	var root_frontier: Array[Dictionary] = strategy._model_root_frontier(
+		[
+			{
+				"candidate_id": "candidate:rule",
+				"route_id": "route:develop",
+				"base_score": 100.0,
+				"local_score": 100.0,
+				"engine_rule_floor_exact": true,
+				"outcome": {},
+				"module_annotations": {},
+			},
+			{
+				"candidate_id": "candidate:allowed",
+				"route_id": "route:energy_commit",
+				"base_score": 90.0,
+				"local_score": 90.0,
+				"outcome": {},
+				"module_annotations": {},
+			},
+			{
+				"candidate_id": "candidate:blocked_same_route",
+				"route_id": "route:energy_commit",
+				"base_score": -100.0,
+				"local_score": -100.0,
+				"outcome": {},
+				"module_annotations": {},
+			},
+		],
+		decision_right_facts
+	)
+	_check(
+		strategy._candidate_ids(root_frontier) == [
+			"candidate:rule",
+			"candidate:allowed",
+		],
+		"the model-facing root frontier must keep the exact Rule root and only exact candidates with runtime decision rights"
+	)
+	var model_completion: Dictionary = strategy._model_turn_completion_contract(
+		{
+			"must_review_before_terminal": true,
+			"recommended_candidate_id": "candidate:blocked",
+			"recommended_action_id": "action:blocked",
+			"productive_candidate_ids": ["candidate:blocked"],
+			"productive_action_ids": ["action:blocked"],
+			"productive_actions": [{
+				"candidate_id": "candidate:blocked",
+				"action_id": "action:blocked",
+			}],
+			"post_attack_continuity": {
+				"candidate_effects": [{
+					"candidate_id": "candidate:blocked",
+					"action_id": "action:blocked",
+				}],
+			},
+		},
+		[{
+			"candidate_id": "candidate:rule",
+			"route_id": "route:information",
+			"action_kind": "use_ability",
+			"safe_prefix_action_id": "action:rule",
+		}]
+	)
+	_check(
+		str(model_completion.get("recommended_candidate_id", "")) \
+				== "candidate:rule" \
+			and "candidate:blocked" not in JSON.stringify(model_completion),
+		"the model completion contract must not leak a mandatory candidate that is absent from the exact root decision-right frontier"
+	)
+	var changed := facts.duplicate(true)
+	changed["continuity"]["search_engine_roots"] = 2
+	var delta := MaterialDeltaScript.new().compare({}, {}, facts, changed)
+	_check(
+		"continuity.search_engine_roots" in delta.get("changed_facts", []),
+		"material-delta detection must use the same public fact leaves as request validation"
+	)
+
+
+func _test_audit_separates_shadow_acceptance_from_execution_ownership() -> void:
+	var audit := DecisionAuditScript.new()
+	audit.configure("test", "ownership", false)
+	audit.record({
+		"event_type": "model_request",
+		"turn_id": 3,
+		"request_id": "request:branch",
+		"request_intent": "turn_opening_graph",
+		"is_delta": false,
+	})
+	audit.record({
+		"event_type": "policy_response",
+		"turn_id": 3,
+		"request_id": "request:branch",
+		"policy_id": "policy:branch",
+		"revision_id": "revision:branch",
+		"accepted": true,
+		"fallback_reason": "exact_rule_root_shadowed",
+		"action_owner": "local_gate",
+		"graph_origin": "model_shadow_rule_root",
+		"policy_installed": true,
+		"provider_response_received": true,
+		"contract_validated": true,
+		"policy_node_count": 5,
+		"policy_graph_bearing": true,
+	})
+	audit.record({
+		"event_type": "local_branch",
+		"turn_id": 3,
+		"graph_branch_hit": true,
+		"action_owner": "local_gate",
+		"graph_origin": "local_gate",
+	})
+	audit.record({
+		"event_type": "graph_branch",
+		"turn_id": 3,
+		"policy_id": "policy:branch",
+		"revision_id": "revision:branch",
+		"graph_branch_hit": true,
+		"action_owner": "policy_graph_branch",
+		"graph_origin": "model_shadow_rule_root",
+	})
+	audit.record({
+		"event_type": "action_result",
+		"turn_id": 3,
+		"policy_id": "policy:branch",
+		"revision_id": "revision:branch",
+		"action_owner": "policy_graph_branch",
+		"graph_origin": "model_shadow_rule_root",
+	})
+	audit.record({
+		"event_type": "model_shadow_information_epoch_retained",
+		"turn_id": 3,
+		"action_owner": "local_gate",
+		"graph_origin": "model_shadow_rule_root",
+	})
+	audit.record({
+		"event_type": "model_request",
+		"turn_id": 5,
+		"request_id": "request:agreement",
+		"request_intent": "turn_opening_graph",
+		"is_delta": false,
+	})
+	audit.record({
+		"event_type": "policy_response",
+		"turn_id": 5,
+		"request_id": "request:agreement",
+		"policy_id": "policy:agreement",
+		"revision_id": "revision:agreement",
+		"accepted": true,
+		"fallback_reason": "exact_rule_root_shadowed",
+		"action_owner": "deadline_fallback",
+		"graph_origin": "model_shadow_rule_root",
+		"policy_installed": true,
+		"provider_response_received": true,
+		"contract_validated": true,
+		"policy_node_count": 1,
+		"policy_graph_bearing": false,
+	})
+	audit.record({
+		"event_type": "model_request",
+		"turn_id": 7,
+		"request_id": "request:rejected",
+		"request_intent": "checkpoint_replan",
+		"is_delta": true,
+	})
+	audit.record({
+		"event_type": "policy_response",
+		"turn_id": 7,
+		"request_id": "request:rejected",
+		"accepted": false,
+		"fallback_reason": "turn_visible_wait_budget_exhausted",
+		"action_owner": "deadline_fallback",
+		"graph_origin": "deadline_fallback",
+		"policy_installed": false,
+		"provider_response_received": false,
+		"contract_validated": false,
+	})
+	var summary := audit.summary()
+	_check(
+		int(summary.get("model_shadow_accepted", 0)) == 2
+			and int(summary.get("model_root_takeovers", 0)) == 0
+			and int(summary.get("model_owned_action_results", 0)) == 1
+			and int(summary.get(
+				"model_shadow_information_epochs_retained",
+				0
+			)) == 1,
+		"an accepted exact-Rule shadow is model planning evidence, not a model-owned root action"
+	)
+	_check(
+		int(summary.get("graph_branch_hits", 0)) == 2
+			and int(summary.get("model_graph_branch_hits", 0)) == 1
+			and int(summary.get("local_graph_branch_hits", 0)) == 1,
+		"audit must not mix local graph branches into model graph execution benefit"
+	)
+	_check(
+		int(summary.get("model_causal_execution_requests", 0)) == 1
+			and int(summary.get("model_verified_agreement_requests", 0)) == 1
+			and int(summary.get("model_effective_participation_requests", 0)) == 2
+			and is_equal_approx(float(summary.get(
+				"model_request_to_effective_participation_rate",
+				0.0
+			)), 2.0 / 3.0)
+			and is_equal_approx(float(summary.get(
+				"model_accepted_to_causal_execution_rate",
+				0.0
+			)), 0.5),
+		"the funnel must count distinct causally linked requests, not raw accepted policies or raw action volume"
+	)
+	_check(
+		int(summary.get("model_requests_resolved", 0)) == 3
+			and int(summary.get("model_provider_responses", 0)) == 2
+			and int(summary.get("model_contract_validated_responses", 0)) == 2
+			and is_equal_approx(float(summary.get(
+				"model_provider_response_rate",
+				0.0
+			)), 2.0 / 3.0)
+			and is_equal_approx(float(summary.get(
+				"model_contract_validation_rate",
+				0.0
+			)), 1.0)
+			and int(summary.get(
+				"model_graph_bearing_installed_requests",
+				0
+			)) == 1
+			and is_equal_approx(float(summary.get(
+				"model_graph_bearing_causal_execution_rate",
+				0.0
+			)), 1.0),
+		"transport resolution, provider return, and contract validation must be separate funnel stages"
+	)
+	_check(
+		int(summary.get("model_request_intents", {}).get(
+			"turn_opening_graph",
+			0
+		)) == 2
+			and int(summary.get("model_request_intents", {}).get(
+				"checkpoint_replan",
+				0
+			)) == 1,
+		"the audit funnel must keep opening-graph and checkpoint-replan denominators separate"
 	)
 
 

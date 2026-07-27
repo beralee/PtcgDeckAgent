@@ -144,6 +144,8 @@ func get_play_stadium_unusable_reason(
 		return "现在不是你的回合，不能打出竞技场卡。"
 	if state.phase != GameState.GamePhase.MAIN:
 		return "只能在主要阶段打出竞技场卡。"
+	if state.stadium_played_this_turn:
+		return "本回合已经打出过竞技场卡。"
 	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
 		if effect_processor.has_method("get_card_from_hand_block_reason"):
 			var block_reason := str(effect_processor.call("get_card_from_hand_block_reason", player_index, card, state))

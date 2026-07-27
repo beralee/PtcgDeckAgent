@@ -51,6 +51,7 @@ const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const DECK_PICKER_ALL := "all"
 const DECK_PICKER_RECENT := "recent"
 const DECK_PICKER_LIMIT := 80
+const DECK_PICKER_SEARCH_DEBOUNCE_SECONDS := 0.08
 const DECK_PICKER_TOUCH_BOUND_META := "_battle_setup_deck_picker_touch_bound"
 const BGM_PICKER_OVERLAY_NAME := "BattleMusicPickerOverlay"
 const HUD_OPTION_PICKER_OVERLAY_NAME := "BattleSetupHudPickerOverlay"
@@ -102,6 +103,7 @@ var _deck_picker_search_input: LineEdit = null
 var _deck_picker_subtitle: Label = null
 var _deck_picker_llm_legend: Label = null
 var _deck_picker_input_suppress_until_msec: int = 0
+var _deck_picker_search_debounce_timer: Timer = null
 var _bgm_picker_overlay: Control = null
 var _bgm_picker_scroll: ScrollContainer = null
 var _bgm_picker_list: VBoxContainer = null
@@ -1164,6 +1166,8 @@ func _handle_deck_picker_modal_input(event: InputEvent) -> bool:
 		return false
 	if NonBattleTouchBridgeScript.handle_root_touch(_deck_picker_overlay, event):
 		return true
+	if NonBattleTouchBridgeScript.event_targets_native_text_input(_deck_picker_overlay, event):
+		return false
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed and _deck_picker_panel != null and not _deck_picker_panel.get_global_rect().has_point(touch.position):
@@ -1646,8 +1650,8 @@ func _refresh_ai_ui_visibility() -> void:
 
 func _setup_ai_preview_strength_options() -> void:
 	%AIPreviewStrengthOption.clear()
-	%AIPreviewStrengthOption.add_item("弱", AI_PREVIEW_STRENGTH_WEAK)
-	%AIPreviewStrengthOption.add_item("强", AI_PREVIEW_STRENGTH_STRONG)
+	%AIPreviewStrengthOption.add_item("标准", AI_PREVIEW_STRENGTH_WEAK)
+	%AIPreviewStrengthOption.add_item("固定", AI_PREVIEW_STRENGTH_STRONG)
 	%AIPreviewStrengthOption.select(AI_PREVIEW_STRENGTH_WEAK)
 
 
@@ -2604,6 +2608,7 @@ func _show_battle_setup_hud_option_picker(option: OptionButton, title_text: Stri
 
 func _hide_battle_setup_hud_option_picker() -> void:
 	if _hud_option_picker_overlay != null and is_instance_valid(_hud_option_picker_overlay):
+		NonBattleTouchBridgeScript.clear_transient_input_state(_hud_option_picker_overlay, "modal_closed")
 		_hud_option_picker_overlay.visible = false
 	_hud_option_picker_target = null
 
@@ -2775,6 +2780,7 @@ func _show_battle_music_picker() -> void:
 
 func _hide_battle_music_picker() -> void:
 	if _bgm_picker_overlay != null and is_instance_valid(_bgm_picker_overlay):
+		NonBattleTouchBridgeScript.clear_transient_input_state(_bgm_picker_overlay, "modal_closed")
 		_bgm_picker_overlay.visible = false
 
 
@@ -3763,12 +3769,16 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
 
 
 func _close_deck_picker() -> void:
+	if _deck_picker_search_debounce_timer != null:
+		_deck_picker_search_debounce_timer.stop()
 	if _deck_picker_overlay != null and is_instance_valid(_deck_picker_overlay):
+		NonBattleTouchBridgeScript.clear_transient_input_state(_deck_picker_overlay, "modal_closed")
 		_deck_picker_overlay.visible = false
 	_deck_picker_input_suppress_until_msec = Time.get_ticks_msec() + 320
 
 
 func _style_hud_line_edit(line_edit: LineEdit) -> void:
+	NonBattleTouchBridgeScript.configure_native_line_edit(line_edit)
 	line_edit.add_theme_font_size_override("font_size", 15)
 	line_edit.add_theme_color_override("font_color", HUD_TEXT)
 	line_edit.add_theme_color_override("font_placeholder_color", Color(0.62, 0.74, 0.82, 0.88))
@@ -3779,7 +3789,22 @@ func _style_hud_line_edit(line_edit: LineEdit) -> void:
 
 func _on_deck_picker_search_changed(text: String) -> void:
 	_deck_picker_search = text.strip_edges()
-	_refresh_deck_picker()
+	if not (_is_mobile_like_runtime() or _is_battle_setup_web_runtime()):
+		_refresh_deck_picker()
+		return
+	_ensure_deck_picker_search_debounce_timer()
+	_deck_picker_search_debounce_timer.start()
+
+
+func _ensure_deck_picker_search_debounce_timer() -> void:
+	if _deck_picker_search_debounce_timer != null and is_instance_valid(_deck_picker_search_debounce_timer):
+		return
+	_deck_picker_search_debounce_timer = Timer.new()
+	_deck_picker_search_debounce_timer.name = "DeckPickerSearchDebounceTimer"
+	_deck_picker_search_debounce_timer.one_shot = true
+	_deck_picker_search_debounce_timer.wait_time = DECK_PICKER_SEARCH_DEBOUNCE_SECONDS
+	_deck_picker_search_debounce_timer.timeout.connect(_refresh_deck_picker)
+	add_child(_deck_picker_search_debounce_timer)
 
 
 func _on_deck_picker_category_pressed(category: String) -> void:
@@ -3798,6 +3823,7 @@ func _refresh_deck_picker() -> void:
 	_apply_deck_picker_mobile_metrics(context)
 	_deck_picker_grid.columns = 1 if portrait or viewport_size.x < 760.0 else 2
 	for child: Node in _deck_picker_grid.get_children():
+		_deck_picker_grid.remove_child(child)
 		child.queue_free()
 	_refresh_deck_picker_tabs()
 

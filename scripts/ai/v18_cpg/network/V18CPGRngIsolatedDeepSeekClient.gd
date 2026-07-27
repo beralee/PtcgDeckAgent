@@ -65,18 +65,21 @@ func _parse_chat_response(response_code: int, response_text: String) -> Dictiona
 			"ZenMux",
 			"DeepSeek"
 		)
-	if str(normalized.get("status", "")) != "error":
-		return normalized
 	var completion_metadata := _completion_metadata(response_text)
 	var finish_reason := str(completion_metadata.get("finish_reason", ""))
+	# Preserve provider completion evidence for accepted and rejected responses.
+	# Without this, production audit reports every successful graph as zero
+	# completion tokens and cannot distinguish concise output from hidden bloat.
+	normalized["finish_reason"] = finish_reason
+	normalized["prompt_tokens"] = int(completion_metadata.get("prompt_tokens", 0))
+	normalized["completion_tokens"] = int(completion_metadata.get("completion_tokens", 0))
+	if str(normalized.get("status", "")) != "error":
+		return normalized
 	if finish_reason in ["length", "max_tokens", "max_output_tokens"]:
 		# HTTP succeeded, but the provider stopped at its completion limit before
 		# closing the JSON object. This is a model-output cutoff, not a network
 		# transport failure. Preserve the distinction for audit and UI fallback.
 		normalized["error_type"] = "response_truncated"
-		normalized["finish_reason"] = finish_reason
-		normalized["prompt_tokens"] = int(completion_metadata.get("prompt_tokens", 0))
-		normalized["completion_tokens"] = int(completion_metadata.get("completion_tokens", 0))
 	return normalized
 
 

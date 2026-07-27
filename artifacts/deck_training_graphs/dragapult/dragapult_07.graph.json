@@ -1,0 +1,208 @@
+{
+  "format_version": 1,
+  "puzzle_id": "dragapult_07",
+  "deck_id": "800018506",
+  "revision": 4,
+  "profile": "precision",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "愿增猿只搬最后30点",
+  "objective": "以最少资源精确击倒260HP前场，并保留六豆给后排70HP目标。",
+  "strategy_id": "dragapult_dusknoir",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "愿增猿只搬最后30点",
+      "fingerprint": "前场260HP、后排70HP；己方一只宝可梦有40伤，愿增猿仅能搬30；多龙巴鲁托ex即将使用幻影潜袭。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "先搬30到前场，使200+30达到230，再把六豆中的30补前场、其余30放后排，形成当前击倒与下轮后排击倒。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“以最少资源精确击倒260HP前场，并保留六豆给后排70HP目标。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "以最少资源精确击倒260HP前场，并保留六豆给后排70HP目标。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "后排70HP目标公开会在下回合抽3张。",
+      "deadline": "对手下一回合结束前",
+      "impact": "若后排没有预埋30，下回合六豆无法在击倒前场后同步阻止抽牌。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "把30全搬到后排",
+      "actor": "player",
+      "axis": "damage_mapping",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "damage_mapping 延迟失败",
+      "outcome": "failure",
+      "reason": "后排看似接近70，但前场还差60并吞掉全部六豆。",
+      "failure_axis": "damage_mapping",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "把六豆全放前场再搬伤",
+      "actor": "player",
+      "axis": "timing_order",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "timing_order 延迟失败",
+      "outcome": "failure",
+      "reason": "当前能击倒，却让后排保持满血并浪费搬伤的跨目标价值。",
+      "failure_axis": "timing_order",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "一次搬运30点",
+      "resource_type": "damage_counter_budget",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "攻击宣言前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "六枚伤害指示物",
+      "resource_type": "damage_counter_budget",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "攻击结算时",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一张夜光能的恶属性所有权",
+      "resource_type": "energy_ownership",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "特性发动前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "以最少资源精确击倒260HP前场，并保留六豆给后排70HP目标。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "not_required",
+    "negative_probe_axes": [
+      "damage_mapping",
+      "timing_order"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

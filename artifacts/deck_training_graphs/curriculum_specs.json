@@ -1,0 +1,3135 @@
+{
+  "format_version": 1,
+  "status": "DESIGN_REVIEW_ONLY",
+  "production_files_modified": false,
+  "decks": [
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "strategy_id": "dragapult_dusknoir",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "profile_mix": {
+        "precision": 2,
+        "deployment": 5,
+        "composite": 3
+      }
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "strategy_id": "v18_800016834_pure_gholdengo",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "profile_mix": {
+        "precision": 2,
+        "deployment": 5,
+        "composite": 3
+      }
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "strategy_id": "v18_800018509_raging_bolt_ogerpon",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "profile_mix": {
+        "precision": 2,
+        "deployment": 5,
+        "composite": 3
+      }
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "strategy_id": "v18_800018501_marnies_grimmsnarl",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "profile_mix": {
+        "precision": 2,
+        "deployment": 5,
+        "composite": 3
+      }
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "strategy_id": "v18_800018502_ns_zoroark",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "profile_mix": {
+        "precision": 2,
+        "deployment": 5,
+        "composite": 3
+      }
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "strategy_id": "v17_bomb_charizard",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "profile_mix": {
+        "precision": 2,
+        "deployment": 5,
+        "composite": 3
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_01",
+      "title": "侦察后才允许洗牌",
+      "profile": "precision",
+      "objective": "本回合发动幻影潜袭，并让第二只多龙奇保留下一回合所需的唯一火能。",
+      "initial_state": "牌库顶2张已公开为基本火能与诱饵；手牌有会洗牌的高级球；两只多龙奇只有一只能在本回合完成进化。",
+      "correct_commitment": "先用侦察指令拿基本火能、把诱饵沉底，再使用高级球找多龙巴鲁托ex并把火能交给接力线。",
+      "attractive_lures": [
+        {
+          "label": "先用高级球洗牌再侦察",
+          "axis": "information_epoch",
+          "reason": "唯一已知火能被洗回未知区，接力线失去确定性。"
+        },
+        {
+          "label": "侦察拿诱饵并把火能沉底",
+          "axis": "resource_assignment",
+          "reason": "本回合能进化，但第二回合没有合法火能来源。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "已知牌顶信息",
+          "type": "information_epoch",
+          "deadline": "首次洗牌前"
+        },
+        {
+          "label": "唯一基本火能",
+          "type": "energy_type",
+          "deadline": "本回合攻击前"
+        },
+        {
+          "label": "一次手贴",
+          "type": "manual_attachment",
+          "deadline": "本回合攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手前场公开具备击倒首攻多龙巴鲁托ex的伤害。",
+        "impact": "首攻者离场后若火能没有转交，第二回合只能使用低伤招式。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_02",
+      "title": "两个空位只能铺一条龙与一枚炸弹",
+      "profile": "deployment",
+      "objective": "两回合拿4奖，同时保证第二回合仍有多龙巴鲁托ex可以攻击。",
+      "initial_state": "备战区仅余2格；牌库可由宝芬找到多龙梅西亚、夜巡灵或含羞苞；对手后排有一只130HP双奖与一只70HP单奖。",
+      "correct_commitment": "宝芬只铺多龙梅西亚与夜巡灵：多龙线负责接力，夜巡灵进化后用50点打开反击捕捉器与六豆奖赏图。",
+      "attractive_lures": [
+        {
+          "label": "铺含羞苞与多龙梅西亚",
+          "axis": "bench_ownership",
+          "reason": "封物品有即时价值，但没有50点校正，第二回合少拿至少1奖。"
+        },
+        {
+          "label": "铺两只多龙梅西亚",
+          "axis": "route_choice",
+          "reason": "接力充足却失去奖差转换，反击捕捉器始终不开。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "两个备战空位",
+          "type": "bench_slot",
+          "deadline": "宝芬结算时"
+        },
+        {
+          "label": "一次进化检索",
+          "type": "search_window",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "一次主动送奖",
+          "type": "prize_window",
+          "deadline": "第二轮捕捉前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可用老大抓掉未进化多龙梅西亚。",
+        "impact": "若没有同时准备炸弹与第二条龙，对手任一回应都会切断4奖路线。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓掉未进化多龙梅西亚",
+        "前场击倒首攻者并用奇树压手牌"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_03",
+      "title": "飞身入场不是装饰伤害",
+      "profile": "deployment",
+      "objective": "用10点入场与六枚伤害指示物在两回合内同时收掉70HP和130HP后排。",
+      "initial_state": "备战区只剩1格；手中摔角鹰人、愿增猿与夜巡灵三条路线都合法；对手后排分别为70HP与130HP。",
+      "correct_commitment": "把最后空位给摔角鹰人，10点放到70HP目标，再用幻影潜袭六豆完成70并把另一目标推进下回合130线。",
+      "attractive_lures": [
+        {
+          "label": "把最后空位给愿增猿",
+          "axis": "bench_ownership",
+          "reason": "最多搬30，无法同时跨过70与130两个断点。"
+        },
+        {
+          "label": "把最后空位给夜巡灵",
+          "axis": "damage_mapping",
+          "reason": "未来130看似更高，但本回合70HP目标存活并立即提供抽牌。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "首次放基础宝可梦时"
+        },
+        {
+          "label": "六枚伤害指示物",
+          "type": "damage_counter_budget",
+          "deadline": "幻影潜袭结算时"
+        },
+        {
+          "label": "唯一一次入场10+10",
+          "type": "entry_trigger",
+          "deadline": "首轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "70HP目标公开拥有下回合抽3的特性。",
+        "impact": "未在本回合清掉会让对手找到老大并破坏接力。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "抽3后奇树重置手牌",
+        "老大抓第二条多龙线"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_04",
+      "title": "50点自爆要先改变奖差",
+      "profile": "deployment",
+      "objective": "不浪费130点黑夜魔灵，先送1奖打开反击捕捉器并形成200+60的三目标奖赏图。",
+      "initial_state": "己方与对手奖赏持平；彷徨夜灵和黑夜魔灵均可用；对手后排有50HP单奖与260HP双奖。",
+      "correct_commitment": "用彷徨夜灵50点击倒单奖并送奖，随后反击捕捉器拉260HP目标，幻影潜袭把200与六豆分别落在两条有效奖赏线上。",
+      "attractive_lures": [
+        {
+          "label": "升级黑夜魔灵打130",
+          "axis": "damage_economy",
+          "reason": "过量80点并送掉同样1奖，下一回合失去关键130校正。"
+        },
+        {
+          "label": "先尝试反击捕捉器",
+          "axis": "timing_order",
+          "reason": "奖差尚未落后，物品不合法且暴露路线。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次主动送奖",
+          "type": "prize_window",
+          "deadline": "使用反击捕捉器前"
+        },
+        {
+          "label": "唯一反击捕捉器",
+          "type": "gust_window",
+          "deadline": "本回合攻击前"
+        },
+        {
+          "label": "一个备战炸弹位",
+          "type": "bench_slot",
+          "deadline": "自爆结算前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开下一回合可撤回260HP目标并换上低价值前场。",
+        "impact": "若本回合不抓杀，高价值目标会离开可达范围。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "撤退保护260HP目标",
+        "奇树把玩家手牌压到2张"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_05",
+      "title": "唯一火能不能死在首攻者身上",
+      "profile": "deployment",
+      "objective": "连续两个玩家回合都使用幻影潜袭，且第二只攻击手在对手击倒后无需顶抽火能。",
+      "initial_state": "首攻多龙巴鲁托ex已有超能但没有火能；后排多龙奇已有夜光能；手中只有1张基本火能和1次手贴。",
+      "correct_commitment": "把基本火能手贴给后排多龙奇，首攻者用夜光能补齐当前攻击；进化后形成确定接力。",
+      "attractive_lures": [
+        {
+          "label": "把基本火能贴给首攻者",
+          "axis": "energy_ownership",
+          "reason": "当前最直观，但对手击倒后全牌组唯一火能进入弃牌区。"
+        },
+        {
+          "label": "把夜光能交给愿增猿",
+          "axis": "role_collision",
+          "reason": "获得30点搬伤，却让第二条龙缺少攻击属性。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "唯一基本火能",
+          "type": "energy_type",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "一次手贴",
+          "type": "manual_attachment",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "一个接力进化位",
+          "type": "bench_slot",
+          "deadline": "对手回合开始前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手前场公开可在下回合击倒首攻多龙巴鲁托ex。",
+        "impact": "首攻者必然离场，所有贴在它身上的稀缺属性都视为永久损失。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "直接击倒首攻者",
+        "先老大抓后排多龙奇再击倒"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_06",
+      "title": "含羞苞送奖换完整重建",
+      "profile": "deployment",
+      "objective": "用1奖换到物品封锁回合，并在第二回合完成多龙巴鲁托ex接力与三奖反击。",
+      "initial_state": "手牌只有宝芬、进化件和一张支援者；对手公开需要高级球与糖果完成主攻；备战区只剩2格。",
+      "correct_commitment": "铺含羞苞和多龙梅西亚，含羞苞零撤退上前锁物品；保留支援者与第二格给接力，而非立刻堆满辅助。",
+      "attractive_lures": [
+        {
+          "label": "直接铺两只多龙梅西亚",
+          "axis": "tempo_exchange",
+          "reason": "资源更厚但对手无阻碍完成主攻并用老大先手拿奖。"
+        },
+        {
+          "label": "含羞苞后再铺愿增猿",
+          "axis": "bench_ownership",
+          "reason": "即时辅助占满最后空位，第二回合无法建立接力龙。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "两个备战空位",
+          "type": "bench_slot",
+          "deadline": "首轮结束前"
+        },
+        {
+          "label": "一次支援者窗口",
+          "type": "supporter_window",
+          "deadline": "第二轮展开时"
+        },
+        {
+          "label": "一次可控送奖",
+          "type": "prize_window",
+          "deadline": "对手首轮攻击时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开高级球与神奇糖果，必须依赖物品完成进化。",
+        "impact": "不封锁物品会让对手先完成三奖攻击并封死反击捕捉器节奏。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "用老大绕过含羞苞抓后排",
+        "击倒含羞苞后用奇树压缩手牌"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_07",
+      "title": "愿增猿只搬最后30点",
+      "profile": "precision",
+      "objective": "以最少资源精确击倒260HP前场，并保留六豆给后排70HP目标。",
+      "initial_state": "前场260HP、后排70HP；己方一只宝可梦有40伤，愿增猿仅能搬30；多龙巴鲁托ex即将使用幻影潜袭。",
+      "correct_commitment": "先搬30到前场，使200+30达到230，再把六豆中的30补前场、其余30放后排，形成当前击倒与下轮后排击倒。",
+      "attractive_lures": [
+        {
+          "label": "把30全搬到后排",
+          "axis": "damage_mapping",
+          "reason": "后排看似接近70，但前场还差60并吞掉全部六豆。"
+        },
+        {
+          "label": "把六豆全放前场再搬伤",
+          "axis": "timing_order",
+          "reason": "当前能击倒，却让后排保持满血并浪费搬伤的跨目标价值。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次搬运30点",
+          "type": "damage_counter_budget",
+          "deadline": "攻击宣言前"
+        },
+        {
+          "label": "六枚伤害指示物",
+          "type": "damage_counter_budget",
+          "deadline": "攻击结算时"
+        },
+        {
+          "label": "一张夜光能的恶属性所有权",
+          "type": "energy_ownership",
+          "deadline": "特性发动前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "后排70HP目标公开会在下回合抽3张。",
+        "impact": "若后排没有预埋30，下回合六豆无法在击倒前场后同步阻止抽牌。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_08",
+      "title": "化危为吉之前先保住唯一支援者窗口",
+      "profile": "composite",
+      "objective": "两回合拿4奖，扛过奇树或老大，并让第二条龙在首攻倒下后继续攻击。",
+      "initial_state": "上回合己方宝可梦被击倒，吉雉鸡ex可抽3；手中博士、奇树、反击捕捉器都是诱饵；对手手牌公开有老大。",
+      "correct_commitment": "先化危为吉读取3张，再用奇树打掉公开老大并保留反击捕捉器，按新信息只铺一条接力龙。",
+      "attractive_lures": [
+        {
+          "label": "先博士研究7张",
+          "axis": "supporter_window",
+          "reason": "丢弃反击捕捉器并让公开老大留在对手手中。"
+        },
+        {
+          "label": "先老大抓高价值目标",
+          "axis": "disruption_priority",
+          "reason": "拿到当前奖却没有打断对手终局，下一回合被抓杀。"
+        },
+        {
+          "label": "先铺满两只辅助宝可梦",
+          "axis": "bench_ownership",
+          "reason": "抽牌更稳但接力龙无处落场。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次支援者窗口",
+          "type": "supporter_window",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "唯一反击捕捉器",
+          "type": "gust_window",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，后排存在被抓杀即输的两奖宝可梦。",
+        "impact": "不在本回合重置对手手牌，当前拿奖后会立刻输掉比赛。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树压玩家到2张并击倒首攻者",
+        "老大抓后排接力龙但放过首攻者"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_09",
+      "title": "送奖、打断、抓杀必须同回合成立",
+      "profile": "composite",
+      "objective": "本回合拿3奖并阻止对手下回合用老大结束比赛；第二回合仍有攻击手。",
+      "initial_state": "黑夜魔灵可自爆；己方落后1奖；对手前场260HP、后排130HP和一只终局两奖目标；手中奇树与老大只能二选一。",
+      "correct_commitment": "黑夜魔灵130击倒后排、送奖扩大落后；用奇树打掉公开老大，再以反击捕捉器拉260HP目标并用幻影潜袭完成三奖。",
+      "attractive_lures": [
+        {
+          "label": "用老大直接抓终局目标",
+          "axis": "disruption_priority",
+          "reason": "当前拿奖更快，但对手保留老大并在下一回合反抓结束。"
+        },
+        {
+          "label": "黑夜魔灵130打前场",
+          "axis": "damage_economy",
+          "reason": "与200攻击过度重叠，后排130单奖仍存活。"
+        },
+        {
+          "label": "先反击捕捉器再自爆",
+          "axis": "timing_order",
+          "reason": "奖差条件尚未成立，关键捕捉窗口丢失。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次支援者窗口",
+          "type": "supporter_window",
+          "deadline": "本回合攻击前"
+        },
+        {
+          "label": "一个炸弹备战位",
+          "type": "bench_slot",
+          "deadline": "黑夜魔灵自爆前"
+        },
+        {
+          "label": "唯一合法反击捕捉窗口",
+          "type": "prize_window",
+          "deadline": "自爆结算后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，己方后排两奖宝可梦被抓杀即输。",
+        "impact": "只追求本回合奖赏而不打断手牌会立即失败。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树重置后改为击倒首攻者",
+        "撤退前场并保护剩余高奖目标"
+      ]
+    },
+    {
+      "deck_key": "dragapult",
+      "deck_id": "800018506",
+      "display_name": "多龙巴鲁托ex／黑夜魔灵",
+      "defect": "旧题多为多龙巴鲁托、能量与自爆线全部预装，玩家主要做伤害分配，缺少火能归属、备战位、奖差与支援者窗口的竞争。",
+      "puzzle_id": "dragapult_10",
+      "title": "血月收尾仍要留下下一棒",
+      "profile": "composite",
+      "objective": "在牌组主线能量耗尽时用血月月月熊ex收掉三奖目标，并防止对手以反抓终局。",
+      "initial_state": "对手已拿4奖，血月招式降到1能；备战区只剩1格；手中月月熊、接力多龙梅西亚与夜光能只能组成两条路线。",
+      "correct_commitment": "最后空位给月月熊并用夜光能完成血月；同时用奇树移除对手老大，保留现有多龙奇作为下一棒。",
+      "attractive_lures": [
+        {
+          "label": "最后空位给新的多龙梅西亚",
+          "axis": "bench_ownership",
+          "reason": "长期价值更高，但本回合没有足够能量跨过340HP。"
+        },
+        {
+          "label": "月月熊入场但用老大抓单奖",
+          "axis": "prize_planning",
+          "reason": "能拿当前奖，却错过唯一三奖窗口。"
+        },
+        {
+          "label": "月月熊入场后博士研究",
+          "axis": "disruption_priority",
+          "reason": "补牌但保留对手公开老大，攻击后被反抓终局。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "攻击手入场前"
+        },
+        {
+          "label": "唯一夜光能",
+          "type": "energy_ownership",
+          "deadline": "血月攻击前"
+        },
+        {
+          "label": "一次打断支援者窗口",
+          "type": "supporter_window",
+          "deadline": "本回合拿奖前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，己方现有多龙奇被抓杀即输。",
+        "impact": "终局攻击必须同时处理手牌威胁，而不是只计算340伤害。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后对手击倒月月熊",
+        "对手撤退三奖目标并推单奖墙"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_01",
+      "title": "硬币抽牌要晚于最后一次洗牌",
+      "profile": "precision",
+      "objective": "本回合精确打出250伤害，并保留第二回合的高级能量回收。",
+      "initial_state": "暗码迷可置顶2张；前场赛富豪ex可抽2；手中巢穴球会洗牌；弃牌区有5能量。",
+      "correct_commitment": "先完成巢穴球检索，再用暗码迷把高级能量回收与弃牌成本置顶，最后前场嘉奖硬币一次拿齐。",
+      "attractive_lures": [
+        {
+          "label": "先暗码迷置顶再用巢穴球",
+          "axis": "information_epoch",
+          "reason": "两张确定组件被洗回未知区。"
+        },
+        {
+          "label": "先嘉奖硬币再暗码迷",
+          "axis": "timing_order",
+          "reason": "随机抽牌越过当前解，置顶牌只能等到下回合。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次确定置顶",
+          "type": "information_epoch",
+          "deadline": "最后一次洗牌后"
+        },
+        {
+          "label": "前场抽2额度",
+          "type": "draw_window",
+          "deadline": "攻击前"
+        },
+        {
+          "label": "两张回收弃牌成本",
+          "type": "discard_ownership",
+          "deadline": "高级能量回收时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手前场公开将在下回合击倒赛富豪ex。",
+        "impact": "本回合若没有把第二次回收留在手中，接力者无法形成伤害。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_02",
+      "title": "八属性不是一次性弹药",
+      "profile": "deployment",
+      "objective": "用能量输送PRO拿到本回合300伤害，同时留下第二回合至少4种基本能量来源。",
+      "initial_state": "牌库仍有8种属性；手中有容器和研究作为诱饵；备战区仅余1格，第二只索财灵尚未落场。",
+      "correct_commitment": "先把最后空位给索财灵，再使用能量输送PRO；本回合只弃6张达成300，保留至少2张稀有属性与回收路径。",
+      "attractive_lures": [
+        {
+          "label": "先用大地容器取两种稀有能量",
+          "axis": "resource_depletion",
+          "reason": "PRO随后少拿2种属性，正好缺100伤害。"
+        },
+        {
+          "label": "八张能量全部弃掉追求400",
+          "axis": "damage_economy",
+          "reason": "当前过量100，第二回合没有可回收弹药。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "首次检索前"
+        },
+        {
+          "label": "八种牌库基本能量",
+          "type": "energy_diversity",
+          "deadline": "能量输送PRO结算时"
+        },
+        {
+          "label": "一次ACE SPEC窗口",
+          "type": "ace_spec",
+          "deadline": "首轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可在下回合击倒前场赛富豪ex并用奇树压手牌。",
+        "impact": "没有预铺索财灵与剩余属性，任何回手干扰都会使第二回合断攻。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树压到2张后击倒前场",
+        "老大抓未进化索财灵"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_03",
+      "title": "回收的两张弃牌不能碰终局桥",
+      "profile": "deployment",
+      "objective": "连续两回合分别打250与300，且第二回合仍能定点抓杀。",
+      "initial_state": "弃牌区6能量；手中高级能量回收、老大、钓竿、两张一次性物品与唯一接力索财灵；备战区只剩1格。",
+      "correct_commitment": "先消耗两张一次性物品，再把它们作为回收成本；最后空位留给索财灵，老大与钓竿留到第二回合。",
+      "attractive_lures": [
+        {
+          "label": "弃老大与钓竿支付回收",
+          "axis": "discard_ownership",
+          "reason": "当前伤害成立，但第二回合失去抓杀与牌库续航。"
+        },
+        {
+          "label": "最后空位给愿增猿",
+          "axis": "bench_ownership",
+          "reason": "省下一张能量，却没有第二只赛富豪承接攻击。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "两张安全弃牌",
+          "type": "discard_ownership",
+          "deadline": "高级能量回收结算时"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "唯一老大支援者",
+          "type": "supporter_window",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开会撤退受伤前场并把两奖目标藏到后排。",
+        "impact": "第二回合没有老大就只能攻击低价值墙。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "撤退受伤目标并推单奖墙",
+        "奇树将保留手牌重置进牌库"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_04",
+      "title": "120伤害的普通赛富豪必须现在进化",
+      "profile": "deployment",
+      "objective": "用单奖普通赛富豪取1奖，保留ex弹药，并让下一回合仍有300伤害接力。",
+      "initial_state": "对手前场120HP；手中普通与ex赛富豪均可进化；备战区仅余1格；基本能量总量刚好覆盖两次攻击。",
+      "correct_commitment": "把现有索财灵当回合进化为普通赛富豪并手贴钢能打120，最后空位预铺下一只索财灵。",
+      "attractive_lures": [
+        {
+          "label": "进化为赛富豪ex弃3能量打150",
+          "axis": "damage_economy",
+          "reason": "过量30且消耗下一回合一半弹药。"
+        },
+        {
+          "label": "先预铺辅助再决定进化",
+          "axis": "bench_ownership",
+          "reason": "最后空位被占，当前攻击手倒下后无法接力。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "当回合进化加90窗口",
+          "type": "evolution_window",
+          "deadline": "攻击宣言前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "首轮结束前"
+        },
+        {
+          "label": "一张钢能手贴",
+          "type": "manual_attachment",
+          "deadline": "普通赛富豪攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可击倒当前单奖攻击手。",
+        "impact": "题目要求把单奖交换转化为ex攻击手的完整弹药，而非保住当前攻击手。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "击倒普通赛富豪",
+        "老大抓后排索财灵"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_05",
+      "title": "铁包袱先逼换位，老大留给第二回合",
+      "profile": "deployment",
+      "objective": "两回合拿3奖：先逼出单奖，再用老大抓回受伤两奖目标。",
+      "initial_state": "对手前场两奖目标差50但可撤退；后排有两个可替换目标；铁包袱可用，老大与奇树竞争支援者；备战区满。",
+      "correct_commitment": "让铁包袱离场触发强力吹风并释放备战位，本回合攻击对手被迫推出的单奖；把老大留到第二回合抓回原两奖目标。",
+      "attractive_lures": [
+        {
+          "label": "本回合直接用老大抓另一个两奖",
+          "axis": "supporter_window",
+          "reason": "拿奖诱人，但原受伤目标下回合仍可藏匿且没有第二次抓杀。"
+        },
+        {
+          "label": "保留铁包袱占场",
+          "axis": "bench_ownership",
+          "reason": "没有新索财灵空位，首攻倒下后断攻。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "铁包袱释放的备战位",
+          "type": "bench_slot",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "唯一老大窗口",
+          "type": "supporter_window",
+          "deadline": "第二轮攻击前"
+        },
+        {
+          "label": "一次非支援者换位",
+          "type": "gust_window",
+          "deadline": "首轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手受伤两奖目标公开可以零成本撤退。",
+        "impact": "若没有把定点抓杀留到第二回合，它会永久离开前场。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "对手选择最耐打的单奖替换",
+        "奇树后撤退受伤两奖目标"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_06",
+      "title": "30点搬伤要省下一整张能量",
+      "profile": "deployment",
+      "objective": "以200伤害资源击倒230HP目标，并让第二只赛富豪拥有下一回合300伤害。",
+      "initial_state": "己方赛富豪有可搬30伤；愿增猿尚无恶能；手中唯一恶能、5张其他能量与一次手贴；备战区仅余1格。",
+      "correct_commitment": "最后空位给愿增猿，恶能手贴后搬30到前场，只弃4能量打200；保留第5张能量与接力索财灵现有资源。",
+      "attractive_lures": [
+        {
+          "label": "直接弃5能量打250",
+          "axis": "damage_economy",
+          "reason": "当前过量20，第二回合正好少1张能量。"
+        },
+        {
+          "label": "最后空位给第二只索财灵",
+          "axis": "bench_ownership",
+          "reason": "接力更稳，但230断点迫使本回合多弃1能，第二回合同样断攻。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战位",
+          "type": "bench_slot",
+          "deadline": "特性发动前"
+        },
+        {
+          "label": "唯一恶能手贴",
+          "type": "energy_ownership",
+          "deadline": "搬运前"
+        },
+        {
+          "label": "第五张保留能量",
+          "type": "damage_resource",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开会在下回合用奇树把保留手牌洗回牌库。",
+        "impact": "必须把资源转换成场上价值，同时留下可由回收找回的弹药。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后击倒前场",
+        "老大抓愿增猿阻止再次搬伤"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_07",
+      "title": "阻碍之塔只值最后50点",
+      "profile": "precision",
+      "objective": "关闭对手勇气护符后，以最少能量击倒280HP基础宝可梦。",
+      "initial_state": "目标基础HP230并装备勇气护符；阻碍之塔在手；赛富豪手中有6张基本能量。",
+      "correct_commitment": "先放阻碍之塔把有效HP降回230，再弃5能量打250，保留第6张给第二回合。",
+      "attractive_lures": [
+        {
+          "label": "先弃6能量按280HP攻击",
+          "axis": "damage_economy",
+          "reason": "可以击倒但多耗1张，第二回合伤害不足。"
+        },
+        {
+          "label": "攻击后再放阻碍之塔",
+          "axis": "timing_order",
+          "reason": "伤害结算时目标仍有280HP，250无法击倒。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "唯一竞技场窗口",
+          "type": "stadium_window",
+          "deadline": "伤害结算前"
+        },
+        {
+          "label": "第六张基本能量",
+          "type": "damage_resource",
+          "deadline": "第二轮攻击前"
+        },
+        {
+          "label": "一次场地替换",
+          "type": "stadium_window",
+          "deadline": "本回合攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手后排公开还有300HP两奖目标。",
+        "impact": "本回合过量弃能会让第二回合无法跨过300。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_08",
+      "title": "反击捕捉器先，老大后",
+      "profile": "composite",
+      "objective": "两回合拿4奖，同时经受奇树或前场击倒，且保留一只赛富豪ex。",
+      "initial_state": "己方落后奖赏；反击捕捉器、老大与高级能量回收均在手；对手后排两只两奖目标，一只已受30伤。",
+      "correct_commitment": "首轮用反击捕捉器拉受伤目标，把支援者窗口给暗码迷/奇树保护资源；次轮再用老大抓第二只两奖。",
+      "attractive_lures": [
+        {
+          "label": "首轮先用老大",
+          "axis": "supporter_window",
+          "reason": "浪费当前免费捕捉器并使第二回合没有定点抓杀。"
+        },
+        {
+          "label": "首轮抓满血目标",
+          "axis": "target_priority",
+          "reason": "多消耗1张能量，第二回合弹药少50。"
+        },
+        {
+          "label": "首轮博士研究",
+          "axis": "discard_ownership",
+          "reason": "补牌却丢弃老大与第二次回收。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次免费捕捉窗口",
+          "type": "gust_window",
+          "deadline": "奖差改变前"
+        },
+        {
+          "label": "最后一个索财灵空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "唯一老大支援者",
+          "type": "supporter_window",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开奇树，且能在下回合击倒首攻赛富豪ex。",
+        "impact": "保留在手中的组件会被重置，必须预铺接力并建立可重取的确定路径。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树压手牌后击倒首攻",
+        "撤退受伤目标并老大抓后排索财灵"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_09",
+      "title": "送一奖才有化危为吉",
+      "profile": "composite",
+      "objective": "用单奖过渡换取抽3与反击捕捉窗口，随后连续击倒两只两奖宝可梦。",
+      "initial_state": "普通赛富豪可打120但会被击倒；吉雉鸡ex在场；手中博士会丢掉回收；备战区仅余1格。",
+      "correct_commitment": "最后空位留给索财灵，普通赛富豪先取单奖并主动进入交换；被击倒后先化危为吉，再用反击捕捉器启动ex接力。",
+      "attractive_lures": [
+        {
+          "label": "立即换赛富豪ex追求两奖",
+          "axis": "tempo_exchange",
+          "reason": "当前拿奖但没有触发抽3，次回合回收组件不足。"
+        },
+        {
+          "label": "把最后空位给第二只吉雉鸡",
+          "axis": "bench_ownership",
+          "reason": "抽牌冗余并彻底失去攻击接力。"
+        },
+        {
+          "label": "被击倒后先博士研究",
+          "axis": "discard_ownership",
+          "reason": "丢掉反击捕捉器与老大，抽7也无法定点终结。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次可控单奖交换",
+          "type": "prize_window",
+          "deadline": "首轮攻击后"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "化危为吉抽3窗口",
+          "type": "draw_window",
+          "deadline": "己方宝可梦被击倒后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可击倒普通赛富豪，并在之后用奇树压缩手牌。",
+        "impact": "玩家必须把被击倒转化为场上接力与非支援者抽牌。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "击倒普通赛富豪后奇树",
+        "老大绕过单奖直接抓索财灵"
+      ]
+    },
+    {
+      "deck_key": "gholdengo",
+      "deck_id": "800016834",
+      "display_name": "赛富豪ex",
+      "defect": "旧题已经覆盖抽牌与能量回收，但多数把能量、检索和攻击手全部交到手中，缺少回收弃牌成本、信息时序、八属性所有权与牌库耗尽风险的同局竞争。",
+      "puzzle_id": "gholdengo_10",
+      "title": "空牌库不是多抽一张",
+      "profile": "composite",
+      "objective": "在牌库仅剩1张时完成两回合终结，任何对手回复后都不能因抽牌败北。",
+      "initial_state": "牌库1张；弃牌区有钓竿目标与6能量；前后场各一只赛富豪ex；暗码迷、钓竿和高级能量回收都可达。",
+      "correct_commitment": "先厉害钓竿回填精确3张，再暗码迷置顶回收与老大，控制嘉奖硬币抽牌次数并只抽到所需组件。",
+      "attractive_lures": [
+        {
+          "label": "先发动前场嘉奖硬币抽2",
+          "axis": "deckout_clock",
+          "reason": "第二张抽牌无牌可抽，立即败北。"
+        },
+        {
+          "label": "钓竿回填错误宝可梦",
+          "axis": "resource_assignment",
+          "reason": "虽不立刻输，但暗码迷后缺少攻击能量来源。"
+        },
+        {
+          "label": "两只赛富豪特性全部发动",
+          "axis": "draw_budget",
+          "reason": "组件齐全后仍多抽，第二回合开始前牌库归零。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一张牌库寿命",
+          "type": "deck_card",
+          "deadline": "首次抽牌前"
+        },
+        {
+          "label": "一次钓竿回填",
+          "type": "recycle_window",
+          "deadline": "任何特性抽牌前"
+        },
+        {
+          "label": "一个后备攻击手位置",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可用奇树洗回手牌，或直接击倒前场迫使玩家回合抽牌。",
+        "impact": "两种回复都要求牌库有足够卡数且接力者仍能攻击。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树把手牌洗回并重建牌库",
+        "击倒前场迫使玩家进入下回合抽牌"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_01",
+      "title": "六张场上能量只允许弃五张",
+      "profile": "precision",
+      "objective": "精确击倒350HP目标，并保留一张草能让草椪在下回合继续抽牌。",
+      "initial_state": "场上共有6能：草椪2草、猛雷鼓ex斗雷草、后排1草；狂野电震每弃1能造成70。",
+      "correct_commitment": "弃猛雷鼓上的3能与后排2能，共5张打350；保留草椪至少1草维持碧草之舞与撤退路线。",
+      "attractive_lures": [
+        {
+          "label": "把草椪两张草能都弃掉",
+          "axis": "energy_ownership",
+          "reason": "当前伤害成立，但下回合碧草之舞和撤退同时失效。"
+        },
+        {
+          "label": "弃满6张追求420",
+          "axis": "damage_economy",
+          "reason": "过量70并把下一回合所有场上能量清空。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "五张伤害能量",
+          "type": "damage_resource",
+          "deadline": "攻击结算时"
+        },
+        {
+          "label": "草椪保留草能",
+          "type": "energy_ownership",
+          "deadline": "第二轮主要阶段"
+        },
+        {
+          "label": "一次能量所有权决策",
+          "type": "energy_ownership",
+          "deadline": "狂野电震结算时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手后排公开有280HP两奖目标。",
+        "impact": "本回合多弃1能会使第二回合无法重新达到280。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_02",
+      "title": "容器先弃斗能才有宝石",
+      "profile": "deployment",
+      "objective": "本回合完成猛雷鼓ex攻击，并为第二回合留下草椪抽牌与故勒顿加速目标。",
+      "initial_state": "手中大地容器、斗能、草能与夜巡式辅助；备战区只余2格；牌库有雷能和第二只草椪。",
+      "correct_commitment": "容器弃斗能取雷与草，把两个空位给草椪和古代攻击手；碧草之舞后由奥琳博士把弃牌斗能加速给古代目标。",
+      "attractive_lures": [
+        {
+          "label": "容器弃草能",
+          "axis": "discard_ownership",
+          "reason": "当前能量齐全，但奥琳博士失去唯一斗能目标。"
+        },
+        {
+          "label": "两个空位都铺草椪",
+          "axis": "bench_ownership",
+          "reason": "抽牌增加，却没有合法古代宝可梦接收奥琳博士加速。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "两个备战空位",
+          "type": "bench_slot",
+          "deadline": "首次基础宝可梦入场时"
+        },
+        {
+          "label": "唯一可弃斗能",
+          "type": "discard_ownership",
+          "deadline": "奥琳博士前"
+        },
+        {
+          "label": "一次支援者窗口",
+          "type": "supporter_window",
+          "deadline": "本回合攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开能在下回合老大抓一只无能量草椪。",
+        "impact": "必须同时准备攻击与可被抓后仍能接力的古代目标。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓草椪",
+        "奇树重置玩家保留手牌"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_03",
+      "title": "十血顽强只怕灼伤",
+      "profile": "deployment",
+      "objective": "用爬地翅的灼伤处理顽强之心目标，并保留ex主攻的五能爆发。",
+      "initial_state": "对手前场满血且特性令招式伤害后保留10HP；爬地翅与第二只草椪争最后空位；场上有5能可供猛雷鼓。",
+      "correct_commitment": "最后空位给爬地翅，以灼伤的非招式伤害完成击倒；不消耗猛雷鼓的五能爆发资源。",
+      "attractive_lures": [
+        {
+          "label": "用猛雷鼓弃5能直接攻击",
+          "axis": "damage_semantics",
+          "reason": "招式伤害触发顽强之心，目标留10HP且资源清空。"
+        },
+        {
+          "label": "最后空位给第二只草椪",
+          "axis": "bench_ownership",
+          "reason": "多抽1张但仍没有绕过特性的伤害来源。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "攻击手入场前"
+        },
+        {
+          "label": "五张场上能量",
+          "type": "damage_resource",
+          "deadline": "第二轮爆发前"
+        },
+        {
+          "label": "一次异常状态结算",
+          "type": "status_window",
+          "deadline": "回合结束检查时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "目标的顽强之心公开只防止招式伤害造成的击倒。",
+        "impact": "误把所有伤害视作同一语义会让目标存活并反击。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "对手撤退解除灼伤",
+        "对手留场承受检查后以备战攻击手接力"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_04",
+      "title": "非ex猛雷鼓负责落雷点名",
+      "profile": "deployment",
+      "objective": "先拿1奖清掉残血吉雉鸡ex的支援，再让猛雷鼓ex在第二回合拿3奖。",
+      "initial_state": "对手吉雉鸡ex后排剩90HP；非ex猛雷鼓可攻击备战；猛雷鼓ex与月月熊争最后空位；支援者窗口仅1次。",
+      "correct_commitment": "最后空位保留给猛雷鼓ex接力，非ex猛雷鼓用落雷点名90HP吉雉鸡；支援者用奇树打断对手而非老大。",
+      "attractive_lures": [
+        {
+          "label": "用老大抓吉雉鸡给ex击倒",
+          "axis": "supporter_window",
+          "reason": "浪费非ex狙击能力并放弃手牌打断。"
+        },
+        {
+          "label": "最后空位给月月熊",
+          "axis": "bench_ownership",
+          "reason": "当前可攻击但第二回合没有足够能量的主攻接力。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "唯一支援者窗口",
+          "type": "supporter_window",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "一次90点后排狙击",
+          "type": "target_window",
+          "deadline": "吉雉鸡被治疗或回手前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "吉雉鸡ex公开会在对手有宝可梦被击倒后抽3。",
+        "impact": "若不先清除，第二回合对手会重新找到老大和终局资源。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "回手吉雉鸡保护抽牌源",
+        "奇树玩家后击倒非ex猛雷鼓"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_05",
+      "title": "大空洞清场前先兑现第八格",
+      "profile": "deployment",
+      "objective": "利用大空洞把第八只宝可梦的入场与特性价值兑现，再安全收缩到5格。",
+      "initial_state": "场上8只宝可梦；大空洞即将被对手替换；风扇洛托姆、猫头夜鹰与月月熊中必须提前规划离场者。",
+      "correct_commitment": "先完成猫头夜鹰检索和草椪抽牌，再把无能量风扇洛托姆标记为收缩弃置；保留两只攻击手与能量载体。",
+      "attractive_lures": [
+        {
+          "label": "优先丢弃无伤害的猫头夜鹰",
+          "axis": "resource_ownership",
+          "reason": "看似不损能量，却失去唯一检索桥。"
+        },
+        {
+          "label": "优先丢弃带能草椪",
+          "axis": "energy_ownership",
+          "reason": "释放同样一格但永久损失两张下一轮伤害能量。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "大空洞第八格",
+          "type": "bench_slot",
+          "deadline": "竞技场被替换前"
+        },
+        {
+          "label": "一次猫头夜鹰检索",
+          "type": "search_window",
+          "deadline": "收缩前"
+        },
+        {
+          "label": "两张场上草能",
+          "type": "energy_ownership",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开另一张竞技场，可在下一回合触发备战区收缩。",
+        "impact": "未预先兑现入场价值或标记离场对象会随机毁掉攻击资源。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "替换大空洞后老大抓能量载体",
+        "奇树后替换大空洞压缩资源"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_06",
+      "title": "赤松分流不是随便两张能量",
+      "profile": "deployment",
+      "objective": "本回合补齐草椪与猛雷鼓的不同属性，并让下一回合仍有一次手贴。",
+      "initial_state": "赤松可找草、斗两种；草椪缺草能，猛雷鼓缺斗能；最后一个备战位可给第二草椪或古代目标。",
+      "correct_commitment": "赤松把草能加入手牌并立即手贴草椪，把斗能直接附给猛雷鼓；最后空位给古代目标承接下一次奥琳博士。",
+      "attractive_lures": [
+        {
+          "label": "把斗能加手、草能附猛雷鼓",
+          "axis": "energy_assignment",
+          "reason": "当前总能量相同，但草椪无法发动碧草之舞。"
+        },
+        {
+          "label": "最后空位给第二草椪",
+          "axis": "bench_ownership",
+          "reason": "抽牌增加，却没有奥琳博士合法加速目标。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次赤松双属性分流",
+          "type": "energy_assignment",
+          "deadline": "本回合攻击前"
+        },
+        {
+          "label": "一次手贴",
+          "type": "manual_attachment",
+          "deadline": "碧草之舞前"
+        },
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "奥琳博士前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开会老大抓能量最少的备战宝可梦。",
+        "impact": "能量分流必须让任一被抓目标都能撤退或接力。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓古代目标",
+        "奇树重置手牌后攻击前场"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_07",
+      "title": "喷射能量就是第五张伤害",
+      "profile": "precision",
+      "objective": "换入猛雷鼓ex并精确形成350伤害，不额外消耗能量转移。",
+      "initial_state": "前场草椪需撤退；后排猛雷鼓ex已有斗雷草3能；手中喷射能量与能量转移各一。",
+      "correct_commitment": "把喷射能量贴给猛雷鼓ex触发换入，使场上总能量达到5并全部用于350伤害；保留能量转移。",
+      "attractive_lures": [
+        {
+          "label": "先支付草椪撤退再贴喷射能",
+          "axis": "energy_economy",
+          "reason": "丢失1草能后场上只剩4能，伤害少70。"
+        },
+        {
+          "label": "先用能量转移再贴喷射能",
+          "axis": "resource_assignment",
+          "reason": "当前能攻击但浪费第二回合唯一调整工具。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次喷射换位触发",
+          "type": "switch_window",
+          "deadline": "攻击宣言前"
+        },
+        {
+          "label": "第五张场上能量",
+          "type": "damage_resource",
+          "deadline": "狂野电震结算时"
+        },
+        {
+          "label": "唯一能量转移",
+          "type": "energy_switch",
+          "deadline": "第二轮主要阶段"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手后排公开还有一只需要重新分配能量才能击倒的两奖目标。",
+        "impact": "浪费能量转移会使第二回合无法把残余能量集中到接力者。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_08",
+      "title": "奥琳博士的两目标不能贴反",
+      "profile": "composite",
+      "objective": "本回合拿2奖并在奇树或老大后仍准备好第二只猛雷鼓ex。",
+      "initial_state": "弃牌有斗、雷两能；两只古代宝可梦分别承担当前攻击与下回合接力；最后空位可给草椪；对手公开老大。",
+      "correct_commitment": "奥琳博士把斗能给当前猛雷鼓、雷能给接力猛雷鼓；最后空位给草椪并立刻用碧草之舞建立场上第五能。",
+      "attractive_lures": [
+        {
+          "label": "两能都加速给当前攻击手",
+          "axis": "energy_ownership",
+          "reason": "当前伤害更直观，首攻倒下后接力者零资源。"
+        },
+        {
+          "label": "最后空位给月月熊",
+          "axis": "bench_ownership",
+          "reason": "终局价值高但当前缺少草椪抽牌与场上第五能。"
+        },
+        {
+          "label": "用老大而非奥琳博士",
+          "axis": "supporter_window",
+          "reason": "抓到目标却无法补齐攻击与接力两端。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次奥琳博士双目标",
+          "type": "supporter_window",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "碧草之舞前"
+        },
+        {
+          "label": "两种弃牌能量所有权",
+          "type": "energy_assignment",
+          "deadline": "加速结算时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，能选择击倒任一能量不足的古代宝可梦。",
+        "impact": "正确路线必须让当前攻击与后继者在两种抓杀下都成立。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓接力猛雷鼓",
+        "奇树后击倒当前猛雷鼓"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_09",
+      "title": "顶尖捕捉器先，老大后",
+      "profile": "composite",
+      "objective": "两回合拿5奖：ACE SPEC抓三奖目标，第二回合老大抓两奖目标，并防止对手反抓终局。",
+      "initial_state": "顶尖捕捉器与老大都在手；玩家需要奥琳博士完成首轮能量；对手公开老大与一只三奖后排。",
+      "correct_commitment": "顶尖捕捉器完成首轮非支援者抓杀，把支援者窗口给奥琳博士；拿奖后用奇树/后续资源处理公开老大，次轮再用老大。",
+      "attractive_lures": [
+        {
+          "label": "首轮直接用老大抓三奖",
+          "axis": "supporter_window",
+          "reason": "失去奥琳博士，本回合伤害不足70。"
+        },
+        {
+          "label": "顶尖捕捉器抓两奖目标",
+          "axis": "prize_planning",
+          "reason": "浪费唯一三奖窗口，第二回合总奖赏不够结束。"
+        },
+        {
+          "label": "首轮把所有能量弃光",
+          "axis": "energy_ownership",
+          "reason": "三奖到手但第二回合没有接力伤害。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "唯一ACE SPEC抓杀",
+          "type": "gust_window",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "一次奥琳博士窗口",
+          "type": "supporter_window",
+          "deadline": "首轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，可抓掉一只两奖草椪结束比赛。",
+        "impact": "首轮攻击还必须保留打断或让易死目标离开可抓范围。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树压手后击倒首攻",
+        "老大抓草椪逼玩家立即输"
+      ]
+    },
+    {
+      "deck_key": "raging_bolt",
+      "deck_id": "800018509",
+      "display_name": "猛雷鼓ex／草椪",
+      "defect": "旧题把能量加速与攻击答案拆成静态步骤，未充分制造“场上能量既是当前伤害、下一回合资产、撤退费和月月熊降费”的所有权冲突。",
+      "puzzle_id": "raging_bolt_10",
+      "title": "大空洞收缩后的血月终局",
+      "profile": "composite",
+      "objective": "在大空洞被替换后仍用月月熊完成终局，并留下不会因抓杀直接输的盘面。",
+      "initial_state": "对手已拿4奖，月月熊只需1能；场上8只宝可梦即将缩到5；三只候选离场者中两只带能。",
+      "correct_commitment": "先把月月熊放入第八格并附能，再主动替换场地；收缩时只弃无能辅助，保留月月熊、接力猛雷鼓与草椪能量。",
+      "attractive_lures": [
+        {
+          "label": "收缩前不放月月熊",
+          "axis": "bench_ownership",
+          "reason": "收缩后没有合法空位，错过1能终局窗口。"
+        },
+        {
+          "label": "收缩时丢弃带2能草椪",
+          "axis": "energy_ownership",
+          "reason": "月月熊能攻击但若未结束比赛便无后继伤害。"
+        },
+        {
+          "label": "先用老大抓单奖",
+          "axis": "prize_planning",
+          "reason": "改变前场却浪费三奖终局与支援者打断窗口。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "大空洞第八格",
+          "type": "bench_slot",
+          "deadline": "竞技场替换前"
+        },
+        {
+          "label": "月月熊的一次手贴",
+          "type": "manual_attachment",
+          "deadline": "收缩前"
+        },
+        {
+          "label": "至少三张保留场上能量",
+          "type": "energy_ownership",
+          "deadline": "对手回应后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开场地与老大，能同时触发收缩并抓杀易死两奖目标。",
+        "impact": "盘面必须预先选择保留对象，不能依赖对手替换后的临时操作。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "替换大空洞并老大抓草椪",
+        "奇树后推单奖墙拖过血月窗口"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_01",
+      "title": "庞克泵感的五能要分给两条线",
+      "profile": "precision",
+      "objective": "本回合使用暗影子弹，并让第二只玛俐宝可梦下回合只差1能即可攻击。",
+      "initial_state": "手中长毛巨魔ex可从手牌进化；牌库5恶能；首攻者已有1能，后排诈唬魔0能。",
+      "correct_commitment": "进化触发庞克泵感，只给首攻者补2能，另外3能给后排诈唬魔。",
+      "attractive_lures": [
+        {
+          "label": "5能全部给首攻者",
+          "axis": "energy_ownership",
+          "reason": "当前攻击成立，但首攻倒下后全部能量一起损失。"
+        },
+        {
+          "label": "把1能留给愿增猿",
+          "axis": "effect_legality",
+          "reason": "庞克泵感只能给玛俐宝可梦，路线本身不合法。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "五张庞克泵感能量",
+          "type": "energy_assignment",
+          "deadline": "进化特性结算时"
+        },
+        {
+          "label": "第二条玛俐进化线",
+          "type": "handoff_resource",
+          "deadline": "对手回应后"
+        },
+        {
+          "label": "一次从手牌进化触发",
+          "type": "evolution_window",
+          "deadline": "攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手前场公开能击倒首攻长毛巨魔ex。",
+        "impact": "所有分给首攻者的冗余能量都无法进入第二回合。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_02",
+      "title": "巢穴球找谁决定两回合路线",
+      "profile": "deployment",
+      "objective": "两回合拿3奖，并在对手老大抓杀后仍保有伤害校正。",
+      "initial_state": "备战区只余1格；牌库可找愿增猿、雪童子、第二只玛俐的捣蛋小妖或谢米；手中仅1恶能。",
+      "correct_commitment": "最后空位给愿增猿，恶能手贴后搬30，使暗影子弹当前取奖并为第二回合后排30形成击倒。",
+      "attractive_lures": [
+        {
+          "label": "找第二只捣蛋小妖",
+          "axis": "bench_ownership",
+          "reason": "接力更厚但当前与下回合都差30伤害。"
+        },
+        {
+          "label": "找谢米保护后排",
+          "axis": "threat_evaluation",
+          "reason": "对手威胁来自老大抓前场，不是备战招式伤害。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "巢穴球结算时"
+        },
+        {
+          "label": "唯一恶能手贴",
+          "type": "manual_attachment",
+          "deadline": "愿增猿特性前"
+        },
+        {
+          "label": "一次30点搬伤",
+          "type": "damage_counter_budget",
+          "deadline": "首轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，可抓掉后排已受伤的两奖目标。",
+        "impact": "必须让当前攻击同时处理公开抓杀威胁和后继奖赏图。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓已受伤后排",
+        "奇树重置手牌后击倒首攻"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_03",
+      "title": "两只愿增猿只有一张手贴",
+      "profile": "deployment",
+      "objective": "用100点可搬伤预算完成本回合击倒，同时保留第二只愿增猿下回合可用。",
+      "initial_state": "两只愿增猿，一只有恶能一只无能；己方三处伤害共100；对手两个目标分别差50与80；最后空位需留给接力线。",
+      "correct_commitment": "本回合只用已带能愿增猿搬50到当前目标；手贴恶能给第二只愿增猿，保留剩余50自伤供下回合搬运。",
+      "attractive_lures": [
+        {
+          "label": "本回合把100伤全搬完",
+          "axis": "damage_budget",
+          "reason": "需要两只都已有恶能，实际少一次合法特性。"
+        },
+        {
+          "label": "手贴给长毛巨魔ex",
+          "axis": "energy_ownership",
+          "reason": "当前攻击更稳，但第二只愿增猿下回合无法校正80断点。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次手贴",
+          "type": "manual_attachment",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "100点可搬自伤",
+          "type": "damage_counter_budget",
+          "deadline": "两回合结束前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开能在下回合治疗或回手其中一个受伤目标。",
+        "impact": "搬伤不能平均分配，必须先兑现当前击倒并保留另一半。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "回手剩余受伤目标",
+        "老大抓无能愿增猿"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_04",
+      "title": "担架取回后必须从手牌进化",
+      "profile": "deployment",
+      "objective": "重新触发庞克泵感，建立两只能攻击的长毛巨魔线，而不是只恢复场面。",
+      "initial_state": "长毛巨魔ex在弃牌区；场上有可进化的捣蛋小妖；担架、神奇糖果和中间进化争夺一次检索；备战区只余1格。",
+      "correct_commitment": "担架把长毛巨魔ex拿回手牌，糖果从手牌进化触发泵感；最后空位预铺第二只捣蛋小妖并分能。",
+      "attractive_lures": [
+        {
+          "label": "担架把长毛巨魔直接放到场上",
+          "axis": "trigger_ownership",
+          "reason": "恢复了宝可梦，但不是从手牌进化，庞克泵感不触发。"
+        },
+        {
+          "label": "先铺雪童子占最后空位",
+          "axis": "bench_ownership",
+          "reason": "获得检查伤害，却没有第二条玛俐接力线。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次担架模式选择",
+          "type": "recovery_window",
+          "deadline": "进化前"
+        },
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "首轮结束前"
+        },
+        {
+          "label": "一次从手牌进化触发",
+          "type": "evolution_window",
+          "deadline": "攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开将在下回合击倒当前长毛巨魔ex。",
+        "impact": "只恢复一只攻击手无法承受公开击倒。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "击倒首攻长毛巨魔",
+        "老大抓第二只捣蛋小妖"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_05",
+      "title": "暗影铺伤要为退化服务",
+      "profile": "deployment",
+      "objective": "两回合内先拿1奖，再用退化学习器同时击倒两只糖果进化宝可梦。",
+      "initial_state": "对手前场180HP单奖，后排两只糖果进化分别剩余30与60的下层HP差；退化TM与捕捉器争资源；备战区仅余1格。",
+      "correct_commitment": "暗影子弹击倒前场并把30放到更难达到的后排；最后空位留给可带退化TM的接力者，第二回合补伤后退化双杀。",
+      "attractive_lures": [
+        {
+          "label": "30伤放到已经满足退化线的目标",
+          "axis": "damage_mapping",
+          "reason": "产生过量，另一只仍高于下层HP。"
+        },
+        {
+          "label": "最后空位给雪妖女",
+          "axis": "bench_ownership",
+          "reason": "检查伤害来不及覆盖当前时间窗，接力者无处落场。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次后排30伤",
+          "type": "damage_counter_budget",
+          "deadline": "首轮攻击结算时"
+        },
+        {
+          "label": "最后一个TM接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "唯一退化TM攻击",
+          "type": "tool_window",
+          "deadline": "第二轮攻击时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可用回收或进化补回其中一条后排。",
+        "impact": "必须让两条退化线在同一回合同时达到阈值。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "进化修复其中一只后排",
+        "老大抓携带退化TM的接力者"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_06",
+      "title": "雪妖女的检查也会杀自己",
+      "profile": "deployment",
+      "objective": "利用两次检查把对手两只宝可梦推进暗影子弹线，同时保证己方愿增猿不先昏厥。",
+      "initial_state": "双方各有多个特性宝可梦；己方愿增猿剩20HP、长毛巨魔剩40HP；可铺雪妖女或谢米，最后仅1空位。",
+      "correct_commitment": "最后空位给谢米并先用愿增猿搬走30自伤，再保留现有雪妖女完成两次检查；让己方关键目标跨过生存线。",
+      "attractive_lures": [
+        {
+          "label": "再铺第二只雪妖女",
+          "axis": "bench_ownership",
+          "reason": "伤害加速但己方愿增猿在下一次检查先昏厥。"
+        },
+        {
+          "label": "先把伤搬到长毛巨魔",
+          "axis": "survival_budget",
+          "reason": "愿增猿仍处于10点检查致死线。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "检查结算前"
+        },
+        {
+          "label": "一次30点搬伤",
+          "type": "damage_counter_budget",
+          "deadline": "宝可梦检查前"
+        },
+        {
+          "label": "两次检查生存预算",
+          "type": "hp_budget",
+          "deadline": "第二轮开始前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "雪妖女公开同时伤害双方非雪妖女的特性宝可梦。",
+        "impact": "若只计算对手伤害，己方引擎会先于奖赏图崩溃。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓愿增猿逼其留在伤害区",
+        "替换竞技场并击倒首攻者"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_07",
+      "title": "谢米挡不住伤害指示物",
+      "profile": "precision",
+      "objective": "正确判断花之纱幔，只为可防的备战招式伤害分配场位。",
+      "initial_state": "对手同时公开焚身加农炮的90点备战招式伤害与幻影潜袭的伤害指示物路线；备战区只余1格。",
+      "correct_commitment": "本题面对焚身加农炮，把最后空位给谢米保护雪妖女；同时把幻影潜袭指示物计入下一题的HP预算，不把谢米视作万能盾。",
+      "attractive_lures": [
+        {
+          "label": "认定谢米也能挡幻影潜袭",
+          "axis": "effect_semantics",
+          "reason": "放置伤害指示物不是招式伤害，保护不会生效。"
+        },
+        {
+          "label": "不铺谢米并保留空位",
+          "axis": "resource_assignment",
+          "reason": "焚身加农炮会直接击倒雪妖女，失去检查伤害。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个备战空位",
+          "type": "bench_slot",
+          "deadline": "对手攻击前"
+        },
+        {
+          "label": "一次保护语义判断",
+          "type": "rule_semantics",
+          "deadline": "选择部署路线时"
+        },
+        {
+          "label": "雪妖女20HP生存余量",
+          "type": "hp_budget",
+          "deadline": "对手回合结束前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手前场公开招式写明对备战造成90点伤害。",
+        "impact": "这是谢米真正能阻止的公开威胁；伤害指示物则必须另算。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_08",
+      "title": "双层冻结帷幕后才退化",
+      "profile": "composite",
+      "objective": "让四只对手进化宝可梦同时进入下层HP击倒线，并在退化前保住己方引擎。",
+      "initial_state": "场上两只雪妖女；对手四只特性进化宝可梦处于不同HP档；己方愿增猿也会被检查；退化TM仅一次。",
+      "correct_commitment": "先用愿增猿搬走己方致死伤害并校正最厚目标，经历两轮检查后再用退化TM统一结算。",
+      "attractive_lures": [
+        {
+          "label": "立即使用退化TM",
+          "axis": "timing_order",
+          "reason": "两个最厚目标尚未超过下层HP，只有两只昏厥。"
+        },
+        {
+          "label": "把30搬伤给已经满足阈值的目标",
+          "axis": "damage_mapping",
+          "reason": "过量导致第四只目标仍存活。"
+        },
+        {
+          "label": "再铺第三只雪妖女",
+          "axis": "bench_ownership",
+          "reason": "对手更快掉血，但己方愿增猿也在检查中先昏厥。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "唯一退化TM窗口",
+          "type": "tool_window",
+          "deadline": "第二次检查后"
+        },
+        {
+          "label": "最后一个安全备战位",
+          "type": "bench_slot",
+          "deadline": "检查前"
+        },
+        {
+          "label": "一次30点跨目标校正",
+          "type": "damage_counter_budget",
+          "deadline": "退化前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可在下回合用老大抓退化TM携带者，或进化修复一只目标。",
+        "impact": "路线必须既保留TM持有者，又把四只目标在同一时间窗压入阈值。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓退化TM携带者",
+        "进化修复最高价值目标"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_09",
+      "title": "道馆检索要给奇树让路",
+      "profile": "composite",
+      "objective": "本回合完成第二只长毛巨魔进化、打断对手老大，并在两种回复后继续攻击。",
+      "initial_state": "尖钉镇道馆可找玛俐进化件；手中奇树、博士、老大三选一；对手公开老大且可抓后排两奖；最后1空位。",
+      "correct_commitment": "用道馆找进化件，不占支援者；最后空位给第二只捣蛋小妖，用奇树打掉公开老大，再从手牌进化触发泵感。",
+      "attractive_lures": [
+        {
+          "label": "用博士研究找进化件",
+          "axis": "supporter_window",
+          "reason": "丢弃奇树并让对手保留终局老大。"
+        },
+        {
+          "label": "用老大先拿当前奖",
+          "axis": "disruption_priority",
+          "reason": "忽略对手反抓，攻击后立即输。"
+        },
+        {
+          "label": "最后空位给雪童子",
+          "axis": "bench_ownership",
+          "reason": "检查伤害有价值，但第二只玛俐线无法建立。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次道馆检索",
+          "type": "stadium_window",
+          "deadline": "进化前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "奇树前"
+        },
+        {
+          "label": "一次打断支援者窗口",
+          "type": "supporter_window",
+          "deadline": "本回合攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，己方后排两奖宝可梦被抓即输。",
+        "impact": "必须用非支援者检索释放奇树窗口。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后击倒首攻",
+        "撤退前场并推进单奖墙"
+      ]
+    },
+    {
+      "deck_key": "marnie",
+      "deck_id": "800018501",
+      "display_name": "玛俐的长毛巨魔ex",
+      "defect": "旧题覆盖泵能、搬伤和退化，但常把长毛巨魔与全部恶能预先放好，弱化了“从手牌进化才触发”“愿增猿必须手贴”“雪妖女也伤自己”的路线判断。",
+      "puzzle_id": "marnie_10",
+      "title": "秘密箱四张牌都必须有工作",
+      "profile": "composite",
+      "objective": "用秘密箱同时完成进化、场地、接力与打断，不丢掉唯一恶能。",
+      "initial_state": "手中秘密箱、唯一恶能、可回收宝可梦和终局支援者；牌库四类可取目标；备战区仅余1格。",
+      "correct_commitment": "弃可由担架回收的宝可梦；秘密箱取糖果/进化桥、救援滑板、尖钉镇与奇树，让最后空位的接力线同时获得撤退与泵能。",
+      "attractive_lures": [
+        {
+          "label": "弃唯一恶能",
+          "axis": "discard_ownership",
+          "reason": "愿增猿无法使用，30点校正与终局同时失去。"
+        },
+        {
+          "label": "取博士研究代替奇树",
+          "axis": "disruption_priority",
+          "reason": "补牌更多但对手公开老大不被移除。"
+        },
+        {
+          "label": "把最后空位给第二只辅助",
+          "axis": "bench_ownership",
+          "reason": "四张检索都能使用，却没有接力攻击手。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "秘密箱一次弃牌",
+          "type": "discard_ownership",
+          "deadline": "ACE SPEC结算时"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "进化前"
+        },
+        {
+          "label": "一次支援者打断",
+          "type": "supporter_window",
+          "deadline": "攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开老大与一只可在下回合击倒首攻者的主攻。",
+        "impact": "检索组合必须同时解决当前输出和反抓终局。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓接力线",
+        "奇树玩家后击倒首攻者"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_01",
+      "title": "暗码迷以后只准交易一次",
+      "profile": "precision",
+      "objective": "确定抽到PP提升剂与老大，同时保留双恶能和复制源。",
+      "initial_state": "暗码迷可置顶2；索罗亚克ex交易弃1抽2；手中有可回收诱饵与唯一第二张恶能；之后还有高级球会洗牌。",
+      "correct_commitment": "先完成高级球检索，再暗码迷按PP提升剂、老大置顶；交易弃可回收诱饵一次拿齐。",
+      "attractive_lures": [
+        {
+          "label": "暗码迷后再用高级球",
+          "axis": "information_epoch",
+          "reason": "确定顶牌被洗散。"
+        },
+        {
+          "label": "交易弃第二张恶能",
+          "axis": "discard_ownership",
+          "reason": "组件齐全但暗夜王牌缺双恶无法攻击。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次确定置顶",
+          "type": "information_epoch",
+          "deadline": "最后洗牌后"
+        },
+        {
+          "label": "唯一第二张恶能",
+          "type": "energy_ownership",
+          "deadline": "攻击前"
+        },
+        {
+          "label": "一次安全交易弃牌",
+          "type": "discard_ownership",
+          "deadline": "交易结算时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手前场公开将在下回合击倒索罗亚克ex。",
+        "impact": "若本回合没有同时拿到加速与抓杀，第二回合接力失败。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_02",
+      "title": "最后空位属于复制源，不属于辅助",
+      "profile": "deployment",
+      "objective": "选择正确N宝可梦作为复制源，击倒当前目标并保留下一回合另一种攻击。",
+      "initial_state": "备战区仅余1格；N的莱希拉姆、N的达摩狒狒与吉雉鸡ex都可入场；对手当前260HP且弃牌区基本能量较少。",
+      "correct_commitment": "最后空位给受伤90的N的莱希拉姆，暗夜王牌复制力量愤怒打260；保留达摩狒狒给之后弃牌能量增长的回合。",
+      "attractive_lures": [
+        {
+          "label": "放N的达摩狒狒",
+          "axis": "route_choice",
+          "reason": "当前对手弃牌能量不足，复燃伤害只有90。"
+        },
+        {
+          "label": "放吉雉鸡ex",
+          "axis": "bench_ownership",
+          "reason": "抽牌变多但暗夜王牌没有可复制的终结招式。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个复制源空位",
+          "type": "bench_slot",
+          "deadline": "攻击选择前"
+        },
+        {
+          "label": "莱希拉姆精确90自伤",
+          "type": "damage_state",
+          "deadline": "力量愤怒结算时"
+        },
+        {
+          "label": "双恶能攻击费用",
+          "type": "energy_ownership",
+          "deadline": "暗夜王牌宣言前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可在下回合老大抓掉唯一复制源。",
+        "impact": "当前击倒后仍需准备可回收或替代的第二复制源。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓莱希拉姆",
+        "奇树重置玩家手牌"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_03",
+      "title": "PP提升剂不能贴给工具箱",
+      "profile": "deployment",
+      "objective": "让本回合索罗亚克ex满足双恶，并给第二只N宝可梦准备下回合攻击。",
+      "initial_state": "弃牌区2恶能；PP提升剂只能附给备战N宝可梦；索罗亚克ex当前1恶；最后空位可给N索罗亚或N达摩狒狒。",
+      "correct_commitment": "最后空位给第二只N索罗亚，PP提升剂把恶能附给它；手贴第二恶给当前索罗亚克，建立双线。",
+      "attractive_lures": [
+        {
+          "label": "PP提升剂给N的莱希拉姆复制源",
+          "axis": "energy_ownership",
+          "reason": "复制源不需攻击，能量不能帮助当前索罗亚克支付双恶。"
+        },
+        {
+          "label": "最后空位给非N吉雉鸡ex",
+          "axis": "effect_legality",
+          "reason": "PP提升剂没有合法目标且接力线消失。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个N宝可梦空位",
+          "type": "bench_slot",
+          "deadline": "PP提升剂前"
+        },
+        {
+          "label": "一次PP提升剂加速",
+          "type": "acceleration_window",
+          "deadline": "攻击前"
+        },
+        {
+          "label": "一次手贴",
+          "type": "manual_attachment",
+          "deadline": "当前索罗亚克攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可击倒当前索罗亚克ex。",
+        "impact": "加速必须落在会成为下一只攻击手的N宝可梦，而非只提供复制文本的工具。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "击倒当前索罗亚克",
+        "老大抓预备N索罗亚"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_04",
+      "title": "城堡零撤退只照顾N宝可梦",
+      "profile": "deployment",
+      "objective": "零成本换入索罗亚克ex并保留前场能量，为第二回合复制另一招式。",
+      "initial_state": "前场N的莱希拉姆带1火能；后排索罗亚克ex双恶；N的城堡在手；最后空位可给复制源。",
+      "correct_commitment": "先放N的城堡，让N的莱希拉姆零撤退，保留火能与伤害状态；最后空位给达摩狒狒，索罗亚克复制当前最佳招式。",
+      "attractive_lures": [
+        {
+          "label": "先支付莱希拉姆撤退费",
+          "axis": "timing_order",
+          "reason": "白白弃掉火能并削弱后续自身攻击路线。"
+        },
+        {
+          "label": "把非N吉雉鸡推到前场再放城堡",
+          "axis": "effect_legality",
+          "reason": "非N宝可梦撤退费不会归零。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次竞技场窗口",
+          "type": "stadium_window",
+          "deadline": "撤退前"
+        },
+        {
+          "label": "最后一个复制源空位",
+          "type": "bench_slot",
+          "deadline": "攻击前"
+        },
+        {
+          "label": "莱希拉姆保留火能",
+          "type": "energy_ownership",
+          "deadline": "第二轮主要阶段"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开会替换竞技场并老大抓复制源。",
+        "impact": "零撤退价值必须在场地被换前兑现，并保留第二来源。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "替换N的城堡后击倒前场",
+        "老大抓达摩狒狒"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_05",
+      "title": "第一只倒下才启动担架重建",
+      "profile": "deployment",
+      "objective": "允许首攻索罗亚克ex被击倒后，用担架与PP提升剂在一回合重建第二只。",
+      "initial_state": "第二只N索罗亚在场；进化件在弃牌；担架可拿手或放场；弃牌有恶能；最后1空位。",
+      "correct_commitment": "担架把索罗亚克ex拿回手，正常进化第二只N索罗亚；PP提升剂给备战N宝可梦，手贴补双恶。",
+      "attractive_lures": [
+        {
+          "label": "担架把索罗亚克ex直接放场",
+          "axis": "evolution_legality",
+          "reason": "进化宝可梦不能作为基础直接放入备战区。"
+        },
+        {
+          "label": "最后空位给血月月月熊",
+          "axis": "bench_ownership",
+          "reason": "当前有临时攻击手，但索罗亚克主线无法重建。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次担架模式",
+          "type": "recovery_window",
+          "deadline": "进化前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "PP提升剂与手贴双资源",
+          "type": "energy_assignment",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开将在首轮击倒当前索罗亚克ex并用奇树压手牌。",
+        "impact": "重建组件要转化为场上状态，不能全部留手。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后击倒首攻索罗亚克",
+        "老大抓第二只N索罗亚"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_06",
+      "title": "两次交易各自有弃牌所有权",
+      "profile": "deployment",
+      "objective": "两次交易分别找到加速与终结抓杀，不丢掉复制源和双恶能。",
+      "initial_state": "两只索罗亚克ex可各交易一次；手中有钓竿、PP提升剂、唯一老大与两张恶能；牌顶可由暗码迷控制。",
+      "correct_commitment": "暗码迷置顶后，第一次交易弃可回收复制源找PP提升剂，先加速并释放手牌；第二次交易弃空物品找老大。",
+      "attractive_lures": [
+        {
+          "label": "第一次交易弃老大",
+          "axis": "discard_ownership",
+          "reason": "抽到加速但第二次无法定点终结。"
+        },
+        {
+          "label": "把最后空位给第二辅助而非复制源",
+          "axis": "bench_ownership",
+          "reason": "交易资源充足却没有可复制攻击。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "两次交易弃牌",
+          "type": "discard_ownership",
+          "deadline": "各自交易结算时"
+        },
+        {
+          "label": "最后一个复制源空位",
+          "type": "bench_slot",
+          "deadline": "攻击选择前"
+        },
+        {
+          "label": "一次暗码迷信息窗口",
+          "type": "information_epoch",
+          "deadline": "所有洗牌后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可回手或抓杀一只复制源。",
+        "impact": "玩家需要两种复制攻击与可重建路径，而不是只抽到当前答案。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓主要复制源",
+        "奇树洗回保留老大"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_07",
+      "title": "90伤与40搬伤只差一个断点",
+      "profile": "precision",
+      "objective": "让N的莱希拉姆保持90伤，用愿增猿搬40后复制力量愤怒精确击倒300HP目标。",
+      "initial_state": "莱希拉姆有130伤；愿增猿可搬最多30一次，另有一次治疗10；目标300HP。",
+      "correct_commitment": "先治疗10再由愿增猿搬30，使莱希拉姆保留90伤；力量愤怒造成260，再叠加不服输头带40档完成300。",
+      "attractive_lures": [
+        {
+          "label": "把莱希拉姆伤害全搬走",
+          "axis": "damage_state",
+          "reason": "复制招式倍率下降，最终少90伤。"
+        },
+        {
+          "label": "不治疗直接搬30",
+          "axis": "damage_mapping",
+          "reason": "保留100伤会越过所需资源并让莱希拉姆进入对手10点补刀线。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "莱希拉姆90伤状态",
+          "type": "damage_state",
+          "deadline": "攻击宣言时"
+        },
+        {
+          "label": "一次30点搬伤",
+          "type": "damage_counter_budget",
+          "deadline": "攻击前"
+        },
+        {
+          "label": "一次10点治疗",
+          "type": "hp_budget",
+          "deadline": "搬伤前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手后排公开有10点补伤来源。",
+        "impact": "莱希拉姆若保留100伤会在对手回合被补刀并失去复制源。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_08",
+      "title": "复燃只数基本能量",
+      "profile": "composite",
+      "objective": "根据对手弃牌区正确计算复燃伤害，并防住回收或老大两种回复。",
+      "initial_state": "对手弃牌有4基本能量、2特殊能量；达摩狒狒与莱希拉姆都可作为复制源；最后空位仅1格。",
+      "correct_commitment": "只按4张基本能量计算120，选择达摩狒狒完成当前断点；同时用钓竿准备被抓杀后的替代复制源。",
+      "attractive_lures": [
+        {
+          "label": "把6张能量都算入复燃",
+          "axis": "rule_semantics",
+          "reason": "虚报180，实际120无法击倒。"
+        },
+        {
+          "label": "最后空位给莱希拉姆",
+          "axis": "route_choice",
+          "reason": "当前没有足够自伤，力量愤怒只有低伤。"
+        },
+        {
+          "label": "为当前伤害用掉钓竿",
+          "axis": "handoff_resource",
+          "reason": "对手抓杀达摩狒狒后无复制源可恢复。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个复制源空位",
+          "type": "bench_slot",
+          "deadline": "攻击选择前"
+        },
+        {
+          "label": "四张基本能量计数",
+          "type": "public_counter",
+          "deadline": "复燃结算时"
+        },
+        {
+          "label": "一次钓竿重建",
+          "type": "recycle_window",
+          "deadline": "对手回应后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可以钓竿回填能量改变弃牌计数，或老大抓复制源。",
+        "impact": "当前正确伤害与下一回合复制源生存必须同时成立。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "钓竿回填3张基本能量降低复燃",
+        "老大抓达摩狒狒"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_09",
+      "title": "一张先存，一张奖区接力",
+      "profile": "composite",
+      "objective": "用PP提升剂与奖赏区取回的能量建立两只索罗亚克接力，并保留城堡撤退。",
+      "initial_state": "首攻索罗亚克即将击倒单奖；奖赏区顶牌确定为恶能；弃牌另有恶能；第二只N索罗亚与复制源争最后空位。",
+      "correct_commitment": "最后空位给第二只N索罗亚，PP提升剂先附1恶；首攻取奖拿第二恶后，下回合手贴完成双恶并用城堡零撤退交棒。",
+      "attractive_lures": [
+        {
+          "label": "最后空位给新复制源",
+          "axis": "bench_ownership",
+          "reason": "招式选择变多但没有第二只索罗亚克承接双恶。"
+        },
+        {
+          "label": "PP提升剂给当前首攻",
+          "axis": "energy_ownership",
+          "reason": "当前已有双恶，额外能量随击倒一起损失。"
+        },
+        {
+          "label": "提前用掉N的城堡",
+          "axis": "stadium_timing",
+          "reason": "对手替换场地后接力者需要支付撤退费。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "一次PP提升剂",
+          "type": "acceleration_window",
+          "deadline": "取奖前"
+        },
+        {
+          "label": "确定奖赏恶能",
+          "type": "prize_resource",
+          "deadline": "首轮击倒后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开会击倒首攻并可能替换N的城堡。",
+        "impact": "接力需要把弃牌、奖赏与场地三个时间点串成一条确定路线。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "击倒首攻后替换城堡",
+        "老大抓第二只N索罗亚"
+      ]
+    },
+    {
+      "deck_key": "n_zoroark",
+      "deck_id": "800018502",
+      "display_name": "N的索罗亚克ex",
+      "defect": "旧题强调复制招式结果，却较少让复制源、双恶能、交易弃牌、PP提升剂目标和N的城堡撤退相互争夺；错误路线通常当回合就暴露，缺少下一回合断线。",
+      "puzzle_id": "n_zoroark_10",
+      "title": "三个加数之外还要处理老大",
+      "profile": "composite",
+      "objective": "用120复燃、30头带与40空手道王达到190，并移除对手终局老大。",
+      "initial_state": "对手弃牌4基本能量；己方奖赏落后且目标为ex；空手道王、头带与奇树三项条件可满足；后排两奖被抓即输。",
+      "correct_commitment": "保留达摩狒狒复制源，装不服输头带并用空手道王；支援者用奇树打掉公开老大，复制复燃得到120+30+40。",
+      "attractive_lures": [
+        {
+          "label": "用老大抓更低HP目标",
+          "axis": "disruption_priority",
+          "reason": "当前拿奖但对手保留终局老大并反抓结束。"
+        },
+        {
+          "label": "先拿奖再判断头带",
+          "axis": "prize_condition",
+          "reason": "奖差改变后不服输头带不再加30。"
+        },
+        {
+          "label": "最后空位给吉雉鸡",
+          "axis": "bench_ownership",
+          "reason": "补牌却把达摩狒狒复制源挤掉。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个复制源空位",
+          "type": "bench_slot",
+          "deadline": "攻击选择前"
+        },
+        {
+          "label": "落后奖赏的+30窗口",
+          "type": "prize_window",
+          "deadline": "拿奖前"
+        },
+        {
+          "label": "一次打断支援者窗口",
+          "type": "supporter_window",
+          "deadline": "攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，己方后排两奖宝可梦被抓即输。",
+        "impact": "伤害公式成立并不代表路线成立，必须同时打断终局。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后击倒首攻",
+        "撤退目标并推单奖墙"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_01",
+      "title": "音速搜索不能洗掉顶6答案",
+      "profile": "precision",
+      "objective": "通过米立龙先找到白蕾雅，再用大比鸟补齐唯一攻击组件。",
+      "initial_state": "米立龙前场可看顶6，白蕾雅已知在其中；大比鸟ex音速搜索会洗牌；手中缺糖果。",
+      "correct_commitment": "先让米立龙揽客拿白蕾雅，再用音速搜索找神奇糖果，最后按终局顺序执行。",
+      "attractive_lures": [
+        {
+          "label": "先音速搜索找糖果",
+          "axis": "information_epoch",
+          "reason": "洗牌后白蕾雅不再保证处于顶6。"
+        },
+        {
+          "label": "米立龙先拿博士研究",
+          "axis": "supporter_window",
+          "reason": "抽牌更多但占掉白蕾雅唯一终局窗口。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次顶6确定信息",
+          "type": "information_epoch",
+          "deadline": "首次洗牌前"
+        },
+        {
+          "label": "一次音速搜索",
+          "type": "search_window",
+          "deadline": "米立龙结算后"
+        },
+        {
+          "label": "唯一白蕾雅窗口",
+          "type": "supporter_window",
+          "deadline": "对手剩2奖时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开将在下回合拿到第5张奖赏。",
+        "impact": "白蕾雅必须在当前信息周期内取得，不能依赖随机顶6。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_02",
+      "title": "两颗糖果只够一只喷火龙一只大比鸟",
+      "profile": "deployment",
+      "objective": "本回合完成攻击与音速搜索，并给第二回合保留一条进化接力。",
+      "initial_state": "场上小火龙、波波和第二只小火龙；手中2糖果、喷火龙ex、大比鸟ex；备战区仅余1格。",
+      "correct_commitment": "第一颗糖果进化喷火龙触发烈焰支配，第二颗进化大比鸟取得接力组件；最后空位不再铺辅助，留给后续基础。",
+      "attractive_lures": [
+        {
+          "label": "两颗糖果都给喷火龙线",
+          "axis": "evolution_ownership",
+          "reason": "攻击手多但没有音速搜索，第二回合缺抓杀。"
+        },
+        {
+          "label": "先铺夜巡灵占最后空位",
+          "axis": "bench_ownership",
+          "reason": "炸弹价值高，却让被击倒后的基础接力无处落场。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "两颗神奇糖果",
+          "type": "evolution_ownership",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "一次烈焰支配触发",
+          "type": "evolution_window",
+          "deadline": "从手牌进化时"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可老大抓尚未进化的第二只小火龙。",
+        "impact": "必须用音速搜索准备恢复/换位，而不是只堆当前攻击手。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓第二只小火龙",
+        "奇树压手后击倒首攻喷火龙"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_03",
+      "title": "三张火能不能全给恶喷",
+      "profile": "deployment",
+      "objective": "喷火龙本回合攻击，同时让古玉鱼或第二只喷火龙成为可用接力。",
+      "initial_state": "烈焰支配可从牌库附3火能；当前喷火龙0能；后排古玉鱼与第二只小火龙争最后空位。",
+      "correct_commitment": "给当前喷火龙2火、给后排古玉鱼1火；最后空位保留给第二只小火龙，由后续手贴/回收建立第二条线。",
+      "attractive_lures": [
+        {
+          "label": "3火全部给当前喷火龙",
+          "axis": "energy_ownership",
+          "reason": "多出的1火没有提高伤害，首攻倒下后三能全失。"
+        },
+        {
+          "label": "最后空位给钥圈儿",
+          "axis": "bench_ownership",
+          "reason": "封锁对手但也让第二只小火龙无法落场。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "三张烈焰支配火能",
+          "type": "energy_assignment",
+          "deadline": "进化特性结算时"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "一次手贴",
+          "type": "manual_attachment",
+          "deadline": "第二轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开能击倒首攻喷火龙ex。",
+        "impact": "冗余附能等同把接力资源送进弃牌区。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "击倒首攻喷火龙",
+        "老大抓第二只小火龙"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_04",
+      "title": "50点比130点更难",
+      "profile": "deployment",
+      "objective": "用最小自爆打开反击捕捉器并让燃烧黑暗正好跨过目标HP。",
+      "initial_state": "彷徨夜灵可50自爆、黑夜魔灵可130自爆；对手后排差50的单奖与前场320HP两奖；己方送奖后燃烧黑暗增加30。",
+      "correct_commitment": "用彷徨夜灵50击倒后排并送奖，反击捕捉器拉320HP目标；燃烧黑暗在新增奖赏后达到正确档位。",
+      "attractive_lures": [
+        {
+          "label": "升级黑夜魔灵打130",
+          "axis": "damage_economy",
+          "reason": "对同一50HP目标过量80并耗掉下一回合130资源。"
+        },
+        {
+          "label": "先用反击捕捉器",
+          "axis": "timing_order",
+          "reason": "奖差条件尚未成立，物品不合法。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次最小自爆",
+          "type": "prize_window",
+          "deadline": "反击捕捉器前"
+        },
+        {
+          "label": "一个炸弹备战位",
+          "type": "bench_slot",
+          "deadline": "自爆结算前"
+        },
+        {
+          "label": "唯一反击捕捉器",
+          "type": "gust_window",
+          "deadline": "攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可撤退320HP目标并用奇树压手。",
+        "impact": "若不在送奖后立即抓杀，燃烧黑暗的档位与目标都会变化。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "撤退320HP目标",
+        "奇树后推单奖墙"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_05",
+      "title": "捕捉器必须等送奖结算",
+      "profile": "deployment",
+      "objective": "本回合抓杀两奖目标，并把老大留到白蕾雅终局回合。",
+      "initial_state": "己方奖赏暂时持平；夜巡灵可自爆送奖；反击捕捉器和老大都在手；备战区仅余1格。",
+      "correct_commitment": "最后空位给夜巡灵，完成自爆并结算送奖后用反击捕捉器；支援者窗口留给奇树/白蕾雅准备。",
+      "attractive_lures": [
+        {
+          "label": "本回合直接用老大",
+          "axis": "supporter_window",
+          "reason": "当前能抓杀，却耗掉终局唯一支援者窗口。"
+        },
+        {
+          "label": "最后空位给第二只小火龙",
+          "axis": "bench_ownership",
+          "reason": "接力更厚但奖差无法改变，反击捕捉器不合法。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "最后一个炸弹空位",
+          "type": "bench_slot",
+          "deadline": "首轮攻击前"
+        },
+        {
+          "label": "一次送奖结算",
+          "type": "prize_window",
+          "deadline": "捕捉器前"
+        },
+        {
+          "label": "唯一支援者窗口",
+          "type": "supporter_window",
+          "deadline": "终局前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，可在下一回合抓掉大比鸟ex。",
+        "impact": "本回合必须用非支援者抓杀并保留打断窗口。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大抓大比鸟ex",
+        "奇树重置玩家手牌"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_06",
+      "title": "钥圈儿要先封，再主动解锁",
+      "profile": "deployment",
+      "objective": "封锁对手一个回合后，解除自身基础特性锁并完成米立龙/吉雉鸡的翻盘抽牌。",
+      "initial_state": "钥圈儿在前场；对手依赖基础ex特性展开；己方下回合需要米立龙顶6或吉雉鸡抽3；仅1次换位资源。",
+      "correct_commitment": "首轮让钥圈儿留前封锁；对手回合后用喷射能量/撤退移走钥圈儿，再发动己方基础宝可梦特性并完成进化。",
+      "attractive_lures": [
+        {
+          "label": "首轮提前移走钥圈儿",
+          "axis": "tempo_exchange",
+          "reason": "己方能抽牌，但对手也立刻完成展开并先拿奖。"
+        },
+        {
+          "label": "第二轮仍让钥圈儿在前",
+          "axis": "effect_semantics",
+          "reason": "己方米立龙与吉雉鸡特性同样被封锁。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次换位资源",
+          "type": "switch_window",
+          "deadline": "第二轮特性前"
+        },
+        {
+          "label": "一个安全备战位",
+          "type": "bench_slot",
+          "deadline": "封锁回合开始前"
+        },
+        {
+          "label": "一次基础特性窗口",
+          "type": "ability_window",
+          "deadline": "钥圈儿离开前场后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开需要基础ex特性才能补齐攻击。",
+        "impact": "封锁要覆盖对手回合，同时不能延长到自己的爆发阶段。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "老大绕过钥圈儿抓后排",
+        "替换场地并用非特性路线击倒钥圈儿"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_07",
+      "title": "博士研究会丢掉唯一答案",
+      "profile": "precision",
+      "objective": "不用随机7抽，靠音速搜索与现有手牌确定取得糖果、喷火龙和火能。",
+      "initial_state": "手中博士研究会丢弃唯一白蕾雅与回收；大比鸟ex可搜任意卡；另一检索可找宝可梦。",
+      "correct_commitment": "用宝可梦检索找喷火龙ex，音速搜索拿糖果；保留白蕾雅与回收，不使用博士研究。",
+      "attractive_lures": [
+        {
+          "label": "先博士研究7张",
+          "axis": "discard_ownership",
+          "reason": "抽牌更多但白蕾雅与唯一回收永久丢失。"
+        },
+        {
+          "label": "音速搜索拿喷火龙ex",
+          "axis": "search_ownership",
+          "reason": "随后没有任何来源取得糖果，手牌组件互相错位。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次任意卡检索",
+          "type": "search_window",
+          "deadline": "进化前"
+        },
+        {
+          "label": "唯一白蕾雅",
+          "type": "supporter_window",
+          "deadline": "终局回合"
+        },
+        {
+          "label": "唯一弃牌回收",
+          "type": "recycle_window",
+          "deadline": "首攻倒下后"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开将在下回合把玩家手牌压到2张。",
+        "impact": "必须在当前回合把确定组件转成场上状态，而非用随机抽牌换概率。",
+        "visibility": "public"
+      },
+      "credible_replies": []
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_08",
+      "title": "差30的320不能只看伤害",
+      "profile": "composite",
+      "objective": "用不服输头带精确跨320，并在拿奖改变条件前处理对手老大。",
+      "initial_state": "燃烧黑暗当前290；己方奖赏落后；不服输头带可取；对手手牌公开老大，后排大比鸟被抓即输。",
+      "correct_commitment": "先装不服输头带，再用奇树打掉公开老大，保持落后条件下攻击320HP目标。",
+      "attractive_lures": [
+        {
+          "label": "先拿单奖再装头带",
+          "axis": "prize_condition",
+          "reason": "奖差变化后+30条件消失，燃烧黑暗仍只有290。"
+        },
+        {
+          "label": "用老大抓290HP目标",
+          "axis": "disruption_priority",
+          "reason": "当前更易击倒，但对手保留老大反抓终局。"
+        },
+        {
+          "label": "最后空位给辅助而非接力小火龙",
+          "axis": "bench_ownership",
+          "reason": "当前击倒后首攻被反杀，第二回合没有攻击手。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "落后奖赏的+30窗口",
+          "type": "prize_window",
+          "deadline": "本回合拿奖前"
+        },
+        {
+          "label": "最后一个接力空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "一次奇树打断",
+          "type": "supporter_window",
+          "deadline": "攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，后排大比鸟ex被抓即输。",
+        "impact": "伤害断点与防终局必须在同一回合解决。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后击倒首攻喷火龙",
+        "撤退320HP目标并推单奖墙"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_09",
+      "title": "先送、再打断、最后白蕾雅三奖",
+      "profile": "composite",
+      "objective": "把对手奖赏推进到2张，移除公开老大，再由白蕾雅击倒太晶三奖目标结束比赛。",
+      "initial_state": "对手剩3奖；黑夜魔灵可自爆送1奖；白蕾雅与奇树竞争支援者；对手手牌公开老大。",
+      "correct_commitment": "先黑夜魔灵自爆把对手推进2奖；通过大比鸟音速搜索准备白蕾雅，并先用奇树移除老大；下一回合白蕾雅终结太晶目标。",
+      "attractive_lures": [
+        {
+          "label": "本回合立刻用白蕾雅",
+          "axis": "timing_order",
+          "reason": "对手仍剩3奖，额外奖赏条件不成立。"
+        },
+        {
+          "label": "自爆后直接老大抓太晶目标",
+          "axis": "supporter_window",
+          "reason": "抓到目标却占用奇树打断，攻击后被反抓结束。"
+        },
+        {
+          "label": "130自爆打当前攻击目标",
+          "axis": "damage_economy",
+          "reason": "与燃烧黑暗重叠，未处理另一条奖赏线。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "一次主动送奖",
+          "type": "prize_window",
+          "deadline": "白蕾雅前"
+        },
+        {
+          "label": "一个黑夜魔灵备战位",
+          "type": "bench_slot",
+          "deadline": "自爆前"
+        },
+        {
+          "label": "奇树与白蕾雅两个回合窗口",
+          "type": "supporter_window",
+          "deadline": "两轮攻击前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手手牌公开老大，可在玩家完成当前攻击后抓杀两奖目标结束。",
+        "impact": "白蕾雅终局必须先用上一回合打断为其争取时间。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树后击倒首攻喷火龙",
+        "撤退太晶目标并老大抓大比鸟"
+      ]
+    },
+    {
+      "deck_key": "charizard_dragapult",
+      "deck_id": "800025404",
+      "display_name": "喷火龙ex／多龙炸弹",
+      "defect": "旧10题高度复用同一盘面与长见证序列，只替换少量目标；糖果在喷火龙与大比鸟之间的竞争、锁特性、自爆改奖差和白蕾雅终局没有真正成为玩家决策。",
+      "puzzle_id": "charizard_dragapult_10",
+      "title": "弃牌区是第二副手牌但不是无限手牌",
+      "profile": "composite",
+      "objective": "钓竿精确回填进化线与火能，扛过奇树或抓杀后完成第二只喷火龙。",
+      "initial_state": "弃牌有喷火龙ex、小火龙与3火能；厉害钓竿只能回3张；牌库极薄；喷射能量与糖果各1。",
+      "correct_commitment": "钓竿回填喷火龙ex、小火龙和1火能；先用大比鸟搜糖果，再用喷射能量换位并从手牌进化触发烈焰支配。",
+      "attractive_lures": [
+        {
+          "label": "钓竿回填3火能",
+          "axis": "recycle_ownership",
+          "reason": "能量充足但没有第二条进化线。"
+        },
+        {
+          "label": "钓竿回填两只进化宝可梦不回基础",
+          "axis": "evolution_legality",
+          "reason": "抽到组件也没有合法进化对象。"
+        },
+        {
+          "label": "最后空位给夜巡灵",
+          "axis": "bench_ownership",
+          "reason": "多一个炸弹，却没有小火龙重建位置。"
+        }
+      ],
+      "scarce_resources": [
+        {
+          "label": "钓竿三个回填名额",
+          "type": "recycle_window",
+          "deadline": "任何抽牌前"
+        },
+        {
+          "label": "最后一个小火龙空位",
+          "type": "bench_slot",
+          "deadline": "对手回应前"
+        },
+        {
+          "label": "一次喷射换位",
+          "type": "switch_window",
+          "deadline": "第二轮进化前"
+        }
+      ],
+      "public_threat": {
+        "evidence": "对手公开可奇树洗回手牌，或老大抓唯一小火龙。",
+        "impact": "回填必须让两种回复后都仍存在合法基础、进化件和能量来源。",
+        "visibility": "public"
+      },
+      "credible_replies": [
+        "奇树重置手牌并击倒首攻",
+        "老大抓唯一小火龙"
+      ]
+    }
+  ]
+}

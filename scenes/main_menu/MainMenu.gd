@@ -7,6 +7,7 @@ const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/No
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
 const DeckCenterMetaClientScript := preload("res://scripts/network/DeckCenterMetaClient.gd")
+const DeckTrainingFeatureNoticeScript := preload("res://scripts/training/DeckTrainingFeatureNotice.gd")
 const UpdateCheckerScript := preload("res://scripts/network/UpdateChecker.gd")
 const UserVisitClientScript := preload("res://scripts/network/UserVisitClient.gd")
 const MENU_VERTICAL_SHIFT := 88.0
@@ -14,6 +15,7 @@ const MAIN_MENU_BUTTON_WIDTH := 312.0
 const MAIN_MENU_BUTTON_HEIGHT := 52.0
 const PORTRAIT_MENU_BUTTON_DOWN_SHIFT := 1.0
 const MAIN_MENU_FEATURED_ACCENT := Color(1.0, 0.70, 0.24, 1.0)
+const MAIN_MENU_TRAINING_ACCENT := Color(0.68, 0.42, 1.0, 1.0)
 const MAIN_MENU_DANGER_ACCENT := Color(1.0, 0.38, 0.34, 1.0)
 const CHAMPION_PREVIEW_PLAYER_NAME := "冠军玩家"
 const CHAMPION_PREVIEW_DECK_ID := 575716
@@ -69,6 +71,8 @@ var _update_button: Button = null
 var _update_button_flash_tween: Tween = null
 var _deck_center_button_flash_tween: Tween = null
 var _deck_center_new_badge: PanelContainer = null
+var _deck_training_button_flash_tween: Tween = null
+var _deck_training_new_badge: PanelContainer = null
 var _feedback_button: Button = null
 var _manual_update_button: Button = null
 var _about_button: Button = null
@@ -163,8 +167,16 @@ func _handle_active_modal_input(event: InputEvent) -> bool:
 	if overlay == null:
 		return false
 	_main_menu_touch_button_candidate = null
+	var native_text_input_touch := false
+	if _is_pointer_input_event(event):
+		native_text_input_touch = (
+			NonBattleTouchBridgeScript.has_native_text_input_touch(overlay)
+			or NonBattleTouchBridgeScript.native_text_input_at_position(overlay, _event_global_position(event)) != null
+		)
 	if bool(NonBattleTouchBridgeScript.handle_root_touch(overlay, event)):
 		return true
+	if native_text_input_touch:
+		return false
 	if _event_inside_modal_overlay(overlay, event):
 		_accept_main_menu_touch()
 		return true
@@ -285,12 +297,14 @@ func _notification(what: int) -> void:
 		_resize_feedback_panel()
 		_resize_hud_modal_panel()
 		_position_deck_center_new_badge()
+		_position_deck_training_new_badge()
 		_layout_budew_mascot()
 		if _corner_action_hover_button != null:
 			_position_corner_action_label(_corner_action_hover_button)
 	elif what == NOTIFICATION_PREDELETE:
 		_stop_update_button_flash(false)
 		_stop_deck_center_button_flash(false)
+		_stop_deck_training_button_flash(false)
 		_stop_budew_mascot_dodge()
 
 
@@ -320,7 +334,7 @@ func _apply_main_menu_hud() -> void:
 			continue
 		var role := _main_menu_button_role(button_name)
 		var is_primary := role == "primary"
-		var is_featured := role == "featured"
+		var is_featured := role in ["featured", "training_feature"]
 		var accent := _main_menu_button_accent(role)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.custom_minimum_size = _main_menu_button_minimum_size(role)
@@ -337,10 +351,12 @@ func _apply_main_menu_hud() -> void:
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		_enable_button_touch_activation(button)
 		if is_featured:
-			button.tooltip_text = "查看推荐卡组、管理本地卡组、导入新卡组"
+			button.tooltip_text = "进入卡组训练，挑战真实对局中的展开与终局决策" if role == "training_feature" else "查看推荐卡组、管理本地卡组、导入新卡组"
 
 
 	_ensure_deck_center_new_badge()
+	_ensure_deck_training_new_badge()
+	_refresh_deck_training_feature_notice()
 	_apply_non_battle_layout()
 
 
@@ -379,6 +395,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	_layout_update_button(context, portrait)
 	_layout_corner_action_buttons(context, portrait)
 	_position_deck_center_new_badge()
+	_position_deck_training_new_badge()
 	_ensure_budew_mascot()
 	_layout_budew_mascot()
 
@@ -883,6 +900,8 @@ func _main_menu_button_role(button_name: String) -> String:
 			return "primary"
 		"BtnDeckManager":
 			return "featured"
+		"BtnBattleReplay":
+			return "training_feature"
 		"BtnQuit":
 			return "danger"
 		_:
@@ -895,6 +914,8 @@ func _main_menu_button_accent(role: String) -> Color:
 			return HudThemeScript.ACCENT
 		"featured":
 			return MAIN_MENU_FEATURED_ACCENT
+		"training_feature":
+			return MAIN_MENU_TRAINING_ACCENT
 		"danger":
 			return MAIN_MENU_DANGER_ACCENT
 		_:
@@ -1315,7 +1336,7 @@ func _position_corner_action_label(button: Button) -> void:
 func _setup_version_and_updates() -> void:
 	var version_label := get_node_or_null("VersionLabel") as Label
 	if version_label != null:
-		version_label.text = AppVersionScript.DISPLAY_VERSION
+		version_label.text = AppVersionScript.current_display_version()
 		version_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 		version_label.add_theme_color_override("font_color", Color(0.70, 0.82, 0.90, 0.92))
 
@@ -1443,6 +1464,16 @@ func _deck_center_button() -> Button:
 	return find_child("BtnDeckManager", true, false) as Button
 
 
+func _deck_training_button() -> Button:
+	var button := get_node_or_null("%BtnBattleReplay") as Button
+	if button != null:
+		return button
+	button = get_node_or_null("VBoxContainer/BtnBattleReplay") as Button
+	if button != null:
+		return button
+	return find_child("BtnBattleReplay", true, false) as Button
+
+
 func _ensure_deck_center_new_badge() -> void:
 	var button := _deck_center_button()
 	if button == null:
@@ -1542,6 +1573,106 @@ func _stop_deck_center_button_flash(reset_modulate: bool = true) -> void:
 	_set_deck_center_new_badge_visible(false)
 
 
+func _ensure_deck_training_new_badge() -> void:
+	var button := _deck_training_button()
+	if button == null:
+		return
+	if _deck_training_new_badge != null and is_instance_valid(_deck_training_new_badge):
+		if _deck_training_new_badge.get_parent() != self:
+			if _deck_training_new_badge.get_parent() != null:
+				_deck_training_new_badge.get_parent().remove_child(_deck_training_new_badge)
+			add_child(_deck_training_new_badge)
+		_position_deck_training_new_badge()
+		return
+	_deck_training_new_badge = PanelContainer.new()
+	_deck_training_new_badge.name = "DeckTrainingNewBadge"
+	_deck_training_new_badge.visible = false
+	_deck_training_new_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_deck_training_new_badge.z_index = 20
+	_deck_training_new_badge.layout_mode = 1
+	_deck_training_new_badge.anchor_left = 0.0
+	_deck_training_new_badge.anchor_top = 0.0
+	_deck_training_new_badge.anchor_right = 0.0
+	_deck_training_new_badge.anchor_bottom = 0.0
+	_deck_training_new_badge.offset_left = 0.0
+	_deck_training_new_badge.offset_top = 0.0
+	_deck_training_new_badge.offset_right = 54.0
+	_deck_training_new_badge.offset_bottom = 22.0
+	_deck_training_new_badge.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_deck_training_new_badge.add_theme_stylebox_override("panel", _deck_center_new_badge_style())
+	add_child(_deck_training_new_badge)
+
+	var label := Label.new()
+	label.name = "DeckTrainingNewBadgeText"
+	label.text = "NEW"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
+	label.add_theme_color_override("font_color", Color(0.03, 0.05, 0.07, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(1.0, 1.0, 1.0, 0.45))
+	label.add_theme_constant_override("outline_size", 1)
+	_deck_training_new_badge.add_child(label)
+	_position_deck_training_new_badge()
+
+
+func _position_deck_training_new_badge() -> void:
+	if _deck_training_new_badge == null or not is_instance_valid(_deck_training_new_badge):
+		return
+	var button := _deck_training_button()
+	if button == null or not is_instance_valid(button):
+		return
+	var rect := button.get_global_rect()
+	_deck_training_new_badge.size = Vector2(54.0, 22.0)
+	_deck_training_new_badge.global_position = Vector2(rect.position.x + rect.size.x - 64.0, rect.position.y + 4.0)
+
+
+func _set_deck_training_new_badge_visible(visible: bool) -> void:
+	_ensure_deck_training_new_badge()
+	if _deck_training_new_badge != null and is_instance_valid(_deck_training_new_badge):
+		_deck_training_new_badge.visible = visible
+
+
+func _refresh_deck_training_feature_notice() -> void:
+	if DeckTrainingFeatureNoticeScript.is_unseen():
+		_start_deck_training_button_flash()
+	else:
+		_stop_deck_training_button_flash()
+
+
+func _start_deck_training_button_flash() -> void:
+	var button := _deck_training_button()
+	if button == null or not is_instance_valid(button):
+		return
+	_stop_deck_training_button_flash(false)
+	_set_deck_training_new_badge_visible(true)
+	button.modulate = Color.WHITE
+	if not is_inside_tree():
+		return
+	_deck_training_button_flash_tween = create_tween()
+	_deck_training_button_flash_tween.set_loops()
+	_deck_training_button_flash_tween.set_trans(Tween.TRANS_SINE)
+	_deck_training_button_flash_tween.set_ease(Tween.EASE_IN_OUT)
+	_deck_training_button_flash_tween.tween_property(button, "modulate", Color(0.82, 0.62, 1.0, 0.58), 0.62)
+	_deck_training_button_flash_tween.tween_property(button, "modulate", Color.WHITE, 0.62)
+
+
+func _stop_deck_training_button_flash(reset_modulate: bool = true) -> void:
+	if _deck_training_button_flash_tween != null:
+		_deck_training_button_flash_tween.kill()
+		_deck_training_button_flash_tween = null
+	var button := _deck_training_button()
+	if reset_modulate and button != null and is_instance_valid(button):
+		button.modulate = Color.WHITE
+	_set_deck_training_new_badge_visible(false)
+
+
+func _mark_deck_training_feature_seen() -> bool:
+	var saved: bool = DeckTrainingFeatureNoticeScript.mark_seen()
+	if saved:
+		_stop_deck_training_button_flash()
+	return saved
+
+
 func _mark_pending_deck_center_meta_seen() -> void:
 	var revision := str(_pending_deck_center_meta.get("latest_revision", "")).strip_edges()
 	if revision != "":
@@ -1598,7 +1729,7 @@ func _show_temp_update_available_preview() -> void:
 
 
 func _build_temp_update_preview_info() -> Dictionary:
-	var latest_version := _next_patch_version(AppVersionScript.VERSION)
+	var latest_version := _next_patch_version(AppVersionScript.current_version())
 	return {
 		"schema_version": 1,
 		"latest_version": latest_version,
@@ -1656,8 +1787,8 @@ func _on_no_update(info: Dictionary) -> void:
 		_update_button.visible = false
 		_apply_non_battle_layout()
 	if was_manual:
-		var display_version := str(info.get("display_version", AppVersionScript.DISPLAY_VERSION))
-		_show_update_status_dialog("已是最新版本", "当前版本：%s\n服务器版本：%s" % [AppVersionScript.DISPLAY_VERSION, display_version])
+		var display_version := str(info.get("display_version", AppVersionScript.current_display_version()))
+		_show_update_status_dialog("已是最新版本", "当前版本：%s\n服务器版本：%s" % [AppVersionScript.current_display_version(), display_version])
 
 
 func _on_update_check_failed(message: String) -> void:
@@ -1915,6 +2046,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 func _hide_hud_modal() -> void:
 	var existing := get_node_or_null(HUD_MODAL_OVERLAY_NAME)
 	if existing != null:
+		NonBattleTouchBridgeScript.clear_transient_input_state(existing, "modal_closed")
 		if existing.get_parent() != null:
 			existing.get_parent().remove_child(existing)
 		existing.queue_free()
@@ -1988,7 +2120,18 @@ func _show_feedback_dialog() -> void:
 func _hide_feedback_dialog() -> void:
 	var overlay := get_node_or_null(FEEDBACK_OVERLAY_NAME) as Control
 	if overlay != null:
+		NonBattleTouchBridgeScript.clear_transient_input_state(overlay, "modal_closed")
 		overlay.visible = false
+	if _feedback_text_edit != null and _feedback_text_edit.has_focus():
+		_feedback_text_edit.release_focus()
+	if _feedback_name_input != null and _feedback_name_input.has_focus():
+		_feedback_name_input.release_focus()
+	if DisplayServer.get_name() != "headless" and (
+		OS.has_feature("mobile")
+		or OS.has_feature("android")
+		or OS.has_feature("ios")
+	):
+		DisplayServer.virtual_keyboard_hide()
 
 
 func _create_feedback_overlay() -> Control:
@@ -2162,6 +2305,7 @@ func _build_feedback_dialog_content() -> Control:
 	_feedback_name_input.placeholder_text = "可填昵称；留空会按匿名玩家提交"
 	_feedback_name_input.max_length = FeedbackClientScript.MAX_NAME_LENGTH
 	form.add_child(_feedback_name_input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(_feedback_name_input, LineEdit.KEYBOARD_TYPE_DEFAULT)
 
 	var content_label := Label.new()
 	content_label.text = "反馈内容"
@@ -2173,6 +2317,7 @@ func _build_feedback_dialog_content() -> Control:
 	_feedback_text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_feedback_text_edit.placeholder_text = "请写下建议或 bug：发生在哪个页面、做了什么操作、期望结果和实际结果。"
 	form.add_child(_feedback_text_edit)
+	NonBattleTouchBridgeScript.configure_native_text_edit(_feedback_text_edit)
 
 	_feedback_quota_label = Label.new()
 	_feedback_quota_label.name = "FeedbackQuotaLabel"
@@ -2395,12 +2540,12 @@ func _on_feedback_dialog_confirmed() -> void:
 		return
 
 	_pending_feedback_payload = FeedbackClientScript.build_payload(player_name, feedback_text, {
-		"app_version": AppVersionScript.DISPLAY_VERSION,
+		"app_version": AppVersionScript.current_display_version(),
 		"platform": OS.get_name(),
 	})
 	_set_feedback_submit_busy(true)
 	var err: int = int(_feedback_client.call("submit_feedback", player_name, feedback_text, {
-		"app_version": AppVersionScript.DISPLAY_VERSION,
+		"app_version": AppVersionScript.current_display_version(),
 		"platform": OS.get_name(),
 	}))
 	if err == ERR_BUSY:
@@ -2453,7 +2598,7 @@ func _format_feedback_clipboard_payload(payload: Dictionary) -> String:
 	return "\n".join(PackedStringArray([
 		"PTCG Deck Agent 反馈",
 		"称呼：%s" % str(payload.get("name", "匿名玩家")),
-		"版本：%s" % str(payload.get("app_version", AppVersionScript.DISPLAY_VERSION)),
+		"版本：%s" % str(payload.get("app_version", AppVersionScript.current_display_version())),
 		"平台：%s" % str(payload.get("platform", OS.get_name())),
 		"小红书：%s（%s）" % [XHS_DISPLAY_NAME, XHS_ID],
 		"",
@@ -2557,7 +2702,7 @@ func _show_update_dialog(info: Dictionary) -> void:
 func _format_update_dialog_text(info: Dictionary) -> String:
 	var display_version := str(info.get("display_version", "v%s" % str(info.get("latest_version", ""))))
 	var lines := PackedStringArray([
-		"当前版本：%s" % AppVersionScript.DISPLAY_VERSION,
+		"当前版本：%s" % AppVersionScript.current_display_version(),
 		"最新版本：%s" % display_version,
 	])
 	var release_date := str(info.get("release_date", ""))
@@ -2630,6 +2775,7 @@ func _on_deck_manager() -> void:
 
 
 func _on_deck_training() -> void:
+	_mark_deck_training_feature_seen()
 	GameManager.goto_deck_training()
 
 

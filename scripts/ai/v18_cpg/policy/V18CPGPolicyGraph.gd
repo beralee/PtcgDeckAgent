@@ -61,6 +61,16 @@ func origin() -> String:
 	return _origin
 
 
+func current_route_has_declared_successor() -> bool:
+	if not is_active():
+		return false
+	var node: Dictionary = _node_by_id[_current_node_id]
+	if str(node.get("kind", "")) != "route":
+		return false
+	var next_node_id := str(node.get("next_node_id", ""))
+	return next_node_id != "" and _node_by_id.has(next_node_id)
+
+
 func advance_after_observation(
 	facts: Dictionary,
 	available_route_ids: Array[String],

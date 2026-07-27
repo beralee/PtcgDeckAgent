@@ -173,7 +173,7 @@ func test_switching_ticket_animation_plan_rejects_unrelated_trainer_actions() ->
 	return assert_true(phases.is_empty(), "The Prize exchange animation should only consume Switching Ticket actions")
 
 
-func test_opening_prize_actions_preserve_the_six_hidden_cards_for_animation() -> String:
+func test_opening_prize_actions_preserve_the_six_hidden_cards_without_reveal_animation() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _state()
 	gsm.game_state.phase = GameState.GamePhase.SETUP
@@ -194,14 +194,14 @@ func test_opening_prize_actions_preserve_the_six_hidden_cards_for_animation() ->
 	]
 	for action: GameAction in prize_actions:
 		var ids: Array = action.data.get("card_instance_ids", [])
-		checks.append(assert_eq(ids.size(), 6, "Opening Prize animation should receive all six hidden card identities"))
-		checks.append(assert_true(bool(action.data.get("opening_deal", false)), "Opening Prize placement should be marked for the dedicated deal animation"))
-		checks.append(assert_eq(str(action.data.get("source_zone", "")), "deck", "Opening cards should visibly originate from the deck"))
-		checks.append(assert_eq(str(action.data.get("target_zone", "")), "prize", "Opening cards should visibly land in the Prize destination"))
+		checks.append(assert_eq(ids.size(), 6, "Opening setup should still record all six hidden Prize identities"))
+		checks.append(assert_true(bool(action.data.get("opening_deal", false)), "Opening Prize placement should remain distinguishable from in-battle Prize changes"))
+		checks.append(assert_eq(str(action.data.get("source_zone", "")), "deck", "Opening Prize records should preserve their source zone"))
+		checks.append(assert_eq(str(action.data.get("target_zone", "")), "prize", "Opening Prize records should preserve their destination zone"))
 	return run_checks(checks)
 
 
-func test_opening_prize_animation_plan_deals_once_from_deck_to_prize_destination() -> String:
+func test_opening_prize_animation_plan_is_disabled() -> String:
 	var action := GameAction.create(
 		GameAction.ActionType.SETUP_SET_PRIZES,
 		0,
@@ -216,14 +216,7 @@ func test_opening_prize_animation_plan_deals_once_from_deck_to_prize_destination
 		"place opening Prizes"
 	)
 	var phases: Array = BattleDrawRevealControllerScript.new().call("build_prize_exchange_animation_plan", action)
-	var phase: Dictionary = phases[0] if phases.size() == 1 else {}
-	return run_checks([
-		assert_eq(phases.size(), 1, "Opening setup should use one concise deal phase"),
-		assert_eq(str(phase.get("id", "")), "opening_deck_to_prize", "Opening phase should have a stable animation identity"),
-		assert_eq(str(phase.get("from_zone", "")), "deck", "Opening Prize cards should originate at the player's deck HUD"),
-		assert_eq(str(phase.get("to_zone", "")), "prize", "Opening Prize cards should land at the layout-specific Prize destination"),
-		assert_true(bool(phase.get("face_down", false)), "Opening Prize identities must stay hidden throughout the animation"),
-	])
+	return assert_true(phases.is_empty(), "Opening setup should place all six Prizes immediately without a flight animation")
 
 
 func test_portrait_prize_flights_target_the_visible_count_hud_instead_of_hidden_slots() -> String:

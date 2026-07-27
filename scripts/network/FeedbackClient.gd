@@ -38,7 +38,7 @@ static func build_payload(player_name: String, content: String, metadata: Dictio
 	return {
 		"name": clean_name,
 		"content": clean_content,
-		"app_version": str(metadata.get("app_version", AppVersionScript.DISPLAY_VERSION)),
+		"app_version": str(metadata.get("app_version", AppVersionScript.current_display_version())),
 		"platform": str(metadata.get("platform", OS.get_name())),
 		"source": str(metadata.get("source", "main_menu_feedback")),
 		"submitted_at": int(metadata.get("submitted_at", Time.get_unix_time_from_system())),
@@ -62,7 +62,7 @@ func submit_feedback(player_name: String, content: String, metadata: Dictionary 
 	var body := JSON.stringify(build_payload(player_name, content, metadata))
 	var headers := PackedStringArray([
 		"Content-Type: application/json; charset=utf-8",
-		"User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION,
+		"User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version(),
 	])
 
 	_is_submitting = true

@@ -235,8 +235,9 @@ func _clear_primary_release_fallback_recursive(node: Node) -> void:
 
 
 func _hand_scroll_height_with_scrollbar(card_height: float) -> float:
-	if _is_portrait_popup_text_profile_active():
-		return maxf(0.0, card_height) + _card_scrollbar_clearance_height()
+	# Hand navigation uses drag scrolling and hides its native scrollbars on every
+	# platform. Reserving the portrait popup scrollbar thickness here wastes a
+	# large vertical strip and can push iPad Web hand cards below the viewport.
 	return maxf(0.0, card_height) + float(HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
 
 
@@ -1878,9 +1879,14 @@ func _bt(key: String, params: Dictionary = {}) -> String:
 
 
 func _on_coin_flipped(result: bool) -> void:
-	var text: String = "正面" if result else "反面"
+	var labels: Dictionary = {}
+	if _opening_first_player_flip_pending:
+		labels = {"heads": "先攻", "tails": "后攻"}
+		_opening_first_player_flip_pending = false
+	var text: String = str(labels.get("heads" if result else "tails", "正面" if result else "反面"))
 	_runtime_log("coin_flipped", text)
 	_coin_flip_queue.append(result)
+	_coin_flip_label_queue.append(labels)
 	if not _coin_animating:
 		_play_next_coin_animation()
 

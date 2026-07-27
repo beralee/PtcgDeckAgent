@@ -27,6 +27,7 @@ const OPTION_PRESS_SIGNAL_ONLY_META := "_non_battle_option_press_signal_only"
 const OPTION_POPUP_BOUNDS_META := "_non_battle_popup_bounds"
 const FOCUS_TOUCH_BOUND_META := "_non_battle_focus_touch_bound"
 const FOCUS_TOUCH_PRESSED_META := "_non_battle_focus_touch_pressed"
+const VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META := "_non_battle_virtual_keyboard_reopen_requested"
 const LINE_EDIT_SELECT_ALL_BOUND_META := "_non_battle_line_edit_select_all_bound"
 const LINE_EDIT_SELECTED_ALL_META := "_non_battle_line_edit_selected_all"
 const LINE_EDIT_SELECTED_ALL_META_NAME := "_non_battle_line_edit_selected_all_meta_name"
@@ -404,6 +405,21 @@ static func configure_native_line_edit(input: LineEdit, keyboard_type: int = Lin
 		input.remove_meta(FOCUS_TOUCH_BOUND_META)
 
 
+static func configure_native_text_edit(input: TextEdit) -> void:
+	if input == null:
+		return
+	input.focus_mode = Control.FOCUS_ALL
+	input.mouse_filter = Control.MOUSE_FILTER_STOP
+	input.context_menu_enabled = true
+	input.virtual_keyboard_enabled = true
+	input.virtual_keyboard_show_on_focus = true
+	input.set("shortcut_keys_enabled", true)
+	input.set("middle_mouse_paste_enabled", true)
+	mark_native_text_input(input)
+	if input.has_meta(FOCUS_TOUCH_BOUND_META):
+		input.remove_meta(FOCUS_TOUCH_BOUND_META)
+
+
 static func bind_button_touch(button: Button) -> void:
 	if button == null or bool(button.get_meta(BUTTON_TOUCH_BOUND_META, false)):
 		return
@@ -735,6 +751,7 @@ static func _should_bypass_bridge_for_native_text_input(host: Control, position:
 			_accept_event(host)
 			return true
 		_store_native_text_input_candidate(host, native_input)
+		_request_hidden_native_keyboard_reopen(native_input)
 		return true
 	if host.has_meta(NATIVE_TEXT_INPUT_CANDIDATE_META):
 		if released:
@@ -751,6 +768,47 @@ static func _should_bypass_bridge_for_native_text_input(host: Control, position:
 			_accept_event(host)
 		return true
 	return false
+
+
+static func has_native_text_input_touch(host: Control) -> bool:
+	return host != null and host.has_meta(NATIVE_TEXT_INPUT_CANDIDATE_META)
+
+
+static func event_targets_native_text_input(host: Control, event: InputEvent) -> bool:
+	if host == null or event == null:
+		return false
+	if has_native_text_input_touch(host):
+		return true
+	var position := Vector2(INF, INF)
+	if event is InputEventScreenTouch:
+		position = (event as InputEventScreenTouch).position
+	elif event is InputEventScreenDrag:
+		position = (event as InputEventScreenDrag).position
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		position = mouse_button.global_position if mouse_button.global_position != Vector2.ZERO else mouse_button.position
+	if position.x == INF or position.y == INF:
+		return false
+	return native_text_input_at_position(host, position) != null
+
+
+static func _request_hidden_native_keyboard_reopen(control: Control) -> void:
+	if control == null or not control.has_focus():
+		return
+	if DisplayServer.get_name() == "headless":
+		control.set_meta(VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META, true)
+		return
+	if not (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
+		return
+	if DisplayServer.virtual_keyboard_get_height() > 0:
+		return
+	control.set_meta(VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META, true)
+	var text := ""
+	if control is LineEdit:
+		text = (control as LineEdit).text
+	elif control is TextEdit:
+		text = (control as TextEdit).text
+	DisplayServer.virtual_keyboard_show(text, control.get_global_rect())
 
 
 static func _handle_range_drag(host: Control, position: Vector2) -> bool:

@@ -22,8 +22,9 @@ func build(
 	var protected_roles: Array = profile.get("protected_roles", []) if profile.get("protected_roles", []) is Array else []
 	var board_energy := _board_energy_counts(own)
 	var own_belief: Dictionary = belief.get("own", {}) if belief.get("own", {}) is Dictionary else {}
+	var next_turn_reservations := _typed_role_reservations(protected_roles)
 	return {
-		"schema_version": 2,
+		"schema_version": 3,
 		"available_now": {
 			"hand_cards": int(own.get("hand_count", 0)),
 			"bench_slots": maxi(0, 5 - int((own.get("bench", []) as Array).size() if own.get("bench", []) is Array else 0)),
@@ -32,7 +33,11 @@ func build(
 			"board_energy_by_symbol": board_energy,
 		},
 		"reserved_current_route": current_reservations.duplicate(true),
-		"reserved_next_turn": _typed_role_reservations(protected_roles),
+		"reserved_next_turn": next_turn_reservations,
+		"reserved_by_window": {
+			"current_action_window": current_reservations.duplicate(true),
+			"next_attack_window": next_turn_reservations.duplicate(true),
+		},
 		"recoverable": _recoverable_public_resources(discard_counts, semantic_manifest),
 		"possibly_prized": (own_belief.get("possible_prized", {}) as Dictionary).duplicate(true) if own_belief.get("possible_prized", {}) is Dictionary else {},
 		"safe_to_discard": _safe_to_discard(hand, hand_counts, protected_roles, semantic_manifest),

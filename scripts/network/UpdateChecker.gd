@@ -67,7 +67,7 @@ func ignore_version(version: String) -> void:
 
 func is_update_available(info: Dictionary, current_version: String = "") -> bool:
 	if current_version == "":
-		current_version = AppVersionScript.VERSION
+		current_version = AppVersionScript.current_version()
 	var latest_version := str(info.get("latest_version", ""))
 	if latest_version == "":
 		return false
@@ -166,7 +166,7 @@ func _build_manifest_request_url(force: bool = false) -> String:
 
 
 func _build_manifest_request_headers(force: bool = false) -> PackedStringArray:
-	var headers := PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION])
+	var headers := PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version()])
 	if force:
 		headers.append("Cache-Control: no-cache, no-store, max-age=0")
 		headers.append("Pragma: no-cache")

@@ -5,6 +5,23 @@ const DEFAULT_BUDGET_MS := 12000
 const DEFAULT_COLD_ESTIMATE_MS := 6500
 
 
+func budget_for_turn(
+	base_budget_ms: int,
+	turn_number: int,
+	growth_ms: int,
+	growth_every_turns: int,
+	cap_ms: int
+) -> int:
+	var base := maxi(1000, base_budget_ms)
+	var bounded_cap := maxi(base, cap_ms)
+	var cadence := maxi(1, growth_every_turns)
+	var completed_growth_steps := maxi(0, maxi(1, turn_number) - 1) / cadence
+	return mini(
+		bounded_cap,
+		base + completed_growth_steps * maxi(0, growth_ms)
+	)
+
+
 func may_request(
 	spent_ms: int,
 	wait_samples_ms: Array[float],

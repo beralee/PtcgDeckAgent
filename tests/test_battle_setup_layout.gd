@@ -1476,6 +1476,43 @@ func test_battle_setup_battle_exit_startup_shield_blocks_portrait_release_only_f
 	return result
 
 
+func test_battle_setup_match_end_startup_shield_blocks_release_only_effect_toggle() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	var previous_effects_enabled := bool(GameManager.battle_effects_enabled)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	GameManager.battle_effects_enabled = true
+	GameManager.call("request_battle_setup_startup_input_shield", "battle_match_end_return", 1000)
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_ready")
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	_force_two_player_mode(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+
+	var effects_off_button := scene.find_child("BattleEffectsOffButton", true, false) as Button
+	var release_position := effects_off_button.get_global_rect().get_center() if effects_off_button != null else Vector2.ZERO
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = release_position
+	scene.call("_input", release)
+	var shield := scene.find_child("BattleSetupStartupInputShield", true, false) as Control
+	var effects_still_enabled := bool(GameManager.battle_effects_enabled) and bool(scene.get("_battle_effects_enabled"))
+
+	var result := run_checks([
+		assert_not_null(effects_off_button, "Portrait BattleSetup should expose the battle-effects off button for the release-only regression"),
+		assert_true(shield != null and shield.visible, "BattleSetup should keep a startup shield above the effects controls after match-end return"),
+		assert_true(effects_still_enabled, "The release inherited from the match-end return button must not toggle battle animation effects"),
+	])
+
+	_dispose_scene(scene)
+	GameManager.battle_effects_enabled = previous_effects_enabled
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
 func test_battle_setup_deck_picker_touch_does_not_steal_edit_button_overlap() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)

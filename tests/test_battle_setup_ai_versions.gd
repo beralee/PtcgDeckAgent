@@ -3,6 +3,7 @@ extends TestBase
 
 const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
 const DeckStrategyV18ProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
+const V18CPGProfileCatalogScript = preload("res://scripts/ai/v18_cpg/V18CPGProfileCatalog.gd")
 const EXPECTED_V18_STRENGTH_ORDER_IDS: Array[int] = [
 	# Final normal-mode n100 win rate descending; strong-mode n100 breaks ties.
 	800018500, 800018880, 800017631, 800018501, 18000625, 800018509,
@@ -314,6 +315,66 @@ func test_battle_setup_windows_landscape_exposes_released_ns_zoroark_cpg() -> St
 	scene.queue_free()
 	_restore_battle_review_config_file(snapshot)
 	return result
+
+
+func test_battle_setup_exposes_rule_and_cpg_for_all_v18_decks() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-flash",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	var deck2_option := scene.find_child(
+		"Deck2Option",
+		true,
+		false
+	) as OptionButton
+	var mode_option := scene.find_child(
+		"ModeOption",
+		true,
+		false
+	) as OptionButton
+	var strategy_option := scene.find_child(
+		"AIStrategyOption",
+		true,
+		false
+	) as OptionButton
+	var checks: Array[String] = []
+	mode_option.select(1)
+	for deck_id: int in V18CPGProfileCatalogScript.ALL_DECK_IDS:
+		var profile := V18CPGProfileCatalogScript.get_profile_for_deck(
+			deck_id
+		)
+		var deck := _make_deck(
+			deck_id,
+			str(profile.get("display_name", "18.0 %d" % deck_id))
+		)
+		scene.set("_ai_deck_list", [deck])
+		deck2_option.clear()
+		deck2_option.add_item(deck.deck_name)
+		deck2_option.set_item_metadata(0, deck.id)
+		deck2_option.select(0)
+		scene.call("_refresh_ai_ui_visibility")
+		var ids: Array[String] = []
+		for index: int in strategy_option.get_item_count():
+			ids.append(str(strategy_option.get_item_metadata(index)))
+		checks.append(assert_eq(
+			ids,
+			[
+				str(profile.get("base_strategy_id", "")),
+				str(profile.get("strategy_id", "")),
+			],
+			"%d should expose Rule and V18CPG in BattleSetup" % deck_id
+		))
+	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
+	return run_checks(checks)
 
 
 func test_battle_setup_saved_llm_variant_overrides_prebuilt_rule_selection() -> String:
@@ -1254,9 +1315,9 @@ func test_battle_setup_ai_preview_strength_option_only_shows_in_ai_mode() -> Str
 		assert_true(preview_option is OptionButton, "BattleSetup should include AIPreviewStrengthOption"),
 		assert_false(hidden_in_two_player, "AIPreviewStrengthOption should stay hidden outside VS_AI mode"),
 		assert_true(preview_option.visible, "AIPreviewStrengthOption should show in VS_AI mode"),
-		assert_eq(preview_option.get_item_count(), 2, "AIPreviewStrengthOption should expose weak/strong choices"),
-		assert_eq(preview_option.get_item_text(0), "弱", "Preview strength option 0 should be weak"),
-		assert_eq(preview_option.get_item_text(1), "强", "Preview strength option 1 should be strong"),
+		assert_eq(preview_option.get_item_count(), 2, "AIPreviewStrengthOption should expose standard/fixed choices"),
+		assert_eq(preview_option.get_item_text(0), "标准", "Preview strength option 0 should be standard"),
+		assert_eq(preview_option.get_item_text(1), "固定", "Preview strength option 1 should be fixed"),
 	])
 
 

@@ -6,6 +6,7 @@ const VISIBLE_SCOPE_OWN_FULL_DECK := "own_full_deck"
 const VISIBLE_SCOPE_OPPONENT_HAND_REVEALED := "opponent_hand_revealed"
 
 var _observation_version: int = 0
+var _last_observation_hash: String = ""
 var _decklist_visibility: String = "observed_only"
 
 
@@ -19,7 +20,6 @@ func build(
 	legal_actions: Array = [],
 	interaction_step: Dictionary = {}
 ) -> Dictionary:
-	_observation_version += 1
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return _empty_envelope(player_index)
 	var opponent_index := 1 - player_index
@@ -27,7 +27,7 @@ func build(
 	var opponent: PlayerState = game_state.players[opponent_index]
 	var envelope := {
 		"schema_version": ContractsScript.OBSERVATION_SCHEMA_VERSION,
-		"observation_version": _observation_version,
+		"observation_version": 0,
 		"turn": {
 			"number": int(game_state.turn_number),
 			"current_player": int(game_state.current_player_index),
@@ -63,7 +63,12 @@ func build(
 	}
 	var hash_payload: Dictionary = envelope.duplicate(true)
 	hash_payload.erase("observation_version")
-	envelope["observation_hash"] = ContractsScript.stable_hash(hash_payload)
+	var observation_hash := ContractsScript.stable_hash(hash_payload)
+	if observation_hash != _last_observation_hash:
+		_observation_version += 1
+		_last_observation_hash = observation_hash
+	envelope["observation_version"] = _observation_version
+	envelope["observation_hash"] = observation_hash
 	return envelope
 
 

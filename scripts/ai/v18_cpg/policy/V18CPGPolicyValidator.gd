@@ -65,7 +65,8 @@ func validate_response(
 	allowed_route_ids: Array[String],
 	max_nodes: int = 8,
 	allowed_candidate_ids: Array[String] = [],
-	require_exact_root: bool = false
+	require_exact_root: bool = false,
+	request_fact_paths: Variant = null
 ) -> Dictionary:
 	if str(response.get("status", "")) == "error":
 		return _invalid(_model_response_error_reason(response))
@@ -101,8 +102,10 @@ func validate_response(
 		return _invalid("nodes_not_array")
 	var nodes: Array = nodes_variant
 	var node_limit := mini(maxi(max_nodes, 1), ContractsScript.HARD_MAX_POLICY_NODES)
-	if nodes.is_empty() or nodes.size() > node_limit:
+	if nodes.is_empty() \
+			or nodes.size() > ContractsScript.HARD_MAX_POLICY_NODES:
 		return _invalid("node_count")
+	var canonicalized_overflow_nodes := maxi(0, nodes.size() - node_limit)
 	var node_by_id: Dictionary = {}
 	for raw_node: Variant in nodes:
 		if not (raw_node is Dictionary):
@@ -121,6 +124,11 @@ func validate_response(
 		return _invalid("missing_root")
 	if require_exact_root and str((node_by_id.get(root, {}) as Dictionary).get("kind", "")) != "route":
 		return _invalid("root_requires_exact_candidate")
+	var allowed_fact_paths: Array[String] = (
+		_typed_string_array(request_fact_paths)
+		if request_fact_paths is Array
+		else ContractsScript.REGISTERED_FACT_PATHS.duplicate()
+	)
 	for node_id: String in node_by_id:
 		var node: Dictionary = node_by_id[node_id]
 		if not node.has("kind") or not (node.get("kind") is String):
@@ -144,7 +152,11 @@ func validate_response(
 			if not bool(route_result.get("valid", false)):
 				return route_result
 		elif kind == "checkpoint":
-			var checkpoint_result := _validate_checkpoint(node, node_by_id)
+			var checkpoint_result := _validate_checkpoint(
+				node,
+				node_by_id,
+				allowed_fact_paths
+			)
 			if not bool(checkpoint_result.get("valid", false)):
 				return checkpoint_result
 		elif kind == "terminal":
@@ -155,6 +167,19 @@ func validate_response(
 	var cycle_result := _validate_acyclic(node_by_id)
 	if not bool(cycle_result.get("valid", false)):
 		return cycle_result
+	if canonicalized_overflow_nodes > 0:
+		policy = _truncate_policy_to_node_limit(
+			root,
+			policy,
+			node_limit
+		)
+		node_by_id.clear()
+		for raw_node: Variant in policy.get("nodes", []):
+			if raw_node is Dictionary:
+				node_by_id[str((raw_node as Dictionary).get(
+					"node_id",
+					""
+				))] = raw_node
 	# Unreachable nodes have no executable semantics.  Validate their complete
 	# shape above, then remove them deterministically instead of rejecting an
 	# otherwise safe root or inventing edges that the model did not declare.
@@ -172,6 +197,7 @@ func validate_response(
 		"policy": policy.duplicate(true),
 		"agenda_patch": agenda_result.get("agenda_patch", {}).duplicate(true),
 		"canonicalized_unreachable_nodes": canonicalized_unreachable_nodes,
+		"canonicalized_overflow_nodes": canonicalized_overflow_nodes,
 	}
 
 
@@ -435,14 +461,22 @@ func _validate_interaction_policies(policy: Dictionary) -> Dictionary:
 	return {"valid": true}
 
 
-func _validate_checkpoint(node: Dictionary, node_by_id: Dictionary) -> Dictionary:
+func _validate_checkpoint(
+	node: Dictionary,
+	node_by_id: Dictionary,
+	allowed_fact_paths: Array[String]
+) -> Dictionary:
 	if not _has_only_keys(node, CHECKPOINT_NODE_KEYS) \
 			or not _has_required_keys(node, CHECKPOINT_NODE_KEYS):
 		return _invalid("checkpoint_node_shape")
 	var branches: Variant = node.get("branches", [])
 	if not (branches is Array):
 		return _invalid("branches_not_array")
-	if (branches as Array).size() > 3:
+	# Four bounded macro intents fit inside the hard eight-node graph limit
+	# (root + checkpoint + four route leaves) and materially reduce pointless
+	# replans in search-heavy PTCG turns. Guard conjunctions remain capped at
+	# three, so this widens useful fan-out without widening fact complexity.
+	if (branches as Array).size() > 4:
 		return _invalid("branch_count")
 	for raw_branch: Variant in branches as Array:
 		if not (raw_branch is Dictionary):
@@ -466,12 +500,67 @@ func _validate_checkpoint(node: Dictionary, node_by_id: Dictionary) -> Dictionar
 			var clause: Dictionary = raw_clause
 			if not _has_only_keys(clause, GUARD_KEYS) or not _has_required_keys(clause, GUARD_KEYS):
 				return _invalid("guard_shape")
-			if not (clause.get("fact") is String) \
-					or str(clause.get("fact", "")) not in ContractsScript.REGISTERED_FACT_PATHS:
+			if not (clause.get("fact") is String):
 				return _invalid("unknown_fact")
+			var canonical_fact_path := ContractsScript.canonical_fact_path(
+				str(clause.get("fact", ""))
+			)
+			if canonical_fact_path not in allowed_fact_paths:
+				return _invalid("unknown_fact")
+			clause["fact"] = canonical_fact_path
 			if not (clause.get("op") is String) \
 					or str(clause.get("op", "")) not in ContractsScript.GUARD_OPERATORS:
 				return _invalid("unknown_guard_operator")
+		var target_node: Dictionary = node_by_id.get(next_node, {}) \
+			if node_by_id.get(next_node, {}) is Dictionary else {}
+		var target_ref: Dictionary = target_node.get("route_ref", {}) \
+			if target_node.get("route_ref", {}) is Dictionary else {}
+		var target_mode := str(target_ref.get("mode", ""))
+		var target_route_id := str(target_ref.get("route_id", ""))
+		var availability_contract_active := false
+		var switch_contract_active := false
+		for fact_path: String in allowed_fact_paths:
+			if fact_path.begins_with("route.available."):
+				availability_contract_active = true
+			elif fact_path.begins_with("route.model_switch_allowed."):
+				switch_contract_active = true
+		if availability_contract_active \
+				and target_mode in ["follow_route", "select_existing"]:
+			var required_fact := "route.available.%s" % target_route_id.trim_prefix(
+				"route:"
+			)
+			var proves_available := false
+			for raw_clause: Variant in clauses as Array:
+				if not (raw_clause is Dictionary):
+					continue
+				var clause: Dictionary = raw_clause as Dictionary
+				if str(clause.get("fact", "")) == required_fact \
+						and str(clause.get("op", "")) == "==" \
+						and clause.get("value") is bool \
+						and bool(clause.get("value")):
+					proves_available = true
+					break
+			if not proves_available:
+				return _invalid("missing_follow_route_availability_guard")
+		if switch_contract_active \
+				and target_mode in ["follow_route", "select_existing"]:
+			var required_switch_fact := \
+				"route.model_switch_allowed.%s" % target_route_id.trim_prefix(
+					"route:"
+				)
+			var proves_switch_allowed := false
+			for raw_clause: Variant in clauses as Array:
+				if not (raw_clause is Dictionary):
+					continue
+				var clause: Dictionary = raw_clause as Dictionary
+				if str(clause.get("fact", "")) == required_switch_fact \
+						and str(clause.get("op", "")) == "==" \
+						and clause.get("value") is bool \
+						and bool(clause.get("value")):
+					proves_switch_allowed = true
+					break
+			if not proves_switch_allowed:
+				return _invalid("missing_follow_route_switch_guard")
 	if not (node.get("otherwise") is String):
 		return _invalid("missing_otherwise")
 	var otherwise := str(node.get("otherwise", ""))
@@ -480,6 +569,16 @@ func _validate_checkpoint(node: Dictionary, node_by_id: Dictionary) -> Dictionar
 	if otherwise not in ["local_best", "replan", "rules_fallback"] and not node_by_id.has(otherwise):
 		return _invalid("unknown_otherwise")
 	return {"valid": true}
+
+
+func _typed_string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if not (value is Array):
+		return result
+	for raw_item: Variant in value as Array:
+		if raw_item is String and str(raw_item) not in result:
+			result.append(str(raw_item))
+	return result
 
 
 func _validate_acyclic(node_by_id: Dictionary) -> Dictionary:
@@ -530,6 +629,63 @@ func _canonicalize_reachable_policy(
 		"policy": normalized,
 		"canonicalized_unreachable_nodes": nodes.size() - filtered.size(),
 	}
+
+
+func _truncate_policy_to_node_limit(
+	root: String,
+	policy: Dictionary,
+	node_limit: int
+) -> Dictionary:
+	var nodes: Array = policy.get("nodes", []) \
+		if policy.get("nodes", []) is Array else []
+	var kept_ids: Dictionary = {}
+	if root != "":
+		kept_ids[root] = true
+	for raw_node: Variant in nodes:
+		if kept_ids.size() >= node_limit:
+			break
+		if not (raw_node is Dictionary):
+			continue
+		var node_id := str((raw_node as Dictionary).get("node_id", ""))
+		if node_id != "":
+			kept_ids[node_id] = true
+	var kept_nodes: Array[Dictionary] = []
+	for raw_node: Variant in nodes:
+		if not (raw_node is Dictionary):
+			continue
+		var node: Dictionary = (raw_node as Dictionary).duplicate(true)
+		if not kept_ids.has(str(node.get("node_id", ""))):
+			continue
+		if node.has("next_node_id") \
+				and not kept_ids.has(str(node.get("next_node_id", ""))):
+			node.erase("next_node_id")
+		if str(node.get("kind", "")) == "checkpoint":
+			var kept_branches: Array[Dictionary] = []
+			var branches: Variant = node.get("branches", [])
+			if branches is Array:
+				for raw_branch: Variant in branches as Array:
+					if raw_branch is Dictionary \
+							and kept_ids.has(str(
+								(raw_branch as Dictionary).get(
+									"next_node_id",
+									""
+								)
+							)):
+						kept_branches.append(
+							(raw_branch as Dictionary).duplicate(true)
+						)
+			node["branches"] = kept_branches
+			var otherwise := str(node.get("otherwise", "replan"))
+			if otherwise not in [
+				"local_best",
+				"replan",
+				"rules_fallback",
+			] and not kept_ids.has(otherwise):
+				node["otherwise"] = "replan"
+		kept_nodes.append(node)
+	var normalized := policy.duplicate(true)
+	normalized["nodes"] = kept_nodes
+	return normalized
 
 
 func _has_cycle(node_id: String, node_by_id: Dictionary, visiting: Dictionary, visited: Dictionary) -> bool:
@@ -610,6 +766,11 @@ func _is_prefixed_string(value: Variant, prefix: String) -> bool:
 
 func _model_response_error_reason(response: Dictionary) -> String:
 	var error_type := str(response.get("error_type", "")).strip_edges()
+	var http_code := int(response.get("http_code", 0))
+	if error_type == "http_error" and http_code == 402:
+		return "provider_quota_exhausted"
+	if error_type == "http_error" and http_code in [401, 403]:
+		return "provider_auth_error"
 	if error_type == "response_truncated":
 		return "response_truncated"
 	if error_type in [

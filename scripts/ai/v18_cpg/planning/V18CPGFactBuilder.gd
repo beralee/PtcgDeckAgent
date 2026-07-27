@@ -4,6 +4,9 @@ extends RefCounted
 const DynamicAttackCostScript = preload(
 	"res://scripts/ai/v18_cpg/modules/V18CPGDynamicAttackCost.gd"
 )
+const EnergyBurstScript = preload(
+	"res://scripts/ai/v18_cpg/modules/V18CPGEnergyBurst.gd"
+)
 
 
 func build(observation: Dictionary, current_route_id: String = "", profile: Dictionary = {}) -> Dictionary:
@@ -29,6 +32,19 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 			material_information_action = true
 		if current_route_id != "" and _route_accepts_action(current_route_id, action):
 			route_valid = true
+	var variable_projection := _variable_attack_projection(
+		observation,
+		actions,
+		profile
+	)
+	if attack_ready and bool(variable_projection.get("enabled", false)):
+		max_damage = maxi(
+			max_damage,
+			int(variable_projection.get("projected_damage", 0))
+		)
+		ko_available = ko_available or bool(
+			variable_projection.get("projected_knockout", false)
+		)
 	var own: Dictionary = observation.get("own", {}) if observation.get("own", {}) is Dictionary else {}
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
 	var has_tera := _slot_is_tera(own.get("active", {}))
@@ -36,7 +52,9 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 	var energy_symbols: Dictionary = {}
 	_collect_energy_symbols(own.get("active", {}), energy_symbols)
 	for raw_slot: Variant in bench:
-		if raw_slot is Dictionary and _slot_is_tera(raw_slot as Dictionary):
+		if not (raw_slot is Dictionary):
+			continue
+		if _slot_is_tera(raw_slot as Dictionary):
 			has_tera = true
 		energy_on_board += _slot_energy_count(raw_slot)
 		_collect_energy_symbols(raw_slot, energy_symbols)
@@ -67,6 +85,7 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 				dynamic_active.get("engine_confirms_cost_paid", attack_ready)
 			),
 			"dynamic_cost": dynamic_active,
+			"variable_damage_projection": variable_projection,
 		},
 		"board": {
 			"bench_full": bench.size() >= 5,
@@ -94,6 +113,76 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 			"energy_available": bool(quotas.get("energy_available", false)),
 			"supporter_available": bool(quotas.get("supporter_available", false)),
 		},
+	}
+
+
+func _variable_attack_projection(
+	observation: Dictionary,
+	actions: Array,
+	profile: Dictionary
+) -> Dictionary:
+	var modules: Array = profile.get("modules", []) \
+		if profile.get("modules", []) is Array else []
+	if "energy_burst" not in modules:
+		return {}
+	var module_parameters: Dictionary = profile.get("module_parameters", {}) \
+		if profile.get("module_parameters", {}) is Dictionary else {}
+	var parameters: Dictionary = module_parameters.get("energy_burst", {}) \
+		if module_parameters.get("energy_burst", {}) is Dictionary else {}
+	var primary_uids: Array[String] = []
+	for raw_uid: Variant in parameters.get("primary_attacker_uids", []):
+		primary_uids.append(str(raw_uid).strip_edges().to_upper())
+	var primary_indexes: Array[int] = []
+	for raw_index: Variant in parameters.get(
+		"minimum_lethal_attack_indexes",
+		[]
+	):
+		primary_indexes.append(int(raw_index))
+	var bound_primary_attack := false
+	for raw_action: Variant in actions:
+		if not (raw_action is Dictionary):
+			continue
+		var action: Dictionary = raw_action
+		if str(action.get("kind", "")) not in ["attack", "granted_attack"]:
+			continue
+		var source_card: Dictionary = action.get("source_card", {}) \
+			if action.get("source_card", {}) is Dictionary else {}
+		var source_uid := str(
+			source_card.get("uid", "")
+		).strip_edges().to_upper()
+		if not primary_uids.is_empty() and source_uid not in primary_uids:
+			continue
+		if not primary_indexes.is_empty() \
+				and int(action.get("attack_index", -1)) not in primary_indexes:
+			continue
+		bound_primary_attack = true
+		break
+	if not bound_primary_attack:
+		return {}
+	var opponent: Dictionary = observation.get("opponent", {}) \
+		if observation.get("opponent", {}) is Dictionary else {}
+	var opponent_active: Dictionary = opponent.get("active", {}) \
+		if opponent.get("active", {}) is Dictionary else {}
+	var target_hp := int(opponent_active.get("remaining_hp", 0))
+	var resource := EnergyBurstScript.new().damage_resource_snapshot(
+		observation,
+		profile,
+		{},
+		target_hp
+	)
+	if not bool(resource.get("enabled", false)):
+		return {}
+	var projected_damage := int(
+		resource.get("projected_public_damage", 0)
+	)
+	return {
+		"enabled": projected_damage > 0,
+		"source": "energy_burst_public_resource",
+		"mode": str(resource.get("mode", "none")),
+		"projected_damage": projected_damage,
+		"projected_knockout": target_hp > 0 \
+			and projected_damage >= target_hp,
+		"resource": resource,
 	}
 
 

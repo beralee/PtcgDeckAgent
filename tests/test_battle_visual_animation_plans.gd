@@ -101,6 +101,25 @@ func test_evolution_anchor_prefers_exact_target_slot_over_stale_zone() -> String
 	])
 
 
+func test_visible_card_motion_rejects_a_reference_that_does_not_match_the_logged_instance() -> String:
+	var animator: RefCounted = ZoneAnimatorScript.new()
+	var expected_data := CardData.new()
+	expected_data.name = "Expected Evolution"
+	expected_data.card_type = "Pokemon"
+	var expected := CardInstance.create(expected_data, 0)
+	var wrong_data := CardData.new()
+	wrong_data.name = "Unrelated Opponent Card"
+	wrong_data.card_type = "Pokemon"
+	var wrong := CardInstance.create(wrong_data, 1)
+	var event := {
+		"visibility": "face",
+		"card_instance_ids": [expected.instance_id],
+		"cards": [wrong],
+	}
+	var resolved: CardInstance = animator.call("_resolved_event_card", event, 0)
+	return assert_null(resolved, "A mismatched snapshot reference must be dropped instead of drawing the wrong card face")
+
+
 func test_portrait_transfer_cards_and_feedback_use_phone_scale() -> String:
 	var scene := VisualAnchorScene.new()
 	scene.size = Vector2(900, 1600)

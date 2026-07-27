@@ -65,6 +65,7 @@ func _initialize() -> void:
 	_test_multi_unit_discard_preserves_one_complete_attack_cost()
 	_test_secured_ko_banks_with_live_ogerpon_before_terminal()
 	_test_secured_ko_uses_noctowl_for_remaining_continuity_debt()
+	_test_noctowl_followup_search_executes_the_continuity_target()
 	_test_missing_ogerpon_engine_is_developed_before_terminal()
 	_test_full_bench_plays_area_zero_before_nonterminal_attack()
 	_test_expanded_bench_builds_hoothoot_root_before_attack()
@@ -75,20 +76,21 @@ func _initialize() -> void:
 	_test_second_ogerpon_engine_is_built_before_attack()
 	_test_engine_root_precedes_rush_attachment()
 	_test_nest_ball_acquires_hoothoot_before_rush_attachment()
-	_test_unpaired_hoothoot_stays_a_model_choice()
-	_test_late_search_root_stays_a_model_choice()
-	_test_area_zero_requires_an_immediate_engine_chain()
+	_test_unpaired_hoothoot_builds_future_search_lane()
+	_test_late_search_root_repairs_the_remaining_clock()
+	_test_area_zero_preserves_future_engine_capacity()
 	_test_last_normal_bench_slot_can_build_second_ogerpon()
 	_test_tera_observation_reads_trait_not_rules_text()
-	_test_live_noctowl_satisfies_one_search_engine_lane()
+	_test_live_noctowl_requires_a_replacement_search_root()
 	_test_area_zero_requires_public_tera_condition()
 	_test_secured_ko_closes_after_continuity_floor()
 	_test_win_now_overrides_continuity_debt()
 	_test_model_prompt_resolves_ko_continuity_precedence()
+	_test_payable_gust_constraint_reaches_interaction_scoring()
 	_test_all_v18_profiles_inherit_the_completion_contract()
 	EffectProcessor.cleanup_live_instances_for_tests()
 	if _failures.is_empty():
-		print("optimization 800018509 turn completion: PASS (26/26)")
+		print("optimization 800018509 turn completion: PASS (28/28)")
 		quit(0)
 		return
 	for failure: String in _failures:
@@ -493,11 +495,21 @@ func _test_secured_ko_uses_noctowl_for_remaining_continuity_debt() -> void:
 		_profile
 	)
 	var continuity: Dictionary = contract.get("post_attack_continuity", {})
+	var noctowl_effect: Dictionary = {}
+	for raw_effect: Variant in continuity.get("candidate_effects", []):
+		if raw_effect is Dictionary \
+				and str((raw_effect as Dictionary).get("action_id", "")) \
+					== "ability:noctowl":
+			noctowl_effect = raw_effect as Dictionary
+			break
 	_check(
 		bool(contract.get("must_review_before_terminal", false)) \
 			and str(contract.get("recommended_action_id", "")) == "ability:noctowl" \
-			and "next_attacker_root" in continuity.get("debt_types", []),
-		"after the Energy bank is safe, live Noctowl must search for the missing next-attacker chain"
+			and "next_attacker_root" in continuity.get("debt_types", []) \
+			and bool(noctowl_effect.get("progresses_debt", false)) \
+			and int(noctowl_effect.get("debt_reduction_count", -1)) == 0 \
+			and bool(noctowl_effect.get("requires_reobservation", false)),
+		"live Noctowl must open a reobservation checkpoint for the missing route without falsely claiming that the searched Trainers already closed every debt"
 	)
 	var search_items: Array = [
 		CardInstance.create(_real_card_data("CSV6C_121"), 0),
@@ -524,6 +536,80 @@ func _test_secured_ko_uses_noctowl_for_remaining_continuity_debt() -> void:
 	_check(
 		_uids(picked) == ["CSV6C_115", "CSVH1C_043"],
 		"Noctowl must translate next-attacker and Energy debt into Nest Ball plus Earthen Vessel"
+	)
+
+
+func _test_noctowl_followup_search_executes_the_continuity_target() -> void:
+	var observation := _completion_observation(false, 200, 140)
+	var used_noctowl: Dictionary = (observation["own"]["bench"] as Array)[1]
+	used_noctowl["ability_used"] = true
+	(observation["own"]["bench"] as Array).append(_slot_ref(
+		"slot:replacement-hoothoot",
+		_card_ref(HOOTHOOT_UID),
+		[],
+		false
+	))
+	observation["own"]["hand"] = [_card_ref(NEST_BALL_UID)]
+	observation["own"]["hand_count"] = 1
+	observation["legal_actions"] = [
+		(observation["legal_actions"] as Array)[0],
+		{
+			"id": "search:nest-ball-after-noctowl",
+			"kind": "play_trainer",
+			"card": _card_ref(NEST_BALL_UID),
+			"requires_interaction": true,
+		},
+		{"id": "end:premature", "kind": "end_turn"},
+	]
+	var facts := _facts(true, false, 140)
+	var frontier := _frontier(observation, facts, {
+		"attack:pressure": 900.0,
+		"search:nest-ball-after-noctowl": 120.0,
+		"end:premature": 0.0,
+	}, "attack:pressure")
+	var contract: Dictionary = TurnCompletionSolverScript.new().build(
+		observation,
+		facts,
+		frontier,
+		_profile
+	)
+	_check(
+		bool(contract.get("must_review_before_terminal", false)) \
+			and str(contract.get("recommended_action_id", "")) \
+				== "search:nest-ball-after-noctowl",
+		"a Nest Ball fetched by Noctowl must remain an executable continuity checkpoint instead of being left unused before the attack"
+	)
+	var ogerpon_item := CardInstance.create(_real_card_data(OGERPON_UID), 0)
+	var bolt_item := CardInstance.create(_real_card_data(RAGING_BOLT_UID), 0)
+	var nest_candidate := _candidate(
+		frontier,
+		"search:nest-ball-after-noctowl"
+	)
+	var picked: Dictionary = NoctowlSearchScript.new() \
+		.pick_verified_basic_search_override(
+			[bolt_item, ogerpon_item],
+			{"id": "basic_pokemon", "min_select": 1, "max_select": 1},
+			[bolt_item],
+			{
+				"v18cpg_facts": facts,
+				"v18cpg_observation": observation,
+				"turn_completion_contract": contract,
+				"v18cpg_preferred_action_ref": nest_candidate.get(
+					"action_ref",
+					{}
+				),
+			},
+			_profile
+		)
+	var picked_items: Array = picked.get("items", []) \
+		if picked.get("items", []) is Array else []
+	_check(
+		bool(picked.get("handled", false)) \
+			and picked_items.size() == 1 \
+			and picked_items[0] is CardInstance \
+			and (picked_items[0] as CardInstance).card_data.get_uid() \
+				.to_upper() == OGERPON_UID,
+		"the follow-up Basic search must bind the missing public Energy-engine target rather than falling back to an arbitrary Basic"
 	)
 
 
@@ -753,6 +839,19 @@ func _test_expanded_bench_builds_hoothoot_root_before_attack() -> void:
 			and str(continuation.get("action_id", "")) \
 				== "develop:hoothoot",
 		"after the first accepted model judgment, the local reobservation path must continue the exact Hoothoot prefix without another model call"
+	)
+	var pre_judgment_prefix: Dictionary = strategy.call(
+		"_pre_judgment_completion_override",
+		frontier,
+		facts,
+		observation,
+		true
+	)
+	_check(
+		bool(pre_judgment_prefix.get("handled", false)) \
+			and str(pre_judgment_prefix.get("action_id", "")) \
+				== "develop:hoothoot",
+		"a mandatory public prefix must execute before the first model request instead of leaking an unselectable recommended candidate into that request"
 	)
 
 
@@ -1368,7 +1467,7 @@ func _test_nest_ball_acquires_hoothoot_before_rush_attachment() -> void:
 	)
 
 
-func _test_unpaired_hoothoot_stays_a_model_choice() -> void:
+func _test_unpaired_hoothoot_builds_future_search_lane() -> void:
 	var observation := _completion_observation(false, 230, 0)
 	observation["own"]["bench"] = [
 		_slot_ref(
@@ -1411,12 +1510,12 @@ func _test_unpaired_hoothoot_stays_a_model_choice() -> void:
 	)
 	_check(
 		str(contract.get("recommended_action_id", "")) \
-			!= "develop:unpaired-hoothoot",
-		"a Hoothoot without a visible Noctowl follow-up remains a model-valued investment, not a deterministic Base override"
+			== "develop:unpaired-hoothoot",
+		"a safe Hoothoot root must build the future search lane even when Noctowl is not already visible in hand"
 	)
 
 
-func _test_late_search_root_stays_a_model_choice() -> void:
+func _test_late_search_root_repairs_the_remaining_clock() -> void:
 	var observation := _completion_observation(false, 230, 0)
 	observation["own"]["bench"] = [
 		_slot_ref(
@@ -1462,12 +1561,12 @@ func _test_late_search_root_stays_a_model_choice() -> void:
 	)
 	_check(
 		str(contract.get("recommended_action_id", "")) \
-			!= "develop:late-hoothoot",
-		"a search root that cannot evolve until next turn is no longer a deterministic Base override after the configured setup window"
+			== "develop:late-hoothoot",
+		"with three Prizes left, the graph must still invest in a future search checkpoint instead of collapsing to the current attack route"
 	)
 
 
-func _test_area_zero_requires_an_immediate_engine_chain() -> void:
+func _test_area_zero_preserves_future_engine_capacity() -> void:
 	var observation := _completion_observation(true, 30, 70)
 	observation["own"]["bench"] = [
 		_slot_ref(
@@ -1511,8 +1610,8 @@ func _test_area_zero_requires_an_immediate_engine_chain() -> void:
 	)
 	_check(
 		str(contract.get("recommended_action_id", "")) \
-			!= "stadium:area-zero",
-		"Area Zero must not override an attack merely to expose empty slots when no visible Noctowl or Ogerpon energy chain can consume them"
+			== "stadium:area-zero",
+		"Area Zero must open capacity for the visible Hoothoot root so the future search lane is not sacrificed to the current attack"
 	)
 
 
@@ -1605,7 +1704,7 @@ func _test_tera_observation_reads_trait_not_rules_text() -> void:
 	)
 
 
-func _test_live_noctowl_satisfies_one_search_engine_lane() -> void:
+func _test_live_noctowl_requires_a_replacement_search_root() -> void:
 	var observation := _completion_observation(false, 230, 0)
 	observation["own"]["bench"] = [
 		_slot_ref(
@@ -1656,13 +1755,13 @@ func _test_live_noctowl_satisfies_one_search_engine_lane() -> void:
 		_profile
 	)
 	_check(
-		"search_engine_root" not in contract.get(
+		"search_engine_root" in contract.get(
 			"post_attack_continuity",
 			{}
 		).get("debt_types", []) \
 			and str(contract.get("recommended_action_id", "")) \
-				!= "search:nest-ball",
-		"a live Noctowl must satisfy the guaranteed one-lane search floor; the base graph may not force a second Hoothoot chain merely because the first root evolved"
+				== "search:nest-ball",
+		"an available Noctowl must require one replacement Hoothoot lane so the search engine survives the current activation"
 	)
 
 
@@ -1786,6 +1885,44 @@ func _test_win_now_overrides_continuity_debt() -> void:
 				false
 			)),
 		"a final-prize KO must attack immediately instead of building a future turn"
+	)
+
+
+func _test_payable_gust_constraint_reaches_interaction_scoring() -> void:
+	var lethal := _real_target("Lethal target", 60, 1)
+	lethal.damage_counters = 30
+	var nonlethal := _real_target("Nonlethal target", 220, 2)
+	var lethal_instance_id := int(lethal.get_top_card().instance_id)
+	var gust_candidate := {
+		"candidate_id": "candidate:bound-gust",
+		"route_id": "route:gust",
+		"safe_prefix_action_id": "trainer:gust",
+		"hard_guard_target_constraint": {
+			"kind": "public_lethal_only",
+			"eligible_slot_ids": ["slot:%d" % lethal_instance_id],
+			"eligible_instance_ids": [lethal_instance_id],
+			"max_damage": 60,
+		},
+	}
+	var strategy = StrategyScript.new()
+	strategy.configure_profile(_profile, _manifest)
+	strategy.configure_verified_local_only_for_benchmark()
+	strategy.set("_current_route_id", "route:gust")
+	strategy.set("_preferred_candidate_id", "candidate:bound-gust")
+	strategy.set("_preferred_action_id", "trainer:gust")
+	var bound_frontier: Array[Dictionary] = [gust_candidate]
+	strategy.set("_last_frontier", bound_frontier)
+	var lethal_score := strategy.score_interaction_target(
+		lethal,
+		{"id": "gust_target"}
+	)
+	var nonlethal_score := strategy.score_interaction_target(
+		nonlethal,
+		{"id": "gust_target"}
+	)
+	_check(
+		lethal_score > 0.0 and nonlethal_score <= -100000000000.0,
+		"the interaction layer must execute the hard-guard lethal target and make every nonlethal gust target impossible"
 	)
 
 

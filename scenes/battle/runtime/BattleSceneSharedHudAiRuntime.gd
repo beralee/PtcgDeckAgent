@@ -56,7 +56,9 @@ func _llm_wait_portrait_hand_hud_rect() -> Rect2:
 	var label_height := 28.0
 	if _ai_llm_wait_label != null and is_instance_valid(_ai_llm_wait_label):
 		label_height = maxf(float(_ai_llm_wait_label.get_theme_font_size("font_size")) + 14.0, label_height)
-	label_height = minf(label_height, maxf(hand_rect.size.y * 0.35, 24.0))
+	# The short-screen hand area is deliberately compact, but the thinking label
+	# must still fit its enlarged single line instead of clipping it at 35%.
+	label_height = minf(label_height, hand_rect.size.y)
 	var width := minf(maxf(hand_rect.size.x * 0.82, 240.0), hand_rect.size.x)
 	var x := hand_rect.position.x + (hand_rect.size.x - width) * 0.5
 	var y := hand_rect.position.y + 4.0
@@ -959,6 +961,7 @@ func _is_ui_blocking_ai() -> bool:
 	return (
 		(_deck_training_controller != null and _deck_training_controller.is_modal_open())
 		or _draw_reveal_active
+		or _battle_visual_input_blocked
 		or _is_ai_action_pause_active()
 		or dialog_blocks_ai
 		or (_discard_overlay != null and _discard_overlay.visible)

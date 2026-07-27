@@ -119,16 +119,16 @@ func test_can_play_item_after_item_lock_turn_expires() -> String:
 	])
 
 
-func test_can_play_different_stadium_after_stadium_played_this_turn() -> String:
+func test_cannot_play_second_stadium_after_stadium_played_this_turn() -> String:
 	var state := _make_state()
 	state.stadium_played_this_turn = true
 	state.stadium_card = _make_stadium_card("Cycling Road", "Cycling Road")
 	var replacement := _make_stadium_card("Collapsed Stadium", "Collapsed Stadium")
 	var v := RuleValidator.new()
 	return run_checks([
-		assert_true(
+		assert_false(
 			v.can_play_stadium(state, 0, replacement),
-			"Different named Stadium cards should be playable after another Stadium was played this turn"
+			"A player may play only one Stadium during the same turn"
 		),
 	])
 

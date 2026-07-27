@@ -6,6 +6,7 @@ const SessionScript := preload("res://scripts/training/DeckTrainingSession.gd")
 const ProgressStoreScript := preload("res://scripts/training/DeckTrainingProgressStore.gd")
 const PresentationScript := preload("res://scripts/training/DeckTrainingPresentation.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const IosWebHudTouchAdapterScript := preload("res://scripts/ui/battle/interactions/IosWebHudTouchAdapter.gd")
 
 var _scene: Control = null
 var _gsm: GameStateMachine = null
@@ -101,9 +102,16 @@ func apply_layout(viewport_size: Vector2) -> void:
 	var portrait := bool(context.get("is_portrait", false))
 	for panel: PanelContainer in [_intro_panel, _result_panel]:
 		if panel != null and is_instance_valid(panel):
+			var panel_height := 0.0
+			if portrait and panel == _intro_panel:
+				panel_height = clampf(
+					layout_size.y * 0.84,
+					360.0,
+					maxf(360.0, layout_size.y - 32.0)
+				)
 			panel.custom_minimum_size = Vector2(
 				float(context.get("content_width", 320.0)) if portrait else clampf(layout_size.x - 40.0, 320.0, 620.0),
-				0.0
+				panel_height
 			)
 			_apply_panel_metrics(panel, context, portrait)
 	if _help_panel != null and is_instance_valid(_help_panel):
@@ -162,6 +170,12 @@ func _apply_panel_metrics(panel: PanelContainer, context: Dictionary, portrait: 
 	var box := panel.find_child("TrainingPanelContent", true, false) as VBoxContainer
 	if box != null:
 		box.add_theme_constant_override("separation", section_gap)
+	var intro_body := panel.find_child("StageIntroBodyContent", true, false) as VBoxContainer
+	if intro_body != null:
+		intro_body.add_theme_constant_override("separation", section_gap)
+	var intro_scroll := panel.find_child("StageIntroBodyScroll", true, false) as ScrollContainer
+	if intro_scroll != null:
+		intro_scroll.custom_minimum_size.y = 0.0 if portrait else 210.0
 	for row_node: Node in panel.find_children("TrainingActionRow", "HFlowContainer", true, false):
 		var row := row_node as HFlowContainer
 		row.add_theme_constant_override("h_separation", section_gap if portrait else 12)
@@ -204,27 +218,45 @@ func _build_intro_overlay() -> void:
 	_intro_panel.name = "DeckTrainingIntroPanel"
 	center.add_child(_intro_panel)
 	var box := _panel_box(_intro_panel)
+	var body_scroll := ScrollContainer.new()
+	body_scroll.name = "StageIntroBodyScroll"
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body_scroll.custom_minimum_size.y = 210.0
+	box.add_child(body_scroll)
+	var body := VBoxContainer.new()
+	body.name = "StageIntroBodyContent"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 18)
+	body_scroll.add_child(body)
 	var title := Label.new()
 	title.name = "StageIntroTitle"
 	title.text = "专家 %02d  %s" % [int(_scenario.get("order", 0)), str(_scenario.get("title", "残局训练"))]
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
-	box.add_child(title)
+	body.add_child(title)
 	var objective := Label.new()
 	objective.name = "StageGoalLabel"
 	objective.text = PresentationScript.goal_summary(_scenario)
 	objective.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	objective.add_theme_font_size_override("font_size", 26)
 	objective.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34))
-	box.add_child(objective)
+	body.add_child(objective)
 	var limit := Label.new()
 	limit.name = "StageIntroLimit"
 	limit.text = "限 %d 个我方回合 · 规则 AI 会改变中间场面 · 最后统一结算" % int(_scenario.get("turn_limit", 1))
 	limit.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	limit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	limit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	limit.add_theme_font_size_override("font_size", 18)
 	limit.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34))
-	box.add_child(limit)
+	body.add_child(limit)
 	var buttons := HFlowContainer.new()
 	buttons.name = "TrainingActionRow"
 	buttons.add_theme_constant_override("h_separation", 12)
@@ -383,6 +415,7 @@ func _make_overlay(node_name: String, layer: int) -> ColorRect:
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.z_index = layer
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	IosWebHudTouchAdapterScript.mark_hud_root(overlay)
 	_scene.add_child(overlay)
 	return overlay
 

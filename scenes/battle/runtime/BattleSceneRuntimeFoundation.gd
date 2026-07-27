@@ -49,6 +49,9 @@ const WebInputAdapterScript := preload("res://scripts/ui/input/WebInputAdapter.g
 const BattlePointerInputRouterScript := preload(
 	"res://scripts/ui/battle/interactions/BattlePointerInputRouter.gd"
 )
+const IosWebHudTouchAdapterScript := preload(
+	"res://scripts/ui/battle/interactions/IosWebHudTouchAdapter.gd"
+)
 const WebUiFeatureGateScript := preload("res://scripts/ui/web/WebUiFeatureGate.gd")
 const UiInteractionSessionScript := preload("res://scripts/ui/interactions/UiInteractionSession.gd")
 const UiInteractionSessionRegistryScript := preload("res://scripts/ui/interactions/UiInteractionSessionRegistry.gd")
@@ -274,6 +277,7 @@ var _draw_reveal_allow_hand_refresh_during_fly: bool = false
 var _draw_reveal_visible_instance_ids: Array[int] = []
 var _web_battle_input_adapter: WebInputAdapter = WebInputAdapterScript.new()
 var _battle_pointer_input_router = BattlePointerInputRouterScript.new()
+var _ios_web_hud_touch_adapter = IosWebHudTouchAdapterScript.new()
 var _modal_pointer_drain_shield: Control = null
 var _modal_pointer_drain_intent: String = ""
 var _modal_pointer_drain_release_pending: bool = false
@@ -575,9 +579,11 @@ var _field_active_card_size: Vector2 = Vector2.ZERO
 # Coin flip animation state
 var _coin_animator: Node = null
 var _coin_flip_queue: Array[bool] = []
+var _coin_flip_label_queue: Array[Dictionary] = []
 var _coin_animating: bool = false
 var _coin_animation_advance_scheduled: bool = false
 var _coin_animation_resume_effect_step: bool = false
+var _opening_first_player_flip_pending: bool = false
 
 # Card detail overlay
 @onready var _detail_overlay: Panel = %DetailOverlay

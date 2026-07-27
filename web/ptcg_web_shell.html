@@ -11,10 +11,14 @@
 		<style>
 	:root {
 		--ptcg-safe-top: env(safe-area-inset-top, 0px);
-		--ptcg-safe-right: env(safe-area-inset-right, 0px);
-		--ptcg-safe-bottom: env(safe-area-inset-bottom, 0px);
-		--ptcg-safe-left: env(safe-area-inset-left, 0px);
-	}
+	--ptcg-safe-right: env(safe-area-inset-right, 0px);
+	--ptcg-safe-bottom: env(safe-area-inset-bottom, 0px);
+	--ptcg-safe-left: env(safe-area-inset-left, 0px);
+	--ptcg-visible-width: 100%;
+	--ptcg-visible-height: 100%;
+	--ptcg-visible-left: 0px;
+	--ptcg-visible-top: 0px;
+}
 
 	html,
 	body {
@@ -56,6 +60,30 @@ body {
 		border: 0;
 		background: #05080c;
 	}
+
+:root[data-ptcg-ipad-web="true"] body {
+	inset: auto;
+	top: var(--ptcg-visible-top);
+	left: var(--ptcg-visible-left);
+	width: var(--ptcg-visible-width);
+	height: var(--ptcg-visible-height);
+}
+
+:root[data-ptcg-ipad-web="true"] #canvas {
+	top: calc(var(--ptcg-visible-top) + var(--ptcg-safe-top));
+	left: calc(var(--ptcg-visible-left) + var(--ptcg-safe-left));
+	width: calc(var(--ptcg-visible-width) - var(--ptcg-safe-left) - var(--ptcg-safe-right)) !important;
+	height: calc(var(--ptcg-visible-height) - var(--ptcg-safe-top) - var(--ptcg-safe-bottom)) !important;
+}
+
+:root[data-ptcg-ipad-web="true"] #launch,
+:root[data-ptcg-ipad-web="true"] #status {
+	inset: auto;
+	top: var(--ptcg-visible-top);
+	left: var(--ptcg-visible-left);
+	width: var(--ptcg-visible-width);
+	height: var(--ptcg-visible-height);
+}
 
 #canvas:focus {
 	outline: none;
@@ -260,6 +288,41 @@ const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
+	function isIpadBrowserViewport() {
+		const userAgent = String(navigator.userAgent || '').toLowerCase();
+		const platform = String(navigator.platform || '').toLowerCase();
+		const touchPoints = Number(navigator.maxTouchPoints || 0);
+		return userAgent.indexOf('ipad') !== -1
+			|| ((userAgent.indexOf('macintosh') !== -1 || platform.indexOf('mac') !== -1) && touchPoints > 1);
+	}
+
+	function syncIpadVisualViewport() {
+		if (!isIpadBrowserViewport()) {
+			return;
+		}
+		const viewport = window.visualViewport;
+		const width = viewport && viewport.width ? viewport.width : window.innerWidth;
+		const height = viewport && viewport.height ? viewport.height : window.innerHeight;
+		const left = viewport ? viewport.offsetLeft : 0;
+		const top = viewport ? viewport.offsetTop : 0;
+		const rootStyle = document.documentElement.style;
+		document.documentElement.setAttribute('data-ptcg-ipad-web', 'true');
+		rootStyle.setProperty('--ptcg-visible-width', Math.max(1, width) + 'px');
+		rootStyle.setProperty('--ptcg-visible-height', Math.max(1, height) + 'px');
+		rootStyle.setProperty('--ptcg-visible-left', Math.max(0, left) + 'px');
+		rootStyle.setProperty('--ptcg-visible-top', Math.max(0, top) + 'px');
+	}
+
+	if (isIpadBrowserViewport()) {
+		syncIpadVisualViewport();
+		window.addEventListener('resize', syncIpadVisualViewport, true);
+		window.addEventListener('orientationchange', syncIpadVisualViewport, true);
+		if (window.visualViewport) {
+			window.visualViewport.addEventListener('resize', syncIpadVisualViewport);
+			window.visualViewport.addEventListener('scroll', syncIpadVisualViewport);
+		}
+	}
+
 	window.__ptcgLifecycleQueue = Array.isArray(window.__ptcgLifecycleQueue) ? window.__ptcgLifecycleQueue : [];
 	if (!window.__ptcgEarlyLifecycleBridge) {
 		const earlyListeners = [];

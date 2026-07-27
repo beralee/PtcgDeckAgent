@@ -1,0 +1,208 @@
+{
+  "format_version": 1,
+  "puzzle_id": "dragapult_01",
+  "deck_id": "800018506",
+  "revision": 4,
+  "profile": "precision",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "侦察后才允许洗牌",
+  "objective": "本回合发动幻影潜袭，并让第二只多龙奇保留下一回合所需的唯一火能。",
+  "strategy_id": "dragapult_dusknoir",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "侦察后才允许洗牌",
+      "fingerprint": "牌库顶2张已公开为基本火能与诱饵；手牌有会洗牌的高级球；两只多龙奇只有一只能在本回合完成进化。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "先用侦察指令拿基本火能、把诱饵沉底，再使用高级球找多龙巴鲁托ex并把火能交给接力线。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“本回合发动幻影潜袭，并让第二只多龙奇保留下一回合所需的唯一火能。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "本回合发动幻影潜袭，并让第二只多龙奇保留下一回合所需的唯一火能。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手前场公开具备击倒首攻多龙巴鲁托ex的伤害。",
+      "deadline": "对手下一回合结束前",
+      "impact": "首攻者离场后若火能没有转交，第二回合只能使用低伤招式。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "先用高级球洗牌再侦察",
+      "actor": "player",
+      "axis": "information_epoch",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "information_epoch 延迟失败",
+      "outcome": "failure",
+      "reason": "唯一已知火能被洗回未知区，接力线失去确定性。",
+      "failure_axis": "information_epoch",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "侦察拿诱饵并把火能沉底",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "resource_assignment 延迟失败",
+      "outcome": "failure",
+      "reason": "本回合能进化，但第二回合没有合法火能来源。",
+      "failure_axis": "resource_assignment",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "已知牌顶信息",
+      "resource_type": "information_epoch",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首次洗牌前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "唯一基本火能",
+      "resource_type": "energy_type",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "本回合攻击前",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一次手贴",
+      "resource_type": "manual_attachment",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "本回合攻击前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "本回合发动幻影潜袭，并让第二只多龙奇保留下一回合所需的唯一火能。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "not_required",
+    "negative_probe_axes": [
+      "information_epoch",
+      "resource_assignment"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

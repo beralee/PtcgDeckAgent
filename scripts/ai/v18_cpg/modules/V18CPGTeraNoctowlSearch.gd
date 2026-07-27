@@ -617,6 +617,71 @@ func pick_verified_basic_search_override(
 	var root_target_uids := _upper_string_array(
 		parameters.get("search_engine_root_target_uids", [])
 	)
+	var verify_continuity_basic_search := bool(parameters.get(
+		"verify_continuity_basic_search",
+		false
+	))
+	var energy_engine_target_uids := _upper_string_array(
+		parameters.get("continuity_energy_engine_target_uids", [])
+	)
+	var next_attacker_target_uids := _upper_string_array(
+		parameters.get("continuity_next_attacker_target_uids", [])
+	)
+	var continuity_debts: Array = continuity.get("debt_types", []) \
+		if continuity.get("debt_types", []) is Array else []
+	var continuity_target_uids: Array[String] = []
+	var immediate_search_evolution_visible := int(continuity.get(
+		"search_engine_in_hand_count",
+		0
+	)) > 0
+	if verify_continuity_basic_search \
+			and "search_engine_root" in continuity_debts \
+			and immediate_search_evolution_visible:
+		continuity_target_uids.append_array(root_target_uids)
+	if verify_continuity_basic_search \
+			and (
+				"live_energy_engine" in continuity_debts \
+				or "energy_engine_width" in continuity_debts
+			):
+		continuity_target_uids.append_array(energy_engine_target_uids)
+	if verify_continuity_basic_search \
+			and "next_attacker_root" in continuity_debts:
+		for uid: String in next_attacker_target_uids:
+			if uid not in continuity_target_uids:
+				continuity_target_uids.append(uid)
+	if verify_continuity_basic_search \
+			and "search_engine_root" in continuity_debts:
+		for uid: String in root_target_uids:
+			if uid not in continuity_target_uids:
+				continuity_target_uids.append(uid)
+	if not continuity_target_uids.is_empty() \
+			and str(preferred_card.get("uid", "")).to_upper() \
+				in root_search_uids \
+			and int(continuity.get(
+				"bench_slots_free",
+				facts.get("resources", {}).get("bench_slots_free", 0)
+			)) > 0:
+		var continuity_target: Variant = null
+		for wanted_uid: String in continuity_target_uids:
+			for item: Variant in items:
+				if _item_uid(item) == wanted_uid:
+					continuity_target = item
+					break
+			if continuity_target != null:
+				break
+		if continuity_target != null:
+			if rule_selection.size() == 1 \
+					and _stable_id(rule_selection[0]) \
+						== _stable_id(continuity_target):
+				return {"handled": false, "items": []}
+			return {
+				"handled": true,
+				"items": [continuity_target],
+				"reason": "acquire_public_continuity_basic",
+				"certificate_kind": (
+					"public_continuity_basic_search_target"
+				),
+			}
 	if bool(parameters.get(
 			"verify_search_engine_root_acquisition",
 			false

@@ -7,6 +7,7 @@ extends RefCounted
 
 const MODULE_PATHS := {
 	"dynamic_attack_cost": "res://scripts/ai/v18_cpg/modules/V18CPGDynamicAttackCost.gd",
+	"prize_clock_pivot": "res://scripts/ai/v18_cpg/modules/V18CPGPrizeClockPivot.gd",
 	"energy_burst": "res://scripts/ai/v18_cpg/modules/V18CPGEnergyBurst.gd",
 	"tera_noctowl_search": "res://scripts/ai/v18_cpg/modules/V18CPGTeraNoctowlSearch.gd",
 	"cycle_pivot": "res://scripts/ai/v18_cpg/modules/V18CPGCyclePivot.gd",
@@ -20,7 +21,10 @@ const MODULE_PATHS := {
 	"grass_spread": "res://scripts/ai/v18_cpg/modules/V18CPGGrassSpread.gd",
 	"fire_toolbox": "res://scripts/ai/v18_cpg/modules/V18CPGEthanHoOhFireToolbox.gd",
 }
-const BASE_MODULE_IDS: Array[String] = ["dynamic_attack_cost"]
+const BASE_MODULE_IDS: Array[String] = [
+	"dynamic_attack_cost",
+	"prize_clock_pivot",
+]
 
 var _instances: Dictionary = {}
 
@@ -192,4 +196,38 @@ func _enabled_module_ids(enabled: Variant) -> Array[String]:
 		var module_id := str(raw_module_id)
 		if module_id != "" and module_id not in result:
 			result.append(module_id)
+	return result
+
+
+func annotate_frontier_post_completion(
+	frontier: Array[Dictionary],
+	observation: Dictionary,
+	facts: Dictionary,
+	profile: Dictionary,
+	semantic_manifest: Dictionary = {}
+) -> Array[Dictionary]:
+	var result := frontier.duplicate(true)
+	var enabled: Variant = profile.get("modules", [])
+	var module_ids := _enabled_module_ids(enabled)
+	for raw_module_id: Variant in module_ids:
+		var module_id := str(raw_module_id)
+		var module := _module(module_id)
+		if module == null \
+				or not module.has_method(
+					"annotate_frontier_post_completion"
+				):
+			continue
+		var annotated: Variant = module.call(
+			"annotate_frontier_post_completion",
+			result,
+			observation,
+			facts,
+			profile,
+			semantic_manifest
+		)
+		if annotated is Array:
+			result.clear()
+			for raw_route: Variant in annotated as Array:
+				if raw_route is Dictionary:
+					result.append(raw_route as Dictionary)
 	return result

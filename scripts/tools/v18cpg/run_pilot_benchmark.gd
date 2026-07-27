@@ -100,11 +100,35 @@ func _run_deck_pair(deck_id: int, options: Dictionary, model_enabled: bool) -> D
 	var aggregate_calls := 0
 	var aggregate_accepted := 0
 	var aggregate_rejected := 0
+	var aggregate_shadow_accepted := 0
+	var aggregate_model_root_takeovers := 0
+	var aggregate_model_branch_action_results := 0
 	var aggregate_model_owned_action_results := 0
+	var aggregate_requests_started := 0
+	var aggregate_requests_resolved := 0
+	var aggregate_provider_responses := 0
+	var aggregate_contract_validated_responses := 0
+	var aggregate_policy_installed_requests := 0
+	var aggregate_graph_bearing_installed_requests := 0
+	var aggregate_graph_bearing_causal_execution_requests := 0
+	var aggregate_causal_execution_requests := 0
+	var aggregate_verified_agreement_requests := 0
+	var aggregate_effective_participation_requests := 0
+	var aggregate_accepted_unexecuted_requests := 0
+	var aggregate_accepted_preempted_requests := 0
+	var aggregate_request_intents: Dictionary = {}
+	var aggregate_funnel_by_intent: Dictionary = {}
 	var aggregate_branch_hits := 0
+	var aggregate_model_graph_branch_hits := 0
+	var aggregate_local_graph_branch_hits := 0
+	var aggregate_shadow_information_epochs_retained := 0
+	var aggregate_judgment_skips := 0
 	var aggregate_uncovered := 0
 	var wait_values: Array[float] = []
 	var turn_wait_values: Array[float] = []
+	var early_turn_wait_values: Array[float] = []
+	var middle_turn_wait_values: Array[float] = []
+	var late_turn_wait_values: Array[float] = []
 	var payload_values: Array[float] = []
 	var fallback_counts: Dictionary = {}
 	var fallback_reason_counts: Dictionary = {}
@@ -149,11 +173,107 @@ func _run_deck_pair(deck_id: int, options: Dictionary, model_enabled: bool) -> D
 		aggregate_calls += int(audit.get("model_calls", 0))
 		aggregate_accepted += int(audit.get("model_accepted", 0))
 		aggregate_rejected += int(audit.get("model_rejected", 0))
+		aggregate_shadow_accepted += int(audit.get(
+			"model_shadow_accepted",
+			0
+		))
+		aggregate_model_root_takeovers += int(audit.get(
+			"model_root_takeovers",
+			0
+		))
+		aggregate_model_branch_action_results += int(audit.get(
+			"model_branch_action_results",
+			0
+		))
 		aggregate_model_owned_action_results += int(audit.get("model_owned_action_results", 0))
+		aggregate_requests_started += int(audit.get(
+			"model_requests_started",
+			audit.get("model_calls", 0)
+		))
+		aggregate_requests_resolved += int(audit.get(
+			"model_requests_resolved",
+			audit.get("model_calls", 0)
+		))
+		aggregate_provider_responses += int(audit.get(
+			"model_provider_responses",
+			audit.get("model_calls", 0)
+		))
+		aggregate_contract_validated_responses += int(audit.get(
+			"model_contract_validated_responses",
+			audit.get("model_accepted", 0)
+		))
+		aggregate_policy_installed_requests += int(audit.get(
+			"model_policy_installed_requests",
+			0
+		))
+		aggregate_graph_bearing_installed_requests += int(audit.get(
+			"model_graph_bearing_installed_requests",
+			0
+		))
+		aggregate_graph_bearing_causal_execution_requests += int(audit.get(
+			"model_graph_bearing_causal_execution_requests",
+			0
+		))
+		aggregate_causal_execution_requests += int(audit.get(
+			"model_causal_execution_requests",
+			0
+		))
+		aggregate_verified_agreement_requests += int(audit.get(
+			"model_verified_agreement_requests",
+			0
+		))
+		aggregate_effective_participation_requests += int(audit.get(
+			"model_effective_participation_requests",
+			0
+		))
+		aggregate_accepted_unexecuted_requests += int(audit.get(
+			"model_accepted_unexecuted_requests",
+			0
+		))
+		aggregate_accepted_preempted_requests += int(audit.get(
+			"model_accepted_preempted_requests",
+			0
+		))
+		_merge_count_dictionary(
+			aggregate_request_intents,
+			audit.get("model_request_intents", {})
+		)
+		_merge_funnel_counts(
+			aggregate_funnel_by_intent,
+			audit.get("model_request_funnel_by_intent", {})
+		)
 		aggregate_branch_hits += int(audit.get("graph_branch_hits", audit.get("branch_hits", 0)))
+		aggregate_model_graph_branch_hits += int(audit.get(
+			"model_graph_branch_hits",
+			0
+		))
+		aggregate_local_graph_branch_hits += int(audit.get(
+			"local_graph_branch_hits",
+			0
+		))
+		aggregate_shadow_information_epochs_retained += int(audit.get(
+			"model_shadow_information_epochs_retained",
+			0
+		))
+		aggregate_judgment_skips += int(audit.get(
+			"turn_model_judgment_skipped_turns",
+			0
+		))
 		aggregate_uncovered += int(audit.get("uncovered_events", 0))
 		_append_float_samples(wait_values, audit.get("visible_wait_samples_ms", []))
 		_append_float_samples(turn_wait_values, audit.get("turn_visible_wait_samples_ms", []))
+		_append_float_samples(
+			early_turn_wait_values,
+			audit.get("early_turn_visible_wait_samples_ms", [])
+		)
+		_append_float_samples(
+			middle_turn_wait_values,
+			audit.get("middle_turn_visible_wait_samples_ms", [])
+		)
+		_append_float_samples(
+			late_turn_wait_values,
+			audit.get("late_turn_visible_wait_samples_ms", [])
+		)
 		_append_float_samples(payload_values, audit.get("payload_samples_bytes", []))
 		var fallbacks: Variant = audit.get("fallbacks", {})
 		if fallbacks is Dictionary:
@@ -206,6 +326,7 @@ func _run_deck_pair(deck_id: int, options: Dictionary, model_enabled: bool) -> D
 			int(audit.get("model_calls", 0)),
 		])
 	var interval := _paired_bootstrap_interval(paired_deltas, seed_base + deck_id)
+	_finalize_funnel_rates(aggregate_funnel_by_intent)
 	var benchmark_profile := ProfileCatalogScript.get_profile_for_deck(
 		deck_id,
 		not bool(options.get("ignore_profile_overrides", false))
@@ -233,16 +354,100 @@ func _run_deck_pair(deck_id: int, options: Dictionary, model_enabled: bool) -> D
 		"model_calls": aggregate_calls,
 		"model_accepted": aggregate_accepted,
 		"model_rejected": aggregate_rejected,
+		"model_shadow_accepted": aggregate_shadow_accepted,
+		"model_root_takeovers": aggregate_model_root_takeovers,
+		"model_branch_action_results": aggregate_model_branch_action_results,
 		"model_owned_action_results": aggregate_model_owned_action_results,
+		"model_requests_started": aggregate_requests_started,
+		"model_requests_resolved": aggregate_requests_resolved,
+		"model_provider_responses": aggregate_provider_responses,
+		"model_contract_validated_responses": \
+			aggregate_contract_validated_responses,
+		"model_policy_installed_requests": \
+			aggregate_policy_installed_requests,
+		"model_graph_bearing_installed_requests": \
+			aggregate_graph_bearing_installed_requests,
+		"model_graph_bearing_causal_execution_requests": \
+			aggregate_graph_bearing_causal_execution_requests,
+		"model_causal_execution_requests": \
+			aggregate_causal_execution_requests,
+		"model_verified_agreement_requests": \
+			aggregate_verified_agreement_requests,
+		"model_effective_participation_requests": \
+			aggregate_effective_participation_requests,
+		"model_accepted_unexecuted_requests": \
+			aggregate_accepted_unexecuted_requests,
+		"model_accepted_preempted_requests": \
+			aggregate_accepted_preempted_requests,
+		"model_request_intents": aggregate_request_intents,
+		"model_request_funnel_by_intent": aggregate_funnel_by_intent,
+		"model_transport_completion_rate": float(
+			aggregate_provider_responses
+		) / float(
+			maxi(aggregate_requests_started, 1)
+		),
+		"model_provider_response_rate": float(
+			aggregate_provider_responses
+		) / float(maxi(aggregate_requests_started, 1)),
+		"model_contract_validation_rate": float(
+			aggregate_contract_validated_responses
+		) / float(maxi(aggregate_provider_responses, 1)),
+		"model_policy_install_rate": float(
+			aggregate_policy_installed_requests
+		) / float(maxi(aggregate_calls, 1)),
+		"model_request_to_causal_execution_rate": float(
+			aggregate_causal_execution_requests
+		) / float(maxi(aggregate_requests_started, 1)),
+		"model_accepted_to_causal_execution_rate": float(
+			aggregate_causal_execution_requests
+		) / float(maxi(aggregate_accepted, 1)),
+		"model_request_to_effective_participation_rate": float(
+			aggregate_effective_participation_requests
+		) / float(maxi(aggregate_requests_started, 1)),
+		"model_graph_bearing_causal_execution_rate": float(
+			aggregate_graph_bearing_causal_execution_requests
+		) / float(maxi(aggregate_graph_bearing_installed_requests, 1)),
+		"model_execution_per_call": float(
+			aggregate_model_owned_action_results
+		) / float(maxi(aggregate_calls, 1)),
 		"model_acceptance_rate": float(aggregate_accepted) / float(maxi(aggregate_calls, 1)),
 		"calls_per_game": float(aggregate_calls) / float(maxi(games, 1)),
 		"graph_branch_hits": aggregate_branch_hits,
+		"model_graph_branch_hits": aggregate_model_graph_branch_hits,
+		"local_graph_branch_hits": aggregate_local_graph_branch_hits,
+		"model_shadow_information_epochs_retained": \
+			aggregate_shadow_information_epochs_retained,
+		"turn_model_judgment_skipped_turns": aggregate_judgment_skips,
 		"uncovered_events": aggregate_uncovered,
 		"visible_wait_count": wait_values.size(),
 		"visible_wait_p50_ms": _percentile(wait_values, 0.50),
 		"visible_wait_p95_ms": _percentile(wait_values, 0.95),
 		"turn_visible_wait_p50_ms": _percentile(turn_wait_values, 0.50),
 		"turn_visible_wait_p95_ms": _percentile(turn_wait_values, 0.95),
+		"early_turn_visible_wait_p50_ms": _percentile(
+			early_turn_wait_values,
+			0.50
+		),
+		"early_turn_visible_wait_p95_ms": _percentile(
+			early_turn_wait_values,
+			0.95
+		),
+		"middle_turn_visible_wait_p50_ms": _percentile(
+			middle_turn_wait_values,
+			0.50
+		),
+		"middle_turn_visible_wait_p95_ms": _percentile(
+			middle_turn_wait_values,
+			0.95
+		),
+		"late_turn_visible_wait_p50_ms": _percentile(
+			late_turn_wait_values,
+			0.50
+		),
+		"late_turn_visible_wait_p95_ms": _percentile(
+			late_turn_wait_values,
+			0.95
+		),
 		"payload_p50_bytes": _percentile(payload_values, 0.50),
 		"payload_p95_bytes": _percentile(payload_values, 0.95),
 		"fallbacks": fallback_counts,
@@ -587,6 +792,76 @@ func _append_float_samples(target: Array[float], samples: Variant) -> void:
 		target.append(float(sample))
 
 
+func _merge_count_dictionary(target: Dictionary, source: Variant) -> void:
+	if not (source is Dictionary):
+		return
+	for raw_key: Variant in (source as Dictionary).keys():
+		var key := str(raw_key)
+		target[key] = int(target.get(key, 0)) + int(
+			(source as Dictionary).get(raw_key, 0)
+		)
+
+
+func _merge_funnel_counts(target: Dictionary, source: Variant) -> void:
+	if not (source is Dictionary):
+		return
+	for raw_intent: Variant in (source as Dictionary).keys():
+		var intent := str(raw_intent)
+		var source_bucket: Dictionary = (source as Dictionary).get(
+			raw_intent,
+			{}
+		) if (source as Dictionary).get(raw_intent, {}) is Dictionary else {}
+		var target_bucket: Dictionary = target.get(intent, {}) \
+			if target.get(intent, {}) is Dictionary else {}
+		for field: String in [
+			"requested",
+			"responded",
+			"provider_response",
+			"contract_validated",
+			"accepted",
+			"installed",
+			"graph_bearing_installed",
+			"graph_bearing_causal_execution",
+			"causal_execution",
+			"verified_agreement",
+			"effective_participation",
+			"rejected",
+		]:
+			target_bucket[field] = int(target_bucket.get(field, 0)) + int(
+				source_bucket.get(field, 0)
+			)
+		target[intent] = target_bucket
+
+
+func _finalize_funnel_rates(funnel: Dictionary) -> void:
+	for raw_intent: Variant in funnel.keys():
+		var intent := str(raw_intent)
+		var bucket: Dictionary = funnel.get(intent, {}) \
+			if funnel.get(intent, {}) is Dictionary else {}
+		bucket["response_rate"] = float(bucket.get("responded", 0)) / float(
+			maxi(int(bucket.get("requested", 0)), 1)
+		)
+		bucket["provider_response_rate"] = float(
+			bucket.get("provider_response", 0)
+		) / float(maxi(int(bucket.get("requested", 0)), 1))
+		bucket["contract_validation_rate"] = float(
+			bucket.get("contract_validated", 0)
+		) / float(maxi(int(bucket.get("provider_response", 0)), 1))
+		bucket["acceptance_rate"] = float(bucket.get("accepted", 0)) / float(
+			maxi(int(bucket.get("responded", 0)), 1)
+		)
+		bucket["causal_execution_rate"] = float(
+			bucket.get("causal_execution", 0)
+		) / float(maxi(int(bucket.get("requested", 0)), 1))
+		bucket["effective_participation_rate"] = float(
+			bucket.get("effective_participation", 0)
+		) / float(maxi(int(bucket.get("requested", 0)), 1))
+		bucket["graph_bearing_causal_execution_rate"] = float(
+			bucket.get("graph_bearing_causal_execution", 0)
+		) / float(maxi(int(bucket.get("graph_bearing_installed", 0)), 1))
+		funnel[intent] = bucket
+
+
 func _json_ascii_safe(value: Variant) -> Variant:
 	if value is Dictionary:
 		var result: Dictionary = {}
@@ -615,7 +890,7 @@ func _print_deck_report(report: Dictionary) -> void:
 	if report.has("error"):
 		print("deck %d ERROR %s" % [int(report.get("deck_id", 0)), str(report.get("error", ""))])
 		return
-	print("deck=%s rule=%.1f%% v18cpg=%.1f%% delta=%+.1fpp clean=%d/%d calls=%d wait_p95=%.0fms" % [
+	print("deck=%s rule=%.1f%% v18cpg=%.1f%% delta=%+.1fpp clean=%d/%d calls=%d accepted=%d causal=%d effective=%d model_branches=%d skips=%d wait_p95=%.0fms" % [
 		str(report.get("deck_name", report.get("deck_id", 0))),
 		float(report.get("rule_win_rate", 0.0)) * 100.0,
 		float(report.get("v18cpg_win_rate", 0.0)) * 100.0,
@@ -623,6 +898,11 @@ func _print_deck_report(report: Dictionary) -> void:
 		int(report.get("v18cpg_clean_games", 0)),
 		int(report.get("games", 0)),
 		int(report.get("model_calls", 0)),
+		int(report.get("model_accepted", 0)),
+		int(report.get("model_causal_execution_requests", 0)),
+		int(report.get("model_effective_participation_requests", 0)),
+		int(report.get("model_graph_branch_hits", 0)),
+		int(report.get("turn_model_judgment_skipped_turns", 0)),
 		float(report.get("visible_wait_p95_ms", 0.0)),
 	])
 

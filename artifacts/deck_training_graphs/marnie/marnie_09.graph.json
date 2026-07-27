@@ -1,0 +1,367 @@
+{
+  "format_version": 1,
+  "puzzle_id": "marnie_09",
+  "deck_id": "800018501",
+  "revision": 4,
+  "profile": "composite",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "道馆检索要给奇树让路",
+  "objective": "本回合完成第二只长毛巨魔进化、打断对手老大，并在两种回复后继续攻击。",
+  "strategy_id": "v18_800018501_marnies_grimmsnarl",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "道馆检索要给奇树让路",
+      "fingerprint": "尖钉镇道馆可找玛俐进化件；手中奇树、博士、老大三选一；对手公开老大且可抓后排两奖；最后1空位。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "用道馆找进化件，不占支援者；最后空位给第二只捣蛋小妖，用奇树打掉公开老大，再从手牌进化触发泵感。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“本回合完成第二只长毛巨魔进化、打断对手老大，并在两种回复后继续攻击。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "本回合完成第二只长毛巨魔进化、打断对手老大，并在两种回复后继续攻击。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手手牌公开老大，己方后排两奖宝可梦被抓即输。",
+      "deadline": "对手下一回合结束前",
+      "impact": "必须用非支援者检索释放奇树窗口。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "用博士研究找进化件",
+      "actor": "player",
+      "axis": "supporter_window",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "supporter_window 延迟失败",
+      "outcome": "failure",
+      "reason": "丢弃奇树并让对手保留终局老大。",
+      "failure_axis": "supporter_window",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "用老大先拿当前奖",
+      "actor": "player",
+      "axis": "disruption_priority",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "disruption_priority 延迟失败",
+      "outcome": "failure",
+      "reason": "忽略对手反抓，攻击后立即输。",
+      "failure_axis": "disruption_priority",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_3",
+      "kind": "action",
+      "label": "最后空位给雪童子",
+      "actor": "player",
+      "axis": "bench_ownership",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_3",
+      "kind": "terminal",
+      "label": "bench_ownership 延迟失败",
+      "outcome": "failure",
+      "reason": "检查伤害有价值，但第二只玛俐线无法建立。",
+      "failure_axis": "bench_ownership",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "一次道馆检索",
+      "resource_type": "stadium_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "进化前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "最后一个接力空位",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "奇树前",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一次打断支援者窗口",
+      "resource_type": "supporter_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "本回合攻击前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "本回合完成第二只长毛巨魔进化、打断对手老大，并在两种回复后继续攻击。"
+    },
+    {
+      "id": "g_survival",
+      "kind": "invariant",
+      "label": "survival",
+      "category": "survival",
+      "assertion": "对手的可信回复结算后，玩家仍未输且至少保留一条核心引擎或攻击线。"
+    },
+    {
+      "id": "g_handoff",
+      "kind": "invariant",
+      "label": "handoff",
+      "category": "handoff",
+      "assertion": "进入第二个玩家回合时存在合法攻击手、能量来源与必要目标访问。"
+    },
+    {
+      "id": "g_disruption",
+      "kind": "invariant",
+      "label": "disruption",
+      "category": "disruption",
+      "assertion": "在推进奖赏的同时处理题面公开或可推导的对手终局资源。"
+    },
+    {
+      "id": "g_deny_opponent_win",
+      "kind": "invariant",
+      "label": "deny_opponent_win",
+      "category": "deny_opponent_win",
+      "assertion": "对手任一枚举回复都不能在下一检查点直接宣告获胜。"
+    },
+    {
+      "id": "s1",
+      "kind": "state",
+      "label": "首轮承诺完成，进入对手回应",
+      "fingerprint": "正确路线已兑现当前进度；仍需覆盖：对手手牌公开老大，己方后排两奖宝可梦被抓即输。",
+      "checkpoint": "opponent_turn_1_start"
+    },
+    {
+      "id": "d_reply",
+      "kind": "opponent_decision",
+      "label": "覆盖所有题面可信高影响回复",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "对手手牌公开老大，己方后排两奖宝可梦被抓即输。；回复集合来自公开手牌、场上招式或已冻结策略。"
+    },
+    {
+      "id": "a_reply_1",
+      "kind": "action",
+      "label": "奇树后击倒首攻",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_1",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "a_reply_2",
+      "kind": "action",
+      "label": "撤退前场并推进单奖墙",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_2",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_3",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_3",
+      "to": "f_bad_3",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_survival",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_handoff",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_disruption",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_deny_opponent_win",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "s1",
+      "type": "resolves"
+    },
+    {
+      "from": "s1",
+      "to": "d_reply",
+      "type": "opens"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_1",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_1",
+      "to": "s2_1",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_1",
+      "to": "g_success",
+      "type": "reaches"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_2",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_2",
+      "to": "s2_2",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_2",
+      "to": "g_success",
+      "type": "reaches"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 4,
+    "opponent_reply_coverage": "all",
+    "negative_probe_axes": [
+      "supporter_window",
+      "disruption_priority",
+      "bench_ownership"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

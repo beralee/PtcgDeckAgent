@@ -18,9 +18,9 @@ if (-not $SkipExport) {
     Copy-Item -LiteralPath (Join-Path $repoRoot "web\userptcg_bridge.html") -Destination (Join-Path $exportDir "userptcg_bridge.html") -Force
     $latest = [ordered]@{
         schema_version = 1
-        version = "0.5.1"
-        display_version = "v0.5.1"
-        build_number = 51
+        version = "0.5.2"
+        display_version = "v0.5.2"
+        build_number = 52
         channel = "e2e"
         release_path = "/"
         entry = "/PtcgDeckAgent.html"

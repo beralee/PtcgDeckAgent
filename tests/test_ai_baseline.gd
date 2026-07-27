@@ -615,7 +615,7 @@ func test_ai_legal_action_builder_enumerates_play_stadium_actions() -> String:
 	])
 
 
-func test_ai_legal_action_builder_keeps_different_stadium_after_one_played_this_turn() -> String:
+func test_ai_legal_action_builder_blocks_all_stadiums_after_one_played_this_turn() -> String:
 	var gsm := _make_ai_manual_gsm()
 	var builder: Variant = _new_legal_action_builder()
 	var player: PlayerState = gsm.game_state.players[0]
@@ -630,9 +630,9 @@ func test_ai_legal_action_builder_keeps_different_stadium_after_one_played_this_
 	var actions := _build_ai_actions(gsm)
 	return run_checks([
 		assert_not_null(builder, "AILegalActionBuilder should load"),
-		assert_eq(_count_actions_by_kind(actions, "play_stadium"), 1, "Builder should still enumerate only the different named Stadium"),
-		assert_true(_has_action(actions, "play_stadium", {"card": replacement, "targets": []}), "Builder should expose the replacement Stadium"),
-		assert_false(_has_action(actions, "play_stadium", {"card": same_stadium}), "Builder should not expose the active Stadium name"),
+		assert_eq(_count_actions_by_kind(actions, "play_stadium"), 0, "Builder must not enumerate a second Stadium in the same turn"),
+		assert_false(_has_action(actions, "play_stadium", {"card": replacement, "targets": []}), "Builder must hide a differently named replacement after the Stadium quota is spent"),
+		assert_false(_has_action(actions, "play_stadium", {"card": same_stadium}), "Builder must also hide the active Stadium name"),
 	])
 
 
@@ -2640,6 +2640,30 @@ func test_battle_scene_successful_ai_action_pauses_before_next_vs_ai_step() -> S
 		assert_false(scheduled_during_pause, "BattleScene should not schedule the next AI step until the pause finishes"),
 		assert_true(scheduled_after_pause, "When the AI action pause finishes, BattleScene should resume AI scheduling"),
 		assert_eq(resumed_run_count, 1, "The resumed AI step should execute exactly once after the pause"),
+	])
+
+
+func test_battle_scene_ai_waits_for_card_visual_queue_and_resumes_when_idle() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", SpyAIOpponent.new())
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+
+	scene.set("_battle_visual_input_blocked", true)
+	scene._maybe_run_ai()
+	var scheduled_during_visual: bool = bool(scene.get("_ai_step_scheduled"))
+	scene.set("_battle_visual_input_blocked", false)
+	scene.call("_on_battle_visual_sequence_idle")
+	var scheduled_after_visual: bool = bool(scene.get("_ai_step_scheduled"))
+
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_false(scheduled_during_visual, "AI must not resolve a new action while an older card visual is active"),
+		assert_true(scheduled_after_visual, "Draining the visual queue should resume the same AI turn"),
 	])
 
 

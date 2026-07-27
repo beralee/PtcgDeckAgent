@@ -13,6 +13,10 @@ const PORTRAIT_TOP_BAR_HEIGHT := 104.0
 const PORTRAIT_TOP_BAR_GAP := 4.0
 const PORTRAIT_TOP_BAR_TOP_PADDING := 4.0
 const PORTRAIT_STADIUM_HEIGHT := 64.0
+const PORTRAIT_HAND_HIDDEN_SCROLLBAR_CLEARANCE := 14.0
+const PORTRAIT_HAND_PANEL_PADDING := 18.0
+const PORTRAIT_FIELD_INNER_GAP := 4.0
+const PORTRAIT_STANDARD_FIELD_MIN_SCALE := 0.72
 
 
 func resolve_layout_mode(viewport_size: Vector2, preferred_mode: String, is_mobile: bool = false) -> String:
@@ -74,7 +78,7 @@ func compute_play_card_height(
 
 	var min_card_height := 82.0 if bench_size > 5 else 112.0
 	var max_card_height := 176.0 if bench_size > 5 else 192.0
-	var hud_width_limited := compute_landscape_hud_safe_card_height(center_width, card_aspect)
+	var hud_width_limited := compute_landscape_hud_safe_card_height(center_width, card_aspect, bench_size)
 	if hud_width_limited > 0.0 and hud_width_limited < min_card_height:
 		min_card_height = maxf(82.0, hud_width_limited)
 	var total_width_limited := width_limited
@@ -83,16 +87,28 @@ func compute_play_card_height(
 	return clampf(minf(height_limited, total_width_limited), min_card_height, max_card_height)
 
 
-func compute_landscape_hud_safe_card_height(center_width: float, card_aspect: float) -> float:
+func compute_landscape_hud_safe_card_height(
+	center_width: float,
+	card_aspect: float,
+	bench_size: int = 5
+) -> float:
 	if center_width <= 0.0 or card_aspect <= 0.0:
 		return 0.0
 	# Horizontal field rows contain prize HUD, active/bench axis, pile HUDs, and shell gaps.
 	# The bench row width alone does not protect low-height 20:9 phones or narrow 4:3
 	# tablet canvases from pushing the prize HUD outside the touchable viewport.
+	# Area Zero can widen the single landscape Bench row from five to eight cards,
+	# so the field-axis budget must follow the live capacity instead of retaining
+	# the five-slot active-row estimate.
 	var prize_factor := 3.0 * 0.9 * card_aspect
-	var field_axis_factor := 6.2 * card_aspect
+	var field_axis_factor := maxf(6.2, float(maxi(bench_size, 1))) * card_aspect
 	var pile_factor := 2.0 * 0.9 * card_aspect
 	var fixed_chrome := 78.0
+	if bench_size > 5:
+		# Keep the same safety gap used by the landscape coordinator. Without
+		# reserving it here, the coordinator compensates by narrowing the log
+		# panel after Area Zero activates, which also resizes the backdrop.
+		fixed_chrome += 24.0
 	var total_factor := maxf(prize_factor + field_axis_factor + pile_factor, 1.0)
 	return maxf((center_width - fixed_chrome) / total_factor, 0.0)
 
@@ -129,6 +145,8 @@ func measure_portrait_card_layout(
 		# Wide portrait phones/tablets should show five hand cards without forcing
 		# the hand rail or bottom controls outside the visible safe width.
 		hand_height = minf(base_hand_height, hand_width_limited_height)
+	var hand_scroll_height := hand_height if expanded_bench else hand_height + PORTRAIT_HAND_HIDDEN_SCROLLBAR_CLEARANCE
+	var hand_area_height := hand_height if expanded_bench else hand_scroll_height + PORTRAIT_HAND_PANEL_PADDING * ui_scale
 	var field_scale := 1.0
 	if expanded_bench:
 		var default_field_height := base_active_height * 2.0 + base_target_bench_height * 2.0
@@ -144,7 +162,36 @@ func measure_portrait_card_layout(
 		var unscaled_pair_height := base_active_height * PORTRAIT_EXPANDED_ACTIVE_HEIGHT_SCALE + base_target_bench_height * float(rows)
 		var vertical_scale := (field_budget - stadium_reserved - bench_gap * float(maxi(rows - 1, 0)) * 2.0) / maxf(unscaled_pair_height * 2.0, 1.0)
 		field_scale = minf(field_scale, clampf(vertical_scale, 0.58, 1.0))
+	else:
+		# The hand scrollbar is hidden and drag-scrolling owns navigation, so its
+		# panel needs only a slim clearance. Fit the two field halves into the
+		# remaining height instead of letting a short browser viewport clip the
+		# bottom half of the hand cards.
+		var top_reserved := (PORTRAIT_TOP_BAR_TOP_PADDING + PORTRAIT_TOP_BAR_HEIGHT + PORTRAIT_TOP_BAR_GAP) * ui_scale
+		var stadium_reserved := maxf(PORTRAIT_STADIUM_HEIGHT * ui_scale, 56.0)
+		var center_separation_reserved := maxf(3.0 * ui_scale, 3.0)
+		var unscaled_bench_height := clampf(
+			minf(width_limited_bench_height, base_target_bench_height),
+			80.0 * ui_scale,
+			270.0 * ui_scale
+		)
+		var field_budget := maxf(
+			viewport_size.y
+			- top_reserved
+			- stadium_reserved
+			- center_separation_reserved
+			- hand_area_height,
+			1.0
+		)
+		var pair_budget := maxf(field_budget * 0.5 - PORTRAIT_FIELD_INNER_GAP, 1.0)
+		var pair_unscaled := maxf(base_active_height + unscaled_bench_height, 1.0)
+		field_scale = minf(
+			field_scale,
+			clampf(pair_budget / pair_unscaled, PORTRAIT_STANDARD_FIELD_MIN_SCALE, 1.0)
+		)
 	var target_bench_height := base_target_bench_height * field_scale
+	if not expanded_bench:
+		target_bench_height = minf(base_target_bench_height, width_limited_bench_height) * field_scale
 	var bench_height := clampf(minf(width_limited_bench_height, target_bench_height), 58.0 * ui_scale if expanded_bench else 80.0 * ui_scale, 270.0 * ui_scale)
 	bench_width = roundf(bench_height * card_aspect)
 
@@ -153,8 +200,6 @@ func measure_portrait_card_layout(
 		active_height *= PORTRAIT_EXPANDED_ACTIVE_HEIGHT_SCALE
 	var dialog_height := clampf(roundf(viewport_size.y * 0.20), 170.0 * ui_scale, 300.0 * ui_scale)
 	var detail_height := clampf(roundf(viewport_size.y * 0.42), 300.0 * ui_scale, 420.0 * ui_scale)
-	var hand_area_height := hand_height if expanded_bench else -1.0
-	var hand_scroll_height := hand_height if expanded_bench else -1.0
 
 	return {
 		"active_card_size": Vector2(roundf(active_height * card_aspect), active_height),

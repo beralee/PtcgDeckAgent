@@ -8,6 +8,7 @@ const DECK_USAGE_STATS_PATH := "user://battle_deck_usage.json"
 const DECK_PICKER_ALL := "all"
 const DECK_PICKER_RECENT := "recent"
 const DECK_PICKER_LIMIT := 80
+const DECK_PICKER_SEARCH_DEBOUNCE_SECONDS := 0.08
 
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -23,6 +24,7 @@ var _deck_picker_tabs: Dictionary = {}
 var _deck_picker_grid: GridContainer = null
 var _deck_picker_search_input: LineEdit = null
 var _deck_picker_subtitle: Label = null
+var _deck_picker_search_debounce_timer: Timer = null
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _last_non_battle_layout_context: Dictionary = {}
 
@@ -99,7 +101,7 @@ func _apply_tournament_mobile_metrics(node: Node, context: Dictionary, portrait:
 		if portrait:
 			control.add_theme_font_size_override("font_size", maxi(int(context.get("input_font_size", 15)), int(context.get("button_font_size", 15))))
 		if control is LineEdit:
-			NonBattleTouchBridgeScript.bind_focus_control_touch(control)
+			NonBattleTouchBridgeScript.configure_native_line_edit(control as LineEdit)
 	elif node is Label:
 		var label := node as Label
 		if label.name == "TitleLabel":
@@ -422,7 +424,7 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary, portrait: bool) -> v
 	if _deck_picker_search_input != null:
 		_deck_picker_search_input.custom_minimum_size.y = maxf(_deck_picker_search_input.custom_minimum_size.y, input_height)
 		_deck_picker_search_input.add_theme_font_size_override("font_size", input_font)
-		NonBattleTouchBridgeScript.bind_focus_control_touch(_deck_picker_search_input)
+		NonBattleTouchBridgeScript.bind_line_edit_select_all(_deck_picker_search_input)
 	for category_variant: Variant in _deck_picker_tabs.keys():
 		var tab := _deck_picker_tabs[category_variant] as Button
 		if tab != null:
@@ -440,13 +442,43 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary, portrait: bool) -> v
 
 
 func _close_deck_picker() -> void:
+	if _deck_picker_search_debounce_timer != null:
+		_deck_picker_search_debounce_timer.stop()
 	if _deck_picker_overlay != null and is_instance_valid(_deck_picker_overlay):
+		NonBattleTouchBridgeScript.clear_transient_input_state(_deck_picker_overlay, "modal_closed")
 		_deck_picker_overlay.visible = false
 
 
 func _on_deck_picker_search_changed(text: String) -> void:
 	_deck_picker_search = text.strip_edges()
-	_refresh_deck_picker()
+	if not _is_mobile_or_web_runtime():
+		_refresh_deck_picker()
+		return
+	_ensure_deck_picker_search_debounce_timer()
+	_deck_picker_search_debounce_timer.start()
+
+
+func _is_mobile_or_web_runtime() -> bool:
+	return (
+		bool(get_meta("_test_mobile_or_web_runtime", false))
+		or OS.has_feature("mobile")
+		or OS.has_feature("android")
+		or OS.has_feature("ios")
+		or OS.has_feature("web")
+		or OS.has_feature("web_android")
+		or OS.has_feature("web_ios")
+	)
+
+
+func _ensure_deck_picker_search_debounce_timer() -> void:
+	if _deck_picker_search_debounce_timer != null and is_instance_valid(_deck_picker_search_debounce_timer):
+		return
+	_deck_picker_search_debounce_timer = Timer.new()
+	_deck_picker_search_debounce_timer.name = "DeckPickerSearchDebounceTimer"
+	_deck_picker_search_debounce_timer.one_shot = true
+	_deck_picker_search_debounce_timer.wait_time = DECK_PICKER_SEARCH_DEBOUNCE_SECONDS
+	_deck_picker_search_debounce_timer.timeout.connect(_refresh_deck_picker)
+	add_child(_deck_picker_search_debounce_timer)
 
 
 func _on_deck_picker_category_pressed(category: String) -> void:
@@ -461,6 +493,7 @@ func _refresh_deck_picker() -> void:
 	var is_picker_portrait := bool(picker_context.get("is_portrait", false)) if not picker_context.is_empty() else _deck_picker_viewport_size().y > _deck_picker_viewport_size().x
 	_deck_picker_grid.columns = 1 if is_picker_portrait or _deck_picker_viewport_size().x < 760.0 else 2
 	for child: Node in _deck_picker_grid.get_children():
+		_deck_picker_grid.remove_child(child)
 		child.queue_free()
 	_refresh_deck_picker_tabs()
 
@@ -728,6 +761,7 @@ func _style_hud_label(label: Label) -> void:
 
 
 func _style_hud_line_edit(line_edit: LineEdit) -> void:
+	NonBattleTouchBridgeScript.configure_native_line_edit(line_edit)
 	line_edit.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	line_edit.add_theme_color_override("font_color", HUD_TEXT)
 	line_edit.add_theme_color_override("font_placeholder_color", Color(0.62, 0.74, 0.82, 0.88))

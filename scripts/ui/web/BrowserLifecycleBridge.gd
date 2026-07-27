@@ -100,7 +100,10 @@ static func build_install_script(callback_name: String = CALLBACK_NAME, generati
       visual_width: vv ? vv.width : 0,
       visual_height: vv ? vv.height : 0,
       visual_offset_left: vv ? vv.offsetLeft : 0,
-      visual_offset_top: vv ? vv.offsetTop : 0
+      visual_offset_top: vv ? vv.offsetTop : 0,
+      user_agent: String(navigator.userAgent || ''),
+      platform: String(navigator.platform || ''),
+      max_touch_points: Number(navigator.maxTouchPoints || 0)
     };
   }
   var listeners = [];

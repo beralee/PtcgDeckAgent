@@ -170,6 +170,8 @@ func _prepare_dialog_action_input_guard(scene: Object) -> void:
 
 
 func _record_dialog_fresh_input(scene: Object, source: String = "dialog", position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	if scene.has_method("_mark_ui_interaction_progress"):
+		scene.call("_mark_ui_interaction_progress", source)
 	scene.set("_dialog_user_input_generation", int(scene.get("_dialog_generation")))
 	scene.set("_dialog_user_input_position", position)
 	scene.set("_dialog_user_input_source", source)

@@ -250,10 +250,10 @@ func test_import_panel_url_input_uses_feedback_style_focus_path() -> String:
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	scene.queue_free()
 	return run_checks([
-		assert_true(handled_press and handled_release, "Deck import URL input taps should be handled by the same focus bridge path as the working feedback dialog"),
-		assert_true(focus_requested, "Deck import URL input tap should request focus and open the Android keyboard"),
-		assert_false(native_marked, "Deck import URL input should not use the native-bypass path that skips the shared focus bridge"),
-		assert_true(focus_bridge_bound, "Deck import URL input should bind the shared focus touch bridge"),
+		assert_false(handled_press or handled_release, "Deck import URL input taps should be yielded to the platform-native text path"),
+		assert_false(focus_requested, "The compatibility bridge must not synthesize focus for a native text input"),
+		assert_true(native_marked, "Deck import URL input should use the shared native text-input contract"),
+		assert_false(focus_bridge_bound, "Deck import URL input should not bind the legacy focus touch bridge"),
 		assert_false(has_manual_modal_handler, "Deck import modal should not install manual gui_input guards that can swallow input-field taps"),
 		assert_true(url_input != null and url_input.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck import URL input should still stop events inside the modal hit area"),
 		assert_true(url_input != null and url_input.virtual_keyboard_enabled and url_input.virtual_keyboard_show_on_focus, "Deck import URL input should request the native mobile keyboard on focus"),
@@ -275,8 +275,8 @@ func test_import_panel_url_input_is_focus_bridge_bound_like_feedback_dialog() ->
 
 	scene.queue_free()
 	return run_checks([
-		assert_false(native_marked, "Deck import URL input should use the feedback-style focus bridge instead of native bypass"),
-		assert_true(focus_bridge_bound, "Deck import URL input should be bound to the non-battle focus bridge"),
+		assert_true(native_marked, "Deck import URL input should use the native text-input path"),
+		assert_false(focus_bridge_bound, "Deck import URL input should not bind the legacy focus bridge"),
 	])
 
 
@@ -323,8 +323,8 @@ func test_import_panel_modal_keeps_input_focus_bridge_after_text_entry_and_block
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	scene.queue_free()
 	return run_checks([
-		assert_true(handled_input_touch and handled_input_release, "Deck import URL input should remain on the feedback-style focus bridge after text entry"),
-		assert_true(focus_requested, "Deck import URL input should request focus after text entry when tapped again"),
+		assert_false(handled_input_touch or handled_input_release, "Deck import URL input should stay owned by the native text control after text entry"),
+		assert_false(focus_requested, "The compatibility bridge should not replace the native input focus lifecycle"),
 		assert_true(handled_echo_press and handled_echo_release, "Deck import modal should consume Android tap echoes outside the input after text entry"),
 	])
 
@@ -397,14 +397,17 @@ func test_import_panel_url_input_touch_uses_feedback_focus_bridge() -> String:
 	var import_panel := scene.get_node_or_null("%ImportPanel") as Control
 	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, press)) if import_panel != null else false
 	var handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, release)) if import_panel != null else false
+	if url_input != null:
+		url_input.gui_input.emit(press)
+		url_input.gui_input.emit(release)
 	var focus_requested := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false))
 	var selected_all := url_input != null and bool(url_input.get_meta("_non_battle_line_edit_selected_all", false))
 
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	scene.queue_free()
 	return run_checks([
-		assert_true(handled_press and handled_release, "Deck import URL input taps should be handled by the shared focus bridge"),
-		assert_true(focus_requested, "Deck import URL input taps should request focus so Android can open the keyboard"),
+		assert_false(handled_press or handled_release, "Deck import URL input taps should be left to the platform-native text control"),
+		assert_false(focus_requested, "The compatibility bridge should not synthesize native input focus"),
 		assert_true(selected_all, "Tapping deck center import URL input should select all existing text"),
 	])
 

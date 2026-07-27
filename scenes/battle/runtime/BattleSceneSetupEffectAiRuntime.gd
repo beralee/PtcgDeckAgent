@@ -105,6 +105,7 @@ func _start_battle() -> void:
 	_match_end_non_battle_orientation_restored = false
 	_turn_start_snapshot_recorded_keys.clear()
 	_ensure_battle_recording_started()
+	_opening_first_player_flip_pending = GameManager.first_player_choice == -1
 	_gsm.start_game(deck1_data, deck2_data, GameManager.first_player_choice)
 	_capture_battle_recording_context_if_ready()
 	# Setup flow continues through state change callbacks and mulligan prompts.
@@ -1451,6 +1452,7 @@ func _on_match_end_return_pressed() -> void:
 		_match_end_tournament_return_pending = false
 		GameManager.goto_tournament_standings()
 	else:
+		GameManager.request_battle_setup_startup_input_shield("battle_match_end_return")
 		GameManager.goto_battle_setup()
 
 
@@ -1733,6 +1735,7 @@ func _play_next_coin_animation() -> void:
 	if _coin_flip_queue.is_empty():
 		_coin_animating = false
 		_coin_animation_advance_scheduled = false
+		_coin_flip_label_queue.clear()
 		if _coin_animation_resume_effect_step:
 			_coin_animation_resume_effect_step = false
 			_show_next_effect_interaction_step()
@@ -1740,6 +1743,7 @@ func _play_next_coin_animation() -> void:
 		return
 	if _coin_animator == null or not _coin_animator.has_method("play"):
 		_coin_flip_queue.clear()
+		_coin_flip_label_queue.clear()
 		_coin_animating = false
 		_coin_animation_advance_scheduled = false
 		if _coin_animation_resume_effect_step:
@@ -1749,10 +1753,13 @@ func _play_next_coin_animation() -> void:
 		return
 	_coin_animating = true
 	var result: bool = _coin_flip_queue.pop_front()
+	var labels: Dictionary = _coin_flip_label_queue.pop_front() if not _coin_flip_label_queue.is_empty() else {}
 	if _coin_animator.has_method("apply_viewport_metrics"):
 		var coin_viewport_size := _portrait_dialog_viewport_size() if _is_portrait_battle_layout_active() else (get_viewport_rect().size if is_inside_tree() else size)
 		_coin_animator.call("apply_viewport_metrics", coin_viewport_size, _is_portrait_battle_layout_active())
 	_raise_coin_animator_to_front()
+	if not labels.is_empty() and _coin_animator.has_method("set_result_labels"):
+		_coin_animator.call("set_result_labels", str(labels.get("heads", "正面")), str(labels.get("tails", "反面")))
 	_coin_animator.play(result)
 
 

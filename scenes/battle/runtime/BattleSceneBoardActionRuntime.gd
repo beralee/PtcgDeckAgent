@@ -7,6 +7,7 @@ func _ensure_portrait_actions_popup() -> VBoxContainer:
 		_portrait_actions_popup.name = "PortraitActionsPopup"
 		_portrait_actions_popup.exclusive = false
 		_portrait_actions_popup.transient = true
+		IosWebHudTouchAdapterScript.mark_hud_root(_portrait_actions_popup)
 		var panel_style := StyleBoxFlat.new()
 		panel_style.bg_color = Color(0.02, 0.07, 0.10, 0.96)
 		panel_style.border_color = Color(0.26, 0.82, 0.95, 0.90)
@@ -741,6 +742,9 @@ func _stop_battle_discussion_flash() -> void:
 
 
 func _can_accept_live_action() -> bool:
+	# Visual events animate GameState changes that have already been committed and
+	# use non-interactive clones. Keep real modal/reveal/AI handoff gates below,
+	# but do not stall human main-phase input while cosmetic visuals catch up.
 	return (
 		not _is_review_mode()
 		and not (_deck_training_controller != null and _deck_training_controller.is_modal_open())
@@ -2520,13 +2524,13 @@ func _refresh_ui() -> void:
 
 
 func _refresh_field_after_visual_event(semantic: String) -> void:
-	if semantic != "knockout" or _gsm == null or _gsm.game_state == null:
+	if semantic not in ["knockout", "damage_delta", "heal_delta", "status_delta"] \
+			or _gsm == null or _gsm.game_state == null:
 		return
-	# POKEMON_CHECK first publishes its phase and only then commits Knock Out
-	# removals. A targeted Bench attack can therefore leave an older field frame
-	# underneath the transfer overlay. Repaint only the field from the committed
-	# GameState after the KO overlay has finished; rule state and modal flow stay
-	# untouched.
+	# Multi-target attack effects can commit Bench damage after the card view's
+	# earlier frame was built. Repaint only the field from committed GameState
+	# after damage/heal/status feedback (or a KO transfer) finishes. This keeps
+	# rule state, modal flow, and training-session evaluation untouched.
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_field")
 	_sync_card_foil_effects()
@@ -2546,4 +2550,9 @@ func _sync_battle_visual_snapshot_before_refresh() -> void:
 
 
 func _set_battle_visual_input_blocked(blocked: bool) -> void:
+	# This is a visual-queue busy signal for AI pacing, not a blanket human-input lock.
 	_battle_visual_input_blocked = blocked
+
+
+func _on_battle_visual_sequence_idle() -> void:
+	_maybe_run_ai()

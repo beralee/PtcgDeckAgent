@@ -379,6 +379,9 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	var action := _choose_best_action(gsm)
 	if action.is_empty():
 		return false
+	if _deck_strategy != null \
+			and _deck_strategy.has_method("capture_runtime_action_ownership"):
+		_deck_strategy.call("capture_runtime_action_ownership", action)
 	var audit_turn := int(gsm.game_state.turn_number)
 	var llm_before_action: Dictionary = _llm_runtime_snapshot(gsm)
 	var executed := _execute_action(battle_scene, gsm, action)

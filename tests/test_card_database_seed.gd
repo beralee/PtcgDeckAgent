@@ -4,6 +4,27 @@ extends TestBase
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 
 
+func test_all_bundled_card_images_are_optimized_webp_and_decode_in_godot() -> String:
+	var image_paths: Array[String] = []
+	_collect_bundled_card_image_paths("res://data/bundled_user/cards/images", image_paths)
+	var non_webp_paths: Array[String] = []
+	var decode_failures: Array[String] = []
+	for image_path: String in image_paths:
+		var bytes := _read_bytes(image_path)
+		if not CardData.has_webp_signature(bytes):
+			non_webp_paths.append(image_path)
+			continue
+		var image := Image.new()
+		var error := image.load_webp_from_buffer(bytes)
+		if error != OK or image.get_width() <= 0 or image.get_height() <= 0:
+			decode_failures.append("%s (error=%d size=%s)" % [image_path, error, image.get_size()])
+	return run_checks([
+		assert_true(image_paths.size() >= 700, "Bundled card decode audit should cover the complete built-in image pool"),
+		assert_true(non_webp_paths.is_empty(), "Bundled card images should use the optimized WebP payload: %s" % str(non_webp_paths)),
+		assert_true(decode_failures.is_empty(), "Every bundled WebP card must decode through Godot: %s" % str(decode_failures)),
+	])
+
+
 func test_csvl1c036_037_and_csv95c100_are_complete_bundled_seed_assets() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest: Array[String] = db._load_bundled_manifest()
@@ -1175,6 +1196,37 @@ func test_csv9c_180_scramble_switch_is_bundled_with_image_and_effect_id() -> Str
 	return run_checks(checks)
 
 
+func test_csv9c_200_lacey_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV9C_200.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV9C/200.png.bin"
+	var card: CardData = db.get_card("CSV9C", "200")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CSV9C_200":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV9C_200 Lacey card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV9C_200 Lacey image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV9C_200 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV9C_200 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV9C_200 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV9C_200 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV9C_200 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CSV9C_200 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CSV9C", "200"), "CardDatabase.has_card should recognize bundled CSV9C_200"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name), "紫竽", "CSV9C_200 should keep the imported Chinese name"))
+		checks.append(assert_eq(str(card.name_en), "Lacey", "CSV9C_200 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Supporter", "CSV9C_200 should be imported as a Supporter"))
+		checks.append(assert_eq(str(card.effect_id), "a3c4d099d726c7dfa4393e7e218661db", "CSV9C_200 should keep the API effect id"))
+	return run_checks(checks)
+
+
 func test_csv95c_126_140_149_are_bundled_with_images_and_effect_ids() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest := db._load_bundled_manifest()
@@ -2264,6 +2316,23 @@ func _read_bytes(path: String) -> PackedByteArray:
 	var bytes := file.get_buffer(file.get_length())
 	file.close()
 	return bytes
+
+
+func _collect_bundled_card_image_paths(directory_path: String, output: Array[String]) -> void:
+	var directory := DirAccess.open(directory_path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while entry != "":
+		if entry != "." and entry != "..":
+			var child_path := directory_path.path_join(entry)
+			if directory.current_is_dir():
+				_collect_bundled_card_image_paths(child_path, output)
+			elif entry.ends_with(".png.bin"):
+				output.append(child_path)
+		entry = directory.get_next()
+	directory.list_dir_end()
 
 
 func _minimal_png_bytes() -> PackedByteArray:

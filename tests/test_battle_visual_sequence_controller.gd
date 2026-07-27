@@ -31,9 +31,13 @@ class FakeScene extends Control:
 	var _view_player := 0
 	var visual_gate_changes: Array[bool] = []
 	var field_resync_semantics: Array[String] = []
+	var visual_sequence_idle_calls := 0
 
 	func _set_battle_visual_input_blocked(blocked: bool) -> void:
 		visual_gate_changes.append(blocked)
+
+	func _on_battle_visual_sequence_idle() -> void:
+		visual_sequence_idle_calls += 1
 
 	func _refresh_field_after_visual_event(semantic: String) -> void:
 		field_resync_semantics.append(semantic)
@@ -77,9 +81,35 @@ func test_queue_runs_one_event_at_a_time_and_releases_input_after_the_last_compl
 		assert_eq(int(controller.call("pending_count")), 0, "Queue should be empty after both callbacks"),
 		assert_false(bool(controller.call("is_active")), "Controller should become idle"),
 		assert_eq(scene.visual_gate_changes, [true, false], "Input gate should cover the whole sequence exactly once"),
+		assert_eq(scene.visual_sequence_idle_calls, 1, "Normal queue drain should notify the battle runtime exactly once"),
 	])
 	scene.free()
 
+	return result
+
+
+func test_visual_sequence_does_not_report_idle_between_queued_actions() -> String:
+	var scene := FakeScene.new()
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("enqueue_events", [
+		{"kind": "zone_transfer", "player_index": 1, "card_names": ["Opponent old card"]},
+	])
+	controller.call("enqueue_events", [
+		{"kind": "stack_change", "semantic": "evolve", "player_index": 0, "card_names": ["Charizard ex"]},
+	])
+
+	animator.finish_next()
+	var calls_between_events := scene.visual_sequence_idle_calls
+	animator.finish_next()
+	var result := run_checks([
+		assert_eq(calls_between_events, 0, "A queued opponent visual must finish before a later Evolution can begin"),
+		assert_eq(scene.visual_sequence_idle_calls, 1, "Only the fully drained sequence may resume gameplay"),
+		assert_eq(animator.started, ["zone_transfer", "stack_change"], "Card events must retain their original action order"),
+	])
+	scene.free()
 	return result
 
 
@@ -106,6 +136,37 @@ func test_knockout_completion_resyncs_field_after_transfer_overlay_is_removed() 
 		),
 		assert_eq(int(controller.call("pending_count")), 0, "KO visual sequence should still finish normally"),
 		assert_false(bool(controller.call("is_active")), "KO field resync must not leave the visual controller active"),
+	])
+	scene.free()
+	return result
+
+
+func test_bench_damage_completion_resyncs_hp_after_floating_number_finishes() -> String:
+	var scene := FakeScene.new()
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("enqueue_events", [
+		{
+			"kind": "damage_delta",
+			"player_index": 1,
+			"slot_key": "p1.bench.0",
+			"amount": 120,
+			"before_damage": 0,
+			"after_damage": 120,
+		},
+	])
+
+	animator.finish_next()
+	var result := run_checks([
+		assert_eq(
+			scene.field_resync_semantics,
+			["damage_delta"],
+			"Scream Tail and Grimmsnarl Bench damage must repaint HP after the floating damage number"
+		),
+		assert_eq(int(controller.call("pending_count")), 0, "Bench-damage feedback should still finish normally"),
+		assert_false(bool(controller.call("is_active")), "Bench HP resync must not keep the visual queue active"),
 	])
 	scene.free()
 	return result
@@ -155,6 +216,35 @@ func test_action_capture_and_refresh_fallback_deduplicate_the_same_state_transit
 		assert_eq(action_events.size(), 1, "Action transition should submit its visual event"),
 		assert_true(fallback_events.is_empty(), "Refresh of the same committed snapshot must not submit a duplicate"),
 		assert_eq(int(controller.call("submitted_event_count")), 1, "Only one event should be recorded for the transition"),
+	])
+	controller.call("clear", "test_end")
+	scene.free()
+	return result
+
+
+func test_actionless_refresh_updates_baseline_without_guessing_card_flights() -> String:
+	var state := _state()
+	var unrelated := _card("Unlogged Opponent Card", 1)
+	state.players[1].deck = [unrelated]
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	var scene := FakeScene.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("prime_snapshot", state, 0)
+
+	state.players[1].deck.clear()
+	state.players[1].discard_pile.append(unrelated)
+	var first_refresh_events: Array = controller.call("sync_after_refresh", state, 0)
+	var second_refresh_events: Array = controller.call("sync_after_refresh", state, 0)
+	var card_motion_kinds := ["zone_transfer", "stack_change", "field_move"]
+	var guessed_card_events: Array = first_refresh_events.filter(func(event: Dictionary) -> bool:
+		return str(event.get("kind", "")) in card_motion_kinds
+	)
+	var result := run_checks([
+		assert_true(guessed_card_events.is_empty(), "A UI refresh without a GameAction must never guess which card should fly"),
+		assert_true(second_refresh_events.is_empty(), "The silent refresh must still advance the visual baseline"),
+		assert_true(animator.started.is_empty(), "No unlogged card may appear in a transfer overlay"),
 	])
 	controller.call("clear", "test_end")
 	scene.free()

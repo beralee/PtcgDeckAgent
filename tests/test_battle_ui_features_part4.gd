@@ -1020,15 +1020,18 @@ func test_match_end_return_activates_on_button_down_and_latches_navigation() -> 
 	var previous_suppressed := bool(GameManager.get("suppress_scene_navigation_for_tests"))
 	GameManager.set_scene_navigation_suppressed_for_tests(true)
 	GameManager.consume_last_requested_scene_path()
+	GameManager.consume_battle_setup_startup_input_shield_request()
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.call("_show_match_end_dialog", 0, "knockout")
 	var return_button := battle_scene.get("_match_end_return_button") as Button
 	if return_button != null:
 		return_button.button_down.emit()
 	var requested_from_button_down := GameManager.consume_last_requested_scene_path()
+	var startup_shield_request: Dictionary = GameManager.consume_battle_setup_startup_input_shield_request()
 	if return_button != null:
 		return_button.pressed.emit()
 	var requested_from_release_echo := GameManager.consume_last_requested_scene_path()
+	var duplicate_shield_request: Dictionary = GameManager.consume_battle_setup_startup_input_shield_request()
 	var navigation_latched: bool = battle_scene.get("_match_end_return_navigation_started")
 	var button_disabled := return_button != null and return_button.disabled
 	battle_scene.queue_free()
@@ -1036,7 +1039,9 @@ func test_match_end_return_activates_on_button_down_and_latches_navigation() -> 
 
 	return run_checks([
 		assert_eq(requested_from_button_down, GameManager.SCENE_BATTLE_SETUP, "Match-end return must not depend on Android or desktop pointer release delivery"),
+		assert_eq(str(startup_shield_request.get("reason", "")), "battle_match_end_return", "Match-end return must arm the BattleSetup startup shield before changing scenes"),
 		assert_eq(requested_from_release_echo, "", "The release echo after button-down navigation must not enqueue a second scene change"),
+		assert_true(duplicate_shield_request.is_empty(), "The release echo must not arm a second BattleSetup startup shield"),
 		assert_true(navigation_latched, "Match-end navigation should latch after its first activation"),
 		assert_true(button_disabled, "The terminal return action should disable immediately after activation"),
 	])

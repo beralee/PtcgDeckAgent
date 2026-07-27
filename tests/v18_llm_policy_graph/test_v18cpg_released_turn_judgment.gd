@@ -4,15 +4,6 @@ const AuditScript = preload("res://scripts/ai/v18_cpg/audit/V18CPGDecisionAudit.
 const ProfileCatalogScript = preload("res://scripts/ai/v18_cpg/V18CPGProfileCatalog.gd")
 const StrategyScript = preload("res://scripts/ai/v18_cpg/V18ConditionalPolicyStrategy.gd")
 
-const RELEASED_DECK_IDS: Array[int] = [
-	800015934,
-	800018497,
-	800018499,
-	800018501,
-	800018502,
-	800018509,
-]
-
 var _failures: Array[String] = []
 
 
@@ -35,9 +26,22 @@ class DecisionProbe:
 		return OK
 
 
+class FailingDecisionProbe:
+	extends RefCounted
+
+	func request_policy(
+		_request_id: String,
+		_request_envelope: Dictionary,
+		_token_budget: int = 600,
+		_is_delta: bool = false
+	) -> int:
+		return ERR_UNCONFIGURED
+
+
 func _initialize() -> void:
 	_test_only_released_decks_require_turn_judgment()
-	_test_required_first_window_bypasses_terminal_local_skip_once_per_turn()
+	_test_proven_terminal_skips_zero_value_request_but_resolves_judgment()
+	_test_request_start_failure_resolves_required_judgment()
 	_test_audit_reports_exact_turn_judgment_coverage()
 	if _failures.is_empty():
 		print("V18CPG released turn judgment contract: PASS")
@@ -53,13 +57,13 @@ func _test_only_released_decks_require_turn_judgment() -> void:
 		var profile := ProfileCatalogScript.get_profile_for_deck(deck_id)
 		var required := str(profile.get("turn_model_judgment_mode", "")) == "required_first_main_window"
 		_check(
-			required == (deck_id in RELEASED_DECK_IDS),
-			"%d per-turn judgment release scope mismatch" % deck_id
+			required,
+			"%d must inherit the batch V18CPG per-turn judgment contract" % deck_id
 		)
 
 
-func _test_required_first_window_bypasses_terminal_local_skip_once_per_turn() -> void:
-	for deck_id: int in RELEASED_DECK_IDS:
+func _test_proven_terminal_skips_zero_value_request_but_resolves_judgment() -> void:
+	for deck_id: int in ProfileCatalogScript.ALL_DECK_IDS:
 		var state := _minimal_main_state(5)
 		var strategy := StrategyScript.new()
 		var profile := ProfileCatalogScript.get_profile_for_deck(deck_id)
@@ -77,10 +81,12 @@ func _test_required_first_window_bypasses_terminal_local_skip_once_per_turn() ->
 			{"event_type": "MAIN_ACTION_WINDOW", "rule_floor_action_id": "action:end"}
 		)
 		_check(
-			str(first.get("status", "")) == "pending" \
-				and probe.request_count == 1 \
-				and probe.max_policy_nodes == [expected_max_nodes],
-			"%d must request a model judgment even when Rule has one terminal route" % deck_id
+			str(first.get("status", "")) == "ready"
+				and probe.request_count == 0
+				and bool(strategy.get("_turn_model_judgment_attempted"))
+				and bool(strategy.get("_turn_model_judgment_resolved")),
+			"%d must skip a zero-value request when the full legal pool proves one terminal Rule action"
+				% deck_id
 		)
 		var repeated: Dictionary = strategy.prepare_decision(
 			state,
@@ -89,24 +95,38 @@ func _test_required_first_window_bypasses_terminal_local_skip_once_per_turn() ->
 			{"event_type": "MAIN_ACTION_WINDOW", "rule_floor_action_id": "action:end"}
 		)
 		_check(
-			str(repeated.get("status", "")) == "pending" and probe.request_count == 1,
-			"%d must not duplicate its required judgment in the same turn" % deck_id
+			str(repeated.get("status", "")) == "ready" and probe.request_count == 0,
+			"%d must not reconsider a deterministically resolved skip in the same turn"
+				% deck_id
 		)
-		strategy.force_deadline_fallback("fixture_timeout", 0)
-		state.turn_number = 7
-		var next_turn: Dictionary = strategy.prepare_decision(
-			state,
-			0,
-			[end_turn],
-			{"event_type": "MAIN_ACTION_WINDOW", "rule_floor_action_id": "action:end"}
-		)
-		_check(
-			str(next_turn.get("status", "")) == "pending" \
-				and probe.request_count == 2 \
-				and probe.request_turns == [5, 7] \
-				and probe.max_policy_nodes == [expected_max_nodes, expected_max_nodes],
-			"%d must request exactly one new judgment on the next AI turn" % deck_id
-		)
+		_check(expected_max_nodes > 0, "%d must expose a positive graph node budget" % deck_id)
+	_test_shared_runtime_requests_after_a_strategic_alternative()
+
+
+func _test_shared_runtime_requests_after_a_strategic_alternative() -> void:
+	var state := _minimal_main_state(7)
+	var strategy := StrategyScript.new()
+	var profile := ProfileCatalogScript.get_profile_for_deck(800018509)
+	strategy.configure_profile(profile)
+	strategy.configure_verified_local_only_for_benchmark()
+	var probe := DecisionProbe.new()
+	strategy.set("_decision_client", probe)
+	var result: Dictionary = strategy.prepare_decision(
+		state,
+		0,
+		[
+			{"id": "action:develop", "kind": "play_basic_to_bench"},
+			{"id": "action:end", "kind": "end_turn"},
+		],
+		{"event_type": "MAIN_ACTION_WINDOW", "rule_floor_action_id": "action:end"}
+	)
+	_check(
+		str(result.get("status", "")) == "pending" \
+			and probe.request_count == 1 \
+			and probe.request_turns == [7] \
+			and probe.max_policy_nodes == [int(profile.get("max_policy_nodes", 8))],
+		"the shared batch runtime must request exactly one judgment for a strategic alternative"
+	)
 
 
 func _test_audit_reports_exact_turn_judgment_coverage() -> void:
@@ -118,7 +138,7 @@ func _test_audit_reports_exact_turn_judgment_coverage() -> void:
 			"turn_id": turn_id,
 			"turn_model_judgment_required": true,
 		})
-	for turn_id: int in [3, 5]:
+	for turn_id: int in [3]:
 		audit.record({
 			"event_type": "turn_model_judgment_requested",
 			"turn_id": turn_id,
@@ -130,23 +150,54 @@ func _test_audit_reports_exact_turn_judgment_coverage() -> void:
 		"accepted": false,
 		"turn_model_judgment": true,
 	})
+	audit.record({
+		"event_type": "turn_model_judgment_skipped",
+		"turn_id": 5,
+		"turn_model_judgment": true,
+		"fallback_reason": "provably_terminal_no_admissible_switch",
+	})
 	var summary := audit.summary()
 	_check(
 		int(summary.get("turn_model_judgment_required_turns", 0)) == 3,
 		"audit must expose the exact required-turn denominator"
 	)
 	_check(
-		int(summary.get("turn_model_judgment_requested_turns", 0)) == 2,
+		int(summary.get("turn_model_judgment_requested_turns", 0)) == 1,
 		"audit must distinguish requested judgments from required turns"
 	)
 	_check(
-		int(summary.get("turn_model_judgment_resolved_turns", 0)) == 1,
-		"audit must count rejected model responses as resolved judgments"
+		int(summary.get("turn_model_judgment_resolved_turns", 0)) == 2,
+		"audit must count rejected responses and proven zero-value skips as resolved judgments"
 	)
 	_check(
 		summary.get("turn_model_judgment_missing_request_turn_ids", []) == [7] \
-			and summary.get("turn_model_judgment_unresolved_turn_ids", []) == [5, 7],
+			and summary.get("turn_model_judgment_unresolved_turn_ids", []) == [7],
 		"audit must identify missing and unresolved turns without hiding failures in a rate"
+	)
+
+
+func _test_request_start_failure_resolves_required_judgment() -> void:
+	var state := _minimal_main_state(5)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(
+		ProfileCatalogScript.get_profile_for_deck(800018509)
+	)
+	strategy.configure_verified_local_only_for_benchmark()
+	strategy.set("_decision_client", FailingDecisionProbe.new())
+	var result: Dictionary = strategy.prepare_decision(
+		state,
+		0,
+		[{"id": "action:end", "kind": "end_turn"}],
+		{
+			"event_type": "MAIN_ACTION_WINDOW",
+			"rule_floor_action_id": "action:end",
+		}
+	)
+	_check(
+		str(result.get("status", "")) == "ready"
+			and bool(strategy.get("_turn_model_judgment_attempted"))
+			and bool(strategy.get("_turn_model_judgment_resolved")),
+		"a required judgment whose request cannot start must resolve as a failed judgment so deterministic continuation matches a rejected live response"
 	)
 
 

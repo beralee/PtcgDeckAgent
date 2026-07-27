@@ -22,15 +22,8 @@ func _initialize() -> void:
 	var rows: Array[Dictionary] = []
 	var released_ids := ProfileCatalogScript.released_deck_ids()
 	_check(
-		released_ids == [
-			800015934,
-			800018497,
-			800018499,
-			800018501,
-			800018502,
-			800018509,
-		],
-		"BattleSetup release metadata must contain exactly the promoted ROI decks"
+		released_ids == expected_ids,
+		"BattleSetup release metadata must expose all 24 graph-ready V18CPG decks"
 	)
 	_check(not RegistryAdapterScript.feature_enabled(), "V18CPG production feature flag must default off")
 	for profile: Dictionary in profiles:
@@ -82,7 +75,13 @@ func _initialize() -> void:
 		_check(RegistryAdapterScript.variants_for_deck(deck_id, str(profile.get("base_strategy_id", "")), true, true).size() == 2, "%d feature-on adapter must expose Rule and CPG variants" % deck_id)
 		var production_variants := RegistryAdapterScript.variants_for_deck(deck_id, str(profile.get("base_strategy_id", "")), true)
 		_check(production_variants.size() == (2 if deck_id in released_ids else 0), "%d production adapter visibility must follow ROI5 release metadata" % deck_id)
-		_check(bool(profile.get("experimental", true)) == (deck_id not in released_ids), "%d experimental metadata must match release status" % deck_id)
+		var promotion_status := str(profile.get("promotion_status", ""))
+		var statistically_promoted := promotion_status.contains("strictly_better") \
+			or promotion_status.contains("noninferior")
+		_check(
+			bool(profile.get("experimental", true)) == not statistically_promoted,
+			"%d experimental metadata must remain separate from BattleSetup availability" % deck_id
+		)
 		rows.append({
 			"deck_id": deck_id,
 			"display_name": str(profile.get("display_name", "")),
@@ -100,12 +99,17 @@ func _initialize() -> void:
 	var sample_profile := ProfileCatalogScript.get_profile_for_deck(expected_ids[0])
 	var sample_strategy_id := str(sample_profile.get("strategy_id", ""))
 	var shared_registry := SharedRegistryScript.new()
-	_check(shared_registry.create_strategy_by_id(sample_strategy_id) == null, "shared registry must hide V18CPG while the production flag is off")
+	var sample_strategy: RefCounted = shared_registry.create_strategy_by_id(sample_strategy_id)
+	_check(
+		sample_strategy != null \
+			and str(sample_strategy.call("get_strategy_id")) == sample_strategy_id,
+		"graph-ready V18CPG strategy must construct from release metadata while the global flag is off"
+	)
 	_check(shared_registry.create_strategy_by_id(str(sample_profile.get("base_strategy_id", ""))) != null, "feature-off integration must preserve the existing Rule registry path")
 	var released_profile := ProfileCatalogScript.get_profile_for_deck(800018502)
 	var released_strategy_id := str(released_profile.get("strategy_id", ""))
 	var released_strategy: RefCounted = shared_registry.create_strategy_by_id(released_strategy_id)
-	_check(released_strategy != null and str(released_strategy.call("get_strategy_id")) == released_strategy_id, "released N's Zoroark strategy must construct while the experimental feature flag stays off")
+	_check(released_strategy != null and str(released_strategy.call("get_strategy_id")) == released_strategy_id, "graph-ready N's Zoroark strategy must construct while the experimental feature flag stays off")
 	var setting_key := "ai/v18_conditional_policy_enabled"
 	var had_setting := ProjectSettings.has_setting(setting_key)
 	var previous_setting: Variant = ProjectSettings.get_setting(setting_key, false)

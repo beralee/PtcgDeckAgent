@@ -977,17 +977,7 @@ func _configure_settings_feedback_line_edit(input: LineEdit) -> void:
 	if input == null:
 		return
 	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if input.name == "EndpointInput" else LineEdit.KEYBOARD_TYPE_DEFAULT
-	input.focus_mode = Control.FOCUS_ALL
-	input.mouse_filter = Control.MOUSE_FILTER_STOP
-	input.context_menu_enabled = true
-	input.virtual_keyboard_enabled = true
-	input.virtual_keyboard_show_on_focus = true
-	input.virtual_keyboard_type = keyboard_type
-	input.set("shortcut_keys_enabled", true)
-	input.set("middle_mouse_paste_enabled", true)
-	if input.has_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META):
-		input.remove_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META)
-	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(input, keyboard_type)
 	if input.name == "ApiKeyInput":
 		_bind_api_key_select_all(input)
 	else:
@@ -1127,6 +1117,7 @@ func _show_settings_model_picker() -> void:
 
 func _hide_settings_model_picker() -> void:
 	if _model_picker_overlay != null and is_instance_valid(_model_picker_overlay):
+		NonBattleTouchBridgeScript.clear_transient_input_state(_model_picker_overlay, "modal_closed")
 		_model_picker_overlay.visible = false
 
 

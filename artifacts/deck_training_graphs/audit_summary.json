@@ -1,0 +1,369 @@
+{
+  "generated_at": "2026-07-26T07:45:19.114Z",
+  "auditor": ".codex/skills/upgrade-ptcg-deck-training-puzzles/scripts/audit_turn_construction_graph.py",
+  "total": 60,
+  "passed": 60,
+  "failed": 0,
+  "rows": [
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_01.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_02.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_03.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_04.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_05.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_06.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_07.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_08.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_09.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/dragapult/dragapult_10.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_01.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_02.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_03.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_04.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_05.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_06.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_07.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_08.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_09.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/gholdengo/gholdengo_10.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_01.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_02.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_03.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_04.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_05.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_06.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_07.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_08.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_09.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/raging_bolt/raging_bolt_10.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_01.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_02.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_03.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_04.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_05.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_06.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_07.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_08.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_09.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/marnie/marnie_10.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_01.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_02.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_03.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_04.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_05.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_06.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_07.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_08.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_09.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/n_zoroark/n_zoroark_10.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_01.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_02.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_03.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_04.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_05.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_06.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_07.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_08.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_09.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "graph": "artifacts/deck_training_graphs/charizard_dragapult/charizard_dragapult_10.graph.json",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    }
+  ]
+}

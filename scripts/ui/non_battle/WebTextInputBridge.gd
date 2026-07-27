@@ -38,6 +38,10 @@ static func get_test_last_payload() -> Dictionary:
 	return _test_last_payload.duplicate(true)
 
 
+static func get_test_install_script() -> String:
+	return _install_script()
+
+
 static func is_web_runtime() -> bool:
 	if _test_force_web:
 		return true
@@ -190,7 +194,7 @@ static func _ensure_javascript_bridge() -> bool:
 static func _install_script() -> String:
 	return """
 (function() {
-  if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.version === 1) return;
+  if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.version === 2) return;
   function callback(event, value, id) {
     if (typeof window.__ptcgDeckAgentTextInputCallback === 'function') {
       window.__ptcgDeckAgentTextInputCallback(JSON.stringify({ event: event, value: value || '', id: id || 0 }));
@@ -198,6 +202,7 @@ static func _install_script() -> String:
   }
   function ensureInput(config) {
     var state = window.__ptcgDeckAgentTextInput;
+    if (typeof state.cleanupPosition === 'function') state.cleanupPosition();
     if (state.input && state.input.parentNode) state.input.parentNode.removeChild(state.input);
     var input = config.multiline ? document.createElement('textarea') : document.createElement('input');
     if (!config.multiline) input.type = config.input_type || 'text';
@@ -207,6 +212,11 @@ static func _install_script() -> String:
     input.autocomplete = 'off';
     input.autocorrect = 'off';
     input.spellcheck = false;
+    input.inputMode = config.input_type === 'tel' ? 'tel' :
+      (config.input_type === 'number' ? 'decimal' :
+      (config.input_type === 'email' ? 'email' :
+      (config.input_type === 'url' ? 'url' : 'text')));
+    input.enterKeyHint = config.multiline ? 'enter' : 'done';
     input.style.position = 'fixed';
     input.style.zIndex = '2147483647';
     input.style.boxSizing = 'border-box';
@@ -216,7 +226,11 @@ static func _install_script() -> String:
     input.style.color = '#f4fbff';
     input.style.outline = 'none';
     input.style.padding = '0 10px';
-    input.style.font = '18px sans-serif';
+    input.style.font = '16px sans-serif';
+    input.style.fontSize = '16px';
+    input.style.webkitAppearance = 'none';
+    input.style.touchAction = 'manipulation';
+    input.style.caretColor = '#f4fbff';
     if (config.multiline) {
       input.style.paddingTop = '8px';
       input.style.resize = 'none';
@@ -238,13 +252,32 @@ static func _install_script() -> String:
     input.style.height = Math.max(38, Number(config.height || 38) * scaleY) + 'px';
   }
   window.__ptcgDeckAgentTextInput = {
-    version: 1,
+    version: 2,
     input: null,
     id: 0,
+    cleanupPosition: null,
     open: function(config) {
       config = config || {};
+      var state = this;
       var input = ensureInput(config);
       placeInput(input, config);
+      var reposition = function() {
+        if (state.input === input) placeInput(input, config);
+      };
+      var visualViewport = window.visualViewport || null;
+      window.addEventListener('resize', reposition);
+      if (visualViewport) {
+        visualViewport.addEventListener('resize', reposition);
+        visualViewport.addEventListener('scroll', reposition);
+      }
+      state.cleanupPosition = function() {
+        window.removeEventListener('resize', reposition);
+        if (visualViewport) {
+          visualViewport.removeEventListener('resize', reposition);
+          visualViewport.removeEventListener('scroll', reposition);
+        }
+        if (state.cleanupPosition) state.cleanupPosition = null;
+      };
       var id = config.id || 0;
       input.oninput = function() { callback('input', input.value, id); };
       input.onchange = function() { callback('input', input.value, id); };
@@ -252,6 +285,7 @@ static func _install_script() -> String:
         callback('commit', input.value, id);
         setTimeout(function() {
           if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.input === input && input.parentNode) {
+            if (typeof state.cleanupPosition === 'function') state.cleanupPosition();
             input.parentNode.removeChild(input);
             window.__ptcgDeckAgentTextInput.input = null;
           }
@@ -268,13 +302,18 @@ static func _install_script() -> String:
           input.blur();
         }
       };
-      input.focus({ preventScroll: true });
+      try {
+        input.focus({ preventScroll: true });
+      } catch (_focusOptionsError) {
+        input.focus();
+      }
       try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
     },
     close: function() {
       var input = this.input;
       this.input = null;
       this.id = 0;
+      if (typeof this.cleanupPosition === 'function') this.cleanupPosition();
       if (!input) return;
       input.oninput = null;
       input.onchange = null;

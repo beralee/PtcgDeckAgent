@@ -4,6 +4,9 @@ extends RefCounted
 const ContractsScript = preload("res://scripts/ai/v18_cpg/schema/V18CPGContracts.gd")
 
 const GOALS: Array[String] = [
+	"immediate_public_win",
+	"prevent_next_attack_window_loss",
+	"repair_robust_prize_clock",
 	"minimum_resource_ko",
 	"post_attack_continuity",
 	"prize_closeout",

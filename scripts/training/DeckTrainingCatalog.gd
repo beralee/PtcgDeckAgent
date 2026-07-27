@@ -21,8 +21,8 @@ const DECKS := {
 	"gardevoir": {"id": 800018498, "name": "学院沙奈朵"},
 	"gholdengo": {"id": 800016834, "name": "赛富豪"},
 	"raging_bolt": {"id": 800018509, "name": "猛雷鼓"},
-	"marnie": {"id": 800018501, "name": "玛俐"},
-	"n_zoroark": {"id": 800018502, "name": "N"},
+	"marnie": {"id": 800018501, "name": "玛毛"},
+	"n_zoroark": {"id": 800018502, "name": "N索"},
 	"charizard_dragapult": {"id": 800025404, "name": "自爆恶喷"},
 }
 

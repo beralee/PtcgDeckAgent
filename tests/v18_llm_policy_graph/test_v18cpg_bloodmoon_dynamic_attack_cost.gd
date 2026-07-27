@@ -7,6 +7,7 @@ const RouteSearchScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGRoute
 const CapabilityRegistryScript = preload("res://scripts/ai/v18_cpg/modules/V18CPGCapabilityRegistry.gd")
 const DynamicCostScript = preload("res://scripts/ai/v18_cpg/modules/V18CPGDynamicAttackCost.gd")
 const StrategyScript = preload("res://scripts/ai/v18_cpg/V18ConditionalPolicyStrategy.gd")
+const ProfileCatalogScript = preload("res://scripts/ai/v18_cpg/V18CPGProfileCatalog.gd")
 
 const BLOODMOON_UID := "CSV8C_172"
 const BLOODMOON_EFFECT_ID := "f2afef80b13b8f6a071facbcade0251c"
@@ -20,6 +21,7 @@ func _initialize() -> void:
 	_test_recalculation_after_opponent_prize_change()
 	_test_frontier_blocks_redundant_active_attachment()
 	_test_paid_bench_bloodmoon_is_visible_on_pivot_candidate()
+	_test_certified_engine_retreat_then_bloodmoon_attack_execution()
 	_test_unrelated_five_colorless_attacker_is_unchanged()
 	EffectProcessor.cleanup_live_instances_for_tests()
 	if _failures.is_empty():
@@ -330,6 +332,131 @@ func _test_paid_bench_bloodmoon_is_visible_on_pivot_candidate() -> void:
 	)
 
 
+func _test_certified_engine_retreat_then_bloodmoon_attack_execution() -> void:
+	var state := _pivot_state()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	gsm.effect_processor.register_pokemon_card(
+		state.players[0].active_pokemon.get_card_data()
+	)
+	gsm.effect_processor.register_pokemon_card(
+		state.players[0].bench[0].get_card_data()
+	)
+	var action_builder := ActionBuilderScript.new()
+	var gateway := ObservationGatewayScript.new()
+	var actions: Array[Dictionary] = action_builder.build_actions(gsm, 0, false)
+	var retreat_action := _action(actions, "retreat")
+	var end_action := _action(actions, "end_turn")
+	_check(
+		not retreat_action.is_empty() and not end_action.is_empty(),
+		"the audited board must expose both the paid retreat and the Rule end-turn action"
+	)
+	if retreat_action.is_empty() or end_action.is_empty():
+		return
+	var retreat_id := gateway.stable_action_id(retreat_action)
+	var end_id := gateway.stable_action_id(end_action)
+	var scores := _rule_end_scores(actions, gateway, end_id)
+	var strategy := StrategyScript.new()
+	strategy.configure_profile(
+		ProfileCatalogScript.get_profile_for_deck(800018509),
+		{}
+	)
+	strategy.configure_verified_local_only_for_benchmark()
+	var first_decision := strategy.prepare_decision(
+		state,
+		0,
+		actions,
+		{
+			"rule_floor_action_id": end_id,
+			"rule_floor_certificate": {
+				"action_id": end_id,
+				"scores": scores,
+			},
+		}
+	)
+	_check(
+		str(first_decision.get("status", "")) == "ready"
+			and str(strategy.get("_preferred_action_id")) == retreat_id
+			and str(first_decision.get("owner", ""))
+				== "module_verified_upgrade",
+		"production planning must select the exact certified retreat instead of Rule end turn"
+	)
+	var retreated := gsm.retreat(
+		0,
+		retreat_action.get("energy_to_discard", []),
+		retreat_action.get("bench_target")
+	)
+	strategy.log_runtime_action_result(
+		retreat_action,
+		retreated,
+		state,
+		0,
+		state.turn_number
+	)
+	_check(
+		retreated
+			and state.players[0].active_pokemon.get_card_data().get_uid()
+				== BLOODMOON_UID
+			and state.players[0].active_pokemon.attached_energy.size() == 1,
+		"the engine must execute the one-Energy retreat and preserve Bloodmoon's paid Energy"
+	)
+	if not retreated:
+		return
+
+	var post_pivot_actions: Array[Dictionary] = action_builder.build_actions(
+		gsm,
+		0,
+		false
+	)
+	var attack_action := _action(post_pivot_actions, "attack")
+	var post_pivot_end := _action(post_pivot_actions, "end_turn")
+	_check(
+		not attack_action.is_empty() and not post_pivot_end.is_empty(),
+		"reobservation after the pivot must expose Blood Moon as a real legal attack"
+	)
+	if attack_action.is_empty() or post_pivot_end.is_empty():
+		return
+	var attack_id := gateway.stable_action_id(attack_action)
+	var post_end_id := gateway.stable_action_id(post_pivot_end)
+	var post_scores := _rule_end_scores(
+		post_pivot_actions,
+		gateway,
+		post_end_id
+	)
+	var second_decision := strategy.prepare_decision(
+		state,
+		0,
+		post_pivot_actions,
+		{
+			"rule_floor_action_id": post_end_id,
+			"rule_floor_certificate": {
+				"action_id": post_end_id,
+				"scores": post_scores,
+			},
+		}
+	)
+	_check(
+		str(second_decision.get("status", "")) == "ready"
+			and str(strategy.get("_preferred_action_id")) == attack_id,
+		"the post-retreat checkpoint must select Blood Moon rather than stopping after the pivot"
+	)
+	var target_before_attack := state.players[1].active_pokemon
+	var attacked := gsm.use_attack(
+		0,
+		int(attack_action.get("attack_index", 0))
+	)
+	_check(
+		attacked
+			and target_before_attack.damage_counters >= 230
+			and state.players[1].active_pokemon == null,
+		"the certified decision-execution chain must deal 240 and enter the two-Prize KO resolution (attacked=%s, damage=%d, phase=%s)" % [
+			str(attacked),
+			target_before_attack.damage_counters,
+			str(state.phase),
+		]
+	)
+
+
 func _state(
 	opponent_prizes_remaining: int,
 	energy_count: int,
@@ -353,6 +480,59 @@ func _state(
 	state.players[1].active_pokemon = _target()
 	_fill_prizes(state.players[0], 3, "OWN_PRIZE")
 	_fill_prizes(state.players[1], opponent_prizes_remaining, "OPP_PRIZE")
+	state.players[0].deck = [_filler("OWN_DRAW", 0)]
+	state.players[1].deck = [_filler("OPP_DRAW", 1)]
+	return state
+
+
+func _pivot_state() -> GameState:
+	var state := GameState.new()
+	state.players = [PlayerState.new(), PlayerState.new()]
+	for index: int in state.players.size():
+		state.players[index].player_index = index
+	state.current_player_index = 0
+	state.first_player_index = 1
+	state.turn_number = 6
+	state.phase = GameState.GamePhase.MAIN
+	var pivot_data := _pokemon_card(
+		"Teal Mask Ogerpon ex",
+		"CSV8C_028",
+		"pivot_effect",
+		210
+	)
+	pivot_data.mechanic = "ex"
+	pivot_data.retreat_cost = 1
+	var pivot := PokemonSlot.new()
+	pivot.pokemon_stack.append(CardInstance.create(pivot_data, 0))
+	pivot.attached_energy.append(CardInstance.create(_basic_energy(), 0))
+	state.players[0].active_pokemon = pivot
+	var bloodmoon := PokemonSlot.new()
+	bloodmoon.pokemon_stack.append(
+		CardInstance.create(_load_real_card(BLOODMOON_UID), 0)
+	)
+	bloodmoon.attached_energy.append(CardInstance.create(_basic_energy(), 0))
+	state.players[0].bench = [bloodmoon]
+	var target_data := _pokemon_card(
+		"Terapagos ex",
+		"CSV9C_129",
+		"target_effect",
+		230
+	)
+	target_data.mechanic = "ex"
+	var target := PokemonSlot.new()
+	target.pokemon_stack.append(CardInstance.create(target_data, 1))
+	state.players[1].active_pokemon = target
+	var reserve_data := _pokemon_card(
+		"Reserve target",
+		"TEST_002",
+		"reserve_effect",
+		100
+	)
+	var reserve := PokemonSlot.new()
+	reserve.pokemon_stack.append(CardInstance.create(reserve_data, 1))
+	state.players[1].bench = [reserve]
+	_fill_prizes(state.players[0], 4, "OWN_PRIZE")
+	_fill_prizes(state.players[1], 2, "OPP_PRIZE")
 	state.players[0].deck = [_filler("OWN_DRAW", 0)]
 	state.players[1].deck = [_filler("OPP_DRAW", 1)]
 	return state
@@ -468,6 +648,25 @@ func _candidate(frontier: Array[Dictionary], action_id: String) -> Dictionary:
 		if str(candidate.get("safe_prefix_action_id", "")) == action_id:
 			return candidate
 	return {}
+
+
+func _action(actions: Array[Dictionary], kind: String) -> Dictionary:
+	for action: Dictionary in actions:
+		if str(action.get("kind", "")) == kind:
+			return action
+	return {}
+
+
+func _rule_end_scores(
+	actions: Array[Dictionary],
+	gateway,
+	end_action_id: String
+) -> Dictionary:
+	var scores := {}
+	for action: Dictionary in actions:
+		var action_id: String = gateway.stable_action_id(action)
+		scores[action_id] = 1000.0 if action_id == end_action_id else -100000.0
+	return scores
 
 
 func _check(condition: bool, message: String) -> void:

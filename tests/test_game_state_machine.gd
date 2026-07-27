@@ -1125,7 +1125,7 @@ func test_play_basic_to_bench() -> String:
 	])
 
 
-func test_play_stadium_can_replace_different_name_after_one_already_played_this_turn() -> String:
+func test_play_stadium_rejects_second_stadium_in_same_turn() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
 	gsm.game_state.phase = GameState.GamePhase.MAIN
@@ -1148,10 +1148,10 @@ func test_play_stadium_can_replace_different_name_after_one_already_played_this_
 	var result := gsm.play_stadium(0, replacement)
 
 	return run_checks([
-		assert_true(result, "A different named Stadium should be playable after another Stadium this turn"),
-		assert_true(gsm.game_state.stadium_card == replacement, "Replacement Stadium should become active"),
-		assert_true(old_stadium in player.discard_pile, "Previous Stadium should move to its owner's discard pile"),
-		assert_false(replacement in player.hand, "Replacement Stadium should leave hand after play"),
+		assert_false(result, "A second Stadium must be rejected during the same turn"),
+		assert_true(gsm.game_state.stadium_card == old_stadium, "The current Stadium must remain active"),
+		assert_false(old_stadium in player.discard_pile, "The current Stadium must not be discarded"),
+		assert_true(replacement in player.hand, "The rejected Stadium must remain in hand"),
 		assert_true(gsm.game_state.stadium_played_this_turn, "The turn flag should remain true for history and prompts"),
 	])
 
@@ -2935,6 +2935,8 @@ func test_evolve_charizard_triggers_infernal_reign_and_attaches_fire_energy() ->
 	return run_checks([
 		assert_eq(evolved, true, "Charizard ex should evolve successfully"),
 		assert_eq(int(evolve_action.data.get("target_slot_runtime_id", -1)) if evolve_action != null else -1, int(active_slot.get_instance_id()), "Evolution actions must identify the exact target slot for visual anchoring"),
+		assert_eq(int(evolve_action.data.get("evolution_instance_id", -1)) if evolve_action != null else -1, evolution.instance_id, "Evolution actions must identify the exact card instance instead of asking visuals to infer it"),
+		assert_eq(evolve_action.data.get("card_instance_ids", []) if evolve_action != null else [], [evolution.instance_id], "Evolution visual metadata should contain only the played Evolution card"),
 		assert_eq(active_slot.get_pokemon_name(), "鍠风伀榫檈x", "The evolved Pokemon should be Charizard ex"),
 		assert_eq(steps.size(), 1, "Infernal Reign should use one reusable assignment step"),
 		assert_eq(str(steps[0].get("ui_mode", "")), "card_assignment", "Infernal Reign should use card_assignment UI mode"),

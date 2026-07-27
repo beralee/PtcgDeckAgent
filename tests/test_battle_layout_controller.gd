@@ -88,6 +88,112 @@ func test_measure_card_layout_keeps_prize_hud_touchable_on_apple_landscape_sizes
 	return run_checks(checks)
 
 
+func test_measure_card_layout_keeps_area_zero_eight_slot_field_inside_windows_landscape() -> String:
+	var controller := BattleLayoutControllerScript.new()
+	var cases := [
+		Vector2(1366, 768),
+		Vector2(1600, 900),
+		Vector2(1920, 1080),
+		Vector2(2560, 1440),
+	]
+	var checks: Array[String] = []
+	for viewport_size: Vector2 in cases:
+		var side_width := clampf(viewport_size.x * 0.05, 72.0, 108.0)
+		var right_width := side_width + 6.0
+		var log_width := clampf(viewport_size.x * 0.15, 144.0, 252.0)
+		if viewport_size.x < 1440.0:
+			log_width = minf(log_width, clampf(roundf(viewport_size.x * 0.10), 96.0, 136.0))
+		var center_width := viewport_size.x - side_width - right_width - log_width
+		var measured_variant: Variant = controller.call(
+			"measure_card_layout",
+			viewport_size,
+			center_width,
+			1.0,
+			8,
+			0.716
+		)
+		var measured: Dictionary = measured_variant if measured_variant is Dictionary else {}
+		var estimated_shell_width := _estimate_landscape_shell_width(measured, 8)
+		var stable_layout_width := estimated_shell_width + 24.0
+		var label := "%sx%s" % [int(viewport_size.x), int(viewport_size.y)]
+		checks.append(assert_true(
+			stable_layout_width <= center_width + 1.0,
+			"%s Area Zero field should retain the 24px stability margin so the log/backdrop width does not change: %.1f <= %.1f" % [
+				label,
+				stable_layout_width,
+				center_width,
+			]
+		))
+	return run_checks(checks)
+
+
+func test_ipad_web_short_portrait_metrics_reserve_one_complete_hand_card() -> String:
+	var controller := BattleLayoutControllerScript.new()
+	# Common iPad Safari visual viewports are centered into a 9:16 battle frame;
+	# horizontal safe insets leave approximately these measurement surfaces.
+	var cases := [
+		Vector2(488, 900),
+		Vector2(526, 970),
+		Vector2(570, 1050),
+		Vector2(678, 1250),
+	]
+	var checks: Array[String] = []
+	for viewport_size: Vector2 in cases:
+		var measured_variant: Variant = controller.call(
+			"measure_portrait_card_layout",
+			viewport_size,
+			5,
+			0.716
+		)
+		var measured: Dictionary = measured_variant if measured_variant is Dictionary else {}
+		var bench_size: Vector2 = measured.get("bench_card_size", Vector2.ZERO)
+		var active_size: Vector2 = measured.get("active_card_size", Vector2.ZERO)
+		var hand_size: Vector2 = measured.get("hand_card_size", Vector2.ZERO)
+		var hand_scroll_height := float(measured.get("hand_scroll_height", -1.0))
+		var hand_area_height := float(measured.get("hand_area_height", -1.0))
+		var total_height := (
+			112.0
+			+ (bench_size.y + active_size.y + 4.0) * 2.0
+			+ 64.0
+			+ 3.0
+			+ hand_area_height
+		)
+		checks.append(assert_true(
+			total_height <= viewport_size.y + 1.0,
+			"Short iPad Web portrait metrics must fit the browser-visible height for %s: %.1f <= %.1f" % [str(viewport_size), total_height, viewport_size.y]
+		))
+		checks.append(assert_true(
+			hand_scroll_height >= hand_size.y,
+			"Short iPad Web hand viewport must reserve at least one complete card for %s" % str(viewport_size)
+		))
+		checks.append(assert_gte(
+			active_size.y,
+			120.0,
+			"Short iPad Web fit should keep the active Pokemon readable for %s" % str(viewport_size)
+		))
+	return run_checks(checks)
+
+
+func test_tall_portrait_metrics_keep_the_existing_readable_card_sizes() -> String:
+	var controller := BattleLayoutControllerScript.new()
+	var measured_variant: Variant = controller.call(
+		"measure_portrait_card_layout",
+		Vector2(900, 1600),
+		5,
+		0.716
+	)
+	var measured: Dictionary = measured_variant if measured_variant is Dictionary else {}
+	var bench_size: Vector2 = measured.get("bench_card_size", Vector2.ZERO)
+	var active_size: Vector2 = measured.get("active_card_size", Vector2.ZERO)
+	var hand_size: Vector2 = measured.get("hand_card_size", Vector2.ZERO)
+
+	return run_checks([
+		assert_gte(active_size.y, 260.0, "Tall portrait active Pokemon should keep its existing readable size"),
+		assert_gte(bench_size.y, 220.0, "Tall portrait Bench should not be compressed unnecessarily"),
+		assert_gte(hand_size.y, 220.0, "Tall portrait hand cards should keep their existing readable size"),
+	])
+
+
 func _estimate_landscape_center_width(viewport_size: Vector2) -> float:
 	var side_width := 0.0
 	var right_width := 78.0
@@ -95,11 +201,11 @@ func _estimate_landscape_center_width(viewport_size: Vector2) -> float:
 	return viewport_size.x - side_width - right_width - log_width
 
 
-func _estimate_landscape_shell_width(measured: Dictionary) -> float:
+func _estimate_landscape_shell_width(measured: Dictionary, bench_size: int = 5) -> float:
 	var play_card_size: Vector2 = measured.get("play_card_size", Vector2.ZERO)
 	var preview_card_size: Vector2 = measured.get("preview_card_size", Vector2.ZERO)
 	var prize_width := preview_card_size.x * 3.0
-	var field_axis_width := play_card_size.x * 6.2
+	var field_axis_width := play_card_size.x * maxf(6.2, float(bench_size))
 	var pile_width := preview_card_size.x * 2.0 + 32.0
 	var shell_gap := 32.0
 	return prize_width + field_axis_width + pile_width + shell_gap

@@ -15,6 +15,13 @@ const PrizeGraphScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGPrizeG
 const ThreatResponseScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGThreatResponseSolver.gd")
 const RouteSearchScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGRouteSearch.gd")
 const TurnCompletionSolverScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGTurnCompletionSolver.gd")
+const HardGuardScript = preload("res://scripts/ai/v18_cpg/planning/V18CPGHardGuard.gd")
+const RouteValueGraphScript = preload(
+	"res://scripts/ai/v18_cpg/planning/route_value/V18CPGRouteValueGraph.gd"
+)
+const OpponentResponseEnvelopeV2Script = preload(
+	"res://scripts/ai/v18_cpg/planning/route_value/V18CPGOpponentResponseEnvelopeV2.gd"
+)
 const PolicyGraphScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGPolicyGraph.gd")
 const PolicyValidatorScript = preload("res://scripts/ai/v18_cpg/policy/V18CPGPolicyValidator.gd")
 const DecisionClientScript = preload("res://scripts/ai/v18_cpg/network/V18CPGDecisionClient.gd")
@@ -31,6 +38,7 @@ const EventBridgeScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGEventB
 const ROUTE_SELECTION_BONUS := 20000.0
 const MAX_ROUTE_SELECTION_BONUS := 250000.0
 const ROUTE_MISMATCH_PENALTY := 350.0
+const HARD_BLOCK_SCORE := -1000000000000.0
 const REGISTERED_ROUTE_IDS: Array[String] = [
 	"route:attack_ko",
 	"route:attack_pressure",
@@ -62,6 +70,9 @@ var _prize_graph = PrizeGraphScript.new()
 var _threat_response = ThreatResponseScript.new()
 var _route_search = RouteSearchScript.new()
 var _turn_completion_solver = TurnCompletionSolverScript.new()
+var _hard_guard = HardGuardScript.new()
+var _route_value_graph = RouteValueGraphScript.new()
+var _opponent_response_v2 = OpponentResponseEnvelopeV2Script.new()
 var _policy_graph = PolicyGraphScript.new()
 var _policy_validator = PolicyValidatorScript.new()
 var _decision_client = DecisionClientScript.new()
@@ -79,6 +90,7 @@ var _runtime_configured: bool = false
 var _last_observation: Dictionary = {}
 var _last_facts: Dictionary = {}
 var _last_frontier: Array[Dictionary] = []
+var _hard_blocked_action_ids: Dictionary = {}
 var _preferred_action_id: String = ""
 var _preferred_candidate_id: String = ""
 var _current_route_id: String = ""
@@ -92,6 +104,7 @@ var _pending_request_id: String = ""
 var _pending_context: Dictionary = {}
 var _handled_delta_hashes: Dictionary = {}
 var _last_request_metrics: Dictionary = {}
+var _last_route_value_metrics: Dictionary = {}
 var _branch_hits: int = 0
 var _uncovered_events: int = 0
 var _turn_visible_wait_ms: int = 0
@@ -101,6 +114,7 @@ var _turn_model_judgment_requested: bool = false
 var _turn_model_judgment_resolved: bool = false
 var _request_wait_samples_ms: Array[float] = []
 var _unconsumed_action_result: Dictionary = {}
+var _pending_action_ownership_ticket: Dictionary = {}
 var _route_selection_bonus: float = ROUTE_SELECTION_BONUS
 var _pending_request_started_msec: int = 0
 var _pending_request_visible_budget_ms: int = 0
@@ -108,6 +122,7 @@ var _active_module_certificate_kind: String = ""
 var _profiled_gardevoir_interaction_ticket: Dictionary = {}
 var _profiled_gardevoir_suffix_ticket: Dictionary = {}
 var _runtime_host: Node = null
+var _provider_terminal_failure_reason: String = ""
 
 
 func configure_profile(profile: Dictionary, semantic_manifest: Dictionary = {}) -> void:
@@ -128,6 +143,9 @@ func configure_from_deck(deck: DeckData) -> void:
 
 func configure_runtime(host: Node, api_config: Dictionary) -> void:
 	_runtime_host = host
+	# Reconfiguration is an explicit recovery boundary: the player may have
+	# repaired credentials or replenished provider balance.
+	_provider_terminal_failure_reason = ""
 	_decision_client.configure(host, api_config)
 	_runtime_configured = _decision_client.is_configured()
 	if not _decision_client.response_ready.is_connected(_on_policy_response):
@@ -173,6 +191,15 @@ func get_runtime_metadata() -> Dictionary:
 		"base_strategy_id": str(_profile.get("base_strategy_id", "")),
 		"runtime_kind": ContractsScript.RUNTIME_KIND,
 		"feature_flag": ContractsScript.FEATURE_FLAG,
+		"route_value_graph_version": ContractsScript.ROUTE_VALUE_GRAPH_VERSION,
+		"route_value_graph_feature_flag": (
+			ContractsScript.ROUTE_VALUE_GRAPH_FEATURE_FLAG
+		),
+		"route_value_graph_mode": (
+			"live" if RouteValueGraphScript.is_enabled(_profile)
+			else "shadow" if RouteValueGraphScript.should_compute(_profile)
+			else "off"
+		),
 		"experimental": bool(_profile.get("experimental", true)),
 		"battle_setup_available": bool(_profile.get("battle_setup_available", false)),
 		"promotion_status": str(_profile.get("promotion_status", "experimental")),
@@ -235,21 +262,105 @@ func prepare_decision(
 		facts,
 		_profile
 	)
+	var completion_facts := _with_turn_completion_facts(
+		facts,
+		observation,
+		candidate_pool
+	)
+	candidate_pool = _capability_registry.annotate_frontier_post_completion(
+		candidate_pool,
+		observation,
+		completion_facts,
+		_profile,
+		_semantic_manifest
+	)
+	facts = _with_prize_clock_facts(
+		completion_facts,
+		observation,
+		candidate_pool
+	)
+	if _runtime_configured:
+		var hard_guard_result := _apply_runtime_hard_guards(
+			candidate_pool,
+			observation,
+			facts
+		)
+		candidate_pool = _typed_candidate_array(
+			hard_guard_result.get("candidates", [])
+		)
+		facts = (
+			hard_guard_result.get("facts", {}) as Dictionary
+		).duplicate(true) if hard_guard_result.get(
+			"facts",
+			{}
+		) is Dictionary else facts
+		_hard_blocked_action_ids = (
+			hard_guard_result.get("blocked_action_ids", {}) as Dictionary
+		).duplicate(true) if hard_guard_result.get(
+			"blocked_action_ids",
+			{}
+		) is Dictionary else {}
+		facts["hard_guard"] = {
+			"blocked": (
+				hard_guard_result.get("blocked", []) as Array
+			).duplicate(true) if hard_guard_result.get(
+				"blocked",
+				[]
+			) is Array else [],
+			"blocked_count": _hard_blocked_action_ids.size(),
+		}
+	else:
+		_hard_blocked_action_ids.clear()
+	if RouteValueGraphScript.should_compute(_profile):
+		var route_value_candidate_pool := _route_value_graph.annotate_candidate_pool(
+			candidate_pool,
+			observation,
+			facts,
+			_resource_ledger.build(
+				observation,
+				_semantic_manifest,
+				_profile,
+				_belief.snapshot()
+			),
+			_profile
+		)
+		_last_route_value_metrics = _route_value_graph.last_metrics()
+		# Shadow mode measures the complete v3 graph but keeps Graph v2
+		# candidates, transport, verified-local ownership, and Rule fallback
+		# unchanged until the real-model promotion gate is satisfied.
+		if RouteValueGraphScript.is_enabled(_profile):
+			candidate_pool = route_value_candidate_pool
+	else:
+		_last_route_value_metrics.clear()
 	# The terminal
 	# skip proof must compare every legal candidate against that same Rule floor,
 	# including candidates that do not fit into the ten-item model frontier.
-	var frontier := _route_search.prune_frontier(candidate_pool, 10)
+	var model_candidate_pool := _route_value_graph.prune_model_candidates(
+		candidate_pool,
+		10
+	) if RouteValueGraphScript.is_enabled(_profile) else candidate_pool
+	var frontier := _route_search.prune_frontier(model_candidate_pool, 10)
 	frontier = _bind_engine_rule_floor(frontier, rule_floor_action_id)
+	facts = _with_route_availability_facts(facts, frontier)
 	facts = _with_turn_completion_facts(facts, observation, frontier)
+	facts = _with_prize_clock_facts(facts, observation, frontier)
+	facts = _with_route_decision_right_facts(facts, frontier)
+	_refresh_match_agenda_from_prize_clock(facts)
 	var force_turn_model_judgment := _should_force_turn_model_judgment(event_context)
 	_trace_filtered_state(observation, facts, frontier)
 	# The match's first observation has no material delta, so the normal post-action
 	# certificate hook below cannot run yet.  The allowlist remains deliberately
 	# narrow: a paired opening-counter proof, or an exact same-quota attachment
 	# that immediately completes the current Active's public attack cost.
-	if _runtime_configured and _last_observation.is_empty() and not force_turn_model_judgment:
+	if _runtime_configured and _last_observation.is_empty():
 		var initial_upgrade := _find_module_verified_upgrade(frontier, facts)
-		if _can_apply_initial_module_upgrade(initial_upgrade):
+		if _can_apply_initial_module_upgrade(initial_upgrade) \
+				and (
+					not force_turn_model_judgment \
+					or _verified_upgrade_preempts_model_judgment(
+						initial_upgrade
+					)
+				):
 			_select_route(
 				str(initial_upgrade.get("route_id", "")),
 				frontier,
@@ -272,6 +383,7 @@ func prepare_decision(
 	var available_candidate_ids := _candidate_ids(frontier)
 	var delta_for_request: Dictionary = {}
 	var request_is_delta := false
+	var deferred_verified_upgrade: Dictionary = {}
 	if not _last_observation.is_empty() and str(observation.get("observation_hash", "")) != str(_last_observation.get("observation_hash", "")):
 		var delta: Dictionary = _material_delta.compare(
 			_last_observation,
@@ -321,9 +433,21 @@ func prepare_decision(
 					"route_id": _current_route_id,
 					"candidate_id": _preferred_candidate_id,
 				}
-		if _runtime_configured and not force_turn_model_judgment:
+		if _runtime_configured:
 			var verified_upgrade := _find_module_verified_upgrade(frontier, facts)
-			if not verified_upgrade.is_empty():
+			if not verified_upgrade.is_empty() \
+					and _model_checkpoint_precedes_verified_upgrade():
+				# Do not silently erase an accepted model graph before its typed
+				# checkpoint is even evaluated. The graph branch is resolved
+				# below, then arbitrated against this deterministic certificate.
+				deferred_verified_upgrade = verified_upgrade.duplicate(true)
+			elif not verified_upgrade.is_empty() \
+					and (
+						not force_turn_model_judgment \
+						or _verified_upgrade_preempts_model_judgment(
+							verified_upgrade
+						)
+					):
 				_select_route(
 					str(verified_upgrade.get("route_id", "")),
 					frontier,
@@ -348,6 +472,24 @@ func prepare_decision(
 			delta,
 			_last_frontier
 		)
+		if not reopen_information_epoch \
+				and _policy_graph.origin() == "model_shadow_rule_root" \
+				and bool(completed_action.get("success", false)) \
+				and bool(completed_action.get("information_event", false)):
+			_record_planning(
+				"model_shadow_information_epoch_retained",
+				started_msec,
+				false,
+				delta,
+				{
+					"completed_route_id": str(
+						completed_action.get("route_id", "")
+					),
+					"completed_candidate_id": str(
+						completed_action.get("candidate_id", "")
+					),
+				}
+			)
 		if reopen_information_epoch:
 			var completed_route_id := str(completed_action.get("route_id", ""))
 			var completed_candidate_id := str(completed_action.get("candidate_id", ""))
@@ -406,6 +548,32 @@ func prepare_decision(
 				var branch_candidate_id := str(transition.get("candidate_id", ""))
 				if branch_candidate_id == "":
 					branch_candidate_id = str(_route_search.find_route(frontier, str(transition.get("route_id", ""))).get("candidate_id", ""))
+				if not deferred_verified_upgrade.is_empty() \
+						and branch_candidate_id != str(
+							deferred_verified_upgrade.get("candidate_id", "")
+						):
+					_install_post_judgment_verified_upgrade(
+						deferred_verified_upgrade,
+						frontier
+					)
+					_update_last_state(observation, facts, frontier)
+					_record_planning(
+						"model_graph_preempted_by_verified_upgrade",
+						started_msec,
+						false,
+						delta,
+						{
+							"model_branch_candidate_id": branch_candidate_id,
+							"verified_candidate_id": _preferred_candidate_id,
+							"fallback_reason": "stronger_public_certificate",
+						}
+					)
+					return {
+						"status": "ready",
+						"owner": _current_action_owner,
+						"route_id": _current_route_id,
+						"candidate_id": _preferred_candidate_id,
+					}
 				var branch_safety := _validate_model_route_safety(
 					str(transition.get("route_id", "")),
 					frontier,
@@ -413,10 +581,21 @@ func prepare_decision(
 					branch_candidate_id
 				) if branch_owner == "policy_graph_branch" else {"valid": true}
 				if not bool(branch_safety.get("valid", false)):
-					_install_local_policy(frontier, "local_gate")
+					if not deferred_verified_upgrade.is_empty():
+						_install_post_judgment_verified_upgrade(
+							deferred_verified_upgrade,
+							frontier
+						)
+					else:
+						_install_local_policy(frontier, "local_gate")
 					_update_last_state(observation, facts, frontier)
 					_record_planning("unsafe_graph_branch_fallback", started_msec, false, delta, {
 						"fallback_reason": str(branch_safety.get("reason", "graph_branch_validation_failed")),
+						"verified_candidate_id": (
+							_preferred_candidate_id
+							if not deferred_verified_upgrade.is_empty()
+							else ""
+						),
 					})
 					return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id, "candidate_id": _preferred_candidate_id}
 				if branch_owner == "policy_graph_branch":
@@ -427,15 +606,47 @@ func prepare_decision(
 					branch_owner,
 					branch_candidate_id
 				)
+				if not deferred_verified_upgrade.is_empty():
+					# The model chose the same exact action as the independent
+					# public-state certificate. Keep model graph ownership while
+					# carrying the certificate into nested interaction handling.
+					_activate_verified_upgrade_certificate(
+						deferred_verified_upgrade
+					)
 				_update_last_state(observation, facts, frontier)
 				_record_planning("graph_branch", started_msec, true, delta, {})
 				return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id, "candidate_id": _preferred_candidate_id}
 			if str(transition.get("status", "")) == "local_best":
-				_install_local_policy(frontier, "local_gate")
+				if not deferred_verified_upgrade.is_empty():
+					_install_post_judgment_verified_upgrade(
+						deferred_verified_upgrade,
+						frontier
+					)
+				else:
+					_install_local_policy(frontier, "local_gate")
 				_update_last_state(observation, facts, frontier)
 				_record_planning("local_branch", started_msec, false, delta, {})
 				return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id}
 			if str(transition.get("status", "")) == "rules_fallback":
+				if not deferred_verified_upgrade.is_empty():
+					_install_post_judgment_verified_upgrade(
+						deferred_verified_upgrade,
+						frontier
+					)
+					_update_last_state(observation, facts, frontier)
+					_record_planning(
+						"model_graph_rules_fallback_verified_upgrade",
+						started_msec,
+						false,
+						delta,
+						{"candidate_id": _preferred_candidate_id}
+					)
+					return {
+						"status": "ready",
+						"owner": _current_action_owner,
+						"route_id": _current_route_id,
+						"candidate_id": _preferred_candidate_id,
+					}
 				_clear_route("rules_fallback")
 				_update_last_state(observation, facts, frontier)
 				return {"status": "rules_fallback", "reason": "policy_otherwise"}
@@ -447,6 +658,25 @@ func prepare_decision(
 			_uncovered_events += 1
 			delta_for_request = delta.duplicate(true)
 			request_is_delta = true
+		if not deferred_verified_upgrade.is_empty():
+			_install_post_judgment_verified_upgrade(
+				deferred_verified_upgrade,
+				frontier
+			)
+			_update_last_state(observation, facts, frontier)
+			_record_planning(
+				"model_graph_replan_verified_upgrade",
+				started_msec,
+				false,
+				delta,
+				{"candidate_id": _preferred_candidate_id}
+			)
+			return {
+				"status": "ready",
+				"owner": _current_action_owner,
+				"route_id": _current_route_id,
+				"candidate_id": _preferred_candidate_id,
+			}
 		if delta_hash != "" and _handled_delta_hashes.has(delta_hash):
 			_install_local_policy(frontier, "local_gate")
 			_update_last_state(observation, facts, frontier)
@@ -473,17 +703,53 @@ func prepare_decision(
 		_select_route(
 			_policy_graph.current_route_id(),
 			frontier,
-			_policy_graph.origin(),
+			_graph_reentry_action_owner(),
 			_policy_graph.current_candidate_id()
 		)
 		_update_last_state(observation, facts, frontier)
 		return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id, "candidate_id": _preferred_candidate_id}
+	var pre_judgment_prefix := _pre_judgment_completion_override(
+		frontier,
+		facts,
+		observation,
+		force_turn_model_judgment
+	)
+	if bool(pre_judgment_prefix.get("handled", false)):
+		# This prefix is a deterministic public-state obligation, not a model
+		# choice. Execute it first and keep the required judgment unopened so the
+		# model sees the state in which it can actually own a decision.
+		_install_turn_completion_override(pre_judgment_prefix, frontier)
+		_update_last_state(observation, facts, frontier)
+		_record_planning(
+			"pre_judgment_turn_completion_prefix",
+			started_msec,
+			false,
+			delta_for_request,
+			{
+				"candidate_id": _preferred_candidate_id,
+				"action_id": _preferred_action_id,
+				"completion_reason": str(
+					pre_judgment_prefix.get("reason", "")
+				),
+				"turn_model_judgment_required": true,
+			}
+		)
+		return {
+			"status": "ready",
+			"owner": _current_action_owner,
+			"route_id": _current_route_id,
+			"candidate_id": _preferred_candidate_id,
+		}
 	var terminal_skip := _should_skip_terminal_without_admissible_switch(candidate_pool, facts)
-	if bool(terminal_skip.get("skip", false)) and not force_turn_model_judgment:
+	if bool(terminal_skip.get("skip", false)):
 		# This is not a local strategic rewrite. Production safety checked the full
 		# annotated legal pool and found no admissible non-Rule root switch. Keep a
 		# one-shot Rule selection: a later observation must be evaluated afresh and
 		# must not advance through a reusable fallback graph.
+		if force_turn_model_judgment:
+			_resolve_turn_model_judgment_without_request(
+				"provably_terminal_no_admissible_switch"
+			)
 		_install_one_shot_rules_floor(frontier)
 		_update_last_state(observation, facts, frontier)
 		_record_planning("provably_terminal_no_admissible_switch", started_msec, false, delta_for_request, {
@@ -491,6 +757,29 @@ func prepare_decision(
 			"checked_alternatives": int(terminal_skip.get("checked_alternatives", 0)),
 			"checked_candidate_pool_size": candidate_pool.size(),
 		})
+		return {
+			"status": "ready",
+			"owner": _current_action_owner,
+			"route_id": _current_route_id,
+			"candidate_id": _preferred_candidate_id,
+		}
+	if _provider_terminal_failure_reason != "":
+		# Quota/auth failures cannot recover through another same-match request.
+		# Runtime-local certificates and hard guards must also switch off: outage
+		# behavior is the exact Rule strategy, not a verified-local variant.
+		if _requires_turn_model_judgment():
+			_resolve_turn_model_judgment_without_request(
+				_provider_terminal_failure_reason
+			)
+		_install_one_shot_rules_floor(frontier)
+		_update_last_state(observation, facts, frontier)
+		_record_planning(
+			"provider_terminal_circuit_open",
+			started_msec,
+			false,
+			delta_for_request,
+			{"fallback_reason": _provider_terminal_failure_reason}
+		)
 		return {
 			"status": "ready",
 			"owner": _current_action_owner,
@@ -505,11 +794,12 @@ func prepare_decision(
 		_update_last_state(observation, facts, frontier)
 		_record_planning("local_policy", started_msec, false, {}, {"fallback_reason": str(local_decision.get("reason", "runtime_unconfigured"))})
 		return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id}
+	var effective_wait_budget_ms := _effective_turn_visible_wait_budget_ms()
 	var wait_gate := _visible_wait_budget.may_request(
 		_turn_visible_wait_ms,
 		_request_wait_samples_ms,
 		_turn_model_requests,
-		int(_profile.get("turn_visible_wait_budget_ms", 12000)),
+		effective_wait_budget_ms,
 		int(_profile.get("cold_request_estimate_ms", 6500))
 	)
 	if not bool(wait_gate.get("allowed", false)):
@@ -519,6 +809,7 @@ func prepare_decision(
 			"fallback_reason": str(wait_gate.get("reason", "visible_wait_budget_exhausted")),
 			"expected_request_ms": int(wait_gate.get("expected_request_ms", 0)),
 			"remaining_visible_wait_ms": int(wait_gate.get("remaining_ms", 0)),
+			"effective_turn_visible_wait_budget_ms": effective_wait_budget_ms,
 		})
 		return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id}
 	_request_serial += 1
@@ -532,6 +823,11 @@ func prepare_decision(
 		force_turn_model_judgment
 	)
 	var request_id := str(_lifecycle.get("request_id", ""))
+	var request_intent := _request_intent(
+		request_is_delta,
+		force_turn_model_judgment
+	)
+	request_envelope["request_intent"] = request_intent
 	var configured_token_budget := (
 		int(_profile.get("delta_response_token_budget", 220))
 		if request_is_delta
@@ -539,7 +835,11 @@ func prepare_decision(
 	)
 	var effective_token_budget := DecisionClientScript.new().resolve_token_budget(
 		configured_token_budget,
-		request_is_delta
+		request_is_delta,
+		int(request_envelope.get("limits", {}).get(
+			"max_policy_nodes",
+			4
+		))
 	)
 	var request_error := _decision_client.request_policy(
 		request_id,
@@ -550,6 +850,10 @@ func prepare_decision(
 	if request_error != OK:
 		if force_turn_model_judgment:
 			_turn_model_judgment_attempted = true
+			# A request that cannot start is a resolved failed judgment, just like
+			# a live timeout/rejection. This keeps the deterministic continuation
+			# state identical in verified-local and real-transport fallback arms.
+			_turn_model_judgment_resolved = true
 			_audit.record({
 				"turn_id": _current_turn,
 				"policy_id": str(_lifecycle.get("policy_id", "")),
@@ -558,17 +862,33 @@ func prepare_decision(
 				"strategy_id": get_strategy_id(),
 				"event_type": "turn_model_judgment_request_failed",
 				"turn_model_judgment_required": true,
+				"turn_model_judgment": true,
 				"fallback_reason": "request_error_%d" % request_error,
 			})
-		_install_completion_aware_fallback(
+		_install_verified_reference_fallback(
 			frontier,
-			"deadline_fallback",
 			facts,
-			observation
+			observation,
+			"deadline_fallback"
 		)
 		_update_last_state(observation, facts, frontier)
 		_record_planning("request_start_failed", started_msec, false, {}, {"fallback_reason": "request_error_%d" % request_error})
 		return {"status": "ready", "owner": _current_action_owner, "route_id": _current_route_id}
+	_audit.record({
+		"turn_id": _current_turn,
+		"policy_id": str(_lifecycle.get("policy_id", "")),
+		"decision_window_id": str(_lifecycle.get("decision_window_id", "")),
+		"request_id": request_id,
+		"deck_id": int(_profile.get("deck_id", 0)),
+		"strategy_id": get_strategy_id(),
+		"event_type": "model_request_started",
+		"is_delta": request_is_delta,
+		"request_intent": request_intent,
+		"configured_token_budget": configured_token_budget,
+		"token_budget": effective_token_budget,
+		"effective_turn_visible_wait_budget_ms": effective_wait_budget_ms,
+		"turn_visible_wait_spent_ms": _turn_visible_wait_ms,
+	})
 	_audit.record_payload({
 		"turn_id": _current_turn,
 		"policy_id": str(_lifecycle.get("policy_id", "")),
@@ -578,8 +898,7 @@ func prepare_decision(
 		"strategy_id": get_strategy_id(),
 		"event_type": "model_request",
 		"is_delta": request_is_delta,
-		"configured_token_budget": configured_token_budget,
-		"token_budget": effective_token_budget,
+		"request_intent": request_intent,
 		"request_envelope": request_envelope,
 	})
 	if force_turn_model_judgment:
@@ -600,7 +919,7 @@ func prepare_decision(
 	_pending_request_started_msec = Time.get_ticks_msec()
 	var visible_budget_remaining := maxi(
 		1,
-		int(_profile.get("turn_visible_wait_budget_ms", 12000)) - _turn_visible_wait_ms
+		effective_wait_budget_ms - _turn_visible_wait_ms
 	)
 	_pending_request_visible_budget_ms = maxi(
 		1,
@@ -610,7 +929,13 @@ func prepare_decision(
 		"observation_version": int(observation.get("observation_version", 0)),
 		"observation_hash": str(observation.get("observation_hash", "")),
 		"allowed_route_ids": REGISTERED_ROUTE_IDS.duplicate(),
-		"allowed_candidate_ids": available_candidate_ids.duplicate(),
+		"allowed_candidate_ids": (
+			request_envelope.get("allowed_candidate_ids", []) as Array
+		).duplicate(),
+		"allowed_fact_paths": request_envelope.get(
+			"allowed_fact_paths",
+			[]
+		).duplicate(),
 		"available_route_ids": available_route_ids,
 		"frontier": frontier.duplicate(true),
 		"facts": facts.duplicate(true),
@@ -618,6 +943,8 @@ func prepare_decision(
 		"is_delta": request_is_delta,
 		"material_delta": delta_for_request.duplicate(true),
 		"turn_model_judgment": force_turn_model_judgment,
+		"request_intent": request_intent,
+		"effective_turn_visible_wait_budget_ms": effective_wait_budget_ms,
 	}
 	_update_last_state(observation, facts, frontier)
 	return {"status": "pending", "request_id": request_id}
@@ -651,7 +978,29 @@ func is_llm_disabled_for_turn(_turn_number: int) -> bool:
 
 
 func get_llm_soft_timeout_seconds() -> float:
-	return float(_profile.get("turn_visible_wait_budget_ms", 6500)) / 1000.0
+	return float(_effective_turn_visible_wait_budget_ms()) / 1000.0
+
+
+func _effective_turn_visible_wait_budget_ms(turn_number: int = -1) -> int:
+	var checked_turn := _current_turn if turn_number < 0 else turn_number
+	return _visible_wait_budget.budget_for_turn(
+		int(_profile.get("turn_visible_wait_budget_ms", 6500)),
+		maxi(1, checked_turn),
+		int(_profile.get("turn_visible_wait_growth_ms", 1500)),
+		int(_profile.get("turn_visible_wait_growth_every_turns", 2)),
+		int(_profile.get("turn_visible_wait_budget_cap_ms", 18000))
+	)
+
+
+func _request_intent(
+	is_delta: bool,
+	required_turn_judgment: bool
+) -> String:
+	if is_delta:
+		return "checkpoint_replan"
+	if required_turn_judgment:
+		return "turn_opening_graph"
+	return "strategic_arbitration"
 
 
 func is_llm_soft_timed_out_for_turn(turn_number: int) -> bool:
@@ -687,6 +1036,11 @@ func force_deadline_fallback(
 		return
 	var resolves_turn_model_judgment := _turn_model_judgment_requested \
 		and not _turn_model_judgment_resolved
+	var request_intent := str(_pending_context.get(
+		"request_intent",
+		"strategic_arbitration"
+	))
+	var request_is_delta := bool(_pending_context.get("is_delta", false))
 	_pending_request_id = ""
 	_pending_context.clear()
 	if visible_wait_ms >= 0:
@@ -711,8 +1065,16 @@ func force_deadline_fallback(
 		"action_owner": "deadline_fallback",
 		"fallback_layer": "deadline_fallback",
 		"fallback_reason": reason,
+		"request_intent": request_intent,
+		"is_delta": request_is_delta,
+		"policy_installed": false,
+		"response_disposition": "deadline_fallback",
+		"provider_response_received": false,
+		"contract_validated": false,
 		"request_wall_ms": maxi(0, visible_wait_ms),
 		"visible_wait_ms": maxi(0, visible_wait_ms),
+		"effective_turn_visible_wait_budget_ms": \
+			_effective_turn_visible_wait_budget_ms(),
 		"turn_model_judgment": resolves_turn_model_judgment,
 	})
 	if resolves_turn_model_judgment:
@@ -756,6 +1118,9 @@ func _score_action_with_rule_floor_plan(
 	player_index: int,
 	turn_plan: Dictionary
 ) -> float:
+	var action_id := _observation_gateway.stable_action_id(action)
+	if _runtime_configured and _hard_blocked_action_ids.has(action_id):
+		return HARD_BLOCK_SCORE
 	var base_score := _rules_fallback.score_action(action, game_state, player_index, turn_plan)
 	# Local/deadline/schema fallbacks are metadata-only policies: the host AI
 	# must retain the exact rule score on its fully augmented action.  The
@@ -769,7 +1134,6 @@ func _score_action_with_rule_floor_plan(
 	]
 	if _preferred_action_id == "" or not route_owned:
 		return base_score
-	var action_id := _observation_gateway.stable_action_id(action)
 	if action_id == _preferred_action_id:
 		return base_score + _route_selection_bonus
 	if str(action.get("kind", "")) == "end_turn" and _current_route_id != "route:end_turn":
@@ -1092,6 +1456,10 @@ func _cached_profiled_gardevoir_interaction_stage(step: Dictionary) -> String:
 
 
 func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
+	if _runtime_configured and _current_route_id == "route:gust":
+		var hard_guard_score: Variant = _hard_guard_gust_target_score(item)
+		if hard_guard_score != null:
+			return float(hard_guard_score)
 	if _runtime_configured:
 		var exact_gardevoir_stage := _active_profiled_gardevoir_ko_interaction_stage(step)
 		if exact_gardevoir_stage == "":
@@ -1158,6 +1526,51 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 	return _rules_fallback.score_interaction_target(item, step, context)
 
 
+func _hard_guard_gust_target_score(item: Variant) -> Variant:
+	var constraint: Dictionary = {}
+	for candidate: Dictionary in _last_frontier:
+		if str(candidate.get("candidate_id", "")) != _preferred_candidate_id \
+				and str(candidate.get(
+					"safe_prefix_action_id",
+					""
+				)) != _preferred_action_id:
+			continue
+		var raw_constraint: Variant = candidate.get(
+			"hard_guard_target_constraint",
+			{}
+		)
+		if raw_constraint is Dictionary:
+			constraint = (raw_constraint as Dictionary).duplicate(true)
+		break
+	if constraint.is_empty() \
+			or str(constraint.get("kind", "")) != "public_lethal_only":
+		return null
+	if not (item is PokemonSlot):
+		return HARD_BLOCK_SCORE
+	var slot := item as PokemonSlot
+	var top := slot.get_top_card()
+	if top == null:
+		return HARD_BLOCK_SCORE
+	var instance_id := int(top.instance_id)
+	var eligible_instance_ids: Array = constraint.get(
+		"eligible_instance_ids",
+		[]
+	) if constraint.get("eligible_instance_ids", []) is Array else []
+	var eligible_slot_ids: Array = constraint.get(
+		"eligible_slot_ids",
+		[]
+	) if constraint.get("eligible_slot_ids", []) is Array else []
+	var slot_id := "slot:%d" % instance_id
+	if instance_id not in eligible_instance_ids and slot_id not in eligible_slot_ids:
+		return HARD_BLOCK_SCORE
+	# The hard guard already proves lethality. Within the admissible target set,
+	# prefer the larger Prize swing, then the lower-HP target as the most robust
+	# public execution of that proof.
+	return 1000000000.0 \
+		+ float(slot.get_prize_count()) * 10000.0 \
+		- float(slot.get_remaining_hp())
+
+
 func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	# A forced replacement is an unconditional public-state boundary.  The
 	# previous Active's route, cursor, and interaction certificate cannot remain
@@ -1203,6 +1616,60 @@ func get_intent_planner_profile() -> Dictionary:
 	return _rules_fallback.get_intent_planner_profile()
 
 
+func capture_runtime_action_ownership(action: Dictionary) -> void:
+	# AIOpponent executes actions synchronously. During that call an interaction,
+	# KO replacement, or policy checkpoint may clear/change the live route before
+	# log_runtime_action_result runs. Freeze the selected action's provenance at
+	# the only authoritative boundary: after host selection, before execution.
+	var stable_action_id := _observation_gateway.stable_action_id(action)
+	var selected_owner := _current_action_owner
+	var selected_route_id := _current_route_id
+	var selected_candidate_id := _preferred_candidate_id
+	var selected_node_id := _policy_graph.current_node_id()
+	var selected_graph_origin := _policy_graph.origin()
+	var selected_certificate := _active_module_certificate_kind
+	var binding_mismatch := false
+	if selected_owner in [
+		"model_selected_local_route",
+		"model_synthesized_route",
+		"policy_graph_branch",
+		"module_verified_upgrade",
+	]:
+		binding_mismatch = _preferred_action_id == "" \
+			or stable_action_id != _preferred_action_id
+		if binding_mismatch:
+			# A model/verified route owns only its exact selected action. If the
+			# host chose anything else, keep a single conservative Rule owner.
+			selected_owner = "rules_fallback"
+			selected_route_id = ""
+			selected_candidate_id = ""
+			selected_node_id = ""
+			selected_graph_origin = "rules_fallback"
+			selected_certificate = ""
+	_pending_action_ownership_ticket = {
+		"action_id": stable_action_id,
+		"turn_id": _current_turn,
+		"policy_id": str(_lifecycle.get("policy_id", "")),
+		"revision_id": str(_lifecycle.get("revision_id", "")),
+		"node_id": selected_node_id,
+		"route_id": selected_route_id,
+		"candidate_id": selected_candidate_id,
+		"owner": selected_owner,
+		"graph_origin": selected_graph_origin,
+		"owner_at_capture": _current_action_owner,
+		"module_certificate_kind": selected_certificate,
+		"observation_hash": str(_last_observation.get(
+			"observation_hash",
+			""
+		)),
+		"observation_version": int(_last_observation.get(
+			"observation_version",
+			0
+		)),
+		"binding_mismatch": binding_mismatch,
+	}
+
+
 func log_runtime_action_result(
 	action: Dictionary,
 	success: bool,
@@ -1212,6 +1679,43 @@ func log_runtime_action_result(
 ) -> void:
 	_profiled_gardevoir_interaction_ticket.clear()
 	var stable_action_id := _observation_gateway.stable_action_id(action)
+	var owner_at_result := _current_action_owner
+	var ownership: Dictionary = {}
+	var ticket_status := "missing"
+	if not _pending_action_ownership_ticket.is_empty():
+		var ticket_action_id := str(_pending_action_ownership_ticket.get(
+			"action_id",
+			""
+		))
+		var ticket_turn := int(_pending_action_ownership_ticket.get(
+			"turn_id",
+			-1
+		))
+		if ticket_action_id == stable_action_id \
+				and (ticket_turn < 0 or ticket_turn == audit_turn):
+			ownership = _pending_action_ownership_ticket.duplicate(true)
+			ticket_status = (
+				"binding_mismatch"
+				if bool(ownership.get("binding_mismatch", false))
+				else "captured"
+			)
+		else:
+			ticket_status = "action_or_turn_mismatch"
+	_pending_action_ownership_ticket.clear()
+	if ownership.is_empty():
+		# Compatibility for direct strategy tests and any non-host caller. The
+		# production AIOpponent seam always supplies a capture ticket.
+		ownership = {
+			"policy_id": str(_lifecycle.get("policy_id", "")),
+			"revision_id": str(_lifecycle.get("revision_id", "")),
+			"node_id": _policy_graph.current_node_id(),
+			"route_id": _current_route_id,
+			"candidate_id": _preferred_candidate_id,
+			"owner": _current_action_owner,
+			"graph_origin": _policy_graph.origin(),
+			"owner_at_capture": _current_action_owner,
+			"module_certificate_kind": _active_module_certificate_kind,
+		}
 	if not _profiled_gardevoir_suffix_ticket.is_empty():
 		var expected_action_id := str(_profiled_gardevoir_suffix_ticket.get("action_id", ""))
 		var current_stage := str(_profiled_gardevoir_suffix_ticket.get("stage", ""))
@@ -1229,18 +1733,18 @@ func log_runtime_action_result(
 		"action_kind": str(action.get("kind", "")),
 		"action_card_uid": action_card_uid,
 		"success": success,
-		"route_id": _current_route_id,
-		"candidate_id": _preferred_candidate_id,
-		"owner": _current_action_owner,
+		"route_id": str(ownership.get("route_id", "")),
+		"candidate_id": str(ownership.get("candidate_id", "")),
+		"owner": str(ownership.get("owner", "rules_fallback")),
 		"target_slot_id": str(public_action_ref.get("target", "")),
 	}
 	_audit.record({
 		"turn_id": audit_turn,
-		"policy_id": str(_lifecycle.get("policy_id", "")),
-		"revision_id": str(_lifecycle.get("revision_id", "")),
-		"node_id": _policy_graph.current_node_id(),
-		"route_id": _current_route_id,
-		"candidate_id": _preferred_candidate_id,
+		"policy_id": str(ownership.get("policy_id", "")),
+		"revision_id": str(ownership.get("revision_id", "")),
+		"node_id": str(ownership.get("node_id", "")),
+		"route_id": str(ownership.get("route_id", "")),
+		"candidate_id": str(ownership.get("candidate_id", "")),
 		"deck_id": int(_profile.get("deck_id", 0)),
 		"strategy_id": get_strategy_id(),
 		"event_type": "action_result",
@@ -1248,8 +1752,18 @@ func log_runtime_action_result(
 		"action_kind": str(action.get("kind", "")),
 		"action_card_uid": action_card_uid,
 		"target_slot_id": str(public_action_ref.get("target", "")),
-		"action_owner": _current_action_owner,
-		"module_certificate_kind": _active_module_certificate_kind,
+		"action_owner": str(ownership.get("owner", "rules_fallback")),
+		"graph_origin": str(ownership.get("graph_origin", "local_gate")),
+		"owner_at_capture": str(ownership.get(
+			"owner_at_capture",
+			""
+		)),
+		"owner_at_result": owner_at_result,
+		"ownership_ticket_status": ticket_status,
+		"module_certificate_kind": str(ownership.get(
+			"module_certificate_kind",
+			""
+		)),
 		"success": success,
 	})
 
@@ -1259,6 +1773,7 @@ func get_audit_summary() -> Dictionary:
 	summary["branch_hits"] = _branch_hits
 	summary["uncovered_events"] = _uncovered_events
 	summary["last_request_metrics"] = _last_request_metrics.duplicate(true)
+	summary["last_route_value_metrics"] = _last_route_value_metrics.duplicate(true)
 	return summary
 
 
@@ -1414,6 +1929,8 @@ func _terminal_completion_override(
 		"route:end_turn",
 	] or recommended_kind in ["attack", "granted_attack", "end_turn"]:
 		return {"handled": false}
+	if not _completion_prefix_can_cross_rule_root(recommended, selected):
+		return {"handled": false}
 	var selected_effect: Dictionary = selected.get(
 		"post_attack_continuity",
 		{}
@@ -1437,6 +1954,43 @@ func _terminal_completion_override(
 	}
 
 
+func _completion_prefix_can_cross_rule_root(
+	recommended: Dictionary,
+	rule_root: Dictionary
+) -> bool:
+	# Information-producing actions are observation barriers.  A completion
+	# prefix derived from the pre-search hand/deck state is stale by definition
+	# once the search resolves, so the graph must execute the checkpoint and
+	# rebuild instead of replacing it.
+	if str(rule_root.get("checkpoint_after", "")) == "information_result" \
+			or str(rule_root.get("route_id", "")) in [
+				"route:information",
+				"route:noctowl_search",
+				"route:opening_search",
+			]:
+		return false
+	# A Supporter acceleration/search action can alter both the visible hand and
+	# the deck RNG epoch.  Public continuity arithmetic may prove that it adds
+	# Energy, but it cannot prove that moving it ahead of the engine's exact
+	# manual attachment preserves the rest of the turn.  Execute the Rule
+	# attachment first and reobserve; deterministic engine prefixes such as
+	# Hoothoot/Noctowl, Area Zero, and Teal Dance remain eligible here.
+	if not bool(rule_root.get("engine_rule_floor_exact", false)) \
+			or str(rule_root.get("action_kind", "")) != "attach_energy":
+		return true
+	var recommended_roles: Array = recommended.get(
+		"action_semantic_roles",
+		[]
+	) if recommended.get("action_semantic_roles", []) is Array else []
+	return not (
+		str(recommended.get("route_id", "")) == "route:accelerate" \
+			and (
+				str(recommended.get("action_kind", "")) == "play_trainer" \
+					or "supporter_acceleration" in recommended_roles
+			)
+	)
+
+
 func _completion_override_for_rule_root(
 	frontier: Array[Dictionary],
 	facts: Dictionary,
@@ -1454,6 +2008,19 @@ func _completion_override_for_rule_root(
 		facts,
 		observation
 	)
+
+
+func _pre_judgment_completion_override(
+	frontier: Array[Dictionary],
+	facts: Dictionary,
+	observation: Dictionary,
+	required_turn_judgment: bool
+) -> Dictionary:
+	if not required_turn_judgment \
+			or _turn_model_judgment_attempted \
+			or _turn_model_judgment_resolved:
+		return {"handled": false}
+	return _completion_override_for_rule_root(frontier, facts, observation)
 
 
 func _install_turn_completion_override(
@@ -1488,12 +2055,18 @@ func install_policy_response_for_test(
 	frontier: Array[Dictionary],
 	facts: Dictionary = {}
 ) -> Dictionary:
+	var request_fact_paths: Variant = (
+		ContractsScript.branchable_fact_paths(facts)
+		if not facts.is_empty()
+		else null
+	)
 	var validation := _policy_validator.validate_response(
 		response,
 		REGISTERED_ROUTE_IDS,
 		int(_profile.get("max_policy_nodes", 8)),
 		_candidate_ids(frontier),
-		false
+		false,
+		request_fact_paths
 	)
 	if not bool(validation.get("valid", false)):
 		return validation
@@ -1537,6 +2110,16 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 	if request_id == "" or request_id != _pending_request_id:
 		return
 	var context := _pending_context.duplicate(true)
+	metrics["request_intent"] = str(context.get(
+		"request_intent",
+		"strategic_arbitration"
+	))
+	metrics["is_delta"] = bool(context.get("is_delta", false))
+	# A resolved request is not necessarily a provider response: deadline
+	# fallback records use the same policy_response event so every request has
+	# one terminal audit record. Keep transport and schema stages explicit.
+	metrics["provider_response_received"] = true
+	metrics["contract_validated"] = false
 	_audit.record_payload({
 		"turn_id": _current_turn,
 		"policy_id": str(_lifecycle.get("policy_id", "")),
@@ -1563,11 +2146,11 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		if raw_route is Dictionary:
 			frontier.append(raw_route as Dictionary)
 	if stale:
-		_install_completion_aware_fallback(
+		_install_verified_reference_fallback(
 			_last_frontier,
-			"deadline_fallback",
 			_last_facts,
-			_last_observation
+			_last_observation,
+			"deadline_fallback"
 		)
 		_record_policy_response(false, "stale_response", metrics)
 		return
@@ -1576,28 +2159,28 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		REGISTERED_ROUTE_IDS,
 		int(_profile.get("max_policy_nodes", 8)),
 		context.get("allowed_candidate_ids", []) if context.get("allowed_candidate_ids", []) is Array else [],
-		true
+		true,
+		context.get("allowed_fact_paths", []) \
+			if context.get("allowed_fact_paths", []) is Array else []
 	)
 	if not bool(validation.get("valid", false)):
-		_install_completion_aware_fallback(
-			frontier,
-			"schema_fallback",
-			context.get("facts", {}) \
-				if context.get("facts", {}) is Dictionary else {},
-			_last_observation
+		var validation_reason := str(
+			validation.get("reason", "schema_error")
 		)
-		_record_policy_response(false, str(validation.get("reason", "schema_error")), metrics)
+		if _is_terminal_provider_failure(validation_reason):
+			_provider_terminal_failure_reason = validation_reason
+			_runtime_configured = false
+			_hard_blocked_action_ids.clear()
+			_clear_route("rules_fallback")
+		else:
+			_install_rejected_model_fallback(frontier)
+		_record_policy_response(false, validation_reason, metrics)
 		return
+	metrics["contract_validated"] = true
 	var policy: Dictionary = validation.get("policy", {})
 	var binding := _policy_validator.bind_root_to_frontier(policy, frontier)
 	if not bool(binding.get("valid", false)):
-		_install_completion_aware_fallback(
-			frontier,
-			"schema_fallback",
-			context.get("facts", {}) \
-				if context.get("facts", {}) is Dictionary else {},
-			_last_observation
-		)
+		_install_rejected_model_fallback(frontier)
 		_record_policy_response(false, str(binding.get("reason", "candidate_binding_failed")), metrics)
 		return
 	policy = binding.get("policy", {})
@@ -1605,13 +2188,7 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 	var root_route := str(root_ref.get("route_id", ""))
 	var root_candidate := str(root_ref.get("candidate_id", root_ref.get("first_candidate_id", "")))
 	if root_route not in context.get("available_route_ids", []):
-		_install_completion_aware_fallback(
-			frontier,
-			"schema_fallback",
-			context.get("facts", {}) \
-				if context.get("facts", {}) is Dictionary else {},
-			_last_observation
-		)
+		_install_rejected_model_fallback(frontier)
 		_record_policy_response(false, "root_route_unavailable", metrics)
 		return
 	var binding_validation := _validate_root_route_ref(root_ref, frontier)
@@ -1680,8 +2257,20 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		return
 	var selected_candidate := _route_search.find_candidate(frontier, root_candidate)
 	var shadow_exact_rule_root := _should_shadow_exact_rule_root(route_safety)
+	var defer_root_to_rule := _can_defer_model_root_to_rule(
+		shadow_exact_rule_root,
+		selected_candidate,
+		frontier,
+		route_safety
+	)
 	var post_judgment_upgrade: Dictionary = {}
-	if shadow_exact_rule_root and bool(context.get("turn_model_judgment", false)):
+	if _should_review_deferred_rule_root_for_verified_upgrade(
+		shadow_exact_rule_root,
+		selected_candidate,
+		frontier,
+		route_safety,
+		bool(context.get("turn_model_judgment", false))
+	):
 		post_judgment_upgrade = _find_module_verified_upgrade(
 			frontier,
 			context.get("facts", {}) if context.get("facts", {}) is Dictionary else {}
@@ -1731,22 +2320,21 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 		_install_post_judgment_verified_upgrade(post_judgment_upgrade, frontier)
 		_record_policy_response(
 			true,
-			"exact_rule_root_reviewed_then_module_verified_upgrade",
+			"exact_rule_root_reviewed_then_module_verified_upgrade" \
+				if shadow_exact_rule_root \
+				else "deferred_rule_root_reviewed_then_module_verified_upgrade",
 			metrics,
 			"",
 			{
 				"canonicalized_unreachable_nodes": int(
 					validation.get("canonicalized_unreachable_nodes", 0)
 				),
+				"canonicalized_overflow_nodes": int(
+					validation.get("canonicalized_overflow_nodes", 0)
+				),
 			}
 		)
 		return
-	var defer_root_to_rule := shadow_exact_rule_root or not bool(route_safety.get("valid", false)) \
-		and str(route_safety.get("reason", "")) in [
-			"ambiguous_rule_tie_without_verified_advantage",
-			"same_route_switch_without_verified_advantage",
-		] \
-		and _can_defer_ambiguous_root_to_rule(selected_candidate, frontier)
 	if not bool(route_safety.get("valid", false)) and not defer_root_to_rule:
 		_install_rejected_model_fallback(frontier)
 		_record_policy_response(false, str(route_safety.get("reason", "route_validation_failed")), metrics, "route_validation")
@@ -1763,10 +2351,16 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 	_lifecycle["revision_id"] = "%s:r%d" % [str(_lifecycle.get("policy_id", "policy")), _revision_serial]
 	if defer_root_to_rule:
 		_execution_cursor.clear()
+		# A shadow graph owns only future declared branches. Its current root must
+		# be transactionally identical to the no-response verified reference,
+		# including nested search targets and other interaction choices. `local_gate`
+		# is intentionally stronger than that reference (it enables autonomous
+		# basic-search certificates), so using it here could change gameplay while
+		# audit still reported zero model-owned actions.
 		_select_route(
 			str(frontier[0].get("route_id", "")),
 			frontier,
-			origin,
+			"deadline_fallback",
 			str(frontier[0].get("candidate_id", ""))
 		)
 	else:
@@ -1790,6 +2384,9 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 			"canonicalized_unreachable_nodes": int(
 				validation.get("canonicalized_unreachable_nodes", 0)
 			),
+			"canonicalized_overflow_nodes": int(
+				validation.get("canonicalized_overflow_nodes", 0)
+			),
 		}
 	)
 
@@ -1797,6 +2394,41 @@ func _on_policy_response(request_id: String, response: Dictionary, metrics: Dict
 func _should_shadow_exact_rule_root(route_safety: Dictionary) -> bool:
 	return bool(route_safety.get("valid", false)) \
 		and str(route_safety.get("reason", "")) == "matches_rules_floor"
+
+
+func _can_defer_model_root_to_rule(
+	shadow_exact_rule_root: bool,
+	selected_candidate: Dictionary,
+	frontier: Array[Dictionary],
+	route_safety: Dictionary
+) -> bool:
+	if shadow_exact_rule_root:
+		return true
+	return not bool(route_safety.get("valid", false)) \
+		and str(route_safety.get("reason", "")) in [
+			"ambiguous_rule_tie_without_verified_advantage",
+			"same_route_switch_without_verified_advantage",
+		] \
+		and _can_defer_ambiguous_root_to_rule(selected_candidate, frontier)
+
+
+func _should_review_deferred_rule_root_for_verified_upgrade(
+	shadow_exact_rule_root: bool,
+	selected_candidate: Dictionary,
+	frontier: Array[Dictionary],
+	route_safety: Dictionary,
+	_turn_model_judgment: bool
+) -> bool:
+	# Accepting a no-op Rule-root shadow must never suppress a deterministic
+	# public-state upgrade that the verified-local arm would execute on the same
+	# observation. This applies to optional and delta requests as well as the
+	# required first-main-window judgment.
+	return _can_defer_model_root_to_rule(
+		shadow_exact_rule_root,
+		selected_candidate,
+		frontier,
+		route_safety
+	)
 
 
 func _has_model_execution_certificate(route_safety: Dictionary) -> bool:
@@ -1930,7 +2562,9 @@ func _begin_turn(turn_number: int, event_context: Dictionary) -> void:
 	_pending_request_started_msec = 0
 	_pending_request_visible_budget_ms = 0
 	_handled_delta_hashes.clear()
+	_hard_blocked_action_ids.clear()
 	_unconsumed_action_result.clear()
+	_pending_action_ownership_ticket.clear()
 	_match_agenda = {
 		"victory_mode": str(_profile.get("victory_mode", "prize_race")),
 		"prize_path": [],
@@ -1963,6 +2597,25 @@ func _should_force_turn_model_judgment(event_context: Dictionary) -> bool:
 		and not _turn_model_judgment_attempted
 
 
+func _resolve_turn_model_judgment_without_request(reason: String) -> void:
+	if not _requires_turn_model_judgment() \
+			or _turn_model_judgment_attempted \
+			or _turn_model_judgment_resolved:
+		return
+	_turn_model_judgment_attempted = true
+	_turn_model_judgment_resolved = true
+	_audit.record({
+		"turn_id": _current_turn,
+		"policy_id": str(_lifecycle.get("policy_id", "")),
+		"deck_id": int(_profile.get("deck_id", 0)),
+		"strategy_id": get_strategy_id(),
+		"event_type": "turn_model_judgment_skipped",
+		"turn_model_judgment_required": true,
+		"turn_model_judgment": true,
+		"fallback_reason": reason,
+	})
+
+
 func _build_request_envelope(
 	observation: Dictionary,
 	facts: Dictionary,
@@ -1971,19 +2624,40 @@ func _build_request_envelope(
 	required_turn_judgment: bool = false
 ) -> Dictionary:
 	var typed_policy := _profile_policy.sanitize(_profile, REGISTERED_ROUTE_IDS)
-	var compact_frontier := _compact_frontier_for_model(frontier)
-	var factored_frontier := _factor_common_capability_context(compact_frontier)
 	var profile_summary := _profile_summary_for_model(typed_policy)
 	var request_facts := _with_turn_completion_facts(
 		facts,
 		observation,
 		frontier
 	)
+	request_facts = _with_prize_clock_facts(
+		request_facts,
+		observation,
+		frontier
+	)
+	request_facts = _with_route_decision_right_facts(
+		request_facts,
+		frontier
+	)
+	# Root selection is an exact-candidate decision, while checkpoint branches
+	# are route decisions after reobservation. Do not show the model exact roots
+	# that the runtime safety gate is guaranteed to reject. This also avoids
+	# wasting prompt tokens on choices the model cannot own.
+	var root_frontier := _model_root_frontier(frontier, request_facts)
+	var compact_frontier := _compact_frontier_for_model(root_frontier)
+	var factored_frontier := _factor_common_capability_context(compact_frontier)
 	var turn_completion_contract := _turn_completion_solver.build(
 		observation,
 		request_facts,
 		frontier,
 		_profile
+	)
+	turn_completion_contract = _model_turn_completion_contract(
+		turn_completion_contract,
+		root_frontier
+	)
+	var allowed_fact_paths := ContractsScript.branchable_fact_paths(
+		request_facts
 	)
 	return {
 		"schema_version": ContractsScript.SCHEMA_VERSION,
@@ -2009,15 +2683,19 @@ func _build_request_envelope(
 		"prize_graph": _compact_prize_graph_for_model(
 			_prize_graph.solve(observation, request_facts)
 		),
-		"threat_response": _threat_response.solve(observation),
+		"threat_response": (
+			_opponent_response_v2.solve(observation, _profile)
+			if RouteValueGraphScript.is_enabled(_profile)
+			else _threat_response.solve(observation)
+		),
 		"turn_completion_contract": turn_completion_contract,
 		"capability_context": factored_frontier.get("capability_context", {}),
 		"frontier": factored_frontier.get("frontier", []),
-		"current_root_route_ids": _route_ids(frontier),
-		"current_root_candidate_bindings": _candidate_bindings(frontier),
+		"current_root_route_ids": _route_ids(root_frontier),
+		"current_root_candidate_bindings": _candidate_bindings(root_frontier),
 		"allowed_follow_route_ids": REGISTERED_ROUTE_IDS.duplicate(),
-		"allowed_candidate_ids": _candidate_ids(frontier),
-		"allowed_fact_paths": ContractsScript.REGISTERED_FACT_PATHS.duplicate(),
+		"allowed_candidate_ids": _candidate_ids(root_frontier),
+		"allowed_fact_paths": allowed_fact_paths,
 		"allowed_guard_operators": ContractsScript.GUARD_OPERATORS.duplicate(),
 		"current_policy_cursor": {
 			"graph": _policy_graph.snapshot(),
@@ -2085,6 +2763,22 @@ func _compact_frontier_for_model(frontier: Array[Dictionary]) -> Array[Dictionar
 			var optional_value: Variant = candidate.get(optional_key, [])
 			if optional_value is Array and not (optional_value as Array).is_empty():
 				compact_candidate[optional_key] = (optional_value as Array).duplicate(true)
+		var conditional_suffix: Variant = candidate.get(
+			"conditional_suffix",
+			{}
+		)
+		if conditional_suffix is Dictionary \
+				and not (conditional_suffix as Dictionary).is_empty():
+			compact_candidate["conditional_suffix"] = (
+				conditional_suffix as Dictionary
+			).duplicate(true)
+		var route_value: Variant = candidate.get("route_value_graph_v3", {})
+		if route_value is Dictionary and not (route_value as Dictionary).is_empty():
+			var compact_route_value := _compact_route_value_for_model(
+				route_value as Dictionary
+			)
+			if not compact_route_value.is_empty():
+				compact_candidate["route_value_graph_v3"] = compact_route_value
 		if (compact_candidate.get("module_annotations", {}) as Dictionary).is_empty():
 			compact_candidate.erase("module_annotations")
 		result.append(compact_candidate)
@@ -2281,6 +2975,12 @@ func _compact_prize_graph_for_model(value: Variant) -> Dictionary:
 		"schema_version", "own_prizes_remaining", "opponent_prizes_remaining",
 		"shortest_path_turns", "opponent_shortest_path_turns", "current_prize_swing",
 		"two_turn_prize_swing", "win_now", "credible_counter_ko",
+		"own_fastest_finish_tick", "own_robust_finish_tick",
+		"opponent_fastest_finish_tick", "opponent_robust_finish_tick",
+		"race_margin", "opponent_wins_next_window",
+		"continuity_debt_cost_ticks", "credible_gust",
+		"public_gust_exhausted", "own_robust_prize_sequence",
+		"opponent_robust_prize_sequence",
 	]:
 		if source.has(key):
 			result[key] = source.get(key)
@@ -2381,7 +3081,13 @@ func _compact_slot(value: Variant) -> Dictionary:
 		"energy": _compact_cards(slot.get("energy", [])),
 		"damage": int(slot.get("damage", 0)),
 		"remaining_hp": int(slot.get("remaining_hp", 0)),
+		"max_hp": int(slot.get(
+			"max_hp",
+			int(slot.get("remaining_hp", 0)) + int(slot.get("damage", 0))
+		)),
 		"prize_count": int(slot.get("prize_count", 1)),
+		"retreat_cost": int(slot.get("retreat_cost", 0)),
+		"tool": _compact_card(slot.get("tool", {})),
 		"ability_used": bool(slot.get("ability_used", false)),
 		"tera": bool(slot.get("tera", false)),
 	}
@@ -2587,17 +3293,43 @@ func _install_completion_aware_fallback(
 	return false
 
 
+func _install_verified_reference_fallback(
+	frontier: Array[Dictionary],
+	facts: Dictionary = {},
+	observation: Dictionary = {},
+	fallback_owner: String = "deadline_fallback"
+) -> bool:
+	# Accepted shadow Rule roots run the deterministic post-judgment certificate
+	# review. A missing/rejected response and the verified-local reference must
+	# run that exact same public-state review, or "zero model-owned actions" can
+	# still produce a different same-seed decision log.
+	var effective_facts := facts if not facts.is_empty() else _last_facts
+	var verified_upgrade := _find_module_verified_upgrade(
+		frontier,
+		effective_facts
+	)
+	if not verified_upgrade.is_empty():
+		_install_post_judgment_verified_upgrade(verified_upgrade, frontier)
+		return true
+	return _install_completion_aware_fallback(
+		frontier,
+		fallback_owner,
+		effective_facts,
+		observation if not observation.is_empty() else _last_observation
+	)
+
+
 func _install_rejected_model_fallback(frontier: Array[Dictionary]) -> void:
 	# A rejected response must be observationally equivalent to a request that
 	# never arrived.  In particular, it must not relabel the Rule root as
 	# `local_gate`, because that owner is allowed to activate additional local
 	# interaction certificates and can therefore change a same-seed duel even
 	# when audit reports model_accepted=0.
-	_install_completion_aware_fallback(
+	_install_verified_reference_fallback(
 		frontier,
-		"deadline_fallback",
 		_last_facts,
-		_last_observation
+		_last_observation,
+		"deadline_fallback"
 	)
 
 
@@ -2621,13 +3353,20 @@ func _should_reopen_information_epoch(
 	# Model graphs retain their own typed checkpoints and are advanced normally.
 	if not _runtime_configured:
 		return false
-	# `model_shadow_rule_root` deliberately executes the exact Rule root through
-	# `local_gate`.  The graph origin describes where the rejected/no-op model
-	# proposal came from; the completed action owner describes who actually made
-	# the decision.  Information-epoch ownership must follow the latter or a
-	# same-size tutor such as Earthen Vessel can silently reuse the stale local
-	# root after replacing the visible hand identities.
 	var completed_owner := str(completed_action.get("owner", policy_origin))
+	if completed_owner in [
+		"model_selected_local_route",
+		"model_synthesized_route",
+		"policy_graph_branch",
+	]:
+		return false
+	# Root action ownership and graph provenance are deliberately separate.
+	# `model_shadow_rule_root` executes the exact Rule root, but the accepted
+	# model graph owns a declared successor. A one-node shadow owns nothing after
+	# its Rule root and must reopen the exact verified-local information epoch.
+	if policy_origin == "model_shadow_rule_root" \
+			and _policy_graph.current_route_has_declared_successor():
+		return false
 	if completed_owner not in ["local_gate", "deadline_fallback", "schema_fallback"]:
 		return false
 	if not bool(completed_action.get("success", false)):
@@ -2989,6 +3728,8 @@ func _can_apply_autonomous_module_upgrade(
 		"profiled_bloodmoon_closeout_attach_pivot",
 		"profiled_bloodmoon_closeout_retreat_finisher",
 		"public_dynamic_cost_ready_attack_over_redundant_attachment",
+		"public_prize_denial_pivot",
+		"public_same_window_pivot_ko_loss_prevention",
 	]:
 		return true
 	# A non-terminal local certificate must never postpone an executable Rule
@@ -3049,12 +3790,48 @@ func _can_apply_initial_module_upgrade(upgrade: Dictionary) -> bool:
 	var certificate_kind := str(
 		upgrade.get("verified_advantage", {}).get("certificate_kind", "")
 	)
+	# A Raging Bolt supporter may publicly complete an attack-cost route while
+	# still being a non-monotonic ordering choice. Seed 182600 proves that using
+	# this certificate to move Crispin ahead of Rule's exact manual attachment
+	# changes the information/RNG epoch and can turn a win into a deck-out loss.
+	# Keep the certificate model-visible, but only the exact attachment candidate
+	# may take autonomous ownership at the first decision window.
+	if int(_profile.get("deck_id", 0)) == 800018509 \
+			and certificate_kind == "public_typed_attack_cost_completion" \
+			and (
+				str(upgrade.get("route_id", "")) != "route:energy_commit" \
+				or str(upgrade.get("action_kind", "")) != "attach_energy"
+			):
+		return false
 	return certificate_kind in [
 		"public_active_ko_cost_before_independent_bench_evolve",
 		"profiled_counter_activation",
 		"public_typed_attack_cost_completion",
 		"public_same_ko_preserve_attached_energy",
 		"profiled_stage2_search_before_pivot",
+		"public_dynamic_cost_ready_attack_over_redundant_attachment",
+		"public_prize_denial_pivot",
+		"public_same_window_pivot_ko_loss_prevention",
+	]
+
+
+func _verified_upgrade_preempts_model_judgment(upgrade: Dictionary) -> bool:
+	if str(upgrade.get("verified_reason", "")) in [
+		"deterministic_win_now",
+		"deterministic_prize_gain",
+	]:
+		return str(upgrade.get("action_kind", "")) in [
+			"attack",
+			"granted_attack",
+		]
+	var certificate_kind := str(
+		upgrade.get("verified_advantage", {}).get("certificate_kind", "")
+	)
+	# Required model judgment is a quality gate, not permission to ignore an
+	# exact public rescue. These proofs are already stronger than a model
+	# preference and close a current attack window that cannot be recovered.
+	return certificate_kind in [
+		"public_same_window_pivot_ko_loss_prevention",
 		"public_dynamic_cost_ready_attack_over_redundant_attachment",
 	]
 
@@ -3134,6 +3911,45 @@ func _can_reuse_direct_verified_selection(frontier: Array[Dictionary], observati
 			or observation_hash != str(_last_observation.get("observation_hash", "")):
 		return false
 	return not _route_search.find_candidate(frontier, _preferred_candidate_id).is_empty()
+
+
+func _graph_reentry_action_owner() -> String:
+	var graph_origin := _policy_graph.origin()
+	if graph_origin not in [
+		"model_selected_local_route",
+		"model_synthesized_route",
+		"model_shadow_rule_root",
+	]:
+		return graph_origin
+	var snapshot := _policy_graph.snapshot()
+	var policy: Dictionary = snapshot.get("policy", {}) \
+		if snapshot.get("policy", {}) is Dictionary else {}
+	var root_node_id := str(policy.get("root_node_id", ""))
+	var current_node_id := str(snapshot.get("current_node_id", ""))
+	# A model-shadow root is still Rule-owned. Once the accepted graph advances
+	# beyond that root, however, duplicate prepare calls on the unchanged public
+	# observation must preserve policy_graph_branch until the host captures and
+	# executes the selected exact action.
+	if root_node_id != "" \
+			and current_node_id != "" \
+			and current_node_id != root_node_id:
+		return "policy_graph_branch"
+	if graph_origin == "model_shadow_rule_root":
+		# Root action + all nested interactions are one atomic Rule transaction.
+		# Keep the verified-reference owner across duplicate host prepare calls;
+		# graph provenance remains available separately for a later branch.
+		return "deadline_fallback"
+	return graph_origin
+
+
+func _model_checkpoint_precedes_verified_upgrade() -> bool:
+	return _policy_graph.is_active() \
+		and _policy_graph.origin() in [
+			"model_selected_local_route",
+			"model_synthesized_route",
+			"model_shadow_rule_root",
+		] \
+		and _policy_graph.current_route_has_declared_successor()
 
 
 func _rule_score_ties(selected: Dictionary, frontier: Array[Dictionary]) -> Array[Dictionary]:
@@ -3539,6 +4355,92 @@ func _candidate_ids(frontier: Array[Dictionary]) -> Array[String]:
 	return result
 
 
+func _compact_route_value_for_model(value: Dictionary) -> Dictionary:
+	# The audit snapshot keeps the full typed Bundle.  The model needs only the
+	# non-default comparison deltas and projected route intents; repeating hashes,
+	# root identity, transition class, and legacy outcome fields per candidate
+	# would erase the latency advantage of local planning.
+	var pareto_selected := bool(value.get("pareto_selected", false))
+	var steps: Array = value.get("steps", []) \
+		if value.get("steps", []) is Array else []
+	var follow_routes: Array[String] = []
+	for index: int in range(1, steps.size()):
+		if not (steps[index] is Dictionary):
+			continue
+		var route_id := str((steps[index] as Dictionary).get("route_id", ""))
+		if route_id != "" and route_id not in follow_routes:
+			follow_routes.append(route_id)
+	var outcome: Dictionary = value.get("outcome_vector", {}) \
+		if value.get("outcome_vector", {}) is Dictionary else {}
+	var result: Dictionary = {}
+	if pareto_selected:
+		result["pareto"] = true
+	if not follow_routes.is_empty():
+		result["follow_routes"] = follow_routes
+	if bool(value.get("requires_reobservation", false)) and not follow_routes.is_empty():
+		result["reobserve"] = true
+	var race_margin := int(outcome.get("race_margin", 0))
+	if race_margin != 0:
+		result["race_margin"] = race_margin
+	var continuity_debt := int(outcome.get("continuity_debt", 0))
+	if continuity_debt > 0:
+		result["continuity_debt"] = continuity_debt
+	if outcome.has("next_attack_window_uptime") \
+			and not bool(outcome.get("next_attack_window_uptime", true)):
+		result["next_uptime"] = false
+	var liability := float(outcome.get("liability", 0.0))
+	if liability > 0.0:
+		result["liability"] = snappedf(liability, 0.01)
+	var extension: Dictionary = value.get("deck_extension", {}) \
+		if value.get("deck_extension", {}) is Dictionary else {}
+	var raging := _compact_raging_route_value(extension)
+	if not raging.is_empty():
+		result["raging"] = raging
+	return result
+
+
+func _compact_raging_route_value(extension: Dictionary) -> Dictionary:
+	if str(extension.get("extension", "")) != "raging_bolt":
+		return {}
+	var result: Dictionary = {}
+	var mappings := {
+		"dynamic_damage_units_required": "damage_units",
+		"noctowl_current_lane": "noctowl_lane",
+		"hoothoot_future_lane": "hoothoot_lane",
+		"teal_dance_current_value": "teal_value",
+		"banked_damage_units_before": "bank_before",
+		"banked_damage_units_after": "bank_after",
+	}
+	for raw_source: Variant in mappings.keys():
+		var source := str(raw_source)
+		if extension.has(source) and float(extension.get(source, 0.0)) != 0.0:
+			result[str(mappings[source])] = extension.get(source)
+	for source: String in [
+		"area_zero_bound_followup",
+		"premature_attack_prevented",
+		"optional_churn_stopped",
+	]:
+		if bool(extension.get(source, false)):
+			result[source] = true
+	var pair: Dictionary = extension.get("trainer_pair_contract", {}) \
+		if extension.get("trainer_pair_contract", {}) is Dictionary else {}
+	if not pair.is_empty():
+		var required: Variant = pair.get("required_roles", [])
+		if required is Array and not (required as Array).is_empty():
+			result["pair_roles"] = (required as Array).duplicate()
+	return result
+
+
+func _typed_candidate_array(value: Variant) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not (value is Array):
+		return result
+	for raw_candidate: Variant in value:
+		if raw_candidate is Dictionary:
+			result.append(raw_candidate as Dictionary)
+	return result
+
+
 func _root_route_ref(policy: Dictionary) -> Dictionary:
 	var root_id := str(policy.get("root_node_id", ""))
 	for raw_node: Variant in policy.get("nodes", []):
@@ -3614,6 +4516,68 @@ func _with_public_flow_facts(facts: Dictionary, observation: Dictionary) -> Dict
 	return result
 
 
+func _apply_runtime_hard_guards(
+	candidate_pool: Array[Dictionary],
+	observation: Dictionary,
+	facts: Dictionary
+) -> Dictionary:
+	# Intrinsic candidate guards must run before the terminal continuity guard.
+	# Otherwise a Rule-vetoed pseudo-prefix can make the stale continuity snapshot
+	# block attack/end_turn, leaving every legal action hard-blocked and allowing
+	# the host's "pick one" fallback to execute the first vetoed action anyway.
+	var intrinsic := _hard_guard.filter_intrinsic_candidates(
+		candidate_pool,
+		observation,
+		facts,
+		_profile
+	)
+	var intrinsically_allowed := _typed_candidate_array(
+		intrinsic.get("candidates", [])
+	)
+	var rebuilt_facts := _with_turn_completion_facts(
+		facts,
+		observation,
+		intrinsically_allowed
+	)
+	rebuilt_facts = _with_prize_clock_facts(
+		rebuilt_facts,
+		observation,
+		intrinsically_allowed
+	)
+	var terminal := _hard_guard.filter_candidates(
+		intrinsically_allowed,
+		observation,
+		rebuilt_facts,
+		_profile
+	)
+	var blocked_action_ids: Dictionary = {}
+	for raw_ids: Variant in [
+		intrinsic.get("blocked_action_ids", {}),
+		terminal.get("blocked_action_ids", {}),
+	]:
+		if not (raw_ids is Dictionary):
+			continue
+		for action_id: Variant in (raw_ids as Dictionary):
+			blocked_action_ids[str(action_id)] = str(
+				(raw_ids as Dictionary).get(action_id, "hard_guard_blocked")
+			)
+	var blocked: Array = []
+	for raw_entries: Variant in [
+		intrinsic.get("blocked", []),
+		terminal.get("blocked", []),
+	]:
+		if raw_entries is Array:
+			blocked.append_array((raw_entries as Array).duplicate(true))
+	return {
+		"candidates": _typed_candidate_array(
+			terminal.get("candidates", [])
+		),
+		"facts": rebuilt_facts,
+		"blocked": blocked,
+		"blocked_action_ids": blocked_action_ids,
+	}
+
+
 func _with_turn_completion_facts(
 	facts: Dictionary,
 	observation: Dictionary,
@@ -3673,6 +4637,293 @@ func _with_turn_completion_facts(
 	return result
 
 
+func _with_route_availability_facts(
+	facts: Dictionary,
+	frontier: Array[Dictionary]
+) -> Dictionary:
+	var result := facts.duplicate(true)
+	var route_facts: Dictionary = result.get("route", {}) \
+		if result.get("route", {}) is Dictionary else {}
+	route_facts = route_facts.duplicate(true)
+	var availability: Dictionary = {}
+	var available_route_ids := _route_ids(frontier)
+	for route_id: String in REGISTERED_ROUTE_IDS:
+		availability[route_id.trim_prefix("route:")] = (
+			route_id in available_route_ids
+		)
+	route_facts["available"] = availability
+	result["route"] = route_facts
+	return result
+
+
+func _with_route_decision_right_facts(
+	facts: Dictionary,
+	frontier: Array[Dictionary]
+) -> Dictionary:
+	var result := facts.duplicate(true)
+	var route_facts: Dictionary = result.get("route", {}) \
+		if result.get("route", {}) is Dictionary else {}
+	route_facts = route_facts.duplicate(true)
+	var switch_allowed: Dictionary = {}
+	for route_id: String in REGISTERED_ROUTE_IDS:
+		var candidate := _route_search.find_route(frontier, route_id)
+		if candidate.is_empty():
+			switch_allowed[route_id.trim_prefix("route:")] = false
+			continue
+		var safety := _validate_model_route_safety(
+			route_id,
+			frontier,
+			result,
+			str(candidate.get("candidate_id", ""))
+		)
+		switch_allowed[route_id.trim_prefix("route:")] = bool(
+			safety.get("valid", false)
+		)
+	route_facts["model_switch_allowed"] = switch_allowed
+	result["route"] = route_facts
+	return result
+
+
+func _model_root_frontier(
+	frontier: Array[Dictionary],
+	facts: Dictionary
+) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if frontier.is_empty():
+		return result
+	var rule_floor_candidate_id := str(frontier[0].get("candidate_id", ""))
+	for candidate: Dictionary in frontier:
+		if bool(candidate.get("engine_rule_floor_exact", false)):
+			rule_floor_candidate_id = str(candidate.get("candidate_id", ""))
+			break
+	for candidate: Dictionary in frontier:
+		var candidate_id := str(candidate.get("candidate_id", ""))
+		if candidate_id == "":
+			continue
+		if candidate_id == rule_floor_candidate_id:
+			result.append(candidate)
+			continue
+		var safety := _validate_model_route_safety(
+			str(candidate.get("route_id", "")),
+			frontier,
+			facts,
+			candidate_id
+		)
+		if bool(safety.get("valid", false)):
+			result.append(candidate)
+	return result
+
+
+func _model_turn_completion_contract(
+	contract: Dictionary,
+	root_frontier: Array[Dictionary]
+) -> Dictionary:
+	var result := contract.duplicate(true)
+	if root_frontier.is_empty():
+		return result
+	var allowed_candidate_ids := _candidate_ids(root_frontier)
+	var declared_productive_action_ids: Array[String] = []
+	for raw_action_id: Variant in result.get("productive_action_ids", []):
+		var action_id := str(raw_action_id)
+		if action_id != "" and action_id not in declared_productive_action_ids:
+			declared_productive_action_ids.append(action_id)
+	var productive_actions: Array[Dictionary] = []
+	for raw_action: Variant in result.get("productive_actions", []):
+		if not (raw_action is Dictionary):
+			continue
+		var action := raw_action as Dictionary
+		if str(action.get("candidate_id", "")) in allowed_candidate_ids:
+			productive_actions.append(action.duplicate(true))
+	var continuity: Dictionary = result.get("post_attack_continuity", {}) \
+		if result.get("post_attack_continuity", {}) is Dictionary else {}
+	continuity = continuity.duplicate(true)
+	var candidate_effects: Array[Dictionary] = []
+	for raw_effect: Variant in continuity.get("candidate_effects", []):
+		if raw_effect is Dictionary \
+				and str((raw_effect as Dictionary).get(
+					"candidate_id",
+					""
+				)) in allowed_candidate_ids:
+			candidate_effects.append((raw_effect as Dictionary).duplicate(true))
+	continuity["candidate_effects"] = candidate_effects
+	result["post_attack_continuity"] = continuity
+	var recommended_candidate_id := str(result.get(
+		"recommended_candidate_id",
+		""
+	))
+	if recommended_candidate_id not in allowed_candidate_ids:
+		var root := root_frontier[0]
+		recommended_candidate_id = str(root.get("candidate_id", ""))
+		var root_action_id := str(root.get("safe_prefix_action_id", ""))
+		var root_action := {
+			"candidate_id": recommended_candidate_id,
+			"action_id": root_action_id,
+			"action_kind": str(root.get("action_kind", "")),
+			"route_id": str(root.get("route_id", "")),
+			"priority": 0,
+			"reason": "current_model_selectable_information_barrier",
+			"information_checkpoint": str(root.get(
+				"checkpoint_after",
+				""
+			)) == "information_result",
+		}
+		productive_actions.push_front(root_action)
+		result["recommended_candidate_id"] = recommended_candidate_id
+		result["recommended_action_id"] = root_action_id
+		result["recommended_route_id"] = str(root.get("route_id", ""))
+		result["recommended_reason"] = \
+			"current_model_selectable_information_barrier"
+		result["instruction"] = \
+			"execute_model_selectable_root_then_reobserve"
+	var productive_candidate_ids: Array[String] = []
+	var productive_action_ids: Array[String] = []
+	for action: Dictionary in productive_actions:
+		var candidate_id := str(action.get("candidate_id", ""))
+		var action_id := str(action.get("action_id", ""))
+		if candidate_id != "" and candidate_id not in productive_candidate_ids:
+			productive_candidate_ids.append(candidate_id)
+		if action_id != "" and action_id not in productive_action_ids:
+			productive_action_ids.append(action_id)
+	for action_id: String in declared_productive_action_ids:
+		if action_id not in productive_action_ids:
+			productive_action_ids.append(action_id)
+	result["productive_actions"] = productive_actions
+	result["productive_candidate_ids"] = productive_candidate_ids
+	result["productive_action_ids"] = productive_action_ids
+	result["productive_action_count"] = productive_action_ids.size()
+	return result
+
+
+func _with_prize_clock_facts(
+	facts: Dictionary,
+	observation: Dictionary,
+	frontier: Array[Dictionary]
+) -> Dictionary:
+	var result := facts.duplicate(true)
+	var baseline: Dictionary = {}
+	for candidate: Dictionary in frontier:
+		var annotations: Dictionary = candidate.get("module_annotations", {}) \
+			if candidate.get("module_annotations", {}) is Dictionary else {}
+		var clock: Dictionary = annotations.get("prize_clock_pivot", {}) \
+			if annotations.get("prize_clock_pivot", {}) is Dictionary else {}
+		if clock.get("baseline_clock", {}) is Dictionary \
+				and not (clock.get("baseline_clock", {}) as Dictionary).is_empty():
+			baseline = (clock.get("baseline_clock", {}) as Dictionary).duplicate(
+				true
+			)
+			break
+	if baseline.is_empty():
+		var prize_graph := _prize_graph.solve(observation, result)
+		baseline = {
+			"current_attack_window_open": bool(prize_graph.get(
+				"current_attack_window_open",
+				false
+			)),
+			"own_fastest_finish_tick": int(prize_graph.get(
+				"own_fastest_finish_tick",
+				0
+			)),
+			"own_robust_finish_tick": int(prize_graph.get(
+				"own_robust_finish_tick",
+				0
+			)),
+			"opponent_fastest_finish_tick": int(prize_graph.get(
+				"opponent_fastest_finish_tick",
+				0
+			)),
+			"opponent_robust_finish_tick": int(prize_graph.get(
+				"opponent_robust_finish_tick",
+				0
+			)),
+			"race_margin": int(prize_graph.get("race_margin", 0)),
+			"opponent_wins_next_window": bool(prize_graph.get(
+				"opponent_wins_next_window",
+				false
+			)),
+			"continuity_debt_cost_ticks": int(prize_graph.get(
+				"continuity_debt_cost_ticks",
+				0
+			)),
+			"credible_gust": bool(prize_graph.get("credible_gust", false)),
+			"public_gust_exhausted": bool(prize_graph.get(
+				"public_gust_exhausted",
+				false
+			)),
+			"own_robust_prize_sequence": prize_graph.get(
+				"own_robust_prize_sequence",
+				[]
+			),
+			"opponent_robust_prize_sequence": prize_graph.get(
+				"opponent_robust_prize_sequence",
+				[]
+			),
+		}
+	result["prize_clock"] = {
+		"current_attack_window_open": bool(baseline.get(
+			"current_attack_window_open",
+			false
+		)),
+		"own_fastest_finish_tick": int(baseline.get(
+			"own_fastest_finish_tick",
+			0
+		)),
+		"own_robust_finish_tick": int(baseline.get(
+			"own_robust_finish_tick",
+			0
+		)),
+		"opponent_fastest_finish_tick": int(baseline.get(
+			"opponent_fastest_finish_tick",
+			0
+		)),
+		"opponent_robust_finish_tick": int(baseline.get(
+			"opponent_robust_finish_tick",
+			0
+		)),
+		"race_margin": int(baseline.get("race_margin", 0)),
+		"opponent_wins_next_window": bool(baseline.get(
+			"opponent_wins_next_window",
+			false
+		)),
+		"continuity_debt_cost_ticks": int(baseline.get(
+			"continuity_debt_cost_ticks",
+			0
+		)),
+		"credible_gust": bool(baseline.get("credible_gust", false)),
+		"public_gust_exhausted": bool(baseline.get(
+			"public_gust_exhausted",
+			false
+		)),
+		"own_robust_prize_sequence": baseline.get(
+			"own_robust_prize_sequence",
+			[]
+		),
+		"opponent_robust_prize_sequence": baseline.get(
+			"opponent_robust_prize_sequence",
+			[]
+		),
+	}
+	return result
+
+
+func _refresh_match_agenda_from_prize_clock(facts: Dictionary) -> void:
+	var clock: Dictionary = facts.get("prize_clock", {}) \
+		if facts.get("prize_clock", {}) is Dictionary else {}
+	if clock.is_empty():
+		return
+	_match_agenda["prize_path"] = (
+		clock.get("own_robust_prize_sequence", []) as Array
+	).duplicate(true) if clock.get("own_robust_prize_sequence", []) is Array \
+		else []
+	var posture: Array[String] = []
+	if bool(clock.get("opponent_wins_next_window", false)):
+		posture.append("prevent_next_attack_window_win")
+	if bool(clock.get("credible_gust", false)):
+		posture.append("credible_gust")
+	if int(clock.get("race_margin", 0)) < 0:
+		posture.append("behind_on_robust_prize_clock")
+	_match_agenda["opponent_threat_posture"] = posture
+
+
 func _visible_hand_uid_counts(side: Dictionary) -> Dictionary:
 	var counts: Dictionary = {}
 	for raw_card: Variant in side.get("hand", []):
@@ -3712,6 +4963,7 @@ func _trace_filtered_state(
 		"observation": _compact_observation_for_model(observation),
 		"facts": facts.duplicate(true),
 		"frontier": _compact_frontier_for_model(frontier),
+		"route_value_graph": _last_route_value_metrics.duplicate(true),
 		"active_graph_origin": _policy_graph.origin(),
 		"current_route_id": _current_route_id,
 	}, "\t"))
@@ -3771,6 +5023,7 @@ func _record_planning(
 		"material_delta_hash": str(delta.get("material_delta_hash", "")),
 		"event_type": event_type,
 		"graph_branch_hit": branch_hit,
+		"graph_origin": _policy_graph.origin(),
 		"action_owner": _current_action_owner,
 		"local_planning_ms": maxi(0, Time.get_ticks_msec() - started_msec),
 	}
@@ -3789,6 +5042,38 @@ func _record_policy_response(
 	var fallback_layer := "" if accepted else (fallback_override if fallback_override != "" else _current_action_owner)
 	var resolves_turn_model_judgment := _turn_model_judgment_requested \
 		and not _turn_model_judgment_resolved
+	var graph_origin := _policy_graph.origin()
+	var policy_installed := accepted and graph_origin in [
+		"model_selected_local_route",
+		"model_synthesized_route",
+		"model_shadow_rule_root",
+	]
+	var installed_policy: Dictionary = _policy_graph.snapshot().get(
+		"policy",
+		{}
+	) if _policy_graph.snapshot().get("policy", {}) is Dictionary else {}
+	var installed_nodes: Array = installed_policy.get("nodes", []) \
+		if installed_policy.get("nodes", []) is Array else []
+	var policy_graph_bearing := policy_installed and installed_nodes.size() > 1
+	if policy_installed and not policy_graph_bearing \
+			and not installed_nodes.is_empty() \
+			and installed_nodes[0] is Dictionary:
+		var root_ref: Dictionary = (installed_nodes[0] as Dictionary).get(
+			"route_ref",
+			{}
+		) if (installed_nodes[0] as Dictionary).get(
+			"route_ref",
+			{}
+		) is Dictionary else {}
+		policy_graph_bearing = root_ref.get("macro_actions", []) is Array \
+			and (root_ref.get("macro_actions", []) as Array).size() > 1
+	var response_disposition := (
+		"policy_installed"
+		if policy_installed
+		else "deterministic_preempted"
+		if accepted
+		else "rejected"
+	)
 	var record := {
 		"turn_id": _current_turn,
 		"policy_id": str(_lifecycle.get("policy_id", "")),
@@ -3802,9 +5087,24 @@ func _record_policy_response(
 		"strategy_id": get_strategy_id(),
 		"event_type": "policy_response",
 		"accepted": accepted,
+		"graph_origin": graph_origin,
 		"action_owner": _current_action_owner,
 		"fallback_layer": fallback_layer,
 		"fallback_reason": reason,
+		"request_intent": str(metrics.get(
+			"request_intent",
+			"strategic_arbitration"
+		)),
+		"is_delta": bool(metrics.get("is_delta", false)),
+		"policy_installed": policy_installed,
+		"policy_node_count": installed_nodes.size() if policy_installed else 0,
+		"policy_graph_bearing": policy_graph_bearing,
+		"response_disposition": response_disposition,
+		"provider_response_received": bool(metrics.get(
+			"provider_response_received",
+			true
+		)),
+		"contract_validated": bool(metrics.get("contract_validated", false)),
 		"request_wall_ms": int(metrics.get("request_wall_ms", 0)),
 		"visible_wait_ms": int(metrics.get("visible_wait_ms", 0)),
 		"payload_bytes": int(metrics.get("payload_bytes", 0)),
@@ -3814,6 +5114,8 @@ func _record_policy_response(
 		"finish_reason": str(metrics.get("finish_reason", "")),
 		"prompt_tokens": int(metrics.get("prompt_tokens", 0)),
 		"completion_tokens": int(metrics.get("completion_tokens", 0)),
+		"provider_http_code": int(metrics.get("provider_http_code", 0)),
+		"provider_error_type": str(metrics.get("provider_error_type", "")),
 		"turn_model_judgment": resolves_turn_model_judgment,
 	}
 	for raw_key: Variant in extra.keys():
@@ -3873,11 +5175,11 @@ func _live_public_interaction_ref(context: Dictionary) -> Dictionary:
 
 func _user_facing_response_reason(accepted: bool, reason: String) -> String:
 	if accepted:
-		return "模型策略已校验" if reason in [
-			"",
-			"exact_rule_root_shadowed",
-			"root_deferred_to_rule",
-		] else reason
+		if reason == "exact_rule_root_shadowed":
+			return "模型后续规划已校验，当前动作沿用 Rule"
+		if reason == "root_deferred_to_rule":
+			return "模型条件图已保留，当前动作沿用 Rule"
+		return "模型执行策略已校验" if reason == "" else reason
 	match reason:
 		"response_truncated":
 			return "模型回复不完整，已自动切换本地策略"
@@ -3885,6 +5187,10 @@ func _user_facing_response_reason(accepted: bool, reason: String) -> String:
 			return "模型回复格式无效，已自动切换本地策略"
 		"transport_error":
 			return "模型连接暂时不可用，已自动切换本地策略"
+		"provider_quota_exhausted":
+			return "DeepSeek 余额不足，本局已自动切换 Rule 策略"
+		"provider_auth_error":
+			return "DeepSeek 认证失败，本局已自动切换 Rule 策略"
 		"turn_visible_wait_budget_exhausted", "external_wait_budget_exhausted":
 			return "模型响应超时，已自动切换本地策略"
 		_:
@@ -3906,6 +5212,7 @@ func _reset_match_state() -> void:
 	_pending_request_started_msec = 0
 	_pending_request_visible_budget_ms = 0
 	_handled_delta_hashes.clear()
+	_hard_blocked_action_ids.clear()
 	_policy_graph.clear()
 	_execution_cursor.clear()
 	_preferred_action_id = ""
@@ -3922,5 +5229,15 @@ func _reset_match_state() -> void:
 	_turn_model_judgment_requested = false
 	_turn_model_judgment_resolved = false
 	_request_wait_samples_ms.clear()
+	_last_route_value_metrics.clear()
+	_provider_terminal_failure_reason = ""
 	_unconsumed_action_result.clear()
+	_pending_action_ownership_ticket.clear()
 	_event_bridge.reset()
+
+
+func _is_terminal_provider_failure(reason: String) -> bool:
+	return reason in [
+		"provider_quota_exhausted",
+		"provider_auth_error",
+	]

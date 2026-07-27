@@ -1,0 +1,208 @@
+{
+  "format_version": 1,
+  "puzzle_id": "charizard_dragapult_01",
+  "deck_id": "800025404",
+  "revision": 4,
+  "profile": "precision",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "音速搜索不能洗掉顶6答案",
+  "objective": "通过米立龙先找到白蕾雅，再用大比鸟补齐唯一攻击组件。",
+  "strategy_id": "v17_bomb_charizard",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "音速搜索不能洗掉顶6答案",
+      "fingerprint": "米立龙前场可看顶6，白蕾雅已知在其中；大比鸟ex音速搜索会洗牌；手中缺糖果。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "先让米立龙揽客拿白蕾雅，再用音速搜索找神奇糖果，最后按终局顺序执行。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“通过米立龙先找到白蕾雅，再用大比鸟补齐唯一攻击组件。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "通过米立龙先找到白蕾雅，再用大比鸟补齐唯一攻击组件。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手公开将在下回合拿到第5张奖赏。",
+      "deadline": "对手下一回合结束前",
+      "impact": "白蕾雅必须在当前信息周期内取得，不能依赖随机顶6。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "先音速搜索找糖果",
+      "actor": "player",
+      "axis": "information_epoch",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "information_epoch 延迟失败",
+      "outcome": "failure",
+      "reason": "洗牌后白蕾雅不再保证处于顶6。",
+      "failure_axis": "information_epoch",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "米立龙先拿博士研究",
+      "actor": "player",
+      "axis": "supporter_window",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "supporter_window 延迟失败",
+      "outcome": "failure",
+      "reason": "抽牌更多但占掉白蕾雅唯一终局窗口。",
+      "failure_axis": "supporter_window",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "一次顶6确定信息",
+      "resource_type": "information_epoch",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首次洗牌前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "一次音速搜索",
+      "resource_type": "search_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "米立龙结算后",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "唯一白蕾雅窗口",
+      "resource_type": "supporter_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "对手剩2奖时",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "通过米立龙先找到白蕾雅，再用大比鸟补齐唯一攻击组件。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_success",
+      "type": "resolves"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 3,
+    "opponent_reply_coverage": "not_required",
+    "negative_probe_axes": [
+      "information_epoch",
+      "supporter_window"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

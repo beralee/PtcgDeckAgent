@@ -151,6 +151,11 @@ var _current_non_battle_layout_context: Dictionary = {}
 var _test_web_runtime_override := false
 var _test_deck_image_variant_override := ""
 var _test_recommendation_poster_cache_dir := ""
+var _pending_deck_delete_ids: Dictionary = {}
+var _deck_delete_refresh_id := -1
+var _pending_deck_upsert_ids: Dictionary = {}
+var _deck_upsert_flush_scheduled := false
+var _deck_full_refresh_scheduled := false
 
 
 func _ready() -> void:
@@ -167,7 +172,7 @@ func _ready() -> void:
 	_ensure_import_image_button()
 	_setup_import_panel_input_guards()
 
-	CardDatabase.decks_changed.connect(_refresh_deck_list)
+	CardDatabase.decks_changed.connect(_on_decks_changed)
 	_refresh_deck_list()
 
 	_importer = DeckImporter.new()
@@ -200,6 +205,8 @@ func _notification(what: int) -> void:
 func _input(event: InputEvent) -> void:
 	if _is_deck_action_hud_dialog_visible():
 		if NonBattleTouchBridgeScript.handle_root_touch(_deck_action_hud_overlay, event):
+			return
+		if NonBattleTouchBridgeScript.event_targets_native_text_input(_deck_action_hud_overlay, event):
 			return
 		if event is InputEventScreenTouch or event is InputEventScreenDrag:
 			accept_event()
@@ -303,17 +310,7 @@ func _handle_import_modal_gui_input(event: InputEvent) -> bool:
 func _configure_import_feedback_line_edit(input: LineEdit, keyboard_type: int = LineEdit.KEYBOARD_TYPE_URL) -> void:
 	if input == null:
 		return
-	input.focus_mode = Control.FOCUS_ALL
-	input.mouse_filter = Control.MOUSE_FILTER_STOP
-	input.context_menu_enabled = true
-	input.virtual_keyboard_enabled = true
-	input.virtual_keyboard_show_on_focus = true
-	input.virtual_keyboard_type = keyboard_type
-	input.set("shortcut_keys_enabled", true)
-	input.set("middle_mouse_paste_enabled", true)
-	if input.has_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META):
-		input.remove_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META)
-	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(input, keyboard_type)
 	NonBattleTouchBridgeScript.bind_line_edit_select_all(input)
 
 
@@ -338,6 +335,7 @@ func _show_import_panel() -> void:
 func _hide_import_panel() -> void:
 	var import_panel := get_node_or_null("%ImportPanel") as Control
 	if import_panel != null:
+		NonBattleTouchBridgeScript.clear_transient_input_state(import_panel, "modal_closed")
 		import_panel.visible = false
 	_set_import_background_controls_blocked(false)
 	var url_input := get_node_or_null("%UrlInput") as LineEdit
@@ -2755,6 +2753,120 @@ func _refresh_deck_list() -> void:
 		_set_import_background_controls_blocked(true)
 
 
+func _on_decks_changed() -> void:
+	if _deck_delete_refresh_id >= 0:
+		var deleted_deck_id := _deck_delete_refresh_id
+		_deck_delete_refresh_id = -1
+		_remove_deck_row(deleted_deck_id)
+		return
+	if not _pending_deck_upsert_ids.is_empty():
+		_schedule_pending_deck_upserts()
+		return
+	_schedule_full_deck_list_refresh()
+
+
+func _save_deck_incrementally(deck: DeckData) -> void:
+	if deck == null or deck.id <= 0:
+		return
+	_pending_deck_upsert_ids[deck.id] = true
+	CardDatabase.save_deck(deck)
+	if _pending_deck_upsert_ids.has(deck.id):
+		_schedule_pending_deck_upserts()
+
+
+func _schedule_pending_deck_upserts() -> void:
+	if _deck_upsert_flush_scheduled:
+		return
+	_deck_upsert_flush_scheduled = true
+	if is_inside_tree():
+		call_deferred("_flush_pending_deck_upserts")
+	else:
+		_flush_pending_deck_upserts()
+
+
+func _flush_pending_deck_upserts() -> void:
+	_deck_upsert_flush_scheduled = false
+	var deck_ids := _pending_deck_upsert_ids.keys()
+	_pending_deck_upsert_ids.clear()
+	for value: Variant in deck_ids:
+		var deck_id := int(value)
+		var deck := CardDatabase.get_deck(deck_id)
+		if deck != null:
+			_upsert_deck_row(deck)
+	_reorder_deck_rows()
+
+
+func _schedule_full_deck_list_refresh() -> void:
+	if _deck_full_refresh_scheduled:
+		return
+	_deck_full_refresh_scheduled = true
+	if is_inside_tree():
+		call_deferred("_flush_full_deck_list_refresh")
+	else:
+		_flush_full_deck_list_refresh()
+
+
+func _flush_full_deck_list_refresh() -> void:
+	_deck_full_refresh_scheduled = false
+	_refresh_deck_list()
+
+
+func _upsert_deck_row(deck: DeckData) -> void:
+	if deck == null:
+		return
+	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	if deck_list_container == null:
+		return
+	for child: Node in deck_list_container.get_children():
+		if int(child.get_meta("deck_id", -1)) != deck.id:
+			continue
+		deck_list_container.remove_child(child)
+		child.queue_free()
+		break
+	deck_list_container.add_child(_create_deck_item(deck))
+	%EmptyLabel.visible = false
+
+
+func _reorder_deck_rows() -> void:
+	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	if deck_list_container == null:
+		return
+	var target_index := 0
+	if _recommendation_section != null and is_instance_valid(_recommendation_section) and _recommendation_section.get_parent() == deck_list_container:
+		deck_list_container.move_child(_recommendation_section, target_index)
+		target_index += 1
+	var empty_label := get_node_or_null("%EmptyLabel") as Control
+	if empty_label != null and empty_label.get_parent() == deck_list_container:
+		deck_list_container.move_child(empty_label, target_index)
+		target_index += 1
+	var rows_by_id: Dictionary = {}
+	for child: Node in deck_list_container.get_children():
+		var deck_id := int(child.get_meta("deck_id", -1))
+		if deck_id > 0:
+			rows_by_id[deck_id] = child
+	var decks := CardDatabase.get_all_decks()
+	decks.sort_custom(_compare_decks_by_edit_time_desc)
+	for deck: DeckData in decks:
+		var row := rows_by_id.get(deck.id) as Control
+		if row == null:
+			continue
+		deck_list_container.move_child(row, mini(target_index, deck_list_container.get_child_count() - 1))
+		target_index += 1
+
+
+func _remove_deck_row(deck_id: int) -> void:
+	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	if deck_list_container == null:
+		return
+	for child: Node in deck_list_container.get_children():
+		if int(child.get_meta("deck_id", -1)) != deck_id:
+			continue
+		deck_list_container.remove_child(child)
+		child.queue_free()
+		break
+	%EmptyLabel.visible = CardDatabase.get_all_decks().is_empty()
+
+
 func _create_deck_item(deck: DeckData) -> Control:
 	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
 	var context := _current_non_battle_layout_context
@@ -3427,7 +3539,7 @@ func _on_import_completed(deck: DeckData, errors: PackedStringArray) -> void:
 
 
 func _finalize_import_save(deck: DeckData, errors: PackedStringArray) -> void:
-	CardDatabase.save_deck(deck)
+	_save_deck_incrementally(deck)
 	_current_operation = ""
 	_pending_import_deck_name_override = ""
 	_set_operation_busy(false)
@@ -3486,6 +3598,7 @@ func _close_deck_action_hud_dialog(context_filter: String = "") -> void:
 		return
 	var closed_context := _deck_action_hud_context
 	if _deck_action_hud_overlay != null and is_instance_valid(_deck_action_hud_overlay):
+		NonBattleTouchBridgeScript.clear_transient_input_state(_deck_action_hud_overlay, "modal_closed")
 		_deck_action_hud_overlay.queue_free()
 	_deck_action_hud_overlay = null
 	_deck_action_hud_panel = null
@@ -3832,7 +3945,7 @@ func _on_create_starter_deck() -> void:
 		_starter_deck_preview_label.text = "生成结果未通过规则校验：%s" % "；".join(errors)
 		_starter_deck_preview_label.add_theme_color_override("font_color", Color(1.0, 0.48, 0.42))
 		return
-	CardDatabase.save_deck(generated)
+	_save_deck_incrementally(generated)
 	_close_deck_action_hud_dialog(STARTER_DECK_HUD_CONTEXT)
 	_on_edit_deck(generated)
 
@@ -3855,7 +3968,6 @@ func _show_rename_hud_dialog(initial_name: String, title: String, message_text: 
 	var context := _current_non_battle_layout_context
 	_rename_input.custom_minimum_size.y = maxf(_rename_input.custom_minimum_size.y, float(context.get("input_height", 98.0)))
 	_rename_input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 29)))
-	NonBattleTouchBridgeScript.bind_focus_control_touch(_rename_input)
 	content.add_child(_rename_input)
 
 	_rename_clear_button = _create_deck_action_hud_button("清除", HUD_SECONDARY, "DeckRenameClearButton")
@@ -4022,7 +4134,7 @@ func _apply_rename_dialog_layout(scroll: ScrollContainer, content: VBoxContainer
 		_style_hud_line_edit(_rename_input)
 		_rename_input.custom_minimum_size.y = maxf(_rename_input.custom_minimum_size.y, input_height)
 		_rename_input.add_theme_font_size_override("font_size", input_font)
-		NonBattleTouchBridgeScript.bind_focus_control_touch(_rename_input)
+		NonBattleTouchBridgeScript.configure_native_line_edit(_rename_input)
 	if _rename_clear_button != null:
 		_style_hud_button(_rename_clear_button, HUD_SECONDARY)
 		_rename_clear_button.custom_minimum_size.y = maxf(_rename_clear_button.custom_minimum_size.y, button_height)
@@ -4076,7 +4188,7 @@ func _on_confirm_rename() -> void:
 		_pending_import_deck = null
 		_pending_import_errors = PackedStringArray()
 	else:
-		CardDatabase.save_deck(deck)
+		_save_deck_incrementally(deck)
 
 	_close_rename_dialog()
 
@@ -4510,8 +4622,9 @@ func _show_delete_deck_hud_dialog(deck: DeckData) -> void:
 
 	var delete_button := _create_deck_action_hud_button("\u5220\u9664", HUD_DANGER, "DeleteDeckConfirmButton")
 	delete_button.pressed.connect(func() -> void:
-		CardDatabase.delete_deck(deck.id)
+		delete_button.disabled = true
 		_close_deck_action_hud_dialog("delete")
+		_schedule_deck_delete(deck.id)
 	)
 	footer.add_child(delete_button)
 
@@ -4527,8 +4640,10 @@ func _on_delete_deck(deck: DeckData) -> void:
 	confirm.ok_button_text = "删除"
 	confirm.cancel_button_text = "取消"
 	confirm.confirmed.connect(func() -> void:
-		CardDatabase.delete_deck(deck.id)
+		confirm.get_ok_button().disabled = true
+		confirm.hide()
 		confirm.queue_free()
+		_schedule_deck_delete(deck.id)
 	)
 	confirm.canceled.connect(confirm.queue_free)
 	add_child(confirm)
@@ -4536,6 +4651,27 @@ func _on_delete_deck(deck: DeckData) -> void:
 	_style_hud_button(confirm.get_cancel_button(), HUD_SECONDARY)
 	if is_inside_tree():
 		confirm.popup_centered()
+
+
+func _schedule_deck_delete(deck_id: int) -> void:
+	if deck_id <= 0 or _pending_deck_delete_ids.has(deck_id):
+		return
+	_pending_deck_delete_ids[deck_id] = true
+	if is_inside_tree():
+		call_deferred("_commit_deck_delete", deck_id)
+	else:
+		_commit_deck_delete(deck_id)
+
+
+func _commit_deck_delete(deck_id: int) -> void:
+	if not _pending_deck_delete_ids.has(deck_id):
+		return
+	_deck_delete_refresh_id = deck_id
+	CardDatabase.delete_deck(deck_id)
+	if _deck_delete_refresh_id == deck_id:
+		_deck_delete_refresh_id = -1
+		_remove_deck_row(deck_id)
+	_pending_deck_delete_ids.erase(deck_id)
 
 
 func _on_back_pressed() -> void:

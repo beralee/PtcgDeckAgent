@@ -1,12 +1,15 @@
 {
-  "profile_version": 22,
+  "profile_version": 27,
   "semantic_version": 2,
   "risk_posture": "balanced",
   "switch_margin": 45.0,
   "expected_regret_threshold": 140.0,
   "initial_response_token_budget": 420,
   "delta_response_token_budget": 180,
-  "turn_visible_wait_budget_ms": 6500,
+  "turn_visible_wait_budget_ms": 7500,
+  "turn_visible_wait_growth_ms": 1500,
+  "turn_visible_wait_growth_every_turns": 2,
+  "turn_visible_wait_budget_cap_ms": 18000,
   "cold_request_estimate_ms": 5000,
   "turn_model_judgment_mode": "required_first_main_window",
   "max_policy_nodes": 8,
@@ -16,11 +19,64 @@
     "teal_mask_energy_engine",
     "energy_access",
     "recovery",
-    "late_game_gust"
+    "late_game_gust",
+    "one_prize_bridge"
   ],
+  "prize_clock_extension": {
+    "kind": "raging_bolt",
+    "free_retreat_enabler_uids": ["CSV9C_078"],
+    "area_zero_uid": "CSV9C_207",
+    "noctowl_uids": ["CSV9C_155"],
+    "raging_bolt_ex_uids": ["CSV7C_154"],
+    "bloodmoon_uids": ["CSV8C_172"],
+    "bloodmoon_damage": 240,
+    "one_prize_attackers": {
+      "CSV6C_082": {
+        "operator": "RB_ONE_PRIZE_SLITHER_WING_BRIDGE",
+        "required_energy": ["F", "F"],
+        "damage": 120,
+        "self_damage": 90
+      },
+      "CSV8C_161": {
+        "operator": "RB_SINGLE_PRIZE_RAGING_BOLT_ROUTE",
+        "required_energy": ["L", "F", "C"],
+        "damage": 130
+      }
+    }
+  },
   "strategic_priorities": [
     {
       "priority": 1,
+      "goal": "immediate_public_win",
+      "when_all": [
+        {"fact": "prize.win_now", "op": "==", "value": true}
+      ],
+      "prefer_routes": ["route:attack_ko"],
+      "avoid_routes": ["route:pivot", "route:information", "route:noctowl_search", "route:develop", "route:end_turn"],
+      "preserve_roles": []
+    },
+    {
+      "priority": 2,
+      "goal": "prevent_next_attack_window_loss",
+      "when_all": [
+        {"fact": "prize_clock.opponent_wins_next_window", "op": "==", "value": true}
+      ],
+      "prefer_routes": ["route:attack_ko", "route:pivot", "route:gust"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["one_prize_bridge", "next_attacker", "late_game_gust"]
+    },
+    {
+      "priority": 3,
+      "goal": "repair_robust_prize_clock",
+      "when_all": [
+        {"fact": "prize_clock.race_margin", "op": "<", "value": 0}
+      ],
+      "prefer_routes": ["route:noctowl_search", "route:stadium", "route:evolve", "route:develop", "route:accelerate", "route:pivot"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["next_attacker", "teal_mask_energy_engine", "one_prize_bridge"]
+    },
+    {
+      "priority": 4,
       "goal": "minimum_resource_ko",
       "when_all": [
         {"fact": "attack.ko_available", "op": "==", "value": true},
@@ -31,7 +87,7 @@
       "preserve_roles": ["raging_bolt_attack_cost", "next_attacker"]
     },
     {
-      "priority": 2,
+      "priority": 5,
       "goal": "post_attack_continuity",
       "when_all": [
         {"fact": "attack.ko_available", "op": "==", "value": true},
@@ -42,7 +98,7 @@
       "preserve_roles": ["raging_bolt_attack_cost", "next_attacker", "teal_mask_energy_engine"]
     },
     {
-      "priority": 3,
+      "priority": 6,
       "goal": "route_completion",
       "when_all": [
         {"fact": "fan_call.available", "op": "==", "value": true},
@@ -53,7 +109,7 @@
       "preserve_roles": ["raging_bolt_attack_cost", "teal_mask_energy_engine", "next_attacker"]
     },
     {
-      "priority": 4,
+      "priority": 7,
       "goal": "prize_closeout",
       "when_all": [
         {"fact": "resources.prizes_remaining", "op": "<=", "value": 2},
@@ -64,7 +120,7 @@
       "preserve_roles": ["late_game_gust"]
     },
     {
-      "priority": 5,
+      "priority": 8,
       "goal": "next_attacker_continuity",
       "when_all": [
         {"fact": "attack.ready", "op": "==", "value": true}
@@ -74,7 +130,7 @@
       "preserve_roles": ["next_attacker", "teal_mask_energy_engine", "recovery"]
     },
     {
-      "priority": 6,
+      "priority": 9,
       "goal": "typed_energy_continuity",
       "when_all": [
         {"fact": "turn.energy_available", "op": "==", "value": true}
@@ -84,7 +140,7 @@
       "preserve_roles": ["raging_bolt_attack_cost", "energy_access"]
     },
     {
-      "priority": 7,
+      "priority": 10,
       "goal": "bench_space_preservation",
       "when_all": [
         {"fact": "board.bench_full", "op": "==", "value": false}
@@ -94,7 +150,7 @@
       "preserve_roles": ["next_attacker", "teal_mask_energy_engine"]
     },
     {
-      "priority": 8,
+      "priority": 11,
       "goal": "low_deck_safety",
       "when_all": [
         {"fact": "resources.deck_low", "op": "==", "value": true}
@@ -151,6 +207,8 @@
     "minimum_current_live_engine_count": 2,
     "minimum_current_energized_engine_count": 2,
     "minimum_search_engine_roots": 1,
+    "minimum_future_search_engine_roots": 1,
+    "sustain_search_engine_until_own_prizes_at_most": 1,
     "minimum_next_attacker_roots": 1,
     "require_next_attacker_cost_ready": true,
     "next_attacker_uids": ["CSV7C_154", "CSV8C_161"],
@@ -168,18 +226,19 @@
     "expanded_bench_capacity": 8,
     "preserve_bench_slots": 1,
     "critical_deck_threshold": 6,
-    "avoid_engine_setup_when_opponent_prizes_at_most": 2,
+    "avoid_engine_setup_when_opponent_prizes_at_most": 1,
     "force_existing_engine_ability_when_debt": true,
     "force_engine_setup_when_missing": true,
     "force_noctowl_search_when_debt": true,
     "force_expansion_stadium_when_blocked": true,
     "force_search_root_setup_when_missing": true,
     "force_search_root_acquisition_when_attack_unready": true,
+    "force_continuity_basic_search_when_debt": true,
     "force_search_engine_evolution_when_ready": true,
     "force_tera_enabler_before_search_evolution": true,
-    "require_visible_search_engine_followup_for_forced_root": true,
-    "force_search_root_only_when_own_prizes_at_least": 5,
-    "force_capacity_only_for_immediate_engine_chain": true,
+    "require_visible_search_engine_followup_for_forced_root": false,
+    "force_search_root_only_when_own_prizes_at_least": 2,
+    "force_capacity_only_for_immediate_engine_chain": false,
     "allow_last_bench_slot_for_immediate_energy_engine": true,
     "expansion_stadium_priority": 0,
     "noctowl_search_priority": 5,
@@ -235,8 +294,11 @@
       "continuity_pair_bonus": 3200.0,
       "verified_pair_switch_margin": 120.0,
       "verify_search_engine_root_acquisition": true,
+      "verify_continuity_basic_search": true,
       "search_engine_root_search_uids": ["CSVH1C_043"],
       "search_engine_root_target_uids": ["CSV9C_154", "CSV9.5C_141"],
+      "continuity_energy_engine_target_uids": ["CSV8C_028"],
+      "continuity_next_attacker_target_uids": ["CSV7C_154", "CSV8C_161"],
       "pair_roles_by_route": {
         "route:noctowl_search": [
           ["supporter_acceleration", "energy_access"],

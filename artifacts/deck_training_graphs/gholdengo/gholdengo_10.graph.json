@@ -1,0 +1,367 @@
+{
+  "format_version": 1,
+  "puzzle_id": "gholdengo_10",
+  "deck_id": "800016834",
+  "revision": 4,
+  "profile": "composite",
+  "design_status": "review_only_not_wired_to_production",
+  "title": "空牌库不是多抽一张",
+  "objective": "在牌库仅剩1张时完成两回合终结，任何对手回复后都不能因抽牌败北。",
+  "strategy_id": "v18_800016834_pure_gholdengo",
+  "start": "s0",
+  "nodes": [
+    {
+      "id": "s0",
+      "kind": "state",
+      "label": "空牌库不是多抽一张",
+      "fingerprint": "牌库1张；弃牌区有钓竿目标与6能量；前后场各一只赛富豪ex；暗码迷、钓竿和高级能量回收都可达。",
+      "checkpoint": "player_turn_1_main"
+    },
+    {
+      "id": "d0",
+      "kind": "player_decision",
+      "label": "选择有限资源下的承诺路线",
+      "operator": "OR",
+      "axis": "route_choice"
+    },
+    {
+      "id": "a_ok",
+      "kind": "action",
+      "label": "先厉害钓竿回填精确3张，再暗码迷置顶回收与老大，控制嘉奖硬币抽牌次数并只抽到所需组件。",
+      "actor": "player",
+      "axis": "route_choice",
+      "legal_guard": "题面公开资源、卡牌文本、奖差、场位与使用次数均满足。",
+      "effect_summary": "双用途动作：推进“在牌库仅剩1张时完成两回合终结，任何对手回复后都不能因抽牌败北。”，同时处理公开威胁并保留接力。"
+    },
+    {
+      "id": "g_success",
+      "kind": "terminal",
+      "label": "当前进度、对手回应与下一棒同时成立",
+      "outcome": "success",
+      "reason": "在牌库仅剩1张时完成两回合终结，任何对手回复后都不能因抽牌败北。"
+    },
+    {
+      "id": "t_reply",
+      "kind": "threat",
+      "label": "题面可验证的对手回复",
+      "visibility": "public",
+      "evidence": "对手公开可用奇树洗回手牌，或直接击倒前场迫使玩家回合抽牌。",
+      "deadline": "对手下一回合结束前",
+      "impact": "两种回复都要求牌库有足够卡数且接力者仍能攻击。"
+    },
+    {
+      "id": "a_bad_1",
+      "kind": "action",
+      "label": "先发动前场嘉奖硬币抽2",
+      "actor": "player",
+      "axis": "deckout_clock",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_1",
+      "kind": "terminal",
+      "label": "deckout_clock 延迟失败",
+      "outcome": "failure",
+      "reason": "第二张抽牌无牌可抽，立即败北。",
+      "failure_axis": "deckout_clock",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_2",
+      "kind": "action",
+      "label": "钓竿回填错误宝可梦",
+      "actor": "player",
+      "axis": "resource_assignment",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_2",
+      "kind": "terminal",
+      "label": "resource_assignment 延迟失败",
+      "outcome": "failure",
+      "reason": "虽不立刻输，但暗码迷后缺少攻击能量来源。",
+      "failure_axis": "resource_assignment",
+      "consequence_depth": 2
+    },
+    {
+      "id": "a_bad_3",
+      "kind": "action",
+      "label": "两只赛富豪特性全部发动",
+      "actor": "player",
+      "axis": "draw_budget",
+      "legal_guard": "动作本身合法且具有局部即时收益。",
+      "effect_summary": "牺牲了另一项稀缺资源或延迟检查点，因此不是可持续解。"
+    },
+    {
+      "id": "f_bad_3",
+      "kind": "terminal",
+      "label": "draw_budget 延迟失败",
+      "outcome": "failure",
+      "reason": "组件齐全后仍多抽，第二回合开始前牌库归零。",
+      "failure_axis": "draw_budget",
+      "consequence_depth": 2
+    },
+    {
+      "id": "r_1",
+      "kind": "resource",
+      "label": "一张牌库寿命",
+      "resource_type": "deck_card",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "首次抽牌前",
+      "scarce": true
+    },
+    {
+      "id": "r_2",
+      "kind": "resource",
+      "label": "一次钓竿回填",
+      "resource_type": "recycle_window",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "任何特性抽牌前",
+      "scarce": true
+    },
+    {
+      "id": "r_3",
+      "kind": "resource",
+      "label": "一个后备攻击手位置",
+      "resource_type": "bench_slot",
+      "available": 1,
+      "minimum_required": 1,
+      "slack": 0,
+      "deadline": "对手回应前",
+      "scarce": true
+    },
+    {
+      "id": "g_progress",
+      "kind": "invariant",
+      "label": "progress",
+      "category": "progress",
+      "assertion": "在牌库仅剩1张时完成两回合终结，任何对手回复后都不能因抽牌败北。"
+    },
+    {
+      "id": "g_survival",
+      "kind": "invariant",
+      "label": "survival",
+      "category": "survival",
+      "assertion": "对手的可信回复结算后，玩家仍未输且至少保留一条核心引擎或攻击线。"
+    },
+    {
+      "id": "g_handoff",
+      "kind": "invariant",
+      "label": "handoff",
+      "category": "handoff",
+      "assertion": "进入第二个玩家回合时存在合法攻击手、能量来源与必要目标访问。"
+    },
+    {
+      "id": "g_disruption",
+      "kind": "invariant",
+      "label": "disruption",
+      "category": "disruption",
+      "assertion": "在推进奖赏的同时处理题面公开或可推导的对手终局资源。"
+    },
+    {
+      "id": "g_deny_opponent_win",
+      "kind": "invariant",
+      "label": "deny_opponent_win",
+      "category": "deny_opponent_win",
+      "assertion": "对手任一枚举回复都不能在下一检查点直接宣告获胜。"
+    },
+    {
+      "id": "s1",
+      "kind": "state",
+      "label": "首轮承诺完成，进入对手回应",
+      "fingerprint": "正确路线已兑现当前进度；仍需覆盖：对手公开可用奇树洗回手牌，或直接击倒前场迫使玩家回合抽牌。",
+      "checkpoint": "opponent_turn_1_start"
+    },
+    {
+      "id": "d_reply",
+      "kind": "opponent_decision",
+      "label": "覆盖所有题面可信高影响回复",
+      "operator": "AND",
+      "credible_set": true,
+      "coverage_basis": "对手公开可用奇树洗回手牌，或直接击倒前场迫使玩家回合抽牌。；回复集合来自公开手牌、场上招式或已冻结策略。"
+    },
+    {
+      "id": "a_reply_1",
+      "kind": "action",
+      "label": "奇树把手牌洗回并重建牌库",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_1",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    },
+    {
+      "id": "a_reply_2",
+      "kind": "action",
+      "label": "击倒前场迫使玩家进入下回合抽牌",
+      "actor": "opponent",
+      "axis": "opponent_reply",
+      "legal_guard": "回复由题面公开资源、场上招式或冻结策略支持。",
+      "effect_summary": "对当前攻击手、手牌、场地或接力线施压。"
+    },
+    {
+      "id": "s2_2",
+      "kind": "state",
+      "label": "回应后仍可接检",
+      "fingerprint": "玩家未输，目标进度未失效，且保留合法接力攻击与目标访问。",
+      "checkpoint": "player_turn_2_start"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s0",
+      "to": "d0",
+      "type": "opens"
+    },
+    {
+      "from": "d0",
+      "to": "a_ok",
+      "type": "option"
+    },
+    {
+      "from": "a_ok",
+      "to": "t_reply",
+      "type": "counters"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_1",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_1",
+      "to": "f_bad_1",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_2",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_2",
+      "to": "f_bad_2",
+      "type": "resolves"
+    },
+    {
+      "from": "d0",
+      "to": "a_bad_3",
+      "type": "option"
+    },
+    {
+      "from": "a_bad_3",
+      "to": "f_bad_3",
+      "type": "resolves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_1",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_2",
+      "type": "reserves"
+    },
+    {
+      "from": "a_ok",
+      "to": "r_3",
+      "type": "reserves"
+    },
+    {
+      "from": "g_success",
+      "to": "g_progress",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_survival",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_handoff",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_disruption",
+      "type": "requires"
+    },
+    {
+      "from": "g_success",
+      "to": "g_deny_opponent_win",
+      "type": "requires"
+    },
+    {
+      "from": "a_ok",
+      "to": "g_progress",
+      "type": "enables"
+    },
+    {
+      "from": "a_ok",
+      "to": "s1",
+      "type": "resolves"
+    },
+    {
+      "from": "s1",
+      "to": "d_reply",
+      "type": "opens"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_1",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_1",
+      "to": "s2_1",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_1",
+      "to": "g_success",
+      "type": "reaches"
+    },
+    {
+      "from": "d_reply",
+      "to": "a_reply_2",
+      "type": "reply"
+    },
+    {
+      "from": "a_reply_2",
+      "to": "s2_2",
+      "type": "resolves"
+    },
+    {
+      "from": "s2_2",
+      "to": "g_success",
+      "type": "reaches"
+    }
+  ],
+  "proof": {
+    "max_depth": 24,
+    "max_player_turns": 2,
+    "required_initial_options": 4,
+    "opponent_reply_coverage": "all",
+    "negative_probe_axes": [
+      "deckout_clock",
+      "resource_assignment",
+      "draw_budget"
+    ],
+    "claim": "policy_replay_proven",
+    "uniqueness_scope": "枚举的承诺路线等价类；对手回复为设计期AND覆盖，生产期仍需适配器证明。"
+  }
+}

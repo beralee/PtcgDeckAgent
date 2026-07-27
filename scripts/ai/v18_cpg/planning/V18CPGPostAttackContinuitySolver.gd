@@ -34,7 +34,8 @@ func annotate_frontier(
 			effect.get("debt_reduction_count", 0)
 		)
 		candidate["outcome"] = outcome
-		if bool(effect.get("reduces_debt", false)):
+		if bool(effect.get("reduces_debt", false)) \
+				or bool(effect.get("progresses_debt", false)):
 			_rewrite_conflicting_module_warnings(candidate, effect)
 		result.append(candidate)
 	return result
@@ -67,7 +68,8 @@ func build_from_annotated_frontier(
 	for candidate: Dictionary in annotated:
 		var effect: Dictionary = candidate.get(ANNOTATION_KEY, {}) \
 			if candidate.get(ANNOTATION_KEY, {}) is Dictionary else {}
-		if not bool(effect.get("reduces_debt", false)):
+		if not bool(effect.get("reduces_debt", false)) \
+				and not bool(effect.get("progresses_debt", false)):
 			continue
 		var item := effect.duplicate(true)
 		item["candidate_id"] = str(candidate.get("candidate_id", ""))
@@ -296,6 +298,10 @@ func _snapshot(
 		0,
 		int(config.get("minimum_search_engine_roots", 0))
 	)
+	var minimum_future_search_engine_roots := maxi(
+		0,
+		int(config.get("minimum_future_search_engine_roots", 0))
+	)
 	var expansion_stadium_uids := _upper_strings(
 		config.get("expansion_stadium_uids", [])
 	)
@@ -349,7 +355,12 @@ func _snapshot(
 			"play_basic_to_bench",
 			tera_enabler_uids
 		)
-	var search_engine_lane_count := search_engine_roots + live_search_engines
+	# A Noctowl whose Ability is already spent cannot provide another search
+	# checkpoint. An unused Noctowl is the current lane, while an unevolved root
+	# is a future lane. Keeping these two time horizons separate prevents the
+	# graph from treating today's activation as tomorrow's engine.
+	var search_engine_lane_count := search_engine_roots \
+		+ available_live_search_engines
 	var search_engine_root_search_available := \
 		_legal_action_card_uid_exists(
 			observation,
@@ -357,6 +368,21 @@ func _snapshot(
 			search_root_search_uids
 		)
 	var own_prizes_remaining := int(own.get("prizes_remaining", 6))
+	var sustain_search_engine_until := maxi(
+		0,
+		int(config.get(
+			"sustain_search_engine_until_own_prizes_at_most",
+			0
+		))
+	)
+	var future_search_lane_required := own_prizes_remaining \
+		> sustain_search_engine_until \
+		and available_live_search_engines > 0
+	var required_search_engine_lanes := minimum_search_engine_roots \
+		+ (
+			minimum_future_search_engine_roots
+			if future_search_lane_required else 0
+		)
 	var search_root_force_window_open := own_prizes_remaining >= int(
 		config.get("force_search_root_only_when_own_prizes_at_least", 0)
 	)
@@ -401,10 +427,7 @@ func _snapshot(
 			debt_types.append("energy_engine_width")
 		if energized_engine_count < minimum_current_energized_engines:
 			debt_types.append("energized_engine_width")
-		# A Hoothoot root does not disappear as an engine lane when it evolves.
-		# Counting only unevolved roots caused the graph to force a fresh Nest
-		# Ball after every Noctowl activation and overbuild the bench.
-		if search_engine_lane_count < minimum_search_engine_roots:
+		if search_engine_lane_count < required_search_engine_lanes:
 			debt_types.append("search_engine_root")
 		if (
 				search_engine_evolution_available \
@@ -494,6 +517,11 @@ func _snapshot(
 		"available_live_search_engines": available_live_search_engines,
 		"search_engine_lane_count": search_engine_lane_count,
 		"minimum_search_engine_roots": minimum_search_engine_roots,
+		"minimum_future_search_engine_roots": (
+			minimum_future_search_engine_roots
+		),
+		"required_search_engine_lanes": required_search_engine_lanes,
+		"future_search_lane_required": future_search_lane_required,
 		"search_engine_evolution_available": (
 			search_engine_evolution_available
 		),
@@ -546,8 +574,11 @@ func _candidate_effect(
 		"schema_version": 1,
 		"active": bool(snapshot.get("active", false)),
 		"reduces_debt": false,
+		"progresses_debt": false,
 		"debt_reduction_count": 0,
 		"debt_types": [],
+		"planned_debt_types": [],
+		"requires_reobservation": false,
 		"force_before_terminal": false,
 		"frontier_priority": false,
 		"priority": 1000,
@@ -592,6 +623,8 @@ func _candidate_effect(
 		engine_symbols
 	)
 	var reductions: Array[String] = []
+	var planned_reductions: Array[String] = []
+	var progresses := false
 	var force := false
 	var priority := 1000
 	var reason := ""
@@ -629,7 +662,11 @@ func _candidate_effect(
 		reason = "public_engine_bench_capacity_expansion"
 	elif route_id == "route:noctowl_search" \
 			and not bool(snapshot.get("deck_critical", false)):
-		reductions.assign(debt_types)
+		# The Ability only opens a typed information checkpoint. Its Trainers
+		# still have to be selected and executed, so this node may prioritize the
+		# route but must not claim that any continuity debt is already closed.
+		planned_reductions.assign(debt_types)
+		progresses = not planned_reductions.is_empty()
 		force = bool(config.get("force_noctowl_search_when_debt", false)) \
 			and (
 				not bool(snapshot.get("ko_available", false)) \
@@ -664,17 +701,40 @@ func _candidate_effect(
 		reason = "public_search_engine_evolution"
 	elif action_kind == "play_trainer" \
 			and action_uid in search_root_search_uids \
-			and "search_engine_root" in debt_types \
 			and search_root_force_ready \
 			and _search_root_development_is_safe(snapshot, config) \
 			and _setup_window_is_safe(snapshot, config):
-		reductions.append("search_engine_root")
-		force = bool(config.get(
-			"force_search_root_acquisition_when_attack_unready",
-			false
-		)) and not bool(snapshot.get("ko_available", false))
+		for debt: String in [
+			"live_energy_engine",
+			"energy_engine_width",
+			"search_engine_root",
+			"next_attacker_root",
+		]:
+			if debt in debt_types:
+				planned_reductions.append(debt)
+		progresses = not planned_reductions.is_empty()
+		var repairs_non_search_continuity := _has_any_debt(
+			planned_reductions,
+			[
+				"live_energy_engine",
+				"energy_engine_width",
+				"next_attacker_root",
+			]
+		)
+		force = (
+			bool(config.get(
+				"force_search_root_acquisition_when_attack_unready",
+				false
+			)) and not bool(snapshot.get("ko_available", false))
+		) or (
+			repairs_non_search_continuity \
+			and bool(config.get(
+				"force_continuity_basic_search_when_debt",
+				false
+			))
+		)
 		priority = int(config.get("search_root_acquisition_priority", 15))
-		reason = "public_search_engine_root_acquisition_checkpoint"
+		reason = "public_continuity_basic_search_checkpoint"
 	elif action_kind == "play_basic_to_bench" \
 			and action_uid in search_root_uids \
 			and "search_engine_root" in debt_types \
@@ -745,10 +805,16 @@ func _candidate_effect(
 		priority = 60
 		reason = "public_continuity_acceleration"
 	result["reduces_debt"] = not reductions.is_empty()
+	result["progresses_debt"] = progresses
 	result["debt_reduction_count"] = reductions.size()
 	result["debt_types"] = reductions
-	result["force_before_terminal"] = force and not reductions.is_empty()
-	result["frontier_priority"] = not reductions.is_empty()
+	result["planned_debt_types"] = planned_reductions
+	result["requires_reobservation"] = progresses \
+		and str(candidate.get("checkpoint_after", "")) \
+			== "information_result"
+	result["force_before_terminal"] = force \
+		and (not reductions.is_empty() or progresses)
+	result["frontier_priority"] = not reductions.is_empty() or progresses
 	result["priority"] = priority
 	result["reason"] = reason
 	result["information_checkpoint"] = str(
@@ -767,13 +833,20 @@ func _rewrite_conflicting_module_warnings(
 ) -> void:
 	var annotations: Dictionary = candidate.get("module_annotations", {}) \
 		if candidate.get("module_annotations", {}) is Dictionary else {}
+	var relevant_debt_types: Array = effect.get(
+		"planned_debt_types",
+		effect.get("debt_types", [])
+	) if effect.get(
+		"planned_debt_types",
+		effect.get("debt_types", [])
+	) is Array else []
 	var burst: Dictionary = annotations.get("energy_burst", {}) \
 		if annotations.get("energy_burst", {}) is Dictionary else {}
 	if not burst.is_empty():
 		burst["route_warning"] = "post_attack_continuity_debt"
 		burst["decision_hint"] = "close_post_attack_continuity_then_reobserve"
 		burst["optional_information_safe"] = true
-		burst["continuity_debt_types"] = effect.get("debt_types", [])
+		burst["continuity_debt_types"] = relevant_debt_types
 		annotations["energy_burst"] = burst
 	var noctowl: Dictionary = annotations.get("tera_noctowl_search", {}) \
 		if annotations.get("tera_noctowl_search", {}) is Dictionary else {}
@@ -781,7 +854,7 @@ func _rewrite_conflicting_module_warnings(
 			and str(candidate.get("route_id", "")) == "route:noctowl_search":
 		noctowl["warning"] = "post_attack_continuity_search"
 		noctowl["continuity_opportunity"] = true
-		noctowl["continuity_debt_types"] = effect.get("debt_types", [])
+		noctowl["continuity_debt_types"] = relevant_debt_types
 		annotations["tera_noctowl_search"] = noctowl
 	candidate["module_annotations"] = annotations
 

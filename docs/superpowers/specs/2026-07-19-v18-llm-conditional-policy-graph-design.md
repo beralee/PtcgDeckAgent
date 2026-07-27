@@ -1,6 +1,6 @@
 # PTCG 18.0 独立 LLM 条件策略图架构方案
 
-状态：隔离实现已覆盖 24 套；24/24 smoke-ready，三套 pilot 已完成初步配对校准，全部仍为 experimental
+状态：隔离实现已覆盖 24 套；24/24 graph-ready 并可在 BattleSetup 选择，6 套保留既有 ROI 配对状态，其余仍为 experimental
 日期：2026-07-19
 适用范围：18.0 内置 24 套 AI 卡组
 架构代号：V18CPG（V18 Conditional Policy Graph）
@@ -114,6 +114,42 @@ v3 固定以下契约：
 6. **传输审计可分解。** 每个 response 记录 `transport_contract_version`、`is_delta`、`system_prompt_bytes`、`user_prompt_bytes`、payload/response bytes 和 visible wait。
 
 当前硬门：strict compact response、双 checkpoint 八节点、全图 candidate↔route 绑定、self-contained delta、12/12 module compaction 等契约共 16 组通过；共享 blocker 12 组、20/20 dominance、24/24 profile 与 12/12 module coverage 均通过。首次真实单局将接受率从旧 round 的 `1/42` 提升到 `6/10`，加入 per-profile node limit 后同 seed 为 `7/10`，且消除了 `node_count` 拒绝；但两次测试仍均为 `0pp` 且已接受 response 都是 exact Rule-root shadow，因此这只是延迟/可用性证据，不是策略强度晋级证据。
+
+### 0.6 实施校准 v8：跨模块证明闭合与轮次渐进长考（2026-07-26）
+
+真实对局暴露了一个不能由提示词修复的组合缺口：动态费用模块已经证明“月月熊换上后费用支付完成”，猛雷鼓扩展也已经暴露月月熊收尾 operator，但 Base Graph 没有把“合法撤退、目标身份、费用、240 伤害、230HP、双奖和重观察”闭合为一条可执行证书，最终安全层仍选择结束回合。
+
+v8 固定以下契约：
+
+1. 单模块事实正确不等于路线可执行。所有跨动作升级必须形成 transition certificate，绑定精确首动作、费用/额度、目标、后继攻击、伤害/击倒、奖赏和失效条件。
+2. 多动作证书只授权当前一个引擎动作。撤退后必须重观察并重新验证月月熊攻击，不能把预测当作已经存在的合法 attack action。
+3. 若对手下一攻击窗口获胜、Rule 根为结束回合，而公开可证的换位后击倒能严格增加当前窗口奖赏，则该确定性救援可先于强制模型判断执行。
+4. 测试必须同时包含 production selector 和真实引擎 witness；只检查动态费用表或 operator 标签不再算完成。
+5. 可见等待采用有界轮次渐进预算：前期基线 6500ms，每两个引擎回合增加 1500ms，上限 18000ms。请求准入、在途 deadline、UI soft timeout 和 audit 必须使用同一个有效值。
+6. 延迟验收按前/中/后期分桶。允许后期长考，但不能用后期预算掩盖开局变慢。
+
+### 0.7 实施校准 v9：请求到执行漏斗与精确决策权（2026-07-26）
+
+真实模型审计发现：`model_accepted` 既不能证明模型动作已执行，也不能区分“模型确认 Rule 根”与“模型图改变后续动作”。本轮将审计升级为 schema v3，并把每个请求按 `request_id + policy_id + revision_id` 连接到最终 `action_result`：
+
+1. 漏斗固定为 `started -> resolved -> provider response -> contract validated -> accepted -> installed -> causal execution / verified agreement`。`effective participation = causal execution + verified agreement`，所有比例按去重请求计算，不能用一个请求执行多个动作来放大收益。
+2. 请求按 `turn_opening_graph`、`checkpoint_replan`、`strategic_arbitration` 分桶。一节点 shadow 是有效的验证后同意，但不是因果执行；多节点或多动作 typed root 才是 graph-bearing，只有该集合适合作为“图是否转化为执行”的分母。
+3. Base 同时公开 `route.available.<suffix>` 与 `route.model_switch_allowed.<suffix>`。所有 `follow_route` 分支必须同时守卫合法性和执行决策权，并与运行时使用同一套安全计算；`route:information` 的事实后缀只能写 `information`，不得写成 `route.available.route:information`。
+4. 根节点是精确 candidate 决策。模型可见 frontier 只保留精确 Rule 根和通过运行时安全门的候选，完整 frontier 留在宿主侧供 checkpoint 后重绑定。模型不再看到必定会被执行层拒绝的根候选。
+5. 若完成求解器已证明一个公开、单调、无模型选择空间的强制前缀，宿主先无等待执行该前缀，保持“本回合必需模型判断”未完成，再从新观察请求模型。模型侧完成契约可以保留未来 action ID 清单，但强制推荐 candidate 必须属于 `allowed_candidate_ids`。
+6. 默认轮次等待保持前期 `6500ms`，每两个引擎回合增加 `1500ms`，总上限 `18000ms`；猛雷鼓依据直连实测从 `7500ms` 起步。增长只给后期同回合多次信息重规划，常见单次响应不被人为拖长。
+
+合理的架构漏斗水位固定为：provider response `>=99%`、contract validation `>=95%`、request-to-effective participation `>=75%`、graph-bearing installed-to-causal execution `40%-60%`、accepted-unexecuted `0`、已接受分支的运行时不安全回退 `0`。这些是管线有效性门槛，不是胜率晋级证据。
+
+最终同种子真实模型 3 局（seed `183410..183412`）记录：26/26 provider response、26/26 contract valid、26/26 accepted、24/26 effective participation（`92.3%`）；14 个 graph-bearing 安装请求中 8 个产生模型因果执行（`57.1%`），0 fallback，单次 visible-wait p95 `7145ms`。V18CPG 与 Rule 均为 2/3、3/3 clean；该小样本只证明漏斗达标和未观察到劣化，不宣称统计胜率优于 Rule。最新共享回归为 24/24 启用态 fixture（604 accepted calls）及 24/24 无模型等价 smoke（26 局）。
+
+### 0.8 实施校准 v10：24 套批量 Graph-ready 与供应商熔断（2026-07-27）
+
+在 v9 漏斗合同稳定后，24 套 Profile 统一继承 `required_first_main_window`：每个有战略选择的首个主行动窗口必须完成一次模型判断，确定性必做前缀仍可先执行并在新观察上请求。BattleSetup 可用性与统计晋级拆开：24 套都可选择 Rule/大模型版；既有 6 套保留 ROI 状态，其余标记 `graph_ready_experimental`，不伪称非劣或严格更强。
+
+批量证据包括：23 套非猛雷鼓复杂场景全部通过（通常每套 5 个，N 的索罗亚克 10 个）；24/24 启用态 fixture 共 604 次接受；24/24 无模型 26 局保持精确 Rule 决策日志；12/12 capability module compaction 与 9/9 战略形状 public-state fixture 通过；BattleSetup 真实控件测试逐一确认 24 套均出现 Rule 与 V18CPG 两个选项。
+
+真实 DeepSeek 家族烟测在余额耗尽前完成 12 套：所有对局 clean，均未观察到相对 Rule 的负翻转；请求合同大部分达到 100%，少量拒绝来自回合等待预算。后续 6 套收到 HTTP 402 `Insufficient Balance`，因此不计为模型策略证据。该事件同时暴露并修复了 Base 缺陷：402/401/403 现在分别归类为额度/认证终止错误，首个失败后本局熔断后续请求，并关闭 verified-local 证书与 V18 硬守卫，严格退回 Rule。陆地水母同一 seed 从旧行为的 14 次失败请求和负翻转，修复为 1 次失败请求、后续全 Rule、Rule/CPG 同胜且零模型动作日志等价。
 
 ## 1. 最终架构决策
 
@@ -877,6 +913,18 @@ initial_response_token_budget
 expected_regret_threshold
 switch_margin
 ```
+
+有效回合预算不是固定常数，而是：
+
+```text
+effective_budget =
+  min(turn_visible_wait_budget_cap_ms,
+      turn_visible_wait_budget_ms
+      + floor((turn_number - 1) / turn_visible_wait_growth_every_turns)
+        * turn_visible_wait_growth_ms)
+```
+
+默认值为 `6500 + floor((turn_number - 1) / 2) * 1000`，封顶 `10500ms`。这一增长只扩大后期高价值 information epoch 的可用长考时间，不改变每个 decision window 最多一个在途请求、迟到响应丢弃和本地 deadline fallback 契约。
 
 数值必须通过目标模型基线测量确定，不在架构中写死 3.5 秒或固定调用数。
 

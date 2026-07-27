@@ -1990,11 +1990,13 @@ func test_tournament_setup_portrait_name_input_accepts_android_touch() -> String
 		var release := InputEventScreenTouch.new()
 		release.pressed = false
 		name_edit.gui_input.emit(release)
-	var name_edit_focused_after_touch := name_edit != null and (name_edit.has_focus() or bool(name_edit.get_meta("_non_battle_touch_focus_requested", false)))
+	var name_edit_native := name_edit != null and bool(name_edit.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false))
+	var name_edit_legacy_focus_requested := name_edit != null and bool(name_edit.get_meta("_non_battle_touch_focus_requested", false))
 	var result := run_checks([
 		assert_true(name_edit != null and name_edit.custom_minimum_size.y >= 145.0, "Tournament setup portrait name input should be large enough to tap"),
 		assert_true(name_edit != null and name_edit.get_theme_font_size("font_size") >= 50, "Tournament setup portrait name input text should be phone-readable"),
-		assert_true(name_edit_focused_after_touch, "Tournament setup NameEdit should focus from Android ScreenTouch without mouse emulation"),
+		assert_true(name_edit_native, "Tournament setup NameEdit should use the cross-platform native text-input lifecycle"),
+		assert_false(name_edit_legacy_focus_requested, "Tournament setup NameEdit should not synthesize focus through the legacy touch bridge"),
 	])
 	_dispose_scene(scene)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
@@ -2437,10 +2439,12 @@ func test_ai_settings_api_key_selects_all_and_paste_button_fills_key() -> String
 		press.pressed = true
 		press.position = tap_position
 		NonBattleTouchBridgeScript.handle_root_touch(scene, press)
+		api_key.gui_input.emit(press)
 		var release := InputEventScreenTouch.new()
 		release.pressed = false
 		release.position = tap_position
 		NonBattleTouchBridgeScript.handle_root_touch(scene, release)
+		api_key.gui_input.emit(release)
 	var selected_text_after_touch := ""
 	if api_key != null and api_key.has_method("get_selected_text"):
 		selected_text_after_touch = str(api_key.call("get_selected_text"))
@@ -2530,10 +2534,12 @@ func test_ai_settings_line_edits_select_all_when_tapped() -> String:
 		press.pressed = true
 		press.position = tap_position
 		NonBattleTouchBridgeScript.handle_root_touch(scene, press)
+		input.gui_input.emit(press)
 		var release := InputEventScreenTouch.new()
 		release.pressed = false
 		release.position = tap_position
 		NonBattleTouchBridgeScript.handle_root_touch(scene, release)
+		input.gui_input.emit(release)
 	if timeout != null:
 		timeout.value = 120.0
 		var timeout_press := InputEventScreenTouch.new()
@@ -2841,10 +2847,10 @@ func test_ai_settings_portrait_form_controls_accept_android_touch_without_mouse_
 	if popup != null:
 		popup.hide()
 	var result := run_checks([
-		assert_false(endpoint_native_marked or api_key_native_marked, "AI settings portrait text inputs should use the same focus path as the working feedback dialog, not the native-bypass path"),
-		assert_true(endpoint_focus_bridge_bound and api_key_focus_bridge_bound, "AI settings text inputs should bind the shared focus touch bridge"),
-		assert_true(endpoint_root_bridge_consumed and api_key_root_bridge_consumed, "AI settings text input taps should be handled by the shared focus bridge"),
-		assert_true(endpoint_focus_requested and api_key_focus_requested, "AI settings text input taps should request focus and open the Android keyboard"),
+		assert_true(endpoint_native_marked and api_key_native_marked, "AI settings portrait text inputs should use the cross-platform native text path"),
+		assert_false(endpoint_focus_bridge_bound or api_key_focus_bridge_bound, "AI settings text inputs should not bind the legacy focus touch bridge"),
+		assert_false(endpoint_root_bridge_consumed or api_key_root_bridge_consumed, "The root touch bridge must yield settings text taps to the platform input control"),
+		assert_false(endpoint_focus_requested or api_key_focus_requested, "The compatibility bridge must not synthesize native settings focus"),
 		assert_true(endpoint != null and endpoint.context_menu_enabled and endpoint.virtual_keyboard_enabled and endpoint.virtual_keyboard_show_on_focus, "AI settings EndpointInput should keep native keyboard and copy/paste menu support"),
 		assert_true(api_key != null and api_key.context_menu_enabled and api_key.virtual_keyboard_enabled and api_key.virtual_keyboard_show_on_focus, "AI settings ApiKeyInput should keep native keyboard and copy/paste menu support"),
 		assert_true(endpoint != null and endpoint.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_URL, "AI settings EndpointInput should request a URL keyboard"),

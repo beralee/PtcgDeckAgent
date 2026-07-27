@@ -178,11 +178,13 @@ func test_evolution_is_a_stack_change_not_a_destroy_create_pair() -> String:
 	var slot := _slot(basic)
 	var opponent_basic := _card("Opponent Basic", 1)
 	var opponent_evolution := _card("Opponent Evolution", 1)
+	var unrelated_opponent_card := _card("Unrelated Opponent Card", 1)
 	var opponent_slot := _slot(opponent_basic)
 	state.players[0].active_pokemon = slot
 	state.players[0].hand = [evolution]
 	state.players[1].active_pokemon = opponent_slot
 	state.players[1].hand = [opponent_evolution]
+	state.players[1].deck = [unrelated_opponent_card]
 	var before: Dictionary = SnapshotScript.capture(state)
 	state.players[0].hand.clear()
 	slot.pokemon_stack.append(evolution)
@@ -190,21 +192,28 @@ func test_evolution_is_a_stack_change_not_a_destroy_create_pair() -> String:
 	# The current player's exact Evolution action must never animate that other side.
 	state.players[1].hand.clear()
 	opponent_slot.pokemon_stack.append(opponent_evolution)
+	state.players[1].deck.clear()
+	state.players[1].discard_pile.append(unrelated_opponent_card)
 	var after: Dictionary = SnapshotScript.capture(state)
 	var action := GameAction.create(GameAction.ActionType.EVOLVE, 0, {
 		"evolution": "Evolution",
+		"evolution_instance_id": evolution.instance_id,
+		"card_instance_ids": [evolution.instance_id],
 		"target_slot_runtime_id": int(slot.get_instance_id()),
 	}, 3, "evolve")
 	var events: Array = BuilderScript.build(before, after, action, 0)
 	var stack_changes := _events_of_kind(events, "stack_change")
+	var evolved_cards: Array = stack_changes[0].get("cards", []) if not stack_changes.is_empty() else []
 
 	return run_checks([
 		assert_eq(stack_changes.size(), 1, "Evolution should produce one stack-change sequence only for its exact target"),
 		assert_eq(str(stack_changes[0].get("semantic", "")) if not stack_changes.is_empty() else "", "evolve", "Evolution semantic should be explicit"),
 		assert_eq(stack_changes[0].get("card_instance_ids", []) if not stack_changes.is_empty() else [], [evolution.instance_id], "Only the added Evolution card should move"),
+		assert_eq(evolved_cards, [evolution], "The rendered card reference must be the exact Evolution instance, never another card with a stale snapshot"),
+		assert_eq(stack_changes[0].get("card_names", []) if not stack_changes.is_empty() else [], ["Evolution"], "The rendered Evolution face must match the logged instance"),
 		assert_eq(int(stack_changes[0].get("slot_runtime_id", -1)) if not stack_changes.is_empty() else -1, int(slot.get_instance_id()), "Evolution visuals must retain the exact target Pokemon slot identity"),
 		assert_eq(str(stack_changes[0].get("target_slot_key", "")) if not stack_changes.is_empty() else "", "p0.active", "Evolution visuals must expose an explicit target slot instead of relying on a generic zone"),
-		assert_true(_events_of_kind(events, "zone_transfer").is_empty(), "Evolution card must not also create a duplicate generic transfer"),
+		assert_true(_events_of_kind(events, "zone_transfer").is_empty(), "An Evolution action must not animate unrelated stale zone changes from either player"),
 		assert_true(_events_of_kind(events, "shuffle").is_empty(), "Evolution must not emit a deck animation when neither player's shuffle count changed"),
 	])
 

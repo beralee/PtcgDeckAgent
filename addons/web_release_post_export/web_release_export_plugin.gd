@@ -45,7 +45,7 @@ func _is_web_export(features: PackedStringArray, path: String) -> bool:
 
 func _generate_release_metadata(export_path: String) -> bool:
 	var export_file_path := _to_absolute_path(export_path)
-	var layout := WebReleaseLayout.prepare_release_directory(export_file_path, AppVersion.VERSION)
+	var layout := WebReleaseLayout.prepare_release_directory(export_file_path, AppVersion.WEB_VERSION)
 	if not bool(layout.get("ok", false)):
 		push_warning(str(layout.get("error", "Unable to prepare Web release directory.")))
 		return false
@@ -77,9 +77,9 @@ func _generate_release_metadata(export_path: String) -> bool:
 
 	var release_manifest := {
 		"schema_version": 1,
-		"version": AppVersion.VERSION,
-		"display_version": AppVersion.DISPLAY_VERSION,
-		"build_number": AppVersion.BUILD_NUMBER,
+		"version": AppVersion.WEB_VERSION,
+		"display_version": AppVersion.WEB_DISPLAY_VERSION,
+		"build_number": AppVersion.WEB_BUILD_NUMBER,
 		"channel": AppVersion.CHANNEL,
 		"public_base_path": public_base,
 		"release_path": release_path,
@@ -93,9 +93,9 @@ func _generate_release_metadata(export_path: String) -> bool:
 	}
 	var latest := {
 		"schema_version": 1,
-		"version": AppVersion.VERSION,
-		"display_version": AppVersion.DISPLAY_VERSION,
-		"build_number": AppVersion.BUILD_NUMBER,
+		"version": AppVersion.WEB_VERSION,
+		"display_version": AppVersion.WEB_DISPLAY_VERSION,
+		"build_number": AppVersion.WEB_BUILD_NUMBER,
 		"channel": AppVersion.CHANNEL,
 		"release_path": release_path,
 		"entry": entry_url,

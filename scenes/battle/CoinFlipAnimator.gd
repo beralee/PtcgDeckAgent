@@ -51,6 +51,8 @@ var _tween: Tween = null
 var _has_external_metrics_override: bool = false
 var _coin_skin_index: int = -1
 var _coin_skin_id: String = ""
+var _next_heads_text := "正面"
+var _next_tails_text := "反面"
 
 
 func _ready() -> void:
@@ -233,6 +235,10 @@ func _portrait_touch_scale(viewport_size: Vector2) -> float:
 
 ## 播放投币动画，result=true 表示正面，false 表示反面
 func play(result: bool) -> void:
+	var heads_text := _next_heads_text
+	var tails_text := _next_tails_text
+	_next_heads_text = "正面"
+	_next_tails_text = "反面"
 	if not _has_external_metrics_override:
 		_apply_auto_metrics()
 	visible = true
@@ -279,7 +285,7 @@ func play(result: bool) -> void:
 	_tween.tween_property(_coin_sprite, "scale", Vector2(1.15, 1.15), 0.12).set_trans(Tween.TRANS_BACK)
 	_tween.tween_property(_coin_sprite, "scale", Vector2(1.0, 1.0), 0.1).set_trans(Tween.TRANS_SINE)
 	_tween.tween_callback(func() -> void:
-		_result_label.text = "正面" if result else "反面"
+		_result_label.text = result_text_for(result, heads_text, tails_text)
 	)
 	# 让玩家看清结果
 	_tween.tween_interval(0.9)
@@ -287,3 +293,12 @@ func play(result: bool) -> void:
 		visible = false
 		animation_finished.emit()
 	)
+
+
+func set_result_labels(heads_text: String, tails_text: String) -> void:
+	_next_heads_text = heads_text if heads_text.strip_edges() != "" else "正面"
+	_next_tails_text = tails_text if tails_text.strip_edges() != "" else "反面"
+
+
+func result_text_for(result: bool, heads_text: String = "正面", tails_text: String = "反面") -> String:
+	return heads_text if result else tails_text

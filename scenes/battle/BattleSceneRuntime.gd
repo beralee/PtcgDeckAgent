@@ -9,16 +9,18 @@ var _dialog_card_touch_bridge_touch_index: int = -1
 
 func _ready() -> void:
 	set_process(false)
+	var runtime_profile: UiRuntimeProfile = (
+		GameManager.get_ui_runtime_profile()
+		if GameManager != null and GameManager.has_method("get_ui_runtime_profile")
+		else null
+	)
 	if _battle_pointer_input_router != null:
-		var runtime_profile: UiRuntimeProfile = (
-			GameManager.get_ui_runtime_profile()
-			if GameManager != null and GameManager.has_method("get_ui_runtime_profile")
-			else null
-		)
 		_battle_pointer_input_router.configure(
 			runtime_profile != null
 			and runtime_profile.mobile_like
 		)
+	if _ios_web_hud_touch_adapter != null:
+		_ios_web_hud_touch_adapter.configure(runtime_profile)
 	_ensure_modal_pointer_drain_shield()
 	_init_battle_runtime_log()
 	_setup_ui_interaction_watchdog()
@@ -53,14 +55,20 @@ func _ready() -> void:
 	_dialog_overlay.visible = false
 	_dialog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialog_overlay.z_index = DIALOG_OVERLAY_Z_INDEX
+	_register_ios_web_hud_touch_root(_dialog_overlay)
+	_register_ios_web_hud_touch_root(_handover_panel)
 	_set_handover_panel_visible(false, "ready_init")
 	_coin_overlay.visible = false
+	_register_ios_web_hud_touch_root(_coin_overlay)
 	_detail_overlay.visible = false
 	_detail_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_detail_overlay.z_index = DETAIL_OVERLAY_Z_INDEX
+	_register_ios_web_hud_touch_root(_detail_overlay)
 	_discard_overlay.visible = false
 	_discard_overlay.z_index = DISCARD_OVERLAY_Z_INDEX
+	_register_ios_web_hud_touch_root(_discard_overlay)
 	_review_overlay.visible = false
+	_register_ios_web_hud_touch_root(_review_overlay)
 	_hand_title.visible = false
 	_left_panel.visible = false
 	_right_panel.visible = false
@@ -141,6 +149,7 @@ func _ready() -> void:
 	)
 	_review_regenerate_btn.pressed.connect(_on_review_regenerate_pressed)
 	_setup_battle_advice_ui()
+	_register_existing_ios_web_hud_button_surfaces()
 	var stadium_sections := $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections as HBoxContainer
 	if stadium_sections != null:
 		stadium_sections.move_child(_stadium_center_section, 0)
@@ -405,9 +414,11 @@ func _clear_runtime_state_payloads() -> void:
 	_latest_opponent_action_text = ""
 	_latest_opponent_action_turn_number = -1
 	_coin_flip_queue.clear()
+	_coin_flip_label_queue.clear()
 	_coin_animating = false
 	_coin_animation_advance_scheduled = false
 	_coin_animation_resume_effect_step = false
+	_opening_first_player_flip_pending = false
 	_battle_recording_started = false
 	_battle_recording_context_captured = false
 	_turn_start_snapshot_recorded_keys.clear()
@@ -463,12 +474,26 @@ func _input(event: InputEvent) -> void:
 		if drain_viewport != null:
 			drain_viewport.set_input_as_handled()
 		return
+	var ios_web_hud_route_active := (
+		_ios_web_hud_touch_adapter != null
+		and _ios_web_hud_touch_adapter.is_enabled()
+	)
+	if ios_web_hud_route_active:
+		# Normalize the Web touch first so its later compatibility-mouse echo is
+		# still recognized, then let the iOS-only HUD adapter own raw touch.
+		if _route_web_battle_pointer_event(event):
+			return
+		if _try_handle_ios_web_hud_touch_input(event):
+			var ios_hud_viewport := get_viewport()
+			if ios_hud_viewport != null:
+				ios_hud_viewport.set_input_as_handled()
+			return
 	if _try_handle_battle_hud_touch_input(event):
 		var hud_touch_viewport := get_viewport()
 		if hud_touch_viewport != null:
 			hud_touch_viewport.set_input_as_handled()
 		return
-	if _route_web_battle_pointer_event(event):
+	if not ios_web_hud_route_active and _route_web_battle_pointer_event(event):
 		return
 	if _try_close_discard_collection_from_cancel(event):
 		var discard_cancel_viewport := get_viewport()
@@ -525,6 +550,60 @@ func _claim_current_modal_pointer_sequence(intent: String) -> bool:
 	if _battle_pointer_input_router == null:
 		return false
 	return _battle_pointer_input_router.claim_current(intent, "battle_modal")
+
+
+func _register_ios_web_hud_touch_root(root: Node) -> void:
+	IosWebHudTouchAdapterScript.mark_hud_root(root)
+
+
+func _register_ios_web_hud_touch_surface(root: Node) -> void:
+	IosWebHudTouchAdapterScript.mark_hud_surface(root)
+
+
+func _register_existing_ios_web_hud_button_surfaces() -> void:
+	for node: Node in find_children("*", "Button", true, false):
+		var button := node as Button
+		if button == null or _has_ios_web_hud_touch_root_ancestor(button):
+			continue
+		_register_ios_web_hud_touch_surface(button)
+
+
+func _has_ios_web_hud_touch_root_ancestor(node: Node) -> bool:
+	var cursor := node
+	while cursor != null:
+		if bool(cursor.get_meta(IosWebHudTouchAdapterScript.HUD_TOUCH_ROOT_META, false)):
+			return true
+		if cursor == self:
+			break
+		cursor = cursor.get_parent()
+	return false
+
+
+func _try_handle_ios_web_hud_touch_input(event: InputEvent) -> bool:
+	if (
+		_ios_web_hud_touch_adapter == null
+		or not _ios_web_hud_touch_adapter.handle_event(self, event)
+	):
+		return false
+	if event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
+		var candidate := _ios_web_hud_touch_adapter.current_candidate_button()
+		if candidate == _dialog_confirm:
+			_battle_dialog_controller.call(
+				"on_dialog_action_button_input",
+				self,
+				"confirm",
+				event
+			)
+		elif candidate == _dialog_cancel:
+			_battle_dialog_controller.call(
+				"on_dialog_action_button_input",
+				self,
+				"cancel",
+				event
+			)
+		else:
+			_claim_modal_pointer_event(event, "ios_web_hud_button")
+	return true
 
 
 func _try_handle_battle_hud_touch_input(event: InputEvent) -> bool:
@@ -775,6 +854,8 @@ func _cancel_transient_platform_input(reason: String = "platform_cancel") -> voi
 		_battle_pointer_input_router.cancel_all(reason)
 	if _web_battle_input_adapter != null:
 		_web_battle_input_adapter.cancel_all(reason)
+	if _ios_web_hud_touch_adapter != null:
+		_ios_web_hud_touch_adapter.cancel_all()
 	_clear_dialog_card_touch_bridge()
 	_prize_touch_press_contexts.clear()
 	if _slot_touch_long_press_timer != null:
@@ -796,6 +877,30 @@ func _setup_ui_interaction_watchdog() -> void:
 	_ui_interaction_watchdog.name = "UiInteractionWatchdog"
 	add_child(_ui_interaction_watchdog)
 	_ui_interaction_watchdog.setup(_ui_interaction_sessions, Callable(self, "_on_ui_interaction_watchdog_recovery"))
+
+
+func _mark_ui_interaction_progress(source: String = "") -> bool:
+	if _ui_interaction_sessions == null:
+		return false
+	var session := _ui_interaction_sessions.current_session()
+	if (
+		session == null
+		or not session.is_active()
+		or session.owner != "effect_human"
+		or session.interaction_type != "effect_step"
+	):
+		return false
+	var marked := session.mark_progress(-1, session.generation)
+	if marked:
+		_runtime_log(
+			"ui_interaction_progress",
+			"source=%s session=%s generation=%d" % [
+				source,
+				session.session_id,
+				session.generation,
+			]
+		)
+	return marked
 
 
 func _on_ui_interaction_watchdog_recovery(session: UiInteractionSession) -> void:
@@ -2528,13 +2633,6 @@ func _on_action_logged(action: GameAction) -> void:
 		action.data["draw_source"] = "turn_start"
 		_record_turn_start_snapshot_after_draw(action)
 	if (
-		action != null
-		and action.action_type == GameAction.ActionType.SETUP_SET_PRIZES
-		and bool(action.data.get("opening_deal", false))
-		and not _is_review_mode()
-	):
-		_battle_draw_reveal_controller.call("enqueue_reveal", self, action)
-	elif (
 		action != null
 		and action.action_type == GameAction.ActionType.DRAW_CARD
 		and _gsm != null

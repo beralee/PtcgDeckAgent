@@ -9,7 +9,9 @@ signal response_ready(request_id: String, response: Dictionary, metrics: Diction
 const COMPACT_WIRE_CONTRACT_VERSION := 3
 const MIN_INITIAL_COMPLETION_TOKENS := 512
 const MIN_DELTA_COMPLETION_TOKENS := 512
-const MAX_COMPLETION_TOKENS := 900
+const BASE_COMPLETION_NODE_COUNT := 4
+const TOKENS_PER_EXTRA_POLICY_NODE := 128
+const MAX_COMPLETION_TOKENS := 1024
 
 const RngIsolatedDeepSeekClientScript = preload(
 	"res://scripts/ai/v18_cpg/network/V18CPGRngIsolatedDeepSeekClient.gd"
@@ -45,7 +47,17 @@ func is_configured() -> bool:
 func request_policy(request_id: String, request_envelope: Dictionary, token_budget: int = 600, is_delta: bool = false) -> int:
 	if not is_configured() or request_id == "" or _pending.has(request_id):
 		return ERR_UNCONFIGURED
-	var effective_token_budget := resolve_token_budget(token_budget, is_delta)
+	var limits: Dictionary = request_envelope.get("limits", {}) \
+		if request_envelope.get("limits", {}) is Dictionary else {}
+	var max_policy_nodes := int(limits.get(
+		"max_policy_nodes",
+		BASE_COMPLETION_NODE_COUNT
+	))
+	var effective_token_budget := resolve_token_budget(
+		token_budget,
+		is_delta,
+		max_policy_nodes
+	)
 	var payload := _build_payload(request_envelope, effective_token_budget, is_delta)
 	var started := Time.get_ticks_msec()
 	var request_error := _client.request_json(
@@ -70,12 +82,31 @@ func request_policy(request_id: String, request_envelope: Dictionary, token_budg
 	return request_error
 
 
-func resolve_token_budget(configured_budget: int, is_delta: bool) -> int:
-	# max_tokens is a ceiling, not a requested output length. A 512-token floor
-	# leaves room for a complete compact checkpoint graph without slowing the
-	# normal one-node response or asking the model to fill the allowance.
+func resolve_token_budget(
+	configured_budget: int,
+	is_delta: bool,
+	max_policy_nodes: int = BASE_COMPLETION_NODE_COUNT
+) -> int:
+	# max_tokens is a ceiling, not a requested output length. Keep the original
+	# 512-token allowance for graphs of at most four nodes, then reserve 128
+	# tokens for each additional permitted node. An eight-node graph therefore
+	# gets the explicit doubled 1024 ceiling without making small decisions fill
+	# or wait for that allowance.
 	var minimum := MIN_DELTA_COMPLETION_TOKENS if is_delta else MIN_INITIAL_COMPLETION_TOKENS
-	return clampi(maxi(configured_budget, minimum), minimum, MAX_COMPLETION_TOKENS)
+	var bounded_nodes := clampi(
+		max_policy_nodes,
+		1,
+		BASE_COMPLETION_NODE_COUNT * 2
+	)
+	var node_aware_minimum := minimum + maxi(
+		0,
+		bounded_nodes - BASE_COMPLETION_NODE_COUNT
+	) * TOKENS_PER_EXTRA_POLICY_NODE
+	return clampi(
+		maxi(configured_budget, node_aware_minimum),
+		minimum,
+		MAX_COMPLETION_TOKENS
+	)
 
 
 func has_pending(request_id: String = "") -> bool:
@@ -103,8 +134,28 @@ func _on_response(response: Dictionary, request_id: String) -> void:
 		"finish_reason": str(response.get("finish_reason", "")),
 		"prompt_tokens": int(response.get("prompt_tokens", 0)),
 		"completion_tokens": int(response.get("completion_tokens", 0)),
+		"provider_http_code": int(response.get("http_code", 0)),
+		"provider_error_type": str(response.get("error_type", "")),
 	}
-	response_ready.emit(request_id, response.duplicate(true), metrics)
+	response_ready.emit(
+		request_id,
+		_semantic_response_for_validation(response),
+		metrics
+	)
+
+
+func _semantic_response_for_validation(response: Dictionary) -> Dictionary:
+	# The transport parser temporarily attaches provider completion metadata so
+	# DecisionClient can build request metrics. It is not model-authored policy
+	# JSON and must not cross the strict semantic-schema boundary.
+	var semantic_response := response.duplicate(true)
+	for provider_metric: String in [
+		"finish_reason",
+		"prompt_tokens",
+		"completion_tokens",
+	]:
+		semantic_response.erase(provider_metric)
+	return semantic_response
 
 
 func _message_content_bytes(messages: Array, role: String) -> int:
@@ -119,11 +170,13 @@ func _build_payload(request_envelope: Dictionary, token_budget: int, is_delta: b
 	var system := """You are the strategic planner for a Pokemon TCG engine. Return one compact, acyclic conditional policy graph as JSON.
 Use only candidate_id, route_id, interaction role, and fact values supplied by the request. Never invent cards, actions, IDs, facts, or hidden information.
 The outermost JSON object must contain policy. Put root_node_id and nodes inside policy, never at the outermost level. agenda_patch is the only other semantic outer key.
-Default to exactly one select_candidate route node bound to the best supplied current candidate. Add more nodes or use propose_typed_route only when a future conditional branch is genuinely necessary and every extra node is connected. A one-node exact judgment is complete; do not add speculative follow-up actions merely to make the graph look strategic.
+Use a one-node policy only when the supplied frontier and turn_completion_contract prove that no productive same-turn follow-up, material information checkpoint, or route-critical interaction remains. When a public prefix has a predictable continuation, emit a compact bounded 2-4 action graph or a root plus checkpoint instead of collapsing the turn into its first action. Every extra node must remain connected and executable; do not add speculative actions merely to make the graph look strategic.
 A root that predictably opens draw, hidden-deck search, a full-deck interaction, or another route-changing information window is a genuinely necessary future conditional branch. When limits permit, connect that root to a checkpoint with typed follow_route branches and otherwise=replan so newly acquired cards are consumed in the same turn.
 Prefer the shortest safe prize path, but preserve the next attacker and typed energy when a current KO is not decisive.
 Honor the request's typed strategic_priorities, route_preferences, protected_roles, and safety fields. They are deck-profile constraints, not suggestions to invent new actions.
 The frontier contains multiple exact candidates, including alternatives inside one macro route. Compare exact targets and costs, not only action categories.
+When a candidate contains route_value_graph_v3, use its sparse public route-value deltas. pareto=true means the route is non-dominated or safety-preserved, not that it overrides the exact Rule floor by itself. follow_routes lists bounded projected intents after the exact current root; they are never current legal action IDs and reobserve=true requires observing the engine again before binding any of them. race_margin, continuity_debt, next_uptime, liability, and the sparse raging fields are route-level comparison facts; omitted values are neutral defaults.
+When a candidate contains conditional_suffix, treat it as the deck extension's typed cross-checkpoint continuation contract: execute only its current exact root, reobserve at checkpoint_after, then prefer the listed guarded_followups whose debt still exists while preserving every listed invariant. Never claim that an information-producing root has already completed those future actions.
 When facts.attack.dynamic_cost_applied=true, its effective_energy_required and energy_deficit are recomputed from the current public Prize count and override the printed cost for planning. If cost_ready and engine_confirms_cost_paid are true, the attack is already paid: never attach another Energy to that Active merely to satisfy its printed cost, and branch to the supplied legal attack candidate after a pivot.
 The candidate marked rule_floor_exact is the exact Rule choice. When candidates are marked rule_tie_ambiguous, host-only Rule intent scoring may still break that tie: do not force one of them unless the supplied outcome contains a concrete, verifier-checkable advantage. Select a different candidate only when its supplied outcome, information value, target quality, or next-turn continuity contains such an advantage; never replace a Rule tie by guesswork.
 When a capability module marks verified_advantage=true, that exact candidate has a deterministic public-state certificate and may replace the Rule floor even across a large score gap; the host still revalidates it atomically. Prefer it when its verified_advantage_kind preserves or completes the current or next attack route, including completing an Active attack cost before an independent Bench evolve/develop action.
@@ -131,26 +184,32 @@ Information actions are checkpoints. In a typed macro, route:information, route:
 Public-discard recovery is deterministic and may remain inside the current graph as route:recover. Hidden-deck trainer tutoring is route:tutor and is an information checkpoint. When the supplied Gardevoir capability context shows that an HP-expansion tool is the missing public final-prize scaler, preserve recover -> evolve the Embrace engine -> tutor -> tool -> repeated Embrace -> KO, rather than collapsing directly into a low-damage attack.
 For Noctowl/Jewel Seeker routes, plan trainer pairs that jointly complete the attack route; do not rank each trainer independently.
 Before any attachment, acceleration, attack, or end-turn commitment, obey turn_completion_contract. If must_review_before_terminal=true, choose the supplied recommended productive candidate first; its priority is the certified executable order, not a suggestion. Reobserve after every prefix. This may form a same-turn chain such as bench-capacity Stadium -> search-engine root/evolution -> Noctowl pair search -> energy-engine bench/ability. Do not jump to a lower-priority setup action or attack merely because it is legal. ko_available=true permits immediate attack only when post_attack_continuity.floor_met=true, win_now_override=true, or no certified safe prefix is available. Once that gate is closed, stop optional churn and pay exactly minimum_lethal_units when the interaction permits it.
-The root must bind an exact current action with mode select_candidate and a supplied candidate_id, or use propose_typed_route with a supplied first_candidate_id plus 2-4 supplied macro route IDs. Never use follow_route at the root. propose_typed_route is root-only: every later route node must use follow_route or select_candidate, never propose_typed_route.
+The root must bind an exact current action from the supplied model-selectable frontier with mode select_candidate and a candidate_id listed in allowed_candidate_ids, or use propose_typed_route with a first_candidate_id listed in allowed_candidate_ids plus 2-4 supplied macro route IDs. Candidates omitted from this frontier have already failed the host's exact runtime decision-right check and cannot be selected. Never use follow_route at the root. propose_typed_route is root-only: every later route node must use follow_route or select_candidate, never propose_typed_route.
 For the root, copy candidate_id and route_id from the same frontier entry as one indivisible pair. Do not use a future macro route as the root route_id.
 Use only allowed_follow_route_ids for later macro_actions and follow_route nodes. Use follow_route only after checkpoints, where the engine will bind the best legal exact candidate of that macro intent after new information.
 When a current line needs two or more predictable main actions, prefer propose_typed_route so the local execution cursor can continue it without another model call.
 Define compact typed interaction policies for route-critical searches, energy choices, gust/pivot targets, or assignments. Reference them by stable step id, ui:<ui_mode>, or default.
 Every node_id must be non-empty and unique. Use node:root for an initial graph and node:delta_root for a compact revision. Use distinct branch node IDs. The current request's limits.max_policy_nodes is the absolute node maximum, not a target; never exceed it. This value is always at most 8.
 If you emit more than the root, connect the root to the next checkpoint or route with next_node_id. Connect every emitted node from the root through next_node_id, checkpoint branches, or otherwise. A route followed by a checkpoint must name that checkpoint in next_node_id. Never emit disconnected planning nodes.
-Checkpoint branches use when_all with fact leaf paths present in facts and operators ==, !=, >, >=, <, <=, in, not_in, or exists; every checkpoint must include otherwise. No cycles: every next_node_id and checkpoint branch must point only to a node listed later in nodes. Stay within limits.max_policy_nodes. Do not emit placeholder or duplicate nodes.
+Checkpoint branches use when_all with exact fact leaf paths present inside the top-level facts object and operators ==, !=, >, >=, <, <=, in, not_in, or exists; write resources.hand_size, never facts.resources.hand_size. Never use frontier, conditional_suffix, capability_context, or route annotations as guard fact paths. Every branch targeting a follow_route node MUST include both route.available.<route suffix> == true and route.model_switch_allowed.<route suffix> == true for that exact route. The suffix never includes the route: prefix: for route:information the exact facts are route.available.information and route.model_switch_allowed.information, never route.available.route:information. Availability proves that a legal candidate exists; model_switch_allowed proves that the same runtime safety and switch-margin gate will authorize the branch after reobservation. The validator rejects either missing proof. This leaves room for at most one additional strategic clause under the three-guard cap. When more than one useful follow-up may remain, emit up to four ordered alternative branches with their own exact availability and switch guards so the graph does not replan merely because its first preferred macro intent disappeared or became unsafe. Every checkpoint must include otherwise. No cycles: every next_node_id and checkpoint branch must point only to a node listed later in nodes. Reserved otherwise values are never branch next_node_id values: local_best, replan, and rules_fallback may appear only in otherwise. Every branch next_node_id must exactly match an emitted later node_id; do not reference node:terminal unless that terminal node is present, and never invent node:replan. Stay within limits.max_policy_nodes. Do not emit placeholder or duplicate nodes.
 The required JSON shape is {"policy":{"root_node_id":"...","nodes":[...]}}. A route node has node_id, kind=route, and route_ref. A checkpoint node has node_id, kind=checkpoint, branches of {when_all:[{fact,op,value}],next_node_id}, and otherwise. A terminal node has node_id and kind=terminal.
+Omit a redundant terminal node after the final useful route: a route with no next_node_id already ends the graph. Emit kind=terminal only when a checkpoint branch must explicitly end without another route.
 For select_candidate, route_ref has mode, route_id, and candidate_id. For propose_typed_route it has mode, route_id, first_candidate_id, and macro_actions. Later nodes may use follow_route with mode and route_id.
 For propose_typed_route, route_id and macro_actions[0] must both exactly equal the frontier route_id owned by first_candidate_id. macro_actions must contain exactly 2, 3, or 4 items; if the plan is longer, express later choices with checkpoint and follow_route nodes. Every macro_actions item is a plain JSON route-id string, never an object.
 Omit agenda_patch and omit empty policy fields. The client deterministically defaults reservations=[], interaction_policy_refs={}, interaction_policies=[], and replan_if=[] before validation. If an interaction policy is needed, include policy_id, rank_by, desired_roles, must_preserve, energy_symbols, min_select, max_select, allow_explicit_empty, and tie_breakers.
 Interaction rank_by values: route_completion, energy_fit, prize_value, knockout_efficiency, attacker_readiness, survival, resource_preservation, stable_id. desired_roles values: attacker, alternate_attacker, finisher, next_attacker, draw_engine, search_engine, recovery, evolution_piece, energy_source, energy_access, typed_energy_access, energy_accelerator, supporter_acceleration, energy_mover, pivot, gust, hand_disruption, lock, stadium, pokemon_search, bench_protection, resource_recycler. Energy symbols: G,W,L,P,F,D,M,C. Tie breakers: stable_id, lower_resource_cost, higher_survival, higher_prize. Optional target_position: any, own_active, own_bench, opponent_active, opponent_bench; optional prize_goal: none, shortest_safe_path, highest_prize, engine_ko, spread_closeout. Checkpoint otherwise is a node_id, local_best, replan, or rules_fallback.
 In sparse frontier outcomes and capability annotations, an omitted scalar means false, 0, or empty. capability_context applies to every frontier candidate; a candidate's module_annotations are only its exact overrides.
 Keep the answer short. Do not explain the choice and do not repeat request data.
-Output minified JSON on one line. Always prefer a syntactically complete one-node response over a larger graph that could be truncated; add nodes only when the complete JSON will fit.
+Output minified JSON on one line. Always prefer syntactically complete JSON. If the full useful line may exceed the budget, preserve its root plus earliest material checkpoint in a bounded graph and use otherwise=replan; collapse to one node only when no certified productive continuation would be lost.
+When no certified continuation exists, prefer a complete one-node response over any truncated larger graph.
 Return JSON only."""
 	var full_payload := {
 		"transport_contract_version": COMPACT_WIRE_CONTRACT_VERSION,
 		"request_kind": request_kind,
+		"request_intent": request_envelope.get(
+			"request_intent",
+			"strategic_arbitration"
+		),
 		"limits": request_envelope.get("limits", {}),
 		"lifecycle": request_envelope.get("lifecycle", {}),
 		"profile": request_envelope.get("profile", {}),
@@ -172,6 +231,10 @@ Return JSON only."""
 	var delta_payload := {
 		"transport_contract_version": COMPACT_WIRE_CONTRACT_VERSION,
 		"request_kind": request_kind,
+		"request_intent": request_envelope.get(
+			"request_intent",
+			"checkpoint_replan"
+		),
 		"limits": request_envelope.get("limits", {}),
 		"lifecycle": request_envelope.get("lifecycle", {}),
 		"profile": request_envelope.get("profile", {}),
