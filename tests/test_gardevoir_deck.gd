@@ -604,6 +604,34 @@ func test_drifloon_balloon_bomb_damage_by_counters() -> String:
 	])
 
 
+func test_munkidori_can_move_from_live_charmed_drifloon_above_base_hp_damage() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var drifloon := _make_slot(_make_basic_pokemon_data("飘飘球", "P", 70), 0)
+	drifloon.attached_tool = CardInstance.create(
+		_make_trainer_data("勇气护符", "Tool", "d1c2f018a644e662f2b6895fdfc29281"),
+		0
+	)
+	drifloon.damage_counters = 80
+	player.active_pokemon = drifloon
+	player.bench.clear()
+
+	var munkidori_cd := _make_basic_pokemon_data("未使用的愿增猿", "P", 110)
+	munkidori_cd.abilities = [{"name": "亢奋脑力"}]
+	var munkidori := _make_slot(munkidori_cd, 0)
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_data("基本恶能量", "D"), 0))
+	player.bench.append(munkidori)
+
+	var effect := AbilityMoveDamageCountersToOpponent.new(3)
+	var effective_remaining_hp := EffectProcessor.new().get_effective_remaining_hp(drifloon, state)
+
+	return run_checks([
+		assert_eq(effective_remaining_hp, 40, "带勇气护符的飘飘球受到80伤害后应仍有40HP"),
+		assert_true(effect.can_use_ability(munkidori, state), "未使用的愿增猿应能从仍存活的飘飘球移动伤害指示物"),
+		assert_true(not effect.get_interaction_steps(munkidori.get_top_card(), state).is_empty(), "亢奋脑力应列出仍存活的勇气护符飘飘球"),
+	])
+
+
 func test_drifloon_balloon_bomb_e2e_deals_180_not_210() -> String:
 	var drifloon_cd: CardData = CardDatabase.get_card("CSV2C", "060")
 	if drifloon_cd == null:
