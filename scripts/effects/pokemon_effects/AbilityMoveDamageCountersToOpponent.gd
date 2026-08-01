@@ -27,14 +27,14 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var player: PlayerState = state.players[top.owner_index]
 	var has_source := false
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if _is_live_slot(slot) and slot.damage_counters >= 10:
+		if _is_live_slot(slot, state) and slot.damage_counters >= 10:
 			has_source = true
 			break
 	if not has_source:
 		return false
 	var opponent: PlayerState = state.players[1 - top.owner_index]
 	for slot: PokemonSlot in opponent.get_all_pokemon():
-		if _is_live_slot(slot):
+		if _is_live_slot(slot, state):
 			return true
 	return false
 
@@ -44,7 +44,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var source_items: Array = []
 	var source_labels: Array[String] = []
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if _is_live_slot(slot) and slot.damage_counters >= 10:
+		if _is_live_slot(slot, state) and slot.damage_counters >= 10:
 			source_items.append(slot)
 			source_labels.append("%s (%d伤害)" % [slot.get_pokemon_name(), slot.damage_counters])
 	if source_items.is_empty():
@@ -73,7 +73,7 @@ func get_followup_interaction_steps(
 	var target_items: Array = []
 	var target_labels: Array[String] = []
 	for slot: PokemonSlot in opponent.get_all_pokemon():
-		if _is_live_slot(slot):
+		if _is_live_slot(slot, state):
 			target_items.append(slot)
 			target_labels.append(slot.get_pokemon_name())
 	if target_items.is_empty():
@@ -158,7 +158,7 @@ func _resolve_transfer(pokemon: PokemonSlot, targets: Array, state: GameState) -
 		var count_raw: Array = ctx.get("counter_count", [])
 		if not count_raw.is_empty():
 			count = int(count_raw[0])
-	if target == null or target not in opponent.get_all_pokemon() or not _is_live_slot(target):
+	if target == null or target not in opponent.get_all_pokemon() or not _is_live_slot(target, state):
 		return {"valid": false, "reason": "damage target is missing or no longer legal"}
 
 	var available_counters: int = mini(max_counters, source.damage_counters / 10)
@@ -180,7 +180,7 @@ func _selected_source_from_context(card: CardInstance, state: GameState, ctx: Di
 	if source_raw.is_empty() or not (source_raw[0] is PokemonSlot):
 		return null
 	var source: PokemonSlot = source_raw[0]
-	if source in player.get_all_pokemon() and _is_live_slot(source) and source.damage_counters >= 10:
+	if source in player.get_all_pokemon() and _is_live_slot(source, state) and source.damage_counters >= 10:
 		return source
 	return null
 
@@ -193,8 +193,10 @@ func _selected_counter_assignment(ctx: Dictionary) -> Dictionary:
 	return first.duplicate(false) if first is Dictionary else {}
 
 
-func _is_live_slot(slot: PokemonSlot) -> bool:
-	return slot != null and slot.get_top_card() != null and slot.get_remaining_hp() > 0
+func _is_live_slot(slot: PokemonSlot, state: GameState) -> bool:
+	if slot == null or slot.get_top_card() == null:
+		return false
+	return EffectProcessor.new().get_effective_remaining_hp(slot, state) > 0
 
 
 func _has_dark_energy(pokemon: PokemonSlot, state: GameState = null) -> bool:
