@@ -369,14 +369,10 @@ func _do_mulligan(player_index: int) -> void:
 ## 解决Mulligan后的选择（对手是否额外抽牌）
 func resolve_mulligan_choice(beneficiary: int, draw_extra: bool) -> void:
 	if draw_extra:
-		var deck_size_before_draw: int = game_state.players[beneficiary].deck.size()
 		var drawn: Array[CardInstance] = game_state.players[beneficiary].draw_cards(1)
 		if not drawn.is_empty():
 			_log_action(GameAction.ActionType.DRAW_CARD, beneficiary,
 				{"count": 1}, "玩家%d因对手重抽额外抽1张" % (beneficiary + 1))
-		if _did_draw_request_deck_out(1, deck_size_before_draw):
-			_trigger_deck_out_loss(beneficiary)
-			return
 
 	# 检查重抽后是否还需要Mulligan
 	var mulligan_player: int = 1 - beneficiary
@@ -565,7 +561,7 @@ func _start_turn() -> void:
 		_log_action(GameAction.ActionType.DRAW_CARD, cp,
 			{"count": drawn.size(), "turn_start": true, "draw_source": "turn_start"}, "玩家%d抽%d张牌" % [cp + 1, drawn.size()])
 
-	if _did_draw_request_deck_out(1, deck_size_before_draw):
+	if _did_turn_start_draw_fail(deck_size_before_draw):
 		_trigger_deck_out_loss(cp)
 		return
 
@@ -1635,13 +1631,10 @@ func draw_card(player_index: int, count: int = 1) -> Array[CardInstance]:
 		return []
 	if player_index < 0 or player_index >= game_state.players.size():
 		return []
-	var deck_size_before_draw: int = game_state.players[player_index].deck.size()
 	var drawn: Array[CardInstance] = game_state.players[player_index].draw_cards(count)
 	if not drawn.is_empty():
 		_log_action(GameAction.ActionType.DRAW_CARD, player_index,
 			{"count": drawn.size()}, "玩家%d抽%d张牌" % [player_index + 1, drawn.size()])
-	if _did_draw_request_deck_out(count, deck_size_before_draw):
-		_trigger_deck_out_loss(player_index)
 	return drawn
 
 
@@ -1655,7 +1648,6 @@ func draw_cards_for_effect(
 		return []
 	if player_index < 0 or player_index >= game_state.players.size():
 		return []
-	var deck_size_before_draw: int = game_state.players[player_index].deck.size()
 	var drawn: Array[CardInstance] = game_state.players[player_index].draw_cards(count)
 	if not drawn.is_empty():
 		_log_action(
@@ -1670,8 +1662,6 @@ func draw_cards_for_effect(
 			},
 			"玩家%d从牌库抽了%d张牌" % [player_index + 1, drawn.size()]
 		)
-	if _did_draw_request_deck_out(count, deck_size_before_draw):
-		_trigger_deck_out_loss(player_index)
 	return drawn
 
 
@@ -3011,8 +3001,8 @@ func _check_win_condition() -> int:
 	return -1
 
 
-func _did_draw_request_deck_out(requested_count: int, deck_size_before_draw: int) -> bool:
-	return requested_count > 0 and requested_count > deck_size_before_draw
+func _did_turn_start_draw_fail(deck_size_before_draw: int) -> bool:
+	return deck_size_before_draw <= 0
 
 
 func _trigger_deck_out_loss(player_index: int) -> void:
