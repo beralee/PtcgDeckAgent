@@ -368,6 +368,48 @@ func test_first_player_first_turn_draws_but_keeps_first_turn_restrictions() -> S
 	])
 
 
+func test_turn_start_with_empty_deck_loses_player() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	gsm._start_turn()
+
+	return run_checks([
+		assert_true(gsm.game_state.is_game_over(), "An empty deck should lose when the turn-start draw cannot be made"),
+		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win after the failed turn-start draw"),
+		assert_eq(gsm.game_state.win_reason, "deck_out", "The failed turn-start draw should use the deck_out reason"),
+	])
+
+
+func test_mulligan_bonus_draw_from_empty_deck_does_not_lose_player() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	gsm.game_state.players[1].hand.append(
+		CardInstance.create(_make_basic_pokemon_card_data("Mulligan Setup Basic"), 1)
+	)
+
+	gsm.resolve_mulligan_choice(0, true)
+
+	return run_checks([
+		assert_false(gsm.game_state.is_game_over(), "A failed optional Mulligan bonus draw must not cause a deck-out loss"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 0, "An empty deck should simply provide no Mulligan bonus card"),
+	])
+
+
 func test_professors_research_play_trainer_logs_drawn_cards_for_reveal_animation() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -421,7 +463,7 @@ func test_professors_research_play_trainer_logs_drawn_cards_for_reveal_animation
 	])
 
 
-func test_professors_research_overdraw_ends_before_play_trainer_log() -> String:
+func test_professors_research_overdraw_draws_remaining_cards_and_continues() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
 	gsm.game_state.current_player_index = 0
@@ -446,17 +488,16 @@ func test_professors_research_overdraw_ends_before_play_trainer_log() -> String:
 		gsm.game_state.players[0].deck.append(CardInstance.create(_make_basic_pokemon_card_data("Short Research Draw %d" % [draw_index + 1]), 0))
 
 	var played: bool = gsm.play_trainer(0, professor, [])
-	var last_action: GameAction = gsm.action_log.back() if not gsm.action_log.is_empty() else null
+	var draw_action := _get_last_action_of_type(gsm.action_log, GameAction.ActionType.DRAW_CARD)
 	var play_action := _get_last_action_of_type(gsm.action_log, GameAction.ActionType.PLAY_TRAINER)
 
 	return run_checks([
-		assert_true(played, "Professor's Research should resolve into a terminal deck-out state"),
-		assert_true(gsm.game_state.is_game_over(), "Professor's Research overdraw should end the game immediately"),
-		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win after the Research overdraw"),
-		assert_eq(gsm.game_state.win_reason, "deck_out", "The terminal reason should be deck_out"),
-		assert_not_null(last_action, "A GAME_END action should be logged"),
-		assert_eq(last_action.action_type, GameAction.ActionType.GAME_END, "Game end should be the final log entry after overdraw"),
-		assert_null(play_action, "The outer trainer action should not be logged after terminal overdraw"),
+		assert_true(played, "Professor's Research should resolve successfully with fewer than seven cards remaining"),
+		assert_false(gsm.game_state.is_game_over(), "Effect overdraw must not end the game"),
+		assert_eq(gsm.game_state.players[0].deck.size(), 0, "Research should draw every remaining deck card"),
+		assert_not_null(draw_action, "The partial Research draw should still be logged"),
+		assert_eq(draw_action.data.get("count", 0), 6, "Research should log the six cards actually drawn"),
+		assert_not_null(play_action, "The completed trainer play should be logged after the partial draw"),
 	])
 
 
@@ -688,7 +729,7 @@ func test_ultra_ball_rejects_missing_discard_context_without_mutating_zones() ->
 	])
 
 
-func test_draw_cards_for_effect_overdraw_immediately_loses_player() -> String:
+func test_draw_cards_for_effect_overdraw_draws_remaining_cards_and_continues() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
 	gsm.game_state.current_player_index = 0
@@ -710,15 +751,13 @@ func test_draw_cards_for_effect_overdraw_immediately_loses_player() -> String:
 	var drawn: Array[CardInstance] = gsm.draw_cards_for_effect(0, 2, source_card, "trainer")
 
 	return run_checks([
-		assert_eq(drawn.size(), 1, "The available card should still be drawn before the failed draw attempt"),
+		assert_eq(drawn.size(), 1, "The effect should draw the one available card"),
 		assert_eq(gsm.game_state.players[0].hand.size(), 1, "The drawn card should move to hand"),
-		assert_true(gsm.game_state.is_game_over(), "Overdrawing from deck should end the game immediately"),
-		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win when player 0 overdraws"),
-		assert_eq(gsm.game_state.win_reason, "deck_out", "Immediate overdraw losses should use the deck_out reason"),
+		assert_false(gsm.game_state.is_game_over(), "Drawing more than remains through an effect must not end the game"),
 	])
 
 
-func test_draw_cards_for_effect_exact_empty_deck_waits_for_next_draw_attempt() -> String:
+func test_draw_cards_for_effect_from_empty_deck_draws_zero_and_continues() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
 	gsm.game_state.current_player_index = 0
@@ -739,11 +778,27 @@ func test_draw_cards_for_effect_exact_empty_deck_waits_for_next_draw_attempt() -
 
 	return run_checks([
 		assert_eq(first_drawn.size(), 1, "Drawing exactly the last deck card should succeed"),
-		assert_true(still_playing, "A deck at zero should not lose until the next draw attempt"),
-		assert_eq(second_drawn.size(), 0, "The next draw attempt should find no cards"),
-		assert_true(gsm.game_state.is_game_over(), "Drawing past zero should end the game"),
-		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win after the failed draw attempt"),
-		assert_eq(gsm.game_state.win_reason, "deck_out", "The failed draw attempt should use the deck_out reason"),
+		assert_true(still_playing, "Drawing the final card through an effect should not end the game"),
+		assert_eq(second_drawn.size(), 0, "A later effect draw should find no cards"),
+		assert_false(gsm.game_state.is_game_over(), "An effect draw from an empty deck must not end the game"),
+	])
+
+
+func test_generic_draw_card_from_empty_deck_draws_zero_and_continues() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var drawn: Array[CardInstance] = gsm.draw_card(0, 1)
+
+	return run_checks([
+		assert_eq(drawn.size(), 0, "A generic effect draw should find no cards in an empty deck"),
+		assert_false(gsm.game_state.is_game_over(), "Only the mandatory turn-start draw can cause a deck-out loss"),
 	])
 
 
@@ -3802,4 +3857,3 @@ func _get_actions_of_type(action_log: Array[GameAction], action_type: GameAction
 		if action != null and action.action_type == action_type:
 			matches.append(action)
 	return matches
-
