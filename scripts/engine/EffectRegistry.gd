@@ -10,6 +10,10 @@ static var _effect_script_cache: Dictionary = {}
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 const CSV10CEffects = preload("res://scripts/effects/CSV10CEffects.gd")
 const CSV10C101To200Registry = preload("res://scripts/engine/CSV10C101To200Registry.gd")
+const AbilityDustFieldEffect = preload("res://scripts/effects/pokemon_effects/AbilityDustField.gd")
+const AttackIgnoreResistanceEffect = preload("res://scripts/effects/pokemon_effects/AttackIgnoreResistance.gd")
+const AbilityDrilburDigDigDigEffect = preload("res://scripts/effects/pokemon_effects/AbilityDrilburDigDigDig.gd")
+const TcgMikAuditBatch20260729Effects = preload("res://scripts/effects/pokemon_effects/TcgMikAuditBatch20260729Effects.gd")
 
 const CSV9C_EFFECT_ID_ALIASES = {
 	"6b6641a24bd64c822e7ca22834562305": "80861b2bfa9967d1e28a97ee4d1f1316",
@@ -495,6 +499,47 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"6c4382c1f802fa873ec01976306d44be": # CSVL2C_041 Glimmet
+			processor.replace_attack_effects(effect_id, [
+				CSV9CEffects.AttackEvolveFromDeck.new(0),
+			])
+		"8d661d82a0867cc1d450e0eb137be5ee": # CSV3C_079 Glimmora
+			processor.register_effect(
+				effect_id,
+				TcgMikAuditBatch20260729Effects.AbilityCrumblingCrystal.new(processor.coin_flipper)
+			)
+			processor.replace_attack_effects(effect_id, [
+				CSV10C101To200Registry.E.AttackApplySeverePoison.new(60, 0),
+			])
+		"ea9a967a89789870e4495d6b26f9c8a2": # CSV5C_073 Glimmora ex
+			processor.register_effect(effect_id, AbilityDustFieldEffect.new())
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("poisoned", false, 0))
+		"7c840e8bed0d40dba697cfd3faeed75d": # CSV9.5C_094 Drilbur
+			processor.register_effect(effect_id, AbilityDrilburDigDigDigEffect.new())
+		"eae2a9a7d9e741b30837cc8e41c58780": # CSV9C_084 Azelf
+			processor.replace_attack_effects(effect_id, [
+				TcgMikAuditBatch20260729Effects.AttackOpponentFieldDamageCounterMultiplier.new(10, 0),
+			])
+		"6e1f0a70900ecdcee11e3a3b1c10e302": # CSV8C_130 Scolipede
+			processor.replace_attack_effects(effect_id, [
+				TcgMikAuditBatch20260729Effects.AttackSetDefenderRemainingHP.new(10, 0),
+			])
+		"9ed8dedf70df1133f656418c3a41cb0d": # CSV9C_082 Uxie
+			processor.replace_attack_effects(effect_id, [
+				TcgMikAuditBatch20260729Effects.AttackDamageCountersOnAllOpponentPokemon.new(2, 0),
+			])
+		"645a088d30f06cad09e9f187d68e8235": # 151C_093 Haunter
+			processor.register_effect(
+				effect_id,
+				TcgMikAuditBatch20260729Effects.AbilityReturnOpponentDiscardSupporter.new()
+			)
+		"ca20baa5307608ad3500c000630bc417": # 151C_094 Gengar
+			processor.replace_attack_effects(effect_id, [
+				TcgMikAuditBatch20260729Effects.AttackOpponentHandTrainerCountDamageReveal.new(50, 50, 0),
+				TcgMikAuditBatch20260729Effects.AttackDistributedBenchCountersExact.new(30, 1),
+			])
+		"af4015d8313faa7fe639023c5add6a38": # CSV9C_110 Glimmet
+			processor.register_attack_effect(effect_id, AttackIgnoreResistanceEffect.new(0))
 		"12c9416c64d1a8cfbbf0a3000a9f3d50": # CSV6C_065 Scream Tail
 			# Imported Limitless decks and old caches can retain the English
 			# attack name "Roaring Scream". Bind this identity-stable effect by

@@ -46,8 +46,8 @@ const RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS := [
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
 const EXPECTED_APP_VERSION := "0.5.2"
 const EXPECTED_BUILD_NUMBER := "52"
-const EXPECTED_WEB_VERSION := "0.5.2.1"
-const EXPECTED_WEB_BUILD_NUMBER := "521"
+const EXPECTED_WEB_VERSION := "0.5.2.6"
+const EXPECTED_WEB_BUILD_NUMBER := "526"
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 
@@ -247,6 +247,31 @@ func test_web_custom_shell_has_click_start_and_ios_layout_guards() -> String:
 		assert_true(shell_text.contains("calc(100% - var(--ptcg-safe-top) - var(--ptcg-safe-bottom))"), "Game canvas height should exclude both vertical safe areas"),
 		assert_true(shell_text.contains("touch-action: none"), "Custom shell should prevent browser gesture interference"),
 		assert_true(shell_text.contains("-webkit-user-select: none"), "Custom shell should prevent long-press text selection"),
+	])
+
+
+func test_web_custom_shell_uses_silent_audio_for_non_threaded_lan_http() -> String:
+	var shell_text := FileAccess.get_file_as_string(WEB_CUSTOM_SHELL_PATH)
+
+	return run_checks([
+		assert_true(
+			shell_text.contains("!GODOT_THREADS_ENABLED")
+				and shell_text.contains("!window.isSecureContext"),
+			"LAN HTTP compatibility must be limited to non-threaded insecure origins"
+		),
+		assert_true(
+			shell_text.contains("window.AudioContext = undefined")
+				and shell_text.contains("window.webkitAudioContext = undefined"),
+			"LAN HTTP mode should disable Web Audio before Godot can call AudioWorklet.addModule"
+		),
+		assert_true(
+			shell_text.contains("!feature.startsWith('Secure Context')"),
+			"LAN HTTP mode should remove only Godot's Secure Context startup blocker"
+		),
+		assert_true(
+			shell_text.contains("Engine.getMissingFeatures"),
+			"Every unrelated Godot Web capability check must remain active"
+		),
 	])
 
 

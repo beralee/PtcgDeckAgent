@@ -7,6 +7,9 @@ const DynamicAttackCostScript = preload(
 const EnergyBurstScript = preload(
 	"res://scripts/ai/v18_cpg/modules/V18CPGEnergyBurst.gd"
 )
+const RetreatMobilitySolverScript = preload(
+	"res://scripts/ai/v18_cpg/planning/V18CPGRetreatMobilitySolver.gd"
+)
 
 
 func build(observation: Dictionary, current_route_id: String = "", profile: Dictionary = {}) -> Dictionary:
@@ -47,6 +50,11 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 		)
 	var own: Dictionary = observation.get("own", {}) if observation.get("own", {}) is Dictionary else {}
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
+	var bench_count := int(own.get("bench_count", bench.size()))
+	var bench_capacity := int(own.get("bench_capacity", 5))
+	var bench_slots_free := int(
+		own.get("bench_slots_free", maxi(0, bench_capacity - bench_count))
+	)
 	var has_tera := _slot_is_tera(own.get("active", {}))
 	var energy_on_board := _slot_energy_count(own.get("active", {}))
 	var energy_symbols: Dictionary = {}
@@ -63,11 +71,26 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 	var safety: Dictionary = profile.get("safety", {}) if profile.get("safety", {}) is Dictionary else {}
 	var low_deck_threshold := int(safety.get("low_deck_threshold", 8))
 	var opponent: Dictionary = observation.get("opponent", {}) if observation.get("opponent", {}) is Dictionary else {}
+	var opponent_bench: Array = opponent.get("bench", []) \
+		if opponent.get("bench", []) is Array else []
+	var opponent_bench_count := int(
+		opponent.get("bench_count", opponent_bench.size())
+	)
+	var opponent_bench_capacity := int(
+		opponent.get("bench_capacity", 5)
+	)
+	var opponent_bench_slots_free := int(
+		opponent.get(
+			"bench_slots_free",
+			maxi(0, opponent_bench_capacity - opponent_bench_count)
+		)
+	)
 	var own_active: Dictionary = own.get("active", {}) if own.get("active", {}) is Dictionary else {}
 	var opponent_active: Dictionary = opponent.get("active", {}) if opponent.get("active", {}) is Dictionary else {}
 	var prize_swing := int(opponent_active.get("prize_count", 1)) if ko_available else 0
 	var prizes_remaining := int(own.get("prizes_remaining", 0))
 	var dynamic_cost_snapshot := DynamicAttackCostScript.new().public_snapshot(observation)
+	var mobility_snapshot := RetreatMobilitySolverScript.new().solve(observation)
 	var dynamic_active: Dictionary = dynamic_cost_snapshot.get("active", {}) \
 		if dynamic_cost_snapshot.get("active", {}) is Dictionary else {}
 	return {
@@ -88,7 +111,44 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 			"variable_damage_projection": variable_projection,
 		},
 		"board": {
-			"bench_full": bench.size() >= 5,
+			"bench_count": bench_count,
+			"bench_capacity": bench_capacity,
+			"bench_full": bool(
+				own.get("bench_full", bench_count >= bench_capacity)
+			),
+			"bench_overflow_count": int(
+				own.get(
+					"bench_overflow_count",
+					maxi(0, bench_count - bench_capacity)
+				)
+			),
+			"bench_overflow_if_default": int(
+				own.get(
+					"overflow_if_default_capacity",
+					maxi(0, bench_count - 5)
+				)
+			),
+			"bench_capacity_above_default": bool(
+				own.get("capacity_above_default", bench_capacity > 5)
+			),
+			"bench_capacity_below_default": bool(
+				own.get("capacity_below_default", bench_capacity < 5)
+			),
+			"opponent_bench_count": opponent_bench_count,
+			"opponent_bench_capacity": opponent_bench_capacity,
+			"opponent_bench_slots_free": opponent_bench_slots_free,
+			"opponent_bench_full": bool(
+				opponent.get(
+					"bench_full",
+					opponent_bench_count >= opponent_bench_capacity
+				)
+			),
+			"opponent_bench_overflow_if_default": int(
+				opponent.get(
+					"overflow_if_default_capacity",
+					maxi(0, opponent_bench_count - 5)
+				)
+			),
 			"has_tera": has_tera,
 			"own_active_remaining_hp": int(own_active.get("remaining_hp", 0)),
 			"opponent_active_remaining_hp": int(opponent_active.get("remaining_hp", 0)),
@@ -96,9 +156,10 @@ func build(observation: Dictionary, current_route_id: String = "", profile: Dict
 		},
 		"fan_call": {"available": fan_call_available},
 		"information": {"material_action_available": material_information_action},
+		"mobility": mobility_snapshot,
 		"resources": {
 			"deck_low": int(own.get("deck_count", 0)) <= low_deck_threshold,
-			"bench_slots_free": maxi(0, 5 - bench.size()),
+			"bench_slots_free": bench_slots_free,
 			"energy_on_board": energy_on_board,
 			"distinct_energy_symbols": energy_symbols.size(),
 			"hand_size": int(own.get("hand_count", 0)),

@@ -59,8 +59,8 @@ func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 	var settings_personality := settings_scene.get_node_or_null("%PersonalityInput") as LineEdit
 	var settings_save := settings_scene.get_node_or_null("%BtnSave") as Button
 	var settings_form := settings_scene.get_node_or_null("VBoxContainer") as Control
-	var settings_guide := settings_scene.find_child("ZenMuxGuideBody", true, false) as Label
-	var settings_troubleshooting := settings_scene.find_child("ZenMuxTroubleBody", true, false) as Label
+	var settings_guide := settings_scene.find_child("DeepSeekGuideBody", true, false) as Label
+	var settings_troubleshooting := settings_scene.find_child("DeepSeekTroubleBody", true, false) as Label
 	var endpoint_style := settings_endpoint.get_theme_stylebox("normal") as StyleBoxFlat if settings_endpoint != null else null
 	var save_style := settings_save.get_theme_stylebox("normal") as StyleBoxFlat if settings_save != null else null
 
@@ -70,13 +70,13 @@ func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 		assert_true(settings_frame != null and settings_form != null and settings_frame.offset_bottom > settings_form.offset_bottom + 50.0, "AI settings HUD frame should extend below the button row"),
 		assert_true(endpoint_style != null and endpoint_style.bg_color.a < 1.0, "AI settings inputs should use translucent HUD styling"),
 		assert_true(save_style != null and save_style.border_color.a > 0.8, "AI settings buttons should use explicit HUD borders"),
-		assert_eq(settings_endpoint.text if settings_endpoint != null else "", "https://zenmux.ai/api/v1", "AI settings should prefill the ZenMux API address"),
+		assert_eq(settings_endpoint.text if settings_endpoint != null else "", "https://api.deepseek.com", "AI settings should prefill the official DeepSeek API address"),
 		assert_eq(settings_personality.text if settings_personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "AI settings should prefill the default AI personality"),
-		assert_not_null(settings_scene.find_child("BtnUseZenMuxDefault", true, false), "AI settings should expose the original default endpoint helper button"),
-		assert_not_null(settings_scene.find_child("BtnOpenZenMux", true, false), "AI settings should expose the original zenmux.ai link button"),
-		assert_true(settings_guide != null and settings_guide.text.contains("https://zenmux.ai/api/v1"), "AI settings should keep the ZenMux endpoint setup guide"),
+		assert_not_null(settings_scene.find_child("BtnUseDeepSeekDefault", true, false), "AI settings should expose the DeepSeek default endpoint helper button"),
+		assert_not_null(settings_scene.find_child("BtnOpenDeepSeek", true, false), "AI settings should expose the DeepSeek platform link button"),
+		assert_true(settings_guide != null and settings_guide.text.contains("https://api.deepseek.com"), "AI settings should keep the official DeepSeek endpoint setup guide"),
 		assert_true(settings_guide != null and settings_guide.text.contains("测试连接"), "AI settings should guide players to validate the configuration"),
-		assert_true(settings_troubleshooting != null and settings_troubleshooting.text.contains("401"), "AI settings should include common ZenMux failure explanations"),
+		assert_true(settings_troubleshooting != null and settings_troubleshooting.text.contains("401"), "AI settings should include common DeepSeek failure explanations"),
 	])
 
 	replay_scene.queue_free()

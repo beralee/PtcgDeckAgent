@@ -315,11 +315,26 @@ func _snapshot(
 	)
 	var board_has_tera := _board_has_tera(observation, facts)
 	var active_stadium_uid := _card_uid(observation.get("stadium", {}))
-	var expansion_active := board_has_tera \
+	var configured_expansion_active := board_has_tera \
 		and active_stadium_uid in expansion_stadium_uids
-	var bench_capacity := expanded_bench_capacity \
-		if expansion_active else base_bench_capacity
-	var bench_slots_free := maxi(0, bench_capacity - bench.size())
+	var configured_bench_capacity := expanded_bench_capacity \
+		if configured_expansion_active else base_bench_capacity
+	var bench_capacity := int(
+		own.get(
+			"bench_capacity",
+			facts.get(
+				"board",
+				{}
+			).get("bench_capacity", configured_bench_capacity)
+		)
+	)
+	var expansion_active := bench_capacity > base_bench_capacity
+	var bench_slots_free := int(
+		own.get(
+			"bench_slots_free",
+			maxi(0, bench_capacity - bench.size())
+		)
+	)
 	var productive_basic_uids := _upper_strings(
 		config.get("productive_basic_uids", [])
 	)

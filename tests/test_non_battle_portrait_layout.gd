@@ -57,9 +57,17 @@ func _write_battle_review_config_for_test() -> void:
 	if file == null:
 		return
 	file.store_string(JSON.stringify({
-		"endpoint": "https://zenmux.ai/api/v1",
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
 		"api_key": "test-key",
-		"model": "kimi-k3",
+		"model": "deepseek-v4-pro",
+		"provider_configs": {
+			"deepseek": {
+				"endpoint": "https://api.deepseek.com",
+				"api_key": "test-key",
+				"model": "deepseek-v4-pro",
+			},
+		},
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -561,11 +569,15 @@ func test_non_battle_touch_bridge_web_native_line_edit_uses_dom_input_proxy_inst
 	root.add_child(input)
 	NonBattleTouchBridgeScript.configure_native_line_edit(input, LineEdit.KEYBOARD_TYPE_URL)
 
-	var opened := bool(NonBattleTouchBridgeScript.request_test_web_text_input(input))
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = true
+	touch.position = input.get_global_rect().get_center()
+	input.gui_input.emit(touch)
+	var opened := NonBattleTouchBridgeScript.get_test_web_text_input_request_count() == 1
 	var payload := NonBattleTouchBridgeScript.get_test_web_text_input_last_payload()
 	var result := run_checks([
-		assert_true(opened, "Web native-marked LineEdit should be accepted by the DOM input proxy"),
-		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 1, "Web native-marked LineEdit should not bypass the DOM input proxy"),
+		assert_true(opened, "A real Web LineEdit GUI press should open the DOM input proxy"),
+		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 1, "Web native-marked LineEdit should open exactly one DOM input proxy from its own GUI event"),
 		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false)), "The existing native input marker should stay intact for Android/iOS behavior"),
 		assert_eq(str(payload.get("input_type", "")), "url", "URL LineEdit should request a URL DOM input for deck import links"),
 		assert_eq(str(payload.get("text", "")), "https://tcg.mik.moe/decks/list/123", "Web DOM input proxy should receive the current import URL"),
@@ -2209,34 +2221,87 @@ func test_replay_browser_portrait_rows_are_vertical_and_readable() -> String:
 	return result
 
 
-func test_ai_settings_keeps_original_help_buttons_and_copy() -> String:
+func test_ai_settings_keeps_deepseek_help_buttons_and_copy() -> String:
 	var snapshot := _snapshot_battle_review_config_file()
 	_write_battle_review_config_for_test()
 	var scene: Control = SettingsScene.instantiate()
 	scene.call("_ready")
 	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
 	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
-	var default_endpoint_button := scene.find_child("BtnUseZenMuxDefault", true, false)
+	var default_endpoint_button := scene.find_child("BtnUseDeepSeekDefault", true, false)
 	var paste_api_key_button := scene.find_child("BtnPasteApiKey", true, false)
-	var open_zenmux_button := scene.find_child("BtnOpenZenMux", true, false)
+	var open_deepseek_button := scene.find_child("BtnOpenDeepSeek", true, false)
 	var endpoint_hint := scene.find_child("EndpointHint", true, false)
 	var api_key_hint := scene.find_child("ApiKeyHint", true, false)
 	var model_hint := scene.find_child("ModelHint", true, false)
-	var guide_column := scene.find_child("ZenMuxGuideColumn", true, false)
-	var guide_body := scene.find_child("ZenMuxGuideBody", true, false) as Label
-	var trouble_body := scene.find_child("ZenMuxTroubleBody", true, false) as Label
+	var guide_column := scene.find_child("DeepSeekGuideColumn", true, false)
+	var guide_body := scene.find_child("DeepSeekGuideBody", true, false) as Label
+	var trouble_body := scene.find_child("DeepSeekTroubleBody", true, false) as Label
 	var result := run_checks([
-		assert_eq(endpoint.text if endpoint != null else "", "https://zenmux.ai/api/v1", "AI settings should prefill the ZenMux API address"),
+		assert_eq(endpoint.text if endpoint != null else "", "https://api.deepseek.com", "AI settings should prefill the official DeepSeek API address"),
 		assert_eq(personality.text if personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "AI settings should prefill the default AI personality even when saved config is blank"),
 		assert_not_null(default_endpoint_button, "AI settings should keep the original default endpoint helper button"),
 		assert_not_null(paste_api_key_button, "AI settings should expose a one-tap API key paste button"),
-		assert_not_null(open_zenmux_button, "AI settings should keep the original zenmux.ai link button"),
+		assert_not_null(open_deepseek_button, "AI settings should expose the DeepSeek platform link button"),
 		assert_not_null(endpoint_hint, "AI settings should keep endpoint help text for new players"),
 		assert_not_null(api_key_hint, "AI settings should keep API key help text for new players"),
 		assert_not_null(model_hint, "AI settings should keep model help text for new players"),
 		assert_not_null(guide_column, "AI settings should keep the setup guide column"),
-		assert_true(guide_body != null and guide_body.text.contains("API 地址保持 https://zenmux.ai/api/v1"), "AI settings guide should keep the original endpoint instruction"),
+		assert_true(guide_body != null and guide_body.text.contains("API 地址保持 https://api.deepseek.com"), "AI settings guide should explain the official DeepSeek endpoint"),
 		assert_true(trouble_body != null and trouble_body.text.contains("401"), "AI settings troubleshooting copy should keep common auth failure guidance"),
+	])
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_ai_settings_defaults_to_direct_deepseek_without_zenmux_tab() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	var file := FileAccess.open(GameManager.get_battle_review_api_config_path(), FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify({
+			"provider": "zenmux",
+			"endpoint": "https://zenmux.ai/api/v1",
+			"api_key": "legacy-zenmux-key",
+			"model": "kimi-k3",
+			"provider_configs": {
+				"zenmux": {
+					"endpoint": "https://zenmux.ai/api/v1",
+					"api_key": "legacy-zenmux-key",
+					"model": "kimi-k3",
+				},
+				"deepseek": {
+					"endpoint": "https://api.deepseek.com",
+					"api_key": "direct-deepseek-key",
+					"model": "deepseek-v4-pro",
+				},
+			},
+			"timeout_seconds": 60.0,
+			"ai_personality": GameManager.DEFAULT_AI_PERSONALITY,
+		}, "\t"))
+		file.close()
+	var scene: Control = SettingsScene.instantiate()
+	scene.call("_ready")
+	var zenmux_button := scene.find_child("ProviderZenMuxButton", true, false) as Button
+	var deepseek_button := scene.find_child("ProviderDeepSeekButton", true, false) as Button
+	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
+	var model := scene.find_child("ModelOption", true, false) as OptionButton
+	var model_ids := PackedStringArray()
+	if model != null:
+		for index: int in model.get_item_count():
+			model_ids.append(str(model.get_item_metadata(index)))
+	var selected_model := str(model.get_item_metadata(model.selected)) if model != null and model.selected >= 0 else ""
+	scene.call("_switch_provider", "zenmux")
+	var result := run_checks([
+		assert_null(zenmux_button, "AI settings should remove the unreachable ZenMux tab"),
+		assert_not_null(deepseek_button, "AI settings should keep the direct DeepSeek tab"),
+		assert_true(deepseek_button != null and deepseek_button.button_pressed, "DeepSeek direct should be selected by default"),
+		assert_eq(str(scene.get("_active_provider")), "deepseek", "The settings provider must stay on official DeepSeek even when legacy config selected ZenMux"),
+		assert_eq(endpoint.text if endpoint != null else "", "https://api.deepseek.com", "The settings form should load the official DeepSeek endpoint"),
+		assert_eq(api_key.text if api_key != null else "", "direct-deepseek-key", "The settings form should load the saved DeepSeek credential instead of the legacy ZenMux key"),
+		assert_eq(",".join(model_ids), "deepseek-v4-flash,deepseek-v4-pro", "Only official DeepSeek models should remain selectable"),
+		assert_eq(selected_model, "deepseek-v4-pro", "The saved direct DeepSeek model should remain selected"),
 	])
 	_dispose_scene(scene)
 	_restore_battle_review_config_file(snapshot)
@@ -2255,7 +2320,7 @@ func test_ai_settings_fresh_install_and_null_config_use_defaults() -> String:
 	var missing_model := missing_scene.find_child("ModelOption", true, false) as OptionButton
 	var missing_model_id := str(missing_model.get_item_metadata(missing_model.selected)) if missing_model != null and missing_model.selected >= 0 else ""
 	var missing_result := run_checks([
-		assert_eq(missing_endpoint.text if missing_endpoint != null else "", "https://zenmux.ai/api/v1", "Fresh install AI settings should prefill the ZenMux API address"),
+		assert_eq(missing_endpoint.text if missing_endpoint != null else "", "https://api.deepseek.com", "Fresh install AI settings should prefill the official DeepSeek API address"),
 		assert_eq(missing_model_id, "deepseek-v4-flash", "Fresh install AI settings should select DeepSeek V4 Flash as the initial large model"),
 		assert_eq(missing_personality.text if missing_personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "Fresh install AI settings should prefill the default AI personality"),
 		assert_false((missing_endpoint.text if missing_endpoint != null else "").to_lower().contains("instance is null"), "Fresh install endpoint should never show a null-instance diagnostic"),
@@ -2285,7 +2350,7 @@ func test_ai_settings_fresh_install_and_null_config_use_defaults() -> String:
 	var null_model := null_scene.find_child("ModelOption", true, false) as OptionButton
 	var null_model_id := str(null_model.get_item_metadata(null_model.selected)) if null_model != null and null_model.selected >= 0 else ""
 	var result := run_checks([
-		assert_eq(null_endpoint.text if null_endpoint != null else "", "https://zenmux.ai/api/v1", "Null endpoint config should fall back to the ZenMux API address"),
+		assert_eq(null_endpoint.text if null_endpoint != null else "", "https://api.deepseek.com", "Null endpoint config should fall back to the official DeepSeek API address"),
 		assert_eq(null_model_id, "deepseek-v4-flash", "Null model config should select DeepSeek V4 Flash as the initial large model"),
 		assert_eq(null_personality.text if null_personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "Null personality config should fall back to the default AI personality"),
 		assert_false((null_endpoint.text if null_endpoint != null else "").to_lower().contains("instance is null"), "Null endpoint config should never leak a null-instance diagnostic"),
@@ -2296,7 +2361,7 @@ func test_ai_settings_fresh_install_and_null_config_use_defaults() -> String:
 	return result
 
 
-func test_ai_settings_switches_and_saves_independent_zenmux_and_deepseek_profiles() -> String:
+func test_ai_settings_saves_only_the_direct_deepseek_selection() -> String:
 	var snapshot := _snapshot_battle_review_config_file()
 	_write_battle_review_config_for_test()
 	var scene: Control = SettingsScene.instantiate()
@@ -2306,58 +2371,39 @@ func test_ai_settings_switches_and_saves_independent_zenmux_and_deepseek_profile
 	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
 	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
 	var model := scene.find_child("ModelOption", true, false) as OptionButton
-	if api_key != null:
-		api_key.text = "zenmux-profile-key"
-	scene.call("_switch_provider", "deepseek")
 	var deepseek_model_ids := PackedStringArray()
 	if model != null:
 		for index: int in model.get_item_count():
 			deepseek_model_ids.append(str(model.get_item_metadata(index)))
-	var switched_endpoint := endpoint.text if endpoint != null else ""
-	var switched_api_key := api_key.text if api_key != null else "missing"
 	if api_key != null:
 		api_key.text = "deepseek-profile-key"
 	scene.call("_select_model", "deepseek-v4-pro")
 	scene.call("_switch_provider", "zenmux")
-	var restored_zenmux_key := api_key.text if api_key != null else ""
-	scene.call("_switch_provider", "deepseek")
+	var provider_after_legacy_switch := str(scene.get("_active_provider"))
 	scene.call("_on_save")
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(GameManager.get_battle_review_api_config_path()))
 	var saved := parsed as Dictionary if parsed is Dictionary else {}
 	var profiles := saved.get("provider_configs", {}) as Dictionary
-	var saved_zenmux := profiles.get("zenmux", {}) as Dictionary
 	var saved_deepseek := profiles.get("deepseek", {}) as Dictionary
-	var provider_parent := deepseek_button.get_parent() if deepseek_button != null else null
 	var result := run_checks([
-		assert_not_null(zenmux_button, "AI settings should expose the backward-compatible ZenMux provider button"),
+		assert_null(zenmux_button, "AI settings should no longer expose the ZenMux provider button"),
 		assert_not_null(deepseek_button, "AI settings should expose a direct DeepSeek provider button"),
-		assert_true(zenmux_button is CheckBox, "ZenMux provider should use a radio-style CheckBox"),
 		assert_true(deepseek_button is CheckBox, "DeepSeek provider should use a radio-style CheckBox"),
 		assert_eq(deepseek_button.text if deepseek_button != null else "", "DeepSeek 直连", "DeepSeek radio should use the direct-connection label"),
-		assert_eq(zenmux_button.text if zenmux_button != null else "", "ZenMux（需翻墙）", "ZenMux radio should disclose its network requirement"),
 		assert_true(
-			provider_parent != null
-			and zenmux_button != null
-			and deepseek_button.get_index() < zenmux_button.get_index(),
-			"DeepSeek radio should appear before ZenMux"
+			deepseek_button != null
+			and deepseek_button.button_group != null
+			and not deepseek_button.button_group.allow_unpress
+			and deepseek_button.button_pressed,
+			"The only provider tab should stay selected"
 		),
-		assert_true(
-			zenmux_button != null
-			and deepseek_button != null
-			and zenmux_button.button_group != null
-			and zenmux_button.button_group == deepseek_button.button_group
-			and not zenmux_button.button_group.allow_unpress,
-			"Provider radios should share a mandatory one-of-two ButtonGroup"
-		),
-		assert_eq(switched_endpoint, "https://api.deepseek.com", "Switching to DeepSeek should fill the official base URL"),
-		assert_eq(switched_api_key, "", "A fresh DeepSeek profile must not reuse the ZenMux credential"),
+		assert_eq(endpoint.text if endpoint != null else "", "https://api.deepseek.com", "DeepSeek should use the official base URL"),
 		assert_eq(",".join(deepseek_model_ids), "deepseek-v4-flash,deepseek-v4-pro", "Direct DeepSeek mode should only offer official DeepSeek models"),
-		assert_eq(restored_zenmux_key, "zenmux-profile-key", "Switching back should restore the edited ZenMux credential"),
+		assert_eq(provider_after_legacy_switch, "deepseek", "Legacy code must not switch the settings page back to ZenMux"),
 		assert_eq(str(saved.get("provider", "")), "deepseek", "Saving should persist the selected provider"),
 		assert_eq(str(saved.get("endpoint", "")), "https://api.deepseek.com", "Existing runtime callers should receive the selected direct endpoint"),
 		assert_eq(str(saved.get("api_key", "")), "deepseek-profile-key", "Existing runtime callers should receive the selected DeepSeek key"),
 		assert_eq(str(saved.get("model", "")), "deepseek-v4-pro", "Existing runtime callers should receive the selected DeepSeek model"),
-		assert_eq(str(saved_zenmux.get("api_key", "")), "zenmux-profile-key", "Saving DeepSeek must keep the ZenMux profile"),
 		assert_eq(str(saved_deepseek.get("api_key", "")), "deepseek-profile-key", "Saving should persist the separate DeepSeek profile"),
 	])
 	_dispose_scene(scene)
@@ -2385,7 +2431,7 @@ func test_ai_settings_mojibake_personality_uses_default() -> String:
 	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
 	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
 	var result := run_checks([
-		assert_eq(endpoint.text if endpoint != null else "", "https://example.invalid/v1", "AI settings should still load non-garbled saved endpoint fields"),
+		assert_eq(endpoint.text if endpoint != null else "", "https://api.deepseek.com", "AI settings should not carry a legacy provider endpoint into DeepSeek direct mode"),
 		assert_eq(personality.text if personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "AI settings should replace mojibake AI personality with the default personality"),
 		assert_false((personality.text if personality != null else "").contains(char(0xE0A3)), "AI settings personality input should not show private-use mojibake markers"),
 	])
@@ -2472,32 +2518,62 @@ func test_ai_settings_api_key_selects_all_and_paste_button_fills_key() -> String
 	return result
 
 
-func test_ai_settings_web_api_key_paste_uses_browser_clipboard_bridge() -> String:
+func test_ai_settings_web_secret_entry_cancel_preserves_existing_key() -> String:
 	var snapshot := _snapshot_battle_review_config_file()
 	_write_battle_review_config_for_test()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
 	var scene: Control = SettingsScene.instantiate()
 	scene.call("_ready")
 	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
 	if api_key != null:
-		api_key.text = "old-secret"
-	var web_runtime := bool(scene.call("_is_web_api_key_clipboard_runtime_for_tests", "Web", {}, "web"))
-	var web_android_runtime := bool(scene.call("_is_web_api_key_clipboard_runtime_for_tests", "", {"web_android": true}, ""))
-	var native_android_runtime := bool(scene.call("_is_web_api_key_clipboard_runtime_for_tests", "Android", {"android": true}, ""))
-	var script := str(scene.call("_build_web_api_key_clipboard_script_for_tests", "__ptcgDeckAgentApiKeyPasteCallback"))
-	scene.call("_on_web_api_key_clipboard_text", [JSON.stringify({
-		"ok": true,
-		"text": "  web-secret-key  ",
-	})])
-	var pasted_key := api_key.text if api_key != null else ""
+		api_key.text = "existing-secret"
+	var services: WebPlatformServices = scene.get("_web_platform_services") as WebPlatformServices
+	if services != null:
+		services.set_test_force_web(true)
+	scene.call("_on_paste_api_key_pressed")
+	var request_id := services.latest_secret_entry_request_id_for_tests() if services != null else -1
+	var delivered := services != null and services.deliver_secret_entry_result_for_tests(
+		request_id,
+		{"ok": false, "cancelled": true}
+	)
 	var result := run_checks([
-		assert_true(web_runtime, "AI settings Web paste should use the browser clipboard branch"),
-		assert_true(web_android_runtime, "Android browser AI settings paste should use the browser clipboard branch"),
-		assert_false(native_android_runtime, "Native Android AI settings paste should keep the DisplayServer clipboard path"),
-		assert_true(script.contains("navigator.clipboard.readText"), "Web API key paste should call the async browser clipboard API"),
-		assert_true(script.contains("__ptcgDeckAgentApiKeyPasteCallback"), "Web API key paste should send results back through the Godot callback"),
-		assert_eq(pasted_key, "web-secret-key", "Web clipboard callback should trim and fill the API key input"),
+		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 0, "Secret paste cancellation must not open the canvas-aligned generic editor"),
+		assert_true(delivered, "The current native secret-entry cancellation should be accepted"),
+		assert_eq(api_key.text if api_key != null else "", "existing-secret", "Cancelling native secret entry must preserve the existing API key"),
 	])
 	_dispose_scene(scene)
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_ai_settings_web_paste_button_uses_isolated_native_secret_entry() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var scene: Control = SettingsScene.instantiate()
+	scene.call("_ready")
+	var services: WebPlatformServices = scene.get("_web_platform_services") as WebPlatformServices
+	if services != null:
+		services.set_test_force_web(true)
+	scene.call("_on_paste_api_key_pressed")
+	var dom_proxy_requests := NonBattleTouchBridgeScript.get_test_web_text_input_request_count()
+	var request_id := services.latest_secret_entry_request_id_for_tests() if services != null else -1
+	var delivered := services != null and services.deliver_secret_entry_result_for_tests(
+		request_id,
+		{"ok": true, "text": "  isolated-secret  "}
+	)
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
+	var result := run_checks([
+		assert_eq(dom_proxy_requests, 0, "The paste button must not reuse the canvas-aligned generic DOM text proxy"),
+		assert_true(request_id > 0, "The paste button should synchronously open one isolated native secret-entry transaction"),
+		assert_true(delivered, "The native secret-entry confirmation should return to the current Settings request"),
+		assert_eq(api_key.text if api_key != null else "", "isolated-secret", "Confirmed native secret text should fill the Godot API-key input"),
+	])
+	_dispose_scene(scene)
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
 	_restore_battle_review_config_file(snapshot)
 	return result
 
@@ -2521,7 +2597,7 @@ func test_ai_settings_line_edits_select_all_when_tapped() -> String:
 	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
 	var timeout := scene.find_child("TimeoutInput", true, false) as SpinBox
 	var inputs: Array[LineEdit] = [endpoint, api_key, personality]
-	var texts := ["https://zenmux.ai/api/v1", "old-secret", "稳健但直接"]
+	var texts := ["https://api.deepseek.com", "old-secret", "稳健但直接"]
 	for i: int in inputs.size():
 		var input := inputs[i]
 		if input == null:
@@ -2575,7 +2651,7 @@ func test_ai_settings_portrait_layout_stacks_form_with_large_inputs() -> String:
 	var stack := scene.find_child("PortraitSettingsStack", true, false) as VBoxContainer
 	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
 	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
-	var guide_column := scene.find_child("ZenMuxGuideColumn", true, false) as Control
+	var guide_column := scene.find_child("DeepSeekGuideColumn", true, false) as Control
 	var save := scene.find_child("BtnSave", true, false) as Button
 	var first_result := run_checks([
 		assert_not_null(stack, "AI settings portrait layout should stack the form vertically"),
@@ -2858,7 +2934,7 @@ func test_ai_settings_portrait_form_controls_accept_android_touch_without_mouse_
 		assert_false(model_native_popup_visible, "AI settings portrait ModelOption should not open Godot's native popup on Android"),
 		assert_true(selected_after != selected_before, "AI settings HUD model picker should update the selected model"),
 		assert_true(model_hud_hidden_after_select, "AI settings HUD model picker should close after selecting a model"),
-		assert_not_null(scene.find_child("BtnUseZenMuxDefault", true, false), "AI settings portrait should keep the default endpoint helper button"),
+		assert_not_null(scene.find_child("BtnUseDeepSeekDefault", true, false), "AI settings portrait should keep the default endpoint helper button"),
 	])
 	scene.queue_free()
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
@@ -2889,7 +2965,7 @@ func test_ai_settings_missing_text_inputs_do_not_throw_null_instance_on_actions(
 		timeout.free()
 
 	scene.call("_load_config")
-	scene.call("_on_use_zenmux_default_endpoint")
+	scene.call("_on_use_deepseek_default_endpoint")
 	scene.call("_on_save")
 	scene.call("_on_test_connection")
 	var status := scene.find_child("StatusLabel", true, false) as Label

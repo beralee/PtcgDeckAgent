@@ -819,7 +819,13 @@ func _profiled_poffin_distinct_roots_interaction_override(
 	if own.is_empty():
 		return {"handled": false, "items": []}
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
-	if 5 - bench.size() < int(config.get("minimum_bench_slots_free", 2)):
+	var bench_slots_free := int(
+		own.get(
+			"bench_slots_free",
+			maxi(0, int(own.get("bench_capacity", 5)) - bench.size())
+		)
+	)
+	if bench_slots_free < int(config.get("minimum_bench_slots_free", 2)):
 		return {"handled": false, "items": []}
 	var visible_uids: Dictionary = {}
 	for raw_slot: Variant in _visible_slots(own):
@@ -1479,7 +1485,20 @@ func _public_snapshot(
 		"own_deck_count": int(own.get("deck_count", 0)),
 		"opponent_deck_count": int(opponent.get("deck_count", -1)),
 		"own_discard_count": (own.get("discard", []) as Array).size() if own.get("discard", []) is Array else 0,
-		"bench_slots_free": maxi(0, 5 - ((own.get("bench", []) as Array).size() if own.get("bench", []) is Array else 0)),
+		"bench_capacity": int(own.get("bench_capacity", 5)),
+		"bench_slots_free": int(
+			own.get(
+				"bench_slots_free",
+				maxi(
+					0,
+					int(own.get("bench_capacity", 5))
+						- (
+							(own.get("bench", []) as Array).size()
+							if own.get("bench", []) is Array else 0
+						)
+				)
+			)
+		),
 		"visible_own_slots": slots.size(),
 		"visible_opponent_slots": opponent_slots.size(),
 		"visible_role_counts": role_counts,

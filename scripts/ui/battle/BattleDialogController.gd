@@ -343,6 +343,7 @@ func _cancel_card_gallery_drag_capture(scene: Object, source: String) -> void:
 
 func _hide_dialog_overlay(scene: Object, source: String) -> void:
 	_cancel_card_gallery_drag_capture(scene, source)
+	_set_assignment_gallery_lanes_active(scene, false)
 	var dialog_overlay := scene.get("_dialog_overlay") as Panel
 	if dialog_overlay != null:
 		dialog_overlay.visible = false
@@ -455,6 +456,12 @@ func setup_dialog_gallery(scene: Object) -> void:
 	dialog_assignment_source_row.size = Vector2(0, dialog_card_size.y)
 	dialog_assignment_source_scroll.add_child(dialog_assignment_source_row)
 	scene.set("_dialog_assignment_source_row", dialog_assignment_source_row)
+	scene.call(
+		"_configure_card_gallery_drag_scroll",
+		dialog_assignment_source_scroll,
+		dialog_assignment_source_row,
+		"assignment_source_cards"
+	)
 
 	var target_title := Label.new()
 	target_title.text = "目标卡牌"
@@ -480,6 +487,12 @@ func setup_dialog_gallery(scene: Object) -> void:
 	dialog_assignment_target_row.size = Vector2(0, dialog_card_size.y)
 	dialog_assignment_target_scroll.add_child(dialog_assignment_target_row)
 	scene.set("_dialog_assignment_target_row", dialog_assignment_target_row)
+	scene.call(
+		"_configure_card_gallery_drag_scroll",
+		dialog_assignment_target_scroll,
+		dialog_assignment_target_row,
+		"assignment_target_cards"
+	)
 
 	var dialog_assignment_summary_lbl := Label.new()
 	dialog_assignment_summary_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -2647,6 +2660,7 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
 
 	_cancel_card_gallery_drag_capture(scene, "show_card_dialog")
+	_set_assignment_gallery_lanes_active(scene, false)
 	if scene.has_method("_clear_hand_drag_click_suppression"):
 		scene.call("_clear_hand_drag_click_suppression", "show_card_dialog")
 
@@ -3712,6 +3726,40 @@ func _action_hud_pill_style(accent: Color, enabled: bool) -> StyleBoxFlat:
 	return style
 
 
+func _configure_assignment_gallery_lane(
+	scene: Object,
+	scroll: ScrollContainer,
+	row: Control,
+	source: String
+) -> void:
+	if scroll == null:
+		return
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var show_visible_scrollbar := _card_dialog_uses_visible_scrollbar(scene)
+	scroll.set_meta("card_gallery_drag_keep_scrollbars_visible", show_visible_scrollbar)
+	if scene.has_method("_configure_card_gallery_drag_scroll"):
+		scene.call("_configure_card_gallery_drag_scroll", scroll, row, source)
+	HudThemeScript.style_scroll_container(scroll, _dialog_scroll_profile(scene))
+	if show_visible_scrollbar:
+		if scene.has_method("_restore_card_gallery_scrollbars_for"):
+			scene.call("_restore_card_gallery_scrollbars_for", scroll)
+	elif scene.has_method("_hide_card_gallery_scrollbars_for"):
+		scene.call("_hide_card_gallery_scrollbars_for", scroll)
+
+
+func _set_assignment_gallery_lanes_active(scene: Object, active: bool) -> void:
+	if scene == null or not scene.has_method("_set_card_gallery_drag_scroll_active"):
+		return
+	for property_name: String in [
+		"_dialog_assignment_source_scroll",
+		"_dialog_assignment_target_scroll",
+	]:
+		var scroll := scene.get(property_name) as ScrollContainer
+		if scroll != null:
+			scene.call("_set_card_gallery_drag_scroll_active", scroll, active)
+
+
 func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 	var dialog_list: ItemList = scene.get("_dialog_list")
 	var dialog_card_scroll: ScrollContainer = scene.get("_dialog_card_scroll")
@@ -3741,6 +3789,19 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 	dialog_assignment_panel.visible = true
 	if scene.has_method("_set_card_gallery_drag_scroll_active"):
 		scene.call("_set_card_gallery_drag_scroll_active", dialog_card_scroll, false)
+	_configure_assignment_gallery_lane(
+		scene,
+		dialog_assignment_source_scroll,
+		dialog_assignment_source_row,
+		"assignment_source_cards"
+	)
+	_configure_assignment_gallery_lane(
+		scene,
+		dialog_assignment_target_scroll,
+		dialog_assignment_target_row,
+		"assignment_target_cards"
+	)
+	_set_assignment_gallery_lanes_active(scene, true)
 	dialog_assignment_source_scroll.scroll_horizontal = 0
 	dialog_assignment_target_scroll.scroll_horizontal = 0
 	scene.call("_clear_container_children", dialog_card_row)
@@ -3786,6 +3847,13 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 		prepare_dialog_card_view(target_view, dialog_card_size)
 		target_view.set_clickable(true)
 		setup_dialog_card_view(scene, target_view, target_items[i], dialog_label_at(target_labels, i))
+		if scene.has_method("_configure_card_gallery_card_view"):
+			scene.call(
+				"_configure_card_gallery_card_view",
+				target_view,
+				dialog_assignment_target_scroll,
+				"assignment_target_cards"
+			)
 		target_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_target_chosen", i)
 		)
@@ -3972,6 +4040,14 @@ func create_grouped_assignment_source_slot_panel(
 		prepare_grouped_energy_card_view(source_view, energy_card_size)
 		source_view.set_clickable(true)
 		setup_dialog_card_view(scene, source_view, source_items[source_index], dialog_label_at(source_labels, source_index))
+		var source_scroll := scene.get("_dialog_assignment_source_scroll") as ScrollContainer
+		if scene.has_method("_configure_card_gallery_card_view"):
+			scene.call(
+				"_configure_card_gallery_card_view",
+				source_view,
+				source_scroll,
+				"assignment_source_cards"
+			)
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_source_chosen", source_index)
 		)
@@ -4010,6 +4086,14 @@ func add_assignment_source_card(
 		source_label = str(source_labels[source_index])
 	var source_item: Variant = display_item if display_item != null else source_items[source_index]
 	setup_dialog_card_view(scene, source_view, source_item, source_label)
+	var source_scroll := scene.get("_dialog_assignment_source_scroll") as ScrollContainer
+	if scene.has_method("_configure_card_gallery_card_view"):
+		scene.call(
+			"_configure_card_gallery_card_view",
+			source_view,
+			source_scroll,
+			"assignment_source_cards"
+		)
 	if disabled:
 		source_view.set_disabled(true)
 		if disabled_badge != "":
@@ -4046,6 +4130,8 @@ func dialog_assignment_last_target_index(scene: Object) -> int:
 
 
 func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
+	if _is_library_search_drag_click_suppressed(scene):
+		return
 	_record_dialog_fresh_input(scene, "assignment_source")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var source_items: Array = dialog_data.get("source_items", [])
@@ -4075,6 +4161,8 @@ func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
 
 
 func on_assignment_target_chosen(scene: Object, target_index: int) -> void:
+	if _is_library_search_drag_click_suppressed(scene):
+		return
 	_record_dialog_fresh_input(scene, "assignment_target")
 	var selected_source_index := int(scene.get("_dialog_assignment_selected_source_index"))
 	if selected_source_index < 0:

@@ -4,6 +4,11 @@ class_name TestBattleUIFeatures
 
 extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 
+class IosWebHandCardScene extends FakeHandCardScene:
+	func _uses_ios_web_hand_touch_profile() -> bool:
+		return true
+
+
 func test_hand_card_view_left_click_opens_detail_confirmation_without_executing() -> String:
 	var display_controller := BattleDisplayControllerScript.new()
 	var fake_scene := FakeHandCardScene.new()
@@ -21,6 +26,41 @@ func test_hand_card_view_left_click_opens_detail_confirmation_without_executing(
 		assert_eq(fake_scene.last_detail_card, card.card_data, "Readonly detail should receive the clicked card data"),
 	])
 	card_view.free()
+	return result
+
+
+func test_ios_web_hand_card_touch_jitter_still_opens_detail() -> String:
+	var display_controller := BattleDisplayControllerScript.new()
+	var fake_scene := IosWebHandCardScene.new()
+	var card := CardInstance.create(_make_trainer_cd("Ultra Ball", "Item", ""), 0)
+	var card_view := display_controller.call("build_hand_card", fake_scene, card) as BattleCardView
+
+	var profile_applied := card_view != null and bool(card_view.get_meta("_ios_web_hand_touch_profile", false))
+	if card_view != null:
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.index = 0
+		press.position = Vector2(220, 40)
+		card_view.call("_gui_input", press)
+
+		var jitter := InputEventScreenDrag.new()
+		jitter.index = 0
+		jitter.position = Vector2(244, 48)
+		jitter.relative = Vector2(24, 8)
+		card_view.call("_gui_input", jitter)
+
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.index = 0
+		release.position = Vector2(244, 48)
+		card_view.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_true(profile_applied, "iOS Web hand cards should receive the relaxed finger-jitter profile"),
+		assert_eq(fake_scene.hand_detail_calls, 1, "A small iPhone Web finger wobble should remain a hand-card tap"),
+	])
+	if card_view != null:
+		card_view.free()
 	return result
 
 
@@ -466,6 +506,40 @@ func test_battle_card_view_primary_release_fallback_handles_missing_press_once()
 		assert_true(armed_before_release, "The fallback should be armed before the first release"),
 		assert_eq(count_after_fallback, 1, "The fallback should convert one missing-press release into a click"),
 		assert_eq(count_after_second_release, 1, "The fallback should be one-shot and not repeat on later releases"),
+	])
+	card_view.free()
+	return result
+
+
+func test_scrollable_card_gallery_hold_never_opens_detail_before_drag() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card := CardInstance.create(_make_pokemon_cd("Scrollable Hold", 70, "C"), 0)
+	var counters := {"right": 0}
+	card_view.setup_from_instance(card, BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	card_view.set_secondary_inspect_enabled(true)
+	card_view.set_meta("card_gallery_drag_input_enabled", true)
+	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		counters["right"] = int(counters["right"]) + 1
+	)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(32, 32)
+	card_view.call("_gui_input", press)
+	card_view.call("_on_touch_long_press_timeout")
+
+	var result := run_checks([
+		assert_eq(
+			int(counters["right"]),
+			0,
+			"Holding a card inside any horizontally scrollable HUD must reserve the gesture for scrolling, not auto-open detail"
+		),
+		assert_false(
+			bool(card_view.get("_touch_long_press_active")),
+			"Scrollable gallery cards must not arm the conflicting long-press gesture"
+		),
 	])
 	card_view.free()
 	return result
@@ -1273,6 +1347,53 @@ func test_card_gallery_touch_horizontal_drag_still_scrolls_and_suppresses_card_c
 		assert_true(scroll_after_drag > start_scroll, "A real touch drag on card-gallery cards should still scroll horizontally"),
 		assert_eq(clicked["count"], 0, "A real touch drag on card-gallery cards should not choose the card"),
 		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A real touch drag release should still suppress follow-up card clicks briefly"),
+	])
+	scene.free()
+	return result
+
+
+func test_card_gallery_touch_drag_at_scroll_threshold_never_emits_card_click() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var scroll := ScrollContainer.new()
+	var row := HBoxContainer.new()
+	scene.add_child(scroll)
+	scroll.add_child(row)
+	scene.call("_configure_card_gallery_drag_scroll", scroll, row, "test_gallery")
+	scene.call("_set_card_gallery_drag_scroll_active", scroll, true)
+	_prepare_overflowing_hand_scroll_for_drag_test(scroll)
+	scroll.scroll_horizontal = 300
+
+	var clicked := {"count": 0}
+	var card_view := BattleCardViewScript.new()
+	card_view.setup_from_instance(CardInstance.create(_make_pokemon_cd("Gallery Card", 60, "C"), 0), BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	scene.call("_configure_card_gallery_card_view", card_view, scroll, "test_gallery")
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		clicked["count"] += 1
+	)
+	row.add_child(card_view)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(220, 24)
+	card_view.call("_gui_input", press)
+
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(204, 24)
+	drag.relative = Vector2(-16, 0)
+	card_view.call("_gui_input", drag)
+
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(204, 24)
+	card_view.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A 16px touch move must already be treated as a gallery drag"),
+		assert_eq(clicked["count"], 0, "The card and gallery drag thresholds must agree so a real drag cannot also emit a card click"),
 	])
 	scene.free()
 	return result

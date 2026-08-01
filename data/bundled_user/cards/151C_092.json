@@ -1,0 +1,59 @@
+{
+    "name":  "鬼斯",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【超】 瓦斯包围 20\n\n\n",
+    "yoren_code":  "P092",
+    "set_code":  "151C",
+    "card_index":  "092",
+    "set_code_en":  "MEW",
+    "card_index_en":  "92",
+    "name_en":  "Gastly",
+    "name_zh":  "",
+    "artist":  "Tomokazu Komiya",
+    "rarity":  "C",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "afe72cfaed6efc3c59572098c9db11f9",
+    "image_url":  "https://tcg.mik.moe/static/img/151C/092.png",
+    "image_local_path":  "user://cards/images/151C/092.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/151C/092",
+    "source_set_code":  "151C",
+    "source_card_index":  "092",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  50,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "瓦斯包围",
+                        "text":  "",
+                        "cost":  "P",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

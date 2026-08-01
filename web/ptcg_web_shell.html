@@ -670,9 +670,23 @@ const engine = new Engine(GODOT_CONFIG);
 		}, displayFailureNotice);
 	}
 
-	const missing = Engine.getMissingFeatures({
+	const lanHttpCompatibilityMode = (
+		!GODOT_THREADS_ENABLED
+		&& !window.isSecureContext
+	);
+	let missing = Engine.getMissingFeatures({
 		threads: GODOT_THREADS_ENABLED,
 	});
+	if (lanHttpCompatibilityMode) {
+		window.AudioContext = undefined;
+		window.webkitAudioContext = undefined;
+		missing = missing.filter(function (feature) {
+			return !feature.startsWith('Secure Context');
+		});
+		console.warn(
+			'PTCG LAN HTTP mode: Web Audio is disabled; using the silent audio driver.'
+		);
+	}
 
 	if (missing.length !== 0) {
 		launchOverlay.classList.add('is-hidden');

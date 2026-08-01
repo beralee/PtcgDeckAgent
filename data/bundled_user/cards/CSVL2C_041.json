@@ -1,0 +1,59 @@
+{
+    "name":  "晶光芽",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【斗】 觉醒 \n从自己牌库中选择1张从这只宝可梦进化而来的卡牌，放于这只宝可梦身上进行进化。并重洗牌库。\n\n",
+    "yoren_code":  "P0969",
+    "set_code":  "CSVL2C",
+    "card_index":  "041",
+    "set_code_en":  "PAL",
+    "card_index_en":  "124",
+    "name_en":  "Glimmet",
+    "name_zh":  "",
+    "artist":  "Mizue",
+    "rarity":  "无标记",
+    "release_date":  "2025-11-07T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "6c4382c1f802fa873ec01976306d44be",
+    "image_url":  "https://tcg.mik.moe/static/img/CSVL2C/041.png",
+    "image_local_path":  "user://cards/images/CSVL2C/041.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSVL2C/041",
+    "source_set_code":  "CSVL2C",
+    "source_card_index":  "041",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Basic",
+    "hp":  40,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "觉醒",
+                        "text":  "从自己牌库中选择1张从这只宝可梦进化而来的卡牌，放于这只宝可梦身上进行进化。并重洗牌库。",
+                        "cost":  "F",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

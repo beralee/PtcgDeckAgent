@@ -2,7 +2,8 @@ class_name BattleDragScrollCoordinator
 extends RefCounted
 
 const HAND_DRAG_SCROLL_THRESHOLD := 12.0
-const CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD := 28.0
+const IOS_WEB_HAND_DRAG_SCROLL_THRESHOLD := 36.0
+const CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD := 12.0
 const HAND_DRAG_SCROLL_WHEEL_STEP := 96
 const HAND_DRAG_CLICK_SUPPRESS_MSEC := 220
 const HAND_DRAG_TOUCH_MOUSE_ECHO_POSITION_EPSILON := 28.0
@@ -13,6 +14,7 @@ const DEBUG_HAND_DRAG_SCROLL_PROJECT_SETTING := "ptcg/debug/hand_drag_scroll"
 const HAND_DRAG_DEBUG_LOG_PATH := "user://logs/hand_drag_debug.log"
 
 var _scene: Node = null
+var _active_hand_pointer_kind: String = ""
 
 
 func setup(scene: Node) -> void:
@@ -114,6 +116,7 @@ func is_hand_drag_click_suppressed() -> bool:
 
 
 func clear_hand_drag_click_suppression(source: String = "clear") -> void:
+	_active_hand_pointer_kind = ""
 	_set_scene_var("_hand_drag_active", false)
 	_set_scene_var("_hand_dragging", false)
 	_set_scene_var("_hand_drag_suppress_click_until_msec", 0)
@@ -133,6 +136,19 @@ func clear_transient_input_capture(source: String = "clear") -> void:
 	debug_hand_drag_scroll("clear-transient-input source=%s" % source)
 
 
+func reset_hand_drag_scroll_layout(source: String = "hand_generation") -> void:
+	var hand_scroll := _hand_scroll()
+	var content := _hand_drag_content_control(hand_scroll)
+	if content == null:
+		return
+	# The hand HBox is reused across semantic generations. Drop only its derived
+	# width so the next layout commit can measure current children from scratch;
+	# do not treat the previous generation's arranged size as new content.
+	content.custom_minimum_size.x = 0.0
+	content.size.x = 0.0
+	debug_hand_drag_scroll("reset-layout source=%s" % source)
+
+
 func configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = null, source: String = "card_gallery") -> void:
 	if scroll == null:
 		return
@@ -145,6 +161,7 @@ func configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = 
 	scroll.set_meta("card_gallery_drag_source", source)
 	if row != null:
 		row.set_meta("card_gallery_drag_row", true)
+		scroll.set_meta("card_gallery_drag_row_control", row)
 	var input_callable := Callable(_scene, "_on_card_gallery_scroll_input").bind(scroll, source)
 	if not scroll.gui_input.is_connected(input_callable):
 		scroll.gui_input.connect(input_callable)
@@ -262,6 +279,10 @@ func configure_card_gallery_card_view(card_view: BattleCardView, scroll: ScrollC
 	if card_view == null or scroll == null:
 		return
 	card_view.set_meta("card_gallery_drag_input_enabled", true)
+	card_view.set_meta(
+		"card_gallery_drag_click_suppression_checker",
+		Callable(self, "is_card_gallery_drag_click_suppressed")
+	)
 	var input_callable := Callable(_scene, "_on_card_gallery_card_input").bind(scroll, source)
 	if not card_view.hand_drag_input.is_connected(input_callable):
 		card_view.hand_drag_input.connect(input_callable)
@@ -417,19 +438,42 @@ func refresh_hand_drag_scroll_extents(hand_scroll: ScrollContainer) -> void:
 		return
 	var content_width := _hand_drag_content_width(content)
 	if content_width > viewport_width:
-		content.custom_minimum_size.x = maxf(content.custom_minimum_size.x, content_width)
+		content.custom_minimum_size.x = content_width
 		if content.size.x < content_width:
 			content.size.x = content_width
+	else:
+		var centered_landscape_rail := (
+			content is BoxContainer
+			and (content as BoxContainer).alignment
+				== BoxContainer.ALIGNMENT_CENTER
+		)
+		if centered_landscape_rail:
+			# The landscape display controller has already made the hand row as
+			# wide as its visible rail so a short hand can center its children.
+			# A deferred pointer-surface extent refresh must preserve that
+			# contract; clearing it here made an Energy leaving hand jump the row
+			# to the left until the next UI action restored the rail.
+			content.custom_minimum_size.x = viewport_width
+			if content.size.x < viewport_width:
+				content.size.x = viewport_width
+		else:
+			# Portrait card rows shrink to their cards. A previous wider hand
+			# must not become the next layout's minimum or make the horizontal
+			# range grow monotonically across draws, plays, and handovers.
+			content.custom_minimum_size.x = 0.0
 	var hbar := hand_scroll.get_h_scroll_bar()
 	if hbar == null:
 		return
-	var range_width := maxf(maxf(viewport_width, content_width), maxf(content.custom_minimum_size.x, content.size.x))
+	var range_width := maxf(viewport_width, content_width)
 	hbar.min_value = 0.0
 	hbar.max_value = range_width
 	hbar.page = viewport_width
 	var max_scroll := maxi(0, roundi(range_width - viewport_width))
-	if hand_scroll.scroll_horizontal > max_scroll:
-		hand_scroll.scroll_horizontal = max_scroll
+	hand_scroll.scroll_horizontal = clampi(
+		hand_scroll.scroll_horizontal,
+		0,
+		max_scroll
+	)
 
 
 func hand_drag_event_global_position(event: InputEvent) -> Vector2:
@@ -492,6 +536,7 @@ func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, so
 	if _as_bool(_get("_card_gallery_drag_active"), false):
 		cancel_card_gallery_drag_scroll("hand_drag_start")
 	_clear_hand_drag_click_suppression_for_fresh_press(position, pointer_kind, source)
+	_active_hand_pointer_kind = pointer_kind
 	refresh_hand_drag_scroll_extents(hand_scroll)
 	_set_scene_var("_hand_drag_active", true)
 	_set_scene_var("_hand_dragging", false)
@@ -523,7 +568,8 @@ func _update_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, s
 	refresh_hand_drag_scroll_extents(hand_scroll)
 	var start_position := _as_vector2(_get("_hand_drag_start_position"), Vector2.ZERO)
 	var delta := position - start_position
-	if not _as_bool(_get("_hand_dragging"), false) and absf(delta.x) < HAND_DRAG_SCROLL_THRESHOLD:
+	var threshold := _active_hand_drag_scroll_threshold()
+	if not _as_bool(_get("_hand_dragging"), false) and absf(delta.x) < threshold:
 		debug_hand_drag_scroll("move-below-threshold source=%s pos=%s delta=%s scroll=%d range=%s" % [source, str(position), str(delta), hand_scroll.scroll_horizontal, hand_drag_scroll_range_text(hand_scroll)], true)
 		return false
 	_set_scene_var("_hand_dragging", true)
@@ -540,6 +586,7 @@ func _update_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, s
 
 func _end_hand_drag_scroll(source: String = "", release_position: Vector2 = Vector2(-1.0, -1.0), pointer_kind: String = "") -> bool:
 	var was_dragging := _as_bool(_get("_hand_dragging"), false)
+	_active_hand_pointer_kind = ""
 	_set_scene_var("_hand_drag_active", false)
 	_set_scene_var("_hand_dragging", false)
 	var hand_scroll := _hand_scroll()
@@ -550,6 +597,18 @@ func _end_hand_drag_scroll(source: String = "", release_position: Vector2 = Vect
 		_set_scene_var("_hand_drag_suppress_pointer_kind", pointer_kind)
 		_accept_event()
 	return was_dragging
+
+
+func _active_hand_drag_scroll_threshold() -> float:
+	if (
+		_active_hand_pointer_kind == "touch"
+		and _scene != null
+		and is_instance_valid(_scene)
+		and _scene.has_method("_uses_ios_web_hand_touch_profile")
+		and bool(_scene.call("_uses_ios_web_hand_touch_profile"))
+	):
+		return IOS_WEB_HAND_DRAG_SCROLL_THRESHOLD
+	return HAND_DRAG_SCROLL_THRESHOLD
 
 
 func _clear_hand_drag_click_suppression_for_fresh_press(position: Vector2, pointer_kind: String, source: String) -> void:
@@ -646,6 +705,8 @@ func _update_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer
 	var threshold := CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD if _as_bool(_get("_card_gallery_drag_touch_active"), false) else HAND_DRAG_SCROLL_THRESHOLD
 	if not _as_bool(_get("_card_gallery_dragging"), false) and absf(delta.x) < threshold:
 		return false
+	if not _card_gallery_has_horizontal_overflow(scroll):
+		return false
 	_set_scene_var("_card_gallery_dragging", true)
 	scroll.scroll_horizontal = maxi(0, int(_get("_card_gallery_drag_start_scroll")) - roundi(delta.x * HAND_DRAG_SCROLL_SENSITIVITY))
 	_accept_event()
@@ -662,6 +723,39 @@ func _end_card_gallery_drag_scroll(_source: String = "") -> bool:
 		_set_scene_var("_card_gallery_drag_suppress_click_until_msec", Time.get_ticks_msec() + HAND_DRAG_CLICK_SUPPRESS_MSEC)
 		_accept_event()
 	return was_dragging
+
+
+func _card_gallery_has_horizontal_overflow(scroll: ScrollContainer) -> bool:
+	if scroll == null:
+		return false
+	var bar := scroll.get_h_scroll_bar()
+	if bar != null and bar.page > 0.5 and bar.max_value > bar.page + 0.5:
+		return true
+	if not scroll.is_inside_tree():
+		var row_variant: Variant = scroll.get_meta("card_gallery_drag_row_control", null)
+		var row := row_variant as Control
+		return row != null and _card_gallery_card_count(row) > 1
+	if scroll.size.x <= 0.5:
+		return false
+	for child: Node in scroll.get_children():
+		var content := child as Control
+		if content == null or content == bar:
+			continue
+		if maxf(content.size.x, content.get_combined_minimum_size().x) > scroll.size.x + 0.5:
+			return true
+	return false
+
+
+func _card_gallery_card_count(node: Node) -> int:
+	if node == null:
+		return 0
+	var count := 0
+	for child: Node in node.get_children():
+		if child is BattleCardView:
+			count += 1
+		else:
+			count += _card_gallery_card_count(child)
+	return count
 
 
 func _hand_scroll() -> ScrollContainer:
@@ -706,7 +800,10 @@ func _screen_position_to_drag_local(screen_position: Vector2) -> Vector2:
 func _hand_drag_content_width(content: Control) -> float:
 	if content == null:
 		return 0.0
-	var width := maxf(content.size.x, content.get_combined_minimum_size().x)
+	var arranged_width := maxf(
+		content.size.x,
+		content.get_combined_minimum_size().x
+	)
 	var child_width := 0.0
 	var visible_child_count := 0
 	for child: Node in content.get_children():
@@ -717,7 +814,7 @@ func _hand_drag_content_width(content: Control) -> float:
 		visible_child_count += 1
 	if visible_child_count > 1:
 		child_width += float((content as BoxContainer).get_theme_constant("separation") if content is BoxContainer else 0) * float(visible_child_count - 1)
-	return maxf(width, child_width)
+	return maxf(arranged_width, child_width)
 
 
 func _accept_event() -> void:

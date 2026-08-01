@@ -33,6 +33,7 @@ const LINE_EDIT_SELECTED_ALL_META := "_non_battle_line_edit_selected_all"
 const LINE_EDIT_SELECTED_ALL_META_NAME := "_non_battle_line_edit_selected_all_meta_name"
 const NATIVE_TEXT_INPUT_META := "_non_battle_native_text_input"
 const NATIVE_TEXT_INPUT_CANDIDATE_META := "_non_battle_native_text_input_candidate"
+const WEB_TEXT_INPUT_BOUND_META := "_non_battle_web_text_input_bound"
 const RANGE_TOUCH_BOUND_META := "_non_battle_range_touch_bound"
 const RANGE_TOUCH_ACTIVE_META := "_non_battle_range_touch_active"
 const HIDDEN_VERTICAL_DRAG_SCROLL_META := "_non_battle_hidden_vertical_drag_scroll"
@@ -72,6 +73,14 @@ static func request_test_web_text_input(control: Control) -> bool:
 	return WebTextInputBridgeScript.request_focus(control)
 
 
+static func request_web_text_input(control: Control) -> bool:
+	return WebTextInputBridgeScript.request_focus(control)
+
+
+static func close_web_text_input(reason: String = "complete") -> void:
+	WebTextInputBridgeScript.cancel_active(reason)
+
+
 static func commit_test_web_text_input_value(value: String, finished: bool = true) -> void:
 	WebTextInputBridgeScript.commit_active_value(value, finished)
 
@@ -95,7 +104,10 @@ static func clear_transient_input_state(host: Node, reason: String = "platform_c
 	if host == null:
 		return
 	_clear_transient_input_state_recursive(host)
-	WebTextInputBridgeScript.cancel_active(reason)
+	# Mobile WebKit can report window blur while a real DOM editor takes focus.
+	# Visibility/pagehide still cancel the editor, but this focus handoff must not.
+	if not WebTextInputBridgeScript.should_preserve_for_cancel_reason(reason):
+		WebTextInputBridgeScript.cancel_active(reason)
 
 
 static func handle_root_touch(host: Control, event: InputEvent) -> bool:
@@ -401,6 +413,7 @@ static func configure_native_line_edit(input: LineEdit, keyboard_type: int = Lin
 	input.set("shortcut_keys_enabled", true)
 	input.set("middle_mouse_paste_enabled", true)
 	mark_native_text_input(input)
+	bind_web_text_input(input)
 	if input.has_meta(FOCUS_TOUCH_BOUND_META):
 		input.remove_meta(FOCUS_TOUCH_BOUND_META)
 
@@ -416,6 +429,7 @@ static func configure_native_text_edit(input: TextEdit) -> void:
 	input.set("shortcut_keys_enabled", true)
 	input.set("middle_mouse_paste_enabled", true)
 	mark_native_text_input(input)
+	bind_web_text_input(input)
 	if input.has_meta(FOCUS_TOUCH_BOUND_META):
 		input.remove_meta(FOCUS_TOUCH_BOUND_META)
 
@@ -574,6 +588,7 @@ static func handle_button_touch(button: Button, event: InputEvent) -> bool:
 static func bind_focus_control_touch(control: Control) -> void:
 	if control == null or bool(control.get_meta(FOCUS_TOUCH_BOUND_META, false)):
 		return
+	bind_web_text_input(control)
 	control.focus_mode = Control.FOCUS_ALL
 	control.set_meta(FOCUS_TOUCH_BOUND_META, true)
 	control.gui_input.connect(func(event: InputEvent) -> void:
@@ -593,6 +608,7 @@ static func bind_line_edit_select_all(
 	input.set_meta(bound_meta, true)
 	input.set_meta(LINE_EDIT_SELECT_ALL_BOUND_META, true)
 	input.set_meta(LINE_EDIT_SELECTED_ALL_META_NAME, selected_meta)
+	bind_web_text_input(input)
 	input.focus_entered.connect(func() -> void:
 		NonBattleTouchBridge.select_all_line_edit(input, selected_meta)
 	)
@@ -600,6 +616,34 @@ static func bind_line_edit_select_all(
 		if NonBattleTouchBridge._line_edit_select_all_press_event(event):
 			NonBattleTouchBridge.select_all_line_edit(input, selected_meta)
 	)
+
+
+static func bind_web_text_input(control: Control) -> void:
+	if control == null:
+		return
+	var target := control
+	if control is SpinBox:
+		target = (control as SpinBox).get_line_edit()
+	if not (target is LineEdit or target is TextEdit):
+		return
+	if bool(target.get_meta(WEB_TEXT_INPUT_BOUND_META, false)):
+		return
+	target.set_meta(WEB_TEXT_INPUT_BOUND_META, true)
+	target.gui_input.connect(func(event: InputEvent) -> void:
+		if not WebTextInputBridgeScript.is_web_runtime() or not _web_text_input_press_event(event):
+			return
+		if WebTextInputBridgeScript.request_focus(target):
+			_accept_event(target)
+	)
+
+
+static func _web_text_input_press_event(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).pressed
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		return mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed
+	return false
 
 
 static func select_all_line_edit(input: LineEdit, selected_meta: String = LINE_EDIT_SELECTED_ALL_META) -> void:

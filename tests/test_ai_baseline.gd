@@ -83,6 +83,17 @@ class NoProgressInteractionScene extends Control:
 		pass
 
 
+class HoldingVisualAnimator extends RefCounted:
+	func handles(_event: Dictionary) -> bool:
+		return true
+
+	func play_event(_scene: Object, _event: Dictionary, _completed: Callable) -> void:
+		pass
+
+	func cancel_all() -> void:
+		pass
+
+
 class CountingAIOpponent extends RefCounted:
 	var player_index: int = 1
 	var difficulty: int = 1
@@ -1970,7 +1981,6 @@ func test_battle_scene_ai_first_player_setup_hands_off_into_first_turn() -> Stri
 	scene.set("_ai_opponent", ai)
 	scene._begin_setup_flow()
 	scene._handle_dialog_choice(PackedInt32Array([0]))
-	scene._handle_dialog_choice(PackedInt32Array([0]))
 	var scheduled_after_human_setup: bool = bool(scene.get("_ai_step_scheduled"))
 	scene._run_ai_step()
 	var scheduled_after_ai_active: bool = bool(scene.get("_ai_step_scheduled"))
@@ -1978,6 +1988,7 @@ func test_battle_scene_ai_first_player_setup_hands_off_into_first_turn() -> Stri
 	var phase_after_setup: int = int(gsm.game_state.phase)
 	var current_player_after_setup: int = int(gsm.game_state.current_player_index)
 	var pending_choice_after_setup: String = str(scene.get("_pending_choice"))
+	var opening_main_step_scheduled: bool = bool(scene.get("_ai_step_scheduled"))
 	GameManager.current_mode = previous_mode
 	return run_checks([
 		assert_true(scheduled_after_human_setup, "Human setup completion should still schedule the AI setup step when the AI is first player"),
@@ -1985,6 +1996,21 @@ func test_battle_scene_ai_first_player_setup_hands_off_into_first_turn() -> Stri
 		assert_eq(phase_after_setup, GameState.GamePhase.MAIN, "Setup completion should advance into the opening main phase"),
 		assert_eq(current_player_after_setup, 1, "AI-first setup should keep the AI as the opening turn owner"),
 		assert_eq(pending_choice_after_setup, "", "No setup prompt should remain pending after setup completes"),
+		assert_true(
+			opening_main_step_scheduled,
+			"Finishing AI setup must immediately queue player 2's opening main action after the draw "
+			+ "(ready=%s blocked=%s followup=%s draw=%s visual=%s dialog=%s field=%s pause=%s handover=%s)" % [
+				str(scene.call("_is_ai_turn_ready")),
+				str(scene.call("_is_ui_blocking_ai")),
+				str(scene.get("_ai_followup_requested")),
+				str(scene.get("_draw_reveal_active")),
+				str(scene.get("_battle_visual_input_blocked")),
+				str(scene.get("_dialog_overlay").visible),
+				str(scene.get("_field_interaction_overlay").visible),
+				str(scene.call("_is_ai_action_pause_active")),
+				str(scene.get("_handover_panel").visible),
+			]
+		),
 		assert_true(ai.run_count >= 2, "AI should have resolved both setup prompts before entering its first turn"),
 	])
 
@@ -2664,6 +2690,39 @@ func test_battle_scene_ai_waits_for_card_visual_queue_and_resumes_when_idle() ->
 	return run_checks([
 		assert_false(scheduled_during_visual, "AI must not resolve a new action while an older card visual is active"),
 		assert_true(scheduled_after_visual, "Draining the visual queue should resume the same AI turn"),
+	])
+
+
+func test_battle_scene_ai_resumes_when_busy_visual_queue_is_cancelled() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", SpyAIOpponent.new())
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+
+	var visual_controller: RefCounted = scene.get("_battle_visual_sequence_controller")
+	var holding_animator := HoldingVisualAnimator.new()
+	visual_controller.call("setup", scene)
+	visual_controller.call("set_animators_for_tests", holding_animator, holding_animator)
+	visual_controller.call("enqueue_events", [{"kind": "zone_transfer"}])
+	scene._maybe_run_ai()
+	var scheduled_during_visual: bool = bool(scene.get("_ai_step_scheduled"))
+
+	# Resizes, perspective changes, and snapshot re-primes cancel presentation
+	# instead of reaching the animator's completion callback.
+	visual_controller.call("clear", "snapshot_reprime")
+	var scheduled_after_cancel: bool = bool(scene.get("_ai_step_scheduled"))
+
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_false(scheduled_during_visual, "A busy visual queue should pace the AI"),
+		assert_true(
+			scheduled_after_cancel,
+			"Cancelling the visual queue must release its gate and schedule player 2 without waiting for the watchdog"
+		),
 	])
 
 

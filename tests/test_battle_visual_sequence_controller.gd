@@ -8,6 +8,7 @@ const ControllerScript := preload("res://scripts/ui/battle/visuals/BattleVisualS
 class FakeAnimator extends RefCounted:
 	var started: Array[String] = []
 	var callbacks: Array[Callable] = []
+	var cancel_calls := 0
 
 	func handles(_event: Dictionary) -> bool:
 		return true
@@ -24,6 +25,7 @@ class FakeAnimator extends RefCounted:
 			callback.call()
 
 	func cancel_all() -> void:
+		cancel_calls += 1
 		callbacks.clear()
 
 
@@ -191,8 +193,49 @@ func test_clear_invalidates_stale_callbacks_and_never_starts_removed_events() ->
 		assert_eq(int(controller.call("pending_count")), 0, "Clear should remove the active and queued work"),
 		assert_false(bool(controller.call("is_active")), "Clear should return to idle"),
 		assert_eq(scene.visual_gate_changes, [true, false], "Clear should release input even if a Tween callback arrives late"),
+		assert_eq(
+			scene.visual_sequence_idle_calls,
+			1,
+			"Cancelling a busy visual sequence must wake the AI exactly like normal queue drain"
+		),
 	])
 	scene.free()
+	return result
+
+
+func test_stalled_iono_hand_reset_times_out_then_finishes_redraw_and_shuffle() -> String:
+	var scene := FakeScene.new()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	await tree.process_frame
+	var animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("setup", scene)
+	controller.call("set_animators_for_tests", animator, animator)
+	controller.call("set_event_timeout_seconds_for_tests", 0.05)
+	controller.call("enqueue_events", [
+		{"kind": "zone_transfer", "semantic": "hand_reset", "player_index": 1},
+		{"kind": "zone_transfer", "semantic": "redraw", "player_index": 1},
+		{"kind": "shuffle", "player_index": 1, "zone": "p1.deck"},
+	])
+
+	await tree.create_timer(0.07).timeout
+	var redraw_started_after_timeout := animator.started == ["zone_transfer", "zone_transfer"]
+	animator.finish_next()
+	var shuffle_started_after_redraw := animator.started == ["zone_transfer", "zone_transfer", "shuffle"]
+	animator.finish_next()
+	var result := run_checks([
+		assert_eq(animator.cancel_calls, 1, "A stalled Iono hand-reset Tween must be cancelled and cleaned up"),
+		assert_true(redraw_started_after_timeout, "Timeout recovery must continue with Iono's committed redraw animation"),
+		assert_true(shuffle_started_after_redraw, "The shuffle feedback must still run after the recovered redraw"),
+		assert_eq(int(controller.call("pending_count")), 0, "The recovered Iono visual sequence must fully drain"),
+		assert_false(bool(controller.call("is_active")), "The visual queue must become idle after timeout recovery"),
+		assert_eq(scene.visual_gate_changes, [true, false], "Timeout recovery must release the visual input gate"),
+		assert_eq(scene.field_resync_semantics, ["visual_timeout"], "Timeout recovery must repaint the committed board state"),
+		assert_eq(scene.visual_sequence_idle_calls, 1, "Timeout recovery must wake the waiting AI continuation"),
+	])
+	scene.queue_free()
+	await tree.process_frame
 	return result
 
 

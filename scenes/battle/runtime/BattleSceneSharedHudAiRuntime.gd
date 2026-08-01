@@ -955,6 +955,7 @@ func _is_ui_blocking_ai() -> bool:
 	var dialog_blocks_ai := _dialog_overlay != null and _dialog_overlay.visible and not (
 		_is_ai_setup_prompt()
 		or _is_ai_effect_prompt()
+		or _is_ai_send_out_prompt()
 		or _is_ai_heavy_baton_prompt()
 		or _is_ai_exp_share_prompt()
 	)
@@ -969,7 +970,16 @@ func _is_ui_blocking_ai() -> bool:
 		or _has_pending_coin_animation()
 		or (_pending_choice == "take_prize" and not _is_ai_prize_prompt())
 		or _pending_prize_animating
-		or (_field_interaction_overlay != null and _field_interaction_overlay.visible and not (_is_ai_effect_prompt() or _is_ai_heavy_baton_prompt() or _is_ai_exp_share_prompt()))
+		or (
+			_field_interaction_overlay != null
+			and _field_interaction_overlay.visible
+			and not (
+				_is_ai_effect_prompt()
+				or _is_ai_send_out_prompt()
+				or _is_ai_heavy_baton_prompt()
+				or _is_ai_exp_share_prompt()
+			)
+		)
 	)
 
 

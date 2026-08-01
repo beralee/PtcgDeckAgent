@@ -1,0 +1,62 @@
+{
+    "name":  "晶光花ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "特性: 尘埃场地\n只要这只宝可梦在战斗场上，对手可放于备战区的宝可梦数量就会变为3只。如果对手的备战区有4只及以上宝可梦的话，则对手将备战宝可梦放于弃牌区直到备战宝可梦变为3只为止。［关于变更备战宝可梦的数量的效果，优先执行数量更少的效果。］\n\n【斗】【斗】 毒液宝石 140\n令对手的战斗宝可梦陷入【中毒】状态。\n\n",
+    "yoren_code":  "Y1339",
+    "set_code":  "CSV5C",
+    "card_index":  "073",
+    "set_code_en":  "OBF",
+    "card_index_en":  "123",
+    "name_en":  "Glimmora ex",
+    "name_zh":  "",
+    "artist":  "5ban Graphics",
+    "rarity":  "RR",
+    "release_date":  "2025-09-12T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "ea9a967a89789870e4495d6b26f9c8a2",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV5C/073.png",
+    "image_local_path":  "user://cards/images/CSV5C/073.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV5C/073",
+    "source_set_code":  "CSV5C",
+    "source_card_index":  "073",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Stage 1",
+    "hp":  270,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "晶光芽",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "毒液宝石",
+                        "text":  "令对手的战斗宝可梦陷入【中毒】状态。",
+                        "cost":  "FF",
+                        "damage":  "140",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "尘埃场地",
+                          "text":  "只要这只宝可梦在战斗场上，对手可放于备战区的宝可梦数量就会变为3只。如果对手的备战区有4只及以上宝可梦的话，则对手将备战宝可梦放于弃牌区直到备战宝可梦变为3只为止。［关于变更备战宝可梦的数量的效果，优先执行数量更少的效果。］"
+                      }
+                  ],
+    "energy_provides":  ""
+}

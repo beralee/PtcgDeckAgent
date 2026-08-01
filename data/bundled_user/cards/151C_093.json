@@ -1,0 +1,62 @@
+{
+    "name":  "鬼斯通",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 魂归故里\n在自己的回合，当将这张卡牌从手牌使出并进行进化时，可使用1次。选择对手弃牌区中的1张支援者，放回对手的手牌。\n\n【超】【无】 喃喃自语 30\n\n\n",
+    "yoren_code":  "P093",
+    "set_code":  "151C",
+    "card_index":  "093",
+    "set_code_en":  "MEW",
+    "card_index_en":  "93",
+    "name_en":  "Haunter",
+    "name_zh":  "",
+    "artist":  "Tomokazu Komiya",
+    "rarity":  "U",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "645a088d30f06cad09e9f187d68e8235",
+    "image_url":  "https://tcg.mik.moe/static/img/151C/093.png",
+    "image_local_path":  "user://cards/images/151C/093.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/151C/093",
+    "source_set_code":  "151C",
+    "source_card_index":  "093",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Stage 1",
+    "hp":  80,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "鬼斯",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "喃喃自语",
+                        "text":  "",
+                        "cost":  "PC",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "魂归故里",
+                          "text":  "在自己的回合，当将这张卡牌从手牌使出并进行进化时，可使用1次。选择对手弃牌区中的1张支援者，放回对手的手牌。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

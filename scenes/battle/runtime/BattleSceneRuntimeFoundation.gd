@@ -49,6 +49,9 @@ const WebInputAdapterScript := preload("res://scripts/ui/input/WebInputAdapter.g
 const BattlePointerInputRouterScript := preload(
 	"res://scripts/ui/battle/interactions/BattlePointerInputRouter.gd"
 )
+const BattlePointerSurfaceControllerScript := preload(
+	"res://scripts/ui/battle/interactions/BattlePointerSurfaceController.gd"
+)
 const IosWebHudTouchAdapterScript := preload(
 	"res://scripts/ui/battle/interactions/IosWebHudTouchAdapter.gd"
 )
@@ -277,6 +280,9 @@ var _draw_reveal_allow_hand_refresh_during_fly: bool = false
 var _draw_reveal_visible_instance_ids: Array[int] = []
 var _web_battle_input_adapter: WebInputAdapter = WebInputAdapterScript.new()
 var _battle_pointer_input_router = BattlePointerInputRouterScript.new()
+var _battle_pointer_surface_controller = BattlePointerSurfaceControllerScript.new()
+var _hand_pointer_surface_generation: int = 0
+var _battle_pointer_surface_test_override: int = -1
 var _ios_web_hud_touch_adapter = IosWebHudTouchAdapterScript.new()
 var _modal_pointer_drain_shield: Control = null
 var _modal_pointer_drain_intent: String = ""

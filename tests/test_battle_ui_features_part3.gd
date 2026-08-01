@@ -3852,6 +3852,10 @@ func test_battle_scene_collapsed_stadium_over_area_zero_cleanup_releases_drag_st
 
 	var stale_gallery_active_after: bool = bool(battle_scene.get("_card_gallery_drag_active"))
 	var stale_hand_suppressed_after: bool = bool(battle_scene.call("_is_hand_drag_click_suppressed"))
+	# The successful action now reconciles the semantic hand and deliberately
+	# discards stale synthetic content width. Restore real overflow so this
+	# assertion isolates capture recovery from the layout-reset contract.
+	_prepare_overflowing_hand_scroll_for_drag_test(hand_scroll)
 	hand_scroll.scroll_horizontal = 300
 	var start_scroll := hand_scroll.scroll_horizontal
 	var hand_press := InputEventMouseButton.new()

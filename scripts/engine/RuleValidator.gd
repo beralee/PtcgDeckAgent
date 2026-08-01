@@ -656,7 +656,7 @@ func get_play_basic_to_bench_unusable_reason(
 			return str(hand_play_effect.call("get_hand_to_bench_unusable_reason", card, state, player_index))
 		return "当前不满足此特性的使用条件。"
 	var player: PlayerState = state.players[player_index]
-	if BenchLimit.is_bench_full(state, player):
+	if BenchLimit.is_bench_full(state, player, effect_processor):
 		return "你的备战区已经满了，不能再放置新的宝可梦。"
 	return ""
 

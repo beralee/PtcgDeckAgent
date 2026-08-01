@@ -1527,8 +1527,8 @@ func _canonical_battle_review_api_config_path() -> String:
 
 func _default_battle_review_api_config() -> Dictionary:
 	return {
-		"provider": AI_PROVIDER_ZENMUX,
-		"endpoint": ZENMUX_DEFAULT_ENDPOINT,
+		"provider": AI_PROVIDER_DEEPSEEK,
+		"endpoint": DEEPSEEK_DEFAULT_ENDPOINT,
 		"api_key": "",
 		"model": DEFAULT_BATTLE_REVIEW_MODEL,
 		"provider_configs": _default_battle_review_provider_configs(),

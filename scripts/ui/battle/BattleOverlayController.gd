@@ -123,9 +123,23 @@ func show_opponent_hand_cards(scene: Object) -> void:
 	scene.set("_discard_card_page", 0)
 	scene.set("_discard_card_page_size", 0)
 	if discard_card_scroll != null:
+		var show_visible_scrollbar := (
+			scene.has_method("_is_portrait_popup_text_profile_active")
+			and bool(scene.call("_is_portrait_popup_text_profile_active"))
+		)
 		discard_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		discard_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		HudThemeScript.style_scroll_container(discard_card_scroll)
+		discard_card_scroll.set_meta("card_gallery_drag_keep_scrollbars_visible", show_visible_scrollbar)
+		if scene.has_method("_set_card_gallery_drag_scroll_active"):
+			scene.call("_set_card_gallery_drag_scroll_active", discard_card_scroll, true)
+		HudThemeScript.style_scroll_container(
+			discard_card_scroll,
+			"portrait_touch" if show_visible_scrollbar else "touch"
+		)
+		if show_visible_scrollbar and scene.has_method("_restore_card_gallery_scrollbars_for"):
+			scene.call("_restore_card_gallery_scrollbars_for", discard_card_scroll)
+		elif not show_visible_scrollbar and scene.has_method("_hide_card_gallery_scrollbars_for"):
+			scene.call("_hide_card_gallery_scrollbars_for", discard_card_scroll)
 	if discard_utility_row != null:
 		scene.call("_clear_container_children", discard_utility_row)
 		discard_utility_row.visible = false
@@ -144,7 +158,16 @@ func show_opponent_hand_cards(scene: Object) -> void:
 				card_view.set_secondary_inspect_enabled(true)
 				card_view.set_badges("", "")
 				card_view.set_info("", "")
+				if scene.has_method("_configure_card_gallery_card_view"):
+					scene.call(
+						"_configure_card_gallery_card_view",
+						card_view,
+						discard_card_scroll,
+						"opponent_hand_collection"
+					)
 				card_view.left_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+					if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+						return
 					if ci != null and scene.has_method("_show_card_detail_for_instance"):
 						scene.call("_show_card_detail_for_instance", ci)
 						return
@@ -152,6 +175,8 @@ func show_opponent_hand_cards(scene: Object) -> void:
 						scene.call("_show_card_detail", cd)
 				)
 				card_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+					if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+						return
 					if ci != null and scene.has_method("_show_card_detail_for_instance"):
 						scene.call("_show_card_detail_for_instance", ci)
 						return

@@ -98,6 +98,17 @@ func active_sequence_count() -> int:
 	)
 
 
+func active_snapshots() -> Array[Dictionary]:
+	var snapshots: Array[Dictionary] = []
+	for value: Variant in _active_touch_sequences.values():
+		var sequence := value as PointerSequence
+		if sequence != null and sequence.is_active():
+			snapshots.append(sequence.snapshot())
+	if _active_mouse_sequence != null and _active_mouse_sequence.is_active():
+		snapshots.append(_active_mouse_sequence.snapshot())
+	return snapshots
+
+
 func _observe_touch(touch: InputEventScreenTouch, now: int) -> Dictionary:
 	var pointer_id := touch.index
 	if touch.pressed:

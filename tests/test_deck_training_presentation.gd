@@ -469,9 +469,16 @@ func test_training_intro_long_copy_stays_inside_portrait_and_keeps_start_action_
 
 func test_training_intro_start_responds_to_ios_web_touch_without_native_pressed() -> String:
 	var tree := Engine.get_main_loop() as SceneTree
+	var canvas_layer := CanvasLayer.new()
+	var canvas_transform := Transform2D.IDENTITY.scaled(Vector2(1.65, 1.65))
+	canvas_transform.origin = Vector2(120, 84)
+	canvas_layer.transform = canvas_transform
+	tree.root.add_child(canvas_layer)
 	var scene := TrainingSceneStub.new()
 	scene.size = Vector2(430, 932)
-	tree.root.add_child(scene)
+	scene.position = Vector2(42, 36)
+	scene.scale = Vector2(1.06, 1.06)
+	canvas_layer.add_child(scene)
 	await tree.process_frame
 	var controller := ControllerScript.new()
 	controller.setup(scene, null, CatalogScript.get_scenario("raging_bolt_02"), {})
@@ -490,7 +497,11 @@ func test_training_intro_start_responds_to_ios_web_touch_without_native_pressed(
 		"mobile_like": true,
 		"feature_flags": {"web": true, "web_ios": true},
 	}))
-	var center := confirm.get_global_rect().get_center() if confirm != null else Vector2.ZERO
+	var center := (
+		confirm.get_global_transform() * (confirm.size * 0.5)
+		if confirm != null
+		else Vector2.ZERO
+	)
 	var press := InputEventScreenTouch.new()
 	press.index = 0
 	press.position = center
@@ -513,7 +524,7 @@ func test_training_intro_start_responds_to_ios_web_touch_without_native_pressed(
 		assert_eq(scene.maybe_run_ai_calls, 1, "The raw iOS Web touch should enter the training turn exactly once"),
 	])
 	controller.release()
-	scene.queue_free()
+	canvas_layer.queue_free()
 	await tree.process_frame
 	return checks
 

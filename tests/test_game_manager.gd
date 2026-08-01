@@ -141,13 +141,13 @@ func test_battle_review_api_config_uses_defaults_when_file_is_missing() -> Strin
 
 	return run_checks([
 		assert_eq(str(manager.call("get_battle_review_api_config_path")), CONFIG_PATH, "GameManager should expose the fixed user:// config path"),
-		assert_eq(str(config.get("provider", "")), "zenmux", "missing config file should keep ZenMux as the backward-compatible provider"),
-		assert_eq(str(config.get("endpoint", "")), "https://zenmux.ai/api/v1", "missing config file should keep default endpoint"),
+		assert_eq(str(config.get("provider", "")), "deepseek", "missing config file should default to official DeepSeek direct"),
+		assert_eq(str(config.get("endpoint", "")), "https://api.deepseek.com", "missing config file should use the official DeepSeek endpoint"),
 		assert_eq(str(config.get("api_key", "")), "", "missing config file should keep default api_key"),
 		assert_eq(str(config.get("model", "")), "deepseek-v4-flash", "missing config file should keep default no-reasoning model"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 60.0, "missing config file should keep default timeout"),
 		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "missing config file should use default AI personality"),
-		assert_eq(str(((config.get("provider_configs", {}) as Dictionary).get("deepseek", {}) as Dictionary).get("endpoint", "")), "https://api.deepseek.com", "missing config should prepare the official DeepSeek endpoint without activating it"),
+		assert_eq(str(((config.get("provider_configs", {}) as Dictionary).get("deepseek", {}) as Dictionary).get("endpoint", "")), "https://api.deepseek.com", "missing config should prepare and activate the official DeepSeek endpoint"),
 	])
 
 
@@ -360,7 +360,7 @@ func test_battle_review_api_config_filters_null_instance_diagnostics() -> String
 	_restore_config_text(original_config_text)
 
 	return run_checks([
-		assert_eq(str(config.get("endpoint", "")), "https://zenmux.ai/api/v1", "Null-instance endpoint diagnostics should fall back to the default endpoint"),
+		assert_eq(str(config.get("endpoint", "")), "https://api.deepseek.com", "Null-instance endpoint diagnostics should fall back to the official DeepSeek endpoint"),
 		assert_eq(str(config.get("api_key", "")), "", "Null-instance API key diagnostics should not be shown as a saved key"),
 		assert_eq(str(config.get("model", "")), "deepseek-v4-flash", "Null-instance model diagnostics should fall back to the default model"),
 		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "Null-instance personality diagnostics should fall back to the default AI personality"),

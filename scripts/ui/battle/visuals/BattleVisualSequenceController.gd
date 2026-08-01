@@ -8,6 +8,7 @@ const FeedbackAnimatorScript := preload("res://scripts/ui/battle/visuals/BattleS
 
 const SOFT_QUEUE_LIMIT := 48
 const FIELD_RESYNC_EVENT_KINDS := ["damage_delta", "heal_delta", "status_delta"]
+const EVENT_TIMEOUT_SECONDS := 3.5
 
 var _scene: Object = null
 var _zone_animator: RefCounted = ZoneAnimatorScript.new()
@@ -17,6 +18,8 @@ var _active_event: Dictionary = {}
 var _baseline_snapshot: Dictionary = {}
 var _view_player: int = -1
 var _generation: int = 0
+var _active_event_serial: int = 0
+var _event_timeout_seconds: float = EVENT_TIMEOUT_SECONDS
 var _submitted_events: int = 0
 var _last_state_transition_signature: String = ""
 
@@ -115,6 +118,7 @@ func enqueue_events(events: Array) -> void:
 
 
 func clear(_reason: String = "") -> void:
+	var was_busy := not _active_event.is_empty() or not _queue.is_empty()
 	_generation += 1
 	_queue.clear()
 	_active_event.clear()
@@ -123,6 +127,12 @@ func clear(_reason: String = "") -> void:
 	if _feedback_animator != null and _feedback_animator != _zone_animator and _feedback_animator.has_method("cancel_all"):
 		_feedback_animator.call("cancel_all")
 	_set_input_blocked(false)
+	# A cancellation is still a terminal transition for the presentation queue.
+	# The battle runtime waits for the same idle edge that normal queue drain
+	# emits; omitting it drops the AI continuation when a resize, view change, or
+	# snapshot re-prime interrupts an opponent animation.
+	if was_busy:
+		_notify_sequence_idle()
 
 
 func _on_scene_resized() -> void:
@@ -143,6 +153,10 @@ func submitted_event_count() -> int:
 	return _submitted_events
 
 
+func set_event_timeout_seconds_for_tests(seconds: float) -> void:
+	_event_timeout_seconds = maxf(0.01, seconds)
+
+
 func _start_next() -> void:
 	if not _active_event.is_empty():
 		return
@@ -157,11 +171,23 @@ func _start_next() -> void:
 		_start_next()
 		return
 	var expected_generation := _generation
-	animator.call("play_event", _scene, _active_event, Callable(self, "_on_event_finished").bind(expected_generation))
+	_active_event_serial += 1
+	var expected_serial := _active_event_serial
+	animator.call(
+		"play_event",
+		_scene,
+		_active_event,
+		Callable(self, "_on_event_finished").bind(expected_generation, expected_serial)
+	)
+	_schedule_event_timeout(expected_generation, expected_serial)
 
 
-func _on_event_finished(expected_generation: int) -> void:
-	if expected_generation != _generation or _active_event.is_empty():
+func _on_event_finished(expected_generation: int, expected_serial: int) -> void:
+	if (
+		expected_generation != _generation
+		or expected_serial != _active_event_serial
+		or _active_event.is_empty()
+	):
 		return
 	var completed_kind := str(_active_event.get("kind", ""))
 	var completed_semantic := str(_active_event.get("semantic", ""))
@@ -174,6 +200,42 @@ func _on_event_finished(expected_generation: int) -> void:
 		and _scene.has_method("_refresh_field_after_visual_event")
 	):
 		_scene.call("_refresh_field_after_visual_event", field_resync_reason)
+	_start_next()
+
+
+func _schedule_event_timeout(expected_generation: int, expected_serial: int) -> void:
+	if not (_scene is Node) or not (_scene as Node).is_inside_tree():
+		return
+	var tree := (_scene as Node).get_tree()
+	if tree == null:
+		return
+	var timer := tree.create_timer(_event_timeout_seconds)
+	timer.timeout.connect(
+		Callable(self, "_on_event_timeout").bind(expected_generation, expected_serial),
+		CONNECT_ONE_SHOT
+	)
+
+
+func _on_event_timeout(expected_generation: int, expected_serial: int) -> void:
+	if (
+		expected_generation != _generation
+		or expected_serial != _active_event_serial
+		or _active_event.is_empty()
+	):
+		return
+	var animator := _animator_for_event(_active_event)
+	if animator != null and animator.has_method("cancel_all"):
+		animator.call("cancel_all")
+	_active_event.clear()
+	# Rules and GameState already completed before presentation began. A lost
+	# Tween callback must therefore recover by repainting that committed state,
+	# never by replaying or mutating the action.
+	if (
+		_scene != null
+		and is_instance_valid(_scene)
+		and _scene.has_method("_refresh_field_after_visual_event")
+	):
+		_scene.call("_refresh_field_after_visual_event", "visual_timeout")
 	_start_next()
 
 

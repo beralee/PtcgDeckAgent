@@ -97,7 +97,15 @@ func visible_typed_snapshot(
 		"typed_energy_on_board": typed_energy,
 		"distinct_energy_symbols": _distinct_symbol_count(typed_energy),
 		"total_energy_on_board": _sum_counts(typed_energy),
-		"bench_slots_free": maxi(0, 5 - bench.size()),
+		"bench_slots_free": int(
+			own.get(
+				"bench_slots_free",
+				maxi(
+					0,
+					int(own.get("bench_capacity", 5)) - bench.size()
+				)
+			)
+		),
 		"supporter_available": bool(quotas.get("supporter_available", facts.get("turn", {}).get("supporter_available", false))),
 		"energy_attachment_available": bool(quotas.get("energy_available", facts.get("turn", {}).get("energy_available", false))),
 		"deck_count": int(own.get("deck_count", 0)),

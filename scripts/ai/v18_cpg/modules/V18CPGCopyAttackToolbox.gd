@@ -385,7 +385,12 @@ func _copy_source_recovery_public_state(
 	if not _public_bench_uids_match(own, config.get("expected_own_bench_uids", [])):
 		return {}
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
-	var visible_free_slots := maxi(0, 5 - bench.size())
+	var visible_free_slots := int(
+		own.get(
+			"bench_slots_free",
+			maxi(0, int(own.get("bench_capacity", 5)) - bench.size())
+		)
+	)
 	var resources: Dictionary = facts.get("resources", {}) \
 		if facts.get("resources", {}) is Dictionary else {}
 	if visible_free_slots != int(resources.get("bench_slots_free", visible_free_slots)) \
@@ -638,7 +643,12 @@ func _source_development_for_candidate(
 		result["failed_guard"] = "wrong_prize_window"
 		return result
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
-	var visible_free_slots := maxi(0, 5 - bench.size())
+	var visible_free_slots := int(
+		own.get(
+			"bench_slots_free",
+			maxi(0, int(own.get("bench_capacity", 5)) - bench.size())
+		)
+	)
 	var fact_resources: Dictionary = facts.get("resources", {}) \
 		if facts.get("resources", {}) is Dictionary else {}
 	var fact_free_slots := int(fact_resources.get("bench_slots_free", visible_free_slots))

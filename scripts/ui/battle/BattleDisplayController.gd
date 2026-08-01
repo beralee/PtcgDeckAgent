@@ -7,6 +7,7 @@ const USED_ABILITY_TILT_DEGREES := 15.0
 const PORTRAIT_HAND_INFO_FONT_SCALE := 3.0
 const PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE := 16
 const PORTRAIT_HAND_INFO_MAX_LINES := 2
+const HAND_INFO_BASE_FONT_SIZE_META := &"_battle_hand_info_base_font_size"
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
@@ -60,9 +61,48 @@ func _portrait_hand_info_size(scene: Object, hand_container: HBoxContainer) -> V
 	return Vector2(width, height)
 
 
+func _visible_hand_rail_width(scene: Object, hand_container: HBoxContainer) -> float:
+	var hand_scroll := _scene_control(scene, "_hand_scroll", "HandScroll") as ScrollContainer
+	if hand_scroll != null:
+		if hand_scroll.size.x > 0.0:
+			return hand_scroll.size.x
+		if hand_scroll.custom_minimum_size.x > 0.0:
+			return hand_scroll.custom_minimum_size.x
+	if scene is Control and (scene as Control).size.x > 0.0:
+		return (scene as Control).size.x
+	if hand_container != null and hand_container.size.x > 0.0:
+		return hand_container.size.x
+	return 0.0
+
+
+func _reset_hand_scroll_origin(scene: Object) -> void:
+	var hand_scroll := _scene_control(scene, "_hand_scroll", "HandScroll") as ScrollContainer
+	if hand_scroll == null:
+		return
+	# The waiting label and a short centered hand are not scrollable content.
+	# Clear both the ScrollContainer property and its child bar immediately;
+	# repeat after layout because Godot applies a new child minimum size later.
+	hand_scroll.scroll_horizontal = 0
+	var horizontal_bar := hand_scroll.get_h_scroll_bar()
+	if horizontal_bar != null:
+		horizontal_bar.value = 0.0
+	hand_scroll.set_deferred("scroll_horizontal", 0)
+
+
 func _apply_portrait_hand_info_label_metrics(scene: Object, hand_container: HBoxContainer, label: Label) -> void:
 	if label == null:
 		return
+	var base_font_size := int(label.get_meta(HAND_INFO_BASE_FONT_SIZE_META, 0))
+	if base_font_size <= 0:
+		# get_theme_font_size() includes a local override. Remove any stale
+		# value first so repeated AI action refreshes cannot treat the previous
+		# portrait result (48, 144, ...) as the next base size.
+		if label.has_theme_font_size_override("font_size"):
+			label.remove_theme_font_size_override("font_size")
+		base_font_size = label.get_theme_font_size("font_size")
+		if base_font_size <= 0:
+			base_font_size = PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE
+		label.set_meta(HAND_INFO_BASE_FONT_SIZE_META, base_font_size)
 	var fixed_size := _portrait_hand_info_size(scene, hand_container)
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -73,15 +113,13 @@ func _apply_portrait_hand_info_label_metrics(scene: Object, hand_container: HBox
 	label.custom_minimum_size = fixed_size
 	label.max_lines_visible = PORTRAIT_HAND_INFO_MAX_LINES
 	if not _is_portrait_battle_layout(scene):
+		label.add_theme_font_size_override("font_size", base_font_size)
 		label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		if hand_container != null:
 			hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
 			hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			hand_container.custom_minimum_size.x = maxf(hand_container.custom_minimum_size.x, fixed_size.x)
 		return
-	var base_font_size := label.get_theme_font_size("font_size")
-	if base_font_size <= 0:
-		base_font_size = PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE
 	label.add_theme_font_size_override("font_size", maxi(roundi(float(base_font_size) * PORTRAIT_HAND_INFO_FONT_SCALE), PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE * 3))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if hand_container != null:
@@ -100,7 +138,10 @@ func _restore_portrait_hand_card_row_metrics(scene: Object, hand_container: HBox
 	else:
 		hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
 		hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		hand_container.custom_minimum_size.x = 0.0
+		# ScrollContainer expansion is applied one layout pass later. Give the
+		# row an explicit visible-rail width so a draw refresh cannot render one
+		# frame (or remain) left-aligned while waiting for that expansion.
+		hand_container.custom_minimum_size.x = _visible_hand_rail_width(scene, hand_container)
 	var play_card_size_variant: Variant = scene.get("_play_card_size") if scene != null else null
 	if play_card_size_variant is Vector2 and (play_card_size_variant as Vector2).y > 0.0:
 		hand_container.custom_minimum_size.y = (play_card_size_variant as Vector2).y
@@ -749,51 +790,175 @@ func refresh_hand(scene: Object) -> void:
 	var hand_container: HBoxContainer = _scene_control(scene, "_hand_container", "HandContainer") as HBoxContainer
 	if hand_container == null:
 		return
-	clear_container_children(hand_container)
-	_restore_portrait_hand_card_row_metrics(scene, hand_container)
 
 	var gs: GameState = gsm.game_state
 	var current_player: int = gs.current_player_index
 	var view_player: int = int(scene.get("_view_player"))
-	if gs.phase == GameState.GamePhase.SETUP:
+	var visible_hand: Array[CardInstance] = []
+	var hand_mode := "cards"
+	if current_player != view_player and gs.phase != GameState.GamePhase.SETUP:
+		hand_mode = "waiting"
+	else:
+		var current_reveal: GameAction = scene.get("_draw_reveal_current_action") as GameAction
+		var hidden_reveal_lookup: Dictionary = {}
+		var visible_reveal_lookup: Dictionary = {}
+		if bool(scene.get("_draw_reveal_active")) and current_reveal != null and current_reveal.player_index == view_player:
+			for id_variant: Variant in current_reveal.data.get("card_instance_ids", []):
+				hidden_reveal_lookup[int(id_variant)] = true
+			for id_variant: Variant in scene.get("_draw_reveal_visible_instance_ids"):
+				visible_reveal_lookup[int(id_variant)] = true
+		var queued_reveals: Array = scene.get("_draw_reveal_queue")
+		for queued_variant: Variant in queued_reveals:
+			var queued_action: GameAction = queued_variant as GameAction
+			if queued_action == null:
+				continue
+			if queued_action.action_type != GameAction.ActionType.DRAW_CARD:
+				continue
+			if queued_action.player_index != view_player:
+				continue
+			for id_variant: Variant in queued_action.data.get("card_instance_ids", []):
+				hidden_reveal_lookup[int(id_variant)] = true
 		for card_inst: CardInstance in gs.players[view_player].hand:
-			hand_container.add_child(build_hand_card(scene, card_inst))
+			if hidden_reveal_lookup.has(card_inst.instance_id) and not visible_reveal_lookup.has(card_inst.instance_id):
+				continue
+			visible_hand.append(card_inst)
+
+	var hand_signature := _hand_surface_signature(hand_mode, visible_hand)
+	var hand_generation := 0
+	if scene.has_method("_reconcile_hand_pointer_surface"):
+		hand_generation = int(scene.call(
+			"_reconcile_hand_pointer_surface",
+			hand_signature
+		))
+	elif scene.has_method("_prepare_ios_web_hand_rebuild"):
+		scene.call("_prepare_ios_web_hand_rebuild", "refresh_hand")
+	_restore_portrait_hand_card_row_metrics(scene, hand_container)
+
+	if hand_mode == "waiting":
+		_sync_hand_waiting_label(scene, hand_container, gs.turn_number)
+	else:
+		_sync_hand_card_views(scene, hand_container, visible_hand)
+	if scene.has_method("_commit_hand_pointer_surface_layout"):
+		scene.call("_commit_hand_pointer_surface_layout", hand_generation)
+
+
+func stabilize_hand_surface_layout(scene: Object) -> void:
+	var hand_container := _scene_control(scene, "_hand_container", "HandContainer") as HBoxContainer
+	if hand_container == null:
 		return
-	if current_player != view_player:
-		var waiting_label := Label.new()
-		var latest_opponent_action_text: String = str(scene.get("_latest_opponent_action_text"))
-		var latest_opponent_action_turn_number: int = int(scene.get("_latest_opponent_action_turn_number"))
-		waiting_label.text = (
-			latest_opponent_action_text
-			if latest_opponent_action_text != "" and latest_opponent_action_turn_number == gs.turn_number
-			else _bt(scene, "battle.hand.waiting")
-		)
+	var waiting_label := hand_container.get_node_or_null("HandWaitingLabel") as Label
+	if waiting_label != null:
 		_apply_portrait_hand_info_label_metrics(scene, hand_container, waiting_label)
-		hand_container.add_child(waiting_label)
+		_reset_hand_scroll_origin(scene)
 		return
-	var current_reveal: GameAction = scene.get("_draw_reveal_current_action") as GameAction
-	var hidden_reveal_lookup: Dictionary = {}
-	var visible_reveal_lookup: Dictionary = {}
-	if bool(scene.get("_draw_reveal_active")) and current_reveal != null and current_reveal.player_index == view_player:
-		for id_variant: Variant in current_reveal.data.get("card_instance_ids", []):
-			hidden_reveal_lookup[int(id_variant)] = true
-		for id_variant: Variant in scene.get("_draw_reveal_visible_instance_ids"):
-			visible_reveal_lookup[int(id_variant)] = true
-	var queued_reveals: Array = scene.get("_draw_reveal_queue")
-	for queued_variant: Variant in queued_reveals:
-		var queued_action: GameAction = queued_variant as GameAction
-		if queued_action == null:
+	_restore_portrait_hand_card_row_metrics(scene, hand_container)
+	var card_views: Array[BattleCardView] = []
+	for child: Node in hand_container.get_children():
+		if child is BattleCardView:
+			card_views.append(child as BattleCardView)
+	_stabilize_centered_hand_scroll(scene, hand_container, card_views)
+
+
+func _sync_hand_waiting_label(
+	scene: Object,
+	hand_container: HBoxContainer,
+	turn_number: int
+) -> void:
+	var waiting_label := hand_container.get_node_or_null("HandWaitingLabel") as Label
+	# Remove the previous card surface before inserting/sizing the status
+	# surface. Otherwise the HBox briefly lays the label out after all hand
+	# cards and preserves that offset through the ScrollContainer.
+	for child: Node in hand_container.get_children():
+		if child == waiting_label:
 			continue
-		if queued_action.action_type != GameAction.ActionType.DRAW_CARD:
+		hand_container.remove_child(child)
+		child.queue_free()
+	if waiting_label == null:
+		waiting_label = Label.new()
+		waiting_label.name = "HandWaitingLabel"
+		hand_container.add_child(waiting_label)
+	var latest_opponent_action_text: String = str(scene.get("_latest_opponent_action_text"))
+	var latest_opponent_action_turn_number: int = int(scene.get("_latest_opponent_action_turn_number"))
+	waiting_label.text = (
+		latest_opponent_action_text
+		if latest_opponent_action_text != "" and latest_opponent_action_turn_number == turn_number
+		else _bt(scene, "battle.hand.waiting")
+	)
+	_apply_portrait_hand_info_label_metrics(scene, hand_container, waiting_label)
+	_reset_hand_scroll_origin(scene)
+
+
+func _sync_hand_card_views(
+	scene: Object,
+	hand_container: HBoxContainer,
+	visible_hand: Array[CardInstance]
+) -> void:
+	# Waiting text uses fill sizing and must leave the row before card widths
+	# are reconciled; keeping it for the same layout pass biases new cards.
+	for child: Node in hand_container.get_children():
+		if child is BattleCardView:
 			continue
-		if queued_action.player_index != view_player:
+		hand_container.remove_child(child)
+		child.queue_free()
+	var existing_by_instance_id: Dictionary = {}
+	for child: Node in hand_container.get_children():
+		var card_view := child as BattleCardView
+		if card_view == null or card_view.card_instance == null:
 			continue
-		for id_variant: Variant in queued_action.data.get("card_instance_ids", []):
-			hidden_reveal_lookup[int(id_variant)] = true
-	for card_inst: CardInstance in gs.players[view_player].hand:
-		if hidden_reveal_lookup.has(card_inst.instance_id) and not visible_reveal_lookup.has(card_inst.instance_id):
+		existing_by_instance_id[card_view.card_instance.instance_id] = card_view
+
+	var desired_views: Array[BattleCardView] = []
+	for inst: CardInstance in visible_hand:
+		var card_view := existing_by_instance_id.get(inst.instance_id, null) as BattleCardView
+		if card_view == null:
+			card_view = build_hand_card(scene, inst)
+			hand_container.add_child(card_view)
+		else:
+			_refresh_hand_card_view(scene, card_view, inst)
+		desired_views.append(card_view)
+
+	for child: Node in hand_container.get_children():
+		if child is BattleCardView and desired_views.has(child as BattleCardView):
 			continue
-		hand_container.add_child(build_hand_card(scene, card_inst))
+		hand_container.remove_child(child)
+		child.queue_free()
+
+	for index: int in desired_views.size():
+		var card_view := desired_views[index]
+		if card_view.get_parent() == hand_container:
+			hand_container.move_child(card_view, index)
+	_stabilize_centered_hand_scroll(scene, hand_container, desired_views)
+
+
+func _stabilize_centered_hand_scroll(
+	scene: Object,
+	hand_container: HBoxContainer,
+	card_views: Array[BattleCardView]
+) -> void:
+	if _is_portrait_battle_layout(scene):
+		return
+	var rail_width := _visible_hand_rail_width(scene, hand_container)
+	if rail_width <= 0.0:
+		return
+	var content_width := 0.0
+	for card_view: BattleCardView in card_views:
+		if card_view == null:
+			continue
+		content_width += maxf(card_view.custom_minimum_size.x, card_view.get_combined_minimum_size().x)
+	if card_views.size() > 1:
+		content_width += float(hand_container.get_theme_constant("separation")) * float(card_views.size() - 1)
+	if content_width <= rail_width + 0.5:
+		_reset_hand_scroll_origin(scene)
+
+
+func _hand_surface_signature(
+	hand_mode: String,
+	visible_hand: Array[CardInstance]
+) -> String:
+	var instance_ids := PackedStringArray()
+	for inst: CardInstance in visible_hand:
+		instance_ids.append(str(inst.instance_id))
+	return "%s|%s" % [hand_mode, ",".join(instance_ids)]
 
 
 func clear_container_children(container: Node) -> void:
@@ -808,29 +973,60 @@ func build_hand_card(scene: Object, inst: CardInstance) -> PanelContainer:
 	var card_view := BattleCardViewScript.new()
 	card_view.custom_minimum_size = scene.get("_play_card_size")
 	card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)
-	card_view.set_selected(scene.get("_selected_hand_card") == inst)
-	card_view.set_info(inst.card_data.display_name(), hand_card_subtext(inst.card_data))
-	if scene.has_method("_should_arm_hand_primary_release_fallback") and bool(scene.call("_should_arm_hand_primary_release_fallback")):
-		card_view.arm_primary_release_fallback("rebuilt_hand_after_modal")
+	card_view.name = "HandCard_%d" % inst.instance_id
+	_refresh_hand_card_view(scene, card_view, inst)
 	if scene.has_method("_handle_hand_drag_scroll_input"):
 		card_view.hand_drag_input.connect(func(event: InputEvent) -> void:
 			scene.call("_handle_hand_drag_scroll_input", event, "hand_card_gui")
 		)
-	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+	card_view.left_clicked.connect(func(ci: CardInstance, _cd: CardData) -> void:
+		if ci == null:
+			return
 		if scene.has_method("_show_hand_card_detail"):
-			scene.call("_show_hand_card_detail", inst)
+			scene.call("_show_hand_card_detail", ci)
 		elif scene.has_method("_show_card_detail_for_instance"):
-			scene.call("_show_card_detail_for_instance", inst)
+			scene.call("_show_card_detail_for_instance", ci)
 		else:
-			scene.call("_show_card_detail", inst.card_data)
-	)
-	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+			scene.call("_show_card_detail", ci.card_data)
+		)
+	card_view.right_clicked.connect(func(ci: CardInstance, _cd: CardData) -> void:
+		if ci == null:
+			return
 		if scene.has_method("_show_card_detail_for_instance"):
-			scene.call("_show_card_detail_for_instance", inst)
+			scene.call("_show_card_detail_for_instance", ci)
 		else:
-			scene.call("_show_card_detail", inst.card_data)
-	)
+			scene.call("_show_card_detail", ci.card_data)
+		)
 	return card_view
+
+
+func _refresh_hand_card_view(
+	scene: Object,
+	card_view: BattleCardView,
+	inst: CardInstance
+) -> void:
+	if card_view == null or inst == null:
+		return
+	card_view.custom_minimum_size = scene.get("_play_card_size")
+	if card_view.card_instance != inst:
+		card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)
+	card_view.set_selected(scene.get("_selected_hand_card") == inst)
+	card_view.set_info(
+		inst.card_data.display_name(),
+		hand_card_subtext(inst.card_data)
+	)
+	if (
+		scene.has_method("_uses_ios_web_hand_touch_profile")
+		and bool(scene.call("_uses_ios_web_hand_touch_profile"))
+	):
+		card_view.set_meta("_ios_web_hand_touch_profile", true)
+	else:
+		card_view.remove_meta("_ios_web_hand_touch_profile")
+	if (
+		scene.has_method("_should_arm_hand_primary_release_fallback")
+		and bool(scene.call("_should_arm_hand_primary_release_fallback"))
+	):
+		card_view.arm_primary_release_fallback("reconciled_hand_after_modal")
 
 
 func hand_card_subtext(card_data: CardData) -> String:

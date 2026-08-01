@@ -43,15 +43,16 @@ func execute_on_play(_card: CardInstance, _state: GameState, _targets: Array = [
 static func build_cleanup_interaction_steps(
 	state: GameState,
 	start_player_index: int = 0,
-	override_limit: int = DEFAULT_BENCH_LIMIT
+	override_limit: int = DEFAULT_BENCH_LIMIT,
+	limit_by_player: Dictionary = {}
 ) -> Array[Dictionary]:
 	var steps: Array[Dictionary] = []
 	if state == null:
 		return steps
 	for pi: int in _cleanup_order(state, start_player_index):
 		var player: PlayerState = state.players[pi]
-		var limit := override_limit
-		if is_area_zero_active(state):
+		var limit := int(limit_by_player.get(pi, override_limit))
+		if not limit_by_player.has(pi) and is_area_zero_active(state):
 			limit = static_bench_limit_for_player(player, state)
 		var excess := player.bench.size() - limit
 		if excess <= 0:
@@ -77,7 +78,8 @@ static func build_cleanup_interaction_steps(
 static func enforce_bench_limits(
 	state: GameState,
 	targets: Array = [],
-	start_player_index: int = 0
+	start_player_index: int = 0,
+	limit_by_player: Dictionary = {}
 ) -> Array[Dictionary]:
 	var discarded_by_player: Array[Dictionary] = []
 	if state == null:
@@ -85,7 +87,7 @@ static func enforce_bench_limits(
 	var ctx := _interaction_context(targets)
 	for pi: int in _cleanup_order(state, start_player_index):
 		var player: PlayerState = state.players[pi]
-		var limit := static_bench_limit_for_player(player, state)
+		var limit := int(limit_by_player.get(pi, static_bench_limit_for_player(player, state)))
 		var excess := player.bench.size() - limit
 		if excess <= 0:
 			continue

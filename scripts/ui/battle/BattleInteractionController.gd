@@ -142,6 +142,14 @@ func ensure_field_interaction_panel(scene: Object) -> void:
 	interaction_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll.add_child(interaction_row)
 	scene.set("_field_interaction_row", interaction_row)
+	scroll.set_meta("card_gallery_drag_keep_scrollbars_visible", true)
+	if scene.has_method("_configure_card_gallery_drag_scroll"):
+		scene.call(
+			"_configure_card_gallery_drag_scroll",
+			scroll,
+			interaction_row,
+			"field_interaction_cards"
+		)
 
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -225,6 +233,9 @@ func _connect_release_independent_button(
 
 func hide_field_interaction(scene: Object) -> void:
 	restore_field_assignment_expanded_metrics(scene)
+	var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
+	if scroll != null and scene.has_method("_set_card_gallery_drag_scroll_active"):
+		scene.call("_set_card_gallery_drag_scroll_active", scroll, false)
 	scene.set("_field_interaction_mode", "")
 	scene.set("_field_interaction_data", {})
 	scene.set("_field_interaction_slot_index_by_id", {})
@@ -558,9 +569,29 @@ func build_field_assignment_source_cards(scene: Object) -> void:
 		else:
 			for i: int in source_items.size():
 				add_field_assignment_source_card(scene, source_items, source_labels, i)
+		configure_field_interaction_card_views(scene, row)
 		return
 
 	build_grouped_field_assignment_source_board(scene, row, source_items, source_labels, source_groups)
+	configure_field_interaction_card_views(scene, row)
+
+
+func configure_field_interaction_card_views(scene: Object, node: Node) -> void:
+	if scene == null or node == null or not scene.has_method("_configure_card_gallery_card_view"):
+		return
+	var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
+	if scroll == null:
+		return
+	for child: Node in node.get_children():
+		if child is BattleCardView:
+			scene.call(
+				"_configure_card_gallery_card_view",
+				child as BattleCardView,
+				scroll,
+				"field_interaction_cards"
+			)
+		else:
+			configure_field_interaction_card_views(scene, child)
 
 
 func build_grouped_field_assignment_source_board(
@@ -999,6 +1030,8 @@ func add_field_assignment_source_card(
 
 
 func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void:
+	if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+		return
 	if scene.has_method("_consume_field_assignment_source_followup_choice") and bool(scene.call("_consume_field_assignment_source_followup_choice", source_index)):
 		return
 	mark_modal_input_consumed(scene, "field_assignment_source", false)
@@ -1156,6 +1189,8 @@ func refresh_field_interaction_status(scene: Object) -> void:
 	var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
 	if scroll != null:
 		scroll.visible = show_cards
+		if scene.has_method("_set_card_gallery_drag_scroll_active"):
+			scene.call("_set_card_gallery_drag_scroll_active", scroll, show_cards)
 	if mode == "assignment":
 		apply_field_assignment_compact_metrics(scene, compact_assignment)
 	var buttons: HBoxContainer = scene.get("_field_interaction_buttons")

@@ -1,0 +1,59 @@
+{
+    "name":  "由克希",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【超】 痛楚记忆 \n给对手所有的宝可梦身上，各放置2个伤害指示物。\n\n",
+    "yoren_code":  "P480",
+    "set_code":  "CSV9C",
+    "card_index":  "082",
+    "set_code_en":  "SSP",
+    "card_index_en":  "78",
+    "name_en":  "Uxie",
+    "name_zh":  "",
+    "artist":  "HYOGONOSUKE",
+    "rarity":  "C",
+    "release_date":  "2026-05-15T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "9ed8dedf70df1133f656418c3a41cb0d",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9C/082.png",
+    "image_local_path":  "user://cards/images/CSV9C/082.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV9C/082",
+    "source_set_code":  "CSV9C",
+    "source_card_index":  "082",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "痛楚记忆",
+                        "text":  "给对手所有的宝可梦身上，各放置2个伤害指示物。",
+                        "cost":  "P",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

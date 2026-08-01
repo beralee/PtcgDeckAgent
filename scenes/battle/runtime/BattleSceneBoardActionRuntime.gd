@@ -807,6 +807,7 @@ func _refresh_hand() -> void:
 	_sync_card_foil_effects(_hand_container)
 	_trace_portrait_layout_stage("scene.refresh_hand.after_display")
 	_finalize_portrait_layout_constraints()
+	_battle_display_coordinator.call("stabilize_hand_surface_layout")
 	_trace_portrait_layout_stage("scene.refresh_hand.after_finalize")
 	_sync_battle_action_intents()
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
@@ -2515,6 +2516,7 @@ func _refresh_ui() -> void:
 	_show_portrait_prize_dialog_if_needed()
 	_trace_portrait_layout_stage("scene.refresh_ui.before_finalize")
 	_finalize_portrait_layout_constraints()
+	_battle_display_coordinator.call("stabilize_hand_surface_layout")
 	_trace_portrait_layout_stage("scene.refresh_ui.after_finalize")
 	_sync_field_swap_snapshot_after_refresh()
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
@@ -2524,13 +2526,13 @@ func _refresh_ui() -> void:
 
 
 func _refresh_field_after_visual_event(semantic: String) -> void:
-	if semantic not in ["knockout", "damage_delta", "heal_delta", "status_delta"] \
+	if semantic not in ["knockout", "damage_delta", "heal_delta", "status_delta", "visual_timeout"] \
 			or _gsm == null or _gsm.game_state == null:
 		return
 	# Multi-target attack effects can commit Bench damage after the card view's
 	# earlier frame was built. Repaint only the field from committed GameState
-	# after damage/heal/status feedback (or a KO transfer) finishes. This keeps
-	# rule state, modal flow, and training-session evaluation untouched.
+	# after damage/heal/status feedback, a KO transfer, or visual-only timeout
+	# recovery. This keeps rule state, modal flow, and training evaluation untouched.
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_field")
 	_sync_card_foil_effects()

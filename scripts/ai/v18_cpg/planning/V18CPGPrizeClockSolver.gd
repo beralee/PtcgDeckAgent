@@ -99,10 +99,13 @@ func solve(
 	var credible_gust := not gust_exhausted \
 		and not (own.get("bench", []) as Array).is_empty() \
 		if own.get("bench", []) is Array else false
+	var mobility: Dictionary = facts.get("mobility", {}) \
+		if facts.get("mobility", {}) is Dictionary else {}
 	var liability_map := _liability_map(
 		own,
 		threat,
-		credible_gust
+		credible_gust,
+		mobility
 	)
 	var credible_next_window_prizes := _maximum_credible_liability_prizes(
 		liability_map,
@@ -436,7 +439,8 @@ func _schedule_with_first_gain(
 func _liability_map(
 	own: Dictionary,
 	threat: Dictionary,
-	credible_gust: bool
+	credible_gust: bool,
+	mobility: Dictionary = {}
 ) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var slots: Array = []
@@ -469,6 +473,15 @@ func _liability_map(
 		var gust_exposed := position == "bench" and credible_gust
 		var credible_ko := position == "active" \
 			or gust_exposed
+		var printed_retreat_cost := int(
+			slot.get("printed_retreat_cost", slot.get("retreat_cost", 0))
+		)
+		var zero_retreat_executable := position == "active" \
+			and str(slot.get("slot_id", "")) == str(
+				mobility.get("active_slot_id", "")
+			) \
+			and bool(mobility.get("engine_legal_proof", false)) \
+			and bool(mobility.get("zero_retreat_available_now", false))
 		result.append({
 			"slot_id": str(slot.get("slot_id", "")),
 			"position": position,
@@ -481,7 +494,10 @@ func _liability_map(
 				float(damage) / float(max_hp),
 				0.001
 			),
-			"retreat_cost": int(slot.get("retreat_cost", 0)),
+			"retreat_cost": printed_retreat_cost,
+			"printed_retreat_cost": printed_retreat_cost,
+			"zero_retreat_executable_now": zero_retreat_executable,
+			"preserves_attached_energy_on_retreat": zero_retreat_executable,
 			"attached_energy_count": _slot_energy_count(slot),
 			"credible_ko": credible_ko,
 			"gust_exposed": gust_exposed,

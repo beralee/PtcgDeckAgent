@@ -115,7 +115,13 @@ func route_annotation(
 	var damage_per_unit := int(damage_resource.get("damage_per_unit", 0))
 	var own: Dictionary = observation.get("own", {}) if observation.get("own", {}) is Dictionary else {}
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
-	var available_bench_slots := maxi(0, 5 - bench.size())
+	var bench_capacity := int(own.get("bench_capacity", 5))
+	var available_bench_slots := int(
+		own.get(
+			"bench_slots_free",
+			maxi(0, bench_capacity - bench.size())
+		)
+	)
 	var safety := _safety(profile)
 	var low_deck_threshold := int(parameters.get("low_deck_threshold", safety.get("low_deck_threshold", DEFAULT_LOW_DECK)))
 	var critical_deck_threshold := int(parameters.get("critical_deck_threshold", safety.get("critical_deck_threshold", DEFAULT_CRITICAL_DECK)))

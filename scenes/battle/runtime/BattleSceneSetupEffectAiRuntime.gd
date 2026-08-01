@@ -1856,6 +1856,8 @@ func _apply_responsive_layout() -> void:
 	_style_end_turn_hud_buttons()
 	_trace_portrait_layout_stage("scene.apply_responsive.after_end_turn_style")
 	_finalize_portrait_layout_constraints()
+	_ensure_battle_display_coordinator()
+	_battle_display_coordinator.call("stabilize_hand_surface_layout")
 	_layout_llm_wait_label()
 	if _deck_training_controller != null:
 		_deck_training_controller.apply_layout(viewport_size)

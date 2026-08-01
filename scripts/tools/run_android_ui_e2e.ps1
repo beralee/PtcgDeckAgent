@@ -108,6 +108,23 @@ do {
 if (-not $appPid) { throw "Android app process did not start within 20 seconds" }
 if ($focus -notmatch [regex]::Escape($PackageName)) { throw "Android app did not gain focus within 20 seconds:`n$focus" }
 
+$runtimeReadyDeadline = (Get-Date).AddSeconds(75)
+$runtimeReady = $false
+do {
+    $startupLog = ((Invoke-AdbChecked -Arguments @("logcat", "-d", "-t", "1600") -Label "Read startup log") -join "`n")
+    if (
+        $startupLog.Contains("[UserVisit] startup visit recorded") -or
+        $startupLog.Contains("OnGodotMainLoopStarted")
+    ) {
+        $runtimeReady = $true
+        break
+    }
+    Start-Sleep -Milliseconds 500
+} while ((Get-Date) -lt $runtimeReadyDeadline)
+if (-not $runtimeReady) {
+    throw "Android runtime did not reach the main loop before baseline capture."
+}
+
 $renderDeadline = (Get-Date).AddSeconds(45)
 $minimumRenderedBytes = [math]::Round($width * $height * 0.05)
 $mainPath = ""

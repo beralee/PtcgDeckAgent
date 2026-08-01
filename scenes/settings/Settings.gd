@@ -1,7 +1,7 @@
-## AI 设置页面 - ZenMux 与 AI 性格配置
+## AI 设置页面 - DeepSeek 直连与 AI 性格配置
 extends Control
 
-const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
+const AiApiClientScript := preload("res://scripts/network/ZenMuxClient.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
@@ -10,19 +10,15 @@ const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
 const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
-const ZENMUX_HOME_URL := "https://zenmux.ai"
-const ZENMUX_DEFAULT_ENDPOINT := "https://zenmux.ai/api/v1"
 const DEEPSEEK_HOME_URL := "https://platform.deepseek.com/api_keys"
 const DEEPSEEK_DEFAULT_ENDPOINT := "https://api.deepseek.com"
-const ZENMUX_SETUP_GUIDE := "1. 在浏览器打开 zenmux.ai，注册或登录账号。\n2. 进入控制台/API Keys，新建一个 API Key。\n3. 回到这里，API 地址保持 https://zenmux.ai/api/v1。\n4. 把 API Key 粘贴到“API 密钥”，选择模型；不确定就用默认模型。\n5. 点“测试连接”。提示测试通过后，回到开始对战选择大模型 AI。"
-const ZENMUX_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：API Key 复制错、少复制字符，或 Key 已失效。\n- model not found：当前 Key 不能用这个模型，换一个模型再测。\n- timeout/请求超时：网络慢，把超时改成 90 或 120 秒再试。"
 const DEEPSEEK_SETUP_GUIDE := "1. 在 DeepSeek 开放平台登录并创建 API Key。\n2. 选择“DeepSeek 直连”，API 地址保持 https://api.deepseek.com。\n3. 粘贴 DeepSeek API Key，选择 V4 Flash 或 V4 Pro。\n4. 点“测试连接”。通过后，游戏里的大模型 AI、复盘和建议都会走 DeepSeek 官方接口。"
-const DEEPSEEK_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：确认粘贴的是 DeepSeek 开放平台的 API Key，不是 ZenMux Key。\n- 余额不足/402：请在 DeepSeek 开放平台检查余额。\n- timeout/请求超时：把超时改成 90 或 120 秒再试。"
+const DEEPSEEK_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：确认完整复制了 DeepSeek 开放平台的 API Key，且 Key 未失效。\n- 余额不足/402：请在 DeepSeek 开放平台检查余额。\n- timeout/请求超时：把超时改成 90 或 120 秒再试。"
 const MODEL_PICKER_OVERLAY_NAME := "AISettingsModelPickerOverlay"
 const API_KEY_SELECT_ALL_BOUND_META := "_ai_settings_api_key_select_all_bound"
 const API_KEY_SELECTED_ALL_META := "_ai_settings_api_key_selected_all"
 
-var _test_client = ZenMuxClientScript.new()
+var _test_client = AiApiClientScript.new()
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _portrait_action_footer_candidate: Button = null
 var _current_non_battle_layout_context: Dictionary = {}
@@ -30,14 +26,14 @@ var _model_picker_overlay: Control = null
 var _model_picker_scroll: ScrollContainer = null
 var _model_picker_list: VBoxContainer = null
 var _web_platform_services: WebPlatformServices = WebPlatformServicesScript.new()
-var _active_provider: String = "zenmux"
+var _active_provider: String = "deepseek"
 var _provider_configs: Dictionary = {}
 var _provider_button_group := ButtonGroup.new()
 
 
 func _ready() -> void:
 	_apply_settings_copy()
-	_ensure_zenmux_setup_guide()
+	_ensure_deepseek_setup_guide()
 	_configure_provider_controls()
 	_configure_settings_form_bounds()
 	_apply_hud_theme()
@@ -108,7 +104,7 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 	var root := get_node_or_null("VBoxContainer") as VBoxContainer
 	var columns := root.get_node_or_null("ContentColumns") as HBoxContainer if root != null else null
 	var form_column := find_child("FormColumn", true, false) as Control
-	var guide_column := find_child("ZenMuxGuideColumn", true, false) as Control
+	var guide_column := find_child("DeepSeekGuideColumn", true, false) as Control
 	if root == null or columns == null or form_column == null:
 		return
 	var viewport_size: Vector2 = context.get("viewport_size", Vector2(390, 844))
@@ -181,7 +177,7 @@ func _apply_settings_landscape_layout(_context: Dictionary) -> void:
 	var root := get_node_or_null("VBoxContainer") as VBoxContainer
 	var columns := root.get_node_or_null("ContentColumns") as HBoxContainer if root != null else null
 	var form_column := find_child("FormColumn", true, false) as Control
-	var guide_column := find_child("ZenMuxGuideColumn", true, false) as Control
+	var guide_column := find_child("DeepSeekGuideColumn", true, false) as Control
 	var scroll := root.get_node_or_null("PortraitSettingsScroll") as ScrollContainer if root != null else null
 	if scroll != null:
 		scroll.visible = false
@@ -385,7 +381,7 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
 		elif button.name in ["BtnSave", "BtnTest", "BtnBack"]:
 			button.custom_minimum_size.y = 40.0
-		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseZenMuxDefault", "BtnPasteApiKey", "BtnOpenZenMux", "ProviderZenMuxButton", "ProviderDeepSeekButton"]:
+		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseDeepSeekDefault", "BtnPasteApiKey", "BtnOpenDeepSeek", "ProviderDeepSeekButton"]:
 			button.custom_minimum_size.x = 0.0
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		elif not portrait and button.name in ["BtnSave", "BtnTest", "BtnBack"]:
@@ -421,13 +417,13 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 			_configure_status_label(label, context, portrait)
 		elif label.name == "Title":
 			label.add_theme_font_size_override("font_size", int(context.get("title_font_size", 34)) if portrait else HudThemeScript.scaled_font_size(34))
-		elif portrait and label.name in ["SectionLabel", "ZenMuxGuideTitle", "ZenMuxTroubleTitle"]:
+		elif portrait and label.name in ["SectionLabel", "DeepSeekGuideTitle", "DeepSeekTroubleTitle"]:
 			label.add_theme_font_size_override("font_size", int(context.get("section_font_size", 29)))
 			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0))
 		elif portrait and label.name in ["EndpointHint", "ApiKeyHint", "ModelHint"]:
 			label.add_theme_font_size_override("font_size", int(context.get("meta_font_size", 19)))
 			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0))
-		elif portrait and label.name in ["ZenMuxGuideBody", "ZenMuxTroubleBody"]:
+		elif portrait and label.name in ["DeepSeekGuideBody", "DeepSeekTroubleBody"]:
 			label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 23)))
 			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 8.0))
 		elif portrait:
@@ -443,9 +439,6 @@ func _apply_settings_copy() -> void:
 	var deepseek_provider_button := find_child("ProviderDeepSeekButton", true, false) as Button
 	if deepseek_provider_button != null:
 		deepseek_provider_button.text = "DeepSeek 直连"
-	var zenmux_provider_button := find_child("ProviderZenMuxButton", true, false) as Button
-	if zenmux_provider_button != null:
-		zenmux_provider_button.text = "ZenMux（需翻墙）"
 	_set_label_text("EndpointLabel", "API 地址:")
 	_set_label_text("ApiKeyLabel", "API 密钥:")
 	_set_label_text("ModelLabel", "模型:")
@@ -580,7 +573,7 @@ func _configure_settings_form_bounds() -> void:
 	form.offset_bottom = 300
 
 
-func _ensure_zenmux_setup_guide() -> void:
+func _ensure_deepseek_setup_guide() -> void:
 	var root := get_node_or_null("VBoxContainer") as VBoxContainer
 	if root == null or root.get_node_or_null("ContentColumns") != null:
 		return
@@ -606,7 +599,7 @@ func _ensure_zenmux_setup_guide() -> void:
 	form_column.owner = self
 
 	var guide_column := VBoxContainer.new()
-	guide_column.name = "ZenMuxGuideColumn"
+	guide_column.name = "DeepSeekGuideColumn"
 	guide_column.custom_minimum_size = Vector2(360, 0)
 	guide_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	guide_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -615,7 +608,7 @@ func _ensure_zenmux_setup_guide() -> void:
 	guide_column.owner = self
 
 	_reparent_form_controls(root, form_column)
-	_add_zenmux_guide_controls(guide_column)
+	_add_deepseek_guide_controls(guide_column)
 	_set_runtime_owner(content_columns)
 
 
@@ -667,14 +660,14 @@ func _build_default_endpoint_row() -> HBoxContainer:
 	row.add_theme_constant_override("separation", 10)
 
 	var button := Button.new()
-	button.name = "BtnUseZenMuxDefault"
+	button.name = "BtnUseDeepSeekDefault"
 	button.unique_name_in_owner = true
-	button.text = "填入 ZenMux 默认地址"
+	button.text = "填入 DeepSeek 默认地址"
 	button.custom_minimum_size = Vector2(168, 34)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	row.add_child(button)
 
-	var hint := _build_hint_label("EndpointHint", "ZenMux 用户通常保持这个地址即可。")
+	var hint := _build_hint_label("EndpointHint", "DeepSeek 直连通常保持这个地址即可。")
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(hint)
 	return row
@@ -709,30 +702,29 @@ func _build_hint_label(node_name: String, text: String) -> Label:
 	return label
 
 
-func _add_zenmux_guide_controls(guide_column: VBoxContainer) -> void:
-	var guide_title := _build_hint_label("ZenMuxGuideTitle", "ZenMux 配置步骤")
+func _add_deepseek_guide_controls(guide_column: VBoxContainer) -> void:
+	var guide_title := _build_hint_label("DeepSeekGuideTitle", "DeepSeek 配置步骤")
 	guide_column.add_child(guide_title)
-	guide_column.add_child(_build_zenmux_link_button())
-	var guide_body := _build_hint_label("ZenMuxGuideBody", ZENMUX_SETUP_GUIDE)
+	guide_column.add_child(_build_deepseek_link_button())
+	var guide_body := _build_hint_label("DeepSeekGuideBody", DEEPSEEK_SETUP_GUIDE)
 	guide_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	guide_column.add_child(guide_body)
-	var trouble_title := _build_hint_label("ZenMuxTroubleTitle", "常见问题")
+	var trouble_title := _build_hint_label("DeepSeekTroubleTitle", "常见问题")
 	guide_column.add_child(trouble_title)
-	var trouble_body := _build_hint_label("ZenMuxTroubleBody", ZENMUX_TROUBLESHOOTING)
+	var trouble_body := _build_hint_label("DeepSeekTroubleBody", DEEPSEEK_TROUBLESHOOTING)
 	trouble_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	guide_column.add_child(trouble_body)
 
 
-func _default_endpoint_for_provider(provider: String) -> String:
-	return DEEPSEEK_DEFAULT_ENDPOINT if GameManager.normalize_battle_review_provider(provider) == "deepseek" else ZENMUX_DEFAULT_ENDPOINT
+func _default_endpoint_for_provider(_provider: String) -> String:
+	return DEEPSEEK_DEFAULT_ENDPOINT
 
 
-func _provider_display_name(provider: String) -> String:
-	return "DeepSeek" if GameManager.normalize_battle_review_provider(provider) == "deepseek" else "ZenMux"
+func _provider_display_name(_provider: String) -> String:
+	return "DeepSeek"
 
 
 func _refresh_provider_copy() -> void:
-	var direct_deepseek := _active_provider == "deepseek"
 	var provider_name := _provider_display_name(_active_provider)
 	var endpoint_input := _endpoint_input()
 	if endpoint_input != null:
@@ -740,7 +732,7 @@ func _refresh_provider_copy() -> void:
 	var api_key_input := _api_key_input()
 	if api_key_input != null:
 		api_key_input.placeholder_text = "粘贴 %s 控制台里的 API Key" % provider_name
-	var default_endpoint_button := find_child("BtnUseZenMuxDefault", true, false) as Button
+	var default_endpoint_button := find_child("BtnUseDeepSeekDefault", true, false) as Button
 	if default_endpoint_button != null:
 		default_endpoint_button.text = "填入 %s 默认地址" % provider_name
 	var endpoint_hint := find_child("EndpointHint", true, false) as Label
@@ -748,37 +740,37 @@ func _refresh_provider_copy() -> void:
 		endpoint_hint.text = "%s 用户通常保持这个地址即可。" % provider_name
 	var model_hint := find_child("ModelHint", true, false) as Label
 	if model_hint != null:
-		model_hint.text = "直连模式仅显示 DeepSeek 官方模型；测试通过后才会启用大模型对手。" if direct_deepseek else "不确定模型就先保留默认；测试通过后才会启用大模型对手。"
-	var guide_title := find_child("ZenMuxGuideTitle", true, false) as Label
+		model_hint.text = "直连模式仅显示 DeepSeek 官方模型；测试通过后才会启用大模型对手。"
+	var guide_title := find_child("DeepSeekGuideTitle", true, false) as Label
 	if guide_title != null:
 		guide_title.text = "%s 配置步骤" % provider_name
-	var guide_body := find_child("ZenMuxGuideBody", true, false) as Label
+	var guide_body := find_child("DeepSeekGuideBody", true, false) as Label
 	if guide_body != null:
-		guide_body.text = DEEPSEEK_SETUP_GUIDE if direct_deepseek else ZENMUX_SETUP_GUIDE
-	var trouble_body := find_child("ZenMuxTroubleBody", true, false) as Label
+		guide_body.text = DEEPSEEK_SETUP_GUIDE
+	var trouble_body := find_child("DeepSeekTroubleBody", true, false) as Label
 	if trouble_body != null:
-		trouble_body.text = DEEPSEEK_TROUBLESHOOTING if direct_deepseek else ZENMUX_TROUBLESHOOTING
-	var open_provider_button := find_child("BtnOpenZenMux", true, false) as Button
+		trouble_body.text = DEEPSEEK_TROUBLESHOOTING
+	var open_provider_button := find_child("BtnOpenDeepSeek", true, false) as Button
 	if open_provider_button != null:
-		open_provider_button.text = "打开 DeepSeek 开放平台" if direct_deepseek else "打开 zenmux.ai"
-		open_provider_button.set_meta("external_url", DEEPSEEK_HOME_URL if direct_deepseek else ZENMUX_HOME_URL)
+		open_provider_button.text = "打开 DeepSeek 开放平台"
+		open_provider_button.set_meta("external_url", DEEPSEEK_HOME_URL)
 	_update_provider_button_state()
 
 
-func _build_zenmux_link_button() -> Button:
+func _build_deepseek_link_button() -> Button:
 	var button := Button.new()
-	button.name = "BtnOpenZenMux"
+	button.name = "BtnOpenDeepSeek"
 	button.unique_name_in_owner = true
-	button.text = "打开 zenmux.ai"
+	button.text = "打开 DeepSeek 开放平台"
 	button.custom_minimum_size = Vector2(180, 38)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	button.set_meta("external_url", ZENMUX_HOME_URL)
+	button.set_meta("external_url", DEEPSEEK_HOME_URL)
 	return button
 
 
 func _apply_hud_theme() -> void:
 	_apply_settings_copy()
-	_ensure_zenmux_setup_guide()
+	_ensure_deepseek_setup_guide()
 	_configure_settings_form_bounds()
 	var shade := get_node_or_null("BackgroundShade") as ColorRect
 	if shade != null:
@@ -797,17 +789,17 @@ func _connect_settings_controls() -> void:
 	var test_button := _settings_button("BtnTest")
 	if test_button != null and not test_button.pressed.is_connected(_on_test_connection):
 		test_button.pressed.connect(_on_test_connection)
-	var default_endpoint_button := find_child("BtnUseZenMuxDefault", true, false) as Button
-	if default_endpoint_button != null and not default_endpoint_button.pressed.is_connected(_on_use_zenmux_default_endpoint):
-		default_endpoint_button.pressed.connect(_on_use_zenmux_default_endpoint)
+	var default_endpoint_button := find_child("BtnUseDeepSeekDefault", true, false) as Button
+	if default_endpoint_button != null and not default_endpoint_button.pressed.is_connected(_on_use_deepseek_default_endpoint):
+		default_endpoint_button.pressed.connect(_on_use_deepseek_default_endpoint)
 	var paste_api_key_button := find_child("BtnPasteApiKey", true, false) as Button
 	if paste_api_key_button != null:
 		if not paste_api_key_button.pressed.is_connected(_on_paste_api_key_pressed):
 			paste_api_key_button.pressed.connect(_on_paste_api_key_pressed)
 		NonBattleTouchBridgeScript.bind_button_touch(paste_api_key_button)
-	var open_zenmux_button := find_child("BtnOpenZenMux", true, false) as Button
-	if open_zenmux_button != null and not open_zenmux_button.pressed.is_connected(_on_open_zenmux_pressed):
-		open_zenmux_button.pressed.connect(_on_open_zenmux_pressed)
+	var open_deepseek_button := find_child("BtnOpenDeepSeek", true, false) as Button
+	if open_deepseek_button != null and not open_deepseek_button.pressed.is_connected(_on_open_deepseek_pressed):
+		open_deepseek_button.pressed.connect(_on_open_deepseek_pressed)
 	var back_button := _settings_button("BtnBack")
 	if back_button != null and not back_button.pressed.is_connected(_on_back):
 		back_button.pressed.connect(_on_back)
@@ -822,15 +814,9 @@ func _connect_settings_controls() -> void:
 
 
 func _configure_provider_controls() -> void:
-	var zenmux_button := find_child("ProviderZenMuxButton", true, false) as Button
 	var deepseek_button := find_child("ProviderDeepSeekButton", true, false) as Button
 	_provider_button_group.allow_unpress = false
-	var zenmux_callback := _switch_provider.bind("zenmux")
 	var deepseek_callback := _switch_provider.bind("deepseek")
-	if zenmux_button != null:
-		zenmux_button.button_group = _provider_button_group
-		if not zenmux_button.pressed.is_connected(zenmux_callback):
-			zenmux_button.pressed.connect(zenmux_callback)
 	if deepseek_button != null:
 		deepseek_button.button_group = _provider_button_group
 		if not deepseek_button.pressed.is_connected(deepseek_callback):
@@ -839,12 +825,9 @@ func _configure_provider_controls() -> void:
 
 
 func _update_provider_button_state() -> void:
-	var zenmux_button := find_child("ProviderZenMuxButton", true, false) as Button
 	var deepseek_button := find_child("ProviderDeepSeekButton", true, false) as Button
-	if zenmux_button != null:
-		zenmux_button.set_pressed_no_signal(_active_provider == "zenmux")
 	if deepseek_button != null:
-		deepseek_button.set_pressed_no_signal(_active_provider == "deepseek")
+		deepseek_button.set_pressed_no_signal(true)
 
 
 func _ensure_hud_frame() -> void:
@@ -919,11 +902,11 @@ func _style_hud_label(label: Label) -> void:
 		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(18))
 		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 		return
-	if label.name in ["ZenMuxGuideTitle", "ZenMuxTroubleTitle"]:
+	if label.name in ["DeepSeekGuideTitle", "DeepSeekTroubleTitle"]:
 		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
 		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 		return
-	if label.name in ["ZenMuxGuideBody", "ZenMuxTroubleBody"]:
+	if label.name in ["DeepSeekGuideBody", "DeepSeekTroubleBody"]:
 		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 		label.add_theme_color_override("font_color", HUD_TEXT)
 		label.add_theme_constant_override("line_spacing", 3)
@@ -1274,19 +1257,11 @@ func _populate_model_options() -> void:
 
 func _load_config() -> void:
 	var config := GameManager.get_battle_review_api_config()
-	_active_provider = GameManager.normalize_battle_review_provider(str(config.get("provider", "zenmux")))
+	_active_provider = "deepseek"
 	var profiles_variant: Variant = config.get("provider_configs", {})
 	_provider_configs = (profiles_variant as Dictionary).duplicate(true) if profiles_variant is Dictionary else {}
 	_populate_model_options()
-	var default_endpoint := _default_endpoint_for_provider(_active_provider)
-	var endpoint := _settings_config_text(config.get("endpoint", default_endpoint), default_endpoint)
-	var endpoint_input := _endpoint_input()
-	if endpoint_input != null:
-		endpoint_input.text = endpoint
-	var api_key_input := _api_key_input()
-	if api_key_input != null:
-		api_key_input.text = _settings_config_text(config.get("api_key", ""), "")
-	_select_model(str(config.get("model", "")))
+	_apply_provider_profile(_active_provider)
 	var timeout_input := _timeout_input()
 	if timeout_input != null:
 		timeout_input.value = float(config.get("timeout_seconds", 30.0))
@@ -1332,7 +1307,7 @@ func _apply_provider_profile(provider: String) -> void:
 
 
 func _switch_provider(provider: String) -> void:
-	var normalized := GameManager.normalize_battle_review_provider(provider)
+	var normalized := "deepseek"
 	if normalized == _active_provider:
 		_update_provider_button_state()
 		return
@@ -1341,7 +1316,7 @@ func _switch_provider(provider: String) -> void:
 	_populate_model_options()
 	_apply_provider_profile(_active_provider)
 	_refresh_provider_copy()
-	_set_status_message("已切换到 %s；两套 API Key 会分别保存。" % _provider_display_name(_active_provider), Color(0.3, 0.85, 1.0))
+	_set_status_message("已使用 DeepSeek 官方直连接口。", Color(0.3, 0.85, 1.0))
 
 
 func _settings_config_text(value: Variant, fallback: String) -> String:
@@ -1381,7 +1356,7 @@ func _selected_model_id() -> String:
 	return GameManager.normalize_battle_review_model_for_provider(str(model_option.get_item_metadata(selected_index)), _active_provider)
 
 
-func _on_use_zenmux_default_endpoint() -> void:
+func _on_use_deepseek_default_endpoint() -> void:
 	var endpoint_input := _endpoint_input()
 	if endpoint_input == null:
 		_set_ai_settings_inputs_unavailable_status("填写默认地址")
@@ -1393,10 +1368,10 @@ func _on_use_zenmux_default_endpoint() -> void:
 
 func _on_paste_api_key_pressed() -> void:
 	if _is_web_api_key_clipboard_runtime():
-		if _request_web_api_key_clipboard_paste():
-			_set_status_message("正在读取浏览器剪贴板...", Color(0.3, 0.85, 1.0))
+		if _request_web_api_key_secret_entry():
+			_set_status_message("已打开浏览器密钥输入框，请点“直接读取剪贴板”。", Color(0.3, 0.85, 1.0))
 			return
-		_set_status_message("浏览器不允许直接读取剪贴板，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
+		_set_status_message("浏览器密钥输入框打开失败，请重新进入设置页后再试。", Color(1, 0.35, 0.25))
 		return
 	var clipboard_text := ""
 	if DisplayServer.get_name() != "headless":
@@ -1408,32 +1383,20 @@ func _is_web_api_key_clipboard_runtime_for_tests(os_name: String = "", feature_f
 	return _is_web_api_key_clipboard_runtime(os_name, feature_flags, display_server_name)
 
 
-func _build_web_api_key_clipboard_script_for_tests(callback_name: String = "__ptcgDeckAgentApiKeyPasteCallback") -> String:
-	return WebPlatformServicesScript.build_clipboard_read_script(callback_name, 1)
-
-
 func _is_web_api_key_clipboard_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
 	return _web_platform_services.is_web_runtime(os_name, feature_flags, display_server_name)
 
 
-func _request_web_api_key_clipboard_paste() -> bool:
-	return _web_platform_services.request_clipboard_text(_on_web_api_key_clipboard_payload)
+func _request_web_api_key_secret_entry() -> bool:
+	return _web_platform_services.request_secret_text("", _on_web_api_key_secret_entry_payload)
 
 
-func _on_web_api_key_clipboard_text(args: Array) -> void:
-	if args.is_empty():
-		_set_status_message("浏览器没有返回剪贴板内容，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
-		return
-	var parsed: Variant = JSON.parse_string(str(args[0]))
-	if not (parsed is Dictionary):
-		_set_status_message("浏览器剪贴板返回格式异常，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
-		return
-	_on_web_api_key_clipboard_payload(parsed as Dictionary)
-
-
-func _on_web_api_key_clipboard_payload(payload: Dictionary) -> void:
+func _on_web_api_key_secret_entry_payload(payload: Dictionary) -> void:
 	if not bool(payload.get("ok", false)):
-		_set_status_message("浏览器未允许读取剪贴板，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
+		if bool(payload.get("cancelled", false)):
+			_set_status_message("已取消粘贴 API Key。", Color(0.64, 0.76, 0.86))
+		else:
+			_set_status_message("浏览器没有返回 API Key，请重新点击“粘贴密钥”。", Color(1, 0.35, 0.25))
 		return
 	_apply_api_key_paste_text(str(payload.get("text", "")))
 
@@ -1460,9 +1423,9 @@ func _apply_api_key_paste_text(text: String) -> bool:
 	return true
 
 
-func _on_open_zenmux_pressed() -> void:
-	var provider_name := _provider_display_name(_active_provider)
-	var provider_url := DEEPSEEK_HOME_URL if _active_provider == "deepseek" else ZENMUX_HOME_URL
+func _on_open_deepseek_pressed() -> void:
+	var provider_name := "DeepSeek"
+	var provider_url := DEEPSEEK_HOME_URL
 	var err := OS.shell_open(provider_url)
 	if err == OK:
 		_set_status_message("已打开 %s，请在浏览器注册或复制 API Key。" % provider_name, Color(0.3, 1, 0.3))

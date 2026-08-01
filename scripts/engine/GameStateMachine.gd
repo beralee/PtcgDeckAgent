@@ -764,7 +764,9 @@ func _enforce_current_bench_limits(
 	)
 	var cleanup_steps: Array[Dictionary] = AreaZeroUnderdepthsEffect.build_cleanup_interaction_steps(
 		game_state,
-		start_player_index
+		start_player_index,
+		BenchLimit.DEFAULT_BENCH_LIMIT,
+		_current_bench_limits_by_player()
 	)
 	if (
 		not cleanup_steps.is_empty()
@@ -783,7 +785,8 @@ func _enforce_current_bench_limits(
 	var discarded_groups: Array[Dictionary] = AreaZeroUnderdepthsEffect.enforce_bench_limits(
 		game_state,
 		targets,
-		start_player_index
+		start_player_index,
+		_current_bench_limits_by_player()
 	)
 	if discarded_groups.is_empty():
 		return false
@@ -794,15 +797,29 @@ func _enforce_current_bench_limits(
 			GameAction.ActionType.DISCARD,
 			pi,
 			{
-				"source": "Area Zero Underdepths",
+				"source": "Bench limit cleanup",
 				"limit": int(group.get("limit", BenchLimit.DEFAULT_BENCH_LIMIT)),
 				"card_names": discarded_names.duplicate(),
 			},
-			"玩家%d因零之大空洞失效弃掉备战宝可梦：%s" % [pi + 1, ", ".join(discarded_names)]
+			"玩家%d因备战区上限变化弃掉备战宝可梦：%s" % [pi + 1, ", ".join(discarded_names)]
 		)
 	_assert_card_totals("bench_limit_cleanup:%s" % context)
 	_resume_pending_knockout_after_bench_cleanup()
 	return true
+
+
+func _current_bench_limits_by_player() -> Dictionary:
+	var limits: Dictionary = {}
+	if game_state == null:
+		return limits
+	game_state.shared_turn_flags["_draw_effect_processor"] = effect_processor
+	for player_index: int in game_state.players.size():
+		limits[player_index] = BenchLimit.get_bench_limit_for_player(
+			game_state,
+			game_state.players[player_index],
+			effect_processor
+		)
+	return limits
 
 
 func _has_player_choice_listener() -> bool:
@@ -907,14 +924,22 @@ func _handle_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> 
 
 func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
 	var pokemon_name: String = slot.get_pokemon_name()
-	var base_prize_count: int = slot.get_prize_count()
-	var prize_count: int = _get_knockout_prize_count(slot)
 	var player: PlayerState = game_state.players[player_index]
 	# 学习装置：战斗位昏厥时转移1张基本能量到持有学习装置的备战宝可梦
 	if is_active and not _exp_share_resolved_knockout_slot_ids.has(int(slot.get_instance_id())):
 		if _maybe_request_exp_share_choice(player_index, slot, is_active):
 			return false
 		_apply_exp_share_if_possible(player_index, slot, null, null)
+	var prizes_prevented := effect_processor.apply_knockout_prize_prevention_ability(slot, game_state)
+	var base_prize_count: int = slot.get_prize_count()
+	var prize_count: int = _get_knockout_prize_count(slot)
+	if prizes_prevented:
+		_log_action(
+			GameAction.ActionType.USE_ABILITY,
+			player_index,
+			{"pokemon_name": pokemon_name, "prize_count": 0},
+			"%s prevents the opponent from taking Prize cards" % pokemon_name
+		)
 	_record_attack_damage_knockout_identity(player_index, slot)
 	_record_knockout_identity(player_index, slot)
 	game_state.last_knockout_turn_against[player_index] = game_state.turn_number
@@ -1087,7 +1112,9 @@ func _knockout_needs_bench_cleanup_before_replacement(player_index: int) -> bool
 		return false
 	var steps: Array[Dictionary] = AreaZeroUnderdepthsEffect.build_cleanup_interaction_steps(
 		game_state,
-		player_index
+		player_index,
+		BenchLimit.DEFAULT_BENCH_LIMIT,
+		_current_bench_limits_by_player()
 	)
 	return not steps.is_empty()
 
@@ -2933,6 +2960,8 @@ func _maybe_request_powerglass_end_turn_choice(player_index: int, slot: PokemonS
 func _get_knockout_prize_count(slot: PokemonSlot) -> int:
 	var prize_count: int = slot.get_prize_count()
 	for effect: Dictionary in slot.effects:
+		if effect.get("type", "") == "prevent_knockout_prizes":
+			return 0
 		if effect.get("type", "") == "extra_prize":
 			prize_count += int(effect.get("count", 0))
 		elif _delayed_extra_prize_marker_is_active(effect, slot):

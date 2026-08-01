@@ -28,6 +28,12 @@ func refresh_hand() -> void:
 	legacy_display_controller.call("refresh_hand", legacy_scene)
 
 
+func stabilize_hand_surface_layout() -> void:
+	if not is_configured():
+		return
+	legacy_display_controller.call("stabilize_hand_surface_layout", legacy_scene)
+
+
 func refresh_field() -> void:
 	if not is_configured():
 		return

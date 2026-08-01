@@ -12,6 +12,7 @@ static var _active_control_id: int = 0
 static var _test_force_web := false
 static var _test_request_count := 0
 static var _test_last_payload: Dictionary = {}
+static var _last_cancel_reason: String = ""
 
 
 static func set_test_force_web(enabled: bool) -> void:
@@ -42,6 +43,20 @@ static func get_test_install_script() -> String:
 	return _install_script()
 
 
+static func debug_state_for_tests() -> Dictionary:
+	var control := _active_control()
+	return {
+		"active_control_id": _active_control_id,
+		"active_control_valid": control != null,
+		"active_control_name": control.name if control != null else "",
+		"last_cancel_reason": _last_cancel_reason,
+	}
+
+
+static func should_preserve_for_cancel_reason(reason: String) -> bool:
+	return reason == "blur" and _active_control() != null
+
+
 static func is_web_runtime() -> bool:
 	if _test_force_web:
 		return true
@@ -51,6 +66,7 @@ static func is_web_runtime() -> bool:
 static func request_focus(control: Control) -> bool:
 	if control == null or not is_web_runtime():
 		return false
+	_last_cancel_reason = ""
 	var target := _target_text_control(control)
 	if target == null or not _target_is_editable(target):
 		return false
@@ -59,6 +75,11 @@ static func request_focus(control: Control) -> bool:
 	if target.get_instance_id() == _active_control_id and now - previous >= 0 and now - previous < DUPLICATE_REQUEST_SUPPRESS_MSEC:
 		if target.is_inside_tree():
 			target.grab_focus()
+		if not _test_force_web and _ensure_javascript_bridge():
+			JavaScriptBridge.eval(
+				"window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.refocus && window.__ptcgDeckAgentTextInput.refocus();",
+				true
+			)
 		return true
 	target.set_meta(LAST_PROXY_REQUEST_META, now)
 	target.set_meta(ACTIVE_META, true)
@@ -92,6 +113,7 @@ static func commit_active_value(value: String, finished: bool = false) -> void:
 
 
 static func cancel_active(_reason: String = "platform_cancel") -> void:
+	_last_cancel_reason = _reason
 	var control := _active_control()
 	if control != null and control.has_meta(ACTIVE_META):
 		control.remove_meta(ACTIVE_META)
@@ -152,6 +174,7 @@ static func _payload_for_control(control: Control) -> Dictionary:
 		"placeholder": placeholder,
 		"input_type": input_type,
 		"multiline": multiline,
+		"select_all": control is LineEdit and (control as LineEdit).has_selection() and (control as LineEdit).get_selected_text() == text,
 	}
 
 
@@ -194,7 +217,7 @@ static func _ensure_javascript_bridge() -> bool:
 static func _install_script() -> String:
 	return """
 (function() {
-  if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.version === 2) return;
+  if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.version === 5) return;
   function callback(event, value, id) {
     if (typeof window.__ptcgDeckAgentTextInputCallback === 'function') {
       window.__ptcgDeckAgentTextInputCallback(JSON.stringify({ event: event, value: value || '', id: id || 0 }));
@@ -229,7 +252,15 @@ static func _install_script() -> String:
     input.style.font = '16px sans-serif';
     input.style.fontSize = '16px';
     input.style.webkitAppearance = 'none';
-    input.style.touchAction = 'manipulation';
+    input.style.userSelect = 'text';
+    input.style.webkitUserSelect = 'text';
+    input.style.webkitTouchCallout = 'default';
+    input.style.touchAction = 'auto';
+    input.style.pointerEvents = 'auto';
+    input.style.setProperty('user-select', 'text', 'important');
+    input.style.setProperty('-webkit-user-select', 'text', 'important');
+    input.style.setProperty('-webkit-touch-callout', 'default', 'important');
+    input.style.setProperty('touch-action', 'auto', 'important');
     input.style.caretColor = '#f4fbff';
     if (config.multiline) {
       input.style.paddingTop = '8px';
@@ -239,6 +270,7 @@ static func _install_script() -> String:
     document.body.appendChild(input);
     state.input = input;
     state.id = config.id || 0;
+    state.createdCount += 1;
     return input;
   }
   function placeInput(input, config) {
@@ -252,15 +284,26 @@ static func _install_script() -> String:
     input.style.height = Math.max(38, Number(config.height || 38) * scaleY) + 'px';
   }
   window.__ptcgDeckAgentTextInput = {
-    version: 2,
+    version: 5,
     input: null,
     id: 0,
+    keepAliveUntil: 0,
+    openCount: 0,
+    createdCount: 0,
+    blurCount: 0,
+    removedCount: 0,
+    refocusCount: 0,
+    pasteCount: 0,
+    lastPasteLength: 0,
+    lastError: '',
     cleanupPosition: null,
     open: function(config) {
-      config = config || {};
-      var state = this;
-      var input = ensureInput(config);
-      placeInput(input, config);
+      this.openCount += 1;
+      try {
+        config = config || {};
+        var state = this;
+        var input = ensureInput(config);
+        placeInput(input, config);
       var reposition = function() {
         if (state.input === input) placeInput(input, config);
       };
@@ -279,44 +322,101 @@ static func _install_script() -> String:
         if (state.cleanupPosition) state.cleanupPosition = null;
       };
       var id = config.id || 0;
+      state.keepAliveUntil = Date.now() + 1200;
       input.oninput = function() { callback('input', input.value, id); };
       input.onchange = function() { callback('input', input.value, id); };
-      input.onblur = function() {
-        callback('commit', input.value, id);
-        setTimeout(function() {
-          if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.input === input && input.parentNode) {
-            if (typeof state.cleanupPosition === 'function') state.cleanupPosition();
-            input.parentNode.removeChild(input);
-            window.__ptcgDeckAgentTextInput.input = null;
+      input.onpaste = function(event) {
+        var clipboard = event && (event.clipboardData || window.clipboardData);
+        var pasted = '';
+        try {
+          pasted = clipboard && typeof clipboard.getData === 'function' ? String(clipboard.getData('text/plain') || '') : '';
+        } catch (_clipboardError) {}
+        state.pasteCount += 1;
+        state.lastPasteLength = pasted.length;
+        if (pasted !== '') {
+          event.preventDefault();
+          var start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+          var end = typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+          if (typeof input.setRangeText === 'function') {
+            input.setRangeText(pasted, start, end, 'end');
+          } else {
+            input.value = input.value.slice(0, start) + pasted + input.value.slice(end);
           }
+          callback('input', input.value, id);
+          return;
+        }
+        setTimeout(function() {
+          if (state.input === input) callback('input', input.value, id);
         }, 0);
+      };
+      input.onblur = function() {
+        state.blurCount += 1;
+        var finishBlur = function() {
+          if (!window.__ptcgDeckAgentTextInput || window.__ptcgDeckAgentTextInput.input !== input || !input.parentNode) return;
+          if (document.activeElement === input) return;
+          var remaining = Number(state.keepAliveUntil || 0) - Date.now();
+          if (remaining > 0) {
+            try {
+              input.focus({ preventScroll: true });
+            } catch (_blurRefocusOptionsError) {
+              input.focus();
+            }
+            if (document.activeElement === input) return;
+            setTimeout(finishBlur, Math.min(remaining + 10, 80));
+            return;
+          }
+          callback('commit', input.value, id);
+          if (typeof state.cleanupPosition === 'function') state.cleanupPosition();
+          input.parentNode.removeChild(input);
+          window.__ptcgDeckAgentTextInput.input = null;
+          state.removedCount += 1;
+        };
+        setTimeout(finishBlur, 0);
       };
       input.onkeydown = function(event) {
         if (!config.multiline && event.key === 'Enter') {
           event.preventDefault();
+          state.keepAliveUntil = 0;
           callback('commit', input.value, id);
           input.blur();
         }
         if (event.key === 'Escape') {
           event.preventDefault();
+          state.keepAliveUntil = 0;
           input.blur();
         }
       };
+      state.refocus();
+      try {
+        if (config.select_all) input.setSelectionRange(0, input.value.length);
+        else input.setSelectionRange(input.value.length, input.value.length);
+      } catch (_) {}
+      } catch (error) {
+        this.lastError = String(error && error.message ? error.message : error);
+      }
+    },
+    refocus: function() {
+      this.refocusCount += 1;
+      var input = this.input;
+      if (!input || !input.parentNode) return false;
+      this.keepAliveUntil = Date.now() + 1200;
       try {
         input.focus({ preventScroll: true });
       } catch (_focusOptionsError) {
         input.focus();
       }
-      try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+      return document.activeElement === input;
     },
     close: function() {
       var input = this.input;
       this.input = null;
       this.id = 0;
+      this.keepAliveUntil = 0;
       if (typeof this.cleanupPosition === 'function') this.cleanupPosition();
       if (!input) return;
       input.oninput = null;
       input.onchange = null;
+      input.onpaste = null;
       input.onblur = null;
       input.onkeydown = null;
       if (input.parentNode) input.parentNode.removeChild(input);

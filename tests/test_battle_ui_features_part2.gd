@@ -5,6 +5,132 @@ extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 const CSV9CAdvancedEffectsScript := preload("res://scripts/effects/pokemon_effects/CSV9CAdvancedEffects.gd")
 
 
+func test_portrait_assignment_hud_uses_shared_drag_for_both_scrollable_card_lanes() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var source_items: Array = []
+	var target_items: Array = []
+	for index: int in 8:
+		source_items.append(CardInstance.create(_make_energy_cd("Source Energy %d" % index, "P"), 0))
+		target_items.append(CardInstance.create(_make_pokemon_cd("Target %d" % index, 70, "P"), 0))
+
+	battle_scene.call("_show_assignment_dialog", {
+		"source_items": source_items,
+		"source_labels": [],
+		"target_items": target_items,
+		"target_labels": [],
+		"min_select": 1,
+		"max_select": 4,
+	})
+
+	var source_scroll := battle_scene.get("_dialog_assignment_source_scroll") as ScrollContainer
+	var target_scroll := battle_scene.get("_dialog_assignment_target_scroll") as ScrollContainer
+	var source_row := battle_scene.get("_dialog_assignment_source_row") as HBoxContainer
+	var target_row := battle_scene.get("_dialog_assignment_target_row") as HBoxContainer
+	var source_card := source_row.get_child(0) as BattleCardView if source_row.get_child_count() > 0 else null
+	var target_card := target_row.get_child(0) as BattleCardView if target_row.get_child_count() > 0 else null
+	battle_scene.set("_card_gallery_drag_suppress_click_until_msec", Time.get_ticks_msec() + 1000)
+	battle_scene.call("_on_assignment_source_chosen", 0)
+	var selected_source_after_suppressed_drag := int(battle_scene.get("_dialog_assignment_selected_source_index"))
+
+	return run_checks([
+		assert_true(
+			bool(source_scroll.get_meta("card_gallery_drag_scroll_enabled", false)),
+			"The upper assignment lane must use the same browser drag coordinator as ordinary card-choice HUDs"
+		),
+		assert_true(
+			bool(target_scroll.get_meta("card_gallery_drag_scroll_enabled", false)),
+			"The lower assignment lane must use the same browser drag coordinator as ordinary card-choice HUDs"
+		),
+		assert_true(
+			bool(source_scroll.get_meta("card_gallery_drag_scroll_active", false))
+			and bool(target_scroll.get_meta("card_gallery_drag_scroll_active", false)),
+			"Both visible assignment lanes must be active while the assignment HUD is open"
+		),
+		assert_true(
+			source_card != null and bool(source_card.get_meta("card_gallery_drag_input_enabled", false)),
+			"Source cards must forward touch motion instead of turning a held swipe into a selection"
+		),
+		assert_true(
+			target_card != null and bool(target_card.get_meta("card_gallery_drag_input_enabled", false)),
+			"Target cards must forward touch motion instead of turning a held swipe into a selection"
+		),
+		assert_true(
+			bool(source_scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false))
+			and bool(target_scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false)),
+			"Portrait assignment lanes must keep their bottom touch scrollbars visible"
+		),
+		assert_eq(
+			selected_source_after_suppressed_drag,
+			-1,
+			"A card release immediately after dragging an assignment lane must not select a source"
+		),
+	])
+
+
+func test_field_assignment_card_strip_uses_shared_drag_without_hiding_bottom_scrollbar() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+
+	var target := PokemonSlot.new()
+	target.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target", 120, "P"), 0))
+	gsm.game_state.players[0].bench = [target]
+	var source_items: Array = []
+	for index: int in 8:
+		source_items.append(CardInstance.create(_make_energy_cd("Energy %d" % index, "P"), 0))
+
+	battle_scene.call("_show_field_assignment_interaction", {
+		"title": "Assign Energy",
+		"ui_mode": "card_assignment",
+		"source_items": source_items,
+		"source_labels": [],
+		"target_items": [target],
+		"target_labels": ["Target"],
+		"min_select": 1,
+		"max_select": 4,
+		"allow_cancel": true,
+	})
+
+	var scroll := battle_scene.get("_field_interaction_scroll") as ScrollContainer
+	var row := battle_scene.get("_field_interaction_row") as HBoxContainer
+	var source_card := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	battle_scene.set("_card_gallery_drag_suppress_click_until_msec", Time.get_ticks_msec() + 1000)
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var selected_source_after_suppressed_drag := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
+	return run_checks([
+		assert_true(
+			scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_enabled", false)),
+			"Field-assignment card strips must use the shared browser drag coordinator"
+		),
+		assert_true(
+			scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false)),
+			"The field-assignment strip must accept upper-card-area swipes while visible"
+		),
+		assert_true(
+			scroll != null and bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false)),
+			"The native bottom scrollbar must remain available independently of upper-area drag"
+		),
+		assert_true(
+			source_card != null and bool(source_card.get_meta("card_gallery_drag_input_enabled", false)),
+			"Field-assignment cards must forward touch motion instead of turning a held swipe into selection"
+		),
+		assert_eq(
+			selected_source_after_suppressed_drag,
+			-1,
+			"A card release immediately after dragging the field strip must not select an energy"
+		),
+	])
+
+
 func test_munkidori_ability_opens_and_completes_two_stage_field_interaction() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -579,11 +705,15 @@ func test_battle_scene_opponent_hand_viewer_shows_card_previews() -> String:
 	var discard_title := Label.new()
 	var discard_overlay := Panel.new()
 	var discard_list := ItemList.new()
+	var discard_card_scroll := ScrollContainer.new()
 	var discard_card_row := HBoxContainer.new()
+	var discard_utility_row := HBoxContainer.new()
 	scene.set("_discard_title", discard_title)
 	scene.set("_discard_overlay", discard_overlay)
 	scene.set("_discard_list", discard_list)
+	scene.set("_discard_card_scroll", discard_card_scroll)
 	scene.set("_discard_card_row", discard_card_row)
+	scene.set("_discard_utility_row", discard_utility_row)
 
 	for pi: int in 2:
 		var player := PlayerState.new()
@@ -595,6 +725,20 @@ func test_battle_scene_opponent_hand_viewer_shows_card_previews() -> String:
 	gsm.game_state.players[1].hand = [opp_hand_a, opp_hand_b]
 
 	scene.call("_show_opponent_hand_cards")
+	var discard_scroll := scene.get("_discard_card_scroll") as ScrollContainer
+	var first_preview := discard_card_row.get_child(0) as BattleCardView
+	var shared_drag_checks := run_checks([
+		assert_true(
+			discard_scroll != null and bool(discard_scroll.get_meta("card_gallery_drag_scroll_active", false)),
+			"The opponent-hand collection must activate the same drag surface as discard and deck viewers"
+		),
+		assert_true(
+			first_preview != null and bool(first_preview.get_meta("card_gallery_drag_input_enabled", false)),
+			"Opponent-hand previews must forward touch motion so holding and swiping cannot open a card accidentally"
+		),
+	])
+	if shared_drag_checks != "":
+		return shared_drag_checks
 
 	return run_checks([
 		assert_true(discard_overlay.visible, "点击对手手牌后应打开只读预览层"),

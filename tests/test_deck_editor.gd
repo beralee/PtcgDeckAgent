@@ -785,6 +785,30 @@ func test_build_pool_includes_requested_bundled_pokemon_cards() -> String:
 	return run_checks(checks)
 
 
+func test_build_pool_includes_csv5c_073_and_csv9c_110_pokemon() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var pokemon_cards: Array = pool_by_category[0] if pool_by_category.size() > 0 else []
+	var found_glimmora: CardData = null
+	var found_glimmet: CardData = null
+	for card: CardData in pokemon_cards:
+		if card.get_uid() == "CSV5C_073":
+			found_glimmora = card
+		elif card.get_uid() == "CSV9C_110":
+			found_glimmet = card
+	var checks: Array[String] = [
+		assert_not_null(found_glimmora, "DeckEditor Pokemon tab should include bundled CSV5C_073"),
+		assert_not_null(found_glimmet, "DeckEditor Pokemon tab should include bundled CSV9C_110"),
+	]
+	if found_glimmora != null:
+		checks.append(assert_eq(found_glimmora.name_en, "Glimmora ex", "DeckEditor should keep CSV5C_073 metadata"))
+	if found_glimmet != null:
+		checks.append(assert_eq(found_glimmet.name_en, "Glimmet", "DeckEditor should keep CSV9C_110 metadata"))
+	editor.free()
+	return run_checks(checks)
+
+
 func test_build_pool_includes_tcg_mik_csv8c050_csv95c034_036_205_csv6c112_batch() -> String:
 	var editor: Control = DeckEditorScript.new()
 	editor.call("_build_pool")

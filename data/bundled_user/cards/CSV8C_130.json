@@ -1,0 +1,66 @@
+{
+    "name":  "蜈蚣王",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【恶】【无】 残酷一击 \n在对手战斗宝可梦身上放置伤害指示物，直到其剩余HP变为「10」为止。\n\n【恶】【无】【无】 污泥炸弹 160\n\n\n",
+    "yoren_code":  "P545",
+    "set_code":  "CSV8C",
+    "card_index":  "130",
+    "set_code_en":  "TWM",
+    "card_index_en":  "117",
+    "name_en":  "Scolipede",
+    "name_zh":  "",
+    "artist":  "Shiburingaru",
+    "rarity":  "U",
+    "release_date":  "2026-03-13T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "6e1f0a70900ecdcee11e3a3b1c10e302",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV8C/130.png",
+    "image_local_path":  "user://cards/images/CSV8C/130.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV8C/130",
+    "source_set_code":  "CSV8C",
+    "source_card_index":  "130",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "D",
+    "stage":  "Stage 2",
+    "hp":  170,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "车轮球",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "残酷一击",
+                        "text":  "在对手战斗宝可梦身上放置伤害指示物，直到其剩余HP变为「10」为止。",
+                        "cost":  "DC",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "污泥炸弹",
+                        "text":  "",
+                        "cost":  "DCC",
+                        "damage":  "160",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

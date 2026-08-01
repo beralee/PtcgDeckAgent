@@ -13,6 +13,8 @@ const MODE_PREVIEW := "preview"
 const TOUCH_LONG_PRESS_SECONDS := 0.42
 const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
 const HAND_PRIMARY_CLICK_MOVE_TOLERANCE := 12.0
+const IOS_WEB_HAND_TOUCH_HORIZONTAL_TOLERANCE := 36.0
+const IOS_WEB_HAND_TOUCH_VERTICAL_TOLERANCE := 48.0
 const CARD_GALLERY_TOUCH_CLICK_MOVE_TOLERANCE := 28.0
 const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := 36.0
 const PRIMARY_RELEASE_FALLBACK_MIN_DELAY_MSEC := 80
@@ -1798,6 +1800,13 @@ func handle_bridged_pointer_input(event: InputEvent) -> void:
 	_handle_card_pointer_input(event)
 
 
+func activate_primary_click() -> bool:
+	if not _clickable:
+		return false
+	left_clicked.emit(card_instance, card_data)
+	return true
+
+
 func _handle_card_pointer_input(event: InputEvent) -> void:
 	if not _clickable:
 		return
@@ -1853,10 +1862,16 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 				_suppress_next_left_click = false
 				accept_event()
 				return true
+			if _is_card_gallery_click_suppressed():
+				accept_event()
+				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
 		if _consume_primary_release_fallback():
+			if _is_card_gallery_click_suppressed():
+				accept_event()
+				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
@@ -1890,10 +1905,16 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 				_suppress_next_left_click = false
 				accept_event()
 				return true
+			if _is_card_gallery_click_suppressed():
+				accept_event()
+				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
 		if _consume_primary_release_fallback():
+			if _is_card_gallery_click_suppressed():
+				accept_event()
+				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
@@ -1965,6 +1986,22 @@ func _update_hand_primary_click_motion(position: Vector2) -> void:
 		if absf(delta.x) > horizontal_tolerance or absf(delta.y) > CARD_GALLERY_VERTICAL_CLICK_TOLERANCE:
 			_hand_primary_press_cancelled = true
 		return
+	if (
+		_hand_primary_press_from_touch
+		and display_mode == MODE_HAND
+		and bool(get_meta("_ios_web_hand_touch_profile", false))
+	):
+		# The 1600-wide logical Web canvas is commonly displayed in roughly 390
+		# CSS pixels on iPhone. The generic 12px threshold therefore becomes only
+		# about three physical pixels and normal finger wobble is misread as a
+		# horizontal hand-row drag. Keep mouse/native behavior unchanged and give
+		# only iOS Web hand cards a physical-finger-sized tap envelope.
+		if (
+			absf(delta.x) > IOS_WEB_HAND_TOUCH_HORIZONTAL_TOLERANCE
+			or absf(delta.y) > IOS_WEB_HAND_TOUCH_VERTICAL_TOLERANCE
+		):
+			_hand_primary_press_cancelled = true
+		return
 	if delta.length() > HAND_PRIMARY_CLICK_MOVE_TOLERANCE:
 		_hand_primary_press_cancelled = true
 
@@ -1983,8 +2020,26 @@ func _touch_release_position_is_reliable(position: Vector2) -> bool:
 	return position != Vector2.ZERO or _hand_primary_press_start == Vector2.ZERO
 
 
+func _is_card_gallery_click_suppressed() -> bool:
+	if not bool(get_meta("card_gallery_drag_input_enabled", false)):
+		return false
+	var checker_variant: Variant = get_meta("card_gallery_drag_click_suppression_checker", Callable())
+	if not (checker_variant is Callable):
+		return false
+	var checker := checker_variant as Callable
+	return checker.is_valid() and bool(checker.call())
+
+
 func _handle_touch_inspect_input(event: InputEvent) -> bool:
 	if not _can_inspect_by_secondary_input():
+		return false
+	# Horizontal card galleries already expose the same detail action through a
+	# normal tap. Arming a second long-press action competes with scroll intent:
+	# if the browser delays or coalesces ScreenDrag, merely resting a finger on a
+	# card opens detail before the row can move. Keep mouse right-click inspection
+	# available, but reserve touch hold/move for the gallery scroller.
+	if bool(get_meta("card_gallery_drag_input_enabled", false)):
+		_cancel_touch_long_press()
 		return false
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch

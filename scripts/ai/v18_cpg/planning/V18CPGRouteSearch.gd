@@ -174,10 +174,89 @@ func _candidate(
 	var information := _information_value.evaluate_action(action, observation, facts, semantic_manifest)
 	var action_id := str(action.get("id", ""))
 	var action_semantic_roles := _action_semantic_roles(action, semantic_manifest)
+	var zero_energy_retreat := str(action.get("kind", "")) == "retreat" \
+		and bool(action.get("engine_legal_retreat_proof", false)) \
+		and bool(action.get("zero_energy_retreat", false)) \
+		and int(action.get("retreat_payment_energy_count", -1)) == 0
 	var candidate_id := "candidate:%s" % ContractsScript.stable_hash({
 		"route_id": "route:%s" % category,
 		"action_id": action_id,
 	}).substr(0, 20)
+	var outcome := {
+		"win_now": prizes_now > 0 and prizes_now >= prizes_remaining,
+		"prizes_now": prizes_now,
+		"estimated_damage": damage,
+		"attack_ready": category.begins_with("attack"),
+		"attack_uptime_next_turn": false,
+		"continuity_debt_reduction": 0,
+		"information_gain": float(information.get("information_gain", 0.0)),
+		"board_development": 1.0 \
+			if category in ["develop", "evolve", "stadium"] else 0.0,
+		"future_flexibility": 0.8 \
+			if category in [
+				"information", "noctowl_search", "tutor", "recover", "pivot",
+			] else 0.3,
+		"uncertainty": 0.7 \
+			if category in [
+				"information", "noctowl_search", "opening_search", "tutor",
+			] else 0.2,
+		"resource_commitment": float(
+			information.get("resource_commitment", 0.0)
+		),
+		"board_commitment": float(
+			information.get("board_commitment", 0.0)
+		),
+		"terminal": bool(information.get("terminal", false)),
+		"expected_route_improvement": float(
+			information.get("expected_route_improvement", 0.0)
+		),
+	}
+	if str(action.get("kind", "")) == "retreat" \
+			and action.has("retreat_payment_energy_count"):
+		outcome["retreat_payment_energy_count"] = int(
+			action.get("retreat_payment_energy_count", -1)
+		)
+	if zero_energy_retreat:
+		outcome["zero_energy_retreat"] = true
+		outcome["preserves_attached_energy"] = true
+	var action_kind := str(action.get("kind", ""))
+	if action_kind == "play_basic_to_bench":
+		var bench: Array = own.get("bench", []) \
+			if own.get("bench", []) is Array else []
+		var bench_capacity := int(own.get("bench_capacity", 5))
+		var bench_slots_before := int(
+			own.get(
+				"bench_slots_free",
+				maxi(0, bench_capacity - bench.size())
+			)
+		)
+		outcome["bench_capacity"] = bench_capacity
+		outcome["bench_slots_before"] = bench_slots_before
+		outcome["bench_slots_after"] = maxi(0, bench_slots_before - 1)
+		outcome["consumes_last_bench_slot"] = bench_slots_before == 1
+		outcome["uses_expanded_bench_capacity"] = bench_capacity > 5
+	if action_kind == "play_stadium":
+		var own_overflow_if_default := int(
+			own.get("overflow_if_default_capacity", 0)
+		)
+		var opponent_overflow_if_default := int(
+			opponent.get("overflow_if_default_capacity", 0)
+		)
+		var expanded_capacity_active := int(
+			own.get("bench_capacity", 5)
+		) > 5 or int(opponent.get("bench_capacity", 5)) > 5
+		if expanded_capacity_active \
+				and (
+					own_overflow_if_default > 0
+					or opponent_overflow_if_default > 0
+				):
+			outcome["bench_capacity_drop_risk"] = true
+			outcome["own_bench_overflow_if_default"] = (
+				own_overflow_if_default
+			)
+			outcome["opponent_bench_overflow_if_default"] = (
+				opponent_overflow_if_default
+			)
 	return {
 		"schema_version": ContractsScript.ROUTE_SCHEMA_VERSION,
 		"candidate_id": candidate_id,
@@ -201,22 +280,7 @@ func _candidate(
 		"base_score": score,
 		"local_score": score,
 		"rule_order": rule_order,
-		"outcome": {
-			"win_now": prizes_now > 0 and prizes_now >= prizes_remaining,
-			"prizes_now": prizes_now,
-			"estimated_damage": damage,
-			"attack_ready": category.begins_with("attack"),
-			"attack_uptime_next_turn": false,
-			"continuity_debt_reduction": 0,
-			"information_gain": float(information.get("information_gain", 0.0)),
-			"board_development": 1.0 if category in ["develop", "evolve", "stadium"] else 0.0,
-			"future_flexibility": 0.8 if category in ["information", "noctowl_search", "tutor", "recover", "pivot"] else 0.3,
-			"uncertainty": 0.7 if category in ["information", "noctowl_search", "opening_search", "tutor"] else 0.2,
-			"resource_commitment": float(information.get("resource_commitment", 0.0)),
-			"board_commitment": float(information.get("board_commitment", 0.0)),
-			"terminal": bool(information.get("terminal", false)),
-			"expected_route_improvement": float(information.get("expected_route_improvement", 0.0)),
-		},
+		"outcome": outcome,
 	}
 
 
@@ -243,6 +307,8 @@ func _typed_action_ref(action: Dictionary) -> Dictionary:
 		"source", "target", "card_instance_id", "source_instance_id",
 		"target_instance_id", "rule_selected_target_slot_id",
 		"rule_selected_target_instance_id", "interaction_steps",
+		"retreat_payment_energy_count", "zero_energy_retreat",
+		"engine_legal_retreat_proof",
 	]:
 		if action.has(key):
 			var value: Variant = action.get(key)
@@ -345,6 +411,12 @@ func _action_summary(action: Dictionary) -> String:
 		parts.append("target=%s" % str(action.get("target", "")))
 	if int(action.get("projected_damage", 0)) > 0:
 		parts.append("damage=%d" % int(action.get("projected_damage", 0)))
+	if str(action.get("kind", "")) == "retreat" \
+			and bool(action.get("engine_legal_retreat_proof", false)):
+		parts.append(
+			"retreat_payment_energy_cards=%d"
+				% int(action.get("retreat_payment_energy_count", -1))
+		)
 	return ";".join(parts)
 
 

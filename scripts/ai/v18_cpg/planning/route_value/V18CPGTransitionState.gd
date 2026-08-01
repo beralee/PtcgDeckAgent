@@ -47,12 +47,42 @@ func _public_side(value: Variant, include_hand: bool) -> Dictionary:
 	if not (value is Dictionary):
 		return {}
 	var side: Dictionary = value
+	var bench: Array = side.get("bench", []) \
+		if side.get("bench", []) is Array else []
+	var bench_count := int(side.get("bench_count", bench.size()))
+	var bench_capacity := int(side.get("bench_capacity", 5))
 	var result := {
 		"hand_count": int(side.get("hand_count", 0)),
 		"deck_count": int(side.get("deck_count", 0)),
 		"prizes_remaining": int(side.get("prizes_remaining", 0)),
+		"bench_count": bench_count,
+		"bench_capacity": bench_capacity,
+		"bench_slots_free": int(
+			side.get(
+				"bench_slots_free",
+				maxi(0, bench_capacity - bench_count)
+			)
+		),
+		"bench_full": bool(
+			side.get("bench_full", bench_count >= bench_capacity)
+		),
+		"bench_overflow_count": int(
+			side.get("bench_overflow_count", 0)
+		),
+		"default_bench_capacity": int(
+			side.get("default_bench_capacity", 5)
+		),
+		"overflow_if_default_capacity": int(
+			side.get("overflow_if_default_capacity", 0)
+		),
+		"capacity_above_default": bool(
+			side.get("capacity_above_default", false)
+		),
+		"capacity_below_default": bool(
+			side.get("capacity_below_default", false)
+		),
 		"active": _public_slot(side.get("active", {})),
-		"bench": _public_slots(side.get("bench", [])),
+		"bench": _public_slots(bench),
 		"discard": _public_cards(side.get("discard", [])),
 		"lost_zone": _public_cards(side.get("lost_zone", [])),
 	}

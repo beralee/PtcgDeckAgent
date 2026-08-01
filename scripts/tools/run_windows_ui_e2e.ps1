@@ -107,6 +107,24 @@ function Get-NormalizedImageDifference {
     }
 }
 
+function Read-SharedTextFile {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) { return "" }
+    $stream = [System.IO.File]::Open(
+        $Path,
+        [System.IO.FileMode]::Open,
+        [System.IO.FileAccess]::Read,
+        [System.IO.FileShare]::ReadWrite
+    )
+    $reader = New-Object System.IO.StreamReader($stream)
+    try {
+        return $reader.ReadToEnd()
+    } finally {
+        $reader.Dispose()
+        $stream.Dispose()
+    }
+}
+
 $stdoutPath = Join-Path $ArtifactDirectory "stdout.log"
 $stderrPath = Join-Path $ArtifactDirectory "stderr.log"
 $previousWindow = [PtcgWindowsUiE2E]::GetForegroundWindow()
@@ -133,6 +151,26 @@ try {
     [PtcgWindowsUiE2E]::SetWindowPos($handle, [IntPtr]::Zero, 80, 50, 0, 0, 0x0045) | Out-Null
     [PtcgWindowsUiE2E]::SetWindowPos($handle, [IntPtr](-1), 0, 0, 0, 0, 0x0043) | Out-Null
     [PtcgWindowsUiE2E]::SetForegroundWindow($handle) | Out-Null
+    # A Vulkan window exists before the Godot main loop has rendered its first
+    # frame. CopyFromScreen can otherwise capture the previously visible app
+    # through that not-yet-presented surface and accept it as the baseline.
+    $runtimeReadyDeadline = (Get-Date).AddSeconds(60)
+    $runtimeReady = $false
+    do {
+        Start-Sleep -Milliseconds 500
+        if (Test-Path -LiteralPath $stdoutPath) {
+            $runtimeOutput = Read-SharedTextFile -Path $stdoutPath
+            $runtimeReady = $runtimeOutput.Contains("[UserVisit] startup visit recorded")
+        }
+    } while (-not $runtimeReady -and -not $process.HasExited -and (Get-Date) -lt $runtimeReadyDeadline)
+    if (-not $runtimeReady) { throw "Windows Godot main loop did not reach the main menu within 60 seconds" }
+    [PtcgWindowsUiE2E]::BringWindowToTop($handle) | Out-Null
+    [PtcgWindowsUiE2E]::SetForegroundWindow($handle) | Out-Null
+    # Windows can reject programmatic foreground activation. A real click in
+    # the main menu's empty top-right margin establishes focus without invoking
+    # any game action, so the baseline screenshot cannot capture another app.
+    Invoke-RealMouseClick -Handle $handle -X 0.98 -Y 0.05
+    Start-Sleep -Milliseconds 500
     $geometry = Get-ClientGeometry -Handle $handle
     $minimumRenderedBytes = [math]::Round($geometry.width * $geometry.height * 0.08)
     $renderDeadline = (Get-Date).AddSeconds(45)

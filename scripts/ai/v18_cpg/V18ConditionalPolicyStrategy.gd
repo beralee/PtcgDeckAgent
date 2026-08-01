@@ -2790,7 +2790,12 @@ func _compact_action_ref_for_model(value: Variant) -> Dictionary:
 		return {}
 	var source: Dictionary = value
 	var result: Dictionary = {}
-	for key: String in ["attack_index", "ability_index", "projected_damage", "projected_knockout", "source", "target"]:
+	for key: String in [
+		"attack_index", "ability_index", "projected_damage",
+		"projected_knockout", "source", "target",
+		"retreat_payment_energy_count", "zero_energy_retreat",
+		"engine_legal_retreat_proof",
+	]:
 		if source.has(key):
 			result[key] = source.get(key)
 	if bool(source.get("requires_interaction", false)):
@@ -2807,7 +2812,9 @@ func _compact_action_card_ref(value: Variant) -> Dictionary:
 		return {}
 	var source: Dictionary = value
 	var result: Dictionary = {}
-	for key: String in ["uid", "name", "type", "energy_type", "energy_provides"]:
+	for key: String in [
+		"uid", "name", "type", "stage", "energy_type", "energy_provides",
+	]:
 		var text := str(source.get(key, ""))
 		if text != "":
 			result[key] = text
@@ -2822,6 +2829,11 @@ func _compact_outcome_for_model(value: Variant) -> Dictionary:
 		"attack_ready",
 		"attack_uptime_next_turn",
 		"terminal",
+		"zero_energy_retreat",
+		"preserves_attached_energy",
+		"consumes_last_bench_slot",
+		"uses_expanded_bench_capacity",
+		"bench_capacity_drop_risk",
 	]:
 		if bool(source.get(key, false)):
 			result[key] = true
@@ -2829,6 +2841,12 @@ func _compact_outcome_for_model(value: Variant) -> Dictionary:
 		"prizes_now",
 		"estimated_damage",
 		"continuity_debt_reduction",
+		"retreat_payment_energy_count",
+		"bench_capacity",
+		"bench_slots_before",
+		"bench_slots_after",
+		"own_bench_overflow_if_default",
+		"opponent_bench_overflow_if_default",
 	]:
 		var amount := int(source.get(key, 0))
 		if amount != 0:
@@ -3024,6 +3042,25 @@ func _compact_observation_for_model(observation: Dictionary) -> Dictionary:
 			"hand_count": int(own.get("hand_count", 0)),
 			"deck_count": int(own.get("deck_count", 0)),
 			"prizes_remaining": int(own.get("prizes_remaining", 0)),
+			"bench_count": int(own.get("bench_count", 0)),
+			"bench_capacity": int(own.get("bench_capacity", 5)),
+			"bench_slots_free": int(own.get("bench_slots_free", 0)),
+			"bench_full": bool(own.get("bench_full", false)),
+			"bench_overflow_count": int(
+				own.get("bench_overflow_count", 0)
+			),
+			"default_bench_capacity": int(
+				own.get("default_bench_capacity", 5)
+			),
+			"overflow_if_default_capacity": int(
+				own.get("overflow_if_default_capacity", 0)
+			),
+			"capacity_above_default": bool(
+				own.get("capacity_above_default", false)
+			),
+			"capacity_below_default": bool(
+				own.get("capacity_below_default", false)
+			),
 			"discard_counts": _card_name_counts(own.get("discard", [])),
 			"active": _compact_slot(own.get("active", {})),
 			"bench": _compact_slots(own.get("bench", [])),
@@ -3032,6 +3069,29 @@ func _compact_observation_for_model(observation: Dictionary) -> Dictionary:
 			"hand_count": int(opponent.get("hand_count", 0)),
 			"deck_count": int(opponent.get("deck_count", 0)),
 			"prizes_remaining": int(opponent.get("prizes_remaining", 0)),
+			"bench_count": int(opponent.get("bench_count", 0)),
+			"bench_capacity": int(
+				opponent.get("bench_capacity", 5)
+			),
+			"bench_slots_free": int(
+				opponent.get("bench_slots_free", 0)
+			),
+			"bench_full": bool(opponent.get("bench_full", false)),
+			"bench_overflow_count": int(
+				opponent.get("bench_overflow_count", 0)
+			),
+			"default_bench_capacity": int(
+				opponent.get("default_bench_capacity", 5)
+			),
+			"overflow_if_default_capacity": int(
+				opponent.get("overflow_if_default_capacity", 0)
+			),
+			"capacity_above_default": bool(
+				opponent.get("capacity_above_default", false)
+			),
+			"capacity_below_default": bool(
+				opponent.get("capacity_below_default", false)
+			),
 			"discard_counts": _card_name_counts(opponent.get("discard", [])),
 			"active": _compact_slot(opponent.get("active", {})),
 			"bench": _compact_slots(opponent.get("bench", [])),
@@ -3055,7 +3115,7 @@ func _compact_card(value: Variant) -> Dictionary:
 		return {}
 	var card: Dictionary = value
 	var result: Dictionary = {}
-	for key: String in ["uid", "name", "type", "energy_type", "energy_provides"]:
+	for key: String in ["uid", "name", "type", "stage", "energy_type", "energy_provides"]:
 		var text := str(card.get(key, ""))
 		if text != "":
 			result[key] = text
@@ -3087,6 +3147,14 @@ func _compact_slot(value: Variant) -> Dictionary:
 		)),
 		"prize_count": int(slot.get("prize_count", 1)),
 		"retreat_cost": int(slot.get("retreat_cost", 0)),
+		"printed_retreat_cost": int(
+			slot.get("printed_retreat_cost", slot.get("retreat_cost", 0))
+		),
+		"stage": str(slot.get(
+			"stage",
+			(slot.get("pokemon", {}) as Dictionary).get("stage", "")
+				if slot.get("pokemon", {}) is Dictionary else ""
+		)),
 		"tool": _compact_card(slot.get("tool", {})),
 		"ability_used": bool(slot.get("ability_used", false)),
 		"tera": bool(slot.get("tera", false)),

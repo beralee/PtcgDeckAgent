@@ -1735,6 +1735,17 @@ func apply_attack_damage_knockout_reactive_effects(attacker: PokemonSlot, knocke
 		effect.call("on_knocked_out_by_attack_damage", knocked_out, attacker, state)
 
 
+func apply_knockout_prize_prevention_ability(knocked_out: PokemonSlot, state: GameState) -> bool:
+	if knocked_out == null or knocked_out.get_card_data() == null or state == null:
+		return false
+	if is_ability_disabled(knocked_out, state):
+		return false
+	var effect := _get_registered_pokemon_effect(knocked_out)
+	if effect == null or not effect.has_method("try_prevent_knockout_prizes"):
+		return false
+	return bool(effect.call("try_prevent_knockout_prizes", knocked_out, state))
+
+
 func get_knockout_prize_modifier(slot: PokemonSlot, state: GameState) -> int:
 	if slot == null:
 		return 0

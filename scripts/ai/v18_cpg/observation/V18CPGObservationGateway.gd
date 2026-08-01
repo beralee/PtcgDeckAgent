@@ -2,8 +2,10 @@ class_name V18CPGObservationGateway
 extends RefCounted
 
 const ContractsScript = preload("res://scripts/ai/v18_cpg/schema/V18CPGContracts.gd")
+const BenchLimitScript = preload("res://scripts/engine/BenchLimitHelper.gd")
 const VISIBLE_SCOPE_OWN_FULL_DECK := "own_full_deck"
 const VISIBLE_SCOPE_OPPONENT_HAND_REVEALED := "opponent_hand_revealed"
+const DEFAULT_BENCH_CAPACITY := 5
 
 var _observation_version: int = 0
 var _last_observation_hash: String = ""
@@ -25,6 +27,8 @@ func build(
 	var opponent_index := 1 - player_index
 	var own: PlayerState = game_state.players[player_index]
 	var opponent: PlayerState = game_state.players[opponent_index]
+	var own_bench_capacity := _bench_capacity(game_state, own)
+	var opponent_bench_capacity := _bench_capacity(game_state, opponent)
 	var envelope := {
 		"schema_version": ContractsScript.OBSERVATION_SCHEMA_VERSION,
 		"observation_version": 0,
@@ -49,8 +53,16 @@ func build(
 				"vstar_available": player_index < game_state.vstar_power_used.size() and not bool(game_state.vstar_power_used[player_index]),
 			},
 		},
-		"own": _visible_own_player(own, game_state.turn_number),
-		"opponent": _visible_opponent(opponent, game_state.turn_number),
+		"own": _visible_own_player(
+			own,
+			game_state.turn_number,
+			own_bench_capacity
+		),
+		"opponent": _visible_opponent(
+			opponent,
+			game_state.turn_number,
+			opponent_bench_capacity
+		),
 		"stadium": _card_ref(game_state.stadium_card),
 		"legal_actions": _legal_action_refs(legal_actions),
 		"interaction": _visible_interaction(interaction_step),
@@ -82,6 +94,8 @@ func snapshot_public_state(game_state: GameState, player_index: int) -> Dictiona
 	var opponent_index := 1 - player_index
 	if opponent_index < 0 or opponent_index >= game_state.players.size():
 		return {}
+	var own: PlayerState = game_state.players[player_index]
+	var opponent: PlayerState = game_state.players[opponent_index]
 	var snapshot := {
 		"turn": {
 			"number": int(game_state.turn_number),
@@ -98,8 +112,16 @@ func snapshot_public_state(game_state: GameState, player_index: int) -> Dictiona
 					and not bool(game_state.vstar_power_used[player_index]),
 			},
 		},
-		"own": _visible_own_player(game_state.players[player_index], game_state.turn_number),
-		"opponent": _visible_opponent(game_state.players[opponent_index], game_state.turn_number),
+		"own": _visible_own_player(
+			own,
+			game_state.turn_number,
+			_bench_capacity(game_state, own)
+		),
+		"opponent": _visible_opponent(
+			opponent,
+			game_state.turn_number,
+			_bench_capacity(game_state, opponent)
+		),
 		"stadium": _card_ref(game_state.stadium_card),
 	}
 	snapshot["public_state_hash"] = ContractsScript.stable_hash(snapshot)
@@ -156,10 +178,14 @@ func _empty_envelope(player_index: int) -> Dictionary:
 	}
 
 
-func _visible_own_player(player: PlayerState, turn_number: int) -> Dictionary:
+func _visible_own_player(
+	player: PlayerState,
+	turn_number: int,
+	bench_capacity: int = DEFAULT_BENCH_CAPACITY
+) -> Dictionary:
 	if player == null:
 		return {}
-	return {
+	var result := {
 		"hand": _card_refs(player.hand),
 		"hand_count": player.hand.size(),
 		"deck_count": player.deck.size(),
@@ -169,12 +195,18 @@ func _visible_own_player(player: PlayerState, turn_number: int) -> Dictionary:
 		"active": _slot_ref(player.active_pokemon, turn_number),
 		"bench": _slot_refs(player.bench, turn_number),
 	}
+	result.merge(_bench_state(player, bench_capacity))
+	return result
 
 
-func _visible_opponent(player: PlayerState, turn_number: int) -> Dictionary:
+func _visible_opponent(
+	player: PlayerState,
+	turn_number: int,
+	bench_capacity: int = DEFAULT_BENCH_CAPACITY
+) -> Dictionary:
 	if player == null:
 		return {}
-	return {
+	var result := {
 		"hand_count": player.hand.size(),
 		"deck_count": player.deck.size(),
 		"prizes_remaining": player.prizes.size(),
@@ -182,6 +214,34 @@ func _visible_opponent(player: PlayerState, turn_number: int) -> Dictionary:
 		"lost_zone": _card_refs(player.lost_zone),
 		"active": _slot_ref(player.active_pokemon, turn_number),
 		"bench": _slot_refs(player.bench, turn_number),
+	}
+	result.merge(_bench_state(player, bench_capacity))
+	return result
+
+
+func _bench_capacity(game_state: GameState, player: PlayerState) -> int:
+	return maxi(
+		0,
+		int(BenchLimitScript.get_bench_limit_for_player(game_state, player))
+	)
+
+
+func _bench_state(player: PlayerState, bench_capacity: int) -> Dictionary:
+	var capacity := maxi(0, bench_capacity)
+	var bench_count := player.bench.size() if player != null else 0
+	return {
+		"bench_count": bench_count,
+		"bench_capacity": capacity,
+		"bench_slots_free": maxi(0, capacity - bench_count),
+		"bench_full": bench_count >= capacity,
+		"bench_overflow_count": maxi(0, bench_count - capacity),
+		"default_bench_capacity": DEFAULT_BENCH_CAPACITY,
+		"overflow_if_default_capacity": maxi(
+			0,
+			bench_count - DEFAULT_BENCH_CAPACITY
+		),
+		"capacity_above_default": capacity > DEFAULT_BENCH_CAPACITY,
+		"capacity_below_default": capacity < DEFAULT_BENCH_CAPACITY,
 	}
 
 
@@ -219,6 +279,16 @@ func action_ref(action: Dictionary) -> Dictionary:
 		"kind": str(action.get("kind", "")),
 		"requires_interaction": bool(action.get("requires_interaction", false)),
 	}
+	if str(action.get("kind", "")) == "retreat":
+		# The legal-action builder has already asked EffectProcessor for the
+		# effective retreat cost. Preserve its exact payment instead of forcing
+		# planners to reason from the printed card cost. Empty payment is a safe,
+		# engine-authoritative zero-retreat proof; provider visibility alone is not.
+		var raw_payment: Variant = action.get("energy_to_discard", null)
+		if raw_payment is Array:
+			ref["retreat_payment_energy_count"] = (raw_payment as Array).size()
+			ref["zero_energy_retreat"] = (raw_payment as Array).is_empty()
+			ref["engine_legal_retreat_proof"] = true
 	var card: Variant = action.get("card", null)
 	if card is CardInstance:
 		ref["card"] = _card_ref(card as CardInstance)
@@ -263,6 +333,7 @@ func _slot_ref(slot: PokemonSlot, turn_number: int) -> Dictionary:
 	if slot == null:
 		return {}
 	var data := slot.get_card_data()
+	var printed_retreat_cost := int(slot.get_retreat_cost())
 	return {
 		"slot_id": _slot_identity(slot),
 		"pokemon": _card_ref(slot.get_top_card()),
@@ -274,7 +345,11 @@ func _slot_ref(slot: PokemonSlot, turn_number: int) -> Dictionary:
 		"remaining_hp": int(slot.get_remaining_hp()),
 		"max_hp": int(slot.get_max_hp()),
 		"prize_count": int(slot.get_prize_count()),
-		"retreat_cost": int(slot.get_retreat_cost()),
+		# Compatibility field retained for consumers created before the effective
+		# mobility contract. It is the printed cost, not the current engine cost.
+		"retreat_cost": printed_retreat_cost,
+		"printed_retreat_cost": printed_retreat_cost,
+		"stage": str(data.stage) if data != null else "",
 		"ability_used": slot.has_ability_used(turn_number),
 		"tera": _is_tera(data),
 	}

@@ -3,9 +3,9 @@ extends RefCounted
 const VERSION := "0.5.2"
 const DISPLAY_VERSION := "v0.5.2"
 const BUILD_NUMBER := 52
-const WEB_VERSION := "0.5.2.1"
-const WEB_DISPLAY_VERSION := "v0.5.2.1"
-const WEB_BUILD_NUMBER := 521
+const WEB_VERSION := "0.5.2.6"
+const WEB_DISPLAY_VERSION := "v0.5.2.6"
+const WEB_BUILD_NUMBER := 526
 const CHANNEL := "stable"
 
 

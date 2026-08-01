@@ -80,3 +80,23 @@ func test_platform_cancel_clears_non_battle_candidates_and_dom_text_state() -> S
 	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
 	root.free()
 	return checks
+
+
+func test_window_blur_preserves_active_dom_editor_until_real_page_suspend() -> String:
+	var root := Control.new()
+	var input := LineEdit.new()
+	root.add_child(input)
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	var requested := NonBattleTouchBridgeScript.request_test_web_text_input(input)
+	NonBattleTouchBridgeScript.clear_transient_input_state(root, "blur")
+	var active_after_blur := input.has_meta("_web_text_input_bridge_active")
+	NonBattleTouchBridgeScript.clear_transient_input_state(root, "pagehide")
+	var active_after_pagehide := input.has_meta("_web_text_input_bridge_active")
+	var checks := run_checks([
+		assert_true(requested, "Test DOM editor should become active before lifecycle events"),
+		assert_true(active_after_blur, "Window blur caused by focusing the iOS DOM editor must not close that editor"),
+		assert_false(active_after_pagehide, "A real page suspension must still cancel the DOM editor"),
+	])
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	root.free()
+	return checks

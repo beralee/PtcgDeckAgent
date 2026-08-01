@@ -21,13 +21,22 @@ func build(
 	var discard_counts := _card_counts(discard)
 	var protected_roles: Array = profile.get("protected_roles", []) if profile.get("protected_roles", []) is Array else []
 	var board_energy := _board_energy_counts(own)
+	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
+	var bench_capacity := int(own.get("bench_capacity", 5))
+	var bench_slots_free := int(
+		own.get(
+			"bench_slots_free",
+			maxi(0, bench_capacity - bench.size())
+		)
+	)
 	var own_belief: Dictionary = belief.get("own", {}) if belief.get("own", {}) is Dictionary else {}
 	var next_turn_reservations := _typed_role_reservations(protected_roles)
 	return {
 		"schema_version": 3,
 		"available_now": {
 			"hand_cards": int(own.get("hand_count", 0)),
-			"bench_slots": maxi(0, 5 - int((own.get("bench", []) as Array).size() if own.get("bench", []) is Array else 0)),
+			"bench_slots": bench_slots_free,
+			"bench_capacity": bench_capacity,
 			"deck_cards": int(own.get("deck_count", 0)),
 			"hand_by_uid": hand_counts,
 			"board_energy_by_symbol": board_energy,

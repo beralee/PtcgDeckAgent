@@ -108,6 +108,16 @@ func _apply_operator(
 				"ability_used": false,
 				"tera": false,
 			})
+			own["bench_count"] = bench.size()
+			own["bench_slots_free"] = maxi(
+				0,
+				_bench_capacity(state) - bench.size()
+			)
+			own["bench_full"] = int(own.get("bench_slots_free", 0)) == 0
+			own["overflow_if_default_capacity"] = maxi(
+				0,
+				bench.size() - int(own.get("default_bench_capacity", 5))
+			)
 		RegistryScript.EVOLVE:
 			if str(action.get("target", "")) == "" \
 					or not _own_slot_exists(str(action.get("target", "")), state):
@@ -173,9 +183,9 @@ func _own_slot_exists(slot_id: String, state: Dictionary) -> bool:
 
 
 func _bench_capacity(state: Dictionary) -> int:
-	var stadium: Dictionary = state.get("stadium", {}) \
-		if state.get("stadium", {}) is Dictionary else {}
-	return 8 if str(stadium.get("uid", "")).to_upper() == "CSV9C_207" else 5
+	var own: Dictionary = state.get("own", {}) \
+		if state.get("own", {}) is Dictionary else {}
+	return int(own.get("bench_capacity", 5))
 
 
 func _without_hash(value: Dictionary) -> Dictionary:

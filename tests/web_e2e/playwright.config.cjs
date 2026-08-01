@@ -36,6 +36,10 @@ module.exports = defineConfig({
     {
       name: 'webkit-touch',
       use: { ...devices['iPhone 14'] }
+    },
+    {
+      name: 'webkit-touch-landscape',
+      use: { ...devices['iPhone 14 landscape'] }
     }
   ]
 });

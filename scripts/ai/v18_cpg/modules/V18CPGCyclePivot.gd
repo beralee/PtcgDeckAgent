@@ -15,7 +15,12 @@ func annotate_frontier(
 	var result: Array[Dictionary] = []
 	var own: Dictionary = observation.get("own", {}) if observation.get("own", {}) is Dictionary else {}
 	var bench: Array = own.get("bench", []) if own.get("bench", []) is Array else []
-	var maximum_bench := 8 if _area_zero_visible(observation) else 5
+	var maximum_bench := int(
+		own.get(
+			"bench_capacity",
+			facts.get("board", {}).get("bench_capacity", 5)
+		)
+	)
 	var has_live_attacker_root := _has_visible_uid(observation, _parameters(profile).get("attacker_root_uids", []))
 	var top_route_id := str(frontier[0].get("route_id", "")) if not frontier.is_empty() else ""
 	for route: Dictionary in frontier:
@@ -77,7 +82,12 @@ func annotate_frontier(
 			"ko_available": bool(facts.get("attack", {}).get("ko_available", false)),
 			"deck_low": bool(facts.get("resources", {}).get("deck_low", false)),
 			"energy_attachment_open": bool(facts.get("turn", {}).get("energy_available", false)),
-			"available_bench_slots": maxi(0, maximum_bench - bench.size()),
+			"available_bench_slots": int(
+				own.get(
+					"bench_slots_free",
+					maxi(0, maximum_bench - bench.size())
+				)
+			),
 			"functional_bench_reserve_met": preserves_functional_bench_space(bench.size(), maximum_bench, profile),
 			"profile_route_bias": route_bias(route_id, profile),
 			"fan_call_development_order": _parameters(profile).get("fan_call_development_order", []),
@@ -533,12 +543,6 @@ func _action_for_route(route: Dictionary, observation: Dictionary) -> Dictionary
 		if raw_action is Dictionary and str((raw_action as Dictionary).get("id", "")) == wanted:
 			return raw_action as Dictionary
 	return {}
-
-
-func _area_zero_visible(observation: Dictionary) -> bool:
-	var stadium: Dictionary = observation.get("stadium", {}) if observation.get("stadium", {}) is Dictionary else {}
-	var roles: Array = stadium.get("semantic_roles", []) if stadium.get("semantic_roles", []) is Array else []
-	return str(stadium.get("uid", "")) == "CSV9C_207" or "bench_expansion" in roles
 
 
 func _has_visible_uid(observation: Dictionary, stable_uids: Variant) -> bool:

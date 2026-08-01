@@ -23,8 +23,22 @@ func annotate_frontier_post_completion(
 	var result: Array[Dictionary] = []
 	var baseline := _clock.solve(observation, facts, profile)
 	var compact_baseline := _clock.compact_baseline(baseline)
+	var mobility: Dictionary = facts.get("mobility", {}) \
+		if facts.get("mobility", {}) is Dictionary else {}
+	var zero_retreat_action_ids: Array = mobility.get(
+		"zero_retreat_action_ids",
+		[]
+	) if mobility.get("zero_retreat_action_ids", []) is Array else []
 	for raw_candidate: Dictionary in frontier:
 		var candidate := raw_candidate.duplicate(true)
+		var candidate_action_id := str(candidate.get(
+			"safe_prefix_action_id",
+			""
+		))
+		var exact_zero_retreat := str(
+			candidate.get("action_kind", "")
+		) == "retreat" \
+			and candidate_action_id in zero_retreat_action_ids
 		var extension: Dictionary = {}
 		if _raging_bolt.supports(profile):
 			extension = _raging_bolt.annotate_candidate(
@@ -81,13 +95,23 @@ func annotate_frontier_post_completion(
 				"latias_free_retreat_visible",
 				false
 			)),
+			"mobility_provider_scope": str(mobility.get(
+				"provider_scope",
+				""
+			)),
 			"route_warning": str(extension.get("route_warning", "")),
 			"verified_advantage": forced_denial or public_pivot_ko,
 			"verified_advantage_kind": "public_prize_denial_pivot" \
 				if forced_denial \
 				else "public_same_window_pivot_ko_loss_prevention" \
-					if public_pivot_ko else "",
+				if public_pivot_ko else "",
 		}
+		if exact_zero_retreat:
+			annotation["zero_energy_retreat"] = true
+			annotation["preserves_attached_energy"] = true
+			annotation["retreat_payment_energy_count"] = 0
+			annotation["mobility_proof_kind"] = \
+				"engine_legal_empty_payment"
 		var annotations: Dictionary = candidate.get("module_annotations", {}) \
 			if candidate.get("module_annotations", {}) is Dictionary else {}
 		annotations[MODULE_ID] = annotation

@@ -13,7 +13,13 @@
         "fact": {
           "enum": [
             "attack.ready", "attack.ko_available", "attack.max_damage",
-            "board.bench_full", "board.has_tera", "board.own_active_remaining_hp",
+            "board.bench_count", "board.bench_capacity", "board.bench_full",
+            "board.bench_overflow_count", "board.bench_overflow_if_default",
+            "board.bench_capacity_above_default", "board.bench_capacity_below_default",
+            "board.opponent_bench_count", "board.opponent_bench_capacity",
+            "board.opponent_bench_slots_free", "board.opponent_bench_full",
+            "board.opponent_bench_overflow_if_default",
+            "board.has_tera", "board.own_active_remaining_hp",
             "board.opponent_active_remaining_hp", "fan_call.available",
             "information.material_action_available", "resources.deck_low",
             "resources.bench_slots_free", "resources.energy_on_board",

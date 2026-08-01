@@ -56,6 +56,13 @@ func _u(codepoints: Array[int]) -> String:
 	return text
 
 
+func _hand_test_card(name: String, owner: int = 0) -> CardInstance:
+	var data := CardData.new()
+	data.name = name
+	data.card_type = "Item"
+	return CardInstance.create(data, owner)
+
+
 func test_get_selected_deck_name_falls_back_to_unknown_label() -> String:
 	var controller := BattleDisplayControllerScript.new()
 	var original_ids: Array = GameManager.selected_deck_ids.duplicate()
@@ -208,6 +215,139 @@ func test_refresh_hand_enlarges_and_centers_portrait_waiting_text() -> String:
 		assert_gte(label.custom_minimum_size.x, 360.0, "Portrait hand info label should fill the hand scroll width"),
 		assert_gte(label.custom_minimum_size.y, 120.0, "Portrait hand info label should fill the hand scroll height"),
 		assert_eq(hand_container.alignment, BoxContainer.ALIGNMENT_CENTER, "Portrait hand info should be centered within the hand row"),
+	])
+
+
+func test_refresh_hand_keeps_portrait_waiting_font_stable_across_ai_action_updates() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(1, 8)
+	scene._portrait_active = true
+	scene._hand_scroll.custom_minimum_size = Vector2(360, 120)
+
+	controller.call("refresh_hand", scene)
+	var label := scene._hand_container.get_node("HandWaitingLabel") as Label
+	var first_font_size := label.get_theme_font_size("font_size")
+	for action_index: int in 5:
+		scene._latest_opponent_action_text = "AI action %d" % action_index
+		scene._latest_opponent_action_turn_number = 8
+		controller.call("refresh_hand", scene)
+	var final_font_size := label.get_theme_font_size("font_size")
+
+	return run_checks([
+		assert_eq(
+			final_font_size,
+			first_font_size,
+			"Repeated opponent action refreshes must not multiply an already-overridden portrait font size"
+		),
+		assert_eq(
+			label.custom_minimum_size,
+			Vector2(360, 182),
+			"Repeated AI HUD refreshes must keep one deterministic hand-area position and size"
+		),
+	])
+
+
+func test_training_waiting_hud_resets_stale_horizontal_scroll_before_centering_text() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(1, 8)
+	scene._portrait_active = true
+	scene.size = Vector2(390, 844)
+	scene._hand_scroll.custom_minimum_size = Vector2(360, 120)
+	scene._hand_scroll.size = Vector2(360, 120)
+	scene._hand_container.custom_minimum_size = Vector2(900, 182)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	await tree.process_frame
+	scene._hand_scroll.scroll_horizontal = 180
+	var reproduced_stale_scroll := scene._hand_scroll.scroll_horizontal > 0
+
+	controller.call("refresh_hand", scene)
+	var label := scene._hand_container.get_node("HandWaitingLabel") as Label
+	var result := run_checks([
+		assert_true(reproduced_stale_scroll, "The regression setup must reproduce a previously scrolled hand rail"),
+		assert_eq(scene._hand_scroll.scroll_horizontal, 0, "AI waiting text must reset stale hand-card scrolling before it is centered"),
+		assert_eq(scene._hand_container.alignment, BoxContainer.ALIGNMENT_CENTER, "Training-mode AI text must own a centered hand row"),
+		assert_eq(label.custom_minimum_size.x, 360.0, "Training-mode AI text must use the visible rail width, not stale card content width"),
+	])
+	scene.queue_free()
+	await tree.process_frame
+	return result
+
+
+func test_refresh_hand_centers_windows_cards_in_explicit_hand_rail_after_draw() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(0, 8)
+	scene._portrait_active = false
+	scene.size = Vector2(1280, 720)
+	scene._hand_scroll.size = Vector2(900, 182)
+	scene._hand_container.alignment = BoxContainer.ALIGNMENT_BEGIN
+	scene._hand_container.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	scene._hand_container.custom_minimum_size = Vector2(0, 182)
+	scene._gsm.game_state.players[0].hand = [
+		_hand_test_card("Drawn A"),
+		_hand_test_card("Drawn B"),
+		_hand_test_card("Drawn C"),
+	]
+
+	controller.call("refresh_hand", scene)
+
+	return run_checks([
+		assert_eq(scene._hand_container.alignment, BoxContainer.ALIGNMENT_CENTER, "Windows hand cards must remain centered after a draw refresh"),
+		assert_eq(scene._hand_container.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "The Windows hand row must continue filling the visible rail"),
+		assert_eq(scene._hand_container.custom_minimum_size.x, 900.0, "Centering must use an explicit rail width instead of relying on transient ScrollContainer expansion"),
+		assert_eq(scene._hand_container.get_child_count(), 3, "The draw refresh must preserve all visible hand cards"),
+	])
+
+
+func test_windows_overflowing_hand_preserves_user_scroll_during_refresh() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(0, 8)
+	scene._portrait_active = false
+	scene.size = Vector2(1280, 720)
+	scene._hand_scroll.size = Vector2(520, 182)
+	for index: int in 8:
+		scene._gsm.game_state.players[0].hand.append(_hand_test_card("Card %d" % index))
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	controller.call("refresh_hand", scene)
+	await tree.process_frame
+	scene._hand_scroll.scroll_horizontal = 240
+	var scroll_before_refresh := scene._hand_scroll.scroll_horizontal
+
+	controller.call("refresh_hand", scene)
+	var result := run_checks([
+		assert_true(scroll_before_refresh > 0, "The regression setup must create an overflowing Windows hand"),
+		assert_eq(scene._hand_scroll.scroll_horizontal, scroll_before_refresh, "Refreshing an overflowing hand must not steal the user's scroll position"),
+		assert_eq(scene._hand_container.alignment, BoxContainer.ALIGNMENT_CENTER, "Overflowing hands may scroll while keeping the same deterministic row contract"),
+	])
+	scene.queue_free()
+	await tree.process_frame
+	return result
+
+
+func test_hand_surface_stabilization_repairs_a_late_landscape_layout_pass() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(0, 8)
+	scene._portrait_active = false
+	scene.size = Vector2(1280, 720)
+	scene._hand_scroll.size = Vector2(900, 182)
+	scene._gsm.game_state.players[0].hand = [
+		_hand_test_card("Stable A"),
+		_hand_test_card("Stable B"),
+	]
+	controller.call("refresh_hand", scene)
+
+	# Reproduce the responsive/fullscreen layout pass that used to overwrite
+	# the content-aware hand metrics after the draw refresh had completed.
+	scene._hand_container.alignment = BoxContainer.ALIGNMENT_BEGIN
+	scene._hand_container.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	scene._hand_container.custom_minimum_size.x = 0.0
+	controller.call("stabilize_hand_surface_layout", scene)
+
+	return run_checks([
+		assert_eq(scene._hand_container.alignment, BoxContainer.ALIGNMENT_CENTER, "A late Windows layout pass must not leave the hand row left-aligned"),
+		assert_eq(scene._hand_container.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Hand stabilization must restore the landscape fill contract"),
+		assert_eq(scene._hand_container.custom_minimum_size.x, 900.0, "Hand stabilization must restore the current visible rail width"),
 	])
 
 

@@ -1,7 +1,5 @@
 ## BattleScene lifecycle and layout runtime.
-extends "res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd"
-
-const PointerGeometryScript := preload("res://scripts/ui/input/PointerGeometry.gd")
+extends "res://scenes/battle/runtime/BattleSceneBrowserPointerRuntime.gd"
 
 var _dialog_card_touch_bridge_active_card: BattleCardView = null
 var _dialog_card_touch_bridge_touch_index: int = -1
@@ -14,11 +12,7 @@ func _ready() -> void:
 		if GameManager != null and GameManager.has_method("get_ui_runtime_profile")
 		else null
 	)
-	if _battle_pointer_input_router != null:
-		_battle_pointer_input_router.configure(
-			runtime_profile != null
-			and runtime_profile.mobile_like
-		)
+	_configure_battle_pointer_runtime(runtime_profile)
 	if _ios_web_hud_touch_adapter != null:
 		_ios_web_hud_touch_adapter.configure(runtime_profile)
 	_ensure_modal_pointer_drain_shield()
@@ -481,7 +475,7 @@ func _input(event: InputEvent) -> void:
 	if ios_web_hud_route_active:
 		# Normalize the Web touch first so its later compatibility-mouse echo is
 		# still recognized, then let the iOS-only HUD adapter own raw touch.
-		if _route_web_battle_pointer_event(event):
+		if _route_web_battle_pointer_event(event, pointer_observation):
 			return
 		if _try_handle_ios_web_hud_touch_input(event):
 			var ios_hud_viewport := get_viewport()
@@ -493,7 +487,7 @@ func _input(event: InputEvent) -> void:
 		if hud_touch_viewport != null:
 			hud_touch_viewport.set_input_as_handled()
 		return
-	if not ios_web_hud_route_active and _route_web_battle_pointer_event(event):
+	if not ios_web_hud_route_active and _route_web_battle_pointer_event(event, pointer_observation):
 		return
 	if _try_close_discard_collection_from_cancel(event):
 		var discard_cancel_viewport := get_viewport()
@@ -505,10 +499,20 @@ func _input(event: InputEvent) -> void:
 		if library_touch_viewport != null:
 			library_touch_viewport.set_input_as_handled()
 		return
+	if _try_handle_web_pointer_surface_input(event, pointer_observation):
+		var pointer_surface_viewport := get_viewport()
+		if pointer_surface_viewport != null:
+			pointer_surface_viewport.set_input_as_handled()
+		return
 	if _try_handle_dialog_card_gallery_touch_input(event):
 		var dialog_touch_viewport := get_viewport()
 		if dialog_touch_viewport != null:
 			dialog_touch_viewport.set_input_as_handled()
+		return
+	if _try_handle_ios_web_hand_card_touch_input(event):
+		var hand_card_touch_viewport := get_viewport()
+		if hand_card_touch_viewport != null:
+			hand_card_touch_viewport.set_input_as_handled()
 		return
 	if _card_gallery_drag_active and _handle_card_gallery_drag_scroll_input(event, _card_gallery_drag_active_scroll, "battle_scene_input"):
 		var gallery_drag_viewport := get_viewport()
@@ -527,83 +531,6 @@ func _input(event: InputEvent) -> void:
 		var viewport := get_viewport()
 		if viewport != null:
 			viewport.set_input_as_handled()
-
-
-func _observe_battle_pointer_event(event: InputEvent) -> Dictionary:
-	if _battle_pointer_input_router == null:
-		return {}
-	return _battle_pointer_input_router.observe(event)
-
-
-func _configure_battle_pointer_input_for_tests(merge_touch_mouse_echo: bool) -> void:
-	if _battle_pointer_input_router != null:
-		_battle_pointer_input_router.configure(merge_touch_mouse_echo)
-
-
-func _claim_modal_pointer_event(event: InputEvent, intent: String) -> bool:
-	if _battle_pointer_input_router == null:
-		return false
-	return _battle_pointer_input_router.claim_event(event, intent, "battle_modal")
-
-
-func _claim_current_modal_pointer_sequence(intent: String) -> bool:
-	if _battle_pointer_input_router == null:
-		return false
-	return _battle_pointer_input_router.claim_current(intent, "battle_modal")
-
-
-func _register_ios_web_hud_touch_root(root: Node) -> void:
-	IosWebHudTouchAdapterScript.mark_hud_root(root)
-
-
-func _register_ios_web_hud_touch_surface(root: Node) -> void:
-	IosWebHudTouchAdapterScript.mark_hud_surface(root)
-
-
-func _register_existing_ios_web_hud_button_surfaces() -> void:
-	for node: Node in find_children("*", "Button", true, false):
-		var button := node as Button
-		if button == null or _has_ios_web_hud_touch_root_ancestor(button):
-			continue
-		_register_ios_web_hud_touch_surface(button)
-
-
-func _has_ios_web_hud_touch_root_ancestor(node: Node) -> bool:
-	var cursor := node
-	while cursor != null:
-		if bool(cursor.get_meta(IosWebHudTouchAdapterScript.HUD_TOUCH_ROOT_META, false)):
-			return true
-		if cursor == self:
-			break
-		cursor = cursor.get_parent()
-	return false
-
-
-func _try_handle_ios_web_hud_touch_input(event: InputEvent) -> bool:
-	if (
-		_ios_web_hud_touch_adapter == null
-		or not _ios_web_hud_touch_adapter.handle_event(self, event)
-	):
-		return false
-	if event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
-		var candidate := _ios_web_hud_touch_adapter.current_candidate_button()
-		if candidate == _dialog_confirm:
-			_battle_dialog_controller.call(
-				"on_dialog_action_button_input",
-				self,
-				"confirm",
-				event
-			)
-		elif candidate == _dialog_cancel:
-			_battle_dialog_controller.call(
-				"on_dialog_action_button_input",
-				self,
-				"cancel",
-				event
-			)
-		else:
-			_claim_modal_pointer_event(event, "ios_web_hud_button")
-	return true
 
 
 func _try_handle_battle_hud_touch_input(event: InputEvent) -> bool:
@@ -829,14 +756,19 @@ func _on_modal_pointer_drain_shield_input(_event: InputEvent) -> void:
 		viewport.set_input_as_handled()
 
 
-func _route_web_battle_pointer_event(event: InputEvent) -> bool:
+func _route_web_battle_pointer_event(
+	event: InputEvent,
+	pointer_observation: Dictionary = {}
+) -> bool:
 	var runtime_profile: UiRuntimeProfile = GameManager.get_ui_runtime_profile() if GameManager != null and GameManager.has_method("get_ui_runtime_profile") else null
 	if not WebUiFeatureGateScript.web_input_adapter_v2_enabled(runtime_profile):
 		return false
 	if not (event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion):
 		return false
-	var normalized := _web_battle_input_adapter.ingest(event)
-	var should_swallow := bool(normalized.get("suppressed", false))
+	var normalized := pointer_observation
+	if normalized.is_empty() and _battle_pointer_input_router != null:
+		normalized = _battle_pointer_input_router.observe(event)
+	var should_swallow := bool(normalized.get("synthetic_echo", false))
 	# After blur/pointercancel, an orphan touch release belongs to the cancelled
 	# sequence and must not reach a newly opened modal underneath it.
 	if (event is InputEventScreenTouch or event is InputEventScreenDrag) and not bool(normalized.get("deliver", false)):
@@ -854,9 +786,12 @@ func _cancel_transient_platform_input(reason: String = "platform_cancel") -> voi
 		_battle_pointer_input_router.cancel_all(reason)
 	if _web_battle_input_adapter != null:
 		_web_battle_input_adapter.cancel_all(reason)
+	if _battle_pointer_surface_controller != null:
+		_battle_pointer_surface_controller.cancel_all(reason)
 	if _ios_web_hud_touch_adapter != null:
 		_ios_web_hud_touch_adapter.cancel_all()
 	_clear_dialog_card_touch_bridge()
+	_clear_ios_web_hand_touch_bridge()
 	_prize_touch_press_contexts.clear()
 	if _slot_touch_long_press_timer != null:
 		_slot_touch_long_press_timer.stop()
@@ -1265,6 +1200,8 @@ func _apply_portrait_field_hud_metrics(viewport_size: Vector2, bench_card_size: 
 func _deferred_finalize_portrait_layout_constraints() -> void:
 	_trace_portrait_layout_stage("scene.deferred_finalize.before")
 	_finalize_portrait_layout_constraints()
+	_ensure_battle_display_coordinator()
+	_battle_display_coordinator.call("stabilize_hand_surface_layout")
 	if _has_human_portrait_prize_prompt_pending():
 		_show_portrait_prize_dialog_if_needed()
 	_trace_portrait_layout_stage("scene.deferred_finalize.after")
@@ -1928,12 +1865,24 @@ func _clear_hand_drag_click_suppression(source: String = "clear") -> void:
 func _configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = null, source: String = "card_gallery") -> void:
 	_ensure_battle_drag_scroll_coordinator()
 	_battle_drag_scroll_coordinator.call("configure_card_gallery_drag_scroll", scroll, row, source)
+	if scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false)):
+		_sync_card_gallery_pointer_surface(scroll)
 
 
 
 func _set_card_gallery_drag_scroll_active(scroll: ScrollContainer, active: bool) -> void:
 	_ensure_battle_drag_scroll_coordinator()
 	_battle_drag_scroll_coordinator.call("set_card_gallery_drag_scroll_active", scroll, active)
+	if scroll == null or _battle_pointer_surface_controller == null:
+		return
+	var surface_id := _card_gallery_pointer_surface_id(scroll)
+	if active:
+		_sync_card_gallery_pointer_surface(scroll)
+	else:
+		_battle_pointer_surface_controller.unregister_surface(
+			surface_id,
+			"gallery_deactivated"
+		)
 
 
 func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
@@ -1946,7 +1895,11 @@ func _configure_card_gallery_card_view(card_view: BattleCardView, scroll: Scroll
 	_ensure_battle_drag_scroll_coordinator()
 	_battle_drag_scroll_coordinator.call("configure_card_gallery_card_view", card_view, scroll, source)
 	_sync_card_foil_effect_for_view(card_view)
-
+	if (
+		scroll != null
+		and bool(scroll.get_meta("card_gallery_drag_scroll_active", false))
+	):
+		call_deferred("_deferred_sync_card_gallery_pointer_surface", scroll)
 
 
 func _on_card_gallery_scroll_input(event: InputEvent, scroll: ScrollContainer, source: String = "card_gallery") -> void:
