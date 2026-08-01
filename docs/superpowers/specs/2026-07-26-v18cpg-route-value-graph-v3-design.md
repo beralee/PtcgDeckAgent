@@ -503,7 +503,7 @@ Ledger 从“有哪些资源”升级为“资源被哪条攻击窗口路线占�
 
 ```text
 expected_information_value =
-  Σ(信息结果类别概率 × 最佳后续 Bundle 价值)
+  sum(信息结果类别概率 * 最佳后续 Bundle 价值)
   - 当前动作机会成本
   - 不可逆资源成本
   - 可见等待成本
