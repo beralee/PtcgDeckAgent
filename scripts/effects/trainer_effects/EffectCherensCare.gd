@@ -72,13 +72,19 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		if replacement == null:
 			return
 
-	_return_slot_cards_to_hand(target_slot, player)
-
 	if is_active:
-		player.active_pokemon = replacement
-		player.bench.erase(replacement)
+		if not _remove_active_and_promote(
+			state,
+			card.owner_index,
+			target_slot,
+			replacement,
+			"cherens_care"
+		):
+			return
 	else:
 		player.bench.erase(target_slot)
+
+	_return_slot_cards_to_hand(target_slot, player)
 
 
 func _return_slot_cards_to_hand(slot: PokemonSlot, player: PlayerState) -> void:
@@ -91,6 +97,12 @@ func _return_slot_cards_to_hand(slot: PokemonSlot, player: PlayerState) -> void:
 	if slot.attached_tool != null:
 		slot.attached_tool.face_up = true
 		player.hand.append(slot.attached_tool)
+	slot.pokemon_stack.clear()
+	slot.attached_energy.clear()
+	slot.attached_tool = null
+	slot.damage_counters = 0
+	slot.clear_all_status()
+	slot.effects.clear()
 
 
 func _get_valid_targets(player: PlayerState) -> Array[PokemonSlot]:

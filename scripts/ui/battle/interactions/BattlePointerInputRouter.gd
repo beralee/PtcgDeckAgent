@@ -5,6 +5,11 @@ const PointerSequenceScript := preload("res://scripts/ui/input/PointerSequence.g
 
 const TOUCH_MOUSE_ECHO_MAX_DISTANCE := 18.0
 const TOUCH_MOUSE_ECHO_MAX_AGE_MSEC := 700
+# Device-zero mouse events on native Android are ambiguous: they can be either
+# an immediate compatibility tail or the leading half of the player's next
+# physical tap. Keep only a short post-release merge window for that weak
+# signal. Explicit DEVICE_ID_EMULATION events retain the full long-press window.
+const UNLABELLED_TOUCH_MOUSE_ECHO_MAX_AGE_MSEC := 96
 const RECENT_TOUCH_LIMIT := 8
 const EVENT_RECORD_MAX_AGE_MSEC := 1600
 const EVENT_RECORD_LIMIT := 48
@@ -224,9 +229,14 @@ func _matching_touch_sequence(
 			return active
 	for sequence: PointerSequence in _recent_touch_sequences:
 		var age_since_touch_release := now - sequence.finished_at_msec
+		var recent_echo_max_age := (
+			TOUCH_MOUSE_ECHO_MAX_AGE_MSEC
+			if mouse_button.device == InputEvent.DEVICE_ID_EMULATION
+			else UNLABELLED_TOUCH_MOUSE_ECHO_MAX_AGE_MSEC
+		)
 		if (
 			age_since_touch_release >= 0
-			and age_since_touch_release <= TOUCH_MOUSE_ECHO_MAX_AGE_MSEC
+			and age_since_touch_release <= recent_echo_max_age
 			and sequence.latest_position.distance_to(position) <= TOUCH_MOUSE_ECHO_MAX_DISTANCE
 		):
 			return sequence

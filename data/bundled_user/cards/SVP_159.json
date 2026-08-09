@@ -1,0 +1,59 @@
+{
+    "name":  "小锻匠",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【超】 狂舞挥打 10+\n抛掷1次硬币如果为正面，则追加造成20伤害。\n\n",
+    "yoren_code":  "P0957",
+    "set_code":  "SVP",
+    "card_index":  "159",
+    "set_code_en":  "PAL",
+    "card_index_en":  "102",
+    "name_en":  "Tinkatink",
+    "name_zh":  "",
+    "artist":  "Pani Kobayashi",
+    "rarity":  "无标记",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "cfc98cad588e26c7060a44ac7ed2b371",
+    "image_url":  "https://tcg.mik.moe/static/img/SVP/159.png",
+    "image_local_path":  "user://cards/images/SVP/159.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/SVP/159",
+    "source_set_code":  "SVP",
+    "source_card_index":  "159",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "狂舞挥打",
+                        "text":  "抛掷1次硬币如果为正面，则追加造成20伤害。",
+                        "cost":  "P",
+                        "damage":  "10+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

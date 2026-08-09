@@ -22,9 +22,8 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 
 
 func _target_hand_size(player_index: int, state: GameState) -> int:
-	if player_index >= 0 and player_index < state.last_knockout_turn_against.size():
-		if int(state.last_knockout_turn_against[player_index]) == state.turn_number - 1:
-			return 8
+	if state.was_knocked_out_during_opponents_previous_turn(player_index):
+		return 8
 	return 5
 
 

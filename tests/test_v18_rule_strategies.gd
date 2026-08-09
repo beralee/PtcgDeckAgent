@@ -1850,14 +1850,14 @@ func test_v18_yanmega_opening_keeps_yanma_on_the_bench_for_buzzing_rush() -> Str
 	])
 
 
-func test_v18_yanmega_card_cost_matches_its_three_energy_acceleration() -> String:
+func test_v18_yanmega_card_cost_requires_one_manual_attachment_after_acceleration() -> String:
 	var yanmega: CardData = CardDatabase.get_card("CSV10C", "003")
 	return run_checks([
 		assert_not_null(yanmega, "The V18 Yanmega card should load"),
 		assert_eq(
 			str(yanmega.attacks[0].get("cost", "")) if yanmega != null and not yanmega.attacks.is_empty() else "",
-			"GGG",
-			"Jet Cyclone should cost the same three Grass Energy supplied by Buzzing Rush"
+			"GGGC",
+			"Buzzing Rush supplies three Grass Energy; Jet Cyclone still requires one additional attachment"
 		),
 	])
 
@@ -1992,16 +1992,16 @@ func test_v18_yanmega_powers_and_preserves_the_active_tm_evolution_carrier() -> 
 func test_v18_yanmega_hands_off_after_tm_builds_the_first_bench_attacker() -> String:
 	var strategy := _strategy_for_deck(800033475)
 	var state := _make_scoring_state(30)
-	var carrier := _make_slot(_make_stage1_pokemon("远古巨蜓ex", "蜻蜻蜓", "G", "GGG", "210"))
+	var carrier := _make_slot(_make_stage1_pokemon("远古巨蜓ex", "蜻蜻蜓", "G", "GGGC", "210"))
 	var tm_data := _make_trainer("招式学习器 进化")
 	tm_data.card_type = "Tool"
 	carrier.attached_tool = CardInstance.create(tm_data, 0)
 	carrier.attached_energy.append(CardInstance.create(_make_energy("基本草能量", "G"), 0))
-	var ready_handoff := _make_slot(_make_stage1_pokemon("远古巨蜓ex", "蜻蜻蜓", "G", "GGG", "210"))
+	var ready_handoff := _make_slot(_make_stage1_pokemon("远古巨蜓ex", "蜻蜻蜓", "G", "GGGC", "210"))
 	var remaining_seed := _make_slot(_make_basic_pokemon("蜻蜻蜓", "G"))
 	state.players[0].active_pokemon = carrier
 	state.players[0].bench.assign([ready_handoff, remaining_seed])
-	state.players[0].deck.push_front(CardInstance.create(_make_stage1_pokemon("远古巨蜓ex", "蜻蜻蜓", "G", "GGG", "210"), 0))
+	state.players[0].deck.push_front(CardInstance.create(_make_stage1_pokemon("远古巨蜓ex", "蜻蜻蜓", "G", "GGGC", "210"), 0))
 	var contract: Dictionary = strategy.call("build_turn_contract", state, 0, {"prompt_kind": "action_selection"})
 	var retreat_score: float = strategy.call("score_action_absolute_with_plan", {
 		"kind": "retreat",

@@ -123,6 +123,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--num-threads", type=int, default=1, help="torch CPU thread cap; 0 keeps default")
     parser.add_argument("--interop-threads", type=int, default=1, help="torch interop thread cap; 0 keeps default")
     parser.add_argument("--allow-dirty-matches", action="store_true", help="keep capped/stalled/unsupported matches in training")
+    parser.add_argument(
+        "--opponent-strategy-id",
+        default="",
+        help="train only records uniquely identified from public state as this opponent strategy",
+    )
     return parser.parse_args(argv)
 
 
@@ -272,6 +277,7 @@ def _payload_match_quality_weight(payload: dict) -> float:
 def load_decision_samples(
     data_dir: str,
     allow_dirty_matches: bool = False,
+    opponent_strategy_id: str = "",
 ) -> tuple[list[dict], np.ndarray, np.ndarray, np.ndarray, int, int]:
     pattern = os.path.join(data_dir, "*.json")
     files = sorted(glob.glob(pattern))
@@ -294,6 +300,9 @@ def load_decision_samples(
         payload_weight = max(0.0, _payload_match_quality_weight(payload))
         payload_match_id = payload.get("meta", {}).get("match_id", os.path.splitext(os.path.basename(path))[0])
         for record_index, record in enumerate(payload.get("records", [])):
+            public_opponent_strategy_id = str(record.get("opponent_deck_identity", ""))
+            if opponent_strategy_id and public_opponent_strategy_id != opponent_strategy_id:
+                continue
             state_features = [float(v) for v in record.get("state_features", [])]
             legal_actions = record.get("legal_actions", [])
             if not state_features or not isinstance(legal_actions, list):
@@ -427,8 +436,16 @@ def load_decision_samples(
     )
 
 
-def load_data(data_dir: str, allow_dirty_matches: bool = False) -> tuple[list[dict], np.ndarray, np.ndarray, np.ndarray, int, int]:
-    return load_decision_samples(data_dir, allow_dirty_matches=allow_dirty_matches)
+def load_data(
+    data_dir: str,
+    allow_dirty_matches: bool = False,
+    opponent_strategy_id: str = "",
+) -> tuple[list[dict], np.ndarray, np.ndarray, np.ndarray, int, int]:
+    return load_decision_samples(
+        data_dir,
+        allow_dirty_matches=allow_dirty_matches,
+        opponent_strategy_id=opponent_strategy_id,
+    )
 
 
 def _entry_key(sample: dict) -> tuple[int, str]:
@@ -675,6 +692,7 @@ def export_weights(
     input_dim: int,
     state_dim: int,
     action_dim: int,
+    opponent_strategy_id: str = "",
 ) -> None:
     layers = []
     activation_map = {
@@ -704,6 +722,11 @@ def export_weights(
         "action_dim": action_dim,
         "layers": layers,
     }
+    if opponent_strategy_id:
+        payload["matchup_policy"] = {
+            "identity_source": "public_unique_fingerprint",
+            "opponent_strategy_id": opponent_strategy_id,
+        }
     with open(output_path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
     print(f"[export] saved weights to {output_path}")
@@ -716,6 +739,7 @@ def train_from_args(args: argparse.Namespace) -> None:
     samples, features, targets, sample_weights, state_dim, action_dim = load_data(
         args.data_dir,
         allow_dirty_matches=args.allow_dirty_matches,
+        opponent_strategy_id=args.opponent_strategy_id,
     )
     input_dim = features.shape[1]
 
@@ -776,7 +800,14 @@ def train_from_args(args: argparse.Namespace) -> None:
                 % (epoch + 1, train_loss / max(train_count, 1), val_loss)
             )
 
-    export_weights(model, args.output, input_dim, state_dim, action_dim)
+    export_weights(
+        model,
+        args.output,
+        input_dim,
+        state_dim,
+        action_dim,
+        opponent_strategy_id=args.opponent_strategy_id,
+    )
 
     model.eval()
     with torch.no_grad():

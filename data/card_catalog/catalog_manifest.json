@@ -1,18 +1,18 @@
 {
-	"card_count": 759,
-	"catalog_version": "2026.07.12.1",
+	"card_count": 792,
+	"catalog_version": "2026.08.02.1",
 	"generated_at": "2026-07-12T00:00:00+08:00",
 	"index_file": {
 		"path": "index.json",
-		"sha256": "66bd12e5656d6c0e8bf1a6ee6e81ef04a05bc3c881a7e1d590add7dc605de1d3"
+		"sha256": "be5d36cf2d0c4f3910e6adfabc83afc5afc207665d36b6db5ef998b77775d2a2"
 	},
-	"schema_version": 1,
+	"schema_version": 2,
 	"sets": [
 		{
-			"card_count": 10,
+			"card_count": 13,
 			"path": "sets/151C.json",
 			"set_code": "151C",
-			"sha256": "c50bee597dc47d11f416924e31c94af53d7b67d6a436c09e82f30d176741a12b"
+			"sha256": "d3cdfc2bc620a9b0e2df0f547f7a3027dae3ba49e97836739e5a27f97f53f792"
 		},
 		{
 			"card_count": 2,
@@ -93,10 +93,10 @@
 			"sha256": "360d7b4615e3a99e961feef9781ac0497a3bcab55b74b22e42c05cb191d1ac43"
 		},
 		{
-			"card_count": 26,
+			"card_count": 28,
 			"path": "sets/CSV1C.json",
 			"set_code": "CSV1C",
-			"sha256": "a2b34b6c8547128339ae0462ab1e09964b303d825edc1e69b205b6b382965f05"
+			"sha256": "be849b1525d53829e93f887ab1208a61b2014eb5d7bf2c87a5a43c97da7135f7"
 		},
 		{
 			"card_count": 17,
@@ -105,10 +105,10 @@
 			"sha256": "9d1860ba2b04322023382991d00293335269fea9f5e1df79985fa00ccf80da8f"
 		},
 		{
-			"card_count": 13,
+			"card_count": 14,
 			"path": "sets/CSV3C.json",
 			"set_code": "CSV3C",
-			"sha256": "c84dae9fd1d9ba69db89c01aaf23c3d117b0f88b9599de83037c457ffbd2885c"
+			"sha256": "b16a7cf990d563c42ded988ad432cb0ead71b6cbd17a244381e75d6a0ce1c714"
 		},
 		{
 			"card_count": 13,
@@ -117,40 +117,40 @@
 			"sha256": "384812dc0dbb3d7a37c3b3c255c823127982e08ccf9fdc1e77e9dfb0d00d22ac"
 		},
 		{
-			"card_count": 13,
+			"card_count": 14,
 			"path": "sets/CSV5C.json",
 			"set_code": "CSV5C",
-			"sha256": "357f316bfe79dc2d05652e66eba52c4ece7e50c328a520b6765a29e73f73ac90"
+			"sha256": "e7ca18d04febbbe16f2e06d46c6df99d4aed431f6a8df999aa715a41963d69f9"
 		},
 		{
-			"card_count": 18,
+			"card_count": 22,
 			"path": "sets/CSV6C.json",
 			"set_code": "CSV6C",
-			"sha256": "542aaba863e8abc6a665a459a7e46658abeaf7f42a267b0d27005343ebe4cb39"
+			"sha256": "12a5a99b39dd665ae79c8204e2e2cb38f92d11602f8c3cbcb04c938e9ac14436"
 		},
 		{
-			"card_count": 55,
+			"card_count": 57,
 			"path": "sets/CSV7C.json",
 			"set_code": "CSV7C",
-			"sha256": "49bb503cd3dd9b60f3f65090a863b534fe348c3776ab1add1dd5939bbc5c05df"
+			"sha256": "3b3c57b0ba0a0f64c02edfbb162f4c267e5286755850bac836f5162967dbade9"
 		},
 		{
-			"card_count": 59,
+			"card_count": 62,
 			"path": "sets/CSV8C.json",
 			"set_code": "CSV8C",
-			"sha256": "7b764e59fbe6601344dea2bc39eead022cec7fbe415d81af3b51079a85270180"
+			"sha256": "daf8ecb25c0430117e7b20092c68e37d8c76658faf192be167a5cd6c9e658e87"
 		},
 		{
-			"card_count": 24,
+			"card_count": 29,
 			"path": "sets/CSV9.5C.json",
 			"set_code": "CSV9.5C",
-			"sha256": "d88bdebed5c1d8652a427e249af36f2b41839f1f4d0f4532832e0699506ef685"
+			"sha256": "840a26c1c65e9627349f8033e5c4e0ebd4249a8e1721fc69fb5b035f4e089407"
 		},
 		{
-			"card_count": 63,
+			"card_count": 69,
 			"path": "sets/CSV9C.json",
 			"set_code": "CSV9C",
-			"sha256": "40dc5059b3158be34774fa15ae10c51f174f320ca1819ae94959c0c5ccbe5061"
+			"sha256": "8f512bc927a9e28c2f893b025d9d402ab67327d1de4b2617dcb42d19fc173090"
 		},
 		{
 			"card_count": 8,
@@ -190,9 +190,27 @@
 		},
 		{
 			"card_count": 1,
+			"path": "sets/CSVH5C.json",
+			"set_code": "CSVH5C",
+			"sha256": "ee3955835130a156a57d88c2365350f0e13833407379eb7706ab128a4f676df4"
+		},
+		{
+			"card_count": 3,
 			"path": "sets/CSVL1C.json",
 			"set_code": "CSVL1C",
-			"sha256": "368712f0386239d9e9110d60346adc6c881115c4993f0b3d65aa8e3941523cc3"
+			"sha256": "6ee43e87a4631cfdd960b2eb445e7e5fe8ff51094e7e865c7d777dfbe2edcd8b"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVL2C.json",
+			"set_code": "CSVL2C",
+			"sha256": "a77950f584b6974777ed728a3024dda773b0eeee1296ffb574e93324e68243c4"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVNC.json",
+			"set_code": "CSVNC",
+			"sha256": "26a67b7596805e2dc0f19c77b9c5b90356c4b459b09cbb439afe004936dd7496"
 		},
 		{
 			"card_count": 1,
@@ -243,10 +261,10 @@
 			"sha256": "3a8bbe436c7d6406eccc9ed708608ec097b28c3502e052d14291c653d74c9b4f"
 		},
 		{
-			"card_count": 5,
+			"card_count": 6,
 			"path": "sets/SVP.json",
 			"set_code": "SVP",
-			"sha256": "8d67460a17a40f3c8fa7afead2020f688e9ba86d62e66e923db38667d8dae065"
+			"sha256": "ab6b5622394ec2d46f2721dddfc6cb38399d5190ffe20b8aaf6465cb23917fcb"
 		},
 		{
 			"card_count": 1,

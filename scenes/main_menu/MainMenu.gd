@@ -392,7 +392,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	_apply_main_menu_background(context, portrait)
 	_ensure_corner_action_buttons()
 	_apply_main_menu_frame_metrics(context, portrait)
-	_layout_update_button(context, portrait)
+	_layout_home_status_stack(context, portrait)
 	_layout_corner_action_buttons(context, portrait)
 	_position_deck_center_new_badge()
 	_position_deck_training_new_badge()
@@ -432,9 +432,12 @@ func _apply_main_menu_frame_metrics(context: Dictionary, portrait: bool) -> void
 		button.custom_minimum_size = Vector2(button_width, button_height)
 		button.add_theme_font_size_override("font_size", button_font if portrait else HudThemeScript.scaled_font_size(button_font))
 		NonBattleTouchBridgeScript.bind_button_touch(button)
-	var version_label := get_node_or_null("VersionLabel") as Label
+	var version_label := get_node_or_null("%VersionLabel") as Label
 	if version_label != null:
-		version_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14 if portrait else 12))
+		version_label.add_theme_font_size_override(
+			"font_size",
+			int(context.get("meta_font_size", 14)) if portrait else HudThemeScript.scaled_font_size(13)
+		)
 
 
 func _apply_main_menu_background(context: Dictionary, portrait: bool) -> void:
@@ -1059,8 +1062,6 @@ func _layout_corner_action_buttons(context: Dictionary, portrait: bool) -> void:
 	var button_size := _corner_action_button_size_for_context(context, portrait)
 	var spacing := _corner_action_spacing_for_size(button_size, portrait)
 	var bottom_margin := _corner_action_bottom_margin_for_size(button_size, portrait)
-	if portrait and _update_button != null and _update_button.visible:
-		bottom_margin = _portrait_update_button_bottom_margin(context) + _portrait_update_button_height(context) + spacing
 	var right_margin := _corner_action_right_margin_for_size(button_size, portrait)
 	var entries: Array[Dictionary] = [
 		{"button": _non_battle_orientation_button, "index": 5, "accent": HudThemeScript.ACCENT},
@@ -1094,32 +1095,38 @@ func _layout_corner_action_buttons(context: Dictionary, portrait: bool) -> void:
 		_position_corner_action_label(_corner_action_hover_button)
 
 
-func _layout_update_button(context: Dictionary, portrait: bool) -> void:
-	if _update_button == null:
+func _layout_home_status_stack(context: Dictionary, portrait: bool) -> void:
+	var status_stack := get_node_or_null("HomeStatusStack") as VBoxContainer
+	var version_label := get_node_or_null("%VersionLabel") as Label
+	if status_stack == null or version_label == null:
 		return
 	var button_width := float(context.get("content_width", MAIN_MENU_BUTTON_WIDTH)) if portrait else 240.0
 	var button_height := _portrait_update_button_height(context) if portrait else 44.0
 	var button_font := int(context.get("button_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(16)
-	var bottom_margin := _portrait_update_button_bottom_margin(context) if portrait else 40.0
-	_update_button.anchor_left = 0.5
-	_update_button.anchor_right = 0.5
-	_update_button.anchor_top = 1.0
-	_update_button.anchor_bottom = 1.0
-	_update_button.offset_left = -button_width * 0.5
-	_update_button.offset_top = -bottom_margin - button_height
-	_update_button.offset_right = button_width * 0.5
-	_update_button.offset_bottom = -bottom_margin
-	_update_button.custom_minimum_size = Vector2(button_width, button_height)
-	_update_button.size = Vector2(button_width, button_height)
-	_update_button.add_theme_font_size_override("font_size", button_font)
+	var top_margin := maxf(float(context.get("page_margin", 24.0)), 20.0)
+	var separation := int(context.get("section_gap", 10)) if portrait else 10
+	var version_height := maxf(float(context.get("meta_font_size", 14)) * 1.55, 28.0)
+	status_stack.anchor_left = 0.5
+	status_stack.anchor_right = 0.5
+	status_stack.anchor_top = 0.0
+	status_stack.anchor_bottom = 0.0
+	status_stack.offset_left = -button_width * 0.5
+	status_stack.offset_top = top_margin
+	status_stack.offset_right = button_width * 0.5
+	status_stack.offset_bottom = top_margin + version_height + (button_height + separation if _update_button != null and _update_button.visible else 0.0)
+	status_stack.custom_minimum_size = Vector2(button_width, 0.0)
+	status_stack.add_theme_constant_override("separation", separation)
+	version_label.custom_minimum_size = Vector2(button_width, version_height)
+	version_label.add_theme_constant_override("outline_size", 4 if portrait else 2)
+	version_label.add_theme_color_override("font_outline_color", Color(0.0, 0.025, 0.055, 0.92))
+	if _update_button != null:
+		_update_button.custom_minimum_size = Vector2(button_width, button_height)
+		_update_button.size_flags_horizontal = Control.SIZE_FILL
+		_update_button.add_theme_font_size_override("font_size", button_font)
 
 
 func _portrait_update_button_height(context: Dictionary) -> float:
 	return float(context.get("primary_button_height", MAIN_MENU_BUTTON_HEIGHT))
-
-
-func _portrait_update_button_bottom_margin(context: Dictionary) -> float:
-	return maxf(float(context.get("page_margin", CORNER_ACTION_BUTTON_BOTTOM_MARGIN)), CORNER_ACTION_BUTTON_BOTTOM_MARGIN)
 
 
 func _create_corner_icon_button(button_name: String, icon_path: String, tip: String, left_offset: float, accent: Color) -> Button:
@@ -1334,7 +1341,7 @@ func _position_corner_action_label(button: Button) -> void:
 
 
 func _setup_version_and_updates() -> void:
-	var version_label := get_node_or_null("VersionLabel") as Label
+	var version_label := get_node_or_null("%VersionLabel") as Label
 	if version_label != null:
 		version_label.text = AppVersionScript.current_display_version()
 		version_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
@@ -1379,17 +1386,8 @@ func _ensure_update_button() -> void:
 	_update_button.visible = false
 	_update_button.text = "发现新版本"
 	_update_button.custom_minimum_size = Vector2(240, 44)
-	_update_button.layout_mode = 1
-	_update_button.anchor_left = 0.5
-	_update_button.anchor_top = 1.0
-	_update_button.anchor_right = 0.5
-	_update_button.anchor_bottom = 1.0
-	_update_button.offset_left = -120.0
-	_update_button.offset_top = -84.0
-	_update_button.offset_right = 120.0
-	_update_button.offset_bottom = -40.0
-	_update_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_update_button.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_update_button.layout_mode = 2
+	_update_button.size_flags_horizontal = Control.SIZE_FILL
 	_update_button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	_update_button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	_update_button.add_theme_color_override("font_hover_color", Color.WHITE)
@@ -1400,7 +1398,11 @@ func _ensure_update_button() -> void:
 	_update_button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_enable_button_touch_activation(_update_button)
 	_update_button.pressed.connect(_on_update_button_pressed)
-	add_child(_update_button)
+	var status_stack := get_node_or_null("HomeStatusStack") as VBoxContainer
+	if status_stack != null:
+		status_stack.add_child(_update_button)
+	else:
+		add_child(_update_button)
 
 
 func _start_update_button_flash() -> void:

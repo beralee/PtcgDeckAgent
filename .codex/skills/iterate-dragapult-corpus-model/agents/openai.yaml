@@ -1,4 +1,0 @@
-interface:
-  display_name: "多龙语料 Graph 模型迭代"
-  short_description: "冻结语料训练、败局回放、配对回归与 Graph 晋级门控"
-  default_prompt: "Use $iterate-dragapult-corpus-model to train and validate a Graph-constrained Dragapult model from the frozen corpus."

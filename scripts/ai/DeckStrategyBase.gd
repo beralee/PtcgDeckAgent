@@ -2,6 +2,7 @@ class_name DeckStrategyBase
 extends RefCounted
 
 const AIIntentPlannerCoordinatorScript = preload("res://scripts/ai/intent/AIIntentPlannerCoordinator.gd")
+const OpponentDeckFingerprintResolverScript = preload("res://scripts/ai/OpponentDeckFingerprintResolver.gd")
 const RESOURCE_PAID_OWNER_RETREAT_PENALTY := 7000.0
 
 var _turn_plan_context: Dictionary = {}
@@ -14,6 +15,139 @@ func get_strategy_id() -> String:
 
 func get_signature_names() -> Array[String]:
 	return []
+
+
+## Pure public-state lookup. It never reads the opponent's hand, deck, or
+## prizes, and it does not cache simulated/MCTS states between calls.
+func resolve_opponent_deck(game_state: GameState, player_index: int) -> Dictionary:
+	return OpponentDeckFingerprintResolverScript.classify_game_state(game_state, player_index)
+
+
+func resolve_opponent_deck_from_visible_cards(visible_cards: Array) -> Dictionary:
+	return OpponentDeckFingerprintResolverScript.classify_visible_cards(visible_cards)
+
+
+func opponent_is_deck(game_state: GameState, player_index: int, deck_id: int) -> bool:
+	var result := resolve_opponent_deck(game_state, player_index)
+	return bool(result.get("is_unique", false)) and int(result.get("deck_id", 0)) == deck_id
+
+
+func opponent_uses_strategy(game_state: GameState, player_index: int, strategy_id: String) -> bool:
+	var result := resolve_opponent_deck(game_state, player_index)
+	return bool(result.get("is_unique", false)) and str(result.get("strategy_id", "")) == strategy_id
+
+
+## Stable public contract shared by Graph overlays, matchup-specific BC models,
+## and decision exports. Exact identity is deliberately blank until the public
+## fingerprint is unique.
+func build_matchup_context(game_state: GameState, player_index: int) -> Dictionary:
+	var resolved := resolve_opponent_deck(game_state, player_index)
+	var is_unique := bool(resolved.get("is_unique", false))
+	return {
+		"status": str(resolved.get("status", "unknown")),
+		"is_unique": is_unique,
+		"scope": str(resolved.get("scope", "v18_builtin_24")),
+		"opponent_deck_id": int(resolved.get("deck_id", 0)) if is_unique else 0,
+		"opponent_strategy_id": str(resolved.get("strategy_id", "")) if is_unique else "",
+		"opponent_archetype": str(resolved.get("archetype", "")) if is_unique else "",
+		"observed_card_count": int(resolved.get("observed_card_count", 0)),
+		"evidence_card_count": int(resolved.get("evidence_card_count", 0)),
+		"candidate_count": (resolved.get("candidate_deck_ids", []) as Array).size() \
+			if resolved.get("candidate_deck_ids", []) is Array else 0,
+	}
+
+
+## Concrete strategies return only public-state-safe deltas here. The host
+## applies them after the ordinary turn contract is built, so subclasses do not
+## need to duplicate their normal plan just to add a matchup branch.
+func build_matchup_overlay(
+	_game_state: GameState,
+	_player_index: int,
+	_matchup_context: Dictionary
+) -> Dictionary:
+	return {}
+
+
+func apply_matchup_overlay_to_turn_contract(
+	turn_contract: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	matchup_context: Dictionary = {}
+) -> Dictionary:
+	var normalized_context := matchup_context.duplicate(true)
+	if normalized_context.is_empty():
+		normalized_context = build_matchup_context(game_state, player_index)
+	var merged := _normalize_turn_contract(turn_contract)
+	merged["matchup_context"] = normalized_context.duplicate(true)
+	var contract_context: Dictionary = merged.get("context", {}) if merged.get("context", {}) is Dictionary else {}
+	contract_context["matchup_context"] = normalized_context.duplicate(true)
+	merged["context"] = contract_context
+	if not bool(normalized_context.get("is_unique", false)):
+		return merged
+
+	var overlay := build_matchup_overlay(game_state, player_index, normalized_context)
+	if overlay.is_empty():
+		return merged
+	var resolved_strategy_id := str(normalized_context.get("opponent_strategy_id", ""))
+	var required_strategy_id := str(overlay.get("opponent_strategy_id", resolved_strategy_id))
+	if resolved_strategy_id == "" or required_strategy_id != resolved_strategy_id:
+		return merged
+
+	var overlay_id := str(overlay.get("id", "")).strip_edges()
+	merged["matchup_overlay_id"] = overlay_id
+	for section: String in ["flags", "targets", "constraints", "owner"]:
+		var delta: Variant = overlay.get(section, {})
+		if not (delta is Dictionary):
+			continue
+		var current: Dictionary = merged.get(section, {}) if merged.get(section, {}) is Dictionary else {}
+		current.merge(delta as Dictionary, true)
+		merged[section] = current
+	var priority_delta: Variant = overlay.get("priorities", {})
+	if priority_delta is Dictionary:
+		var priorities: Dictionary = merged.get("priorities", {}) if merged.get("priorities", {}) is Dictionary else {}
+		for raw_key: Variant in (priority_delta as Dictionary).keys():
+			var key := str(raw_key)
+			var requested: Variant = (priority_delta as Dictionary).get(raw_key, [])
+			if not (requested is Array):
+				continue
+			var combined: Array = []
+			for item: Variant in requested as Array:
+				if item not in combined:
+					combined.append(item)
+			var existing: Variant = priorities.get(key, [])
+			if existing is Array:
+				for item: Variant in existing as Array:
+					if item not in combined:
+						combined.append(item)
+			priorities[key] = combined
+		merged["priorities"] = priorities
+	var flags: Dictionary = merged.get("flags", {}) if merged.get("flags", {}) is Dictionary else {}
+	flags["matchup_overlay_active"] = true
+	flags["matchup_overlay_id"] = overlay_id
+	merged["flags"] = flags
+	return merged
+
+
+## These two hooks are added by the host after the deck's ordinary Rule score.
+## They must return deltas, not absolute scores, so unknown/ambiguous opponents
+## and missing overlays naturally fall back to the generic strategy.
+func score_matchup_action(
+	_action: Dictionary,
+	_game_state: GameState,
+	_player_index: int,
+	_matchup_context: Dictionary,
+	_turn_contract: Dictionary = {}
+) -> float:
+	return 0.0
+
+
+func score_matchup_interaction_target(
+	_item: Variant,
+	_step: Dictionary,
+	_context: Dictionary,
+	_matchup_context: Dictionary
+) -> float:
+	return 0.0
 
 
 func get_state_encoder_class() -> GDScript:

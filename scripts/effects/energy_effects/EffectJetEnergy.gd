@@ -43,17 +43,10 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	# 执行换场：将备战宝可梦与战斗宝可梦互换
 	if player.active_pokemon == null:
 		# 若战斗位为空（理论上对战中不应出现），直接移过去
-		player.bench.remove_at(bench_index)
-		player.active_pokemon = target_slot
-		target_slot.mark_entered_active_from_bench(state.turn_number)
+		_promote_from_bench(state, pi, target_slot, "jet_energy")
 		return
 
-	var old_active: PokemonSlot = player.active_pokemon
-	player.bench.remove_at(bench_index)
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
-	player.active_pokemon = target_slot
-	target_slot.mark_entered_active_from_bench(state.turn_number)
+	_switch_active_with_bench(state, pi, target_slot, "jet_energy")
 
 
 ## 获取此特殊能量提供的能量类型（供 EffectProcessor.get_energy_type 查询）

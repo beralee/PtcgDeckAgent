@@ -444,6 +444,9 @@ func _handle_slot_left_click(slot_id: String) -> void:
 		_suppress_slot_followup_click(slot_id, "field_interaction_target")
 		_try_handle_field_interaction_slot_click(slot_id, target_slot)
 		return
+	if not _can_view_player_start_turn_action():
+		_runtime_log("slot_input_blocked", "slot=%s reason=not_view_player_turn %s" % [slot_id, _state_snapshot()])
+		return
 	if target_slot == null and not slot_id.begins_with("opp"):
 		if _selected_hand_card != null and _selected_hand_card.card_data.is_basic_pokemon():
 			_try_play_to_bench(cp, _selected_hand_card, slot_id)
@@ -814,6 +817,41 @@ func _refresh_hand() -> void:
 	call_deferred("_sync_battle_action_intents")
 
 
+func _request_authoritative_hand_reconciliation(reason: String = "") -> void:
+	_authoritative_hand_reconcile_pending = true
+	if reason.strip_edges() != "":
+		_authoritative_hand_reconcile_reason = reason
+	if not is_inside_tree():
+		# Lightweight UI fixtures have no deferred frame. Production scenes always
+		# take the transaction-end path below.
+		_flush_authoritative_hand_reconciliation()
+		return
+	if _authoritative_hand_reconcile_scheduled:
+		return
+	_authoritative_hand_reconcile_scheduled = true
+	call_deferred("_flush_authoritative_hand_reconciliation")
+
+
+func _flush_authoritative_hand_reconciliation() -> bool:
+	_authoritative_hand_reconcile_scheduled = false
+	if not _authoritative_hand_reconcile_pending:
+		return false
+	if _gsm == null or _gsm.game_state == null:
+		_authoritative_hand_reconcile_pending = false
+		_authoritative_hand_reconcile_reason = ""
+		return false
+	if _draw_reveal_active and not _draw_reveal_allow_hand_refresh_during_fly:
+		# Keep the request latched. BattleDrawRevealController flushes it at the
+		# reveal/presentation boundary, including watchdog and resume recovery.
+		return false
+	var reason := _authoritative_hand_reconcile_reason
+	_authoritative_hand_reconcile_pending = false
+	_authoritative_hand_reconcile_reason = ""
+	_runtime_log("authoritative_hand_reconcile", "reason=%s %s" % [reason, _state_snapshot()])
+	_refresh_hand()
+	return true
+
+
 func _sync_battle_action_intents() -> void:
 	if _battle_action_intent_controller == null:
 		return
@@ -1054,30 +1092,50 @@ func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
 	var prize_view: BattleCardView = _get_prize_slot_view(player_index, slot_index)
 	if prize_view == null:
 		return
+	# Commit the rule transaction synchronously. The flip is presentation only:
+	# losing a Tween callback must never be able to prevent resolve_take_prize.
 	_pending_prize_animating = true
-	_animate_prize_flip(prize_view, prize_card, func() -> void:
-		var previous_choice := _pending_choice
-		var previous_prize_player_index := _pending_prize_player_index
-		var previous_prize_remaining := _pending_prize_remaining
-		_pending_choice = ""
-		_pending_prize_player_index = -1
-		_pending_prize_remaining = 0
-		var resolved: bool = _gsm.resolve_take_prize(player_index, slot_index)
-		_pending_prize_animating = false
-		if resolved:
-			_restore_pending_engine_prize_choice_if_needed("take_prize_resolve")
-		if resolved and _pending_choice == "take_prize":
-			_focus_prize_panel(_pending_prize_player_index)
-		elif resolved:
-			_clear_prize_selection()
-		else:
-			_pending_choice = previous_choice
-			_pending_prize_player_index = previous_prize_player_index
-			_pending_prize_remaining = previous_prize_remaining
-			_focus_prize_panel(player_index)
+	_prize_animation_generation += 1
+	var animation_generation := _prize_animation_generation
+	var previous_choice := _pending_choice
+	var previous_prize_player_index := _pending_prize_player_index
+	var previous_prize_remaining := _pending_prize_remaining
+	_pending_choice = ""
+	_pending_prize_player_index = -1
+	_pending_prize_remaining = 0
+	var resolved: bool = _gsm.resolve_take_prize(player_index, slot_index)
+	if not resolved:
+		_pending_choice = previous_choice
+		_pending_prize_player_index = previous_prize_player_index
+		_pending_prize_remaining = previous_prize_remaining
+		_complete_prize_presentation(animation_generation)
+		_focus_prize_panel(player_index)
 		_refresh_ui()
-		_check_two_player_handover()
 		_maybe_run_ai()
+		return
+	_restore_pending_engine_prize_choice_if_needed("take_prize_resolve")
+	if _pending_choice == "take_prize":
+		_focus_prize_panel(_pending_prize_player_index)
+	else:
+		_clear_prize_selection()
+	_refresh_ui()
+	_check_two_player_handover()
+	_animate_prize_flip(
+		prize_view,
+		prize_card,
+		Callable(self, "_complete_prize_presentation").bind(animation_generation)
+	)
+
+
+func _can_view_player_start_turn_action() -> bool:
+	return (
+		_can_accept_live_action()
+		and _gsm != null
+		and BattleTurnActionPolicyScript.can_view_player_start_normal_action(
+			_gsm.game_state,
+			_view_player,
+			_pending_choice
+		)
 	)
 
 
@@ -1353,6 +1411,15 @@ func _try_handle_field_interaction_slot_click(slot_id: String, _target_slot: Pok
 
 
 func _show_pokemon_action_dialog(cp: int, slot: PokemonSlot, include_attacks: bool) -> void:
+	var gs := _gsm.game_state if _gsm != null else null
+	var can_present_existing_prompt := _pending_choice in ["", "pokemon_action"]
+	if (
+		not BattleTurnActionPolicyScript.is_view_player_turn(gs, _view_player)
+		or not can_present_existing_prompt
+		or cp != _view_player
+	):
+		_runtime_log("pokemon_action_blocked", "player=%d reason=not_view_player_turn %s" % [cp, _state_snapshot()])
+		return
 	_battle_dialog_controller.call("show_pokemon_action_dialog", self, cp, slot, include_attacks)
 
 
@@ -1716,6 +1783,29 @@ func _animate_prize_flip(prize_view: BattleCardView, prize_card: CardInstance, o
 	)
 
 
+func _complete_prize_presentation(animation_generation: int) -> void:
+	if animation_generation != _prize_animation_generation:
+		return
+	_pending_prize_animating = false
+	_refresh_ui()
+	_check_two_player_handover()
+	_maybe_run_ai()
+
+
+func _ai_watchdog_force_finish_prize_animation() -> void:
+	if not _pending_prize_animating:
+		return
+	_prize_animation_generation += 1
+	_pending_prize_animating = false
+	for prize_view: BattleCardView in _my_prize_slots + _opp_prize_slots:
+		if prize_view != null and is_instance_valid(prize_view):
+			prize_view.scale = Vector2.ONE
+	_runtime_log("prize_presentation_recovered", _state_snapshot())
+	_refresh_ui()
+	_check_two_player_handover()
+	_maybe_run_ai()
+
+
 
 func _sync_battle_scene_context_runtime() -> void:
 	if _battle_scene_context == null:
@@ -1965,6 +2055,9 @@ func _refresh_ui_after_successful_action(check_handover: bool = false, action_pl
 	_clear_stale_selected_hand_card("successful_action")
 	_mark_ready_vfx_action_source(action_player_index, action_kind)
 	_refresh_ui()
+	_request_authoritative_hand_reconciliation(
+		"successful_action:%s" % (action_kind if action_kind != "" else "generic")
+	)
 	if check_handover:
 		_check_two_player_handover()
 	if _should_pause_after_ai_action(action_player_index):
@@ -2557,4 +2650,13 @@ func _set_battle_visual_input_blocked(blocked: bool) -> void:
 
 
 func _on_battle_visual_sequence_idle() -> void:
+	_maybe_run_ai()
+
+
+func _ai_watchdog_force_finish_visual_sequence() -> void:
+	if _battle_visual_sequence_controller != null:
+		_battle_visual_sequence_controller.call("clear", "ai_watchdog_recovery")
+	_battle_visual_input_blocked = false
+	_runtime_log("battle_visual_sequence_recovered", _state_snapshot())
+	_refresh_ui()
 	_maybe_run_ai()

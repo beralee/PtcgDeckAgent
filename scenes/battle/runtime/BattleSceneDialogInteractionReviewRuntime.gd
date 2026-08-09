@@ -466,15 +466,11 @@ func _selected_assignment_labels(assignments: Array[Dictionary]) -> Array[String
 
 
 func _on_dialog_card_left_signal(_ci: CardInstance, _cd: CardData, real_index: int) -> void:
-	if _is_card_gallery_drag_click_suppressed():
-		return
 	_on_dialog_card_chosen(real_index)
 
 
 
 func _on_dialog_card_right_signal(ci: CardInstance, cd: CardData) -> void:
-	if _is_card_gallery_drag_click_suppressed():
-		return
 	if ci != null:
 		_show_card_detail_for_instance(ci)
 		return
@@ -1556,7 +1552,7 @@ func _run_ai_step() -> void:
 	_reset_ai_action_counter_if_needed()
 	if _ai_actions_this_turn >= AI_MAX_ACTIONS_PER_TURN:
 		if _pending_choice == "" and _gsm != null and _gsm.game_state != null and _gsm.game_state.phase == GameState.GamePhase.MAIN:
-			_on_end_turn()
+			_on_end_turn(_ai_opponent.player_index)
 		return
 	var starting_pending_choice: String = _pending_choice
 	_ai_running = true
@@ -1621,7 +1617,7 @@ func _run_ai_step() -> void:
 
 
 func _on_hand_card_clicked(inst: CardInstance, _panel: PanelContainer) -> void:
-	if not _can_accept_live_action():
+	if not _can_view_player_start_turn_action():
 		return
 	_clear_stale_selected_hand_card("hand_card_clicked")
 	_battle_action_controller.call("on_hand_card_clicked", self, inst, _panel)
@@ -1630,6 +1626,24 @@ func _on_hand_card_clicked(inst: CardInstance, _panel: PanelContainer) -> void:
 
 func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -> void:
 	_battle_action_controller.call("try_play_trainer_with_interaction", self, player_index, card)
+
+
+func _ai_watchdog_dismiss_stale_human_turn_prompt() -> bool:
+	if _gsm == null or _gsm.game_state == null:
+		return false
+	_ensure_ai_opponent()
+	if _ai_opponent == null or not BattleTurnActionPolicyScript.is_stale_human_prompt_on_ai_turn(
+		_pending_choice,
+		_gsm.game_state,
+		_ai_opponent.player_index
+	):
+		return false
+	var stale_prompt := _pending_choice
+	_battle_dialog_controller.call("dismiss_stale_turn_action_dialog", self)
+	_selected_hand_card = null
+	_runtime_log("stale_human_turn_prompt_dismissed", "choice=%s %s" % [stale_prompt, _state_snapshot()])
+	_maybe_run_ai()
+	return true
 
 
 

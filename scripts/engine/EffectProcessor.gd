@@ -11,6 +11,7 @@ const AbilityZamazentaVSTARShieldScript = preload("res://scripts/effects/pokemon
 const AbilityPreventTeraAttackDamageAndEffectsScript = preload("res://scripts/effects/pokemon_effects/AbilityPreventTeraAttackDamageAndEffects.gd")
 const AbilityTingLuCursedLandScript = preload("res://scripts/effects/pokemon_effects/AbilityTingLuCursedLand.gd")
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
+const FieldTransition = preload("res://scripts/engine/BattleFieldTransitionService.gd")
 
 const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
 const PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY := "_pending_attack_effect_energy_returns"
@@ -1920,6 +1921,14 @@ func _process_delayed_end_turn_discards(state: GameState) -> void:
 			affected.append(slot)
 			break
 	for slot: PokemonSlot in affected:
+		var was_active := player.active_pokemon == slot
+		if was_active:
+			FieldTransition.remove_active(
+				state,
+				state.current_player_index,
+				slot,
+				"delayed_end_turn_discard"
+			)
 		for card: CardInstance in slot.collect_all_cards():
 			card.face_up = true
 			player.discard_pile.append(card)
@@ -1928,9 +1937,7 @@ func _process_delayed_end_turn_discards(state: GameState) -> void:
 		slot.attached_tool = null
 		slot.effects.clear()
 		slot.clear_all_status()
-		if player.active_pokemon == slot:
-			player.active_pokemon = null
-		else:
+		if not was_active:
 			player.bench.erase(slot)
 
 

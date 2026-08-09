@@ -70,11 +70,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			var replacement: PokemonSlot = _resolve_switch_target(player, ctx)
 			if replacement == null:
 				return
-			var old_active: PokemonSlot = player.active_pokemon
-			player.bench.erase(replacement)
-			old_active.clear_on_leave_active()
-			player.bench.append(old_active)
-			player.active_pokemon = replacement
+			_switch_active_with_bench(state, card.owner_index, replacement, "kieran")
 		MODE_DAMAGE:
 			state.shared_turn_flags[DAMAGE_FLAG_PREFIX + str(card.owner_index)] = state.turn_number
 			state.shared_turn_flags[DAMAGE_VALUE_PREFIX + str(card.owner_index)] = 30

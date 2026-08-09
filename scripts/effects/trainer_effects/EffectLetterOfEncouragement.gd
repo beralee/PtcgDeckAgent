@@ -7,12 +7,12 @@ func _init() -> void:
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
-	if state.last_knockout_turn_against[card.owner_index] != state.turn_number - 1:
+	if not state.was_knocked_out_during_opponents_previous_turn(card.owner_index):
 		return false
 	return super.can_execute(card, state)
 
 
 func can_headless_execute(card: CardInstance, state: GameState) -> bool:
-	if state.last_knockout_turn_against[card.owner_index] != state.turn_number - 1:
+	if not state.was_knocked_out_during_opponents_previous_turn(card.owner_index):
 		return false
 	return super.can_headless_execute(card, state)

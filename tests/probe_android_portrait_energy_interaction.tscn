@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/probe_android_portrait_energy_interaction.gd" id="1_probe"]
+
+[node name="AndroidPortraitEnergyProbe" type="Node"]
+script = ExtResource("1_probe")

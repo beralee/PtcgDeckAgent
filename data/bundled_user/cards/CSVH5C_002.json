@@ -1,0 +1,66 @@
+{
+    "name":  "来悲粗茶",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【草】 咒术水滴 \n将4个伤害指示物，以任意方式放置于对手的宝可梦身上。\n\n【草】 泼洒热茶 70×\n将自己场上宝可梦身上附着的最多3张【草】能量放于弃牌区，造成其张数×70伤害。\n\n",
+    "yoren_code":  "P1013",
+    "set_code":  "CSVH5C",
+    "card_index":  "002",
+    "set_code_en":  "TWM",
+    "card_index_en":  "22",
+    "name_en":  "Sinistcha",
+    "name_zh":  "",
+    "artist":  "Kouki Saitou",
+    "rarity":  "无标记",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "defef39f399206a6de240aab5caa7f6b",
+    "image_url":  "https://tcg.mik.moe/static/img/CSVH5C/002.png",
+    "image_local_path":  "user://cards/images/CSVH5C/002.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSVH5C/002",
+    "source_set_code":  "CSVH5C",
+    "source_card_index":  "002",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  70,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "斯魔茶",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "咒术水滴",
+                        "text":  "将4个伤害指示物，以任意方式放置于对手的宝可梦身上。",
+                        "cost":  "G",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "泼洒热茶",
+                        "text":  "将自己场上宝可梦身上附着的最多3张【草】能量放于弃牌区，造成其张数×70伤害。",
+                        "cost":  "G",
+                        "damage":  "70×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

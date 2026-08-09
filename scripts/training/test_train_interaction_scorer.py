@@ -8,6 +8,57 @@ import train_interaction_scorer
 
 
 class TrainInteractionScorerTests(unittest.TestCase):
+    def test_load_data_filters_on_public_opponent_strategy_id(self):
+        tmp_dir = tempfile.mkdtemp(prefix="ptcg_train_interaction_matchup_")
+        try:
+            base_record = {
+                "match_id": "match_public_filter",
+                "interaction_id": 0,
+                "turn_number": 3,
+                "player_index": 0,
+                "opponent_deck_identity": "v18_800017097_no_balloon_gardevoir",
+                "step_id": "opponent_bench_target",
+                "step_type": "dialog_single_select",
+                "result": 1.0,
+                "state_features": [0.1, 0.2],
+                "candidates": [
+                    {
+                        "candidate_index": 0,
+                        "strategy_score": 10.0,
+                        "chosen": True,
+                        "interaction_vector": [1.0, 0.0],
+                    },
+                    {
+                        "candidate_index": 1,
+                        "strategy_score": 1.0,
+                        "chosen": False,
+                        "interaction_vector": [0.0, 1.0],
+                    },
+                ],
+            }
+            sibling = dict(base_record)
+            sibling["interaction_id"] = 1
+            sibling["opponent_deck_identity"] = "v18_800018497_standard_gardevoir"
+            with open(os.path.join(tmp_dir, "match.json"), "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "failure_reason": "normal_game_end",
+                        "match_quality_weight": 1.0,
+                        "interaction_records": [base_record, sibling],
+                    },
+                    handle,
+                )
+
+            samples, *_rest = train_interaction_scorer.load_data(
+                tmp_dir,
+                opponent_strategy_id="v18_800017097_no_balloon_gardevoir",
+            )
+
+            self.assertEqual(len(samples), 2)
+            self.assertTrue(all(sample["match_id"] == "match_public_filter" for sample in samples))
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
     def test_load_data_skips_dirty_match_payloads(self):
         tmp_dir = tempfile.mkdtemp(prefix="ptcg_train_interaction_")
         try:

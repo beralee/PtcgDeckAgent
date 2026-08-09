@@ -85,7 +85,7 @@ func execute_ability(
 		"search_supporter":
 			_search_supporter(player, targets)
 		"rush_in":
-			_rush_in(pokemon, player, targets)
+			_rush_in(pokemon, player, targets, state)
 
 	pokemon.effects.append({
 		"type": TRIGGERED_KEY,
@@ -130,7 +130,8 @@ func _search_supporter(player: PlayerState, targets: Array) -> void:
 func _rush_in(
 	pokemon: PokemonSlot,
 	player: PlayerState,
-	targets: Array
+	targets: Array,
+	state: GameState
 ) -> void:
 	var bench_idx: int = player.bench.find(pokemon)
 	if bench_idx == -1:
@@ -140,11 +141,13 @@ func _rush_in(
 	if old_active == null:
 		return
 
-	player.bench.remove_at(bench_idx)
-	player.active_pokemon = pokemon
-	if not player.is_bench_full():
-		old_active.clear_on_leave_active()
-		player.bench.append(old_active)
+	if not _switch_active_with_bench(
+		state,
+		pokemon.get_top_card().owner_index,
+		pokemon,
+		"bench_enter_rush_in"
+	):
+		return
 
 	if targets.size() > 0 and targets[0] is PokemonSlot:
 		var energy_target: PokemonSlot = targets[0] as PokemonSlot

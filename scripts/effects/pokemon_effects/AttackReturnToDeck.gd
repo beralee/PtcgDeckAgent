@@ -15,6 +15,9 @@ func execute_attack(
 		return
 	var pi: int = top_card.owner_index
 	var player: PlayerState = state.players[pi]
+	var was_active := player.active_pokemon == attacker
+	if was_active and not _remove_active(state, pi, attacker, "attack_return_to_deck"):
+		return
 
 	# 收集并直接放入牌库（不经过弃牌堆）
 	for card: CardInstance in attacker.pokemon_stack:
@@ -36,9 +39,7 @@ func execute_attack(
 	player.shuffle_deck()
 
 	# 从场上移除
-	if player.active_pokemon == attacker:
-		player.active_pokemon = null
-	else:
+	if not was_active:
 		var bench_idx: int = player.bench.find(attacker)
 		if bench_idx >= 0:
 			player.bench.remove_at(bench_idx)

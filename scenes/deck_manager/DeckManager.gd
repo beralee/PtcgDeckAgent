@@ -20,6 +20,7 @@ const CARD_TILE_HEIGHT := 140
 const VIEW_GRID_COLUMNS := 6
 const RENAME_DIALOG_SIZE := Vector2i(460, 300)
 const COMMUNITY_DATA_PATH := "res://community/data/community-data.json"
+const WEB_RECOMMENDATION_SNAPSHOT_PATH := "res://data/deck_recommendations_web.json"
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_DANGER := Color(1.0, 0.28, 0.22, 1.0)
@@ -31,6 +32,7 @@ const HUD_RECOMMENDATION_BORDER := Color(1.0, 0.76, 0.30, 0.96)
 const HUD_SECONDARY := Color(0.50, 0.80, 1.0, 1.0)
 const HUD_RENAME := Color(0.72, 0.64, 1.0, 1.0)
 const IMPORT_RESULT_AUTO_CLOSE_SECONDS := 1.4
+const DECK_ACTION_HUD_CLOSE_INPUT_QUARANTINE_MSEC := 320
 const REMOTE_RECOMMENDATION_PREFETCH_STEPS := 0
 const DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE := 40
 const RECOMMENDATION_DETAIL_SCROLLBAR_RIGHT_CLEARANCE := 34
@@ -48,14 +50,18 @@ const RECOMMENDATION_LANDSCAPE_MIN_HEIGHT := 324.0
 const RECOMMENDATION_DESKTOP_MIN_HEIGHT := 478.0
 const RECOMMENDATION_MOBILE_SHARE_PREVIEW_SIZE := Vector2(184.0, 306.0)
 const RECOMMENDATION_DESKTOP_PREVIEW_SIZE := Vector2(600.0, 450.0)
-const IMPORT_DECK_GUIDE_TEXT := "导入步骤：\n1. 在浏览器打开 tcg.mik.moe，进入你想玩的卡组页面。\n2. 复制浏览器地址栏里的完整链接，例如 https://tcg.mik.moe/decks/list/574793。\n3. 回到这里，点击下面的输入框并粘贴链接；也可以只输入末尾数字 ID，例如 574793。\n4. 点“导入卡组”，等待卡组和卡图同步完成。"
+const TCG_MIK_HOME_URL := "https://tcg.mik.moe/"
+const IMPORT_DECK_GUIDE_TEXT := "导入步骤：\n1. 点击下方“打开卡牌网站”，进入你想玩的卡组页面。\n2. 复制浏览器地址栏里的完整链接，例如 https://tcg.mik.moe/decks/list/574793。\n3. 回到这里，点击下面的输入框并粘贴链接；也可以只输入末尾数字 ID，例如 574793。\n4. 点“导入卡组”，等待卡组和卡图同步完成。"
 const IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META := "_import_modal_previous_mouse_filter"
+const DECK_ACTION_HUD_PREVIOUS_MOUSE_FILTER_META := "_deck_action_hud_previous_mouse_filter"
 const IMPORT_URL_FOCUS_REQUESTED_META := "_import_url_focus_requested"
 const DECK_ACTION_HUD_DIALOG_NAME := "DeckActionHudDialog"
 const STARTER_DECK_HUD_CONTEXT := "starter_deck_builder"
 const WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT := "web_portrait_deck_edit"
 const WEB_PORTRAIT_DECK_EDIT_TITLE := "\u8bf7\u5148\u6a2a\u5c4f"
 const WEB_PORTRAIT_DECK_EDIT_MESSAGE := "\u6d4f\u89c8\u5668\u7248\u5361\u7ec4\u7f16\u8f91\u5668\u9700\u8981\u6a2a\u5c4f\u7a7a\u95f4\u3002\u8bf7\u5148\u5c06\u624b\u673a\u6a2a\u8fc7\u6765\uff08\u5fc5\u8981\u65f6\u5173\u95ed\u7cfb\u7edf\u65cb\u8f6c\u9501\uff09\uff0c\u786e\u8ba4\u540e\u518d\u8fdb\u5165\u5361\u7ec4\u7f16\u8f91\u3002"
+const LOCAL_DECK_EMPTY_TEXT := "\u6682\u65e0\u672c\u5730\u5361\u7ec4\uff0c\u53ef\u4ee5\u65b0\u5efa\u57fa\u7840\u5361\u7ec4\u6216\u5bfc\u5165\u73b0\u6709\u5361\u7ec4\u3002"
+const LOCAL_DECK_SEARCH_EMPTY_TEXT := "\u672a\u627e\u5230\u5339\u914d\u7684\u672c\u5730\u5361\u7ec4"
 
 const ENERGY_TYPE_LABELS: Dictionary = {
 	"R": "火", "W": "水", "G": "草", "L": "雷",
@@ -105,6 +111,7 @@ var _rename_forced: bool = false
 var _deck_action_hud_overlay: Control = null
 var _deck_action_hud_panel: PanelContainer = null
 var _deck_action_hud_context: String = ""
+var _deck_action_hud_input_suppress_until_msec: int = 0
 var _starter_deck_generator: RefCounted = StarterDeckGeneratorScript.new()
 var _starter_deck_catalog: Array[Dictionary] = []
 var _starter_deck_choice := {"energy_type": "", "axis": "auto", "pace": "balanced"}
@@ -127,6 +134,7 @@ var _pending_remote_recommendation_id := ""
 var _recommendation_store: RefCounted = null
 var _recommendation_articles: Array[Dictionary] = []
 var _embedded_recommendations: Array[Dictionary] = []
+var _web_recommendation_snapshot: Array[Dictionary] = []
 var _current_recommendation: Dictionary = {}
 var _deck_center_latest_meta: Dictionary = {}
 var _deck_center_recommendation_badge_seen_revision := ""
@@ -156,9 +164,11 @@ var _deck_delete_refresh_id := -1
 var _pending_deck_upsert_ids: Dictionary = {}
 var _deck_upsert_flush_scheduled := false
 var _deck_full_refresh_scheduled := false
+var _local_deck_search_query := ""
 
 
 func _ready() -> void:
+	_setup_local_deck_search_input()
 	_apply_hud_theme()
 	_connect_non_battle_layout_signal()
 	_setup_deck_recommendations()
@@ -170,6 +180,7 @@ func _ready() -> void:
 	%BtnCloseImport.pressed.connect(_on_close_import)
 	_ensure_import_paste_button()
 	_ensure_import_image_button()
+	_ensure_import_provider_button()
 	_setup_import_panel_input_guards()
 
 	CardDatabase.decks_changed.connect(_on_decks_changed)
@@ -197,12 +208,32 @@ func _ready() -> void:
 	call_deferred("_apply_non_battle_layout")
 
 
+func _setup_local_deck_search_input() -> void:
+	var search_input := get_node_or_null("%DeckSearchInput") as LineEdit
+	var clear_button := get_node_or_null("%DeckSearchClearButton") as Button
+	if search_input != null:
+		search_input.clear_button_enabled = false
+		NonBattleTouchBridgeScript.configure_persistent_native_line_edit(search_input, LineEdit.KEYBOARD_TYPE_DEFAULT)
+		var changed_callback := Callable(self, "_on_local_deck_search_changed")
+		if not search_input.text_changed.is_connected(changed_callback):
+			search_input.text_changed.connect(changed_callback)
+	if clear_button != null:
+		clear_button.focus_mode = Control.FOCUS_NONE
+		var clear_callback := Callable(self, "_on_local_deck_search_clear_pressed")
+		if not clear_button.pressed.is_connected(clear_callback):
+			clear_button.pressed.connect(clear_callback)
+		NonBattleTouchBridgeScript.bind_button_touch(clear_button)
+		_update_local_deck_search_clear_state(search_input.text if search_input != null else "")
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_apply_non_battle_layout()
 
 
 func _input(event: InputEvent) -> void:
+	if _should_suppress_deck_action_hud_close_input(event):
+		return
 	if _is_deck_action_hud_dialog_visible():
 		if NonBattleTouchBridgeScript.handle_root_touch(_deck_action_hud_overlay, event):
 			return
@@ -224,8 +255,34 @@ func _input(event: InputEvent) -> void:
 	NonBattleTouchBridgeScript.handle_root_touch(self, event)
 
 
+func _should_suppress_deck_action_hud_close_input(event: InputEvent) -> bool:
+	if _deck_action_hud_input_suppress_until_msec <= 0:
+		return false
+	if Time.get_ticks_msec() > _deck_action_hud_input_suppress_until_msec:
+		_deck_action_hud_input_suppress_until_msec = 0
+		return false
+	var should_suppress := event is InputEventScreenTouch or event is InputEventScreenDrag
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		should_suppress = mouse_button.button_index == MOUSE_BUTTON_LEFT and _should_guard_android_mouse_echo()
+	if not should_suppress:
+		return false
+	accept_event()
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+	return true
+
+
+func _should_guard_android_mouse_echo() -> bool:
+	if not bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return true
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
 func _setup_import_panel_input_guards() -> void:
 	_ensure_import_paste_button()
+	_ensure_import_provider_button()
 	var modal_controls: Array[Control] = [
 		get_node_or_null("%ImportPanel") as Control,
 		find_child("ImportBg", true, false) as Control,
@@ -240,7 +297,7 @@ func _setup_import_panel_input_guards() -> void:
 			control.gui_input.disconnect(modal_callback)
 	var url_input := get_node_or_null("%UrlInput") as LineEdit
 	if url_input != null:
-		_configure_import_feedback_line_edit(url_input)
+		_configure_import_url_line_edit(url_input)
 
 
 func _ensure_import_paste_button() -> Button:
@@ -283,6 +340,37 @@ func _ensure_import_image_button() -> Button:
 	return image_button
 
 
+func _ensure_import_provider_button() -> Button:
+	var existing := find_child("BtnOpenTcgMik", true, false) as Button
+	if existing != null:
+		return existing
+	var vbox := get_node_or_null("ImportPanel/ImportBox/VBox") as VBoxContainer
+	var hint_label := get_node_or_null("ImportPanel/ImportBox/VBox/HintLabel") as Label
+	if vbox == null or hint_label == null or hint_label.get_parent() != vbox:
+		return null
+	var provider_button := Button.new()
+	provider_button.name = "BtnOpenTcgMik"
+	provider_button.unique_name_in_owner = true
+	provider_button.text = "打开卡牌网站 · tcg.mik.moe"
+	provider_button.tooltip_text = TCG_MIK_HOME_URL
+	provider_button.custom_minimum_size = Vector2(0.0, HUD_BUTTON_COMPACT_MIN_HEIGHT)
+	provider_button.pressed.connect(_on_open_import_provider_pressed)
+	vbox.add_child(provider_button)
+	vbox.move_child(provider_button, hint_label.get_index() + 1)
+	_style_hud_button(provider_button, HUD_ACCENT)
+	NonBattleTouchBridgeScript.bind_button_touch(provider_button)
+	return provider_button
+
+
+func _on_open_import_provider_pressed() -> void:
+	var err := OS.shell_open(TCG_MIK_HOME_URL)
+	if err != OK:
+		var progress_label := get_node_or_null("%ProgressLabel") as Label
+		if progress_label != null:
+			progress_label.text = "无法自动打开卡牌网站，请访问 tcg.mik.moe。"
+		push_warning("无法打开卡牌网站: %s" % TCG_MIK_HOME_URL)
+
+
 func _on_import_modal_gui_input(event: InputEvent) -> void:
 	_handle_import_modal_gui_input(event)
 
@@ -307,11 +395,16 @@ func _handle_import_modal_gui_input(event: InputEvent) -> bool:
 	return false
 
 
-func _configure_import_feedback_line_edit(input: LineEdit, keyboard_type: int = LineEdit.KEYBOARD_TYPE_URL) -> void:
+func _configure_import_feedback_line_edit(input: LineEdit, keyboard_type: int = LineEdit.KEYBOARD_TYPE_DEFAULT) -> void:
 	if input == null:
 		return
 	NonBattleTouchBridgeScript.configure_native_line_edit(input, keyboard_type)
 	NonBattleTouchBridgeScript.bind_line_edit_select_all(input)
+
+
+func _configure_import_url_line_edit(input: LineEdit) -> void:
+	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if _is_deck_manager_web_runtime() else LineEdit.KEYBOARD_TYPE_DEFAULT
+	_configure_import_feedback_line_edit(input, keyboard_type)
 
 
 func _consume_import_modal_event() -> void:
@@ -330,6 +423,18 @@ func _show_import_panel() -> void:
 	import_panel.z_index = 2500
 	import_panel.move_to_front()
 	_set_import_background_controls_blocked(true)
+	if _panel_mode == "import" and _is_deck_manager_web_runtime():
+		call_deferred("_prepare_web_import_url_input")
+
+
+func _prepare_web_import_url_input() -> bool:
+	if not _is_deck_manager_web_runtime() or _panel_mode != "import" or not _is_import_panel_visible():
+		return false
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input == null or not url_input.editable or not url_input.visible:
+		return false
+	_configure_import_url_line_edit(url_input)
+	return NonBattleTouchBridgeScript.prepare_web_text_input(url_input)
 
 
 func _hide_import_panel() -> void:
@@ -352,18 +457,29 @@ func _set_import_background_controls_blocked(blocked: bool) -> void:
 	_set_control_tree_mouse_filter_blocked(content_root, blocked)
 
 
+func _set_deck_action_hud_background_controls_blocked(blocked: bool) -> void:
+	var content_root := get_node_or_null("MarginContainer") as Control
+	if content_root == null:
+		return
+	_set_control_tree_mouse_filter_blocked_with_meta(content_root, blocked, DECK_ACTION_HUD_PREVIOUS_MOUSE_FILTER_META)
+
+
 func _set_control_tree_mouse_filter_blocked(node: Node, blocked: bool) -> void:
+	_set_control_tree_mouse_filter_blocked_with_meta(node, blocked, IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META)
+
+
+func _set_control_tree_mouse_filter_blocked_with_meta(node: Node, blocked: bool, previous_filter_meta: String) -> void:
 	if node is Control:
 		var control := node as Control
 		if blocked:
-			if not control.has_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META):
-				control.set_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META, control.mouse_filter)
+			if not control.has_meta(previous_filter_meta):
+				control.set_meta(previous_filter_meta, control.mouse_filter)
 			control.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		elif control.has_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META):
-			control.mouse_filter = int(control.get_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META))
-			control.remove_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META)
+		elif control.has_meta(previous_filter_meta):
+			control.mouse_filter = int(control.get_meta(previous_filter_meta))
+			control.remove_meta(previous_filter_meta)
 	for child: Node in node.get_children():
-		_set_control_tree_mouse_filter_blocked(child, blocked)
+		_set_control_tree_mouse_filter_blocked_with_meta(child, blocked, previous_filter_meta)
 
 
 func _connect_non_battle_layout_signal() -> void:
@@ -507,6 +623,7 @@ func _apply_import_panel_layout(context: Dictionary, portrait: bool, viewport_si
 	var button_row := import_box.get_node_or_null("VBox/BtnRow") as HBoxContainer
 	var paste_button := _ensure_import_paste_button()
 	var image_import_button := _ensure_import_image_button()
+	var provider_button := _ensure_import_provider_button()
 	var import_button := get_node_or_null("%BtnDoImport") as Button
 	var close_button := get_node_or_null("%BtnCloseImport") as Button
 	if hint_label != null:
@@ -515,7 +632,7 @@ func _apply_import_panel_layout(context: Dictionary, portrait: bool, viewport_si
 		progress_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if url_input != null:
-		_configure_import_feedback_line_edit(url_input)
+		_configure_import_url_line_edit(url_input)
 	if not portrait:
 		import_box.anchor_left = 0.5
 		import_box.anchor_top = 0.5
@@ -539,6 +656,10 @@ func _apply_import_panel_layout(context: Dictionary, portrait: bool, viewport_si
 			url_input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 		if progress_bar != null:
 			progress_bar.custom_minimum_size.y = 0.0
+		if provider_button != null:
+			provider_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			provider_button.custom_minimum_size.y = HUD_BUTTON_COMPACT_MIN_HEIGHT
+			provider_button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE))
 		if button_row != null:
 			button_row.add_theme_constant_override("separation", 20)
 		for button: Button in [paste_button, image_import_button, import_button, close_button]:
@@ -588,9 +709,14 @@ func _apply_import_panel_layout(context: Dictionary, portrait: bool, viewport_si
 		url_input.custom_minimum_size = Vector2(maxf(260.0, box_width - margin), maxf(url_input.custom_minimum_size.y, portrait_input_height))
 		url_input.add_theme_font_size_override("font_size", input_font)
 		url_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_configure_import_feedback_line_edit(url_input)
+		_configure_import_url_line_edit(url_input)
 	if progress_bar != null:
 		progress_bar.custom_minimum_size.y = maxf(progress_bar.custom_minimum_size.y, input_height * 0.36)
+	if provider_button != null:
+		provider_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		provider_button.custom_minimum_size.y = maxf(provider_button.custom_minimum_size.y, button_height)
+		provider_button.add_theme_font_size_override("font_size", button_font)
+		NonBattleTouchBridgeScript.bind_button_touch(provider_button)
 	if button_row != null:
 		button_row.add_theme_constant_override("separation", maxi(16, roundi(float(section_gap) * 0.78)))
 	for button: Button in [paste_button, image_import_button, import_button, close_button]:
@@ -625,10 +751,13 @@ func _apply_deck_manager_mobile_metrics(node: Node, context: Dictionary, portrai
 func _apply_deck_manager_header_layout(context: Dictionary, portrait: bool) -> void:
 	var header := find_child("Header", true, false) as VBoxContainer
 	var actions := find_child("HeaderActions", true, false) as GridContainer
+	var search_row := find_child("DeckSearchRow", true, false) as HBoxContainer
 	var title := find_child("Title", true, false) as Label
 	var new_button := get_node_or_null("%BtnNewDeck") as Button
 	var import_button := get_node_or_null("%BtnImport") as Button
 	var sync_button := get_node_or_null("%BtnSyncImages") as Button
+	var search_input := get_node_or_null("%DeckSearchInput") as LineEdit
+	var search_clear_button := get_node_or_null("%DeckSearchClearButton") as Button
 	if header != null:
 		header.size_flags_horizontal = Control.SIZE_SHRINK_CENTER if portrait else Control.SIZE_EXPAND_FILL
 	if actions != null:
@@ -643,6 +772,26 @@ func _apply_deck_manager_header_layout(context: Dictionary, portrait: bool) -> v
 		import_button.text = "导入卡组" if portrait else "+ 导入卡组"
 	if sync_button != null:
 		sync_button.text = "同步卡图"
+	if search_row != null:
+		search_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		search_row.add_theme_constant_override("separation", maxi(12, int(context.get("section_gap", 22)) / 2) if portrait else 8)
+	if search_input != null:
+		search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		search_input.custom_minimum_size.x = 0.0 if portrait else 360.0
+		search_input.custom_minimum_size.y = float(context.get("input_height", 98.0)) if portrait else 38.0
+		search_input.add_theme_font_size_override(
+			"font_size",
+			int(context.get("input_font_size", 29)) if portrait else HudThemeScript.scaled_font_size(15)
+		)
+		NonBattleTouchBridgeScript.configure_persistent_native_line_edit(search_input, LineEdit.KEYBOARD_TYPE_DEFAULT)
+	if search_clear_button != null:
+		var clear_size := float(context.get("input_height", 98.0)) if portrait else 38.0
+		search_clear_button.custom_minimum_size = Vector2(clear_size, clear_size)
+		search_clear_button.add_theme_font_size_override(
+			"font_size",
+			maxi(32, int(context.get("input_font_size", 29)) + 7) if portrait else HudThemeScript.scaled_font_size(20)
+		)
+		NonBattleTouchBridgeScript.bind_button_touch(search_clear_button)
 	for button: Button in [new_button, import_button, sync_button]:
 		if button == null:
 			continue
@@ -663,15 +812,15 @@ func _apply_hud_theme() -> void:
 		shade.color = Color(0.01, 0.025, 0.045, 0.18)
 	_ensure_hud_frame()
 	_style_hud_labels_recursive(self)
-	for button_name: String in ["BtnNewDeck", "BtnImport", "BtnSyncImages", "BtnBack", "BtnPasteImport", "BtnImageImport", "BtnDoImport", "BtnCloseImport"]:
+	for button_name: String in ["BtnNewDeck", "BtnImport", "BtnSyncImages", "BtnBack", "BtnPasteImport", "BtnImageImport", "BtnDoImport", "BtnCloseImport", "DeckSearchClearButton"]:
 		var button := get_node_or_null("%" + button_name) as Button
 		if button != null:
 			var accent := HUD_ACCENT
 			if button_name in ["BtnNewDeck", "BtnImport", "BtnPasteImport", "BtnDoImport"]:
 				accent = HUD_ACCENT_WARM
-			elif button_name in ["BtnSyncImages", "BtnImageImport", "BtnCloseImport"]:
+			elif button_name in ["BtnSyncImages", "BtnImageImport", "BtnCloseImport", "DeckSearchClearButton"]:
 				accent = HUD_SECONDARY
-			_style_hud_button(button, accent)
+			_style_hud_button(button, accent, button_name == "DeckSearchClearButton")
 	var import_box := find_child("ImportBox", true, false) as PanelContainer
 	if import_box != null:
 		import_box.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.025, 0.055, 0.085, 0.92), HUD_FRAME_BORDER, 20))
@@ -681,6 +830,9 @@ func _apply_hud_theme() -> void:
 	var url_input := get_node_or_null("%UrlInput") as LineEdit
 	if url_input != null:
 		_style_hud_line_edit(url_input)
+	var deck_search_input := get_node_or_null("%DeckSearchInput") as LineEdit
+	if deck_search_input != null:
+		_style_hud_line_edit(deck_search_input)
 	var empty_label := get_node_or_null("%EmptyLabel") as Label
 	if empty_label != null:
 		empty_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
@@ -814,8 +966,10 @@ func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
-	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if input.name == "UrlInput" else LineEdit.KEYBOARD_TYPE_DEFAULT
-	_configure_import_feedback_line_edit(input, keyboard_type)
+	if bool(input.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)):
+		NonBattleTouchBridgeScript.configure_persistent_native_line_edit(input, LineEdit.KEYBOARD_TYPE_DEFAULT)
+	else:
+		_configure_import_feedback_line_edit(input, LineEdit.KEYBOARD_TYPE_DEFAULT)
 	input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	input.add_theme_color_override("font_color", HUD_TEXT)
 	input.add_theme_color_override("font_placeholder_color", Color(0.55, 0.66, 0.74, 0.78))
@@ -844,12 +998,22 @@ func _setup_deck_recommendations() -> void:
 	_recommendation_store.call("load_cache")
 	_recommendation_articles = _load_recommendation_articles()
 	_embedded_recommendations = _normalize_recommendation_articles(_recommendation_articles)
+	_web_recommendation_snapshot = _load_web_recommendation_snapshot()
 	_current_recommendation = _select_initial_recommendation()
 	_deck_center_latest_meta = _load_deck_center_latest_meta()
 	_mark_deck_center_opened()
-	_ensure_recommendation_client()
 	_ensure_recommendation_section()
-	_request_latest_remote_recommendation_on_open()
+	if _should_fetch_remote_recommendations():
+		_ensure_recommendation_client()
+		_request_latest_remote_recommendation_on_open()
+	else:
+		_refresh_recommendation_cards()
+
+
+func _should_fetch_remote_recommendations() -> bool:
+	# The deployed service is HTTP-only. Calling it from the HTTPS Web build is
+	# mixed content and Safari blocks it before Godot receives a response.
+	return not _is_deck_manager_web_runtime()
 
 
 func _load_deck_center_latest_meta() -> Dictionary:
@@ -954,6 +1118,54 @@ func _normalize_recommendation_articles(articles: Array[Dictionary]) -> Array[Di
 	return result
 
 
+func _load_web_recommendation_snapshot() -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
+	if not FileAccess.file_exists(WEB_RECOMMENDATION_SNAPSHOT_PATH):
+		return candidates
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(WEB_RECOMMENDATION_SNAPSHOT_PATH))
+	if parsed is not Dictionary:
+		return candidates
+	var items_raw: Variant = (parsed as Dictionary).get("recommendations", [])
+	if items_raw is not Array:
+		return candidates
+	for item_raw: Variant in items_raw:
+		if item_raw is not Dictionary:
+			continue
+		var normalized: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(item_raw as Dictionary)
+		if not normalized.is_empty():
+			# Sort from the recommendation's own date first. The service response is
+			# normally newest-first, but the bundled Web fallback must not depend on
+			# transport order or a JSON generator accidentally reversing the array.
+			normalized.erase("server_order")
+			normalized.erase("server_order_batch")
+			normalized["web_snapshot_source_order"] = candidates.size()
+			candidates.append(normalized)
+	var sorted := _sort_web_snapshot_by_recency(candidates)
+	for index: int in range(sorted.size()):
+		sorted[index].erase("web_snapshot_source_order")
+		sorted[index]["server_order"] = index
+		sorted[index]["server_order_batch"] = 0
+	return sorted
+
+
+func _sort_web_snapshot_by_recency(items: Array[Dictionary]) -> Array[Dictionary]:
+	var source := items.duplicate(true)
+	var result: Array[Dictionary] = []
+	while not source.is_empty():
+		var best_index := 0
+		for index: int in range(1, source.size()):
+			var candidate_key := _recommendation_sort_key(source[index])
+			var best_key := _recommendation_sort_key(source[best_index])
+			if candidate_key > best_key or (
+				candidate_key == best_key
+				and int(source[index].get("web_snapshot_source_order", 0)) < int(source[best_index].get("web_snapshot_source_order", 0))
+			):
+				best_index = index
+		result.append(source[best_index])
+		source.remove_at(best_index)
+	return result
+
+
 func _select_initial_recommendation() -> Dictionary:
 	var fallback: Dictionary = {}
 	if _recommendation_store != null:
@@ -964,6 +1176,11 @@ func _select_initial_recommendation() -> Dictionary:
 	var pool := _combined_recommendation_pool()
 	if pool.is_empty():
 		return fallback
+	if _is_deck_manager_web_runtime():
+		# Web ships a dated snapshot because Safari cannot call the HTTP-only
+		# recommendation endpoint. Never let a May-era persisted current id pin
+		# startup behind the newest bundled snapshot.
+		return (pool[0] as Dictionary).duplicate(true)
 
 	var fallback_id := str(fallback.get("id", "")).strip_edges()
 	if fallback_id != "":
@@ -1374,14 +1591,16 @@ func _deck_manager_portrait_scale() -> float:
 
 
 func _apply_recommendation_button_mobile_metrics(button: Button) -> void:
-	if button == null or not _is_deck_manager_portrait_layout():
+	if button == null:
+		return
+	NonBattleTouchBridgeScript.bind_button_touch(button)
+	if not _is_deck_manager_portrait_layout():
 		return
 	var context := _current_non_battle_layout_context
 	var height := maxf(145.0, float(context.get("secondary_button_height", 96.0)) * 0.86)
 	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, height)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 32)))
-	NonBattleTouchBridgeScript.bind_button_touch(button)
 
 
 func _ensure_recommendation_poster_importer() -> void:
@@ -1945,7 +2164,7 @@ func _on_recommendation_next_pressed() -> void:
 
 
 func _request_latest_remote_recommendation_on_open() -> void:
-	if not is_inside_tree() or _recommendation_fetch_in_progress:
+	if not _should_fetch_remote_recommendations() or not is_inside_tree() or _recommendation_fetch_in_progress:
 		return
 	_start_remote_recommendation_request(
 		"",
@@ -1967,6 +2186,8 @@ func _start_remote_recommendation_request(
 	refresh_on_start: bool = true,
 	limit: int = 1
 ) -> bool:
+	if not _should_fetch_remote_recommendations():
+		return false
 	_ensure_recommendation_client()
 	if _recommendation_client == null:
 		return false
@@ -2080,6 +2301,14 @@ func _select_pending_remote_recommendation_from_pool(pool: Array[Dictionary], cu
 func _combined_recommendation_pool() -> Array[Dictionary]:
 	var pool: Array[Dictionary] = []
 	var seen := {}
+	if _is_deck_manager_web_runtime():
+		for snapshot_item: Dictionary in _web_recommendation_snapshot:
+			_append_recommendation_to_pool(pool, seen, snapshot_item)
+		for embedded: Dictionary in _embedded_recommendations:
+			_append_recommendation_to_pool(pool, seen, embedded)
+		if pool.is_empty() and not _current_recommendation.is_empty():
+			_append_recommendation_to_pool(pool, seen, _current_recommendation)
+		return _sort_recommendations_for_pool(pool)
 	var embedded_ids := {}
 	for item: Dictionary in _embedded_recommendations:
 		var item_id := str(item.get("id", "")).strip_edges()
@@ -2738,14 +2967,15 @@ func _refresh_deck_list() -> void:
 	_refresh_recommendation_cards()
 	for child: Node in deck_list_container.get_children():
 		if child != %EmptyLabel and child != _recommendation_section:
+			deck_list_container.remove_child(child)
 			child.queue_free()
 
 	var decks := CardDatabase.get_all_decks()
 	decks.sort_custom(_compare_decks_by_edit_time_desc)
-	%EmptyLabel.visible = decks.is_empty()
 
 	for deck: DeckData in decks:
 		deck_list_container.add_child(_create_deck_item(deck))
+	_apply_local_deck_search_filter()
 	if deck_scroll != null and previous_scroll > 0:
 		deck_scroll.scroll_vertical = previous_scroll
 		deck_scroll.set_deferred("scroll_vertical", previous_scroll)
@@ -2824,7 +3054,7 @@ func _upsert_deck_row(deck: DeckData) -> void:
 		child.queue_free()
 		break
 	deck_list_container.add_child(_create_deck_item(deck))
-	%EmptyLabel.visible = false
+	_apply_local_deck_search_filter()
 
 
 func _reorder_deck_rows() -> void:
@@ -2864,7 +3094,82 @@ func _remove_deck_row(deck_id: int) -> void:
 		deck_list_container.remove_child(child)
 		child.queue_free()
 		break
-	%EmptyLabel.visible = CardDatabase.get_all_decks().is_empty()
+	_apply_local_deck_search_filter()
+
+
+func _on_local_deck_search_changed(new_text: String) -> void:
+	_local_deck_search_query = new_text.strip_edges()
+	_update_local_deck_search_clear_state(new_text)
+	_apply_local_deck_search_filter()
+	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
+	if deck_scroll != null:
+		deck_scroll.scroll_vertical = 0
+
+
+func _update_local_deck_search_clear_state(text: String) -> void:
+	var clear_button := get_node_or_null("%DeckSearchClearButton") as Button
+	if clear_button == null:
+		return
+	var has_text := not text.is_empty()
+	# Keep the button's slot reserved so the active Web DOM editor never grows
+	# over it and intercepts the clear tap when the state changes.
+	clear_button.visible = true
+	clear_button.disabled = not has_text
+	clear_button.mouse_filter = Control.MOUSE_FILTER_STOP if has_text else Control.MOUSE_FILTER_IGNORE
+	clear_button.self_modulate = Color.WHITE if has_text else Color(1.0, 1.0, 1.0, 0.36)
+
+
+func _on_local_deck_search_clear_pressed() -> void:
+	var search_input := get_node_or_null("%DeckSearchInput") as LineEdit
+	if search_input == null:
+		return
+	NonBattleTouchBridgeScript.replace_text_input_value(search_input, "", true)
+
+
+func _apply_local_deck_search_filter() -> void:
+	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var empty_label := get_node_or_null("%EmptyLabel") as Label
+	if deck_list_container == null or empty_label == null:
+		return
+	var local_deck_count := 0
+	var matching_deck_count := 0
+	for child: Node in deck_list_container.get_children():
+		if not child.has_meta("deck_id"):
+			continue
+		local_deck_count += 1
+		var matches := _deck_name_matches_search(str(child.get_meta("deck_name", "")), _local_deck_search_query)
+		if child is Control:
+			(child as Control).visible = matches
+		if matches:
+			matching_deck_count += 1
+	empty_label.text = LOCAL_DECK_SEARCH_EMPTY_TEXT if local_deck_count > 0 and not _local_deck_search_query.is_empty() else LOCAL_DECK_EMPTY_TEXT
+	empty_label.visible = local_deck_count == 0 or matching_deck_count == 0
+
+
+func _deck_name_matches_search(deck_name: String, query: String) -> bool:
+	var normalized_query := _normalize_local_deck_search_text(query)
+	if normalized_query.is_empty():
+		return true
+	var normalized_name := _normalize_local_deck_search_text(deck_name)
+	if normalized_name.contains(normalized_query):
+		return true
+	var name_index := 0
+	for query_index: int in normalized_query.length():
+		var query_code := normalized_query.unicode_at(query_index)
+		var found := false
+		while name_index < normalized_name.length():
+			if normalized_name.unicode_at(name_index) == query_code:
+				found = true
+				name_index += 1
+				break
+			name_index += 1
+		if not found:
+			return false
+	return true
+
+
+func _normalize_local_deck_search_text(text: String) -> String:
+	return text.strip_edges().to_lower().replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
 
 
 func _create_deck_item(deck: DeckData) -> Control:
@@ -3330,7 +3635,93 @@ func _on_recommendation_import_pressed(recommendation: Dictionary) -> void:
 		_set_recommendation_status("这套推荐缺少可导入的卡组链接。")
 		return
 	var recommended_deck_name := str(normalized.get("deck_name", "")).strip_edges()
+	if _is_deck_manager_web_runtime():
+		var embedded_deck := _build_embedded_recommendation_deck(normalized)
+		if embedded_deck != null:
+			_start_embedded_recommendation_import(embedded_deck, import_url)
+			return
 	_start_import_from_url(import_url, "正在导入推荐卡组...", recommended_deck_name)
+
+
+func _build_embedded_recommendation_deck(recommendation: Dictionary) -> DeckData:
+	var expected_deck_id := int(recommendation.get("deck_id", 0))
+	var expected_url := str(recommendation.get("import_url", "")).strip_edges()
+	for article: Dictionary in _recommendation_articles:
+		var article_url := _extract_recommendation_import_url(article)
+		var article_deck_id := _extract_recommendation_deck_id(article)
+		if expected_deck_id > 0 and article_deck_id != expected_deck_id:
+			continue
+		if expected_deck_id <= 0 and article_url != expected_url:
+			continue
+		var snapshot := _as_dictionary(article.get("deck_snapshot", {}))
+		var cards_raw: Variant = snapshot.get("cards", [])
+		var snapshot_cards: Array = cards_raw if cards_raw is Array else []
+		if snapshot_cards.is_empty():
+			continue
+
+		var deck := DeckData.new()
+		deck.id = article_deck_id
+		deck.source_url = article_url
+		deck.source_provider = "tcg_mik"
+		deck.source_id = str(article_deck_id)
+		deck.import_date = Time.get_datetime_string_from_system()
+		deck.updated_at = int(Time.get_unix_time_from_system() * 1000.0)
+		deck.deck_code = str(snapshot.get("deck_code", ""))
+		deck.deck_name = str(recommendation.get("deck_name", "推荐卡组")).strip_edges()
+		var hero := _as_dictionary(article.get("hero", {}))
+		deck.variant_name = str(hero.get("variant_name", deck.deck_name)).strip_edges()
+		var total := 0
+		for card_raw: Variant in snapshot_cards:
+			if card_raw is not Dictionary:
+				continue
+			var snapshot_card := card_raw as Dictionary
+			var set_code := str(snapshot_card.get("set_code", "")).strip_edges()
+			var card_index := str(snapshot_card.get("card_index", "")).strip_edges()
+			var count := int(snapshot_card.get("count", 0))
+			if set_code == "" or card_index == "" or count <= 0:
+				continue
+			var catalog_card: CardData = CardDatabase.get_card(set_code, card_index)
+			var entry := {
+				"set_code": set_code,
+				"card_index": card_index,
+				"count": count,
+				"card_type": str(snapshot_card.get("type", "")),
+				"name": str(snapshot_card.get("name", "")),
+				"effect_id": "",
+				"name_en": "",
+			}
+			if catalog_card != null:
+				entry["card_type"] = catalog_card.card_type
+				entry["name"] = catalog_card.name
+				entry["effect_id"] = catalog_card.effect_id
+				entry["name_en"] = catalog_card.name_en
+			deck.cards.append(entry)
+			total += count
+		deck.total_cards = total
+		if deck.total_cards == 60:
+			return deck
+	return null
+
+
+func _start_embedded_recommendation_import(deck: DeckData, import_url: String) -> void:
+	if deck == null or _current_operation != "":
+		return
+	_cancel_import_result_auto_close()
+	_pending_import_deck_name_override = ""
+	_current_operation = "import"
+	_panel_mode = "import"
+	_configure_operation_panel()
+	_set_operation_busy(true)
+	_show_import_panel()
+	%UrlInput.text = import_url
+	%UrlInput.editable = false
+	%BtnDoImport.visible = false
+	%BtnDoImport.disabled = true
+	%ProgressBar.visible = true
+	%ProgressBar.value = 100
+	%ProgressLabel.text = "正在从内置推荐卡表导入..."
+	NonBattleTouchBridgeScript.close_web_text_input("embedded_recommendation_import")
+	_on_import_completed(deck, deck.validate())
 
 
 func _on_recommendation_open_pressed(recommendation: Dictionary) -> void:
@@ -3372,6 +3763,12 @@ func _focus_import_url_input() -> void:
 
 func _on_paste_import_url() -> void:
 	if _panel_mode != "import":
+		return
+	if _is_deck_manager_web_runtime():
+		var url_input := get_node_or_null("%UrlInput") as LineEdit
+		if url_input != null and url_input.editable:
+			NonBattleTouchBridgeScript.request_web_text_input(url_input)
+			%ProgressLabel.text = "请直接输入卡组链接或数字 ID；也可以长按输入框，使用浏览器的粘贴菜单。"
 		return
 	var clipboard_text := ""
 	if DisplayServer.get_name() != "headless":
@@ -3422,6 +3819,8 @@ func _start_import_from_url(url: String, progress_text: String, deck_name_overri
 	_show_import_panel()
 	%UrlInput.text = url
 	%UrlInput.editable = false
+	if _is_deck_manager_web_runtime():
+		NonBattleTouchBridgeScript.close_web_text_input("import_started")
 	%BtnDoImport.visible = false
 	%BtnDoImport.disabled = true
 	%ProgressBar.visible = true
@@ -3597,9 +3996,18 @@ func _close_deck_action_hud_dialog(context_filter: String = "") -> void:
 	if context_filter != "" and _deck_action_hud_context != context_filter:
 		return
 	var closed_context := _deck_action_hud_context
-	if _deck_action_hud_overlay != null and is_instance_valid(_deck_action_hud_overlay):
-		NonBattleTouchBridgeScript.clear_transient_input_state(_deck_action_hud_overlay, "modal_closed")
-		_deck_action_hud_overlay.queue_free()
+	var closing_overlay := _deck_action_hud_overlay
+	if closing_overlay != null and is_instance_valid(closing_overlay):
+		_release_deck_action_hud_focus(closing_overlay)
+		NonBattleTouchBridgeScript.clear_transient_input_state(closing_overlay, "modal_closed")
+		closing_overlay.visible = false
+		closing_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var overlay_parent := closing_overlay.get_parent()
+		if overlay_parent != null:
+			overlay_parent.remove_child(closing_overlay)
+		closing_overlay.queue_free()
+		_deck_action_hud_input_suppress_until_msec = Time.get_ticks_msec() + DECK_ACTION_HUD_CLOSE_INPUT_QUARANTINE_MSEC
+	_set_deck_action_hud_background_controls_blocked(false)
 	_deck_action_hud_overlay = null
 	_deck_action_hud_panel = null
 	_deck_action_hud_context = ""
@@ -3608,6 +4016,18 @@ func _close_deck_action_hud_dialog(context_filter: String = "") -> void:
 		_starter_deck_preview_label = null
 		_starter_deck_create_button = null
 		_starter_deck_selection = {}
+
+
+func _release_deck_action_hud_focus(overlay: Control) -> void:
+	if overlay == null:
+		return
+	var viewport := get_viewport()
+	var focus_owner := viewport.gui_get_focus_owner() if viewport != null else null
+	if focus_owner == null or not overlay.is_ancestor_of(focus_owner):
+		return
+	focus_owner.release_focus()
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.virtual_keyboard_hide()
 
 
 func _deck_action_hud_dialog_size(preferred_size: Vector2, fill_viewport_height: bool = false) -> Vector2:
@@ -3641,6 +4061,8 @@ func _create_deck_action_hud_shell(
 	_deck_action_hud_overlay.z_as_relative = false
 	_deck_action_hud_overlay.z_index = 2600
 	add_child(_deck_action_hud_overlay)
+	_deck_action_hud_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_set_deck_action_hud_background_controls_blocked(true)
 
 	var shade := ColorRect.new()
 	shade.name = "DeckActionHudShade"
@@ -3649,6 +4071,7 @@ func _create_deck_action_hud_shell(
 	shade.color = Color(0.0, 0.012, 0.024, 0.62)
 	shade.mouse_filter = Control.MOUSE_FILTER_STOP
 	_deck_action_hud_overlay.add_child(shade)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var center := CenterContainer.new()
 	center.name = "DeckActionHudCenter"
@@ -3656,6 +4079,7 @@ func _create_deck_action_hud_shell(
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_deck_action_hud_overlay.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_deck_action_hud_panel = PanelContainer.new()
 	_deck_action_hud_panel.name = "DeckActionHudPanel"
@@ -3981,8 +4405,12 @@ func _show_rename_hud_dialog(initial_name: String, title: String, message_text: 
 	_rename_error_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 	content.add_child(_rename_error_label)
 
-	var cancel_button := _create_deck_action_hud_button("\u53d6\u6d88", HUD_SECONDARY, "DeckRenameCancelButton")
-	cancel_button.pressed.connect(_on_rename_close_requested)
+	var is_import_rename := _rename_context == "import"
+	var cancel_button := _create_deck_action_hud_button("放弃导入" if is_import_rename else "取消", HUD_SECONDARY, "DeckRenameCancelButton")
+	if is_import_rename:
+		cancel_button.pressed.connect(_on_cancel_import_rename)
+	else:
+		cancel_button.pressed.connect(_on_rename_close_requested)
 	footer.add_child(cancel_button)
 
 	_rename_confirm_button = _create_deck_action_hud_button("\u786e\u8ba4", HUD_ACCENT_WARM, "DeckRenameConfirmButton")
@@ -3990,6 +4418,8 @@ func _show_rename_hud_dialog(initial_name: String, title: String, message_text: 
 	footer.add_child(_rename_confirm_button)
 
 	_on_rename_text_changed(initial_name)
+	if _is_deck_manager_web_runtime():
+		call_deferred("_prepare_web_rename_input")
 
 
 func _on_rename_deck(deck: DeckData) -> void:
@@ -4006,15 +4436,36 @@ func _on_rename_deck(deck: DeckData) -> void:
 
 
 func _show_import_rename_dialog(initial_name: String) -> void:
-	_show_rename_dialog(
-		initial_name,
-		"卡组名称重复",
-		"导入的卡组名称已存在，请输入一个不同的名称后再保存。",
-		-1
-	)
+	_close_rename_dialog(false)
+	_rename_ignore_deck_id = -1
 	_rename_target_deck = _pending_import_deck
 	_rename_context = "import"
 	_rename_forced = true
+	_show_rename_hud_dialog(
+		initial_name,
+		"卡组名称重复",
+		"导入的卡组名称已存在，请输入一个不同的名称后再保存。"
+	)
+
+
+func _prepare_web_rename_input() -> bool:
+	if not _is_deck_manager_web_runtime() or _rename_context != "import":
+		return false
+	if _rename_input == null or not _rename_input.editable or not _rename_input.visible:
+		return false
+	if _deck_action_hud_overlay == null or not _deck_action_hud_overlay.visible:
+		return false
+	return NonBattleTouchBridgeScript.prepare_web_text_input(_rename_input)
+
+
+func _on_cancel_import_rename() -> void:
+	_pending_import_deck = null
+	_pending_import_errors = PackedStringArray()
+	_pending_import_deck_name_override = ""
+	_current_operation = ""
+	_set_operation_busy(false)
+	_close_rename_dialog()
+	_hide_import_panel()
 
 
 func _show_rename_dialog(initial_name: String, title: String, message_text: String, ignored_deck_id: int, prefer_hud_dialog: bool = false) -> void:
@@ -4683,6 +5134,7 @@ func _configure_operation_panel() -> void:
 	var hint_label: Label = $ImportPanel/ImportBox/VBox/HintLabel
 	var paste_button := _ensure_import_paste_button()
 	var image_import_button := _ensure_import_image_button()
+	var provider_button := _ensure_import_provider_button()
 
 	if _panel_mode == "sync_images":
 		title_label.text = "同步卡图"
@@ -4693,6 +5145,8 @@ func _configure_operation_panel() -> void:
 			paste_button.visible = false
 		if image_import_button != null:
 			image_import_button.visible = false
+		if provider_button != null:
+			provider_button.visible = false
 	else:
 		title_label.text = "导入卡组"
 		hint_label.visible = true
@@ -4702,6 +5156,8 @@ func _configure_operation_panel() -> void:
 			paste_button.visible = true
 		if image_import_button != null:
 			image_import_button.visible = true
+		if provider_button != null:
+			provider_button.visible = true
 
 	%BtnCloseImport.text = "关闭"
 	if _panel_mode == "import":
@@ -4709,7 +5165,7 @@ func _configure_operation_panel() -> void:
 		hint_label.text = IMPORT_DECK_GUIDE_TEXT
 		%UrlInput.placeholder_text = "粘贴卡组链接或输入数字 ID，例如 574793"
 		if paste_button != null:
-			paste_button.text = "粘贴链接"
+			paste_button.text = "输入 / 粘贴" if _is_deck_manager_web_runtime() else "粘贴链接"
 		if image_import_button != null:
 			image_import_button.text = "卡组图导入"
 		%BtnDoImport.text = "导入卡组"

@@ -20,12 +20,9 @@ func execute_attack(
 	var new_active: PokemonSlot = player.bench[0]
 
 	# 将当前出战宝可梦移至备战区
-	player.bench.remove_at(0)
-	player.active_pokemon.clear_on_leave_active()
-	player.bench.append(player.active_pokemon)
+	_switch_active_with_bench(state, pi, new_active, "attack_retreat_after_attack")
 
 	# 将选定的备战宝可梦设为出战
-	player.active_pokemon = new_active
 
 
 func get_description() -> String:

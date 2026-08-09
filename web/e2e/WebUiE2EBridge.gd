@@ -553,6 +553,10 @@ func _control_snapshot(control: Control) -> Dictionary:
 	if control is LineEdit:
 		snapshot["text"] = (control as LineEdit).text
 		snapshot["secret"] = (control as LineEdit).secret
+	elif control is Label:
+		snapshot["text"] = (control as Label).text
+	elif control is BaseButton:
+		snapshot["text"] = (control as BaseButton).text
 	return snapshot
 
 

@@ -40,6 +40,11 @@ func record_trace(trace, extra_context: Dictionary = {}) -> void:
 	var trace_dict: Dictionary = trace.to_dictionary() if trace.has_method("to_dictionary") else {}
 	if trace_dict.is_empty():
 		return
+	var matchup_context: Dictionary = trace_dict.get("matchup_context", {}) \
+		if trace_dict.get("matchup_context", {}) is Dictionary else {}
+	var public_opponent_strategy_id := str(matchup_context.get("opponent_strategy_id", "")) \
+		if bool(matchup_context.get("is_unique", false)) else ""
+	var acting_strategy_id := str(trace_dict.get("strategy_id", ""))
 	var record := {
 		"run_id": str(_meta.get("run_id", "")),
 		"match_id": str(_meta.get("match_id", "")),
@@ -48,8 +53,15 @@ func record_trace(trace, extra_context: Dictionary = {}) -> void:
 		"phase": str(trace_dict.get("phase", "")),
 		"player_index": int(trace_dict.get("player_index", -1)),
 		"pipeline_name": str(_meta.get("pipeline_name", "")),
-		"deck_identity": str(_meta.get("deck_identity", "")),
-		"opponent_deck_identity": str(_meta.get("opponent_deck_identity", "")),
+		"deck_identity": acting_strategy_id if acting_strategy_id != "" else str(_meta.get("deck_identity", "")),
+		"opponent_deck_identity": public_opponent_strategy_id,
+		"oracle_deck_identity": str(_meta.get("deck_identity", "")),
+		"oracle_opponent_deck_identity": str(_meta.get("opponent_deck_identity", "")),
+		"opponent_fingerprint_status": str(matchup_context.get("status", "unknown")),
+		"opponent_fingerprint_unique": bool(matchup_context.get("is_unique", false)),
+		"opponent_fingerprint_evidence_count": int(matchup_context.get("evidence_card_count", 0)),
+		"matchup_overlay_id": str((trace_dict.get("turn_contract", {}) as Dictionary).get("matchup_overlay_id", "")) \
+			if trace_dict.get("turn_contract", {}) is Dictionary else "",
 		"state_features": _to_float_array(trace_dict.get("state_features", [])),
 		"legal_actions": _build_legal_action_entries(trace_dict),
 		"chosen_action": _build_chosen_action_entry(trace_dict.get("chosen_action", {})),
@@ -71,8 +83,19 @@ func record_interaction_decision(record: Dictionary) -> void:
 	entry["run_id"] = str(_meta.get("run_id", ""))
 	entry["match_id"] = str(_meta.get("match_id", ""))
 	entry["pipeline_name"] = str(_meta.get("pipeline_name", ""))
-	entry["deck_identity"] = str(_meta.get("deck_identity", ""))
-	entry["opponent_deck_identity"] = str(_meta.get("opponent_deck_identity", ""))
+	var matchup_context: Dictionary = entry.get("matchup_context", {}) \
+		if entry.get("matchup_context", {}) is Dictionary else {}
+	var acting_strategy_id := str(entry.get("deck_strategy_id", ""))
+	entry["deck_identity"] = acting_strategy_id if acting_strategy_id != "" else str(_meta.get("deck_identity", ""))
+	entry["opponent_deck_identity"] = str(matchup_context.get("opponent_strategy_id", "")) \
+		if bool(matchup_context.get("is_unique", false)) else ""
+	entry["oracle_deck_identity"] = str(_meta.get("deck_identity", ""))
+	entry["oracle_opponent_deck_identity"] = str(_meta.get("opponent_deck_identity", ""))
+	entry["opponent_fingerprint_status"] = str(matchup_context.get("status", "unknown"))
+	entry["opponent_fingerprint_unique"] = bool(matchup_context.get("is_unique", false))
+	entry["opponent_fingerprint_evidence_count"] = int(matchup_context.get("evidence_card_count", 0))
+	entry.erase("matchup_context")
+	entry.erase("deck_strategy_id")
 	entry["state_features"] = _to_float_array(entry.get("state_features", []))
 	var candidates_variant: Variant = entry.get("candidates", [])
 	var candidates: Array[Dictionary] = []
@@ -137,7 +160,7 @@ func export_game() -> String:
 	var match_id: String = str(_meta.get("match_id", ""))
 	var path := TrainingExportPathScript.build_unique_user_json_path(base_dir, match_id, "decision_match")
 	var payload := {
-		"version": "1.0",
+		"version": "1.1",
 		"winner_index": _winner_index,
 		"total_turns": _total_turns,
 		"failure_reason": _failure_reason,

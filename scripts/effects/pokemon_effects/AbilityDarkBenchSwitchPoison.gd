@@ -80,10 +80,7 @@ func execute_ability(
 	var bench_idx := player.bench.find(selected)
 	if bench_idx < 0:
 		return
-	var old_active := player.active_pokemon
-	old_active.clear_on_leave_active()
-	player.bench[bench_idx] = old_active
-	player.active_pokemon = selected
+	_switch_active_with_bench(state, pi, selected, "dark_bench_switch_poison", true)
 	_apply_special_status(player.active_pokemon, "poisoned", state)
 	state.shared_turn_flags[USED_FLAG_PREFIX + str(pi)] = state.turn_number
 

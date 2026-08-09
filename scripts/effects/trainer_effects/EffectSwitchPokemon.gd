@@ -86,13 +86,8 @@ func _switch(state: GameState, pi: int, chosen_target: PokemonSlot = null) -> vo
 	var player: PlayerState = state.players[pi]
 	if player.active_pokemon == null or player.bench.is_empty():
 		return
-	var old_active: PokemonSlot = player.active_pokemon
 	var new_active: PokemonSlot = chosen_target if chosen_target != null and chosen_target in player.bench else player.bench[0]
-	player.bench.erase(new_active)
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
-	player.active_pokemon = new_active
-	new_active.mark_entered_active_from_bench(state.turn_number)
+	_switch_active_with_bench(state, pi, new_active, "switch_pokemon")
 
 
 func get_description() -> String:

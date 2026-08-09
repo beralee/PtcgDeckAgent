@@ -199,6 +199,41 @@ func test_csv10c_003_yanmega_buzzing_rush_becomes_usable_after_jet_energy_switch
 	])
 
 
+func test_csv10c_003_yanmega_buzzing_rush_becomes_usable_after_dudunsparce_promotion() -> String:
+	var yanmega_card := _load_card("res://data/bundled_user/cards/CSV10C_003.json")
+	var dudunsparce_card := _load_card("res://data/bundled_user/cards/CSV7C_162.json")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.effect_processor.register_pokemon_card(yanmega_card)
+	gsm.effect_processor.register_pokemon_card(dudunsparce_card)
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+
+	var dudunsparce := _make_slot(dudunsparce_card, 0)
+	var yanmega := _make_slot(yanmega_card, 0)
+	player.active_pokemon = dudunsparce
+	player.bench = [yanmega]
+	var draw_a := CardInstance.create(_pokemon("Draw A", "C"), 0)
+	var draw_b := CardInstance.create(_pokemon("Draw B", "C"), 0)
+	var draw_c := CardInstance.create(_pokemon("Draw C", "C"), 0)
+	var grass_a := _energy("Grass A", "G", 0)
+	var grass_b := _energy("Grass B", "G", 0)
+	var grass_c := _energy("Grass C", "G", 0)
+	player.deck = [draw_a, draw_b, draw_c, grass_a, grass_b, grass_c]
+
+	var used := gsm.use_ability(0, dudunsparce, 0, [{
+		"replacement_bench": [yanmega],
+	}])
+	var ability_usable := gsm.effect_processor.can_use_ability(yanmega, state, 0)
+
+	return run_checks([
+		assert_true(used, "Dudunsparce Run Away Draw should resolve through GameStateMachine"),
+		assert_eq(player.active_pokemon, yanmega, "Run Away Draw should promote the selected Yanmega ex"),
+		assert_true(yanmega.entered_active_from_bench_this_turn(state.turn_number), "Every Bench-to-Active path must record the same active-entry event"),
+		assert_true(ability_usable, "Buzzing Rush should become usable after Run Away Draw promotes Yanmega ex"),
+	])
+
+
 func test_csv10c_004_is_numeric_only_and_005_boosts_only_cynthias_pokemon() -> String:
 	var roselia := _load_card("res://data/bundled_user/cards/CSV10C_004.json")
 	var roserade := _load_card("res://data/bundled_user/cards/CSV10C_005.json")

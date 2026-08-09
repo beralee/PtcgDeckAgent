@@ -29,6 +29,8 @@ static func capture(game_state: GameState) -> Dictionary:
 		"stadium_effect_used_effect_id": game_state.stadium_effect_used_effect_id,
 		"vstar_power_used": _normalize_bool_array(game_state.vstar_power_used, PLAYER_COUNT),
 		"last_knockout_turn_against": _normalize_int_array(game_state.last_knockout_turn_against, PLAYER_COUNT, -999),
+		"last_knockout_during_opponent_turn_against": _normalize_int_array(game_state.last_knockout_during_opponent_turn_against, PLAYER_COUNT, -999),
+		"knockout_provenance_tracked_against": _normalize_bool_array(game_state.knockout_provenance_tracked_against, PLAYER_COUNT),
 		"shared_turn_flags": game_state.shared_turn_flags.duplicate(true),
 		"players": _capture_players(game_state.players),
 	}
@@ -77,6 +79,10 @@ static func validate(raw_snapshot: Dictionary) -> Array[String]:
 	_validate_card(snapshot.get("stadium_card", {}), "stadium_card", errors, true)
 	_validate_bool_array(snapshot.get("vstar_power_used", []), "vstar_power_used", PLAYER_COUNT, errors)
 	_validate_int_array(snapshot.get("last_knockout_turn_against", []), "last_knockout_turn_against", PLAYER_COUNT, errors)
+	if snapshot.has("last_knockout_during_opponent_turn_against"):
+		_validate_int_array(snapshot.get("last_knockout_during_opponent_turn_against", []), "last_knockout_during_opponent_turn_against", PLAYER_COUNT, errors)
+	if snapshot.has("knockout_provenance_tracked_against"):
+		_validate_bool_array(snapshot.get("knockout_provenance_tracked_against", []), "knockout_provenance_tracked_against", PLAYER_COUNT, errors)
 	if snapshot.has("shared_turn_flags") and not (snapshot.get("shared_turn_flags") is Dictionary):
 		errors.append("shared_turn_flags must be a Dictionary")
 

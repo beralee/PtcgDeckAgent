@@ -1038,6 +1038,107 @@ func _prompt_exp_share_dialog(
 	_refresh_ui()
 	call("_show_exp_share_dialog", pi, bench_targets, source_slot, source_energy)
 
+
+func _ai_watchdog_reconcile_authoritative_decision() -> bool:
+	if _gsm == null or not _gsm.has_method("get_pending_decision_snapshot"):
+		return false
+	var snapshot_variant: Variant = _gsm.call("get_pending_decision_snapshot")
+	if not (snapshot_variant is Dictionary):
+		return false
+	var snapshot: Dictionary = snapshot_variant
+	if snapshot.is_empty():
+		return false
+	_ensure_ai_opponent()
+	var owner := int(snapshot.get("owner_player_index", -1))
+	if (
+		GameManager.current_mode == GameManager.GameMode.VS_AI
+		and (_ai_opponent == null or owner != int(_ai_opponent.player_index))
+	):
+		return false
+	var kind := str(snapshot.get("kind", ""))
+	_runtime_log(
+		"reconcile_authoritative_decision",
+		"kind=%s owner=%d previous=%s" % [kind, owner, _state_snapshot()]
+	)
+	match kind:
+		"take_prize":
+			_start_prize_selection(owner, int(snapshot.get("count", 1)))
+		"send_out":
+			_prompt_send_out_dialog(owner)
+		"heavy_baton_target":
+			var heavy_targets: Array[PokemonSlot] = []
+			for target_variant: Variant in snapshot.get("bench", []):
+				if target_variant is PokemonSlot:
+					heavy_targets.append(target_variant)
+			var heavy_energy: Array[CardInstance] = []
+			for energy_variant: Variant in snapshot.get("source_energy", []):
+				if energy_variant is CardInstance:
+					heavy_energy.append(energy_variant)
+			_prompt_heavy_baton_dialog(
+				owner,
+				heavy_targets,
+				int(snapshot.get("count", heavy_energy.size())),
+				str(snapshot.get("source_name", "Heavy Baton")),
+				snapshot.get("source_slot", null) as PokemonSlot,
+				heavy_energy
+			)
+		"exp_share_target":
+			var exp_targets: Array[PokemonSlot] = []
+			for target_variant: Variant in snapshot.get("bench", []):
+				if target_variant is PokemonSlot:
+					exp_targets.append(target_variant)
+			var exp_energy: Array[CardInstance] = []
+			for energy_variant: Variant in snapshot.get("source_energy", []):
+				if energy_variant is CardInstance:
+					exp_energy.append(energy_variant)
+			_prompt_exp_share_dialog(
+				owner,
+				exp_targets,
+				snapshot.get("source_slot", null) as PokemonSlot,
+				exp_energy
+			)
+		"powerglass_end_turn", "bench_limit_cleanup":
+			var steps: Array[Dictionary] = []
+			for raw_step: Variant in snapshot.get("steps", []):
+				if raw_step is Dictionary:
+					steps.append(raw_step)
+			if steps.is_empty():
+				var recovered_without_input := bool(
+					_gsm.call("recover_pending_decision_without_input", kind)
+					if _gsm.has_method("recover_pending_decision_without_input")
+					else false
+				)
+				if recovered_without_input:
+					_refresh_ui()
+					_maybe_run_ai()
+				return recovered_without_input
+			_start_effect_interaction(
+				kind,
+				int(snapshot.get("effect_player_index", owner)),
+				steps,
+				snapshot.get("card", null) as CardInstance,
+				snapshot.get("slot", null) as PokemonSlot
+			)
+		_:
+			return false
+	return true
+
+
+func _ai_effect_resolution_progress_token() -> String:
+	var action_log_size := _gsm.action_log.size() if _gsm != null else -1
+	var phase := int(_gsm.game_state.phase) if _gsm != null and _gsm.game_state != null else -1
+	var current_player := _gsm.game_state.current_player_index if _gsm != null and _gsm.game_state != null else -1
+	return "%s|%s|%d|%d|%d|%d|%d|%d" % [
+		_pending_choice,
+		_pending_effect_kind,
+		_pending_effect_player_index,
+		_pending_effect_step_index,
+		hash(_pending_effect_steps),
+		hash(_pending_effect_context),
+		action_log_size,
+		hash([phase, current_player]),
+	]
+
 func _record_battle_event(event_data: Dictionary) -> void:
 	_ensure_battle_recording_coordinator()
 	_battle_recording_coordinator.call("record_event", event_data)
@@ -1057,6 +1158,9 @@ func _recording_phase_name() -> String:
 
 
 func _show_stadium_action_dialog(cp: int) -> void:
+	if not _can_view_player_start_turn_action() or cp != _view_player:
+		_runtime_log("stadium_action_blocked", "player=%d reason=not_view_player_turn %s" % [cp, _state_snapshot()])
+		return
 	_battle_dialog_controller.call("show_stadium_action_dialog", self, cp)
 
 
@@ -1087,6 +1191,8 @@ func _try_show_opponent_slot_detail_input(event: InputEvent, slot_id: String) ->
 
 
 func _show_slot_pokemon_action_if_available(slot_id: String) -> bool:
+	if not _can_view_player_start_turn_action():
+		return false
 	if not slot_id.begins_with("my_"):
 		return false
 	if _selected_hand_card != null or _is_field_interaction_active():
@@ -1104,6 +1210,8 @@ func _show_slot_pokemon_action_if_available(slot_id: String) -> bool:
 
 
 func _slot_touch_release_can_open_action_hud(slot_id: String) -> bool:
+	if not _can_view_player_start_turn_action():
+		return false
 	if not slot_id.begins_with("my_"):
 		return false
 	if _selected_hand_card != null or _is_field_interaction_active():
@@ -1230,9 +1338,9 @@ func _on_dialog_card_chosen(real_index: int) -> void:
 
 
 
-func _is_card_gallery_drag_click_suppressed() -> bool:
+func _should_filter_card_gallery_primary_click(event: InputEvent, scroll: ScrollContainer) -> bool:
 	_ensure_battle_drag_scroll_coordinator()
-	return bool(_battle_drag_scroll_coordinator.call("is_card_gallery_drag_click_suppressed"))
+	return bool(_battle_drag_scroll_coordinator.call("should_filter_card_gallery_primary_click", event, scroll))
 
 
 
@@ -1611,6 +1719,10 @@ func _start_battle_discussion_flash() -> void:
 
 func _on_end_turn(action_player_index: int = -1) -> void:
 	if not _can_accept_live_action() or _gsm == null or _is_field_interaction_active():
+		return
+	if action_player_index < 0 and not _can_view_player_start_turn_action():
+		return
+	if action_player_index >= 0 and action_player_index != _gsm.game_state.current_player_index:
 		return
 	_selected_hand_card = null
 	_refresh_hand()

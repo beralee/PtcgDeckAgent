@@ -45,6 +45,11 @@ var stadium_effect_used_effect_id: String = ""
 ## VSTAR力量使用记录 [player_0, player_1]
 var vstar_power_used: Array[bool] = [false, false]
 var last_knockout_turn_against: Array[int] = [-999, -999]
+## Tracks the stricter card-text condition "during your opponent's turn".
+## The legacy turn array above intentionally remains for replay/scenario
+## compatibility and for effects whose wording only says "last turn".
+var last_knockout_during_opponent_turn_against: Array[int] = [-999, -999]
+var knockout_provenance_tracked_against: Array[bool] = [false, false]
 var shared_turn_flags: Dictionary = {}
 
 ## 胜者索引（-1 表示未决出胜负）
@@ -77,6 +82,35 @@ func is_first_turn_for_player(player_index: int) -> bool:
 	if player_index == first_player_index:
 		return turn_number == 1
 	return turn_number == 2
+
+
+func record_knockout_against(
+	player_index: int,
+	during_opponents_turn_override: int = -1
+) -> void:
+	if player_index < 0 or player_index >= last_knockout_turn_against.size():
+		return
+	last_knockout_turn_against[player_index] = turn_number
+	knockout_provenance_tracked_against[player_index] = true
+	var during_opponents_turn := (
+		current_player_index == 1 - player_index
+		and phase != GamePhase.POKEMON_CHECK
+		and phase != GamePhase.BETWEEN_TURNS
+	)
+	if during_opponents_turn_override >= 0:
+		during_opponents_turn = during_opponents_turn_override != 0
+	if during_opponents_turn:
+		last_knockout_during_opponent_turn_against[player_index] = turn_number
+
+
+func was_knocked_out_during_opponents_previous_turn(player_index: int) -> bool:
+	if player_index < 0 or player_index >= last_knockout_turn_against.size():
+		return false
+	if bool(knockout_provenance_tracked_against[player_index]):
+		return int(last_knockout_during_opponent_turn_against[player_index]) == turn_number - 1
+	# Old replays and authored scenarios predate provenance tracking. Preserve
+	# their explicit intent until they are saved in the richer format.
+	return int(last_knockout_turn_against[player_index]) == turn_number - 1
 
 
 ## 重置回合内状态（新回合开始时调用）

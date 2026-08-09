@@ -38,6 +38,13 @@ class ResolverScene extends Control:
 		choice_call_count += 1
 		picked_indices = indices
 
+	func _ai_effect_resolution_progress_token() -> String:
+		return "%s|%d|%d" % [
+			_pending_choice,
+			_pending_effect_step_index,
+			hash(_pending_effect_context),
+		]
+
 	func _on_assignment_source_chosen(source_index: int) -> void:
 		chosen_sources.append(source_index)
 
@@ -282,6 +289,26 @@ func test_step_resolver_reports_required_assignment_without_targets_as_unresolve
 		assert_eq(str(scene._pending_choice), "", "Unresolvable assignment prompts should not remain pending forever"),
 		assert_eq(scene.reset_calls, 1, "Unresolvable assignment prompts should reset the effect interaction state"),
 		assert_eq(scene.ai_calls, 1, "Unresolvable assignment prompts should schedule the next AI step"),
+	])
+
+
+func test_step_resolver_aborts_when_choice_handler_reports_success_without_progress() -> String:
+	var resolver = AIStepResolverScript.new()
+	var scene := ResolverScene.new()
+	scene._pending_effect_steps = [{
+		"id": "rejected_legal_choice",
+		"items": ["target"],
+		"min_select": 1,
+		"max_select": 1,
+		"chooser_player_index": 0,
+	}]
+	var resolved: bool = resolver.resolve_pending_step(scene, _make_gsm(), 0, [])
+	return run_checks([
+		assert_true(resolved, "A rejected AI choice should take the explicit recovery path instead of being counted as progress"),
+		assert_eq(scene.choice_call_count, 1, "The fixture should submit the otherwise legal choice exactly once"),
+		assert_eq(scene.reset_calls, 1, "No-progress evidence must clear the dead effect interaction"),
+		assert_eq(str(scene._pending_choice), "", "A handler that leaves the same step untouched must not strand the AI on that step"),
+		assert_eq(scene.ai_calls, 1, "No-progress recovery should resume the AI pump"),
 	])
 
 

@@ -12,11 +12,25 @@ func test_default_catalog_loads_and_searches_without_materializing_sets() -> Str
 
 	return run_checks([
 		assert_true(catalog.is_ready(), "Bundled card catalog should load"),
-		assert_eq(catalog.get_catalog_version(), "2026.07.12.1", "Bundled catalog version should match the generated snapshot"),
+		assert_eq(catalog.get_catalog_version(), "2026.08.02.1", "Bundled catalog version should match the generated snapshot"),
 		assert_true(catalog.has_card("CS5aC", "107"), "Bundled catalog should include existing bundled cards"),
 		assert_true(results.size() > 0, "Catalog search should return index rows"),
 		assert_eq(before_sets, 0, "Catalog should not materialize set files on construction"),
 		assert_eq(after_sets, 0, "Catalog search should not materialize full CardData set files"),
+	])
+
+
+func test_catalog_search_entry_keeps_tera_marker_without_materializing_set() -> String:
+	var catalog := CardCatalogIndexScript.new()
+	var before_sets := catalog.materialized_set_count_for_tests()
+	var entry := catalog.get_entry("CSV8C", "028")
+	var after_sets := catalog.materialized_set_count_for_tests()
+
+	return run_checks([
+		assert_eq(str(entry.get("name", "")), "厄诡椪 碧草面具ex", "Fixture should resolve the expected Tera Pokemon ex"),
+		assert_eq(str(entry.get("ancient_trait", "")), "Tera", "Search index rows must preserve the Tera marker"),
+		assert_eq(before_sets, 0, "Tera metadata check should start without materialized set files"),
+		assert_eq(after_sets, 0, "Tera metadata must be available directly from the search index"),
 	])
 
 
@@ -83,13 +97,33 @@ func test_newer_remote_catalog_cache_overrides_bundled_and_bad_remote_rolls_back
 	])
 
 
-func _write_catalog_fixture(root: String, manifest_name: String, version: String, card_name: String, valid_index: bool) -> void:
+func test_legacy_remote_catalog_without_tera_search_schema_falls_back() -> String:
+	var bundled_root := "res://.godot_test_user/catalog_schema_bundled"
+	var user_root := "res://.godot_test_user/catalog_schema_user"
+	_remove_dir_recursive(bundled_root)
+	_remove_dir_recursive(user_root)
+	_write_catalog_fixture(bundled_root, "catalog_manifest.json", "1.0.0", "Bundled Card", true, 2)
+	_write_catalog_fixture(user_root, "remote_manifest.json", "2.0.0", "Legacy Remote", true, 1)
+
+	var catalog := CardCatalogIndexScript.new(bundled_root, user_root)
+	var card: CardData = catalog.get_card_data("TCAT", "001")
+
+	_remove_dir_recursive(bundled_root)
+	_remove_dir_recursive(user_root)
+	return run_checks([
+		assert_eq(catalog.get_active_root_for_tests(), bundled_root, "A remote catalog without Tera search metadata must be ignored"),
+		assert_eq(str(card.name if card != null else ""), "Bundled Card", "Schema fallback should keep the bundled card searchable"),
+	])
+
+
+func _write_catalog_fixture(root: String, manifest_name: String, version: String, card_name: String, valid_index: bool, schema_version: int = 2) -> void:
 	_make_dir_recursive(root.path_join("sets"))
 	var card_dict := {
 		"name": card_name,
 		"name_en": card_name,
 		"name_zh": card_name,
 		"card_type": "Pokemon",
+		"ancient_trait": "",
 		"stage": "Basic",
 		"hp": 70,
 		"set_code": "TCAT",
@@ -112,15 +146,16 @@ func _write_catalog_fixture(root: String, manifest_name: String, version: String
 		"name_en": card_name,
 		"name_zh": card_name,
 		"card_type": "Pokemon",
+		"ancient_trait": "",
 		"stage": "Basic",
 		"hp": 70,
 		"implementation_status": "implemented",
 		"set_file": "sets/TCAT.json",
 	}]
-	var index_payload := {"schema_version": 1, "catalog_version": version, "cards": cards}
+	var index_payload := {"schema_version": schema_version, "catalog_version": version, "cards": cards}
 	_write_text(root.path_join("index.json"), JSON.stringify(index_payload, "\t"))
 	var manifest := {
-		"schema_version": 1,
+		"schema_version": schema_version,
 		"catalog_version": version,
 		"card_count": cards.size(),
 		"index_file": {"path": "index.json", "sha256": ""},

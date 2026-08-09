@@ -475,7 +475,7 @@ func apply_desktop_render_resolution_cap(window_size: Vector2i = Vector2i.ZERO) 
 	if size.x <= 0 or size.y <= 0:
 		return
 	_applying_desktop_render_resolution_cap = true
-	if _should_apply_desktop_render_resolution_cap("", {}, "", size, DisplayServer.window_get_mode()):
+	if _should_apply_desktop_render_resolution_cap(OS.get_name(), {}, "", size, DisplayServer.window_get_mode()):
 		root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 		root.content_scale_size = _desktop_render_size_for_window_size(size)
 	else:
@@ -508,6 +508,11 @@ func _should_apply_desktop_render_resolution_cap(
 	if _is_web_runtime(os_name, feature_flags, display_server_name):
 		return false
 	if _is_mobile_runtime_for_context(os_name, feature_flags):
+		return false
+	# Retina exports already render at the backing-store density. Capping the
+	# logical window to a 1080p Viewport rasterizes text and then scales that
+	# bitmap back up, which makes every macOS page look blocky.
+	if os_name.strip_edges().to_lower() in ["macos", "osx"]:
 		return false
 	if window_mode in [
 		DisplayServer.WINDOW_MODE_MAXIMIZED,

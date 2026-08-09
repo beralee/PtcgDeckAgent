@@ -31,6 +31,14 @@ const EARTHEN_VESSEL := "大地容器"
 const CRISPIN := "赤松"
 const SECRET_BOX := "秘密箱"
 const BUDDY_BUDDY_POFFIN := "友好宝芬"
+const BOSS_ORDERS := "老大的指令"
+const COUNTER_CATCHER := "反击捕捉器"
+
+const NO_BALLOON_GARDEVOIR_STRATEGY_ID := "v18_800017097_no_balloon_gardevoir"
+const OPPONENT_RALTS_NAMES: Array[String] = ["拉鲁拉丝", "Ralts"]
+const OPPONENT_KIRLIA_NAMES: Array[String] = ["奇鲁莉安", "Kirlia"]
+const OPPONENT_GARDEVOIR_NAMES: Array[String] = ["沙奈朵ex", "Gardevoir ex"]
+const OPPONENT_MUNKIDORI_NAMES: Array[String] = ["愿增猿", "Munkidori"]
 
 const DARKNESS_ENERGY := "基本恶能量"
 const FIGHTING_ENERGY := "基本斗能量"
@@ -160,6 +168,94 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	if player == null:
 		return {}
 	return _build_marnie_plan(game_state, player, context) if _deck_id == MARNIE_DECK_ID else _build_cynthia_plan(game_state, player, context)
+
+
+func build_matchup_overlay(
+	_game_state: GameState,
+	_player_index: int,
+	matchup_context: Dictionary
+) -> Dictionary:
+	if _deck_id != MARNIE_DECK_ID \
+			or str(matchup_context.get("opponent_strategy_id", "")) != NO_BALLOON_GARDEVOIR_STRATEGY_ID:
+		return {}
+	return {
+		"id": "marnie_vs_no_balloon_gardevoir_froslass_pressure_v1",
+		"opponent_strategy_id": NO_BALLOON_GARDEVOIR_STRATEGY_ID,
+		"flags": {
+			"matchup_froslass_pressure": true,
+			"matchup_froslass_target_count": 2,
+			"matchup_gust_ability_engine": true,
+		},
+		"priorities": {
+			"search": [FROSLASS, SNORUNT, GRIMMSNARL, MORGREM],
+			"evolve": [FROSLASS, GRIMMSNARL, MORGREM],
+			"ability": [MUNKIDORI, GRIMMSNARL],
+			"trainer": [COUNTER_CATCHER, BOSS_ORDERS, SPIKEMUTH_GYM],
+		},
+	}
+
+
+func score_matchup_action(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	matchup_context: Dictionary,
+	_turn_contract: Dictionary = {}
+) -> float:
+	if _deck_id != MARNIE_DECK_ID \
+			or str(matchup_context.get("opponent_strategy_id", "")) != NO_BALLOON_GARDEVOIR_STRATEGY_ID:
+		return 0.0
+	var player := _valid_player(game_state, player_index)
+	if player == null:
+		return 0.0
+	var kind := str(action.get("kind", ""))
+	var card: Variant = action.get("card", null)
+	match kind:
+		"play_basic_to_bench":
+			if _matches_key(card, SNORUNT) and _count_slots(player, SNORUNT) < 2:
+				return 900.0
+		"evolve":
+			if _matches_key(card, FROSLASS) and _count_slots(player, FROSLASS) < 2:
+				return 1400.0
+		"use_ability":
+			var source: PokemonSlot = action.get("source_slot", null)
+			if _matches_key(source, MUNKIDORI):
+				return 650.0
+		"play_trainer":
+			if _card_matches_names(card, [BOSS_ORDERS, "Boss's Orders", COUNTER_CATCHER, "Counter Catcher"]):
+				return 500.0 if _opponent_has_gardevoir_engine_target(game_state, player_index) else 0.0
+		"end_turn":
+			if _count_slots(player, FROSLASS) == 0 and _count_slots(player, SNORUNT) > 0:
+				return -700.0
+	return 0.0
+
+
+func score_matchup_interaction_target(
+	item: Variant,
+	step: Dictionary,
+	context: Dictionary,
+	matchup_context: Dictionary
+) -> float:
+	if _deck_id != MARNIE_DECK_ID \
+			or str(matchup_context.get("opponent_strategy_id", "")) != NO_BALLOON_GARDEVOIR_STRATEGY_ID \
+			or not (item is PokemonSlot):
+		return 0.0
+	var step_id := str(step.get("id", "")).to_lower()
+	if step_id not in ["opponent_bench_target", "opponent_bench_damage_targets"]:
+		return 0.0
+	var slot := item as PokemonSlot
+	var top_card := slot.get_top_card()
+	if top_card == null or int(top_card.owner_index) == int(context.get("player_index", -1)):
+		return 0.0
+	if _slot_matches_names(slot, OPPONENT_GARDEVOIR_NAMES):
+		return 1800.0
+	if _slot_matches_names(slot, OPPONENT_KIRLIA_NAMES):
+		return 1500.0
+	if _slot_matches_names(slot, OPPONENT_MUNKIDORI_NAMES):
+		return 1000.0
+	if _slot_matches_names(slot, OPPONENT_RALTS_NAMES):
+		return 700.0
+	return 0.0
 
 
 func build_continuity_contract(
@@ -1211,6 +1307,36 @@ func _matches_key(item: Variant, key: String) -> bool:
 			if super._matches_key(item, str(alias)):
 				return true
 	return super._matches_key(item, key)
+
+
+func _card_matches_names(item: Variant, names: Array) -> bool:
+	for name_variant: Variant in names:
+		if super._matches_key(item, str(name_variant)):
+			return true
+	return false
+
+
+func _slot_matches_names(slot: PokemonSlot, names: Array[String]) -> bool:
+	if slot == null:
+		return false
+	for name: String in names:
+		if super._matches_key(slot, name):
+			return true
+	return false
+
+
+func _opponent_has_gardevoir_engine_target(game_state: GameState, player_index: int) -> bool:
+	var opponent_index := 1 - player_index
+	if game_state == null or opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null:
+		return false
+	for slot: PokemonSlot in opponent.get_all_pokemon():
+		if _slot_matches_names(slot, OPPONENT_GARDEVOIR_NAMES) \
+				or _slot_matches_names(slot, OPPONENT_KIRLIA_NAMES):
+			return true
+	return false
 
 
 func _player_from_context(context: Dictionary) -> PlayerState:

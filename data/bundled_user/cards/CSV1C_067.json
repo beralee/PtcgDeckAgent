@@ -1,0 +1,62 @@
+{
+    "name":  "巨锻匠",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 素材收集\n在自己的回合，如果将自己的1张手牌放于弃牌区的话，则可使用1次。从自己牌库上方抽取3张卡牌。\n\n【超】【无】 特殊重锤 90+\n如果这只宝可梦身上附着了特殊能量的话，则追加造成90伤害。\n\n",
+    "yoren_code":  "P0959",
+    "set_code":  "CSV1C",
+    "card_index":  "067",
+    "set_code_en":  "PAF",
+    "card_index_en":  "167",
+    "name_en":  "Tinkaton",
+    "name_zh":  "",
+    "artist":  "Kouki Saitou",
+    "rarity":  "R",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "4facb3836ec30a5640ab3ce81d4310f1",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV1C/067.png",
+    "image_local_path":  "user://cards/images/CSV1C/067.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV1C/067",
+    "source_set_code":  "CSV1C",
+    "source_card_index":  "067",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Stage 2",
+    "hp":  140,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "巧锻匠",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "特殊重锤",
+                        "text":  "如果这只宝可梦身上附着了特殊能量的话，则追加造成90伤害。",
+                        "cost":  "PC",
+                        "damage":  "90+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "素材收集",
+                          "text":  "在自己的回合，如果将自己的1张手牌放于弃牌区的话，则可使用1次。从自己牌库上方抽取3张卡牌。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

@@ -42,6 +42,7 @@ func test_card_database_user_card_overrides_catalog_card() -> String:
 		"name": "User Card",
 		"name_en": "User Card",
 		"card_type": "Pokemon",
+		"ancient_trait": "",
 		"stage": "Basic",
 		"hp": 80,
 		"set_code": "CATPRI",
@@ -150,7 +151,7 @@ func _write_catalog_fixture(root: String, set_code: String, card_index: String, 
 	var set_payload := {"schema_version": 1, "set_code": set_code, "cards": [card_dict]}
 	_write_text(root.path_join("sets/%s.json" % set_code), JSON.stringify(set_payload, "\t"))
 	var index_payload := {
-		"schema_version": 1,
+		"schema_version": 2,
 		"catalog_version": "1.0.0",
 		"cards": [{
 			"uid": uid,
@@ -163,6 +164,7 @@ func _write_catalog_fixture(root: String, set_code: String, card_index: String, 
 			"name_en": card_name,
 			"name_zh": card_name,
 			"card_type": "Pokemon",
+			"ancient_trait": "",
 			"stage": "Basic",
 			"hp": 70,
 			"implementation_status": "implemented",
@@ -171,7 +173,7 @@ func _write_catalog_fixture(root: String, set_code: String, card_index: String, 
 	}
 	_write_text(root.path_join("index.json"), JSON.stringify(index_payload, "\t"))
 	var manifest := {
-		"schema_version": 1,
+		"schema_version": 2,
 		"catalog_version": "1.0.0",
 		"card_count": 1,
 		"index_file": {"path": "index.json", "sha256": ""},

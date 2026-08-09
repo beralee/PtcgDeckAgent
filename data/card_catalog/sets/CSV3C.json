@@ -290,6 +290,64 @@
 		{
 			"abilities": [
 				{
+					"name": "碎裂结晶",
+					"text": "当这只宝可梦【昏厥】时，自己抛掷1次硬币。如果为正面，则对手无法拿取奖赏卡。"
+				}
+			],
+			"ancient_trait": "",
+			"artist": "Shin Nagasawa",
+			"attacks": [
+				{
+					"cost": "F",
+					"damage": "",
+					"is_vstar_power": false,
+					"name": "毒性花瓣",
+					"text": "令对手的战斗宝可梦陷入【中毒】状态。因这个【中毒】而放置的伤害指示物数量变为6个。"
+				}
+			],
+			"card_index": "079",
+			"card_index_en": "126",
+			"card_type": "Pokemon",
+			"description": "特性: 碎裂结晶\n当这只宝可梦【昏厥】时，自己抛掷1次硬币。如果为正面，则对手无法拿取奖赏卡。\n\n【斗】 毒性花瓣 \n令对手的战斗宝可梦陷入【中毒】状态。因这个【中毒】而放置的伤害指示物数量变为6个。\n\n",
+			"effect_id": "8d661d82a0867cc1d450e0eb137be5ee",
+			"energy_provides": "",
+			"energy_type": "F",
+			"evolves_from": "晶光芽",
+			"hp": 130,
+			"image_local_path": "user://cards/images/CSV3C/079.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSV3C/079.png",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "晶光花",
+			"name_en": "Glimmora",
+			"name_zh": "",
+			"rarity": "R",
+			"regulation_expanded": true,
+			"regulation_mark": "G",
+			"regulation_standard": true,
+			"release_date": "2025-05-16T00:00:00+08:00",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 3,
+			"set_code": "CSV3C",
+			"set_code_en": "PAL",
+			"source_card_index": "079",
+			"source_imported_at": 0,
+			"source_language": "zh-CN",
+			"source_parser_version": 1,
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV3C",
+			"source_url": "https://tcg.mik.moe/cards/CSV3C/079",
+			"stage": "Stage 1",
+			"weakness_energy": "G",
+			"weakness_value": "×2",
+			"yoren_code": "P0970"
+		},
+		{
+			"abilities": [
+				{
 					"name": "空腹冲刺",
 					"text": "如果这只宝可梦身上没有附着任何能量的话，则这只宝可梦【撤退】所需能量，全部消除。"
 				}

@@ -45,6 +45,26 @@ async function semanticPoint(page, id) {
   };
 }
 
+async function visibleSemanticPoint(page, id) {
+  const controls = await bridgeRequest(page, 'list_controls');
+  const snapshot = await bridgeRequest(page, 'snapshot');
+  const viewport = snapshot.runtime_profile.viewport_size;
+  const logicalWidth = Math.max(1, Number(viewport.x || viewport.width));
+  const logicalHeight = Math.max(1, Number(viewport.y || viewport.height));
+  const control = controls
+    .filter(item => item.name === id && item.visible)
+    .filter(item => item.rect.x + item.rect.width * 0.5 >= 0 && item.rect.x + item.rect.width * 0.5 <= logicalWidth)
+    .filter(item => item.rect.y + item.rect.height * 0.5 >= 0 && item.rect.y + item.rect.height * 0.5 <= logicalHeight)
+    .sort((a, b) => a.rect.y - b.rect.y)[0];
+  if (!control) throw new Error(`No on-screen control found: ${id}`);
+  const canvas = await page.locator('#canvas').boundingBox();
+  if (!canvas) throw new Error('Godot canvas has no browser bounding box');
+  return {
+    x: canvas.x + (control.rect.x + control.rect.width * 0.5) * canvas.width / logicalWidth,
+    y: canvas.y + (control.rect.y + control.rect.height * 0.5) * canvas.height / logicalHeight
+  };
+}
+
 async function activateControl(page, id, useTouch) {
   const point = await semanticPoint(page, id);
   if (process.env.PTCG_E2E_POINTER_DIAGNOSTICS === '1') {
@@ -53,6 +73,12 @@ async function activateControl(page, id, useTouch) {
     const canvas = await page.locator('#canvas').boundingBox();
     console.log('POINTER_DIAGNOSTIC', JSON.stringify({ id, point, control, viewport: snapshot.runtime_profile.viewport_size, canvas }));
   }
+  if (useTouch) await page.touchscreen.tap(point.x, point.y);
+  else await page.mouse.click(point.x, point.y);
+}
+
+async function activateVisibleNamedControl(page, id, useTouch) {
+  const point = await visibleSemanticPoint(page, id);
   if (useTouch) await page.touchscreen.tap(point.x, point.y);
   else await page.mouse.click(point.x, point.y);
 }
@@ -244,10 +270,133 @@ test('real canvas input round-trips battle setup and deck manager', async ({ pag
   await activateControl(page, 'BtnBack', useTouch);
   await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('MainMenu');
 
-  await activateControl(page, 'BtnDeckManager', useTouch);
-  await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('DeckManager');
-  await activateControl(page, 'BtnBack', useTouch);
+	await activateControl(page, 'BtnDeckManager', useTouch);
+	await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('DeckManager');
+	const deckSearch = await bridgeRequest(page, 'find_control', { id: 'DeckSearchInput' });
+	expect(deckSearch.visible).toBe(true);
+	expect(deckSearch.rect.width).toBeGreaterThan(200);
+	expect(deckSearch.rect.height).toBeGreaterThan(useTouch ? 70 : 30);
+	const clearAtRest = await bridgeRequest(page, 'find_control', { id: 'DeckSearchClearButton' });
+	expect(clearAtRest.visible).toBe(true);
+	expect(clearAtRest.disabled).toBe(true);
+	expect(clearAtRest.rect.height).toBeGreaterThan(useTouch ? 70 : 30);
+	await activateControl(page, 'DeckSearchInput', useTouch);
+	const localDeckEditor = page.locator('body > input').filter({ hasNot: page.locator('#canvas') });
+	await expect(localDeckEditor).toHaveCount(1);
+	await localDeckEditor.fill('Dragapult ex');
+	expect(await page.evaluate(() => window.__ptcgDeckAgentTextInput ? window.__ptcgDeckAgentTextInput.version : 0)).toBe(9);
+	if (useTouch) {
+		await page.evaluate(() => {
+			const state = window.__ptcgDeckAgentTextInput;
+			const input = state && state.input;
+			if (!input) throw new Error('Mobile deck-search DOM editor disappeared before IME deletion');
+			input.focus();
+			input.setSelectionRange(input.value.length, input.value.length);
+			input.dispatchEvent(new InputEvent('beforeinput', {
+				bubbles: true,
+				cancelable: true,
+				inputType: 'deleteContentBackward'
+			}));
+		});
+	} else {
+		await localDeckEditor.focus();
+		await expect(localDeckEditor).toBeFocused();
+		await page.keyboard.press('Backspace');
+	}
+	await expect(localDeckEditor).toHaveValue('Dragapult e');
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckSearchInput' })).text).toBe('Dragapult e');
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckSearchClearButton' })).disabled).toBe(false);
+	await activateControl(page, 'DeckSearchClearButton', useTouch);
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckSearchInput' })).text).toBe('');
+	await expect.poll(async () => page.evaluate(() => {
+		const state = window.__ptcgDeckAgentTextInput || null;
+		return !state || !state.input || state.input.value === '';
+	})).toBe(true);
+	const recommendation = await bridgeRequest(page, 'find_control', { id: 'RecommendationFeedCard' });
+	expect(recommendation.visible).toBe(true);
+	await activateControl(page, 'BtnImport', useTouch);
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'UrlInput' })).visible).toBe(true);
+	const importEditor = page.locator('body > input').filter({ hasNot: page.locator('#canvas') });
+	await expect(importEditor).toHaveCount(1);
+	const preparedState = await page.evaluate(() => {
+		const state = window.__ptcgDeckAgentTextInput || null;
+		return state ? {
+			version: state.version,
+			prepareCount: state.prepareCount,
+			focused: document.activeElement === state.input,
+		} : null;
+	});
+	expect(preparedState).not.toBeNull();
+	expect(preparedState.version).toBe(9);
+	expect(preparedState.prepareCount).toBeGreaterThan(0);
+	expect(preparedState.focused).toBe(false);
+	await importEditor.click();
+	await expect(importEditor).toBeFocused();
+	await importEditor.fill('574793');
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'UrlInput' })).text).toBe('574793');
+	await activateControl(page, 'BtnCloseImport', useTouch);
+	await expect(importEditor).toHaveCount(0);
+	await activateControl(page, 'BtnBack', useTouch);
   await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('MainMenu');
+  expect(errors).toEqual([]);
+});
+
+test('deck editor card search exposes HUD radios and filters ex cards', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'DeckEditor is landscape-only on Web and this regression uses the desktop canvas');
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  page.on('console', message => {
+    if (message.type() === 'error' && message.text().includes('WEB_RUNTIME_ERROR')) errors.push(message.text());
+  });
+  await startGame(page, 'v2');
+  await activateControl(page, 'BtnDeckManager', false);
+  await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('DeckManager');
+  await activateVisibleNamedControl(page, 'DeckRowEditButton', false);
+  await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('DeckEditor');
+
+  const searchButton = await bridgeRequest(page, 'find_control', { id: 'BtnCardSearch' });
+  expect(searchButton.visible).toBe(true);
+  expect(searchButton.rect.height).toBeGreaterThan(60);
+  await activateControl(page, 'BtnCardSearch', false);
+
+  const nameInput = await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchInput' });
+  const category = await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchCategoryRadio0' });
+  const exType = await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchTagRadio_ex' });
+	const teraType = await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchTagRadio_Tera' });
+  const energy = await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchEnergyRadio_All' });
+	const grassEnergy = await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchEnergyRadio_G' });
+  expect(nameInput.visible).toBe(true);
+  expect(nameInput.rect.width).toBeGreaterThan(400);
+  expect(nameInput.rect.height).toBeGreaterThan(40);
+  for (const control of [category, exType, teraType, energy, grassEnergy]) {
+    expect(control.visible).toBe(true);
+    expect(control.rect.height).toBeGreaterThan(40);
+  }
+
+	await activateControl(page, 'DeckPoolSearchTagRadio_Tera', false);
+	await activateControl(page, 'DeckPoolSearchEnergyRadio_G', false);
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchResultLabel' })).text).toContain('找到 2 张');
+	await activateControl(page, 'DeckPoolSearchEnergyRadio_All', false);
+	await activateControl(page, 'DeckPoolSearchTagRadio_ex', false);
+
+  await activateControl(page, 'DeckPoolSearchInput', false);
+  const editor = page.locator('body > input').filter({ hasNot: page.locator('#canvas') });
+  await expect(editor).toHaveCount(1);
+  await editor.fill('ex');
+  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchInput' })).text).toBe('ex');
+  await page.evaluate(() => {
+    const state = window.__ptcgDeckAgentTextInput;
+    const callback = window.__ptcgDeckAgentTextInputCallback;
+    if (state && state.input && typeof callback === 'function') {
+      callback(JSON.stringify({ event: 'commit', value: state.input.value, id: state.id || 0 }));
+    }
+    if (state && typeof state.close === 'function') state.close();
+  });
+  const searchScreenshot = testInfo.outputPath('deck-editor-card-search.png');
+  await page.screenshot({ path: searchScreenshot });
+  await testInfo.attach('deck editor card search', { path: searchScreenshot, contentType: 'image/png' });
+  await activateControl(page, 'DeckPoolSearchDoneButton', false);
+  await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('DeckEditor');
   expect(errors).toEqual([]);
 });
 

@@ -1,0 +1,66 @@
+{
+    "name":  "来悲粗茶ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【无】 再煮悲茶 \n将自己弃牌区中所有「基本【草】能量」给对手查看，将其张数×2个伤害指示物，放置于对手的1只宝可梦身上。然后，将给对手查看过的能量放回牌库并重洗牌库。\n\n【草】【无】 抹茶飞溅 120\n将自己所有宝可梦的HP，各回复「30」。\n\n",
+    "yoren_code":  "Y1501",
+    "set_code":  "CSVNC",
+    "card_index":  "008",
+    "set_code_en":  "TWM",
+    "card_index_en":  "23",
+    "name_en":  "Sinistcha ex",
+    "name_zh":  "",
+    "artist":  "aky CG Works",
+    "rarity":  "无标记",
+    "release_date":  "2026-05-15T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "3393a671748e17d4cf292b6e0201bb7c",
+    "image_url":  "https://tcg.mik.moe/static/img/CSVNC/008.png",
+    "image_local_path":  "user://cards/images/CSVNC/008.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSVNC/008",
+    "source_set_code":  "CSVNC",
+    "source_card_index":  "008",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  240,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "斯魔茶",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "再煮悲茶",
+                        "text":  "将自己弃牌区中所有「基本【草】能量」给对手查看，将其张数×2个伤害指示物，放置于对手的1只宝可梦身上。然后，将给对手查看过的能量放回牌库并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "抹茶飞溅",
+                        "text":  "将自己所有宝可梦的HP，各回复「30」。",
+                        "cost":  "GC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

@@ -40,7 +40,7 @@ func _state(with_yanmega: bool) -> GameState:
 		state.players.append(player)
 	state.players[0].active_pokemon = _slot(_pokemon("Dunsparce", "Basic", "C"))
 	if with_yanmega:
-		state.players[0].bench.append(_slot(_pokemon("Yanmega ex", "Stage 1", "GGG")))
+		state.players[0].bench.append(_slot(_pokemon("Yanmega ex", "Stage 1", "GGGC")))
 	else:
 		state.players[0].bench.append(_slot(_pokemon("Yanma", "Basic", "G")))
 	state.players[0].bench.append(_slot(_pokemon("Budew", "Basic", "")))

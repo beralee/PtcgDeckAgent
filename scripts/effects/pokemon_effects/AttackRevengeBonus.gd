@@ -21,9 +21,7 @@ func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
 	if top_card == null:
 		return 0
 	var owner_index := top_card.owner_index
-	if owner_index < 0 or owner_index >= state.last_knockout_turn_against.size():
-		return 0
-	return bonus_damage if int(state.last_knockout_turn_against[owner_index]) == state.turn_number - 1 else 0
+	return bonus_damage if state.was_knocked_out_during_opponents_previous_turn(owner_index) else 0
 
 
 func execute_attack(

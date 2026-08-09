@@ -52,7 +52,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		new_active = player.bench[0]
 
 	var energy_to_move := _selected_energy_to_move(ctx, old_active, new_active)
-	_switch_player_active(player, old_active, new_active, state.turn_number)
+	_switch_player_active(state, card.owner_index, old_active, new_active)
 	for energy: CardInstance in energy_to_move:
 		if energy in old_active.attached_energy:
 			old_active.attached_energy.erase(energy)
@@ -146,14 +146,11 @@ func _selected_energy_to_move(ctx: Dictionary, old_active: PokemonSlot, new_acti
 	return selected
 
 
-func _switch_player_active(player: PlayerState, old_active: PokemonSlot, new_active: PokemonSlot, turn_number: int) -> void:
+func _switch_player_active(state: GameState, player_index: int, old_active: PokemonSlot, new_active: PokemonSlot) -> void:
+	var player: PlayerState = state.players[player_index]
 	if old_active == null or new_active == null or new_active not in player.bench:
 		return
-	player.bench.erase(new_active)
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
-	player.active_pokemon = new_active
-	new_active.mark_entered_active_from_bench(turn_number)
+	_switch_active_with_bench(state, player_index, new_active, "scramble_switch")
 
 
 func get_description() -> String:

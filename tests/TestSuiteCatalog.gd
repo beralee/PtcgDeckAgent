@@ -32,6 +32,8 @@ const AI_TRAINING_FILES := {
 	"test_ai_version_registry.gd": true,
 	"test_benchmark_evaluator.gd": true,
 	"test_deck_identity_tracker.gd": true,
+	"test_opponent_deck_fingerprint_resolver.gd": true,
+	"test_matchup_policy_integration.gd": true,
 	"test_evolution_engine.gd": true,
 	"test_gardevoir_value_net.gd": true,
 	"test_gardevoir_miraidon_trace_regressions.gd": true,

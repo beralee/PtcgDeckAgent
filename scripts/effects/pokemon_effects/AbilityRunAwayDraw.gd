@@ -72,6 +72,16 @@ func execute_ability(
 		if replacement == null and not player.bench.is_empty():
 			replacement = player.bench[0]
 
+	var was_active := player.active_pokemon == pokemon
+	if was_active and not _remove_active_and_promote(
+		state,
+		top.owner_index,
+		pokemon,
+		replacement,
+		"run_away_draw"
+	):
+		return
+
 	for card: CardInstance in pokemon.pokemon_stack:
 		card.face_up = false
 		player.deck.append(card)
@@ -89,11 +99,7 @@ func execute_ability(
 	pokemon.clear_all_status()
 	pokemon.damage_counters = 0
 
-	if player.active_pokemon == pokemon:
-		player.active_pokemon = replacement
-		if replacement != null:
-			player.bench.erase(replacement)
-	else:
+	if not was_active:
 		player.bench.erase(pokemon)
 
 	player.shuffle_deck()

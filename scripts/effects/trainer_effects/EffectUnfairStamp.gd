@@ -4,7 +4,7 @@ extends BaseEffect
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var pi: int = card.owner_index
-	return state.last_knockout_turn_against[pi] == state.turn_number - 1
+	return state.was_knocked_out_during_opponents_previous_turn(pi)
 
 
 func execute(card: CardInstance, _targets: Array, state: GameState) -> void:

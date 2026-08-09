@@ -19,7 +19,6 @@ class HandDragHost:
 	var _card_gallery_drag_active_scroll: ScrollContainer = null
 	var _card_gallery_drag_start_position := Vector2.ZERO
 	var _card_gallery_drag_start_scroll := 0
-	var _card_gallery_drag_suppress_click_until_msec := 0
 	var _card_gallery_drag_touch_active := false
 	var ios_web_hand_touch_profile := false
 
@@ -251,6 +250,49 @@ func test_portrait_short_hand_extent_refresh_remains_content_sized() -> String:
 	return result
 
 
+func test_ai_waiting_hand_extent_discards_stale_wide_card_row_geometry() -> String:
+	var host := HandDragHost.new()
+	var hand_scroll := ScrollContainer.new()
+	hand_scroll.name = "HandScroll"
+	hand_scroll.size = Vector2(900, 182)
+	hand_scroll.custom_minimum_size = Vector2(900, 182)
+	var hand_container := HBoxContainer.new()
+	hand_container.name = "HandContainer"
+	# Reproduce the layout frame immediately after a wide player hand is replaced
+	# by the AI action label: Control.size still carries the old card-row width.
+	hand_container.size = Vector2(1600, 182)
+	hand_container.custom_minimum_size = Vector2(900, 182)
+	hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	hand_container.set_meta("battle_hand_surface_mode", "waiting")
+	var waiting_label := Label.new()
+	waiting_label.name = "HandWaitingLabel"
+	waiting_label.text = "Opponent used Iono"
+	waiting_label.custom_minimum_size = Vector2(900, 182)
+	waiting_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hand_container.add_child(waiting_label)
+	hand_scroll.add_child(hand_container)
+	host.add_child(hand_scroll)
+	host._hand_scroll = hand_scroll
+	var hbar := hand_scroll.get_h_scroll_bar()
+	hbar.min_value = 0.0
+	hbar.max_value = 1600.0
+	hbar.page = 900.0
+	hand_scroll.scroll_horizontal = 500
+	var coordinator := BattleDragScrollCoordinatorScript.new()
+	coordinator.setup(host)
+
+	coordinator.refresh_hand_drag_scroll_extents(hand_scroll)
+
+	var result := run_checks([
+		assert_eq(hand_container.custom_minimum_size.x, 900.0, "AI waiting text must use exactly the visible hand rail, not the previous wide hand"),
+		assert_eq(hand_container.size.x, 900.0, "The stale arranged width must be normalized before the deferred extent refresh can preserve it"),
+		assert_eq(hand_scroll.scroll_horizontal, 0, "AI waiting text must always render from the centered, non-scrollable origin"),
+		assert_eq(hbar.max_value - hbar.page, 0.0, "AI waiting text must not inherit a horizontal scroll range from player cards"),
+	])
+	host.free()
+	return result
+
+
 func test_card_gallery_late_starts_from_screen_drag_when_press_was_swallowed() -> String:
 	var fixture := _build_hand_scroll_fixture()
 	var host := fixture["host"] as HandDragHost
@@ -313,13 +355,12 @@ func test_card_gallery_touch_press_does_not_swallow_plain_card_tap() -> String:
 		assert_false(release_consumed, "Plain touch release without drag should be left for the card tap handler"),
 		assert_false(host._card_gallery_drag_active, "Plain touch release should clear the armed gallery drag state"),
 		assert_false(host._card_gallery_dragging, "Plain touch tap should not become a gallery drag"),
-		assert_eq(host._card_gallery_drag_suppress_click_until_msec, 0, "Plain touch tap should not suppress card clicks"),
 	])
 	host.free()
 	return result
 
 
-func test_card_gallery_touch_drag_starts_before_a_hold_can_become_a_click() -> String:
+func test_card_gallery_touch_jitter_inside_tap_envelope_does_not_start_drag() -> String:
 	var fixture := _build_hand_scroll_fixture()
 	var host := fixture["host"] as HandDragHost
 	var gallery_scroll := fixture["scroll"] as ScrollContainer
@@ -338,9 +379,7 @@ func test_card_gallery_touch_drag_starts_before_a_hold_can_become_a_click() -> S
 	press.position = Vector2(220, 40)
 	coordinator.handle_card_gallery_drag_scroll_input(press, gallery_scroll, "discard_collection")
 
-	# A normal finger move in a browser is often delivered in several small
-	# samples. Requiring a 28px jump makes the row feel stuck long enough for the
-	# card's hold gesture to win.
+	# Normal finger wobble remains a tap until it exits the shared 28px envelope.
 	var drag := InputEventScreenDrag.new()
 	drag.index = 0
 	drag.position = Vector2(204, 42)
@@ -355,9 +394,9 @@ func test_card_gallery_touch_drag_starts_before_a_hold_can_become_a_click() -> S
 	var scroll_after_drag := gallery_scroll.scroll_horizontal
 
 	var result := run_checks([
-		assert_true(drag_consumed, "A deliberate 16px horizontal touch move should immediately own the gallery gesture"),
-		assert_true(scroll_after_drag > start_scroll, "The first deliberate touch move should already move the card row"),
-		assert_true(host._card_gallery_dragging, "The gallery must enter dragging state before a held card can fire"),
+		assert_false(drag_consumed, "A 16px horizontal touch wobble must remain eligible to tap"),
+		assert_eq(scroll_after_drag, start_scroll, "Touch wobble inside the tap envelope must not move the card row"),
+		assert_false(host._card_gallery_dragging, "Touch wobble inside the tap envelope must not become a drag"),
 	])
 	host.free()
 	return result
@@ -394,7 +433,55 @@ func test_card_gallery_mouse_press_does_not_swallow_plain_card_click() -> String
 		assert_false(release_consumed, "Plain mouse release without drag should be left for the card click handler"),
 		assert_false(host._card_gallery_drag_active, "Plain mouse release should clear the armed gallery drag state"),
 		assert_false(host._card_gallery_dragging, "Plain mouse click should not become a gallery drag"),
-		assert_eq(host._card_gallery_drag_suppress_click_until_msec, 0, "Plain mouse click should not suppress card clicks"),
+	])
+	host.free()
+	return result
+
+
+func test_card_gallery_filters_only_same_surface_touch_mouse_release_echo() -> String:
+	var fixture := _build_hand_scroll_fixture()
+	var host := fixture["host"] as HandDragHost
+	var gallery_scroll := fixture["scroll"] as ScrollContainer
+	var gallery_row := fixture["row"] as HBoxContainer
+	var coordinator := BattleDragScrollCoordinatorScript.new()
+	coordinator.setup(host)
+	coordinator.configure_card_gallery_drag_scroll(gallery_scroll, gallery_row, "dialog_cards")
+	coordinator.set_card_gallery_drag_scroll_active(gallery_scroll, true)
+	_prepare_scroll_range(gallery_scroll)
+
+	var touch_press := InputEventScreenTouch.new()
+	touch_press.pressed = true
+	touch_press.position = Vector2(220, 24)
+	coordinator.handle_card_gallery_drag_scroll_input(touch_press, gallery_scroll, "dialog_cards")
+	var touch_release := InputEventScreenTouch.new()
+	touch_release.pressed = false
+	touch_release.position = Vector2(220, 24)
+	coordinator.handle_card_gallery_drag_scroll_input(touch_release, gallery_scroll, "dialog_cards")
+
+	var mouse_echo := InputEventMouseButton.new()
+	mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	mouse_echo.pressed = false
+	mouse_echo.position = Vector2(220, 24)
+	mouse_echo.global_position = Vector2(220, 24)
+	var distant_mouse_release := InputEventMouseButton.new()
+	distant_mouse_release.button_index = MOUSE_BUTTON_LEFT
+	distant_mouse_release.pressed = false
+	distant_mouse_release.position = Vector2(320, 24)
+	distant_mouse_release.global_position = Vector2(320, 24)
+
+	var result := run_checks([
+		assert_true(
+			coordinator.should_filter_card_gallery_primary_click(mouse_echo, gallery_scroll),
+			"A matching mouse release immediately synthesized from touch should be filtered"
+		),
+		assert_false(
+			coordinator.should_filter_card_gallery_primary_click(touch_release, gallery_scroll),
+			"A new real touch release must never be filtered by the mouse-echo guard"
+		),
+		assert_false(
+			coordinator.should_filter_card_gallery_primary_click(distant_mouse_release, gallery_scroll),
+			"An unrelated mouse release outside the touch position envelope must remain clickable"
+		),
 	])
 	host.free()
 	return result

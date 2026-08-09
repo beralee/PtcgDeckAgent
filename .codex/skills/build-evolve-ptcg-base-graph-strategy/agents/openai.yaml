@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build & Evolve Base Graph v1.8"
+  short_description: "Build goal-state Base v1.8 deck strategies"
+  default_prompt: "Use $build-evolve-ptcg-base-graph-strategy to build a Base Graph v1.8 deck strategy with typed board goals, macro intents, uncertainty-aware futures, trace v2, and Bench v7 gates."

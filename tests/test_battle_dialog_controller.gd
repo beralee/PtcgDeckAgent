@@ -62,7 +62,6 @@ class DialogSceneStub:
 	var _last_effect_choice: PackedInt32Array = PackedInt32Array()
 	var _effect_choice_call_count := 0
 	var _cancelled_card_gallery_drag_sources: Array[String] = []
-	var _card_gallery_drag_click_suppressed := false
 	var _screen_position_to_battle_local_offset := Vector2.ZERO
 
 	func _init() -> void:
@@ -144,9 +143,6 @@ class DialogSceneStub:
 		scroll.set_meta("card_gallery_drag_source", source)
 		if row != null:
 			row.set_meta("card_gallery_drag_row", true)
-
-	func _is_card_gallery_drag_click_suppressed() -> bool:
-		return _card_gallery_drag_click_suppressed
 
 	func _screen_position_to_battle_local(screen_position: Vector2) -> Vector2:
 		return screen_position + _screen_position_to_battle_local_offset
@@ -1022,7 +1018,7 @@ func test_portrait_library_search_board_uses_bottom_buttons_and_max_slots() -> S
 	return result
 
 
-func test_library_search_drag_suppression_ignores_candidate_and_selected_clicks() -> String:
+func test_library_search_business_callbacks_trust_delivered_card_clicks() -> String:
 	var controller := BattleDialogControllerScript.new()
 	var scene := DialogSceneStub.new()
 	scene.set("_active_battle_layout_mode", "portrait")
@@ -1043,31 +1039,19 @@ func test_library_search_drag_suppression_ignores_candidate_and_selected_clicks(
 	var candidate_views := _battle_card_views_under(library_row)
 	var candidate := candidate_views[0] if candidate_views.size() > 0 else null
 	var candidate_slot := _candidate_slot_for_view(candidate)
-	scene._card_gallery_drag_click_suppressed = true
 	_emit_candidate_slot_tap(candidate_slot)
-	var suppressed_candidate_selection: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
-
-	scene._card_gallery_drag_click_suppressed = false
-	_emit_candidate_slot_tap(candidate_slot)
-	var selected_after_clean_click: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var selected_after_candidate_click: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
 
 	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
 	var selected_views := _battle_card_views_under(selected_row)
 	var selected_view := selected_views[0] if selected_views.size() > 0 else null
-	scene._card_gallery_drag_click_suppressed = true
 	if selected_view != null:
-		selected_view.left_clicked.emit(selected_view.card_instance, selected_view.card_data)
-	var selected_after_suppressed_remove: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
-
-	scene._card_gallery_drag_click_suppressed = false
-	controller.call("on_library_selected_slot_pressed", scene, 0)
-	var selected_after_clean_remove: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+		controller.call("on_library_selected_slot_pressed", scene, 0)
+	var selected_after_remove: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
 
 	var result := run_checks([
-		assert_eq(suppressed_candidate_selection, [], "A suppressed drag-release click should not select a library candidate"),
-		assert_eq(selected_after_clean_click, [0], "A normal candidate click should still select the card"),
-		assert_eq(selected_after_suppressed_remove, [0], "A suppressed drag-release click should not remove an already selected card"),
-		assert_eq(selected_after_clean_remove, [], "A normal selected-slot click should still remove the selected card"),
+		assert_eq(selected_after_candidate_click, [0], "A delivered candidate click should select the card"),
+		assert_eq(selected_after_remove, [], "A delivered selected-slot click should remove the selected card"),
 	])
 	scene.free()
 	return result

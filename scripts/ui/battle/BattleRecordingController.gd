@@ -133,6 +133,8 @@ func build_battle_state_snapshot(scene: Object) -> Dictionary:
 		"stadium_effect_used_effect_id": state.stadium_effect_used_effect_id,
 		"vstar_power_used": [state.vstar_power_used[0], state.vstar_power_used[1]] if state.vstar_power_used.size() >= 2 else [false, false],
 		"last_knockout_turn_against": [state.last_knockout_turn_against[0], state.last_knockout_turn_against[1]] if state.last_knockout_turn_against.size() >= 2 else [-999, -999],
+		"last_knockout_during_opponent_turn_against": [state.last_knockout_during_opponent_turn_against[0], state.last_knockout_during_opponent_turn_against[1]] if state.last_knockout_during_opponent_turn_against.size() >= 2 else [-999, -999],
+		"knockout_provenance_tracked_against": [state.knockout_provenance_tracked_against[0], state.knockout_provenance_tracked_against[1]] if state.knockout_provenance_tracked_against.size() >= 2 else [false, false],
 		"shared_turn_flags": state.shared_turn_flags.duplicate(true),
 		"players": [
 			build_battle_initial_player_state(state.players[0]) if state.players.size() > 0 else {},

@@ -112,6 +112,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--num-threads", type=int, default=1, help="torch CPU thread cap; 0 keeps default")
     parser.add_argument("--interop-threads", type=int, default=1, help="torch interop thread cap; 0 keeps default")
     parser.add_argument("--allow-dirty-matches", action="store_true", help="keep capped/stalled/unsupported matches in training")
+    parser.add_argument(
+        "--opponent-strategy-id",
+        default="",
+        help="train only records uniquely identified from public state as this opponent strategy",
+    )
     return parser.parse_args(argv)
 
 
@@ -186,7 +191,11 @@ def _payload_match_quality_weight(payload: dict) -> float:
         return 1.0
 
 
-def load_data(data_dir: str, allow_dirty_matches: bool = False) -> tuple[list[dict], np.ndarray, np.ndarray, np.ndarray, int, int]:
+def load_data(
+    data_dir: str,
+    allow_dirty_matches: bool = False,
+    opponent_strategy_id: str = "",
+) -> tuple[list[dict], np.ndarray, np.ndarray, np.ndarray, int, int]:
     pattern = os.path.join(data_dir, "*.json")
     files = sorted(glob.glob(pattern))
     if not files:
@@ -207,6 +216,9 @@ def load_data(data_dir: str, allow_dirty_matches: bool = False) -> tuple[list[di
             continue
         payload_weight = max(0.0, _payload_match_quality_weight(payload))
         for record in payload.get("interaction_records", []):
+            public_opponent_strategy_id = str(record.get("opponent_deck_identity", ""))
+            if opponent_strategy_id and public_opponent_strategy_id != opponent_strategy_id:
+                continue
             state_features = [float(v) for v in record.get("state_features", [])]
             candidates = record.get("candidates", [])
             if not state_features or not isinstance(candidates, list) or not candidates:
@@ -253,6 +265,7 @@ def load_data(data_dir: str, allow_dirty_matches: bool = False) -> tuple[list[di
                         "match_id": str(record.get("match_id", os.path.splitext(os.path.basename(path))[0])),
                         "decision_key": decision_key,
                         "deck_identity": deck_identity,
+                        "opponent_deck_identity": public_opponent_strategy_id,
                         "step_id": step_id,
                         "step_type": step_type,
                         "candidate_index": int(candidate.get("candidate_index", candidate_index)),
@@ -289,6 +302,7 @@ def export_weights(
     input_dim: int,
     state_dim: int,
     interaction_dim: int,
+    opponent_strategy_id: str = "",
 ) -> None:
     layers = []
     activation_map = {"ReLU": "relu", "Sigmoid": "sigmoid"}
@@ -315,6 +329,11 @@ def export_weights(
         "interaction_dim": interaction_dim,
         "layers": layers,
     }
+    if opponent_strategy_id:
+        payload["matchup_policy"] = {
+            "identity_source": "public_unique_fingerprint",
+            "opponent_strategy_id": opponent_strategy_id,
+        }
     with open(output_path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
     print(f"[export] saved weights to {output_path}")
@@ -495,6 +514,7 @@ def train_from_args(args: argparse.Namespace) -> None:
     samples, features, targets, sample_weights, state_dim, interaction_dim = load_data(
         args.data_dir,
         allow_dirty_matches=args.allow_dirty_matches,
+        opponent_strategy_id=args.opponent_strategy_id,
     )
     input_dim = features.shape[1]
     group_ids = [str(sample.get("match_id", sample.get("decision_key", ""))) for sample in samples]
@@ -552,7 +572,14 @@ def train_from_args(args: argparse.Namespace) -> None:
     with torch.no_grad():
         predictions = model(torch.from_numpy(features).to(device)).detach().cpu().numpy()
 
-    export_weights(model, args.output, input_dim, state_dim, interaction_dim)
+    export_weights(
+        model,
+        args.output,
+        input_dim,
+        state_dim,
+        interaction_dim,
+        opponent_strategy_id=args.opponent_strategy_id,
+    )
     metrics = build_interaction_metrics(samples, predictions)
     digest = build_interaction_comparison_digest(metrics)
     output_dir = os.path.dirname(os.path.abspath(args.output))

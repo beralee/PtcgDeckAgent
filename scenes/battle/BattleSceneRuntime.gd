@@ -5,6 +5,38 @@ var _dialog_card_touch_bridge_active_card: BattleCardView = null
 var _dialog_card_touch_bridge_touch_index: int = -1
 
 
+func _notification(what: int) -> void:
+	if what not in [NOTIFICATION_APPLICATION_RESUMED, NOTIFICATION_WM_WINDOW_FOCUS_IN]:
+		return
+	if not is_inside_tree() or not is_node_ready() or _gsm == null or _runtime_resume_recovery_scheduled:
+		return
+	_runtime_resume_recovery_scheduled = true
+	call_deferred("_recover_battle_runtime_after_resume", str(what))
+
+
+func _recover_battle_runtime_after_resume(reason: String = "resume") -> void:
+	_runtime_resume_recovery_scheduled = false
+	if not is_inside_tree() or _gsm == null or _battle_mode != "live":
+		return
+	_cancel_transient_platform_input("battle_runtime_resume")
+	_runtime_log("battle_runtime_resume", "notification=%s %s" % [reason, _state_snapshot()])
+	if _battle_visual_input_blocked:
+		_ai_watchdog_force_finish_visual_sequence()
+	if _pending_prize_animating:
+		_ai_watchdog_force_finish_prize_animation()
+	if _draw_reveal_active:
+		_ai_watchdog_force_finish_draw_reveal()
+	if _has_pending_coin_animation():
+		_on_coin_animation_finished()
+	if _is_ai_action_pause_active():
+		_on_ai_action_pause_finished()
+	if GameManager.current_mode == GameManager.GameMode.VS_AI:
+		_ai_watchdog_reconcile_authoritative_decision()
+	_refresh_ui()
+	_notify_ai_watchdog_activity("runtime_resume")
+	_maybe_run_ai()
+
+
 func _ready() -> void:
 	set_process(false)
 	var runtime_profile: UiRuntimeProfile = (
@@ -468,13 +500,13 @@ func _input(event: InputEvent) -> void:
 		if drain_viewport != null:
 			drain_viewport.set_input_as_handled()
 		return
-	var ios_web_hud_route_active := (
+	var direct_hud_touch_route_active := (
 		_ios_web_hud_touch_adapter != null
 		and _ios_web_hud_touch_adapter.is_enabled()
 	)
-	if ios_web_hud_route_active:
-		# Normalize the Web touch first so its later compatibility-mouse echo is
-		# still recognized, then let the iOS-only HUD adapter own raw touch.
+	if direct_hud_touch_route_active:
+		# Normalize raw touch first so its later compatibility-mouse echo remains
+		# part of the same sequence, then let the direct HUD adapter own the event.
 		if _route_web_battle_pointer_event(event, pointer_observation):
 			return
 		if _try_handle_ios_web_hud_touch_input(event):
@@ -482,12 +514,22 @@ func _input(event: InputEvent) -> void:
 			if ios_hud_viewport != null:
 				ios_hud_viewport.set_input_as_handled()
 			return
+	if _try_close_card_detail_from_cancel(event):
+		var detail_cancel_viewport := get_viewport()
+		if detail_cancel_viewport != null:
+			detail_cancel_viewport.set_input_as_handled()
+		return
+	# Card detail is the visual top layer. Leave pointer events unhandled here so
+	# Godot can deliver them to its Close button, but never route them into the
+	# full-library search or card gallery that remains visible underneath.
+	if _detail_overlay != null and _detail_overlay.visible:
+		return
 	if _try_handle_battle_hud_touch_input(event):
 		var hud_touch_viewport := get_viewport()
 		if hud_touch_viewport != null:
 			hud_touch_viewport.set_input_as_handled()
 		return
-	if not ios_web_hud_route_active and _route_web_battle_pointer_event(event, pointer_observation):
+	if not direct_hud_touch_route_active and _route_web_battle_pointer_event(event, pointer_observation):
 		return
 	if _try_close_discard_collection_from_cancel(event):
 		var discard_cancel_viewport := get_viewport()
@@ -853,8 +895,10 @@ func _on_ui_interaction_watchdog_recovery(session: UiInteractionSession) -> void
 		UiInteractionSessionScript.POLICY_AI_FALLBACK:
 			if session.interaction_type == "effect_step":
 				_reset_effect_interaction()
+				var reconciled_authoritative := _ai_watchdog_reconcile_authoritative_decision()
 				_refresh_ui()
-				_maybe_run_ai()
+				if not reconciled_authoritative:
+					_maybe_run_ai()
 
 
 func _try_close_discard_collection_from_cancel(event: InputEvent) -> bool:
@@ -867,6 +911,15 @@ func _try_close_discard_collection_from_cancel(event: InputEvent) -> bool:
 	if not event.is_action_pressed("ui_cancel"):
 		return false
 	_close_discard_collection_viewer("ui_cancel")
+	return true
+
+
+func _try_close_card_detail_from_cancel(event: InputEvent) -> bool:
+	if _detail_overlay == null or not _detail_overlay.visible:
+		return false
+	if not event.is_action_pressed("ui_cancel"):
+		return false
+	_hide_card_detail()
 	return true
 
 
@@ -1014,7 +1067,7 @@ func _dialog_card_gallery_card_at_screen_position_in_gallery(scroll: ScrollConta
 		return null
 	if scroll.is_inside_tree() and not scroll.is_visible_in_tree():
 		return null
-	if not PointerGeometryScript.control_visible_point(scroll, screen_position):
+	if not PointerGeometryScript.control_visible_viewport_point(scroll, screen_position):
 		return null
 	return _dialog_card_gallery_card_at_screen_position_in_node(row, screen_position, scroll)
 
@@ -1034,9 +1087,9 @@ func _dialog_card_gallery_card_at_screen_position_in_node(node: Node, screen_pos
 		return null
 	if card_view.is_inside_tree() and not card_view.is_visible_in_tree():
 		return null
-	if clip_control == null or not PointerGeometryScript.control_visible_point(clip_control, screen_position):
+	if clip_control == null or not PointerGeometryScript.control_visible_viewport_point(clip_control, screen_position):
 		return null
-	if not PointerGeometryScript.control_visible_point(card_view, screen_position):
+	if not PointerGeometryScript.control_visible_viewport_point(card_view, screen_position):
 		return null
 	return card_view
 
@@ -2585,6 +2638,11 @@ func _on_action_logged(action: GameAction) -> void:
 		action.data["turn_start"] = true
 		action.data["draw_source"] = "turn_start"
 		_record_turn_start_snapshot_after_draw(action)
+	if BattleZoneChangeContractScript.should_reconcile_hand_immediately(action, _view_player):
+		# This signal is emitted from inside the rule transaction. Reconcile after
+		# it returns so Android modal/layout teardown cannot preserve an
+		# intermediate hand Surface.
+		_request_authoritative_hand_reconciliation("zone_change_action")
 	if (
 		action != null
 		and action.action_type == GameAction.ActionType.DRAW_CARD
@@ -2649,7 +2707,6 @@ func _on_action_logged(action: GameAction) -> void:
 		_deck_training_controller.on_action_logged(action)
 
 
-
 func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 	_capture_battle_recording_context_if_ready()
 	_runtime_log("player_choice_required", "%s data=%s" % [choice_type, JSON.stringify(data)])
@@ -2700,6 +2757,21 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 					powerglass_steps,
 					powerglass_card,
 					powerglass_slot
+				)
+		"amulet_of_hope_knockout":
+			var amulet_steps: Array[Dictionary] = []
+			for raw_amulet_step: Variant in data.get("steps", []):
+				if raw_amulet_step is Dictionary:
+					amulet_steps.append(raw_amulet_step)
+			var amulet_card: CardInstance = data.get("card", null) as CardInstance
+			var amulet_slot: PokemonSlot = data.get("slot", null) as PokemonSlot
+			if not amulet_steps.is_empty() and amulet_card != null and amulet_slot != null:
+				_start_effect_interaction(
+					"amulet_of_hope_knockout",
+					int(data.get("player", _view_player)),
+					amulet_steps,
+					amulet_card,
+					amulet_slot
 				)
 		"heavy_baton_target":
 			var pi_hb: int = data.get("player", 0)
@@ -2805,7 +2877,7 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 func _on_stadium_action_pressed() -> void:
 	if _is_board_modal_overlay_visible():
 		return
-	if not _can_accept_live_action() or _gsm == null or _is_field_interaction_active():
+	if not _can_view_player_start_turn_action() or _gsm == null or _is_field_interaction_active():
 		return
 	_show_stadium_action_dialog(_gsm.game_state.current_player_index)
 
@@ -2815,7 +2887,7 @@ func _on_stadium_card_left_clicked(card_instance: CardInstance, card_data: CardD
 	if _is_board_modal_overlay_visible():
 		return
 	var gs := _gsm.game_state if _gsm != null else null
-	if gs != null and gs.stadium_card != null and _can_accept_live_action() and not _is_field_interaction_active():
+	if gs != null and gs.stadium_card != null and _can_view_player_start_turn_action() and not _is_field_interaction_active():
 		_show_stadium_action_dialog(gs.current_player_index)
 		return
 	if card_instance != null:
@@ -2847,7 +2919,7 @@ func _on_stadium_area_input(event: InputEvent) -> void:
 	var mbe := event as InputEventMouseButton
 	if not mbe.pressed:
 		return
-	if not _can_accept_live_action():
+	if not _can_view_player_start_turn_action():
 		return
 	if _gsm == null or _gsm.game_state.stadium_card == null:
 		return
@@ -2878,7 +2950,7 @@ func _on_zeus_help_pressed() -> void:
 			return
 		_deck_training_controller.show_stage_goal()
 		return
-	if not _can_accept_live_action() or _gsm == null or _gsm.game_state == null or _is_field_interaction_active():
+	if not _can_view_player_start_turn_action() or _gsm == null or _gsm.game_state == null or _is_field_interaction_active():
 		return
 	if _view_player < 0 or _view_player >= _gsm.game_state.players.size():
 		return

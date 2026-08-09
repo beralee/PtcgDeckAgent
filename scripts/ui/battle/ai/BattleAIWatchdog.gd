@@ -1,6 +1,8 @@
 class_name BattleAIWatchdog
 extends RefCounted
 
+const BattleTurnActionPolicyScript := preload("res://scripts/ui/battle/BattleTurnActionPolicy.gd")
+
 const TICK_SECONDS := 0.5
 const SOFT_STALL_MSEC := 3000
 const BLOCKER_STALL_MSEC := 6000
@@ -60,6 +62,30 @@ func tick(now_msec: int = -1) -> Dictionary:
 
 func _recover_if_needed(scene: Object, now: int, stalled_msec: int) -> Dictionary:
 	if stalled_msec >= BLOCKER_STALL_MSEC:
+		if _has_stale_human_turn_prompt(scene):
+			_log_recovery(scene, "dismiss_stale_human_action_prompt", stalled_msec)
+			if scene.has_method("_ai_watchdog_dismiss_stale_human_turn_prompt") \
+					and bool(scene.call("_ai_watchdog_dismiss_stale_human_turn_prompt")):
+				_mark_recovery(now)
+				return {"action": "dismiss_stale_human_action_prompt", "stalled_msec": stalled_msec}
+		if bool(scene.get("_pending_prize_animating")):
+			_log_recovery(scene, "finish_prize_animation", stalled_msec)
+			if scene.has_method("_ai_watchdog_force_finish_prize_animation"):
+				scene.call("_ai_watchdog_force_finish_prize_animation")
+			else:
+				scene.set("_pending_prize_animating", false)
+				scene.call("_maybe_run_ai")
+			_mark_recovery(now)
+			return {"action": "finish_prize_animation", "stalled_msec": stalled_msec}
+		if bool(scene.get("_battle_visual_input_blocked")):
+			_log_recovery(scene, "finish_visual_sequence", stalled_msec)
+			if scene.has_method("_ai_watchdog_force_finish_visual_sequence"):
+				scene.call("_ai_watchdog_force_finish_visual_sequence")
+			else:
+				scene.set("_battle_visual_input_blocked", false)
+				scene.call("_maybe_run_ai")
+			_mark_recovery(now)
+			return {"action": "finish_visual_sequence", "stalled_msec": stalled_msec}
 		if bool(scene.call("_is_ai_action_pause_active")):
 			_log_recovery(scene, "finish_action_pause", stalled_msec)
 			scene.call("_on_ai_action_pause_finished")
@@ -81,6 +107,22 @@ func _recover_if_needed(scene: Object, now: int, stalled_msec: int) -> Dictionar
 			_force_rules_after_llm_timeout(scene, stalled_msec)
 			_mark_recovery(now)
 			return {"action": "fallback_llm_rules", "stalled_msec": stalled_msec}
+		var authoritative := _authoritative_pending_decision(scene)
+		if (
+			not authoritative.is_empty()
+			and int(authoritative.get("owner_player_index", -1)) == _ai_player_index(scene)
+			and not _scene_matches_authoritative_decision(scene, authoritative)
+			and scene.has_method("_ai_watchdog_reconcile_authoritative_decision")
+		):
+			_log_recovery(
+				scene,
+				"reconcile_authoritative_decision",
+				stalled_msec,
+				"kind=%s" % str(authoritative.get("kind", ""))
+			)
+			if bool(scene.call("_ai_watchdog_reconcile_authoritative_decision")):
+				_mark_recovery(now)
+				return {"action": "reconcile_authoritative_decision", "stalled_msec": stalled_msec}
 		var pending_choice := str(scene.get("_pending_choice"))
 		if pending_choice == "effect_interaction" and _ai_owns_next_decision(scene):
 			_log_recovery(scene, "abort_effect_and_end_turn", stalled_msec)
@@ -88,6 +130,13 @@ func _recover_if_needed(scene: Object, now: int, stalled_msec: int) -> Dictionar
 			scene.set("_ai_step_scheduled", false)
 			scene.set("_ai_followup_requested", false)
 			scene.call("_reset_effect_interaction")
+			if (
+				not authoritative.is_empty()
+				and scene.has_method("_ai_watchdog_reconcile_authoritative_decision")
+				and bool(scene.call("_ai_watchdog_reconcile_authoritative_decision"))
+			):
+				_mark_recovery(now)
+				return {"action": "abort_effect_and_reconcile", "stalled_msec": stalled_msec}
 			scene.call("_refresh_ui")
 			if _can_force_end_main_phase(scene):
 				scene.call("_on_end_turn", _ai_player_index(scene))
@@ -123,6 +172,11 @@ func _recover_if_needed(scene: Object, now: int, stalled_msec: int) -> Dictionar
 
 	if stalled_msec < SOFT_STALL_MSEC:
 		return {"action": "waiting", "stalled_msec": stalled_msec}
+	if (
+		(bool(scene.get("_pending_prize_animating")) or bool(scene.get("_battle_visual_input_blocked")))
+		and not _ai_owns_next_decision(scene)
+	):
+		return {"action": "waiting_for_presentation", "stalled_msec": stalled_msec}
 	if bool(scene.get("_ai_running")):
 		return {"action": "waiting_for_running_step", "stalled_msec": stalled_msec}
 	if _last_recovery_msec > 0 and now - _last_recovery_msec < RECOVERY_COOLDOWN_MSEC:
@@ -172,7 +226,26 @@ func _should_monitor(scene: Object) -> bool:
 		return true
 	if scene.has_method("_ensure_ai_opponent"):
 		scene.call("_ensure_ai_opponent")
+	# Prize flips and the shared visual queue are presentation-only. Watching
+	# them is safe even if rule progression already handed control to the human.
+	if bool(scene.get("_pending_prize_animating")) or bool(scene.get("_battle_visual_input_blocked")):
+		return true
+	if _has_stale_human_turn_prompt(scene):
+		return true
 	return _ai_owns_next_decision(scene)
+
+
+func _has_stale_human_turn_prompt(scene: Object) -> bool:
+	var gsm: Variant = scene.get("_gsm") if scene != null else null
+	return (
+		gsm != null
+		and gsm.game_state != null
+		and BattleTurnActionPolicyScript.is_stale_human_prompt_on_ai_turn(
+			str(scene.get("_pending_choice")),
+			gsm.game_state,
+			_ai_player_index(scene)
+		)
+	)
 
 
 func _ai_owns_next_decision(scene: Object) -> bool:
@@ -182,6 +255,9 @@ func _ai_owns_next_decision(scene: Object) -> bool:
 	var gsm: Variant = scene.get("_gsm")
 	if gsm == null or gsm.game_state == null:
 		return false
+	var authoritative := _authoritative_pending_decision(scene)
+	if not authoritative.is_empty():
+		return int(authoritative.get("owner_player_index", -1)) == ai_index
 	var pending_choice := str(scene.get("_pending_choice"))
 	if pending_choice == "":
 		return (
@@ -198,7 +274,43 @@ func _ai_owns_next_decision(scene: Object) -> bool:
 	if pending_choice in ["send_out", "heavy_baton_target", "exp_share_target"]:
 		return int((scene.get("_dialog_data") as Dictionary).get("player", -1)) == ai_index
 	if pending_choice == "effect_interaction":
-		return int(scene.call("_get_effect_interaction_prompt_player_index")) == ai_index
+		var prompt_owner := int(scene.call("_get_effect_interaction_prompt_player_index"))
+		if prompt_owner < 0:
+			# Keep malformed scene state observable long enough for the hard
+			# recovery path; otherwise an invalid step index disables watchdog.
+			prompt_owner = int(scene.get("_pending_effect_player_index"))
+		return prompt_owner == ai_index
+	return false
+
+
+func _authoritative_pending_decision(scene: Object) -> Dictionary:
+	if scene == null:
+		return {}
+	var gsm: Variant = scene.get("_gsm")
+	if gsm == null or not gsm.has_method("get_pending_decision_snapshot"):
+		return {}
+	var snapshot: Variant = gsm.call("get_pending_decision_snapshot")
+	return snapshot if snapshot is Dictionary else {}
+
+
+func _scene_matches_authoritative_decision(scene: Object, decision: Dictionary) -> bool:
+	var expected_choice := str(decision.get("scene_choice", ""))
+	if expected_choice == "" or str(scene.get("_pending_choice")) != expected_choice:
+		return false
+	var owner := int(decision.get("owner_player_index", -1))
+	match expected_choice:
+		"take_prize":
+			return (
+				int(scene.get("_pending_prize_player_index")) == owner
+				and int(scene.get("_pending_prize_remaining")) > 0
+			)
+		"send_out", "heavy_baton_target", "exp_share_target":
+			return int((scene.get("_dialog_data") as Dictionary).get("player", -1)) == owner
+		"effect_interaction":
+			return (
+				int(scene.call("_get_effect_interaction_prompt_player_index")) == owner
+				and str(scene.get("_pending_effect_kind")) == str(decision.get("kind", ""))
+			)
 	return false
 
 
@@ -248,14 +360,30 @@ func _fingerprint(scene: Object) -> String:
 		"pending": str(scene.get("_pending_choice")),
 		"effect_step": int(scene.get("_pending_effect_step_index")),
 		"prize_remaining": int(scene.get("_pending_prize_remaining")),
+		"prize_animating": bool(scene.get("_pending_prize_animating")),
+		"visual_blocked": bool(scene.get("_battle_visual_input_blocked")),
 		"draw_active": bool(scene.get("_draw_reveal_active")),
 		"draw_queue": (scene.get("_draw_reveal_queue") as Array).size(),
 		"coin_active": bool(scene.get("_coin_animating")),
 		"coin_queue": (scene.get("_coin_flip_queue") as Array).size(),
 		"pause_active": bool(scene.call("_is_ai_action_pause_active")),
 		"llm_waiting": bool(scene.get("_ai_llm_waiting")),
+		"authoritative": _authoritative_fingerprint(scene),
 		"zones": player_zones,
 	})
+
+
+func _authoritative_fingerprint(scene: Object) -> Dictionary:
+	var decision := _authoritative_pending_decision(scene)
+	if decision.is_empty():
+		return {}
+	return {
+		"kind": str(decision.get("kind", "")),
+		"choice": str(decision.get("scene_choice", "")),
+		"owner": int(decision.get("owner_player_index", -1)),
+		"count": int(decision.get("count", 0)),
+		"steps": (decision.get("steps", []) as Array).size(),
+	}
 
 
 func _arm_tick(scene: Object) -> void:

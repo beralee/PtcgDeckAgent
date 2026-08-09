@@ -46,6 +46,8 @@ func normalize_snapshot_for_restore(raw_snapshot: Variant) -> Dictionary:
 		"stadium_effect_used_effect_id": str(snapshot.get("stadium_effect_used_effect_id", "")),
 		"vstar_power_used": _normalize_bool_array(snapshot.get("vstar_power_used", [false, false]), 2, false),
 		"last_knockout_turn_against": _normalize_int_array(snapshot.get("last_knockout_turn_against", [-999, -999]), 2, -999),
+		"last_knockout_during_opponent_turn_against": _normalize_int_array(snapshot.get("last_knockout_during_opponent_turn_against", [-999, -999]), 2, -999),
+		"knockout_provenance_tracked_against": _normalize_bool_array(snapshot.get("knockout_provenance_tracked_against", [false, false]), 2, false),
 		"shared_turn_flags": _dictionary_value(snapshot.get("shared_turn_flags", {})),
 		"players": normalized_players,
 	}

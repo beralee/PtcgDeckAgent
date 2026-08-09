@@ -408,6 +408,64 @@
 		{
 			"abilities": [
 				{
+					"name": "尘埃场地",
+					"text": "只要这只宝可梦在战斗场上，对手可放于备战区的宝可梦数量就会变为3只。如果对手的备战区有4只及以上宝可梦的话，则对手将备战宝可梦放于弃牌区直到备战宝可梦变为3只为止。［关于变更备战宝可梦的数量的效果，优先执行数量更少的效果。］"
+				}
+			],
+			"ancient_trait": "",
+			"artist": "5ban Graphics",
+			"attacks": [
+				{
+					"cost": "FF",
+					"damage": "140",
+					"is_vstar_power": false,
+					"name": "毒液宝石",
+					"text": "令对手的战斗宝可梦陷入【中毒】状态。"
+				}
+			],
+			"card_index": "073",
+			"card_index_en": "123",
+			"card_type": "Pokemon",
+			"description": "特性: 尘埃场地\n只要这只宝可梦在战斗场上，对手可放于备战区的宝可梦数量就会变为3只。如果对手的备战区有4只及以上宝可梦的话，则对手将备战宝可梦放于弃牌区直到备战宝可梦变为3只为止。［关于变更备战宝可梦的数量的效果，优先执行数量更少的效果。］\n\n【斗】【斗】 毒液宝石 140\n令对手的战斗宝可梦陷入【中毒】状态。\n\n",
+			"effect_id": "ea9a967a89789870e4495d6b26f9c8a2",
+			"energy_provides": "",
+			"energy_type": "F",
+			"evolves_from": "晶光芽",
+			"hp": 270,
+			"image_local_path": "user://cards/images/CSV5C/073.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSV5C/073.png",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "晶光花ex",
+			"name_en": "Glimmora ex",
+			"name_zh": "",
+			"rarity": "RR",
+			"regulation_expanded": true,
+			"regulation_mark": "G",
+			"regulation_standard": true,
+			"release_date": "2025-09-12T00:00:00+08:00",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 3,
+			"set_code": "CSV5C",
+			"set_code_en": "OBF",
+			"source_card_index": "073",
+			"source_imported_at": 0,
+			"source_language": "zh-CN",
+			"source_parser_version": 1,
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV5C",
+			"source_url": "https://tcg.mik.moe/cards/CSV5C/073",
+			"stage": "Stage 1",
+			"weakness_energy": "G",
+			"weakness_value": "×2",
+			"yoren_code": "Y1339"
+		},
+		{
+			"abilities": [
+				{
 					"name": "烈炎支配",
 					"text": "在自己的回合，当将这张卡牌从手牌使出并进行进化时，可使用1次。选择自己牌库中最多3张「基本【火】能量」，以任意方式附着于自己的宝可梦身上。并重洗牌库。"
 				}

@@ -4,6 +4,107 @@ extends TestBase
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 
 
+func test_csv7c_021_shaymin_is_a_complete_bundled_seed_asset() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest: Array[String] = db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV7C_021.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV7C/021.png.bin"
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var card: CardData = db.get_card("CSV7C", "021")
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV7C_021 JSON should be listed in the bundled manifest"),
+		assert_true(image_path in manifest, "CSV7C_021 image should be listed in the bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV7C_021 bundled JSON should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV7C_021 bundled image should decode"),
+		assert_not_null(direct_card, "CSV7C_021 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV7C_021 should load through CardDatabase.get_card"),
+		assert_true(db.has_card("CSV7C", "021"), "CSV7C_021 should load through CardDatabase.has_card"),
+		assert_true(pooled_uids.has("CSV7C_021"), "CSV7C_021 should appear in CardDatabase.get_all_cards for DeckEditor"),
+	]
+	if card != null:
+		checks.append(assert_eq(card.name, "谢米", "CSV7C_021 should preserve the API Chinese name"))
+		checks.append(assert_eq(card.name_en, "Shaymin", "CSV7C_021 should preserve the API English name"))
+		checks.append(assert_eq(card.card_type, "Pokemon", "CSV7C_021 should remain a Pokemon"))
+		checks.append(assert_eq(card.effect_id, "9e3be3fe406be3516aec15ec6898711a", "CSV7C_021 should preserve the API effect id"))
+	db.free()
+	return run_checks(checks)
+
+
+func test_151c_035_036_are_complete_bundled_seed_assets() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest: Array[String] = db._load_bundled_manifest()
+	var specs := {
+		"151C_035": {"index": "035", "name_en": "Clefairy", "effect_id": "03b4239cd2061eb23b13824b7b6cc7b8"},
+		"151C_036": {"index": "036", "name_en": "Clefable", "effect_id": "cae24aba46134427b6c27356344dab57"},
+	}
+	var checks: Array[String] = []
+	for uid: String in specs:
+		var spec: Dictionary = specs[uid]
+		var card_index := str(spec["index"])
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/151C/%s.png.bin" % card_index
+		var direct_card: CardData = db._load_card_from_file(card_path)
+		var card: CardData = db.get_card("151C", card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should decode" % uid))
+		checks.append(assert_not_null(direct_card, "%s bundled JSON should deserialize directly" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase.get_card" % uid))
+		checks.append(assert_true(db.has_card("151C", card_index), "%s should load through CardDatabase.has_card" % uid))
+		if card != null:
+			checks.append(assert_eq(card.name_en, str(spec["name_en"]), "%s should preserve the API English name" % uid))
+			checks.append(assert_eq(card.effect_id, str(spec["effect_id"]), "%s should preserve the API effect id" % uid))
+	db.free()
+	return run_checks(checks)
+
+
+func test_2026_08_01_tinkaton_and_sinistcha_cards_are_complete_bundled_seed_assets() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest: Array[String] = db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var specs := {
+		"CSV1C_068": {"set_code": "CSV1C", "card_index": "068", "name_en": "Tinkaton ex", "effect_id": "132754175b93ba17efadd9d03dabaae9"},
+		"CSV1C_067": {"set_code": "CSV1C", "card_index": "067", "name_en": "Tinkaton", "effect_id": "4facb3836ec30a5640ab3ce81d4310f1"},
+		"CSV6C_063": {"set_code": "CSV6C", "card_index": "063", "name_en": "Tinkatuff", "effect_id": "b5670f3ae026615178352ddd7b9755ec"},
+		"SVP_159": {"set_code": "SVP", "card_index": "159", "name_en": "Tinkatink", "effect_id": "cfc98cad588e26c7060a44ac7ed2b371"},
+		"CSV6C_062": {"set_code": "CSV6C", "card_index": "062", "name_en": "Tinkatink", "effect_id": "2a29a8d92c90a166e603d72bc855c862"},
+		"CSV9.5C_019": {"set_code": "CSV9.5C", "card_index": "019", "name_en": "Poltchageist", "effect_id": "c2a4f4ce310fd236994b700562ce2892"},
+		"CSVH5C_002": {"set_code": "CSVH5C", "card_index": "002", "name_en": "Sinistcha", "effect_id": "defef39f399206a6de240aab5caa7f6b"},
+		"CSVNC_008": {"set_code": "CSVNC", "card_index": "008", "name_en": "Sinistcha ex", "effect_id": "3393a671748e17d4cf292b6e0201bb7c"},
+	}
+	var checks: Array[String] = []
+	for uid: String in specs:
+		var spec: Dictionary = specs[uid]
+		var set_code := str(spec["set_code"])
+		var card_index := str(spec["card_index"])
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var direct_card: CardData = db._load_card_from_file(card_path)
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should decode" % uid))
+		checks.append(assert_not_null(direct_card, "%s bundled JSON should deserialize directly" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase.get_card" % uid))
+		checks.append(assert_true(db.has_card(set_code, card_index), "%s should load through CardDatabase.has_card" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in CardDatabase.get_all_cards" % uid))
+		if card != null:
+			checks.append(assert_eq(card.name_en, str(spec["name_en"]), "%s should preserve the API English name" % uid))
+			checks.append(assert_eq(card.card_type, "Pokemon", "%s should remain a Pokemon" % uid))
+			checks.append(assert_eq(card.effect_id, str(spec["effect_id"]), "%s should preserve the API effect_id" % uid))
+	db.free()
+	return run_checks(checks)
+
+
 func test_csv5c_073_and_csv9c_110_are_complete_bundled_seed_assets() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest: Array[String] = db._load_bundled_manifest()

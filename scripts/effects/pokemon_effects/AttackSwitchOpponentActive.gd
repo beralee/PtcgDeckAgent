@@ -77,7 +77,7 @@ func execute_attack(
 	var target := _resolve_selected_target(opponent)
 	if target == null:
 		return
-	_switch_to_active(opponent, target, state.turn_number)
+	_switch_active_with_bench(state, opponent_index, target, "attack_switch_opponent_active")
 
 
 func _resolve_selected_target(opponent: PlayerState) -> PokemonSlot:
@@ -88,18 +88,6 @@ func _resolve_selected_target(opponent: PlayerState) -> PokemonSlot:
 		if selected in opponent.bench:
 			return selected
 	return opponent.bench[0] if not opponent.bench.is_empty() else null
-
-
-func _switch_to_active(player: PlayerState, new_active: PokemonSlot, turn_number: int) -> void:
-	var old_active: PokemonSlot = player.active_pokemon
-	var bench_idx := player.bench.find(new_active)
-	if old_active == null or bench_idx < 0:
-		return
-	player.bench.remove_at(bench_idx)
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
-	player.active_pokemon = new_active
-	new_active.mark_entered_active_from_bench(turn_number)
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

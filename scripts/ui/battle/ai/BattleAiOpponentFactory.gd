@@ -56,6 +56,12 @@ func build_selected_ai_opponent(
 		if not ai_path_exists(interaction_scorer_path):
 			return build_default_ai_opponent(deck_strategy_registry, host_scene)
 		ai.interaction_scorer_path = interaction_scorer_path
+	var matchup_artifacts: Variant = version_record.get(
+		"matchup_policy_artifacts",
+		selection.get("matchup_policy_artifacts", agent_config.get("matchup_policy_artifacts", {}))
+	)
+	if matchup_artifacts is Dictionary:
+		ai.matchup_policy_artifacts = (matchup_artifacts as Dictionary).duplicate(true)
 
 	var version_id := str(version_record.get("version_id", selection.get("version_id", "")))
 	var display_name := str(version_record.get("display_name", selection.get("display_name", version_id)))

@@ -19,6 +19,13 @@ class WatchdogAI extends RefCounted:
 		return game_state != null and not ui_blocked and game_state.current_player_index == player_index
 
 
+class WatchdogGSM extends GameStateMachine:
+	var authoritative_pending_decision: Dictionary = {}
+
+	func get_pending_decision_snapshot() -> Dictionary:
+		return authoritative_pending_decision.duplicate(true)
+
+
 class WatchdogScene extends Control:
 	var _gsm: GameStateMachine = null
 	var _ai_opponent: RefCounted = WatchdogAI.new()
@@ -31,6 +38,7 @@ class WatchdogScene extends Control:
 	var _pending_prize_player_index: int = -1
 	var _pending_prize_remaining: int = 0
 	var _pending_prize_animating: bool = false
+	var _battle_visual_input_blocked: bool = false
 	var _draw_reveal_active: bool = false
 	var _draw_reveal_queue: Array[GameAction] = []
 	var _coin_animating: bool = false
@@ -45,13 +53,17 @@ class WatchdogScene extends Control:
 	var pause_finish_calls: int = 0
 	var coin_finish_calls: int = 0
 	var draw_finish_calls: int = 0
+	var prize_finish_calls: int = 0
+	var visual_finish_calls: int = 0
+	var authoritative_reconcile_calls: int = 0
 	var reset_effect_calls: int = 0
 	var refresh_calls: int = 0
 	var end_turn_calls: int = 0
+	var stale_prompt_dismiss_calls: int = 0
 	var logs: Array[String] = []
 
 	func _init() -> void:
-		_gsm = GameStateMachine.new()
+		_gsm = WatchdogGSM.new()
 		_gsm.game_state = GameState.new()
 		_gsm.game_state.current_player_index = 1
 		_gsm.game_state.phase = GameState.GamePhase.MAIN
@@ -71,7 +83,11 @@ class WatchdogScene extends Control:
 		return _ai_action_pause_timer != null
 
 	func _get_effect_interaction_prompt_player_index() -> int:
-		return _pending_effect_player_index if _pending_choice == "effect_interaction" else -1
+		if _pending_choice != "effect_interaction":
+			return -1
+		if _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
+			return -1
+		return _pending_effect_player_index
 
 	func _maybe_run_ai() -> void:
 		maybe_calls += 1
@@ -93,6 +109,28 @@ class WatchdogScene extends Control:
 		_draw_reveal_queue.clear()
 		_maybe_run_ai()
 
+	func _ai_watchdog_force_finish_prize_animation() -> void:
+		prize_finish_calls += 1
+		_pending_prize_animating = false
+		_maybe_run_ai()
+
+	func _ai_watchdog_force_finish_visual_sequence() -> void:
+		visual_finish_calls += 1
+		_battle_visual_input_blocked = false
+		_maybe_run_ai()
+
+	func _ai_watchdog_reconcile_authoritative_decision() -> bool:
+		authoritative_reconcile_calls += 1
+		var decision := (_gsm as WatchdogGSM).authoritative_pending_decision
+		if decision.is_empty():
+			return false
+		_pending_choice = str(decision.get("scene_choice", "effect_interaction"))
+		_pending_effect_player_index = int(decision.get("owner_player_index", -1))
+		_pending_effect_step_index = 0
+		_pending_effect_steps = [{"id": "reconciled", "items": ["fallback"]}]
+		_maybe_run_ai()
+		return true
+
 	func _reset_effect_interaction() -> void:
 		reset_effect_calls += 1
 		_pending_choice = ""
@@ -105,6 +143,14 @@ class WatchdogScene extends Control:
 
 	func _on_end_turn(_player_index: int = -1) -> void:
 		end_turn_calls += 1
+
+	func _ai_watchdog_dismiss_stale_human_turn_prompt() -> bool:
+		stale_prompt_dismiss_calls += 1
+		if not _pending_choice in ["pokemon_action", "zeus_help"]:
+			return false
+		_pending_choice = ""
+		_maybe_run_ai()
+		return true
 
 	func _runtime_log(event: String, detail: String = "") -> void:
 		logs.append("%s:%s" % [event, detail])
@@ -183,6 +229,83 @@ func test_watchdog_force_finishes_stuck_coin_and_draw_animations() -> String:
 	)
 
 
+func test_watchdog_force_finishes_stuck_ai_prize_animation() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._pending_choice = "take_prize"
+		scene._pending_prize_player_index = 1
+		scene._pending_prize_remaining = 1
+		scene._pending_prize_animating = true
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("prize_animation", 1000)
+		var result: Dictionary = watchdog.tick(7500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "finish_prize_animation", "A lost prize Tween callback must not block the AI-owned prize prompt forever"),
+			assert_eq(scene.prize_finish_calls, 1, "Prize recovery should invoke the scene's idempotent completion bridge"),
+			assert_false(scene._pending_prize_animating, "Prize recovery must release the animation latch"),
+		])
+		scene.free()
+		return checks
+	)
+
+
+func test_watchdog_force_finishes_stuck_visual_sequence() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._battle_visual_input_blocked = true
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("visual_sequence", 1000)
+		var result: Dictionary = watchdog.tick(7500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "finish_visual_sequence", "A lost visual callback must not block the AI turn forever"),
+			assert_eq(scene.visual_finish_calls, 1, "Visual recovery should clear the presentation queue through the scene bridge"),
+			assert_false(scene._battle_visual_input_blocked, "Visual recovery must release the AI gate"),
+		])
+		scene.free()
+		return checks
+	)
+
+
+func test_watchdog_dismisses_stale_human_action_hud_during_ai_turn() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._pending_choice = "pokemon_action"
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("stale_human_action_hud", 1000)
+		var result: Dictionary = watchdog.tick(7500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "dismiss_stale_human_action_prompt", "A human-only action HUD must stay monitored while the AI owns the turn"),
+			assert_eq(scene.stale_prompt_dismiss_calls, 1, "The watchdog should dismiss the stale human prompt exactly once"),
+			assert_eq(scene._pending_choice, "", "Stale human prompt recovery must clear the AI blocker"),
+			assert_eq(scene.maybe_calls, 1, "Stale human prompt recovery should resume normal AI scheduling"),
+		])
+		scene.free()
+		return checks
+	)
+
+
+func test_watchdog_dismisses_stale_human_helper_prompt_during_ai_turn() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._pending_choice = "zeus_help"
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("stale_human_helper", 1000)
+		var result: Dictionary = watchdog.tick(7500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "dismiss_stale_human_action_prompt", "Every human-only mutation prompt must stay monitored while the AI owns the turn"),
+			assert_eq(scene.stale_prompt_dismiss_calls, 1, "The watchdog should dismiss the stale helper prompt exactly once"),
+			assert_eq(scene._pending_choice, "", "Stale helper recovery must clear the AI blocker"),
+			assert_eq(scene.maybe_calls, 1, "Stale helper recovery should resume normal AI scheduling"),
+		])
+		scene.free()
+		return checks
+	)
+
+
 func test_watchdog_hard_fallback_aborts_ai_effect_and_ends_main_phase_turn() -> String:
 	return _with_vs_ai(func() -> String:
 		var scene := WatchdogScene.new()
@@ -203,6 +326,66 @@ func test_watchdog_hard_fallback_aborts_ai_effect_and_ends_main_phase_turn() -> 
 		scene.free()
 		return checks
 	)
+
+
+func test_watchdog_recovers_malformed_ai_effect_prompt_instead_of_becoming_inactive() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._pending_choice = "effect_interaction"
+		scene._pending_effect_player_index = 1
+		scene._pending_effect_step_index = -1
+		scene._pending_effect_steps = []
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("malformed_effect", 1000)
+		var result: Dictionary = watchdog.tick(13500)
+		var checks := run_checks([
+			assert_true(str(result.get("action", "")) in ["abort_effect", "abort_effect_and_end_turn"], "Malformed AI-owned effect state must remain monitored and take a hard recovery path"),
+			assert_eq(scene.reset_effect_calls, 1, "Malformed AI-owned effect state should be cleared exactly once"),
+		])
+		scene.free()
+		return checks
+	)
+
+
+func test_watchdog_reconciles_engine_owned_ai_decision_when_scene_prompt_is_missing() -> String:
+	return _with_vs_ai(func() -> String:
+		var scene := WatchdogScene.new()
+		scene._gsm.game_state.current_player_index = 0
+		(scene._gsm as WatchdogGSM).authoritative_pending_decision = {
+			"kind": "powerglass_end_turn",
+			"owner_player_index": 1,
+			"scene_choice": "effect_interaction",
+		}
+		var watchdog := BattleAIWatchdogScript.new()
+		watchdog.setup(scene)
+		watchdog.notify_activity("engine_pending", 1000)
+		var result: Dictionary = watchdog.tick(13500)
+		var checks := run_checks([
+			assert_eq(str(result.get("action", "")), "reconcile_authoritative_decision", "An engine-owned AI decision must be rebuilt even when BattleScene lost its prompt"),
+			assert_eq(scene.authoritative_reconcile_calls, 1, "Authoritative recovery should reconcile the scene exactly once"),
+			assert_eq(scene._pending_choice, "effect_interaction", "Reconciliation should restore an actionable scene prompt"),
+		])
+		scene.free()
+		return checks
+	)
+
+
+func test_game_state_machine_exposes_authoritative_prize_decision_snapshot() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.set("_pending_prize_player_index", 1)
+	gsm.set("_pending_prize_remaining", 2)
+	var snapshot: Dictionary = gsm.get_pending_decision_snapshot()
+	return run_checks([
+		assert_eq(str(snapshot.get("kind", "")), "take_prize", "The rule engine should identify its pending prize phase"),
+		assert_eq(int(snapshot.get("owner_player_index", -1)), 1, "The authoritative snapshot should preserve the decision owner"),
+		assert_eq(int(snapshot.get("count", 0)), 2, "The authoritative snapshot should preserve remaining prize count"),
+	])
 
 
 func test_watchdog_releases_stale_running_flag_while_ai_owns_send_out_prompt() -> String:

@@ -31,6 +31,7 @@ const BattleAdviceCoordinatorScript := preload("res://scripts/ui/battle/advice/B
 const BattleDiscussionContextBuilderScript := preload("res://scripts/ui/battle/advice/BattleDiscussionContextBuilder.gd")
 const BattleMatchEndQuickReviewBuilderScript := preload("res://scripts/ui/battle/advice/BattleMatchEndQuickReviewBuilder.gd")
 const BattleActionControllerScript := preload("res://scripts/ui/battle/BattleActionController.gd")
+const BattleTurnActionPolicyScript := preload("res://scripts/ui/battle/BattleTurnActionPolicy.gd")
 const BattleInvalidActionHintControllerScript := preload("res://scripts/ui/battle/BattleInvalidActionHintController.gd")
 const BattleAttackVfxControllerScript := preload("res://scripts/ui/battle/BattleAttackVfxController.gd")
 const BattleAttackVfxRegistryScript := preload("res://scripts/ui/battle/BattleAttackVfxRegistry.gd")
@@ -62,6 +63,7 @@ const UiInteractionWatchdogScript := preload("res://scripts/ui/interactions/UiIn
 const BattleFieldSwapAnimatorScript := preload("res://scripts/ui/battle/BattleFieldSwapAnimator.gd")
 const BattleDialogControllerScript := preload("res://scripts/ui/battle/BattleDialogController.gd")
 const BattleDrawRevealControllerScript := preload("res://scripts/ui/battle/BattleDrawRevealController.gd")
+const BattleZoneChangeContractScript := preload("res://scripts/engine/BattleZoneChangeContract.gd")
 const BattleVisualSequenceControllerScript := preload("res://scripts/ui/battle/visuals/BattleVisualSequenceController.gd")
 const BattleActionIntentControllerScript := preload("res://scripts/ui/battle/intent/BattleActionIntentController.gd")
 const BattleEffectInteractionControllerScript := preload("res://scripts/ui/battle/BattleEffectInteractionController.gd")
@@ -232,7 +234,6 @@ var _card_gallery_drag_active: bool = false
 var _card_gallery_dragging: bool = false
 var _card_gallery_drag_start_position: Vector2 = Vector2.ZERO
 var _card_gallery_drag_start_scroll: int = 0
-var _card_gallery_drag_suppress_click_until_msec: int = 0
 var _card_gallery_drag_touch_active: bool = false
 
 var _setup_done: Array[bool] = [false, false]
@@ -278,6 +279,13 @@ var _draw_reveal_card_views: Array[BattleCardView] = []
 var _draw_reveal_resume_timer: Variant = null
 var _draw_reveal_allow_hand_refresh_during_fly: bool = false
 var _draw_reveal_visible_instance_ids: Array[int] = []
+## Hand membership is rule-owned, while Android/Web pointer surfaces and reveal
+## animations are presentation-owned. Zone/action observers request a semantic
+## reconciliation; the request is flushed after the current rule transaction
+## and retained across any presentation barrier.
+var _authoritative_hand_reconcile_pending: bool = false
+var _authoritative_hand_reconcile_scheduled: bool = false
+var _authoritative_hand_reconcile_reason: String = ""
 var _web_battle_input_adapter: WebInputAdapter = WebInputAdapterScript.new()
 var _battle_pointer_input_router = BattlePointerInputRouterScript.new()
 var _battle_pointer_surface_controller = BattlePointerSurfaceControllerScript.new()
@@ -296,6 +304,8 @@ var _ready_vfx_trigger_action_kind: String = ""
 var _pending_prize_player_index: int = -1
 var _pending_prize_remaining: int = 0
 var _pending_prize_animating: bool = false
+var _prize_animation_generation: int = 0
+var _runtime_resume_recovery_scheduled: bool = false
 var _ai_opponent = null
 var _deck_training_controller: DeckTrainingBattleController = null
 var _deck_training_scenario: Dictionary = {}

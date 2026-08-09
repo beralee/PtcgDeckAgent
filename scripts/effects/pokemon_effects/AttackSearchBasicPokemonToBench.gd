@@ -6,11 +6,17 @@ const STEP_ID := "bombirdier_fast_carrier"
 
 var max_count: int = 3
 var attack_index_to_match: int = -1
+var required_names: PackedStringArray = PackedStringArray()
 
 
-func _init(count: int = 3, match_attack_index: int = -1) -> void:
+func _init(
+	count: int = 3,
+	match_attack_index: int = -1,
+	matching_names: PackedStringArray = PackedStringArray()
+) -> void:
 	max_count = maxi(0, count)
 	attack_index_to_match = match_attack_index
+	required_names = matching_names.duplicate()
 
 
 func applies_to_attack_index(attack_index: int) -> bool:
@@ -29,9 +35,10 @@ func get_attack_interaction_steps(
 	if available <= 0:
 		return []
 	var legal := _legal_cards(player)
+	var target_label := _search_target_label()
 	return [build_full_library_search_step(
 		STEP_ID,
-		"Choose up to %d Basic Pokemon to put onto your Bench" % available,
+		"Choose up to %d %s to put onto your Bench" % [available, target_label],
 		player.deck,
 		legal,
 		VISIBLE_SCOPE_OWN_FULL_DECK,
@@ -74,15 +81,38 @@ func execute_attack(
 
 
 func get_description() -> String:
-	return "Search your deck for up to %d Basic Pokemon, put them onto your Bench, then shuffle your deck." % max_count
+	return "Search your deck for up to %d %s, put them onto your Bench, then shuffle your deck." % [
+		max_count,
+		_search_target_label(),
+	]
 
 
 func _legal_cards(player: PlayerState) -> Array[CardInstance]:
 	var result: Array[CardInstance] = []
 	for card: CardInstance in player.deck:
-		if card != null and card.card_data != null and card.card_data.is_basic_pokemon():
+		if (
+			card != null
+			and card.card_data != null
+			and card.card_data.is_basic_pokemon()
+			and _matches_required_name(card.card_data)
+		):
 			result.append(card)
 	return result
+
+
+func _matches_required_name(card_data: CardData) -> bool:
+	if required_names.is_empty():
+		return true
+	for required_name: String in required_names:
+		if card_data.matches_rule_identity_name(required_name):
+			return true
+	return false
+
+
+func _search_target_label() -> String:
+	if required_names.is_empty():
+		return "Basic Pokemon"
+	return "Basic Pokemon named %s" % " / ".join(required_names)
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

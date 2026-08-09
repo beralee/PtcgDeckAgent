@@ -1037,16 +1037,22 @@ class AttackReturnSelfToDeck:
 			replacement = _resolve_replacement(player)
 			if replacement == null:
 				return
+		var was_active := player.active_pokemon == attacker
+		if was_active and not _remove_active_and_promote(
+			state,
+			attacker.get_top_card().owner_index,
+			attacker,
+			replacement,
+			"attack_return_self_to_deck"
+		):
+			return
 		var cards := attacker.collect_all_cards()
 		attacker.pokemon_stack.clear()
 		attacker.attached_energy.clear()
 		attacker.attached_tool = null
 		attacker.damage_counters = 0
 		attacker.clear_all_status()
-		if player.active_pokemon == attacker:
-			player.active_pokemon = replacement
-			player.bench.erase(replacement)
-		else:
+		if not was_active:
 			player.bench.erase(attacker)
 		H.return_cards_to_deck(player, cards, true)
 
@@ -1667,6 +1673,7 @@ class AbilityBenchMillOnPlay:
 
 class AbilityBenchDiscardStadiumOnPlay:
 	extends BaseEffect
+	const STEP_ID := "csv9c_chien_pao_discard_stadium"
 
 	func is_bench_enter_ability() -> bool:
 		return true
@@ -1680,9 +1687,29 @@ class AbilityBenchDiscardStadiumOnPlay:
 		var pi := pokemon.get_top_card().owner_index
 		return state.current_player_index == pi and pokemon in state.players[pi].bench and pokemon.turn_played == state.turn_number and pokemon.entered_bench_from_hand_this_turn(state.turn_number) and not pokemon.has_ability_used(state.turn_number)
 
-	func execute_ability(pokemon: PokemonSlot, _ability_index: int, _targets: Array, state: GameState) -> void:
+	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+		if card == null or state == null or state.stadium_card == null:
+			return []
+		return [{
+			"id": STEP_ID,
+			"title": "埋入雪中：选择当前竞技场并放入弃牌区",
+			"items": [state.stadium_card],
+			"labels": [state.stadium_card.card_data.display_name()],
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": true,
+			"force_confirm": true,
+			"visible_scope": "public_stadium",
+		}]
+
+	func execute_ability(pokemon: PokemonSlot, _ability_index: int, targets: Array, state: GameState) -> void:
 		if not can_use_ability(pokemon, state):
 			return
+		var context := get_interaction_context(targets)
+		if context.has(STEP_ID):
+			var selected: Array = context.get(STEP_ID, [])
+			if selected.size() != 1 or selected[0] != state.stadium_card:
+				return
 		var stadium_owner := state.stadium_owner_index
 		if stadium_owner >= 0 and stadium_owner < state.players.size():
 			state.players[stadium_owner].discard_pile.append(state.stadium_card)

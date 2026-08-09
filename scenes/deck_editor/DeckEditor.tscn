@@ -177,12 +177,12 @@ custom_minimum_size = Vector2(0, 104)
 size_flags_horizontal = 3
 text = "保存"
 
-[node name="BtnStrategy" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+[node name="BtnCardSearch" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 104)
 size_flags_horizontal = 3
-text = "打法思路"
+text = "搜索卡牌"
 
 [node name="BtnAI" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
 unique_name_in_owner = true

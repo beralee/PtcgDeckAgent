@@ -262,6 +262,8 @@ func _score_and_rank_actions(
 	_sync_deck_strategy_helpers()
 	var scored: Array = []
 	var state_features: Array = []
+	var matchup_context: Dictionary = {}
+	var matchup_turn_contract: Dictionary = {}
 	if gsm != null and gsm.game_state != null:
 		if state_encoder_class != null and state_encoder_class.has_method("encode"):
 			var encoded: Variant = state_encoder_class.call("encode", gsm.game_state, player_index)
@@ -269,6 +271,26 @@ func _score_and_rank_actions(
 				state_features = (encoded as Array).duplicate(true)
 		if state_features.is_empty():
 			state_features = StateEncoderScript.encode(gsm.game_state, player_index)
+		if deck_strategy != null and deck_strategy.has_method("build_matchup_context"):
+			var built_matchup: Variant = deck_strategy.call("build_matchup_context", gsm.game_state, player_index)
+			if built_matchup is Dictionary:
+				matchup_context = (built_matchup as Dictionary).duplicate(true)
+		if bool(matchup_context.get("is_unique", false)):
+			if deck_strategy.has_method("build_turn_contract"):
+				matchup_turn_contract = deck_strategy.call(
+					"build_turn_contract",
+					gsm.game_state,
+					player_index,
+					{"prompt_kind": "mcts_action_order", "matchup_context": matchup_context}
+				)
+			if deck_strategy.has_method("apply_matchup_overlay_to_turn_contract"):
+				matchup_turn_contract = deck_strategy.call(
+					"apply_matchup_overlay_to_turn_contract",
+					matchup_turn_contract,
+					gsm.game_state,
+					player_index,
+					matchup_context
+				)
 	for action: Dictionary in actions:
 		var context := {
 			"gsm": gsm,
@@ -277,8 +299,20 @@ func _score_and_rank_actions(
 			"features": _feature_extractor.build_context(gsm, player_index, action),
 		}
 		var heuristic_score: float = _heuristics.score_action(action, context)
+		var matchup_score := 0.0
+		if deck_strategy != null \
+				and bool(matchup_context.get("is_unique", false)) \
+				and deck_strategy.has_method("score_matchup_action"):
+			matchup_score = float(deck_strategy.call(
+				"score_matchup_action",
+				action,
+				gsm.game_state,
+				player_index,
+				matchup_context,
+				matchup_turn_contract
+			))
 		var learned_action_score: float = _score_action_with_model(str(action.get("kind", "")), state_features, context.get("features", {}))
-		var score: float = heuristic_score + learned_action_score
+		var score: float = heuristic_score + matchup_score + learned_action_score
 		scored.append({"action": action, "score": score})
 	scored.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a.get("score", 0.0)) > float(b.get("score", 0.0))

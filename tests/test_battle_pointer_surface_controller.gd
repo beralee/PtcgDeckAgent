@@ -106,6 +106,56 @@ func test_touch_jitter_is_tap_when_surface_does_not_overflow() -> String:
 	])
 
 
+func test_overflow_surface_keeps_sub_slop_jitter_as_tap() -> String:
+	var router = RouterScript.new()
+	router.configure(true)
+	var controller = SurfaceControllerScript.new()
+	controller.configure(router, true)
+	var activations: Array = []
+	var scroll_state := {"value": 120}
+	var config := _surface_config(89, activations, scroll_state, true)
+	config["horizontal_drag_threshold"] = 12.0
+	controller.reconcile_surface("gallery", "cards:89", config)
+
+	var down := _touch(true, Vector2(100, 100))
+	controller.handle_event(down, router.observe(down, 3500))
+	var drag := _drag(Vector2(108, 102), Vector2(8, 2))
+	controller.handle_event(drag, router.observe(drag, 3510))
+	var up := _touch(false, Vector2(108, 102))
+	controller.handle_event(up, router.observe(up, 3520))
+
+	return run_checks([
+		assert_eq(activations.size(), 1, "Movement below the horizontal drag slop must remain a tap"),
+		assert_eq(int(scroll_state.get("value", -1)), 120, "Movement below the drag slop must not scroll an overflowing surface"),
+	])
+
+
+func test_overflow_surface_drag_past_slop_commits_without_release_rollback() -> String:
+	var router = RouterScript.new()
+	router.configure(true)
+	var controller = SurfaceControllerScript.new()
+	controller.configure(router, true)
+	var activations: Array = []
+	var scroll_state := {"value": 120}
+	var config := _surface_config(90, activations, scroll_state, true)
+	config["horizontal_drag_threshold"] = 12.0
+	controller.reconcile_surface("gallery", "cards:90", config)
+
+	var down := _touch(true, Vector2(100, 100))
+	controller.handle_event(down, router.observe(down, 3600))
+	var drag := _drag(Vector2(84, 102), Vector2(-16, 2))
+	controller.handle_event(drag, router.observe(drag, 3610))
+	var scroll_during_drag := int(scroll_state.get("value", -1))
+	var up := _touch(false, Vector2(84, 102))
+	controller.handle_event(up, router.observe(up, 3620))
+
+	return run_checks([
+		assert_eq(scroll_during_drag, 124, "A horizontal swipe should begin after 12px and apply only movement beyond that slop, without a jump"),
+		assert_eq(int(scroll_state.get("value", -1)), 124, "Releasing a committed horizontal drag must preserve its scroll position"),
+		assert_eq(activations.size(), 0, "A committed horizontal drag must never activate the starting card"),
+	])
+
+
 func test_horizontal_overflow_drag_scrolls_without_activating_card() -> String:
 	var router = RouterScript.new()
 	router.configure(true)
@@ -113,10 +163,12 @@ func test_horizontal_overflow_drag_scrolls_without_activating_card() -> String:
 	controller.configure(router, true)
 	var activations: Array = []
 	var scroll_state := {"value": 120}
+	var config := _surface_config(99, activations, scroll_state, true)
+	config["horizontal_drag_threshold"] = 12.0
 	controller.reconcile_surface(
 		"hand",
 		"cards:99",
-		_surface_config(99, activations, scroll_state, true)
+		config
 	)
 
 	var down := _touch(true, Vector2(160, 120))
@@ -131,7 +183,7 @@ func test_horizontal_overflow_drag_scrolls_without_activating_card() -> String:
 	return run_checks([
 		assert_true(handled_drag, "The surface must own a horizontal overflow drag"),
 		assert_eq(activations.size(), 0, "A scrolling gesture must never activate its starting card"),
-		assert_eq(int(scroll_state.get("value", -1)), 180, "Horizontal drag must update the registered scroll value"),
+		assert_eq(int(scroll_state.get("value", -1)), 168, "Horizontal drag must apply movement beyond the 12px drag slop without an entry jump"),
 		assert_eq(controller.active_gesture_count(), 0, "The drag must release all gesture state"),
 	])
 
@@ -179,21 +231,113 @@ func test_mouse_first_touch_compatibility_sequence_commits_once() -> String:
 	)
 	var touch_echo_down := _touch(true, Vector2(140, 100))
 	var echo_observation: Dictionary = router.observe(touch_echo_down, 6001)
-	var touch_echo_up := _touch(false, Vector2(140, 100))
-	router.observe(touch_echo_up, 6002)
+	var handled_echo_down: bool = bool(
+		controller.handle_event(touch_echo_down, echo_observation)
+	)
 	var mouse_up := _mouse_button(false, Vector2(140, 100))
 	var handled_up: bool = bool(
-		controller.handle_event(mouse_up, router.observe(mouse_up, 6003))
+		controller.handle_event(mouse_up, router.observe(mouse_up, 6002))
+	)
+	var touch_echo_up := _touch(false, Vector2(140, 100))
+	var handled_echo_up: bool = bool(
+		controller.handle_event(touch_echo_up, router.observe(touch_echo_up, 6003))
 	)
 
 	return run_checks([
 		assert_true(handled_down, "A mouse-first browser compatibility sequence must own the surface"),
 		assert_true(bool(echo_observation.get("synthetic_echo", false)), "The following touch must be recognized as the same sequence"),
+		assert_true(handled_echo_down, "The touch echo must remain swallowed by the existing surface owner"),
 		assert_true(handled_up, "The mouse tail must complete the owned surface gesture"),
+		assert_true(handled_echo_up, "The touch release echo must remain swallowed after the canonical release"),
 		assert_eq(activations.size(), 1, "A mouse-first touch sequence must activate exactly once"),
 		assert_eq(int(activations[0].get("key", -1)), 303, "The semantic card key must survive compatibility events"),
 		assert_eq(controller.active_gesture_count(), 0, "The compatibility sequence must leave no gesture state"),
 	])
+
+
+func test_completed_hand_surface_does_not_swallow_next_hud_mouse_first_press() -> String:
+	var router = RouterScript.new()
+	router.configure(true)
+	var controller = SurfaceControllerScript.new()
+	controller.configure(router, true)
+	var surface_visible := {"value": true}
+	var activations: Array = []
+	var scroll_state := {"value": 0}
+	var config := _surface_config(404, activations, scroll_state, false)
+	config["contains"] = func(position: Vector2) -> bool:
+		return bool(surface_visible.get("value", false)) and Rect2(Vector2.ZERO, Vector2(400, 260)).has_point(position)
+	config["activate"] = func(key: Variant, generation: int) -> void:
+		activations.append({"key": key, "generation": generation})
+		surface_visible["value"] = false
+	controller.reconcile_surface("hand", "cards:404", config)
+
+	var position := Vector2(140, 100)
+	var touch_down := _touch(true, position)
+	controller.handle_event(touch_down, router.observe(touch_down, 7000))
+	var touch_up := _touch(false, position)
+	controller.handle_event(touch_up, router.observe(touch_up, 7010))
+	var use_button_mouse_down := _mouse_button(true, position)
+	var next_observation: Dictionary = router.observe(use_button_mouse_down, 7160)
+	var swallowed_by_old_surface := controller.handle_event(use_button_mouse_down, next_observation)
+
+	return run_checks([
+		assert_eq(activations.size(), 1, "The first tap must open the card action HUD"),
+		assert_true(bool(next_observation.get("deliver", false)), "The next Android mouse-first tap must be canonical"),
+		assert_false(swallowed_by_old_surface, "The hidden hand surface must not consume the first Use-button press"),
+	])
+
+
+func test_android_touch_mouse_event_order_matrix_commits_each_physical_tap_once() -> String:
+	var orderings: Array[Array] = [
+		["touch_down", "mouse_down", "touch_up", "mouse_up"],
+		["touch_down", "mouse_down", "mouse_up", "touch_up"],
+		["mouse_down", "touch_down", "mouse_up", "touch_up"],
+		["mouse_down", "touch_down", "touch_up", "mouse_up"],
+		["touch_down", "touch_up"],
+		["mouse_down", "mouse_up"],
+	]
+	var checks: Array[String] = []
+	for repetition: int in 20:
+		for ordering_index: int in orderings.size():
+			var router = RouterScript.new()
+			router.configure(true)
+			var controller = SurfaceControllerScript.new()
+			controller.configure(router, true)
+			var activations: Array = []
+			var scroll_state := {"value": 0}
+			controller.reconcile_surface(
+				"android_gallery",
+				"cards:%d:%d" % [repetition, ordering_index],
+				_surface_config(7000 + repetition * 10 + ordering_index, activations, scroll_state, false)
+			)
+			var press_position := Vector2(140, 100)
+			var release_position := press_position + Vector2(float((repetition % 7) - 3), float(repetition % 3))
+			var timestamp := 10_000 + repetition * 100 + ordering_index * 10
+			for phase: String in orderings[ordering_index]:
+				var event: InputEvent
+				match phase:
+					"touch_down":
+						event = _touch(true, press_position)
+					"touch_up":
+						event = _touch(false, release_position)
+					"mouse_down":
+						event = _mouse_button(true, press_position)
+					_:
+						event = _mouse_button(false, release_position)
+				var observation: Dictionary = router.observe(event, timestamp)
+				controller.handle_event(event, observation)
+				timestamp += 1
+			checks.append(assert_eq(
+				activations.size(),
+				1,
+				"Android ordering %s repetition %d must activate exactly once" % [str(orderings[ordering_index]), repetition]
+			))
+			checks.append(assert_eq(
+				controller.active_gesture_count(),
+				0,
+				"Android ordering %s repetition %d must release all gesture state" % [str(orderings[ordering_index]), repetition]
+			))
+	return run_checks(checks)
 
 
 func _surface_config(

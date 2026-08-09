@@ -116,6 +116,8 @@ func get_latest_approved_artifacts() -> Dictionary:
 		"value_net_path": str(latest.get("value_net_path", "")),
 		"action_scorer_path": str(latest.get("action_scorer_path", "")),
 		"interaction_scorer_path": str(latest.get("interaction_scorer_path", "")),
+		"matchup_policy_artifacts": (latest.get("matchup_policy_artifacts", {}) as Dictionary).duplicate(true) \
+			if latest.get("matchup_policy_artifacts", {}) is Dictionary else {},
 		"source_run_id": str(latest.get("source_run_id", "")),
 		"lane_recipe_id": str(latest.get("lane_recipe_id", "")),
 		"parent_approved_baseline_id": str(latest.get("parent_approved_baseline_id", "")),

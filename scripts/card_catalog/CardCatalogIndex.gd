@@ -1,10 +1,12 @@
 class_name CardCatalogIndex
 extends RefCounted
 
+const CardCatalogSearchRecordScript := preload("res://scripts/card_catalog/CardCatalogSearchRecord.gd")
 const BUNDLED_ROOT := "res://data/card_catalog"
 const USER_ROOT := "user://card_catalog"
 const BUNDLED_MANIFEST := "catalog_manifest.json"
 const USER_MANIFEST := "remote_manifest.json"
+const MIN_SEARCH_INDEX_SCHEMA_VERSION := 2
 
 var _bundled_root := BUNDLED_ROOT
 var _user_root := USER_ROOT
@@ -151,6 +153,8 @@ func _load_index_for_manifest(root_path: String, manifest: Dictionary) -> bool:
 	if index_path == "":
 		index_path = "index.json"
 	var index_data := _load_json_dictionary(root_path.path_join(index_path))
+	if int(index_data.get("schema_version", 0)) < MIN_SEARCH_INDEX_SCHEMA_VERSION:
+		return false
 	var raw_cards: Variant = index_data.get("cards", [])
 	if not (raw_cards is Array):
 		return false
@@ -218,33 +222,7 @@ func _load_set_cards(set_file: String) -> Dictionary:
 
 
 func _minimal_card_dict_from_entry(entry: Dictionary) -> Dictionary:
-	var set_code := str(entry.get("set_code", ""))
-	var card_index := str(entry.get("card_index", ""))
-	return {
-		"name": str(entry.get("name", "")),
-		"name_en": str(entry.get("name_en", "")),
-		"name_zh": str(entry.get("name_zh", "")),
-		"card_type": str(entry.get("card_type", "")),
-		"mechanic": str(entry.get("mechanic", "")),
-		"label": str(entry.get("label", "")),
-		"is_tags": entry.get("is_tags", []),
-		"set_code": set_code,
-		"card_index": card_index,
-		"set_code_en": str(entry.get("set_code_en", "")),
-		"card_index_en": str(entry.get("card_index_en", "")),
-		"rarity": str(entry.get("rarity", "")),
-		"regulation_mark": str(entry.get("regulation_mark", "")),
-		"effect_id": str(entry.get("effect_id", "")),
-		"source_provider": str(entry.get("source_provider", "")),
-		"source_set_code": str(entry.get("source_set_code", "")),
-		"source_card_index": str(entry.get("source_card_index", "")),
-		"source_prints": entry.get("source_prints", []),
-		"energy_type": str(entry.get("energy_type", "")),
-		"stage": str(entry.get("stage", "")),
-		"hp": int(entry.get("hp", 0)),
-		"image_url": str(entry.get("image_url", "")),
-		"image_local_path": CardData.build_local_image_path(set_code, card_index),
-	}
+	return CardCatalogSearchRecordScript.to_minimal_card_dict(entry)
 
 
 func _matches_query(entry: Dictionary, normalized_query: String) -> bool:

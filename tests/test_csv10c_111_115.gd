@@ -131,6 +131,53 @@ func test_csv10c_113_optional_draw_and_discard_all_energy() -> String:
 	])
 
 
+func test_csv10c_113_attack_knockout_unlocks_csv8c_135_on_the_defenders_next_turn() -> String:
+	var garchomp_card := _load_card("113")
+	var fezandipiti_payload: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/CSV8C_135.json"))
+	var fezandipiti_card := CardData.from_dict(fezandipiti_payload) if fezandipiti_payload is Dictionary else null
+	if garchomp_card == null or fezandipiti_card == null:
+		return "CSV10C_113 and CSV8C_135 bundled cards should load"
+	var gsm := GameStateMachine.new()
+	var state := _state()
+	gsm.game_state = state
+	state.turn_number = 4
+	state.current_player_index = 1
+	state.phase = GameState.GamePhase.MAIN
+	var garchomp := _slot(garchomp_card, 1)
+	garchomp.attached_energy = [CardInstance.create(_energy("Fighting Energy", "Basic Energy"), 1)]
+	state.players[1].active_pokemon = garchomp
+	var victim_card := _pokemon("Garchomp victim")
+	victim_card.hp = 100
+	var victim := _slot(victim_card, 0)
+	var replacement := _slot(_pokemon("Replacement"), 0)
+	var fezandipiti := _slot(fezandipiti_card, 0)
+	state.players[0].active_pokemon = victim
+	state.players[0].bench = [replacement, fezandipiti]
+	for draw_index: int in 5:
+		state.players[0].deck.append(CardInstance.create(_pokemon("Draw %d" % draw_index), 0))
+	for player_index: int in 2:
+		for prize_index: int in 6:
+			state.players[player_index].prizes.append(CardInstance.create(_pokemon("Prize %d-%d" % [player_index, prize_index]), player_index))
+	gsm.effect_processor.register_pokemon_card(garchomp_card)
+	gsm.effect_processor.register_pokemon_card(fezandipiti_card)
+
+	var attack_used := gsm.use_attack(1, 0, [{"draw_to_hand_size_choice": ["skip"]}])
+	var prize_taken := gsm.resolve_take_prize(1, 0)
+	var replacement_sent := gsm.send_out_pokemon(0, replacement)
+	var ability_used := gsm.use_ability(0, fezandipiti, 0)
+
+	return run_checks([
+		assert_true(attack_used, "Cynthia's Garchomp ex should resolve Spiral Dive through the real attack entry"),
+		assert_true(victim.get_top_card() in state.players[0].discard_pile, "Spiral Dive should Knock Out and discard the 100 HP defending Pokemon"),
+		assert_true(prize_taken, "The attacking player should complete the Prize choice before the turn changes"),
+		assert_true(replacement_sent, "The defending player should promote a replacement after the Knock Out"),
+		assert_eq(state.current_player_index, 0, "The defender's next turn should begin after replacement"),
+		assert_eq(state.phase, GameState.GamePhase.MAIN, "The defender should reach the Main phase before using Flip the Script"),
+		assert_true(ability_used, "An attack Knock Out by Cynthia's Garchomp ex should unlock Fezandipiti ex on the defender's next turn"),
+		assert_eq(state.players[0].hand.size(), 4, "The next-turn draw plus Flip the Script should put four cards into the defender's hand"),
+	])
+
+
 func test_csv10c_114_reveals_top_card_and_optionally_discards_it() -> String:
 	var state := _state()
 	var processor := EffectProcessor.new()

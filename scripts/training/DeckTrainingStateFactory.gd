@@ -46,6 +46,18 @@ static func build(scenario: Dictionary) -> Dictionary:
 			int((knockout_turns as Array)[0]),
 			int((knockout_turns as Array)[1]),
 		]
+	var opponent_turn_knockout_turns: Variant = scenario.get("last_knockout_during_opponent_turn_against", null)
+	if opponent_turn_knockout_turns is Array and (opponent_turn_knockout_turns as Array).size() >= 2:
+		state.last_knockout_during_opponent_turn_against = [
+			int((opponent_turn_knockout_turns as Array)[0]),
+			int((opponent_turn_knockout_turns as Array)[1]),
+		]
+	var knockout_provenance: Variant = scenario.get("knockout_provenance_tracked_against", null)
+	if knockout_provenance is Array and (knockout_provenance as Array).size() >= 2:
+		state.knockout_provenance_tracked_against = [
+			bool((knockout_provenance as Array)[0]),
+			bool((knockout_provenance as Array)[1]),
+		]
 	state.players.append(_build_player(card_database, player_deck, 0, scenario.get("player", {}), state.turn_number, errors))
 	state.players.append(_build_player(card_database, opponent_deck, 1, scenario.get("opponent", {}), state.turn_number, errors))
 	if not errors.is_empty():

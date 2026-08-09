@@ -1630,7 +1630,24 @@ func test_battle_scene_sadas_vitality_field_assignment_confirm_resolves_effect()
 	var effect := EffectSadasVitalityScript.new()
 	var steps: Array[Dictionary] = effect.get_interaction_steps(sada, gsm.game_state)
 	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, sada)
-	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var source_row := battle_scene.get("_field_interaction_row") as HBoxContainer
+	var source_card := source_row.get_child(0) as BattleCardView
+	var source_press := InputEventScreenTouch.new()
+	source_press.index = 0
+	source_press.pressed = true
+	source_press.position = Vector2(200, 80)
+	source_card.handle_bridged_pointer_input(source_press)
+	var source_jitter := InputEventScreenDrag.new()
+	source_jitter.index = 0
+	source_jitter.position = Vector2(216, 82)
+	source_jitter.relative = Vector2(16, 2)
+	source_card.handle_bridged_pointer_input(source_jitter)
+	var source_release := InputEventScreenTouch.new()
+	source_release.index = 0
+	source_release.pressed = false
+	source_release.position = Vector2(216, 82)
+	source_card.handle_bridged_pointer_input(source_release)
+	var selected_source_after_touch := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
 	battle_scene.call("_handle_field_assignment_target_index", 0)
 	var confirm_button := battle_scene.get("_field_interaction_confirm_btn") as Button
 	var overlay := battle_scene.get("_field_interaction_overlay") as Control
@@ -1639,6 +1656,7 @@ func test_battle_scene_sadas_vitality_field_assignment_confirm_resolves_effect()
 		confirm_button.emit_signal("pressed")
 
 	var result := run_checks([
+		assert_eq(selected_source_after_touch, 0, "Sada's Vitality must accept a real Energy touch with normal 16px finger jitter"),
 		assert_true(enabled_after_assignment, "Sada field assignment confirm should enable after one legal energy assignment"),
 		assert_true(overlay != null and int(overlay.z_index) >= 300 and not overlay.z_as_relative, "Field assignment overlay should sit above portrait HUD/input layers"),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "Confirm should finish the pending effect interaction"),

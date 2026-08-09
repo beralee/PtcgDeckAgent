@@ -82,6 +82,12 @@ static func _restore_game_state(snapshot: Dictionary) -> GameState:
 	var knockout_variant: Variant = snapshot.get("last_knockout_turn_against", [-999, -999])
 	if knockout_variant is Array:
 		state.last_knockout_turn_against = _restore_int_array(knockout_variant as Array, 2, -999)
+	var opponent_turn_knockout_variant: Variant = snapshot.get("last_knockout_during_opponent_turn_against", [-999, -999])
+	if opponent_turn_knockout_variant is Array:
+		state.last_knockout_during_opponent_turn_against = _restore_int_array(opponent_turn_knockout_variant as Array, 2, -999)
+	var provenance_variant: Variant = snapshot.get("knockout_provenance_tracked_against", [false, false])
+	if provenance_variant is Array:
+		state.knockout_provenance_tracked_against = _restore_bool_array(provenance_variant as Array, 2, false)
 
 	var shared_flags_variant: Variant = snapshot.get("shared_turn_flags", {})
 	state.shared_turn_flags = shared_flags_variant.duplicate(true) if shared_flags_variant is Dictionary else {}

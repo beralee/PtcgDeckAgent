@@ -3,6 +3,8 @@ extends RefCounted
 
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const PointerGesturePolicyScript := preload("res://scripts/ui/input/PointerGesturePolicy.gd")
+const BattleTurnActionPolicyScript := preload("res://scripts/ui/battle/BattleTurnActionPolicy.gd")
 const ENERGY_ICON_TEXTURES := {
 	"R": preload("res://assets/ui/e-huo.png"),
 	"W": preload("res://assets/ui/e-shui.png"),
@@ -42,8 +44,7 @@ const LIBRARY_SEARCH_PORTRAIT_SOURCE_BAR_MIN_HEIGHT := 118.0
 const LIBRARY_SEARCH_PORTRAIT_EMPTY_SLOT_FONT_SIZE := 32
 const LIBRARY_SEARCH_SOURCE_WIDTH_MIN := 196.0
 const LIBRARY_SEARCH_SOURCE_WIDTH_MAX := 214.0
-const LIBRARY_SEARCH_CANDIDATE_TOUCH_CLICK_MOVE_TOLERANCE := 28.0
-const LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE := 36.0
+const LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE := PointerGesturePolicyScript.TOUCH_VERTICAL_TAP_TOLERANCE
 
 var _pending_dialog_center_locks: Dictionary = {}
 var _pending_dialog_reveals: Dictionary = {}
@@ -1929,13 +1930,15 @@ func try_handle_library_search_board_touch_input(scene: Object, event: InputEven
 			if _library_search_control_contains_input_position(scene, library_scroll, position):
 				_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
 				return true
-			if _begin_library_search_selected_touch_if_hit(scene, selected_scroll, selected_row, position):
+			if _begin_library_search_selected_touch_if_hit(scene, selected_scroll, selected_row, position, false):
+				_forward_library_search_candidate_drag_input(scene, selected_scroll, event)
 				return true
 			return false
 		if library_press_active:
 			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
 			return true
-		if _end_library_search_selected_touch(scene, selected_scroll, selected_row, position):
+		if _end_library_search_selected_touch(scene, selected_scroll, selected_row, position, event):
+			_forward_library_search_candidate_drag_input(scene, selected_scroll, event)
 			return true
 		return false
 	if event is InputEventMouseMotion:
@@ -1945,6 +1948,7 @@ func try_handle_library_search_board_touch_input(scene: Object, event: InputEven
 			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
 			return true
 		if _update_library_search_selected_touch(selected_scroll, position):
+			_forward_library_search_candidate_drag_input(scene, selected_scroll, event)
 			return true
 		return false
 	if event is InputEventScreenTouch:
@@ -1953,13 +1957,15 @@ func try_handle_library_search_board_touch_input(scene: Object, event: InputEven
 			if _library_search_control_contains_input_position(scene, library_scroll, position):
 				_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
 				return true
-			if _begin_library_search_selected_touch_if_hit(scene, selected_scroll, selected_row, position):
+			if _begin_library_search_selected_touch_if_hit(scene, selected_scroll, selected_row, position, true):
+				_forward_library_search_candidate_drag_input(scene, selected_scroll, event)
 				return true
 			return false
 		if library_press_active:
 			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
 			return true
-		if _end_library_search_selected_touch(scene, selected_scroll, selected_row, position):
+		if _end_library_search_selected_touch(scene, selected_scroll, selected_row, position, event):
+			_forward_library_search_candidate_drag_input(scene, selected_scroll, event)
 			return true
 		return false
 	if event is InputEventScreenDrag:
@@ -1967,6 +1973,7 @@ func try_handle_library_search_board_touch_input(scene: Object, event: InputEven
 			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
 			return true
 		if _update_library_search_selected_touch(selected_scroll, position):
+			_forward_library_search_candidate_drag_input(scene, selected_scroll, event)
 			return true
 	return false
 
@@ -1987,7 +1994,7 @@ func _handle_library_search_scroll_tap_input(
 		if mouse_event.pressed:
 			_begin_library_search_scroll_press(scene, library_scroll, library_row, mouse_event.global_position, false)
 			return
-		if _end_library_search_scroll_press(scene, library_scroll, library_row, mouse_event.global_position):
+		if _end_library_search_scroll_press(scene, library_scroll, library_row, mouse_event.global_position, event):
 			library_scroll.accept_event()
 			return
 		if drag_handled:
@@ -2007,7 +2014,7 @@ func _handle_library_search_scroll_tap_input(
 			_begin_library_search_scroll_press(scene, library_scroll, library_row, touch.position, true)
 			return
 		var release_position := _library_search_touch_release_position(library_scroll, touch.position)
-		if _end_library_search_scroll_press(scene, library_scroll, library_row, release_position):
+		if _end_library_search_scroll_press(scene, library_scroll, library_row, release_position, event):
 			library_scroll.accept_event()
 			return
 		if drag_handled:
@@ -2026,7 +2033,7 @@ func _begin_library_search_scroll_press(scene: Object, library_scroll: ScrollCon
 	library_scroll.set_meta("library_search_press_candidate_index", _library_search_candidate_index_at_input_position(scene, library_row, position))
 
 
-func _end_library_search_scroll_press(scene: Object, library_scroll: ScrollContainer, library_row: HBoxContainer, position: Vector2) -> bool:
+func _end_library_search_scroll_press(scene: Object, library_scroll: ScrollContainer, library_row: HBoxContainer, position: Vector2, event: InputEvent) -> bool:
 	if not bool(library_scroll.get_meta("library_search_press_active", false)):
 		return false
 	_update_library_search_candidate_press(library_scroll, position)
@@ -2041,7 +2048,7 @@ func _end_library_search_scroll_press(scene: Object, library_scroll: ScrollConta
 	var release_index := _library_search_candidate_index_at_input_position(scene, library_row, position)
 	if release_index != press_index:
 		return true
-	if _is_library_search_drag_click_suppressed(scene):
+	if _should_filter_card_gallery_primary_click(scene, event, library_scroll):
 		return true
 	on_library_search_candidate_pressed(scene, press_index)
 	return true
@@ -2099,7 +2106,8 @@ func _begin_library_search_selected_touch_if_hit(
 	scene: Object,
 	selected_scroll: ScrollContainer,
 	selected_row: HBoxContainer,
-	position: Vector2
+	position: Vector2,
+	from_touch: bool
 ) -> bool:
 	if selected_scroll == null or selected_row == null:
 		return false
@@ -2108,7 +2116,7 @@ func _begin_library_search_selected_touch_if_hit(
 	var real_index := _library_search_selected_real_index_at_input_position(scene, selected_row, position)
 	if real_index < 0:
 		return false
-	_begin_library_search_candidate_press(selected_scroll, position, true)
+	_begin_library_search_candidate_press(selected_scroll, position, from_touch)
 	selected_scroll.set_meta("library_search_selected_press_real_index", real_index)
 	return true
 
@@ -2124,7 +2132,8 @@ func _end_library_search_selected_touch(
 	scene: Object,
 	selected_scroll: ScrollContainer,
 	selected_row: HBoxContainer,
-	position: Vector2
+	position: Vector2,
+	event: InputEvent
 ) -> bool:
 	if selected_scroll == null or selected_row == null:
 		return false
@@ -2142,7 +2151,7 @@ func _end_library_search_selected_touch(
 	var release_real_index := _library_search_selected_real_index_at_input_position(scene, selected_row, position)
 	if release_real_index != press_real_index:
 		return true
-	if _is_library_search_drag_click_suppressed(scene):
+	if _should_filter_card_gallery_primary_click(scene, event, selected_scroll):
 		return true
 	on_library_selected_slot_pressed(scene, press_real_index)
 	return true
@@ -2201,7 +2210,7 @@ func _handle_library_search_candidate_slot_input(
 			_begin_library_search_candidate_press(slot, mouse_event.global_position, false)
 			slot.accept_event()
 			return
-		if _end_library_search_candidate_press(scene, slot, mouse_event.global_position, real_index, selectable):
+		if _end_library_search_candidate_press(scene, slot, mouse_event.global_position, real_index, selectable, event, library_scroll):
 			slot.accept_event()
 			return
 		if drag_handled:
@@ -2222,7 +2231,7 @@ func _handle_library_search_candidate_slot_input(
 			slot.accept_event()
 			return
 		var release_position := _library_search_touch_release_position(slot, touch.position)
-		if _end_library_search_candidate_press(scene, slot, release_position, real_index, selectable):
+		if _end_library_search_candidate_press(scene, slot, release_position, real_index, selectable, event, library_scroll):
 			slot.accept_event()
 			return
 		if drag_handled:
@@ -2257,12 +2266,22 @@ func _update_library_search_candidate_press(slot: Control, position: Vector2) ->
 	var start_variant: Variant = slot.get_meta("library_search_press_start", Vector2.ZERO)
 	var start: Vector2 = start_variant if start_variant is Vector2 else Vector2.ZERO
 	var delta: Vector2 = position - start
-	var horizontal_tolerance: float = LIBRARY_SEARCH_CANDIDATE_TOUCH_CLICK_MOVE_TOLERANCE if bool(slot.get_meta("library_search_press_from_touch", false)) else 12.0
-	if absf(delta.x) > horizontal_tolerance or absf(delta.y) > LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE:
+	var from_touch := bool(slot.get_meta("library_search_press_from_touch", false))
+	var horizontal_tolerance := (
+		PointerGesturePolicyScript.touch_horizontal_tap_tolerance()
+		if from_touch
+		else PointerGesturePolicyScript.MOUSE_HORIZONTAL_TAP_TOLERANCE
+	)
+	var vertical_tolerance := (
+		PointerGesturePolicyScript.touch_vertical_tap_tolerance()
+		if from_touch
+		else LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE
+	)
+	if absf(delta.x) > horizontal_tolerance or absf(delta.y) > vertical_tolerance:
 		slot.set_meta("library_search_press_cancelled", true)
 
 
-func _end_library_search_candidate_press(scene: Object, slot: Control, position: Vector2, real_index: int, selectable: bool) -> bool:
+func _end_library_search_candidate_press(scene: Object, slot: Control, position: Vector2, real_index: int, selectable: bool, event: InputEvent, library_scroll: ScrollContainer) -> bool:
 	if not bool(slot.get_meta("library_search_press_active", false)):
 		return false
 	_update_library_search_candidate_press(slot, position)
@@ -2274,7 +2293,7 @@ func _end_library_search_candidate_press(scene: Object, slot: Control, position:
 		return true
 	if not selectable:
 		return true
-	if _is_library_search_drag_click_suppressed(scene):
+	if _should_filter_card_gallery_primary_click(scene, event, library_scroll):
 		return true
 	on_library_search_candidate_pressed(scene, real_index)
 	return true
@@ -2320,8 +2339,12 @@ func _populate_library_search_source(scene: Object, source_holder: Control, sour
 		source_caption.text = "来源未显示"
 
 
-func _is_library_search_drag_click_suppressed(scene: Object) -> bool:
-	return scene != null and scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed"))
+func _should_filter_card_gallery_primary_click(scene: Object, event: InputEvent, scroll: ScrollContainer) -> bool:
+	return (
+		scene != null
+		and scene.has_method("_should_filter_card_gallery_primary_click")
+		and bool(scene.call("_should_filter_card_gallery_primary_click", event, scroll))
+	)
 
 
 func on_library_search_candidate_pressed(scene: Object, real_index: int) -> void:
@@ -2404,8 +2427,6 @@ func _rebuild_library_search_selected_slots(scene: Object, selected_row: HBoxCon
 		setup_dialog_card_view(scene, card_view, item, "")
 		card_view.set_meta("library_selected_real_index", bound_real_index)
 		card_view.left_clicked.connect(func(_card_instance: CardInstance, _card_data: CardData) -> void:
-			if _is_library_search_drag_click_suppressed(scene):
-				return
 			on_library_selected_slot_pressed(scene, bound_real_index)
 		)
 		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
@@ -4130,8 +4151,6 @@ func dialog_assignment_last_target_index(scene: Object) -> int:
 
 
 func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
-	if _is_library_search_drag_click_suppressed(scene):
-		return
 	_record_dialog_fresh_input(scene, "assignment_source")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var source_items: Array = dialog_data.get("source_items", [])
@@ -4161,8 +4180,6 @@ func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
 
 
 func on_assignment_target_chosen(scene: Object, target_index: int) -> void:
-	if _is_library_search_drag_click_suppressed(scene):
-		return
 	_record_dialog_fresh_input(scene, "assignment_target")
 	var selected_source_index := int(scene.get("_dialog_assignment_selected_source_index"))
 	if selected_source_index < 0:
@@ -4599,6 +4616,19 @@ func on_dialog_cancel(scene: Object) -> void:
 	if str(scene.get("_pending_choice")) == "effect_interaction":
 		scene.call("_reset_effect_interaction")
 	scene.set("_pending_choice", "")
+	if scene.has_method("_maybe_run_ai"):
+		scene.call("_maybe_run_ai")
+
+
+func dismiss_stale_turn_action_dialog(scene: Object) -> bool:
+	if not BattleTurnActionPolicyScript.is_human_turn_only_prompt(str(scene.get("_pending_choice"))):
+		return false
+	_hide_dialog_overlay(scene, "stale_turn_action_prompt")
+	_replace_int_array(scene, "_dialog_multi_selected_indices", [])
+	_replace_int_array(scene, "_dialog_card_selected_indices", [])
+	reset_dialog_assignment_state(scene)
+	scene.set("_pending_choice", "")
+	return true
 
 
 func confirm_assignment_dialog(scene: Object) -> void:

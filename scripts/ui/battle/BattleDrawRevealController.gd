@@ -608,7 +608,12 @@ func _finish_all_reveals(scene: Object) -> void:
 		overlay.visible = false
 		_set_hint_text(overlay, "")
 	scene.set("_draw_reveal_pending_hand_refresh", false)
-	scene.call("_refresh_hand")
+	if scene.has_method("_request_authoritative_hand_reconciliation"):
+		scene.call("_request_authoritative_hand_reconciliation", "draw_reveal_complete")
+		if scene.has_method("_flush_authoritative_hand_reconciliation"):
+			scene.call("_flush_authoritative_hand_reconciliation")
+	else:
+		scene.call("_refresh_hand")
 	if scene.has_method("_check_two_player_handover"):
 		scene.call("_check_two_player_handover")
 	if scene.has_method("_maybe_run_ai"):

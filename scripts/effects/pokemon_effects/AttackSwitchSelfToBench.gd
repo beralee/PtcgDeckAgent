@@ -61,9 +61,7 @@ func execute_attack(
 	var bench_idx: int = player.bench.find(target)
 	if bench_idx < 0:
 		return
-	attacker.clear_on_leave_active()
-	player.bench[bench_idx] = attacker
-	player.active_pokemon = target
+	_switch_active_with_bench(state, top.owner_index, target, "attack_switch_self_to_bench", true)
 
 
 func get_description() -> String:

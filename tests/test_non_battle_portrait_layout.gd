@@ -3,6 +3,7 @@ extends TestBase
 
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const WebTextInputBridgeScript := preload("res://scripts/ui/non_battle/WebTextInputBridge.gd")
 const MainMenuScene := preload("res://scenes/main_menu/MainMenu.tscn")
 const BattleSetupScene := preload("res://scenes/battle_setup/BattleSetup.tscn")
 const DeckManagerScene := preload("res://scenes/deck_manager/DeckManager.tscn")
@@ -514,6 +515,49 @@ func test_non_battle_touch_bridge_leaves_native_text_input_touch_sequence_uncons
 	return result
 
 
+func test_non_battle_touch_bridge_bootstraps_native_android_text_focus_before_yielding_touch() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var tree := Engine.get_main_loop() as SceneTree
+	var root := Control.new()
+	root.name = "AndroidNativeTextFocusRoot"
+	root.position = Vector2.ZERO
+	root.size = Vector2(720, 720)
+	root.z_as_relative = false
+	root.z_index = 4095
+	tree.root.add_child(root)
+	var input := LineEdit.new()
+	input.name = "AndroidNativeTextInput"
+	input.position = Vector2(80, 120)
+	input.size = Vector2(520, 110)
+	root.add_child(input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(input, LineEdit.KEYBOARD_TYPE_DEFAULT)
+	await tree.process_frame
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = input.get_global_rect().get_center()
+	var hit_input := NonBattleTouchBridgeScript.native_text_input_at_position(root, press.position)
+	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(root, press))
+	var focused_on_press := input.has_focus()
+	var keyboard_reopen_requested := bool(input.get_meta(NonBattleTouchBridgeScript.VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META, false))
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	var handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(root, release))
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	var result := run_checks([
+		assert_eq(hit_input, input, "Android native text hit testing should resolve the touched LineEdit"),
+		assert_false(handled_press or handled_release, "Android native text focus bootstrap must still yield the complete touch sequence to Godot's LineEdit"),
+		assert_true(focused_on_press, "Android native LineEdit should own focus on pointer-down even when its parent ScrollContainer does not forward native focus"),
+		assert_true(keyboard_reopen_requested, "Android native LineEdit focus bootstrap should request the platform keyboard when it is hidden"),
+	])
+	root.queue_free()
+	return result
+
+
 func test_non_battle_touch_bridge_web_line_edit_uses_dom_input_proxy() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
@@ -585,6 +629,81 @@ func test_non_battle_touch_bridge_web_native_line_edit_uses_dom_input_proxy_inst
 	root.queue_free()
 	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_non_battle_touch_bridge_can_prepare_ios_web_dom_input_before_focus() -> String:
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var tree := Engine.get_main_loop() as SceneTree
+	var root := Control.new()
+	root.size = Vector2(720, 720)
+	tree.root.add_child(root)
+	var input := LineEdit.new()
+	input.text = "574793"
+	input.position = Vector2(60, 160)
+	input.size = Vector2(560, 88)
+	root.add_child(input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(input, LineEdit.KEYBOARD_TYPE_DEFAULT)
+
+	var prepared := NonBattleTouchBridgeScript.prepare_web_text_input(input)
+	var payload := NonBattleTouchBridgeScript.get_test_web_text_input_last_payload()
+	var bridge_script := WebTextInputBridgeScript.get_test_install_script()
+	var result := run_checks([
+		assert_true(prepared, "iOS Web text input should allow a real DOM editor to be prepared before the user's focus tap"),
+		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_prepare_count(), 1, "Preparing the Web editor should create exactly one native input layer"),
+		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 0, "Preparing the Web editor must not request keyboard focus outside a user gesture"),
+		assert_eq(str(payload.get("text", "")), "574793", "Prepared Web editor should mirror the Godot input value"),
+		assert_true(bridge_script.contains("version: 9") and bridge_script.contains("prepare_only") and bridge_script.contains("prepare: function"), "The browser bridge should expose a no-focus prepare path for iOS Safari"),
+		assert_true(bridge_script.contains("focusFromNativeTap") and bridge_script.contains("'touchstart', 'touchend'") and bridge_script.contains("event.stopPropagation()"), "Prepared iOS Web inputs should retain focus against the canvas-wide touch listener"),
+	])
+	root.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	return result
+
+
+func test_non_battle_touch_bridge_programmatic_clear_updates_active_web_editor_and_preserves_caret_policy() -> String:
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var tree := Engine.get_main_loop() as SceneTree
+	var root := Control.new()
+	root.name = "WebPersistentSearchRoot"
+	root.size = Vector2(720, 720)
+	tree.root.add_child(root)
+	var input := LineEdit.new()
+	input.name = "WebPersistentSearchInput"
+	input.text = "Dragapult ex"
+	input.position = Vector2(60, 140)
+	input.size = Vector2(520, 88)
+	root.add_child(input)
+	NonBattleTouchBridgeScript.configure_persistent_native_line_edit(input)
+	NonBattleTouchBridgeScript.bind_line_edit_select_all(input)
+	var changes := [0]
+	input.text_changed.connect(func(_value: String) -> void:
+		changes[0] = int(changes[0]) + 1
+	)
+
+	var opened := NonBattleTouchBridgeScript.request_test_web_text_input(input)
+	input.set_meta(WebTextInputBridgeScript.LAST_PROXY_REQUEST_META, Time.get_ticks_msec() - 1000)
+	var reused_after_delayed_echo := NonBattleTouchBridgeScript.request_test_web_text_input(input)
+	var request_count_after_delayed_echo := NonBattleTouchBridgeScript.get_test_web_text_input_request_count()
+	NonBattleTouchBridgeScript.replace_text_input_value(input, "", true)
+	var payload := NonBattleTouchBridgeScript.get_test_web_text_input_last_payload()
+	var bridge_script := WebTextInputBridgeScript.get_test_install_script()
+	var result := run_checks([
+		assert_true(opened, "Persistent Web search should open the shared DOM editor"),
+		assert_true(reused_after_delayed_echo, "A delayed focus echo should reuse the active Web editor"),
+		assert_eq(request_count_after_delayed_echo, 1, "A delayed focus echo for the same control must not destroy and recreate the active editor"),
+		assert_eq(input.text, "", "Programmatic clear should update the Godot LineEdit immediately"),
+		assert_eq(str(payload.get("text", "missing")), "", "Programmatic clear should update the active DOM editor payload instead of leaving stale text"),
+		assert_eq(int(changes[0]), 1, "Programmatic clear should emit exactly one text change for search filtering"),
+		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)), "Persistent search should declare native caret ownership explicitly"),
+		assert_false(bool(input.get_meta(NonBattleTouchBridgeScript.LINE_EDIT_SELECT_ALL_BOUND_META, false)), "Persistent search should reject the transient-dialog select-all policy"),
+		assert_true(bridge_script.contains("version: 9") and bridge_script.contains("setValue: function"), "The real browser proxy should support in-place value replacement while it owns keyboard focus"),
+		assert_true(bridge_script.contains("addEventListener('beforeinput'") and bridge_script.contains("addEventListener('keydown'") and bridge_script.contains("deleteText(input"), "The browser editor should capture Backspace/Delete before Godot's global Web key handler can prevent native defaults"),
+	])
+	root.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
 	return result
 
 
@@ -707,26 +826,55 @@ func test_main_menu_portrait_layout_reflows_buttons_immediately() -> String:
 	return result
 
 
-func test_main_menu_portrait_available_update_button_matches_primary_actions_at_bottom() -> String:
+func test_main_menu_portrait_version_and_available_update_share_top_status_stack() -> String:
 	var scene: Control = MainMenuScene.instantiate()
 	scene.size = Vector2(1080, 2400)
 	scene.call("_apply_main_menu_hud")
 	scene.call("_ensure_update_button")
-	var available_update := scene.get_node_or_null("UpdateButton") as Button
+	var available_update := scene.find_child("UpdateButton", true, false) as Button
+	var version_label := scene.find_child("VersionLabel", true, false) as Label
 	if available_update != null:
 		available_update.visible = true
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var status_stack := scene.get_node_or_null("HomeStatusStack") as VBoxContainer
 	var menu := scene.get_node_or_null("VBoxContainer") as VBoxContainer
 	var start_button := scene.get_node_or_null("%BtnStartBattle") as Button
 	var manual_update := scene.get_node_or_null("ManualUpdateButton") as Button
 	var result := run_checks([
+		assert_not_null(status_stack, "The home page should expose one top status stack for version and update reminders"),
+		assert_true(version_label != null and version_label.get_parent() == status_stack, "The game version should live in the top status stack"),
+		assert_true(available_update != null and available_update.get_parent() == status_stack, "The dynamic update reminder should live beside the version in the top status stack"),
 		assert_not_null(available_update, "Available update button should exist for portrait layout checks"),
 		assert_true(start_button != null and available_update != null and absf(available_update.custom_minimum_size.x - start_button.custom_minimum_size.x) < 0.1, "Portrait available update button should match the main action width"),
 		assert_true(start_button != null and available_update != null and absf(available_update.custom_minimum_size.y - start_button.custom_minimum_size.y) < 0.1, "Portrait available update button should match the main action height"),
-		assert_true(menu != null and available_update != null and absf(available_update.offset_left - menu.offset_left) < 0.1, "Portrait available update button should align with the main action stack left edge"),
-		assert_true(menu != null and available_update != null and absf(available_update.offset_right - menu.offset_right) < 0.1, "Portrait available update button should align with the main action stack right edge"),
-		assert_true(available_update != null and available_update.anchor_top == 1.0 and available_update.anchor_bottom == 1.0, "Portrait available update button should be bottom anchored"),
-		assert_true(manual_update != null and available_update != null and manual_update.offset_bottom <= available_update.offset_top - 1.0, "Portrait corner action row should move above the available update button"),
+		assert_true(status_stack != null and status_stack.anchor_top == 0.0 and status_stack.anchor_bottom == 0.0, "The status stack should be anchored to the top edge"),
+		assert_true(status_stack != null and status_stack.offset_top >= 20.0 and status_stack.offset_top < 160.0, "The status stack should respect a small top safe margin"),
+		assert_true(menu != null and status_stack != null and status_stack.offset_bottom < 2400.0 * 0.5 + menu.offset_top, "The top status stack should stay clear of the main action group"),
+		assert_true(manual_update != null and manual_update.anchor_top == 1.0, "Moving the dynamic reminder must not move the manual update corner action"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_main_menu_landscape_version_and_available_update_stay_above_actions() -> String:
+	var scene: Control = MainMenuScene.instantiate()
+	scene.size = Vector2(1600, 900)
+	scene.call("_apply_main_menu_hud")
+	scene.call("_ensure_update_button")
+	var available_update := scene.find_child("UpdateButton", true, false) as Button
+	if available_update != null:
+		available_update.visible = true
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var status_stack := scene.get_node_or_null("HomeStatusStack") as VBoxContainer
+	var version_label := scene.find_child("VersionLabel", true, false) as Label
+	var menu := scene.get_node_or_null("VBoxContainer") as VBoxContainer
+	var menu_top := 450.0 + menu.offset_top if menu != null else 0.0
+	var result := run_checks([
+		assert_true(status_stack != null and status_stack.anchor_top == 0.0 and status_stack.anchor_bottom == 0.0, "Landscape should keep the shared status stack top anchored"),
+		assert_true(status_stack != null and status_stack.offset_top >= 20.0 and status_stack.offset_bottom < menu_top, "Landscape status content should remain above the primary actions"),
+		assert_true(version_label != null and version_label.get_parent() == status_stack, "Landscape should not send the version back to the footer"),
+		assert_true(available_update != null and available_update.get_parent() == status_stack, "Landscape dynamic update reminders should use the same top stack"),
+		assert_true(available_update != null and available_update.custom_minimum_size.y >= 44.0, "Landscape update reminders should remain comfortably clickable"),
 	])
 	scene.queue_free()
 	return result
@@ -2634,6 +2782,50 @@ func test_ai_settings_line_edits_select_all_when_tapped() -> String:
 		assert_true(api_key_selected, "Tapping AI settings ApiKeyInput should select all existing text"),
 		assert_true(personality_selected, "Tapping AI settings PersonalityInput should select all existing text"),
 		assert_true(timeout_selected, "Tapping AI settings TimeoutInput should select all existing numeric text"),
+	])
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_ai_settings_android_personality_input_focuses_and_persists() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = SettingsScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	await tree.process_frame
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	await tree.process_frame
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
+	if personality != null:
+		personality.global_position = Vector2(120, 620)
+		personality.size = Vector2(760, 140)
+		personality.release_focus()
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = personality.get_global_rect().get_center() if personality != null else Vector2(500, 690)
+	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(scene, press))
+	var focused := personality != null and personality.has_focus()
+	var keyboard_requested := personality != null and bool(personality.get_meta(NonBattleTouchBridgeScript.VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META, false))
+	if personality != null:
+		personality.text = "冷静精算并解释关键选择"
+	scene.call("_on_save")
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(GameManager.get_battle_review_api_config_path()))
+	var config := parsed as Dictionary if parsed is Dictionary else {}
+
+	var result := run_checks([
+		assert_false(handled_press, "AI personality input should keep native Android LineEdit event delivery"),
+		assert_true(focused, "Tapping AI personality on Android should reliably focus the editable field"),
+		assert_true(keyboard_requested, "Tapping AI personality should request the Android soft keyboard"),
+		assert_eq(str(config.get("ai_personality", "")), "冷静精算并解释关键选择", "Saving AI settings should persist the personality entered on mobile"),
 	])
 	_dispose_scene(scene)
 	_restore_battle_review_config_file(snapshot)

@@ -62,12 +62,7 @@ func execute_ability(
 	var bench_idx: int = player.bench.find(pokemon)
 	if bench_idx == -1 or player.active_pokemon == null:
 		return
-	var old_active: PokemonSlot = player.active_pokemon
-
-	player.bench.remove_at(bench_idx)
-	player.active_pokemon = pokemon
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
+	_switch_active_with_bench(state, top.owner_index, pokemon, "bench_enter_switch_and_move_energy")
 
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected_raw: Array = ctx.get(STEP_ID, [])

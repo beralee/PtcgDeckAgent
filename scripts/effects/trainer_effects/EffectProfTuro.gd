@@ -72,6 +72,14 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		replacement = _get_selected_replacement(ctx, player)
 		if replacement == null:
 			return
+		if not _remove_active_and_promote(
+			state,
+			card.owner_index,
+			target_slot,
+			replacement,
+			"professor_turos_scenario"
+		):
+			return
 
 	for pokemon_card: CardInstance in target_slot.pokemon_stack:
 		pokemon_card.face_up = true
@@ -88,10 +96,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	target_slot.clear_all_status()
 	target_slot.damage_counters = 0
 
-	if is_active:
-		player.active_pokemon = replacement
-		player.bench.erase(replacement)
-	else:
+	if not is_active:
 		player.bench.erase(target_slot)
 
 

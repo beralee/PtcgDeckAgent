@@ -1,6 +1,7 @@
 class_name BattlePointerSurfaceController
 extends RefCounted
 
+const PointerGesturePolicyScript := preload("res://scripts/ui/input/PointerGesturePolicy.gd")
 const STATE_PENDING_TAP := "pending_tap"
 const STATE_SCROLLING := "scrolling"
 const STATE_CANCELLED := "cancelled"
@@ -43,7 +44,7 @@ func reconcile_surface(
 	var record := {
 		"generation": generation,
 		"signature": signature,
-		"config": config.duplicate(false),
+		"config": PointerGesturePolicyScript.normalize_horizontal_surface_config(config),
 	}
 	_surfaces[normalized_id] = record
 	if not _surface_order.has(normalized_id):
@@ -81,6 +82,18 @@ func handle_event(event: InputEvent, observation: Dictionary) -> bool:
 	var sequence: PointerSequence = observation.get("sequence", null) as PointerSequence
 	if sequence == null:
 		return false
+	# BattlePointerInputRouter normalizes native/browser compatibility events onto
+	# one semantic sequence. Only its canonical event may mutate gesture state:
+	# processing a mouse-first touch echo as a second press overwrites pointer_id,
+	# so the canonical mouse release then deletes the gesture without committing.
+	if not bool(observation.get("deliver", true)):
+		var owned_echo := _sequence_owned_by_surface(sequence)
+		if owned_echo:
+			_trace_event("normalized_echo_swallowed", {
+				"sequence_id": sequence.sequence_id,
+				"phase": str(observation.get("phase", "echo")),
+			})
+		return owned_echo
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
@@ -234,7 +247,7 @@ func _handle_pointer_dragged(
 			[],
 			false
 		))
-		if has_overflow and horizontal_dominant and absf(delta.x) >= drag_threshold:
+		if has_overflow and horizontal_dominant and absf(delta.x) > drag_threshold:
 			state = STATE_SCROLLING
 			gesture["state"] = state
 			_trace_event("gesture_scrolling", gesture)
@@ -252,8 +265,11 @@ func _handle_pointer_dragged(
 				gesture["state"] = STATE_CANCELLED
 				gesture["cancel_reason"] = "tap_tolerance_exceeded"
 				_trace_event("gesture_cancelled", gesture)
-	if str(gesture.get("state", "")) == STATE_SCROLLING:
-		var target_scroll := int(gesture.get("start_scroll", 0)) - roundi(delta.x)
+	state = str(gesture.get("state", state))
+	if state == STATE_SCROLLING:
+		var drag_threshold := float(config.get("horizontal_drag_threshold", 0.0))
+		var effective_delta := maxf(0.0, absf(delta.x) - drag_threshold) * signf(delta.x)
+		var target_scroll := int(gesture.get("start_scroll", 0)) - roundi(effective_delta)
 		_call_config(config, "set_horizontal_scroll", [maxi(0, target_scroll)], null)
 	_active_gestures[sequence.sequence_id] = gesture
 	return true
@@ -284,11 +300,12 @@ func _handle_pointer_released(
 			"reason": "stale_generation",
 		})
 		return true
-	if str(gesture.get("state", "")) != STATE_PENDING_TAP:
+	var gesture_state := str(gesture.get("state", ""))
+	if gesture_state != STATE_PENDING_TAP:
 		_trace_event("gesture_release_ignored", {
 			"sequence_id": sequence.sequence_id,
 			"surface_id": surface_id,
-			"reason": str(gesture.get("state", "")),
+			"reason": gesture_state,
 		})
 		return true
 	var config: Dictionary = surface.get("config", {})

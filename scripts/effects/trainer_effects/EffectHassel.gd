@@ -18,9 +18,7 @@ func _had_own_pokemon_knocked_out_last_turn(card: CardInstance, state: GameState
 	if card == null or state == null:
 		return false
 	var player_index := card.owner_index
-	if player_index < 0 or player_index >= state.last_knockout_turn_against.size():
-		return false
-	return int(state.last_knockout_turn_against[player_index]) == state.turn_number - 1
+	return state.was_knocked_out_during_opponents_previous_turn(player_index)
 
 
 func get_description() -> String:

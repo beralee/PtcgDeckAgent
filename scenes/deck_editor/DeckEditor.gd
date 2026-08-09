@@ -1,6 +1,7 @@
 ## 卡组编辑器 - 逐张替换卡组中的卡牌
 extends Control
 
+const CardCatalogSearchRecordScript := preload("res://scripts/card_catalog/CardCatalogSearchRecord.gd")
 ## 分类标签定义：显示名 -> 匹配的 card_type 值列表
 const CATEGORY_TABS: Array[Dictionary] = [
 	{"label": "宝可梦", "types": ["Pokemon"]},
@@ -43,6 +44,11 @@ const CATEGORY_TAB_FONT_SIZE := 18
 const CATEGORY_TAB_GAP := 8
 const ACTION_BUTTON_HEIGHT := 104
 const ACTION_BUTTON_FONT_SIZE := 30
+const POOL_SEARCH_TITLE_FONT_SIZE := 30
+const POOL_SEARCH_BODY_FONT_SIZE := 21
+const POOL_SEARCH_CONTROL_HEIGHT := 56
+const POOL_SEARCH_RADIO_HEIGHT := 48
+const POOL_SEARCH_RADIO_FONT_SIZE := 18
 const CARD_DETAIL_TITLE_FONT_SIZE := 40
 const CARD_DETAIL_BODY_FONT_SIZE := 28
 const CARD_DETAIL_CLOSE_FONT_SIZE := 28
@@ -64,6 +70,17 @@ const COLOR_SELECTED := Color(0.3, 0.6, 1.0, 1.0)
 const COLOR_NORMAL := Color(0.2, 0.22, 0.3, 1.0)
 const COLOR_HOVER := Color(0.25, 0.27, 0.35, 1.0)
 const COLOR_BORDER_SELECTED := Color(0.4, 0.7, 1.0, 1.0)
+
+const POKEMON_TAG_LABELS: Dictionary = {
+	"ex": "ex",
+	"Tera": "太晶",
+	"Ancient": "古代",
+	"Future": "未来",
+	"Radiant": "光辉",
+	"Single Strike": "一击",
+	"Rapid Strike": "连击",
+}
+const STRUCTURAL_POKEMON_TAGS: Array[String] = ["Basic", "Stage 1", "Stage 2"]
 
 var _deck: DeckData = null
 var _original_deck_id: int = -1
@@ -90,6 +107,29 @@ var _deck_by_category: Array[Array] = []
 ## 标签按钮引用
 var _deck_tab_buttons: Array[Button] = []
 var _pool_tab_buttons: Array[Button] = []
+
+## 可替换卡池搜索/筛选
+var _pool_search_query: String = ""
+var _pool_search_tag: String = ""
+var _pool_search_energy_type: String = ""
+var _pool_search_overlay: Panel = null
+var _pool_search_box: PanelContainer = null
+var _pool_search_input: LineEdit = null
+var _pool_search_scroll: ScrollContainer = null
+var _pool_search_category_row: Control = null
+var _pool_search_category_grid: GridContainer = null
+var _pool_search_tag_row: Control = null
+var _pool_search_tag_grid: GridContainer = null
+var _pool_search_energy_row: Control = null
+var _pool_search_energy_grid: GridContainer = null
+var _pool_search_category_buttons: Array[Button] = []
+var _pool_search_tag_buttons: Array[Button] = []
+var _pool_search_energy_buttons: Array[Button] = []
+var _pool_search_category_group := ButtonGroup.new()
+var _pool_search_tag_group := ButtonGroup.new()
+var _pool_search_energy_group := ButtonGroup.new()
+var _pool_search_result_label: Label = null
+var _pool_search_results_dirty: bool = false
 
 ## AI 分析
 const AI_TIMEOUT_SECONDS := 180.0
@@ -145,7 +185,7 @@ func _ready() -> void:
 	%BtnBack.pressed.connect(_on_back_pressed)
 	%BtnViewCard.pressed.connect(_on_view_card_pressed)
 	%BtnReplace.pressed.connect(_on_replace_pressed)
-	%BtnStrategy.pressed.connect(_on_strategy_pressed)
+	%BtnCardSearch.pressed.connect(_on_card_search_pressed)
 	%BtnAI.pressed.connect(_on_ai_pressed)
 	%BtnDiscussAI.pressed.connect(_on_discuss_ai_pressed)
 	%UnsavedDialog.confirmed.connect(_do_go_back)
@@ -191,7 +231,7 @@ func _ready() -> void:
 
 
 func _style_editor_action_buttons() -> void:
-	var buttons: Array[Button] = [%BtnViewCard, %BtnReplace, %BtnSave, %BtnStrategy, %BtnAI, %BtnDiscussAI, %BtnBack]
+	var buttons: Array[Button] = [%BtnViewCard, %BtnReplace, %BtnSave, %BtnCardSearch, %BtnAI, %BtnDiscussAI, %BtnBack]
 	for button: Button in buttons:
 		if button == null:
 			continue
@@ -213,6 +253,7 @@ func _style_editor_action_buttons() -> void:
 
 func _on_editor_resized() -> void:
 	_apply_editor_scrollbar_policy()
+	_apply_pool_search_overlay_metrics()
 	_queue_card_grid_metrics_refresh()
 
 
@@ -392,25 +433,7 @@ func _card_from_catalog_entry(entry: Dictionary) -> CardData:
 	var card_index := str(entry.get("card_index", "")).strip_edges()
 	if set_code == "" or card_index == "":
 		return null
-	var card := CardData.from_dict({
-		"name": str(entry.get("name", "")),
-		"name_en": str(entry.get("name_en", "")),
-		"name_zh": str(entry.get("name_zh", "")),
-		"card_type": str(entry.get("card_type", "")),
-		"mechanic": str(entry.get("mechanic", "")),
-		"label": str(entry.get("label", "")),
-		"is_tags": entry.get("is_tags", []),
-		"set_code": set_code,
-		"card_index": card_index,
-		"rarity": str(entry.get("rarity", "")),
-		"regulation_mark": str(entry.get("regulation_mark", "")),
-		"effect_id": str(entry.get("effect_id", "")),
-		"energy_type": str(entry.get("energy_type", "")),
-		"stage": str(entry.get("stage", "")),
-		"hp": int(entry.get("hp", 0)),
-		"image_url": str(entry.get("image_url", "")),
-		"image_local_path": CardData.build_local_image_path(set_code, card_index),
-	})
+	var card := CardData.from_dict(CardCatalogSearchRecordScript.to_minimal_card_dict(entry))
 	return card
 
 
@@ -470,7 +493,7 @@ func _build_tab_bar(tab_bar: HBoxContainer, buttons: Array[Button], is_deck: boo
 		if is_deck:
 			count = _count_deck_cards_in_category(i)
 		else:
-			count = _pool_by_category[i].size()
+			count = _filtered_pool_cards(i).size()
 		btn.text = "%s(%d)" % [tab_label, count]
 		btn.toggle_mode = true
 		btn.button_pressed = (i == active)
@@ -520,7 +543,646 @@ func _on_pool_tab_pressed(tab_index: int) -> void:
 	_pool_active_tab = tab_index
 	for i: int in _pool_tab_buttons.size():
 		_pool_tab_buttons[i].button_pressed = (i == _pool_active_tab)
+	_sync_pool_search_category_control()
+	_update_pool_search_pokemon_rows()
+	_update_pool_search_result_label()
 	_refresh_pool_grid()
+
+
+func _filtered_pool_cards(category_index: int) -> Array:
+	var result: Array = []
+	if category_index < 0 or category_index >= _pool_by_category.size():
+		return result
+	var normalized_query := _normalize_pool_search_text(_pool_search_query)
+	for card: CardData in _pool_by_category[category_index]:
+		if normalized_query != "" and not _pool_card_name_matches_query(card, normalized_query):
+			continue
+		if category_index == 0:
+			if _pool_search_tag != "" and not _pool_card_matches_pokemon_tag(card, _pool_search_tag):
+				continue
+			if _pool_search_energy_type != "" and not _pool_card_matches_energy_type(card, _pool_search_energy_type):
+				continue
+		result.append(card)
+	return result
+
+
+func _pool_card_name_matches_query(card: CardData, normalized_query: String) -> bool:
+	if card == null:
+		return false
+	for raw_name: String in [card.name, card.name_zh, card.name_en, card.display_name()]:
+		var normalized_name := _normalize_pool_search_text(raw_name)
+		if normalized_name.contains(normalized_query) or _is_pool_search_subsequence(normalized_query, normalized_name):
+			return true
+	return false
+
+
+func _normalize_pool_search_text(raw_text: String) -> String:
+	var normalized := raw_text.strip_edges().to_lower()
+	for separator: String in [" ", "\t", "\n", "\r", "-", "_", "·", "'", "’"]:
+		normalized = normalized.replace(separator, "")
+	return normalized
+
+
+func _is_pool_search_subsequence(needle: String, haystack: String) -> bool:
+	if needle == "":
+		return true
+	if haystack == "" or needle.length() > haystack.length():
+		return false
+	var needle_index := 0
+	for haystack_index: int in haystack.length():
+		if haystack.substr(haystack_index, 1) == needle.substr(needle_index, 1):
+			needle_index += 1
+			if needle_index >= needle.length():
+				return true
+	return false
+
+
+func _pool_card_matches_pokemon_tag(card: CardData, tag: String) -> bool:
+	if card == null or not card.is_pokemon():
+		return false
+	match tag:
+		"ex":
+			return _pool_card_is_ex(card)
+		"Tera":
+			return card.is_tera_pokemon()
+		"Ancient":
+			return card.is_ancient_pokemon()
+		"Future":
+			return card.is_future_pokemon()
+		"Radiant":
+			return card.is_radiant()
+	for card_tag: String in card.is_tags:
+		if card_tag.to_lower() == tag.to_lower():
+			return true
+	return card.mechanic.to_lower() == tag.to_lower()
+
+
+func _pool_card_is_ex(card: CardData) -> bool:
+	if card == null or not card.is_pokemon():
+		return false
+	if card.mechanic.strip_edges().to_lower() == "ex":
+		return true
+	for card_tag: String in card.is_tags:
+		if card_tag.strip_edges().to_lower() == "ex":
+			return true
+	for raw_name: String in [card.name, card.name_zh, card.name_en, card.display_name()]:
+		if _normalize_pool_search_text(raw_name).ends_with("ex"):
+			return true
+	return false
+
+
+func _pool_card_matches_energy_type(card: CardData, energy_type: String) -> bool:
+	if card == null or not card.is_pokemon():
+		return false
+	var card_energy_type := card.energy_type if card.energy_type != "" else "C"
+	return card_energy_type == energy_type
+
+
+func _has_active_pool_search_filters() -> bool:
+	return _normalize_pool_search_text(_pool_search_query) != "" \
+		or _pool_search_tag != "" \
+		or _pool_search_energy_type != ""
+
+
+func _on_card_search_pressed() -> void:
+	_ensure_pool_search_overlay()
+	_populate_pool_search_tag_options()
+	_sync_pool_search_controls()
+	_apply_pool_search_overlay_metrics()
+	_update_pool_search_result_label()
+	_pool_search_overlay.visible = true
+	call_deferred("_focus_pool_search_input")
+
+
+func _focus_pool_search_input() -> void:
+	if _pool_search_input == null or not is_instance_valid(_pool_search_input):
+		return
+	_pool_search_input.grab_focus()
+
+
+func _ensure_pool_search_overlay() -> void:
+	if _pool_search_overlay != null and is_instance_valid(_pool_search_overlay):
+		return
+
+	_pool_search_overlay = Panel.new()
+	_pool_search_overlay.name = "DeckPoolSearchOverlay"
+	_pool_search_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pool_search_overlay.visible = false
+	_pool_search_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_pool_search_overlay.z_index = 220
+	add_child(_pool_search_overlay)
+
+	var center := CenterContainer.new()
+	center.name = "DeckPoolSearchCenter"
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	_pool_search_overlay.add_child(center)
+
+	_pool_search_box = PanelContainer.new()
+	_pool_search_box.name = "DeckPoolSearchBox"
+	_pool_search_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_pool_search_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_pool_search_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	center.add_child(_pool_search_box)
+
+	var content := VBoxContainer.new()
+	content.name = "DeckPoolSearchContent"
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 12)
+	_pool_search_box.add_child(content)
+
+	var header := HBoxContainer.new()
+	header.name = "DeckPoolSearchHeader"
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_theme_constant_override("separation", 10)
+	content.add_child(header)
+
+	var title := Label.new()
+	title.name = "DeckPoolSearchTitle"
+	title.text = "搜索可替换卡牌"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(POOL_SEARCH_TITLE_FONT_SIZE))
+	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.68))
+	header.add_child(title)
+
+	var close_button := Button.new()
+	close_button.name = "DeckPoolSearchCloseButton"
+	close_button.text = "关闭"
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.pressed.connect(_hide_pool_search_overlay)
+	_style_pool_search_button(close_button, HudThemeScript.ACCENT)
+	NonBattleTouchBridgeScript.bind_button_touch(close_button)
+	header.add_child(close_button)
+
+	_pool_search_input = LineEdit.new()
+	_pool_search_input.name = "DeckPoolSearchInput"
+	_pool_search_input.placeholder_text = "输入卡牌名称（支持中英文模糊搜索）"
+	_pool_search_input.clear_button_enabled = true
+	_pool_search_input.custom_minimum_size = Vector2(0, POOL_SEARCH_CONTROL_HEIGHT)
+	_pool_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pool_search_input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(POOL_SEARCH_BODY_FONT_SIZE))
+	_style_pool_search_text_input(_pool_search_input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(_pool_search_input)
+	NonBattleTouchBridgeScript.bind_line_edit_select_all(_pool_search_input)
+	_pool_search_input.text_changed.connect(_on_pool_search_query_changed)
+	_pool_search_input.text_submitted.connect(_on_pool_search_text_submitted)
+	content.add_child(_pool_search_input)
+
+
+	_pool_search_scroll = ScrollContainer.new()
+	_pool_search_scroll.name = "DeckPoolSearchFilterScroll"
+	_pool_search_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pool_search_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pool_search_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_pool_search_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	content.add_child(_pool_search_scroll)
+
+	var filters := VBoxContainer.new()
+	filters.name = "DeckPoolSearchFilterContent"
+	filters.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	filters.add_theme_constant_override("separation", 12)
+	_pool_search_scroll.add_child(filters)
+
+	var category_section := _create_pool_search_radio_section("分类", "DeckPoolSearchCategoryRadios")
+	_pool_search_category_row = category_section["row"] as Control
+	_pool_search_category_grid = category_section["grid"] as GridContainer
+	filters.add_child(_pool_search_category_row)
+
+	var tag_section := _create_pool_search_radio_section("宝可梦类型 / 标签", "DeckPoolSearchTagRadios")
+	_pool_search_tag_row = tag_section["row"] as Control
+	_pool_search_tag_grid = tag_section["grid"] as GridContainer
+	filters.add_child(_pool_search_tag_row)
+
+	var energy_section := _create_pool_search_radio_section("宝可梦属性", "DeckPoolSearchEnergyRadios")
+	_pool_search_energy_row = energy_section["row"] as Control
+	_pool_search_energy_grid = energy_section["grid"] as GridContainer
+	filters.add_child(_pool_search_energy_row)
+
+	_pool_search_result_label = Label.new()
+	_pool_search_result_label.name = "DeckPoolSearchResultLabel"
+	_pool_search_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pool_search_result_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(POOL_SEARCH_BODY_FONT_SIZE))
+	_pool_search_result_label.add_theme_color_override("font_color", Color(0.72, 0.92, 1.0))
+	content.add_child(_pool_search_result_label)
+
+	var actions := HBoxContainer.new()
+	actions.name = "DeckPoolSearchActions"
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 14)
+	content.add_child(actions)
+
+	var reset_button := Button.new()
+	reset_button.name = "DeckPoolSearchResetButton"
+	reset_button.text = "清除筛选"
+	reset_button.pressed.connect(_clear_pool_search_filters)
+	_style_pool_search_button(reset_button, HudThemeScript.ACCENT_WARM)
+	NonBattleTouchBridgeScript.bind_button_touch(reset_button)
+	actions.add_child(reset_button)
+
+	var done_button := Button.new()
+	done_button.name = "DeckPoolSearchDoneButton"
+	done_button.text = "查看结果"
+	done_button.pressed.connect(_hide_pool_search_overlay)
+	_style_pool_search_button(done_button, HudThemeScript.ACCENT)
+	NonBattleTouchBridgeScript.bind_button_touch(done_button)
+	actions.add_child(done_button)
+
+	_style_pool_search_overlay()
+	_populate_pool_search_category_radios()
+	_populate_pool_search_tag_options()
+	_populate_pool_search_energy_radios()
+	_sync_pool_search_controls()
+
+
+func _create_pool_search_radio_section(label_text: String, grid_name: String) -> Dictionary:
+	var row := VBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 7)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size = Vector2(0, 28)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(POOL_SEARCH_BODY_FONT_SIZE))
+	label.add_theme_color_override("font_color", Color(0.84, 0.93, 0.98, 1.0))
+	row.add_child(label)
+	var grid := GridContainer.new()
+	grid.name = grid_name
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	row.add_child(grid)
+	return {"row": row, "grid": grid}
+
+
+func _style_pool_search_overlay() -> void:
+	var overlay_style := StyleBoxFlat.new()
+	overlay_style.bg_color = Color(0.0, 0.02, 0.04, 0.78)
+	_pool_search_overlay.add_theme_stylebox_override("panel", overlay_style)
+
+	var box_style := StyleBoxFlat.new()
+	box_style.bg_color = Color(0.018, 0.045, 0.072, 0.99)
+	box_style.border_color = Color(0.22, 0.70, 0.84, 0.95)
+	box_style.set_border_width_all(2)
+	box_style.set_corner_radius_all(18)
+	box_style.shadow_color = Color(0.0, 0.0, 0.0, 0.58)
+	box_style.shadow_size = 28
+	box_style.shadow_offset = Vector2(0, 12)
+	box_style.content_margin_left = 24
+	box_style.content_margin_top = 20
+	box_style.content_margin_right = 24
+	box_style.content_margin_bottom = 22
+	_pool_search_box.add_theme_stylebox_override("panel", box_style)
+
+
+func _style_pool_search_text_input(input: LineEdit) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.025, 0.075, 0.105, 0.96)
+	normal.border_color = Color(0.20, 0.60, 0.72, 0.88)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	normal.content_margin_left = 14
+	normal.content_margin_right = 14
+	var focus := normal.duplicate()
+	focus.border_color = Color(0.48, 0.92, 1.0, 1.0)
+	input.add_theme_stylebox_override("normal", normal)
+	input.add_theme_stylebox_override("focus", focus)
+	input.add_theme_color_override("font_color", Color(0.94, 0.99, 1.0))
+	input.add_theme_color_override("font_placeholder_color", Color(0.58, 0.72, 0.79, 0.92))
+	input.add_theme_color_override("caret_color", Color(0.96, 0.80, 0.38))
+
+
+func _create_pool_search_radio_button(button_name: String, label: String, option_id: Variant, group: ButtonGroup) -> Button:
+	var button := Button.new()
+	button.name = button_name
+	button.toggle_mode = true
+	button.button_group = group
+	button.custom_minimum_size = Vector2(0, POOL_SEARCH_RADIO_HEIGHT)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_text = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.set_meta("pool_search_radio", true)
+	button.set_meta("pool_search_option_id", option_id)
+	button.set_meta("pool_search_option_label", label)
+	NonBattleTouchBridgeScript.bind_button_touch(button)
+	_style_pool_search_radio_button(button, false)
+	return button
+
+
+func _style_pool_search_radio_button(button: Button, selected: bool) -> void:
+	if button == null:
+		return
+	var label := str(button.get_meta("pool_search_option_label", ""))
+	button.button_pressed = selected
+	button.text = "%s %s" % ["◉" if selected else "○", label]
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(POOL_SEARCH_RADIO_FONT_SIZE))
+	button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.13, 1.0) if selected else Color(0.90, 0.98, 1.0, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.13, 1.0) if selected else Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color(0.04, 0.10, 0.13, 1.0))
+	button.add_theme_stylebox_override("normal", _pool_search_radio_style(selected, false))
+	button.add_theme_stylebox_override("hover", _pool_search_radio_style(selected, true))
+	button.add_theme_stylebox_override("pressed", _pool_search_radio_style(true, true))
+	button.add_theme_stylebox_override("hover_pressed", _pool_search_radio_style(true, true))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _pool_search_radio_style(selected: bool, hovered: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.22, 0.83, 1.0, 0.94) if selected else Color(0.02, 0.055, 0.08, 0.94)
+	if hovered and not selected:
+		style.bg_color = Color(0.04, 0.14, 0.19, 0.98)
+	style.border_color = Color(0.42, 0.94, 1.0, 0.96 if selected or hovered else 0.52)
+	style.set_border_width_all(2 if selected else 1)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 7
+	style.content_margin_bottom = 7
+	return style
+
+
+func _style_pool_search_button(button: Button, accent: Color) -> void:
+	button.custom_minimum_size = Vector2(150, POOL_SEARCH_CONTROL_HEIGHT)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(POOL_SEARCH_BODY_FONT_SIZE))
+	button.add_theme_stylebox_override("normal", HudThemeScript.button_style(accent, false, false))
+	button.add_theme_stylebox_override("hover", HudThemeScript.button_style(accent, true, false))
+	button.add_theme_stylebox_override("pressed", HudThemeScript.button_style(accent, true, true))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_color_override("font_color", Color(0.94, 0.99, 1.0))
+
+
+func _pool_search_layout_metrics(viewport_size: Vector2) -> Dictionary:
+	var safe_size := viewport_size
+	if safe_size.x <= 0.0 or safe_size.y <= 0.0:
+		safe_size = Vector2(1280, 720)
+	var compact := safe_size.x < 760.0
+	var outer_margin := 12.0 if compact else 30.0
+	var available_width := maxf(1.0, safe_size.x - outer_margin * 2.0)
+	var available_height := maxf(1.0, safe_size.y - 24.0)
+	return {
+		"compact": compact,
+		"box_width": minf(980.0, available_width),
+		"box_height": minf(700.0, available_height),
+		"category_columns": 2 if compact else 6,
+		"tag_columns": 2 if compact else 5,
+		"energy_columns": 3 if compact else 6,
+	}
+
+
+func _apply_pool_search_overlay_metrics() -> void:
+	if _pool_search_box == null or not is_instance_valid(_pool_search_box):
+		return
+	var viewport_size := Vector2(1280, 720)
+	if is_inside_tree() and get_viewport() != null:
+		viewport_size = get_viewport().get_visible_rect().size
+	var metrics := _pool_search_layout_metrics(viewport_size)
+	_pool_search_box.custom_minimum_size = Vector2(float(metrics["box_width"]), float(metrics["box_height"]))
+	if _pool_search_category_grid != null:
+		_pool_search_category_grid.columns = int(metrics["category_columns"])
+	if _pool_search_tag_grid != null:
+		_pool_search_tag_grid.columns = int(metrics["tag_columns"])
+	if _pool_search_energy_grid != null:
+		_pool_search_energy_grid.columns = int(metrics["energy_columns"])
+	if _pool_search_scroll != null:
+		HudThemeScript.style_scroll_container(_pool_search_scroll, "auto")
+		if bool(metrics["compact"]):
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_pool_search_scroll)
+		else:
+			NonBattleTouchBridgeScript.configure_visible_vertical_scroll(_pool_search_scroll)
+
+
+func _pokemon_search_tag_options() -> Array[Dictionary]:
+	var result: Array[Dictionary] = [
+		{"id": "", "label": "全部标签"},
+		{"id": "ex", "label": "ex"},
+		{"id": "Tera", "label": "太晶"},
+		{"id": "Ancient", "label": "古代"},
+		{"id": "Future", "label": "未来"},
+		{"id": "Radiant", "label": "光辉"},
+	]
+	var seen := {"": true, "ex": true, "Tera": true, "Ancient": true, "Future": true, "Radiant": true}
+	if not _pool_by_category.is_empty():
+		for card: CardData in _pool_by_category[0]:
+			var candidate_tags := Array(card.is_tags)
+			if card.mechanic != "":
+				candidate_tags.append(card.mechanic)
+			for raw_tag: Variant in candidate_tags:
+				var tag := str(raw_tag).strip_edges()
+				if tag == "" or tag in STRUCTURAL_POKEMON_TAGS or seen.has(tag):
+					continue
+				seen[tag] = true
+				result.append({"id": tag, "label": str(POKEMON_TAG_LABELS.get(tag, tag))})
+	return result
+
+
+func _populate_pool_search_tag_options() -> void:
+	if _pool_search_tag_grid == null:
+		return
+	_clear_pool_search_radio_grid(_pool_search_tag_grid, _pool_search_tag_buttons)
+	for option_data: Dictionary in _pokemon_search_tag_options():
+		var option_id := str(option_data["id"])
+		var button := _create_pool_search_radio_button(
+			"DeckPoolSearchTagRadio_%s" % _pool_search_radio_node_suffix(option_id),
+			str(option_data["label"]),
+			option_id,
+			_pool_search_tag_group
+		)
+		button.pressed.connect(_on_pool_search_tag_radio_pressed.bind(option_id))
+		_pool_search_tag_grid.add_child(button)
+		_pool_search_tag_buttons.append(button)
+	_refresh_pool_search_radio_buttons()
+
+
+func _populate_pool_search_category_radios() -> void:
+	if _pool_search_category_grid == null:
+		return
+	_clear_pool_search_radio_grid(_pool_search_category_grid, _pool_search_category_buttons)
+	for index: int in CATEGORY_TABS.size():
+		var button := _create_pool_search_radio_button(
+			"DeckPoolSearchCategoryRadio%d" % index,
+			str(CATEGORY_TABS[index]["label"]),
+			index,
+			_pool_search_category_group
+		)
+		button.pressed.connect(_on_pool_search_category_radio_pressed.bind(index))
+		_pool_search_category_grid.add_child(button)
+		_pool_search_category_buttons.append(button)
+	_refresh_pool_search_radio_buttons()
+
+
+func _populate_pool_search_energy_radios() -> void:
+	if _pool_search_energy_grid == null:
+		return
+	_clear_pool_search_radio_grid(_pool_search_energy_grid, _pool_search_energy_buttons)
+	var options: Array[Dictionary] = [{"id": "", "label": "全部属性"}]
+	for energy_type: String in ENERGY_TYPE_ORDER:
+		options.append({"id": energy_type, "label": str(ENERGY_TYPE_LABELS.get(energy_type, energy_type))})
+	for option_data: Dictionary in options:
+		var option_id := str(option_data["id"])
+		var button := _create_pool_search_radio_button(
+			"DeckPoolSearchEnergyRadio_%s" % _pool_search_radio_node_suffix(option_id),
+			str(option_data["label"]),
+			option_id,
+			_pool_search_energy_group
+		)
+		button.pressed.connect(_on_pool_search_energy_radio_pressed.bind(option_id))
+		_pool_search_energy_grid.add_child(button)
+		_pool_search_energy_buttons.append(button)
+	_refresh_pool_search_radio_buttons()
+
+
+func _clear_pool_search_radio_grid(grid: GridContainer, buttons: Array[Button]) -> void:
+	for child: Node in grid.get_children():
+		grid.remove_child(child)
+		child.queue_free()
+	buttons.clear()
+
+
+func _pool_search_radio_node_suffix(option_id: String) -> String:
+	if option_id == "":
+		return "All"
+	return option_id.replace(" ", "_").replace("/", "_").replace("-", "_")
+
+
+func _refresh_pool_search_radio_buttons() -> void:
+	for index: int in _pool_search_category_buttons.size():
+		_style_pool_search_radio_button(_pool_search_category_buttons[index], index == _pool_active_tab)
+	for button: Button in _pool_search_tag_buttons:
+		_style_pool_search_radio_button(button, str(button.get_meta("pool_search_option_id", "")) == _pool_search_tag)
+	for button: Button in _pool_search_energy_buttons:
+		_style_pool_search_radio_button(button, str(button.get_meta("pool_search_option_id", "")) == _pool_search_energy_type)
+
+
+func _sync_pool_search_controls() -> void:
+	if _pool_search_input != null:
+		_pool_search_input.text = _pool_search_query
+	_sync_pool_search_category_control()
+	_refresh_pool_search_radio_buttons()
+	_update_pool_search_pokemon_rows()
+
+
+func _sync_pool_search_category_control() -> void:
+	_pool_active_tab = clampi(_pool_active_tab, 0, maxi(0, CATEGORY_TABS.size() - 1))
+	_refresh_pool_search_radio_buttons()
+
+
+func _update_pool_search_pokemon_rows() -> void:
+	var show_pokemon_filters := _pool_active_tab == 0
+	if _pool_search_tag_row != null:
+		_pool_search_tag_row.visible = show_pokemon_filters
+	if _pool_search_energy_row != null:
+		_pool_search_energy_row.visible = show_pokemon_filters
+
+
+func _on_pool_search_query_changed(value: String) -> void:
+	_pool_search_query = value
+	_apply_pool_search_filters()
+
+
+func _on_pool_search_text_submitted(_value: String) -> void:
+	_hide_pool_search_overlay()
+
+
+func _on_pool_search_category_radio_pressed(category_index: int) -> void:
+	_pool_active_tab = clampi(category_index, 0, maxi(0, CATEGORY_TABS.size() - 1))
+	_update_pool_search_pokemon_rows()
+	_apply_pool_search_filters()
+
+
+func _on_pool_search_tag_radio_pressed(tag: String) -> void:
+	_pool_search_tag = tag
+	_apply_pool_search_filters()
+
+
+func _on_pool_search_energy_radio_pressed(energy_type: String) -> void:
+	_pool_search_energy_type = energy_type
+	_apply_pool_search_filters()
+
+
+func _apply_pool_search_filters() -> void:
+	_refresh_pool_search_radio_buttons()
+	var pool_tab_bar := get_node_or_null("%PoolTabBar") as HBoxContainer
+	if pool_tab_bar != null:
+		_build_tab_bar(pool_tab_bar, _pool_tab_buttons, false)
+	_clear_hidden_pool_selection()
+	if _should_defer_pool_search_result_render():
+		_pool_search_results_dirty = true
+	elif get_node_or_null("%PoolGrid") != null:
+		_refresh_pool_grid()
+		_reset_pool_search_result_scroll()
+	_update_pool_search_result_label()
+	_update_pool_search_button_state()
+
+
+func _should_defer_pool_search_result_render() -> bool:
+	return _pool_search_overlay != null \
+		and is_instance_valid(_pool_search_overlay) \
+		and _pool_search_overlay.visible
+
+
+func _reset_pool_search_result_scroll() -> void:
+	var pool_scroll := get_node_or_null("%PoolScroll") as ScrollContainer
+	if pool_scroll != null:
+		pool_scroll.scroll_vertical = 0
+
+
+func _commit_deferred_pool_search_results() -> void:
+	if not _pool_search_results_dirty:
+		return
+	_pool_search_results_dirty = false
+	if get_node_or_null("%PoolGrid") == null:
+		return
+	_show_pool_loading_placeholder()
+	if is_inside_tree():
+		await get_tree().process_frame
+	_refresh_pool_grid()
+	_reset_pool_search_result_scroll()
+
+
+func _clear_hidden_pool_selection() -> void:
+	if _selected_pool_uid == "":
+		return
+	for card: CardData in _filtered_pool_cards(_pool_active_tab):
+		if card.get_uid() == _selected_pool_uid:
+			return
+	_selected_pool_uid = ""
+	if str(_last_selected_card_payload.get("kind", "")) == "pool":
+		_last_selected_card_payload = {}
+	if get_node_or_null("%BtnReplace") != null:
+		_update_footer()
+
+
+func _update_pool_search_result_label() -> void:
+	if _pool_search_result_label == null:
+		return
+	var category_label := str(CATEGORY_TABS[_pool_active_tab]["label"]) if _pool_active_tab >= 0 and _pool_active_tab < CATEGORY_TABS.size() else "卡牌"
+	_pool_search_result_label.text = "%s：找到 %d 张" % [category_label, _filtered_pool_cards(_pool_active_tab).size()]
+
+
+func _update_pool_search_button_state() -> void:
+	var button := get_node_or_null("%BtnCardSearch") as Button
+	if button == null:
+		return
+	button.text = "搜索卡牌*" if _has_active_pool_search_filters() else "搜索卡牌"
+	button.tooltip_text = "当前已启用搜索筛选" if _has_active_pool_search_filters() else "按名称、分类、宝可梦标签与属性搜索"
+
+
+func _clear_pool_search_filters() -> void:
+	_pool_search_query = ""
+	_pool_search_tag = ""
+	_pool_search_energy_type = ""
+	_sync_pool_search_controls()
+	_apply_pool_search_filters()
+	call_deferred("_focus_pool_search_input")
+
+
+func _hide_pool_search_overlay() -> void:
+	if _pool_search_overlay == null:
+		return
+	_pool_search_overlay.visible = false
+	if _pool_search_input != null:
+		_pool_search_input.release_focus()
+	if _pool_search_results_dirty:
+		call_deferred("_commit_deferred_pool_search_results")
 
 
 # -- 左侧卡组网格 --
@@ -622,7 +1284,10 @@ func _refresh_pool_grid() -> void:
 	if _pool_active_tab < 0 or _pool_active_tab >= _pool_by_category.size():
 		return
 
-	var cards: Array = _pool_by_category[_pool_active_tab]
+	var cards: Array = _filtered_pool_cards(_pool_active_tab)
+	if cards.is_empty():
+		_add_pool_no_results_label()
+		return
 
 	# 宝可梦分类（索引 0）按属性子分组
 	if _pool_active_tab == 0:
@@ -676,6 +1341,20 @@ func _refresh_pool_grid_pokemon(cards: Array) -> void:
 		for card: CardData in group:
 			grid.add_child(_make_pool_tile(card))
 		%PoolGrid.add_child(grid)
+
+
+func _add_pool_no_results_label() -> void:
+	var label := Label.new()
+	label.name = "PoolSearchNoResults"
+	label.text = "未找到匹配卡牌\n请调整名称、分类、标签或属性"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(0, 150)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.add_theme_color_override("font_color", Color(0.72, 0.83, 0.90, 0.92))
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(22))
+	%PoolGrid.add_child(label)
 
 
 func _create_pool_sub_grid() -> GridContainer:
@@ -892,7 +1571,7 @@ func _restyle_pool_grid() -> void:
 	var all_tiles: Array[PanelContainer] = []
 	_collect_pool_tiles(%PoolGrid, all_tiles)
 
-	var cards: Array = _pool_by_category[_pool_active_tab]
+	var cards: Array = _filtered_pool_cards(_pool_active_tab)
 	# 宝可梦分类需要按属性重排顺序匹配
 	var ordered_cards: Array = cards
 	if _pool_active_tab == 0:

@@ -106,6 +106,30 @@ func test_native_mobile_unlabelled_device_zero_mouse_tail_stays_with_touch() -> 
 	])
 
 
+func test_native_mobile_next_mouse_first_press_is_not_reused_as_old_touch_echo() -> String:
+	var router = RouterScript.new()
+	router.configure(true)
+	var position := Vector2(280, 420)
+	var touch_down := _touch(true, position)
+	router.observe(touch_down, 1000)
+	router.claim_event(touch_down, "hand_card", "battle_pointer_surface:hand", 1001)
+	router.observe(_touch(false, position), 1010)
+
+	# The compatibility tail for the first tap has already had a short delivery
+	# window. A later device-zero mouse press at the same coordinate can be the
+	# leading half of the player's next Android tap (for example the Use button
+	# opened above that card), and must start a fresh sequence.
+	var next_press := _mouse(true, position, 0)
+	var next_result: Dictionary = router.observe(next_press, 1160)
+	var next_sequence := next_result.get("sequence", null) as PointerSequence
+
+	return run_checks([
+		assert_true(bool(next_result.get("deliver", false)), "A later Android mouse-first press must reach the newly opened HUD button"),
+		assert_false(bool(next_result.get("synthetic_echo", false)), "The next physical tap must not be classified as the previous hand-card echo"),
+		assert_true(next_sequence != null and next_sequence.owner == "", "The next tap must start with no stale hand-surface owner"),
+	])
+
+
 func test_native_android_mouse_first_touch_echo_stays_in_one_sequence() -> String:
 	var router = RouterScript.new()
 	router.configure(true)

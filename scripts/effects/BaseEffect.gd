@@ -2,6 +2,7 @@ class_name BaseEffect
 extends RefCounted
 
 const DiscardPileRestriction := preload("res://scripts/effects/DiscardPileRestrictionHelper.gd")
+const FieldTransition := preload("res://scripts/engine/BattleFieldTransitionService.gd")
 
 var _attack_interaction_context: Dictionary = {}
 var _default_attack_index_to_match: int = -1
@@ -299,6 +300,70 @@ func _move_discard_cards_to_hand_with_log(
 		player.hand.append(card)
 		moved.append(card)
 	return moved
+
+
+func _switch_active_with_bench(
+	state: GameState,
+	player_index: int,
+	incoming: PokemonSlot,
+	reason: String,
+	preserve_incoming_bench_index: bool = false
+) -> bool:
+	var placement := (
+		FieldTransition.BENCH_PLACEMENT_REPLACE_INCOMING
+		if preserve_incoming_bench_index
+		else FieldTransition.BENCH_PLACEMENT_APPEND
+	)
+	return FieldTransition.switch_active_with_bench(
+		state,
+		player_index,
+		incoming,
+		reason,
+		placement
+	)
+
+
+func _promote_from_bench(
+	state: GameState,
+	player_index: int,
+	incoming: PokemonSlot,
+	reason: String
+) -> bool:
+	return FieldTransition.promote_from_bench(state, player_index, incoming, reason)
+
+
+func _replace_active_with_newcomer(
+	state: GameState,
+	player_index: int,
+	incoming: PokemonSlot,
+	reason: String
+) -> bool:
+	return FieldTransition.replace_active_with_newcomer(state, player_index, incoming, reason)
+
+
+func _remove_active(
+	state: GameState,
+	player_index: int,
+	outgoing: PokemonSlot,
+	reason: String
+) -> bool:
+	return FieldTransition.remove_active(state, player_index, outgoing, reason)
+
+
+func _remove_active_and_promote(
+	state: GameState,
+	player_index: int,
+	outgoing: PokemonSlot,
+	incoming: PokemonSlot,
+	reason: String
+) -> bool:
+	return FieldTransition.remove_active_and_promote(
+		state,
+		player_index,
+		outgoing,
+		incoming,
+		reason
+	)
 
 
 func set_attack_interaction_context(targets: Array) -> void:

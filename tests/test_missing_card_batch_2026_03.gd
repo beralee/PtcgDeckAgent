@@ -2434,6 +2434,7 @@ func test_cs5_5c_064_cherens_care_returns_damaged_colorless_pokemon_and_all_atta
 
 	var target_cd := _make_basic_pokemon_data("Cheren Target", "C", 130, "Basic")
 	var target := _make_slot(target_cd, 0)
+	var target_card: CardInstance = target.get_top_card()
 	target.damage_counters = 40
 	var attached_energy := CardInstance.create(_make_energy_data("Double Turbo", "C", "Special Energy"), 0)
 	var attached_tool := CardInstance.create(_make_trainer_data("Hero's Cape", "Tool"), 0)
@@ -2460,7 +2461,7 @@ func test_cs5_5c_064_cherens_care_returns_damaged_colorless_pokemon_and_all_atta
 		assert_eq(steps.size(), 2, "CS5.5C_064 should ask for the target and an Active replacement"),
 		assert_true(success, "CS5.5C_064 should resolve through GameStateMachine"),
 		assert_eq(player.active_pokemon, replacement, "CS5.5C_064 should promote the chosen replacement when the Active is returned"),
-		assert_contains(player.hand, target.get_top_card(), "CS5.5C_064 should return the Pokemon card to hand"),
+		assert_contains(player.hand, target_card, "CS5.5C_064 should return the Pokemon card to hand"),
 		assert_contains(player.hand, attached_energy, "CS5.5C_064 should return attached Energy to hand"),
 		assert_contains(player.hand, attached_tool, "CS5.5C_064 should return the attached Tool to hand"),
 		assert_eq(player.discard_pile.size(), 1, "CS5.5C_064 should only discard itself"),

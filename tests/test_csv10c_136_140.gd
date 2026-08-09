@@ -131,6 +131,12 @@ func test_csv10c_138_counts_damage_counters_only_on_own_benched_cynthia_pokemon_
 	unrelated.damage_counters = 90
 	state.players[0].bench = [cynthia_one, cynthia_two, unrelated]
 	processor.register_pokemon_card(spiritomb.get_card_data())
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	gsm.effect_processor.register_pokemon_card(spiritomb.get_card_data())
+	state.players[1].active_pokemon.get_card_data().weakness_energy = "D"
+	state.players[1].active_pokemon.get_card_data().weakness_value = "×2"
+	var final_damage := gsm.get_attack_preview_damage(0, 0)
 	var bonus := 0
 	var ignores_weakness := false
 	for effect: BaseEffect in processor.get_attack_effects_for_slot(spiritomb, 0):
@@ -141,6 +147,7 @@ func test_csv10c_138_counts_damage_counters_only_on_own_benched_cynthia_pokemon_
 	return run_checks([
 		assert_eq(bonus, 40, "CSV10C_138 should add 40 to printed 10 for 5 counters on Cynthia's Benched Pokemon"),
 		assert_true(ignores_weakness, "CSV10C_138 should ignore Weakness"),
+		assert_eq(final_damage, 50, "CSV10C_138 should deal exactly 10 damage per real counter and must not double for Weakness"),
 	])
 
 

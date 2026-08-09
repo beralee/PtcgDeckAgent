@@ -17,6 +17,8 @@ android/
 !.codex/skills/upgrade-ptcg-deck-training-puzzles/**
 !.codex/skills/iterate-dragapult-corpus-model/
 !.codex/skills/iterate-dragapult-corpus-model/**
+!.codex/skills/build-evolve-ptcg-base-graph-strategy/
+!.codex/skills/build-evolve-ptcg-base-graph-strategy/**
 .codex-remote-attachments/
 .worktrees/
 

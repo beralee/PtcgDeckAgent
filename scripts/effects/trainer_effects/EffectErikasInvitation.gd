@@ -39,10 +39,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var slot := PokemonSlot.new()
 	slot.pokemon_stack.append(chosen)
 	slot.turn_played = state.turn_number
-	var old_active: PokemonSlot = opponent.active_pokemon
-	old_active.clear_on_leave_active()
-	opponent.bench.append(old_active)
-	opponent.active_pokemon = slot
+	_replace_active_with_newcomer(state, 1 - card.owner_index, slot, "erikas_invitation")
 
 
 func get_description() -> String:

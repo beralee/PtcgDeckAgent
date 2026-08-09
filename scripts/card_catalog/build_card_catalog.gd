@@ -1,6 +1,7 @@
 extends SceneTree
 
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
+const CardCatalogSearchRecordScript := preload("res://scripts/card_catalog/CardCatalogSearchRecord.gd")
 
 const SOURCE_CARD_DIRECTORIES := [
 	{
@@ -14,7 +15,8 @@ const SOURCE_CARD_DIRECTORIES := [
 ]
 const OUTPUT_ROOT := "res://data/card_catalog"
 const OUTPUT_SETS_DIR := "res://data/card_catalog/sets"
-const CATALOG_SCHEMA_VERSION := 1
+const CATALOG_SCHEMA_VERSION := 2
+const SET_PAYLOAD_SCHEMA_VERSION := 1
 
 
 func _initialize() -> void:
@@ -60,7 +62,7 @@ func _build() -> int:
 			index_cards.append(_index_entry_for_card(card, "sets/%s.json" % set_code))
 			total_cards += 1
 		var set_payload := {
-			"schema_version": CATALOG_SCHEMA_VERSION,
+			"schema_version": SET_PAYLOAD_SCHEMA_VERSION,
 			"set_code": set_code,
 			"cards": set_payload_cards,
 		}
@@ -145,35 +147,15 @@ func _source_card_file_names(source_path: String) -> PackedStringArray:
 func _index_entry_for_card(card: CardData, set_file: String) -> Dictionary:
 	var status := CardImplementationStatusScript.get_status(card)
 	var implementation_status := "text_only" if bool(status.get("unimplemented", false)) else "implemented"
-	return {
+	var entry := CardCatalogSearchRecordScript.from_card(card)
+	entry.merge({
 		"uid": card.get_uid(),
-		"set_code": card.set_code,
-		"card_index": card.card_index,
-		"set_code_en": card.set_code_en,
-		"card_index_en": card.card_index_en,
-		"name": card.name,
-		"name_en": card.name_en,
-		"name_zh": card.name_zh,
-		"card_type": card.card_type,
-		"mechanic": card.mechanic,
-		"label": card.label,
-		"is_tags": Array(card.is_tags),
-		"stage": card.stage,
-		"hp": card.hp,
-		"energy_type": card.energy_type,
-		"regulation_mark": card.regulation_mark,
-		"rarity": card.rarity,
-		"effect_id": card.effect_id,
 		"implementation_status": implementation_status,
 		"implementation_reason": str(status.get("reason", "")),
 		"set_file": set_file,
 		"image_key": "%s/%s" % [card.set_code, card.card_index],
-		"image_url": card.image_url,
-		"source_provider": card.source_provider,
-		"source_set_code": card.source_set_code,
-		"source_card_index": card.source_card_index,
-		"source_prints": Array(card.source_prints),
-	}
+	}, true)
+	return entry
 
 
 func _load_json_dictionary(path: String) -> Dictionary:
@@ -207,7 +189,7 @@ func _ensure_dir(path: String) -> void:
 
 
 func _catalog_version() -> String:
-	return "2026.07.12.1"
+	return "2026.08.02.1"
 
 
 func _manifest_sources() -> Array[Dictionary]:

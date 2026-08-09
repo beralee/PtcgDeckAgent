@@ -3,6 +3,8 @@ extends TestBase
 
 const BATTLE_SCENE_ENTRY_PATH := "res://scenes/battle/BattleScene.gd"
 const BATTLE_SCENE_RUNTIME_PATH := "res://scenes/battle/BattleSceneRuntime.gd"
+const FIELD_TRANSITION_SERVICE_PATH := "res://scripts/engine/BattleFieldTransitionService.gd"
+const BOARD_ACTION_RUNTIME_PATH := "res://scenes/battle/runtime/BattleSceneBoardActionRuntime.gd"
 const BATTLE_SCENE_RUNTIME_LAYER_PATHS := [
 	"res://scenes/battle/BattleSceneRuntime.gd",
 	"res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd",
@@ -71,3 +73,65 @@ func test_phase_one_architecture_files_do_not_reflect_scene_private_state() -> S
 		checks.append(assert_false("scene.set(\"_" in text, "%s should not write BattleScene private fields" % path))
 		checks.append(assert_false("scene.call(\"_" in text, "%s should not call BattleScene private methods" % path))
 	return run_checks(checks)
+
+
+func test_runtime_active_slot_changes_are_owned_by_one_transition_service() -> String:
+	var runtime_paths: Array[String] = [
+		"res://scripts/engine/GameStateMachine.gd",
+		"res://scripts/engine/EffectProcessor.gd",
+	]
+	_collect_gd_files("res://scripts/effects", runtime_paths)
+	var assignment_pattern := RegEx.new()
+	var compiled := assignment_pattern.compile("\\.active_pokemon[\\t ]*=[\\t ]*(?!=)")
+	var checks: Array[String] = [
+		assert_eq(compiled, OK, "The active-slot architecture guard must compile"),
+		assert_true(
+			FileAccess.file_exists(FIELD_TRANSITION_SERVICE_PATH),
+			"Runtime field changes must have one authoritative transition service"
+		),
+	]
+	if compiled != OK:
+		return run_checks(checks)
+	for path: String in runtime_paths:
+		var source := FileAccess.get_file_as_string(path)
+		checks.append(assert_true(
+			assignment_pattern.search(source) == null,
+			"Runtime code must not mutate active_pokemon outside the transition service: %s" % path
+		))
+	return run_checks(checks)
+
+
+func test_prize_rule_commit_precedes_and_is_absent_from_presentation_callbacks() -> String:
+	var source := FileAccess.get_file_as_string(BOARD_ACTION_RUNTIME_PATH)
+	var interaction_start := source.find("func _try_take_prize_from_slot")
+	var animation_start := source.find("func _animate_prize_flip")
+	var presentation_end := source.find("func _complete_prize_presentation", animation_start)
+	var interaction_source := source.substr(interaction_start, animation_start - interaction_start)
+	var animation_source := source.substr(animation_start, presentation_end - animation_start)
+	var commit_index := interaction_source.find("resolve_take_prize")
+	var animate_index := interaction_source.find("_animate_prize_flip")
+
+	return run_checks([
+		assert_true(interaction_start >= 0 and animation_start > interaction_start and presentation_end > animation_start, "Prize runtime boundaries must remain inspectable"),
+		assert_true(commit_index >= 0, "The prize interaction must synchronously commit the rule transaction"),
+		assert_true(animate_index > commit_index, "Prize rules must commit before presentation begins"),
+		assert_false("resolve_take_prize" in animation_source, "Tween callbacks must never own the prize rule commit"),
+		assert_false("take_prize_from_slot" in animation_source, "Presentation code must never mutate the authoritative prize zone"),
+	])
+
+
+func _collect_gd_files(root_path: String, output: Array[String]) -> void:
+	var dir := DirAccess.open(root_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while entry != "":
+		if entry not in [".", ".."]:
+			var path := "%s/%s" % [root_path, entry]
+			if dir.current_is_dir():
+				_collect_gd_files(path, output)
+			elif entry.ends_with(".gd"):
+				output.append(path)
+		entry = dir.get_next()
+	dir.list_dir_end()

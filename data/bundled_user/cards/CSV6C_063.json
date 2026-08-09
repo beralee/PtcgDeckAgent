@@ -1,0 +1,59 @@
+{
+    "name":  "巧锻匠",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【超】 合金挥打 20+\n如果这只宝可梦身上附着了【钢】能量的话，则追加造成40伤害。\n\n",
+    "yoren_code":  "P0958",
+    "set_code":  "CSV6C",
+    "card_index":  "063",
+    "set_code_en":  "PAR",
+    "card_index_en":  "84",
+    "name_en":  "Tinkatuff",
+    "name_zh":  "",
+    "artist":  "Souichirou Gunjima",
+    "rarity":  "C",
+    "release_date":  "2025-11-07T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "b5670f3ae026615178352ddd7b9755ec",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV6C/063.png",
+    "image_local_path":  "user://cards/images/CSV6C/063.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV6C/063",
+    "source_set_code":  "CSV6C",
+    "source_card_index":  "063",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Stage 1",
+    "hp":  80,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "小锻匠",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "合金挥打",
+                        "text":  "如果这只宝可梦身上附着了【钢】能量的话，则追加造成40伤害。",
+                        "cost":  "P",
+                        "damage":  "20+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

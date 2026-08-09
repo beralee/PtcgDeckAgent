@@ -4,6 +4,32 @@ extends TestBase
 const DeckEditorScript := preload("res://scenes/deck_editor/DeckEditor.gd")
 const DeckEditorScene := preload("res://scenes/deck_editor/DeckEditor.tscn")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const EXPECTED_TERA_EX_UIDS := [
+	"CSV5C_075",
+	"CSV7C_123",
+	"CSV7C_141",
+	"CSV8C_028",
+	"CSV8C_067",
+	"CSV8C_121",
+	"CSV8C_159",
+	"CSV9.5C_006",
+	"CSV9.5C_023",
+	"CSV9.5C_029",
+	"CSV9.5C_036",
+	"CSV9.5C_047",
+	"CSV9.5C_058",
+	"CSV9.5C_068",
+	"CSV9.5C_104",
+	"CSV9.5C_140",
+	"CSV9C_034",
+	"CSV9C_054",
+	"CSV9C_064",
+	"CSV9C_090",
+	"CSV9C_119",
+	"CSV9C_144",
+	"CSV9C_152",
+	"CSV9C_175",
+]
 
 
 func _set_navigation_suppressed(suppressed: bool) -> void:
@@ -71,20 +97,247 @@ func _count_blocking_descendant_controls(root: Control) -> int:
 	return count
 
 
-func test_deck_editor_shows_strategy_button_and_hides_legacy_ai_button() -> String:
+func test_build_pool_includes_151c_035_036_pokemon() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var pokemon_cards: Array = pool_by_category[0] if pool_by_category.size() > 0 else []
+	var found: Dictionary = {}
+	for card: CardData in pokemon_cards:
+		if card != null and card.get_uid() in ["151C_035", "151C_036"]:
+			found[card.get_uid()] = card
+	var checks: Array[String] = [
+		assert_true(found.has("151C_035"), "DeckEditor Pokemon tab should include 151C_035 Clefairy"),
+		assert_true(found.has("151C_036"), "DeckEditor Pokemon tab should include 151C_036 Clefable"),
+	]
+	if found.has("151C_035"):
+		checks.append(assert_eq((found["151C_035"] as CardData).stage, "Basic", "Clefairy should remain Basic in the card pool"))
+	if found.has("151C_036"):
+		checks.append(assert_eq((found["151C_036"] as CardData).evolves_from, "皮皮", "Clefable should retain its evolution metadata in the card pool"))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_deck_editor_replaces_strategy_button_with_card_search() -> String:
 	var editor: Control = DeckEditorScene.instantiate()
+	var search_button := editor.get_node_or_null("%BtnCardSearch") as Button
 	var strategy_button := editor.get_node_or_null("%BtnStrategy") as Button
 	var ai_button := editor.get_node_or_null("%BtnAI") as Button
 	var discuss_button := editor.get_node_or_null("%BtnDiscussAI") as Button
 	editor.queue_free()
 
 	return run_checks([
-		assert_not_null(strategy_button, "旧打法思路按钮节点可保留以兼容旧代码"),
+		assert_not_null(search_button, "卡组编辑页应提供搜索卡牌入口"),
+		assert_eq(search_button.text if search_button != null else "", "搜索卡牌", "搜索入口应使用明确的中文标签"),
+		assert_true(search_button.visible if search_button != null else false, "搜索卡牌按钮应在卡组编辑页可见"),
+		assert_null(strategy_button, "打法思路按钮应由卡牌搜索入口替换"),
 		assert_not_null(ai_button, "旧 AI 分析按钮节点可保留以兼容旧代码"),
 		assert_not_null(discuss_button, "与 AI 探讨按钮应保留"),
-		assert_true(strategy_button.visible, "打法思路按钮应在卡组编辑页面可见"),
 		assert_false(ai_button.visible, "AI 分析按钮应从界面隐藏"),
 		assert_true(discuss_button.visible, "与 AI 探讨按钮应保持可见"),
+	])
+
+
+func test_pool_search_fuzzy_matches_chinese_and_english_card_names() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var pikachu := _make_card("SV1", "001", "皮卡丘ex", "Pokemon")
+	pikachu.name_en = "Pikachu ex"
+	var charizard := _make_card("SV1", "002", "喷火龙ex", "Pokemon")
+	charizard.name_en = "Charizard ex"
+	editor.set("_pool_by_category", [[pikachu, charizard], [], [], [], [], []] as Array[Array])
+
+	editor.set("_pool_search_query", "皮丘")
+	var chinese_matches: Array = editor.call("_filtered_pool_cards", 0)
+	editor.set("_pool_search_query", "pka ex")
+	var english_matches: Array = editor.call("_filtered_pool_cards", 0)
+
+	return run_checks([
+		assert_eq(chinese_matches.size(), 1, "中文卡名应支持非连续字符模糊搜索"),
+		assert_eq((chinese_matches[0] as CardData).get_uid() if chinese_matches.size() == 1 else "", pikachu.get_uid(), "中文模糊搜索应命中皮卡丘"),
+		assert_eq(english_matches.size(), 1, "英文卡名应忽略空格并支持模糊搜索"),
+		assert_eq((english_matches[0] as CardData).get_uid() if english_matches.size() == 1 else "", pikachu.get_uid(), "英文模糊搜索应命中 Pikachu ex"),
+	])
+
+
+func test_pool_search_combines_pokemon_name_tag_and_energy_filters() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var ancient_fire := _make_card("SV1", "010", "古代火龙", "Pokemon")
+	ancient_fire.energy_type = "R"
+	ancient_fire.is_tags = PackedStringArray(["Ancient"])
+	var ancient_water := _make_card("SV1", "011", "古代水龙", "Pokemon")
+	ancient_water.energy_type = "W"
+	ancient_water.is_tags = PackedStringArray(["Ancient"])
+	var future_fire := _make_card("SV1", "012", "未来火龙", "Pokemon")
+	future_fire.energy_type = "R"
+	future_fire.is_tags = PackedStringArray(["Future"])
+	editor.set("_pool_by_category", [[ancient_fire, ancient_water, future_fire], [], [], [], [], []] as Array[Array])
+	editor.set("_pool_search_query", "火龙")
+	editor.set("_pool_search_tag", "Ancient")
+	editor.set("_pool_search_energy_type", "R")
+
+	var matches: Array = editor.call("_filtered_pool_cards", 0)
+	return run_checks([
+		assert_eq(matches.size(), 1, "名称、标签和属性应以组合条件过滤宝可梦"),
+		assert_eq((matches[0] as CardData).get_uid() if matches.size() == 1 else "", ancient_fire.get_uid(), "组合筛选应只保留对应的古代火属性宝可梦"),
+	])
+
+
+func test_pool_search_ex_type_matches_mechanic_tag_and_card_name() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var mechanic_ex := _make_card("SV1", "013", "梦幻", "Pokemon")
+	mechanic_ex.mechanic = "ex"
+	var tagged_ex := _make_card("SV1", "014", "喷火龙", "Pokemon")
+	tagged_ex.is_tags = PackedStringArray(["ex"])
+	var named_ex := _make_card("SV1", "015", "皮卡丘ex", "Pokemon")
+	var pokemon_v := _make_card("SV1", "016", "密勒顿V", "Pokemon")
+	pokemon_v.mechanic = "V"
+	editor.set("_pool_by_category", [[mechanic_ex, tagged_ex, named_ex, pokemon_v], [], [], [], [], []] as Array[Array])
+	editor.set("_pool_search_tag", "ex")
+
+	var matches: Array = editor.call("_filtered_pool_cards", 0)
+	var matched_uids: Array[String] = []
+	for card: CardData in matches:
+		matched_uids.append(card.get_uid())
+	return run_checks([
+		assert_eq(matches.size(), 3, "ex 类型应识别 mechanic、is_tags 和卡名后缀三种数据来源"),
+		assert_true(mechanic_ex.get_uid() in matched_uids, "mechanic=ex 的宝可梦应被类型筛选命中"),
+		assert_true(tagged_ex.get_uid() in matched_uids, "is_tags 包含 ex 的宝可梦应被类型筛选命中"),
+		assert_true(named_ex.get_uid() in matched_uids, "旧数据只在名称带 ex 时也应被类型筛选命中"),
+		assert_false(pokemon_v.get_uid() in matched_uids, "ex 类型不应误命中宝可梦 V"),
+	])
+
+
+func test_pool_search_category_filter_keeps_non_pokemon_categories_independent() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var pokemon := _make_card("SV1", "020", "超级球兽", "Pokemon")
+	var item := _make_card("SV1", "021", "超级球", "Item")
+	var supporter := _make_card("SV1", "022", "博士的研究", "Supporter")
+	editor.set("_pool_by_category", [[pokemon], [supporter], [item], [], [], []] as Array[Array])
+	editor.set("_pool_search_query", "超级球")
+	editor.set("_pool_search_tag", "Ancient")
+	editor.set("_pool_search_energy_type", "R")
+
+	var pokemon_matches: Array = editor.call("_filtered_pool_cards", 0)
+	var item_matches: Array = editor.call("_filtered_pool_cards", 2)
+	var supporter_matches: Array = editor.call("_filtered_pool_cards", 1)
+	return run_checks([
+		assert_eq(pokemon_matches.size(), 0, "宝可梦分类应应用标签与属性条件"),
+		assert_eq(item_matches.size(), 1, "物品分类只应用卡名条件，不应被宝可梦条件误伤"),
+		assert_eq(supporter_matches.size(), 0, "分类结果应来自对应候选卡池"),
+	])
+
+
+func test_pool_search_overlay_exposes_all_filter_controls_and_responsive_metrics() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.set("_pool_by_category", [[], [], [], [], [], []] as Array[Array])
+	editor.call("_ensure_pool_search_overlay")
+	var overlay := editor.get("_pool_search_overlay") as Panel
+	var input := editor.get("_pool_search_input") as LineEdit
+	var category_grid := editor.get("_pool_search_category_grid") as GridContainer
+	var tag_grid := editor.get("_pool_search_tag_grid") as GridContainer
+	var energy_grid := editor.get("_pool_search_energy_grid") as GridContainer
+	var category_buttons := editor.get("_pool_search_category_buttons") as Array[Button]
+	var tag_buttons := editor.get("_pool_search_tag_buttons") as Array[Button]
+	var energy_buttons := editor.get("_pool_search_energy_buttons") as Array[Button]
+	var desktop_metrics: Dictionary = editor.call("_pool_search_layout_metrics", Vector2(1280, 720))
+	var mobile_metrics: Dictionary = editor.call("_pool_search_layout_metrics", Vector2(390, 844))
+	var tag_ids: Array[String] = []
+	for button: Button in tag_buttons:
+		tag_ids.append(str(button.get_meta("pool_search_option_id", "")))
+	var first_category := category_buttons[0] if not category_buttons.is_empty() else null
+	var second_category := category_buttons[1] if category_buttons.size() > 1 else null
+	var ex_radio := editor.find_child("DeckPoolSearchTagRadio_ex", true, false) as Button
+
+	return run_checks([
+		assert_not_null(overlay, "搜索入口应创建同页模态筛选层"),
+		assert_not_null(input, "筛选层应包含卡牌名称搜索框"),
+		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false)) if input != null else false, "搜索框应使用 Web/Android 原生文本输入桥接"),
+		assert_not_null(category_grid, "分类筛选应使用直接可见的 HUD radio 网格"),
+		assert_not_null(tag_grid, "宝可梦类型筛选应使用直接可见的 HUD radio 网格"),
+		assert_not_null(energy_grid, "属性筛选应使用直接可见的 HUD radio 网格"),
+		assert_eq(category_buttons.size(), 6, "分类筛选应完整提供六个 radio 选项"),
+		assert_true("ex" in tag_ids and "Tera" in tag_ids and "Ancient" in tag_ids and "Future" in tag_ids, "类型筛选应显式提供 ex、太晶、古代和未来"),
+		assert_not_null(ex_radio, "ex 应是固定、可直接点击的 HUD radio"),
+		assert_eq(energy_buttons.size(), 11, "属性筛选应提供全部选项与十种宝可梦属性"),
+		assert_true(first_category != null and first_category.toggle_mode and first_category.button_group != null, "HUD radio 应保留互斥选择语义"),
+		assert_true(first_category != null and second_category != null and first_category.button_group == second_category.button_group, "同组筛选项应共享 ButtonGroup"),
+		assert_true(first_category != null and first_category.text.begins_with("◉ "), "当前筛选项应显示明确的选中圆点"),
+		assert_true(second_category != null and second_category.text.begins_with("○ "), "未选筛选项应显示空心圆点"),
+		assert_null(_find_descendant_by_class(overlay, "OptionButton"), "搜索筛选层不应再使用难以辨认的原生下拉列表"),
+		assert_eq(float(desktop_metrics.get("box_width", 0.0)), 980.0, "桌面筛选层应为 radio 网格提供足够宽度"),
+		assert_eq(int(desktop_metrics.get("category_columns", 0)), 6, "桌面端六个分类应一行展示"),
+		assert_true(bool(mobile_metrics.get("compact", false)), "窄屏应启用紧凑筛选布局"),
+		assert_true(float(mobile_metrics.get("box_width", 999.0)) <= 366.0, "移动端筛选层应保留左右安全边距"),
+		assert_eq(int(mobile_metrics.get("category_columns", 0)), 2, "移动端分类 radio 应自动换成两列"),
+		assert_eq(int(mobile_metrics.get("energy_columns", 0)), 3, "移动端属性 radio 应自动换成三列"),
+	])
+
+
+func test_catalog_pool_preserves_tera_marker_for_every_ex_pokemon() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var ex_count := 0
+	var tera_uids := PackedStringArray()
+	var ex_cards: Array[CardData] = []
+	var checks: Array[String] = []
+	for entry: Dictionary in CardDatabase.search_catalog_cards("", {}, 0, 0):
+		if str(entry.get("card_type", "")) != "Pokemon" \
+				or str(entry.get("mechanic", "")).strip_edges().to_lower() != "ex":
+			continue
+		ex_count += 1
+		var uid := str(entry.get("uid", ""))
+		var card: CardData = editor.call("_card_from_catalog_entry", entry)
+		if card != null:
+			ex_cards.append(card)
+		if str(entry.get("ancient_trait", "")) != "Tera":
+			continue
+		tera_uids.append(uid)
+		checks.append(assert_true(
+			card != null and bool(editor.call("_pool_card_matches_pokemon_tag", card, "Tera")),
+			"%s should remain selectable through the Tera HUD radio" % uid
+		))
+	tera_uids.sort()
+	checks.append(assert_true(ex_count >= 132, "The audit must cover the complete catalog of Pokemon ex"))
+	checks.append(assert_eq(
+		Array(tera_uids),
+		EXPECTED_TERA_EX_UIDS,
+		"Every Tera Pokemon ex in the catalog must keep its search marker"
+	))
+	editor.set("_pool_by_category", [ex_cards, [], [], [], [], []] as Array[Array])
+	editor.set("_pool_search_tag", "Tera")
+	editor.set("_pool_search_energy_type", "G")
+	var grass_uids := PackedStringArray()
+	for card: CardData in editor.call("_filtered_pool_cards", 0):
+		grass_uids.append(card.get_uid())
+	grass_uids.sort()
+	editor.set("_pool_search_energy_type", "R")
+	var fire_uids := PackedStringArray()
+	for card: CardData in editor.call("_filtered_pool_cards", 0):
+		fire_uids.append(card.get_uid())
+	fire_uids.sort()
+	checks.append(assert_eq(
+		Array(grass_uids),
+		["CSV8C_028", "CSV9.5C_006"],
+		"Grass + Tera must include Teal Mask Ogerpon ex and Leafeon ex"
+	))
+	checks.append(assert_eq(
+		Array(fire_uids),
+		["CSV9.5C_023", "CSV9.5C_029", "CSV9C_034"],
+		"Fire + Tera must include Flareon ex, Hearthflame Mask Ogerpon ex, and Ceruledge ex"
+	))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_pool_search_defers_expensive_card_grid_render_while_radio_overlay_is_open() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var overlay := Panel.new()
+	overlay.visible = true
+	editor.set("_pool_search_overlay", overlay)
+	editor.set("_pool_by_category", [[], [], [], [], [], []] as Array[Array])
+	editor.call("_apply_pool_search_filters")
+	return run_checks([
+		assert_true(bool(editor.call("_should_defer_pool_search_result_render")), "radio 面板打开时应延迟昂贵的卡池网格重建"),
+		assert_true(bool(editor.get("_pool_search_results_dirty")), "选择 radio 后应记录待提交的搜索结果"),
 	])
 
 
@@ -685,6 +938,30 @@ func test_build_pool_includes_bundled_lacey_in_supporter_category() -> String:
 		checks.append(assert_eq(str(found.name_en), "Lacey", "DeckEditor should keep Lacey's English name"))
 		checks.append(assert_eq(str(found.card_type), "Supporter", "Lacey should be listed under the Supporter tab"))
 		checks.append(assert_eq(str(found.effect_id), "a3c4d099d726c7dfa4393e7e218661db", "Lacey should keep its implemented effect id"))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_build_pool_includes_2026_08_01_tinkaton_and_sinistcha_cards() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var pokemon_cards: Array = pool_by_category[0] if pool_by_category.size() > 0 else []
+	var expected_uids := [
+		"CSV1C_068", "CSV1C_067", "CSV6C_063", "SVP_159",
+		"CSV6C_062", "CSV9.5C_019", "CSVH5C_002", "CSVNC_008",
+	]
+	var found: Dictionary = {}
+	for card: CardData in pokemon_cards:
+		if card != null and card.get_uid() in expected_uids:
+			found[card.get_uid()] = card
+	var checks: Array[String] = []
+	for uid: String in expected_uids:
+		checks.append(assert_true(found.has(uid), "DeckEditor Pokemon tab should include %s" % uid))
+	if found.has("CSV1C_068"):
+		checks.append(assert_eq((found["CSV1C_068"] as CardData).mechanic, "ex", "Tinkaton ex should keep the ex mechanic in the pool"))
+	if found.has("CSVNC_008"):
+		checks.append(assert_eq((found["CSVNC_008"] as CardData).stage, "Stage 1", "Sinistcha ex should remain a Stage 1 Pokemon in the pool"))
 	editor.free()
 	return run_checks(checks)
 

@@ -887,6 +887,15 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 			replacement = raw[0]
 		elif str(raw[0]) != "return":
 			return
+		var was_active := player.active_pokemon == attacker
+		if was_active and not _remove_active_and_promote(
+			state,
+			owner,
+			attacker,
+			replacement,
+			"attack_return_self_to_hand"
+		):
+			return
 		for pokemon_card: CardInstance in attacker.pokemon_stack:
 			pokemon_card.face_up = true
 			player.hand.append(pokemon_card)
@@ -902,10 +911,7 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 		attacker.damage_counters = 0
 		attacker.clear_all_status()
 		attacker.effects.clear()
-		if player.active_pokemon == attacker:
-			player.active_pokemon = replacement
-			player.bench.erase(replacement)
-		else:
+		if not was_active:
 			player.bench.erase(attacker)
 
 	func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
@@ -2103,14 +2109,7 @@ class AbilityEvolveGustOpponentBench extends BaseEffect:
 		if selected == null:
 			pokemon.mark_ability_used(state.turn_number)
 			return
-		var bench_index := opponent.bench.find(selected)
-		if bench_index < 0:
-			return
-		var old_active := opponent.active_pokemon
-		if old_active != null:
-			old_active.clear_on_leave_active()
-		opponent.active_pokemon = selected
-		opponent.bench[bench_index] = old_active
+		_switch_active_with_bench(state, 1 - owner, selected, "ability_gust", true)
 		pokemon.mark_ability_used(state.turn_number)
 
 

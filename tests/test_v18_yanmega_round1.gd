@@ -63,6 +63,7 @@ func test_ready_crustle_walls_active_ex_before_non_ko_yanmega() -> String:
 	for _index: int in 3:
 		crustle.attached_energy.append(_basic_grass())
 		yanmega.attached_energy.append(_basic_grass())
+	yanmega.attached_energy.append(_basic_grass())
 	state.players[0].bench.assign([crustle, yanmega])
 	strategy.call("build_turn_plan", state, 0)
 	var crustle_prediction: Dictionary = strategy.call("predict_attacker_damage", crustle)
@@ -82,7 +83,7 @@ func test_ready_crustle_walls_active_ex_before_non_ko_yanmega() -> String:
 	return run_checks([
 		assert_true(bool(crustle_prediction.get("can_attack", false)), "Three Energy must ready Crustle's printed GCC attack"),
 		assert_eq(int(crustle_prediction.get("damage", 0)), 120, "Crustle must retain its printed 120-damage prediction"),
-		assert_eq(int(yanmega_prediction.get("damage", 0)), 210, "Yanmega must retain its printed 210-damage prediction"),
+		assert_eq(int(yanmega_prediction.get("damage", 0)), 210, "Four Energy must ready Yanmega's printed GGGC attack for 210 damage"),
 		assert_true(int(yanmega_prediction.get("damage", 0)) < 230, "Yanmega must be outside the knockout window in this regression state"),
 		assert_true(
 			crustle_handoff >= yanmega_handoff + 1000.0,

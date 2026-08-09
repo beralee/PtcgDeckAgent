@@ -23,9 +23,18 @@ func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
 	for slot: PokemonSlot in opponent.get_all_pokemon():
 		if slot == null or slot.get_card_data() == null:
 			continue
-		if slot.get_card_data().abilities.size() > 0:
+		if _currently_has_ability(slot, state):
 			count += 1
 	return count * damage_per_pokemon
+
+
+func _currently_has_ability(slot: PokemonSlot, state: GameState) -> bool:
+	if slot == null or slot.get_card_data() == null or slot.get_card_data().abilities.is_empty():
+		return false
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+	if processor != null and processor.has_method("is_ability_disabled"):
+		return not bool(processor.call("is_ability_disabled", slot, state))
+	return true
 
 
 func get_description() -> String:

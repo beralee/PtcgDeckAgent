@@ -166,8 +166,6 @@ func show_opponent_hand_cards(scene: Object) -> void:
 						"opponent_hand_collection"
 					)
 				card_view.left_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
-					if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
-						return
 					if ci != null and scene.has_method("_show_card_detail_for_instance"):
 						scene.call("_show_card_detail_for_instance", ci)
 						return
@@ -175,8 +173,6 @@ func show_opponent_hand_cards(scene: Object) -> void:
 						scene.call("_show_card_detail", cd)
 				)
 				card_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
-					if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
-						return
 					if ci != null and scene.has_method("_show_card_detail_for_instance"):
 						scene.call("_show_card_detail_for_instance", ci)
 						return

@@ -12,6 +12,8 @@ var reason_tags: Array = []
 var used_mcts: bool = false
 var runtime_mode: String = ""
 var turn_contract: Dictionary = {}
+var strategy_id: String = ""
+var matchup_context: Dictionary = {}
 
 
 func clone():
@@ -27,6 +29,8 @@ func clone():
 	copy.used_mcts = used_mcts
 	copy.runtime_mode = runtime_mode
 	copy.turn_contract = _freeze_dictionary(turn_contract)
+	copy.strategy_id = strategy_id
+	copy.matchup_context = _freeze_dictionary(matchup_context)
 	return copy
 
 
@@ -43,6 +47,8 @@ func to_dictionary() -> Dictionary:
 		"used_mcts": used_mcts,
 		"runtime_mode": runtime_mode,
 		"turn_contract": _freeze_dictionary(turn_contract),
+		"strategy_id": strategy_id,
+		"matchup_context": _freeze_dictionary(matchup_context),
 	}
 
 

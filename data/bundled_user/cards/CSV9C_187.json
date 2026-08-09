@@ -1,0 +1,53 @@
+{
+    "name":  "奇迹耳机",
+    "card_type":  "Item",
+    "mechanic":  "ACE SPEC",
+    "label":  "",
+    "description":  "选择自己弃牌区中最多2张支援者，在给对手看过之后，加入手牌。",
+    "yoren_code":  "Y1528",
+    "set_code":  "CSV9C",
+    "card_index":  "187",
+    "set_code_en":  "SSP",
+    "card_index_en":  "183",
+    "name_en":  "Miracle Headset",
+    "name_zh":  "",
+    "artist":  "inose yukie",
+    "rarity":  "ACE",
+    "release_date":  "2026-05-15T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "2a9598f0151a2851d9c3011d69e70089",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9C/187.png",
+    "image_local_path":  "user://cards/images/CSV9C/187.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV9C/187",
+    "source_set_code":  "CSV9C",
+    "source_card_index":  "187",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

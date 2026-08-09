@@ -66,12 +66,10 @@ func execute_ability(
 	if target_slot == null:
 		target_slot = opponent.bench[0]
 
-	var old_active: PokemonSlot = opponent.active_pokemon
-	opponent.bench.erase(target_slot)
-	opponent.active_pokemon = target_slot
-	if old_active != null:
-		old_active.clear_on_leave_active()
-		opponent.bench.append(old_active)
+	if opponent.active_pokemon == null:
+		_promote_from_bench(state, 1 - pi, target_slot, "gust_from_bench")
+	else:
+		_switch_active_with_bench(state, 1 - pi, target_slot, "gust_from_bench")
 
 	player.bench.erase(pokemon)
 	for card: CardInstance in pokemon.pokemon_stack:

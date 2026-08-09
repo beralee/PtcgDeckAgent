@@ -3,7 +3,7 @@
     "card_type":  "Pokemon",
     "mechanic":  "ex",
     "label":  "",
-    "description":  "特性: 嗡鸣突进\n在自己的回合，当这只宝可梦从备战区被放入战斗场时，可以使用1次。选择自己牌库中最多3张「基本【草】能量」，附着于这只宝可梦身上。并重洗牌库。\n\n【草】【草】【草】 喷射旋风 210\n选择这只宝可梦身上附着的3个能量，转附于1只备战宝可梦身上。\n\n",
+    "description":  "特性: 嗡鸣突进\n在自己的回合，当这只宝可梦从备战区被放入战斗场时，可以使用1次。选择自己牌库中最多3张「基本【草】能量」，附着于这只宝可梦身上。并重洗牌库。\n\n【草】【草】【草】【无色】 喷射旋风 210\n选择这只宝可梦身上附着的3个能量，转附于1只备战宝可梦身上。\n\n",
     "yoren_code":  "Y1569",
     "set_code":  "CSV10C",
     "card_index":  "003",
@@ -16,7 +16,7 @@
     "release_date":  "2026-07-16T00:00:00+08:00",
     "regulation_mark":  "I",
     "effect_id":  "88367894eb8e5dc6ae6b2b8350eb75f9",
-    "bundled_implementation_revision":  1,
+    "bundled_implementation_revision":  2,
     "image_url":  "https://tcg.mik.moe/static/img/CSV10C/003.png",
     "image_local_path":  "user://cards/images/CSV10C/003.png",
     "source_provider":  "",
@@ -48,7 +48,7 @@
                     {
                         "name":  "喷射旋风",
                         "text":  "选择这只宝可梦身上附着的3个能量，转附于1只备战宝可梦身上。",
-                        "cost":  "GGG",
+                        "cost":  "GGGC",
                         "damage":  "210",
                         "is_vstar_power":  false
                     }

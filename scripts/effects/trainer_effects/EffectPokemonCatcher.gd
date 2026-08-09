@@ -64,11 +64,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	if not selected_raw.is_empty() and selected_raw[0] is PokemonSlot and selected_raw[0] in opponent.bench:
 		chosen = selected_raw[0]
 
-	var old_active: PokemonSlot = opponent.active_pokemon
-	opponent.bench.erase(chosen)
-	old_active.clear_on_leave_active()
-	opponent.bench.append(old_active)
-	opponent.active_pokemon = chosen
+	_switch_active_with_bench(state, 1 - card.owner_index, chosen, "pokemon_catcher")
 	_has_pending_flip = false
 
 

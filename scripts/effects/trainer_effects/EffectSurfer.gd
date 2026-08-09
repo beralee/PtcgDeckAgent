@@ -41,12 +41,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		replacement = raw[0] as PokemonSlot
 	if replacement == null:
 		replacement = player.bench[0]
-	var old_active := player.active_pokemon
-	player.bench.erase(replacement)
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
-	player.active_pokemon = replacement
-	replacement.mark_entered_active_from_bench(state.turn_number)
+	_switch_active_with_bench(state, card.owner_index, replacement, "surfer")
 	_draw_cards_with_log(state, card.owner_index, maxi(0, 5 - player.hand.size()), card, "trainer")
 
 

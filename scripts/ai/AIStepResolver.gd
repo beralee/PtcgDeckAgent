@@ -9,6 +9,7 @@ const AIHandoffScoringScript = preload("res://scripts/ai/AIHandoffScoring.gd")
 var deck_strategy: RefCounted = null
 var interaction_scorer: RefCounted = null
 var decision_exporter: RefCounted = null
+var _matchup_context: Dictionary = {}
 
 var _interaction_planner = AIInteractionPlannerScript.new()
 var _interaction_feature_encoder = AIInteractionFeatureEncoderScript.new()
@@ -18,17 +19,32 @@ func set_deck_strategy(strategy: RefCounted) -> void:
 	deck_strategy = strategy
 
 
+func set_matchup_context(matchup_context: Dictionary) -> void:
+	_matchup_context = matchup_context.duplicate(true)
+
+
 func _build_turn_plan(game_state: GameState, player_index: int, extra_context: Dictionary = {}) -> Dictionary:
 	if deck_strategy == null:
 		return {}
 	if game_state == null:
 		return {}
 	var plan_context: Dictionary = extra_context.duplicate(true)
+	var turn_contract: Dictionary = {}
 	if deck_strategy.has_method("build_turn_contract"):
-		return deck_strategy.call("build_turn_contract", game_state, player_index, plan_context)
-	if not deck_strategy.has_method("build_turn_plan"):
-		return {}
-	return deck_strategy.call("build_turn_plan", game_state, player_index, plan_context)
+		turn_contract = deck_strategy.call("build_turn_contract", game_state, player_index, plan_context)
+	elif deck_strategy.has_method("build_turn_plan"):
+		turn_contract = deck_strategy.call("build_turn_plan", game_state, player_index, plan_context)
+	var matchup_context: Dictionary = plan_context.get("matchup_context", {}) \
+		if plan_context.get("matchup_context", {}) is Dictionary else {}
+	if deck_strategy.has_method("apply_matchup_overlay_to_turn_contract"):
+		turn_contract = deck_strategy.call(
+			"apply_matchup_overlay_to_turn_contract",
+			turn_contract,
+			game_state,
+			player_index,
+			matchup_context
+		)
+	return turn_contract
 
 
 func resolve_pending_step(
@@ -60,6 +76,16 @@ func resolve_pending_step(
 		"pending_effect_slot": battle_scene.get("_pending_effect_slot"),
 		"pending_effect_ability_index": pending_ability_index,
 	}
+	var matchup_context := _matchup_context.duplicate(true)
+	if matchup_context.is_empty() and deck_strategy != null and deck_strategy.has_method("build_matchup_context"):
+		var resolved_matchup: Variant = deck_strategy.call(
+			"build_matchup_context",
+			_gsm.game_state if _gsm != null else null,
+			player_index
+		)
+		if resolved_matchup is Dictionary:
+			matchup_context = (resolved_matchup as Dictionary).duplicate(true)
+	strategy_context["matchup_context"] = matchup_context.duplicate(true)
 	var turn_contract := _build_turn_plan(
 		_gsm.game_state if _gsm != null else null,
 		player_index,
@@ -67,19 +93,38 @@ func resolve_pending_step(
 			"step_id": str(step.get("id", "")),
 			"prompt_kind": "effect_interaction",
 			"interaction_context": interaction_context,
+			"matchup_context": matchup_context,
 		}
 	)
 	strategy_context["turn_plan"] = turn_contract
 	strategy_context["turn_contract"] = turn_contract
+	var require_progress_evidence := battle_scene.has_method("_ai_effect_resolution_progress_token")
+	var progress_before := (
+		str(battle_scene.call("_ai_effect_resolution_progress_token"))
+		if require_progress_evidence
+		else ""
+	)
+	var handled := false
 	if bool(battle_scene.call("_effect_step_uses_counter_distribution_ui", step)):
-		return _resolve_counter_distribution_step(battle_scene, step, strategy_context, state_features)
-	if bool(battle_scene.call("_effect_step_uses_field_assignment_ui", step)):
-		return _resolve_field_assignment_step(battle_scene, step, strategy_context, state_features)
-	if bool(battle_scene.call("_effect_step_uses_field_slot_ui", step)):
-		return _resolve_field_slot_step(battle_scene, step, strategy_context, interaction_context, state_features)
-	if str(step.get("ui_mode", "")) == "card_assignment":
-		return _resolve_dialog_assignment_step(battle_scene, step, strategy_context, state_features)
-	return _resolve_dialog_step(battle_scene, step, strategy_context, interaction_context, state_features)
+		handled = _resolve_counter_distribution_step(battle_scene, step, strategy_context, state_features)
+	elif bool(battle_scene.call("_effect_step_uses_field_assignment_ui", step)):
+		handled = _resolve_field_assignment_step(battle_scene, step, strategy_context, state_features)
+	elif bool(battle_scene.call("_effect_step_uses_field_slot_ui", step)):
+		handled = _resolve_field_slot_step(battle_scene, step, strategy_context, interaction_context, state_features)
+	elif str(step.get("ui_mode", "")) == "card_assignment":
+		handled = _resolve_dialog_assignment_step(battle_scene, step, strategy_context, state_features)
+	else:
+		handled = _resolve_dialog_step(battle_scene, step, strategy_context, interaction_context, state_features)
+	if not handled or not require_progress_evidence:
+		return handled
+	var progress_after := str(battle_scene.call("_ai_effect_resolution_progress_token"))
+	if progress_after != progress_before:
+		return true
+	return _abort_unresolvable_effect_step(
+		battle_scene,
+		step,
+		"handler_reported_success_without_progress"
+	)
 
 
 func _resolve_dialog_step(
@@ -482,9 +527,12 @@ func _abort_unresolvable_effect_step(battle_scene: Control, step: Dictionary, re
 		battle_scene.call("_reset_effect_interaction")
 	else:
 		battle_scene.set("_pending_choice", "")
+	var reconciled_authoritative := false
+	if battle_scene.has_method("_ai_watchdog_reconcile_authoritative_decision"):
+		reconciled_authoritative = bool(battle_scene.call("_ai_watchdog_reconcile_authoritative_decision"))
 	if battle_scene.has_method("_refresh_ui"):
 		battle_scene.call("_refresh_ui")
-	if battle_scene.has_method("_maybe_run_ai"):
+	if not reconciled_authoritative and battle_scene.has_method("_maybe_run_ai"):
 		battle_scene.call("_maybe_run_ai")
 	return true
 
@@ -778,6 +826,10 @@ func _record_interaction_decision(
 		"step_label": str(step.get("title", step.get("prompt", ""))),
 		"candidates": candidates,
 		"chosen_indices": Array(chosen_indices),
+		"deck_strategy_id": str(deck_strategy.call("get_strategy_id")) \
+			if deck_strategy != null and deck_strategy.has_method("get_strategy_id") else "",
+		"matchup_context": context.get("matchup_context", {}).duplicate(true) \
+			if context.get("matchup_context", {}) is Dictionary else {},
 	})
 
 
@@ -790,7 +842,19 @@ func _score_strategy_target(
 		return 0.0
 	var score_context: Dictionary = context.duplicate(true)
 	score_context["all_items"] = context.get("all_items", [])
-	return AIHandoffScoringScript.score_strategy_target(deck_strategy, item, step, score_context)
+	var score := AIHandoffScoringScript.score_strategy_target(deck_strategy, item, step, score_context)
+	var matchup_context: Dictionary = score_context.get("matchup_context", {}) \
+		if score_context.get("matchup_context", {}) is Dictionary else {}
+	if bool(matchup_context.get("is_unique", false)) \
+			and deck_strategy.has_method("score_matchup_interaction_target"):
+		score += float(deck_strategy.call(
+			"score_matchup_interaction_target",
+			item,
+			step,
+			score_context,
+			matchup_context
+		))
+	return score
 
 
 func _item_name(item: Variant) -> String:

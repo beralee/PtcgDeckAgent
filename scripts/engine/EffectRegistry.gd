@@ -14,6 +14,7 @@ const AbilityDustFieldEffect = preload("res://scripts/effects/pokemon_effects/Ab
 const AttackIgnoreResistanceEffect = preload("res://scripts/effects/pokemon_effects/AttackIgnoreResistance.gd")
 const AbilityDrilburDigDigDigEffect = preload("res://scripts/effects/pokemon_effects/AbilityDrilburDigDigDig.gd")
 const TcgMikAuditBatch20260729Effects = preload("res://scripts/effects/pokemon_effects/TcgMikAuditBatch20260729Effects.gd")
+const TcgMikTinkatonSinistchaEffects = preload("res://scripts/effects/pokemon_effects/TcgMikTinkatonSinistchaEffects.gd")
 
 const CSV9C_EFFECT_ID_ALIASES = {
 	"6b6641a24bd64c822e7ca22834562305": "80861b2bfa9967d1e28a97ee4d1f1316",
@@ -242,6 +243,7 @@ const AttackSweetTrapEffect = "res://scripts/effects/pokemon_effects/AttackSweet
 const AttackReturnEnergyThenBenchDamageEffect = "res://scripts/effects/pokemon_effects/AttackReturnEnergyThenBenchDamage.gd"
 const AttackTargetOwnBenchDamageEffect = "res://scripts/effects/pokemon_effects/AttackTargetOwnBenchDamage.gd"
 const AttackTargetOpponentBenchDamageEffect = "res://scripts/effects/pokemon_effects/AttackTargetOpponentBenchDamage.gd"
+const AttackTargetOpponentBenchExOrVDamageEffect = "res://scripts/effects/pokemon_effects/AttackTargetOpponentBenchExOrVDamage.gd"
 const AttackDiscardOwnBenchBasicEnergyBonusDamageEffect = "res://scripts/effects/pokemon_effects/AttackDiscardOwnBenchBasicEnergyBonusDamage.gd"
 const AttackKnockOutOpponentWithExactDamageCountersEffect = "res://scripts/effects/pokemon_effects/AttackKnockOutOpponentWithExactDamageCounters.gd"
 const AttackCrobatCriticalBiteEffect = "res://scripts/effects/pokemon_effects/AttackCrobatCriticalBite.gd"
@@ -279,6 +281,9 @@ const AbilityBasicLockEffect = "res://scripts/effects/pokemon_effects/AbilityBas
 const AbilityBasicVLockEffect = "res://scripts/effects/pokemon_effects/AbilityBasicVLock.gd"
 const AttackDiscardDefenderToolEffect = "res://scripts/effects/pokemon_effects/AttackDiscardDefenderTool.gd"
 const EffectSecretBoxEffect = "res://scripts/effects/trainer_effects/EffectSecretBox.gd"
+const EffectMiracleHeadsetEffect = "res://scripts/effects/trainer_effects/EffectMiracleHeadset.gd"
+const EffectAmuletOfHopeEffect = "res://scripts/effects/tool_effects/EffectAmuletOfHope.gd"
+const AttackScizorExCrossBreakerEffect = "res://scripts/effects/pokemon_effects/AttackScizorExCrossBreaker.gd"
 const EffectArtazonEffect = "res://scripts/effects/stadium_effects/EffectArtazon.gd"
 const EffectSpikemuthGymEffect = "res://scripts/effects/stadium_effects/EffectSpikemuthGym.gd"
 const EffectBrocksScoutingEffect = "res://scripts/effects/trainer_effects/EffectBrocksScouting.gd"
@@ -499,6 +504,63 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"9e3be3fe406be3516aec15ec6898711a": # CSV7C_021 Shaymin
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackTargetOpponentBenchExOrVDamageEffect, [60, 0]),
+			])
+		"03b4239cd2061eb23b13824b7b6cc7b8": # 151C_035 Clefairy
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(
+					AttackSearchBasicPokemonToBenchEffect,
+					[3, 0, PackedStringArray(["皮皮", "Clefairy"])]
+				),
+			])
+		"cae24aba46134427b6c27356344dab57": # 151C_036 Clefable
+			processor.replace_attack_effects(effect_id, [
+				CSV10C101To200Registry.E.AttackChooseOpponentBenchAsActive.new(0),
+				AttackExtraPrize.new(1, 1),
+			])
+		"132754175b93ba17efadd9d03dabaae9": # CSV1C_068 Tinkaton ex
+			processor.replace_attack_effects(effect_id, [
+				TcgMikTinkatonSinistchaEffects.AttackOwnHandCountDamage.new(30, 30, 0),
+				AttackIgnoreDefenderEffects.new(1),
+			])
+		"4facb3836ec30a5640ab3ce81d4310f1": # CSV1C_067 Tinkaton
+			processor.register_effect(effect_id, TcgMikTinkatonSinistchaEffects.AbilityMaterialGathering.new(3))
+			processor.replace_attack_effects(effect_id, [
+				TcgMikTinkatonSinistchaEffects.AttackEnergyPresentBonus.new("Special Energy", 90, 0),
+			])
+		"b5670f3ae026615178352ddd7b9755ec": # CSV6C_063 Tinkatuff
+			processor.replace_attack_effects(effect_id, [
+				TcgMikTinkatonSinistchaEffects.AttackEnergyPresentBonus.new("M", 40, 0),
+			])
+		"cfc98cad588e26c7060a44ac7ed2b371": # SVP_159 Tinkatink
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackCoinFlipBonusDamageEffect, [20, 0, processor.coin_flipper]),
+			])
+		"2a29a8d92c90a166e603d72bc855c862": # CSV6C_062 Tinkatink
+			processor.replace_attack_effects(effect_id, [
+				TcgMikTinkatonSinistchaEffects.AttackSeekingMountain.new(0),
+			])
+		"c2a4f4ce310fd236994b700562ce2892": # CSV9.5C_019 Poltchageist
+			processor.register_effect(effect_id, AbilityBenchImmune.new())
+		"defef39f399206a6de240aab5caa7f6b": # CSVH5C_002 Sinistcha
+			processor.replace_attack_effects(effect_id, [
+				TcgMikTinkatonSinistchaEffects.AttackDistributeOpponentDamageCounters.new(4, 0),
+				TcgMikTinkatonSinistchaEffects.AttackDiscardGrassEnergyFromFieldDamage.new(3, 70, 70, 1),
+			])
+		"3393a671748e17d4cf292b6e0201bb7c": # CSVNC_008 Sinistcha ex
+			processor.replace_attack_effects(effect_id, [
+				TcgMikTinkatonSinistchaEffects.AttackRebrewBasicGrassEnergy.new(2, 0),
+				TcgMikTinkatonSinistchaEffects.AttackHealAllOwnPokemon.new(30, 1),
+			])
+		"8e3a8f7248c7087364b542c5e277f6cc": # CSV3C_096 Girafarig (cached tcg.mik import)
+			var girafarig_paralysis := _instantiate_effect(
+				AttackCoinFlipApplyStatusEffect,
+				["paralyzed", processor.coin_flipper]
+			)
+			_bind_attack_index_if_supported(girafarig_paralysis, 0)
+			processor.replace_attack_effects(effect_id, [girafarig_paralysis])
 		"6c4382c1f802fa873ec01976306d44be": # CSVL2C_041 Glimmet
 			processor.replace_attack_effects(effect_id, [
 				CSV9CEffects.AttackEvolveFromDeck.new(0),
@@ -1191,8 +1253,13 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_effect(effect_id, _instantiate_effect(AbilitySelfKnockoutDamageCountersEffect, [13]))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]))
 		"14cf8080c35f652fe13a579f1b50542a":
-			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]))
-			processor.register_attack_effect(effect_id, _instantiate_effect(AttackReturnEnergyThenBenchDamageEffect, [120, 1]))
+			# Keep the two attacks as an exact positional contract. Replacing the
+			# inferred list prevents name-parser or stale registrations from binding
+			# Sob's retreat lock to Torrential Pump (or to Ogerpon itself).
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]),
+				_instantiate_effect(AttackReturnEnergyThenBenchDamageEffect, [120, 1]),
+			])
 		"4f25f668ee0ab45c68f6954324c73003":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityPreventDamageFromAttackersWithAbilitiesEffect))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackIgnoreWeaknessResistanceAndEffectsEffect, [0]))
@@ -1458,6 +1525,9 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_effect(effect_id, _instantiate_effect(AbilityEeveeExRainbowFactorEffect))
 		"d5ab8efe3bcad6f39e9a434ae6d8de7a":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBonusIfOpponentActiveTeraEffect, [230, 0]))
+		"6c13a1afb0238ba7cea406803c64383d":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackReduceDamageNextTurnEffect, [50, 0]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackScizorExCrossBreakerEffect))
 		"d3782c7410166c2c7c00b54886241e7b":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackFixedCoinFlipDamageEffect, [3, 10, 10, 0, processor.coin_flipper]))
 		"f9c6499bbad853ebcb1ca8e3364fc677":
@@ -1485,6 +1555,7 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 ## ==================== 物品卡注册（register_effect）====================
 
 static func _register_items(processor: EffectProcessor) -> void:
+	processor.register_effect("2a9598f0151a2851d9c3011d69e70089", _instantiate_effect(EffectMiracleHeadsetEffect))
 	# 反击捕捉器
 	processor.register_effect("06bc00d5dcec33898dc6db2e4c4d10ec", EffectCounterCatcher.new())
 	# 巢穴球
@@ -1678,6 +1749,7 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 ## ==================== 道具卡注册（register_effect）====================
 
 static func _register_tools(processor: EffectProcessor) -> void:
+	processor.register_effect("6aac84f2cdc661d1ebbcbbd38ee890e4", _instantiate_effect(EffectAmuletOfHopeEffect))
 	processor.register_effect("6d4d9b954e3a2cbad2ae1e0bfad2305a", _instantiate_effect(EffectGravityGemstoneEffect))
 	processor.register_effect("76ed73e869ac742e97ea521f200a360e", _instantiate_effect(EffectLuckyHelmetEffect))
 	processor.register_effect("0ad0108e5ab1346d88f6ce11b75028d7", _instantiate_effect(EffectSupereffectiveGlassesEffect))

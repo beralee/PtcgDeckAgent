@@ -12,6 +12,8 @@ const WEB_CUSTOM_SHELL_PATH := "res://web/ptcg_web_shell.html"
 const WEB_E2E_BRIDGE_PATH := "res://web/e2e/WebUiE2EBridge.gd"
 const WEB_USER_VISIT_BRIDGE_PATH := "res://web/userptcg_bridge.html"
 const REQUIRED_BUNDLED_FILTER := "data/**"
+const WEB_RECOMMENDATION_DATA_FILTER := "community/data/community-data.json"
+const COMMUNITY_STATIC_SITE_EXCLUDE_FILTERS := ["community/app.js", "community/index.html", "community/styles.css"]
 const RELEASE_PRESET_NAMES := ["Windows Desktop", "macOS", "Android", "Web", "iOS"]
 const WEB_PRESET_NAME := "Web"
 const WEB_E2E_PRESET_NAME := "Web UI E2E"
@@ -27,7 +29,6 @@ const RELEASE_DEVELOPMENT_EXCLUDE_FILTERS := [
 	".codex-remote-attachments/**",
 	".pytest_cache/**",
 	"tools/**",
-	"community/**",
 	"addons/web_release_post_export/**",
 ]
 const RELEASE_GENERATED_SOURCE_EXCLUDE_FILTERS := [
@@ -44,10 +45,10 @@ const RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS := [
 	"assets/ui/8187aae7-e467-446f-bcd8-544468eae16b.png",
 ]
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
-const EXPECTED_APP_VERSION := "0.5.2"
-const EXPECTED_BUILD_NUMBER := "52"
-const EXPECTED_WEB_VERSION := "0.5.2.6"
-const EXPECTED_WEB_BUILD_NUMBER := "526"
+const EXPECTED_APP_VERSION := "0.5.4"
+const EXPECTED_BUILD_NUMBER := "54"
+const EXPECTED_WEB_VERSION := "0.5.4.4"
+const EXPECTED_WEB_BUILD_NUMBER := "544"
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 
@@ -335,9 +336,13 @@ func test_web_export_excludes_development_only_files() -> String:
 	var web_block := _extract_preset_block(preset_text, WEB_PRESET_NAME)
 	var web_exclude_filter := _extract_string_value(web_block, "exclude_filter")
 	var web_filters := web_exclude_filter.split(",")
+	var web_include_filters := _extract_string_value(web_block, "include_filter").split(",")
 	var checks: Array[String] = []
 	for filter: String in RELEASE_DEVELOPMENT_EXCLUDE_FILTERS:
 		checks.append(assert_true(web_filters.has(filter), "Web export should exclude development-only path %s" % filter))
+	for filter: String in COMMUNITY_STATIC_SITE_EXCLUDE_FILTERS:
+		checks.append(assert_true(web_filters.has(filter), "Web export should exclude community static-site file %s" % filter))
+	checks.append(assert_true(web_include_filters.has(WEB_RECOMMENDATION_DATA_FILTER), "Web export should bundle the recommendation feed used by the deck center"))
 	checks.append(assert_true(web_filters.has("web/e2e/**"), "Production Web should exclude its E2E bridge"))
 	checks.append(assert_true(web_filters.has(DUPLICATE_APP_ICON_FILTER), "Web export should omit the unreferenced duplicate 1024px app icon"))
 	return run_checks(checks)
@@ -349,9 +354,16 @@ func test_all_release_exports_share_the_production_resource_budget() -> String:
 	for preset_name: String in RELEASE_PRESET_NAMES:
 		var preset_block := _extract_preset_block(preset_text, preset_name)
 		var filters := _extract_string_value(preset_block, "exclude_filter").split(",")
+		var include_filters := _extract_string_value(preset_block, "include_filter").split(",")
 		checks.append(assert_true(preset_block != "", "%s release preset should exist" % preset_name))
 		for filter: String in RELEASE_DEVELOPMENT_EXCLUDE_FILTERS:
 			checks.append(assert_true(filters.has(filter), "%s should exclude development-only path %s" % [preset_name, filter]))
+		if preset_name == WEB_PRESET_NAME:
+			for filter: String in COMMUNITY_STATIC_SITE_EXCLUDE_FILTERS:
+				checks.append(assert_true(filters.has(filter), "Web should exclude community static-site file %s" % filter))
+			checks.append(assert_true(include_filters.has(WEB_RECOMMENDATION_DATA_FILTER), "Web should include deck-center recommendation data"))
+		else:
+			checks.append(assert_true(filters.has("community/**"), "%s should exclude the community site" % preset_name))
 		for filter: String in RELEASE_GENERATED_SOURCE_EXCLUDE_FILTERS:
 			checks.append(assert_true(filters.has(filter), "%s should exclude generated VFX source %s" % [preset_name, filter]))
 		for filter: String in RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS:

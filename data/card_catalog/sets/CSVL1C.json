@@ -1,6 +1,122 @@
 {
 	"cards": [
 		{
+			"abilities": [
+				{
+					"name": "咒缚大地",
+					"text": "只要这只宝可梦在战斗场上，对手场上的身上放置有伤害指示物的宝可梦（除宝可梦【ex】外）的特性，全部消除。"
+				}
+			],
+			"ancient_trait": "",
+			"artist": "5ban Graphics",
+			"attacks": [
+				{
+					"cost": "FFF",
+					"damage": "150",
+					"is_vstar_power": false,
+					"name": "掬弄大地",
+					"text": "给对手的1只备战宝可梦身上，放置2个伤害指示物。"
+				}
+			],
+			"card_index": "036",
+			"card_index_en": "127",
+			"card_type": "Pokemon",
+			"description": "特性: 咒缚大地\n只要这只宝可梦在战斗场上，对手场上的身上放置有伤害指示物的宝可梦（除宝可梦【ex】外）的特性，全部消除。\n\n【斗】【斗】【斗】 掬弄大地 150\n给对手的1只备战宝可梦身上，放置2个伤害指示物。\n\n",
+			"effect_id": "6db296a19d741896c070fe471e92b8f3",
+			"energy_provides": "",
+			"energy_type": "F",
+			"evolves_from": "",
+			"hp": 240,
+			"image_local_path": "user://cards/images/CSVL1C/036.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSVL1C/036.png",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "古鼎鹿ex",
+			"name_en": "Ting-Lu ex",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_expanded": true,
+			"regulation_mark": "G",
+			"regulation_standard": true,
+			"release_date": "2025-06-13T00:00:00+08:00",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 4,
+			"set_code": "CSVL1C",
+			"set_code_en": "PAL",
+			"source_card_index": "036",
+			"source_imported_at": 0,
+			"source_language": "zh-CN",
+			"source_parser_version": 1,
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVL1C",
+			"source_url": "https://tcg.mik.moe/cards/CSVL1C/036",
+			"stage": "Basic",
+			"weakness_energy": "G",
+			"weakness_value": "×2",
+			"yoren_code": "Y1282"
+		},
+		{
+			"abilities": [
+				{
+					"name": "恐龙嘶吼",
+					"text": "在自己的回合可以使用1次，如果使用了，则自己的回合结束。选择自己弃牌区中最多2张「基本【斗】能量」，以任意方式附着于自己的【斗】属性的【基础】宝可梦身上。"
+				}
+			],
+			"ancient_trait": "",
+			"artist": "aky CG Works",
+			"attacks": [
+				{
+					"cost": "FFC",
+					"damage": "220",
+					"is_vstar_power": false,
+					"name": "野性冲击",
+					"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+				}
+			],
+			"card_index": "037",
+			"card_index_en": "125",
+			"card_type": "Pokemon",
+			"description": "特性: 恐龙嘶吼\n在自己的回合可以使用1次，如果使用了，则自己的回合结束。选择自己弃牌区中最多2张「基本【斗】能量」，以任意方式附着于自己的【斗】属性的【基础】宝可梦身上。\n\n【斗】【斗】【无】 野性冲击 220\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+			"effect_id": "94df9ff8b811a6ae267a87194abd5323",
+			"energy_provides": "",
+			"energy_type": "F",
+			"evolves_from": "",
+			"hp": 230,
+			"image_local_path": "user://cards/images/CSVL1C/037.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSVL1C/037.png",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "故勒顿ex",
+			"name_en": "Koraidon ex",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_expanded": true,
+			"regulation_mark": "G",
+			"regulation_standard": true,
+			"release_date": "2025-06-13T00:00:00+08:00",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 2,
+			"set_code": "CSVL1C",
+			"set_code_en": "SVI",
+			"source_card_index": "037",
+			"source_imported_at": 0,
+			"source_language": "zh-CN",
+			"source_parser_version": 1,
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVL1C",
+			"source_url": "https://tcg.mik.moe/cards/CSVL1C/037",
+			"stage": "Basic",
+			"weakness_energy": "P",
+			"weakness_value": "×2",
+			"yoren_code": "Y1201"
+		},
+		{
 			"abilities": [],
 			"ancient_trait": "",
 			"artist": "Nisota Niso",

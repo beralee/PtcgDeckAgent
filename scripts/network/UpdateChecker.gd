@@ -14,9 +14,18 @@ signal update_available(info: Dictionary)
 signal no_update(info: Dictionary)
 signal check_failed(message: String)
 
-var _http_request: HTTPRequest = null
+var _http_request: Node = null
 var _is_checking := false
 var _force_current_check := false
+var _provisional_cached_update_version := ""
+var _test_environment: RefCounted = null
+
+
+## Test seam for deterministic update checks. Production keeps using HTTPRequest,
+## the user state file, and the system clock when no environment is installed.
+func configure_environment_for_tests(environment: RefCounted) -> void:
+	_cancel_active_request()
+	_test_environment = environment
 
 
 func check_for_updates(force: bool = false) -> int:
@@ -28,30 +37,42 @@ func check_for_updates(force: bool = false) -> int:
 	var state := _load_state()
 	if not force:
 		var cached_info := _cached_update_info(state)
+		var cached_update_available := is_update_available(cached_info) and not _is_version_ignored(cached_info, state)
 		if not _should_check_now(state):
-			if is_update_available(cached_info) and not _is_version_ignored(cached_info, state):
-				update_available.emit(cached_info)
+			if cached_update_available:
+				_emit_update_available(cached_info, "cache")
 			else:
-				no_update.emit(cached_info)
+				_emit_no_update(cached_info, "cache")
 			return OK
+		# Stale-while-revalidate: keep a known update visible while the due
+		# background request runs. A transport failure must not erase useful
+		# cached information from the home page.
+		if cached_update_available:
+			_provisional_cached_update_version = str(cached_info.get("latest_version", ""))
+			_emit_update_available(cached_info, "cache")
+	else:
+		_provisional_cached_update_version = ""
 
 	_ensure_http_request()
 	if _http_request == null:
 		_record_check_failure()
+		_provisional_cached_update_version = ""
 		check_failed.emit("无法创建更新检查请求")
 		return ERR_CANT_CREATE
 
 	_is_checking = true
 	_force_current_check = force
-	var err := _http_request.request(
+	var err := int(_http_request.call(
+		"request",
 		_build_manifest_request_url(force),
 		_build_manifest_request_headers(force),
 		HTTPClient.METHOD_GET
-	)
+	))
 	if err != OK:
 		_is_checking = false
 		_force_current_check = false
 		_record_check_failure()
+		_provisional_cached_update_version = ""
 		check_failed.emit("更新检查启动失败：%d" % err)
 	return err
 
@@ -138,18 +159,27 @@ func _ready() -> void:
 func _ensure_http_request() -> void:
 	if _http_request != null:
 		return
-	_http_request = HTTPRequest.new()
-	_http_request.timeout = 8.0
-	_http_request.use_threads = true
-	_http_request.request_completed.connect(_on_manifest_response)
+	if _test_environment != null and _test_environment.has_method("create_request"):
+		_http_request = _test_environment.call("create_request") as Node
+	else:
+		var request := HTTPRequest.new()
+		request.timeout = 8.0
+		request.use_threads = true
+		_http_request = request
+	if _http_request == null or not _http_request.has_signal("request_completed") or not _http_request.has_method("request"):
+		_http_request = null
+		return
+	_http_request.connect("request_completed", Callable(self, "_on_manifest_response"))
 	add_child(_http_request)
 
 
 func _cancel_active_request() -> void:
 	if _http_request != null:
-		if _http_request.request_completed.is_connected(_on_manifest_response):
-			_http_request.request_completed.disconnect(_on_manifest_response)
-		_http_request.cancel_request()
+		var callback := Callable(self, "_on_manifest_response")
+		if _http_request.has_signal("request_completed") and _http_request.is_connected("request_completed", callback):
+			_http_request.disconnect("request_completed", callback)
+		if _http_request.has_method("cancel_request"):
+			_http_request.call("cancel_request")
 		if _http_request.get_parent() != null:
 			_http_request.get_parent().remove_child(_http_request)
 		_http_request.queue_free()
@@ -180,10 +210,12 @@ func _on_manifest_response(result: int, response_code: int, _headers: PackedStri
 	_force_current_check = false
 	if result != HTTPRequest.RESULT_SUCCESS:
 		_record_check_failure()
+		_provisional_cached_update_version = ""
 		check_failed.emit("更新检查失败：result=%d" % result)
 		return
 	if response_code < 200 or response_code >= 300:
 		_record_check_failure()
+		_provisional_cached_update_version = ""
 		check_failed.emit("更新检查失败：HTTP %d" % response_code)
 		return
 
@@ -191,25 +223,42 @@ func _on_manifest_response(result: int, response_code: int, _headers: PackedStri
 	var parse_err := json.parse(body.get_string_from_utf8())
 	if parse_err != OK or not (json.data is Dictionary):
 		_record_check_failure()
+		_provisional_cached_update_version = ""
 		check_failed.emit("更新信息解析失败")
 		return
 
 	var info := normalize_manifest(json.data as Dictionary)
 	if info.is_empty():
 		_record_check_failure()
+		_provisional_cached_update_version = ""
 		check_failed.emit("更新信息缺少版本号")
 		return
 
 	var state := _load_state()
-	state["last_checked_at"] = int(Time.get_unix_time_from_system())
+	state["last_checked_at"] = _current_unix_time()
 	state.erase("last_failed_at")
 	state["latest_info"] = info
 	_save_state(state)
 
 	if is_update_available(info) and (force_check or not _is_version_ignored(info, state)):
-		update_available.emit(info)
+		var latest_version := str(info.get("latest_version", ""))
+		if force_check or latest_version != _provisional_cached_update_version:
+			_emit_update_available(info, "network")
 	else:
-		no_update.emit(info)
+		_emit_no_update(info, "network")
+	_provisional_cached_update_version = ""
+
+
+func _emit_update_available(info: Dictionary, source: String) -> void:
+	var payload := info.duplicate(true)
+	payload["notification_source"] = source
+	update_available.emit(payload)
+
+
+func _emit_no_update(info: Dictionary, source: String) -> void:
+	var payload := info.duplicate(true)
+	payload["notification_source"] = source
+	no_update.emit(payload)
 
 
 func _is_version_ignored(info: Dictionary, state: Dictionary) -> bool:
@@ -221,7 +270,7 @@ func _is_version_ignored(info: Dictionary, state: Dictionary) -> bool:
 func _should_check_now(state: Dictionary) -> bool:
 	var last_checked_at := int(state.get("last_checked_at", 0))
 	var last_failed_at := int(state.get("last_failed_at", 0))
-	var now := int(Time.get_unix_time_from_system())
+	var now := _current_unix_time()
 	if last_failed_at > 0 and last_failed_at >= last_checked_at:
 		return now - last_failed_at >= CHECK_FAILURE_INTERVAL_SECONDS
 	if last_checked_at <= 0:
@@ -236,11 +285,14 @@ func _cached_update_info(state: Dictionary) -> Dictionary:
 
 func _record_check_failure() -> void:
 	var state := _load_state()
-	state["last_failed_at"] = int(Time.get_unix_time_from_system())
+	state["last_failed_at"] = _current_unix_time()
 	_save_state(state)
 
 
 func _load_state() -> Dictionary:
+	if _test_environment != null and _test_environment.has_method("load_state"):
+		var test_state: Variant = _test_environment.call("load_state")
+		return (test_state as Dictionary).duplicate(true) if test_state is Dictionary else {}
 	if not FileAccess.file_exists(STATE_PATH):
 		return {}
 	var file := FileAccess.open(STATE_PATH, FileAccess.READ)
@@ -255,11 +307,20 @@ func _load_state() -> Dictionary:
 
 
 func _save_state(state: Dictionary) -> void:
+	if _test_environment != null and _test_environment.has_method("save_state"):
+		_test_environment.call("save_state", state.duplicate(true))
+		return
 	var file := FileAccess.open(STATE_PATH, FileAccess.WRITE)
 	if file == null:
 		return
 	file.store_string(JSON.stringify(state, "\t"))
 	file.close()
+
+
+func _current_unix_time() -> int:
+	if _test_environment != null and _test_environment.has_method("current_unix_time"):
+		return int(_test_environment.call("current_unix_time"))
+	return int(Time.get_unix_time_from_system())
 
 
 func _normalize_summary(raw_summary: Variant) -> PackedStringArray:

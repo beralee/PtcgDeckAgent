@@ -854,6 +854,8 @@ func test_move_public_cards_to_hand_for_effect_logs_public_reveal() -> String:
 	return run_checks([
 		assert_eq(moved.size(), 1, "Public reveal helper should move the selected card to hand"),
 		assert_not_null(reveal_action, "Public reveal helper should emit a PUBLIC_REVEAL action"),
+		assert_eq(str(reveal_action.data.get("source_zone", "")), "deck", "Public reveal helper should identify the authoritative source zone"),
+		assert_eq(str(reveal_action.data.get("destination_zone", "")), "hand", "Public reveal helper should identify the authoritative destination zone"),
 		assert_eq(reveal_action.data.get("card_names", []), ["喷火龙ex"], "Public reveal helper should record the revealed card name"),
 		assert_eq(reveal_action.data.get("public_result_labels", []), ["宝可梦"], "Public reveal helper should preserve the public label"),
 		assert_eq(reveal_action.description, "玩家1通过高级球公开加入手牌：宝可梦「喷火龙ex」", "Public reveal helper should produce readable Chinese summary copy"),
@@ -3749,7 +3751,8 @@ func test_take_prize_log_includes_prize_count_and_card_identity() -> String:
 	prize_cd.stage = "Basic"
 	prize_cd.hp = 60
 	prize_cd.energy_type = "W"
-	player.prizes.append(CardInstance.create(prize_cd, 0))
+	var prize_card := CardInstance.create(prize_cd, 0)
+	player.prizes.append(prize_card)
 	gsm.set("_pending_prize_player_index", 0)
 	gsm.set("_pending_prize_remaining", 1)
 	gsm.set("_pending_prize_resume_mode", "")
@@ -3759,6 +3762,8 @@ func test_take_prize_log_includes_prize_count_and_card_identity() -> String:
 	var took_prize: bool = gsm.resolve_take_prize(0, 0)
 	var prize_action: GameAction = _get_last_action_of_type(gsm.action_log, GameAction.ActionType.TAKE_PRIZE)
 	var prize_data: Dictionary = prize_action.data if prize_action != null else {}
+	var zone_changes: Array = prize_data.get("zone_changes", [])
+	var zone_change: Dictionary = zone_changes[0] if not zone_changes.is_empty() else {}
 
 	return run_checks([
 		assert_eq(pending_prize_remaining, 1, "Prize fixture should queue exactly one prize"),
@@ -3767,6 +3772,11 @@ func test_take_prize_log_includes_prize_count_and_card_identity() -> String:
 		assert_eq(int(prize_data.get("prize_count", -1)), 1, "Prize log should include the prize count"),
 		assert_eq(prize_data.get("card_names", []), ["Prize Target"], "Prize log should include the revealed prize list"),
 		assert_eq(str(prize_data.get("card_name", "")), "Prize Target", "Prize log should include the revealed prize identity"),
+		assert_eq(zone_changes.size(), 1, "Prize taking must publish one typed zone change before observers run"),
+		assert_eq(str(zone_change.get("source_zone", "")), "prizes", "Prize projection must identify its source zone"),
+		assert_eq(str(zone_change.get("destination_zone", "")), "hand", "Prize projection must identify its destination zone"),
+		assert_eq(zone_change.get("card_instance_ids", []), [prize_card.instance_id], "Prize projection must identify exact membership"),
+		assert_eq(str(zone_change.get("projection_timing", "")), "after_presentation", "Prize hand projection must wait for presentation"),
 	])
 
 

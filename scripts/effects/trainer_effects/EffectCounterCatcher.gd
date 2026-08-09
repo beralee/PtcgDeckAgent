@@ -44,11 +44,7 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 			target = selected
 	if target == null:
 		target = opp.bench[0]
-	var old_active: PokemonSlot = opp.active_pokemon
-	opp.bench.erase(target)
-	old_active.clear_on_leave_active()
-	opp.bench.append(old_active)
-	opp.active_pokemon = target
+	_switch_active_with_bench(state, 1 - pi, target, "counter_catcher")
 
 
 func get_description() -> String:

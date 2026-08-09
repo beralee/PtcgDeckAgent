@@ -1,6 +1,8 @@
 class_name CSV9CAdvancedHelpers
 extends RefCounted
 
+const FieldTransition := preload("res://scripts/engine/BattleFieldTransitionService.gd")
+
 
 static func resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 	if attack.has("_override_attack_index"):
@@ -53,8 +55,16 @@ static func effective_max_hp(slot: PokemonSlot, state: GameState, processor = nu
 	return slot.get_max_hp()
 
 
-static func return_slot_to_deck(slot: PokemonSlot, player: PlayerState) -> void:
-	if slot == null or player == null:
+static func return_slot_to_deck(slot: PokemonSlot, player: PlayerState, state: GameState) -> void:
+	if slot == null or player == null or state == null:
+		return
+	var was_active := player.active_pokemon == slot
+	if was_active and not FieldTransition.remove_active(
+		state,
+		player.player_index,
+		slot,
+		"return_slot_to_deck"
+	):
 		return
 	for card: CardInstance in slot.collect_all_cards():
 		card.face_up = false
@@ -64,9 +74,7 @@ static func return_slot_to_deck(slot: PokemonSlot, player: PlayerState) -> void:
 	slot.attached_tool = null
 	slot.damage_counters = 0
 	slot.clear_all_status()
-	if player.active_pokemon == slot:
-		player.active_pokemon = null
-	else:
+	if not was_active:
 		player.bench.erase(slot)
 
 

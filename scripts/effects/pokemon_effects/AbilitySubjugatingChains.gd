@@ -67,10 +67,7 @@ func execute_ability(
 	var bench_idx: int = _find_bench_index(player, chosen)
 	if bench_idx == -1 or old_active == null:
 		return
-	player.bench.remove_at(bench_idx)
-	old_active.clear_on_leave_active()
-	player.bench.append(old_active)
-	player.active_pokemon = chosen
+	_switch_active_with_bench(state, pi, chosen, "subjugating_chains")
 	_apply_special_status(player.active_pokemon, "poisoned", state)
 	state.shared_turn_flags["%s_%d" % [SHARED_KEY, pi]] = state.turn_number
 

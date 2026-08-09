@@ -50,6 +50,43 @@ func test_csv9c_under100_effect_ids_register_required_hooks() -> String:
 	return run_checks(checks)
 
 
+func test_csv9c_053_chien_pao_bench_entry_prompts_and_resolves_optional_stadium_discard() -> String:
+	var chien_pao_card := _load_bundled_card("res://data/bundled_user/cards/CSV9C_053.json")
+	if chien_pao_card == null:
+		return "CSV9C_053 bundled card should load"
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var stadium_data := CardData.new()
+	stadium_data.name = "Test Stadium"
+	stadium_data.card_type = "Stadium"
+	var stadium := CardInstance.create(stadium_data, 1)
+	state.stadium_card = stadium
+	state.stadium_owner_index = 1
+	var chien_pao := CardInstance.create(chien_pao_card, 0)
+	player.hand.append(chien_pao)
+	gsm.effect_processor.register_pokemon_card(chien_pao_card)
+	var effect: BaseEffect = gsm.effect_processor.get_effect(chien_pao_card.effect_id)
+	var entry_steps: Array[Dictionary] = effect.get_interaction_steps(chien_pao, state)
+	var placed := gsm.play_basic_to_bench(0, chien_pao, false)
+	var slot: PokemonSlot = player.bench.back() if placed and not player.bench.is_empty() else null
+	var usable_after_entry := slot != null and gsm.effect_processor.can_use_ability(slot, state, 0)
+	var used := false
+	if slot != null:
+		used = gsm.use_ability(0, slot, 0, [{"csv9c_chien_pao_discard_stadium": [stadium]}])
+
+	return run_checks([
+		assert_eq(entry_steps.size(), 1, "CSV9C_053 should offer its optional Stadium discard at the exact Bench-entry window"),
+		assert_eq(entry_steps[0].get("items", []) if not entry_steps.is_empty() else [], [stadium], "The Bench-entry prompt should expose only the current Stadium"),
+		assert_true(bool(entry_steps[0].get("allow_cancel", false)) if not entry_steps.is_empty() else false, "Bury in Snow is optional and its prompt must allow declining"),
+		assert_true(placed, "CSV9C_053 should be playable from hand to the Bench"),
+		assert_true(usable_after_entry, "Bury in Snow should be usable immediately after CSV9C_053 enters the Bench from hand"),
+		assert_true(used, "The player ability entry should resolve Bury in Snow"),
+		assert_null(state.stadium_card, "Bury in Snow should discard the Stadium selected by the entry prompt"),
+		assert_true(stadium in state.players[1].discard_pile, "The discarded Stadium should go to its owner's discard pile"),
+	])
+
+
 func test_csv9c_remote_pokemon_effect_id_aliases_register_required_hooks() -> String:
 	var processor := EffectProcessor.new()
 	var scripted_cards: Array[Dictionary] = [

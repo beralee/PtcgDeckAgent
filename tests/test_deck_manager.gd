@@ -5,6 +5,7 @@ const DeckManagerScene = preload("res://scenes/deck_manager/DeckManager.tscn")
 const DeckViewDialogScript = preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const DeckRecommendationStoreScript = preload("res://scripts/engine/DeckRecommendationStore.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const WebTextInputBridgeScript := preload("res://scripts/ui/non_battle/WebTextInputBridge.gd")
 const DeckPosterComposerScript := preload("res://scripts/deck_share/DeckPosterComposer.gd")
 const TEST_RECOMMENDATION_CACHE_PATH := "user://test_deck_manager/recommendation_cache.json"
 const TEST_DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.headless.json"
@@ -83,6 +84,7 @@ func test_import_panel_portrait_uses_phone_sized_modal_controls() -> String:
 	var progress_label := scene.get_node_or_null("%ProgressLabel") as Label
 	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
 	var paste_button := scene.find_child("BtnPasteImport", true, false) as Button
+	var provider_button := scene.find_child("BtnOpenTcgMik", true, false) as Button
 	var import_button := scene.get_node_or_null("%BtnDoImport") as Button
 	var close_button := scene.get_node_or_null("%BtnCloseImport") as Button
 	var box_min_size := import_box.custom_minimum_size if import_box != null else Vector2.ZERO
@@ -109,10 +111,12 @@ func test_import_panel_portrait_uses_phone_sized_modal_controls() -> String:
 		assert_true(url_input != null and url_input.custom_minimum_size.y >= 128.0, "Deck import portrait URL input should be a large phone touch target"),
 		assert_true(url_input != null and url_input.get_theme_font_size("font_size") >= 29, "Deck import portrait URL input text should be phone-readable"),
 		assert_true(url_input != null and url_input.virtual_keyboard_enabled and url_input.virtual_keyboard_show_on_focus, "Deck import URL input should rely on native mobile keyboard-on-focus behavior"),
-		assert_true(url_input != null and url_input.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_URL, "Deck import URL input should request the URL keyboard type"),
+		assert_true(url_input != null and url_input.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_DEFAULT, "Deck import mixed URL-or-ID input should use the full keyboard so Android users can enter numeric deck IDs"),
 		assert_true(url_input != null and url_input.context_menu_enabled, "Deck import URL input should keep the native paste context menu enabled"),
 		assert_true(paste_button != null and paste_button.visible, "Deck import portrait dialog should include a one-tap paste button for phone users"),
 		assert_true(paste_button != null and paste_button.custom_minimum_size.y >= 104.0, "Deck import paste button should be phone-sized"),
+		assert_true(provider_button != null and provider_button.visible and provider_button.text.contains("tcg.mik.moe"), "Deck import should expose a direct card-site button so mobile users never need to type the URL"),
+		assert_true(provider_button != null and bool(provider_button.get_meta(NonBattleTouchBridgeScript.BUTTON_TOUCH_BOUND_META, false)), "Card-site action should use the HUD touch bridge"),
 		assert_true(import_button != null and import_button.custom_minimum_size.y >= 104.0, "Deck import portrait confirm button should be phone-sized"),
 		assert_true(close_button != null and close_button.custom_minimum_size.y >= 104.0, "Deck import portrait close button should be phone-sized"),
 		assert_true(import_button != null and import_button.get_theme_font_size("font_size") >= 33, "Deck import portrait button text should be phone-readable"),
@@ -628,6 +632,248 @@ func test_deck_manager_deck_row_shows_edit_date_when_available() -> String:
 	])
 
 
+func test_web_import_panel_prepares_native_dom_input_and_avoids_clipboard_read() -> String:
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.set("_test_web_runtime_override", true)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_on_import_pressed")
+	var prepared := bool(scene.call("_prepare_web_import_url_input"))
+	var paste_button := scene.find_child("BtnPasteImport", true, false) as Button
+	if paste_button != null:
+		paste_button.emit_signal("pressed")
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	var progress_label := scene.get_node_or_null("%ProgressLabel") as Label
+	var web_input_payload := NonBattleTouchBridgeScript.get_test_web_text_input_last_payload()
+	var result := run_checks([
+		assert_true(prepared, "Web deck import should prepare an HTML input over the Godot field before the first tap"),
+		assert_true(paste_button != null and paste_button.text == "输入 / 粘贴", "Web import should offer a keyboard-and-native-paste action instead of relying on clipboard_get"),
+		assert_true(url_input != null and url_input.editable, "Opening the Web input action should keep the deck URL editable"),
+		assert_true(progress_label != null and progress_label.text.contains("长按输入框"), "Web input guidance should explain the browser-native paste path"),
+		assert_eq(str(web_input_payload.get("input_type", "")), "url", "Web import should request Safari's URL keyboard without changing Android's mixed URL-or-ID keyboard"),
+		assert_true(NonBattleTouchBridgeScript.get_test_web_text_input_prepare_count() >= 1, "Web import should own a prepared DOM input layer"),
+	])
+	scene.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	return result
+
+
+func test_web_duplicate_import_rename_prepares_dom_input_inside_hud() -> String:
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.set("_test_web_runtime_override", true)
+	scene.set("_pending_import_deck", _make_deck(910043, "Duplicate Web Deck"))
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_show_import_rename_dialog", "Duplicate Web Deck")
+	var prepared := bool(scene.call("_prepare_web_rename_input"))
+	var input := scene.find_child("DeckRenameInput", true, false) as LineEdit
+	var native_dialog: AcceptDialog = scene.get("_rename_dialog")
+	var result := run_checks([
+		assert_true(prepared, "Web duplicate-name HUD should prepare a real DOM input for the iOS keyboard"),
+		assert_not_null(input, "Web duplicate-name HUD should expose an editable HUD LineEdit"),
+		assert_null(native_dialog, "Web duplicate-name handling must never fall back to a native Godot dialog"),
+		assert_true(NonBattleTouchBridgeScript.get_test_web_text_input_prepare_count() >= 1, "Web duplicate-name input should own a prepared DOM editor"),
+	])
+	scene.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	return result
+
+
+func test_web_import_can_transfer_dom_editor_from_url_to_duplicate_rename() -> String:
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.set("_test_web_runtime_override", true)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_on_import_pressed")
+	var first_prepared := bool(scene.call("_prepare_web_import_url_input"))
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	var first_state := WebTextInputBridgeScript.debug_state_for_tests()
+	NonBattleTouchBridgeScript.commit_test_web_text_input_value("https://tcg.mik.moe/decks/list/645436", true)
+	scene.set("_pending_import_deck", _make_deck(910044, "Duplicate Web Deck"))
+	scene.call("_show_import_rename_dialog", "Duplicate Web Deck")
+	var second_prepared := bool(scene.call("_prepare_web_rename_input"))
+	var rename_input := scene.find_child("DeckRenameInput", true, false) as LineEdit
+	var second_state := WebTextInputBridgeScript.debug_state_for_tests()
+	var result := run_checks([
+		assert_true(first_prepared and second_prepared, "Both sequential iOS editors should be prepared successfully"),
+		assert_eq(str(first_state.get("active_control_name", "")), "UrlInput", "The first DOM transaction should belong to the import URL field"),
+		assert_eq(str(second_state.get("active_control_name", "")), "DeckRenameInput", "The completed URL transaction must hand ownership to the duplicate-name field"),
+		assert_true(NonBattleTouchBridgeScript.get_test_web_text_input_prepare_count() >= 2, "Import then rename should create two distinct DOM editor transactions"),
+		assert_true(url_input != null and not url_input.virtual_keyboard_enabled and not url_input.virtual_keyboard_show_on_focus, "Web URL input must not compete through Godot's virtual keyboard"),
+		assert_true(rename_input != null and not rename_input.virtual_keyboard_enabled and not rename_input.virtual_keyboard_show_on_focus, "Web rename input must leave the iOS keyboard exclusively to the DOM editor"),
+	])
+	scene.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	return result
+
+
+func test_web_deck_recommendations_use_latest_snapshot_without_http_request() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.set("_test_web_runtime_override", true)
+	var should_fetch := bool(scene.call("_should_fetch_remote_recommendations"))
+	scene.call("_setup_deck_recommendations")
+	var stale_recommendation: Dictionary = scene._embedded_recommendations[0] if not scene._embedded_recommendations.is_empty() else {}
+	if not stale_recommendation.is_empty():
+		scene._recommendation_store.call("upsert_item", stale_recommendation, true)
+		scene._current_recommendation = scene._select_initial_recommendation()
+	var recommendation: Dictionary = scene.get("_current_recommendation")
+	var client: Node = scene.get("_recommendation_client")
+	var snapshot: Array = scene.get("_web_recommendation_snapshot")
+	var pool: Array = scene.call("_combined_recommendation_pool")
+	var source: Dictionary = recommendation.get("source", {}) if recommendation.get("source", {}) is Dictionary else {}
+	var embedded_deck := scene.call("_build_embedded_recommendation_deck", stale_recommendation) as DeckData
+	scene.queue_free()
+	return run_checks([
+		assert_false(should_fetch, "HTTPS Web builds must not call the HTTP-only recommendation service"),
+		assert_null(client, "Web deck center should not create the remote HTTP recommendation client"),
+		assert_eq(snapshot.size(), 5, "Web builds should bundle the five newest server recommendations"),
+		assert_eq(str(source.get("date", "")), "2026-08-02", "Web startup should select the newest snapshot date even when a May 1 recommendation id was persisted"),
+		assert_true(not pool.is_empty() and str((pool[0] as Dictionary).get("deck_id", "")) == "645436", "Web recommendation order should preserve the server's newest-first ranking"),
+		assert_not_null(embedded_deck, "The older community feed should remain available as an offline import fallback"),
+		assert_eq(embedded_deck.total_cards if embedded_deck != null else 0, 60, "The offline fallback should still reconstruct a complete 60-card deck"),
+	])
+
+
+func test_deck_manager_local_search_matches_name_substrings_and_ordered_fuzzy_characters() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var checks: Array[String] = [
+		assert_true(bool(scene.call("_deck_name_matches_search", "Dragapult ex 控制", "DRAGAPULT")), "Local deck search should ignore Latin letter case"),
+		assert_true(bool(scene.call("_deck_name_matches_search", "Dragapult ex 控制", "drg plt")), "Local deck search should support ordered non-contiguous characters and ignore spaces"),
+		assert_true(bool(scene.call("_deck_name_matches_search", "猛雷鼓 Ogerpon", "猛鼓")), "Local deck search should support ordered fuzzy matching for Chinese names"),
+		assert_false(bool(scene.call("_deck_name_matches_search", "Dragapult ex 控制", "palkia")), "Local deck search should reject unrelated names"),
+		assert_true(bool(scene.call("_deck_name_matches_search", "Any local deck", "   ")), "A blank query should restore every local deck"),
+	]
+	scene.queue_free()
+	return run_checks(checks)
+
+
+func test_deck_manager_local_search_filters_only_saved_deck_rows_and_reports_no_results() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var dragapult_row := scene.call("_create_deck_item", _make_deck(910041, "Dragapult ex 控制")) as Control
+	var raging_bolt_row := scene.call("_create_deck_item", _make_deck(910042, "猛雷鼓 Ogerpon")) as Control
+	var recommendation := PanelContainer.new()
+	recommendation.name = "SearchUnaffectedRecommendation"
+	if deck_list != null:
+		deck_list.add_child(recommendation)
+		deck_list.add_child(dragapult_row)
+		deck_list.add_child(raging_bolt_row)
+	scene.set("_recommendation_section", recommendation)
+
+	scene.call("_on_local_deck_search_changed", "drg plt")
+	var fuzzy_dragapult_visible := dragapult_row.visible
+	var fuzzy_raging_bolt_visible := raging_bolt_row.visible
+	var recommendation_visible_during_search := recommendation.visible
+	scene.call("_on_local_deck_search_changed", "不存在的卡组")
+	var empty_label := scene.get_node_or_null("%EmptyLabel") as Label
+	var no_result_visible := empty_label != null and empty_label.visible
+	var no_result_text := empty_label.text if empty_label != null else ""
+	scene.call("_on_local_deck_search_changed", "")
+	var restored_both_rows := dragapult_row.visible and raging_bolt_row.visible
+	var restored_empty_hidden := empty_label != null and not empty_label.visible
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(fuzzy_dragapult_visible, "Fuzzy search should keep the matching saved deck row visible"),
+		assert_false(fuzzy_raging_bolt_visible, "Fuzzy search should hide non-matching saved deck rows"),
+		assert_true(recommendation_visible_during_search, "Local deck search must not hide the recommendation section"),
+		assert_true(no_result_visible, "An unmatched local deck query should reveal a dedicated empty state"),
+		assert_eq(no_result_text, "未找到匹配的本地卡组", "The unmatched state should explain that no local deck matched"),
+		assert_true(restored_both_rows, "Clearing local deck search should restore all saved deck rows"),
+		assert_true(restored_empty_hidden, "Clearing local deck search should hide the no-result state when decks exist"),
+	])
+
+
+func test_deck_manager_local_search_input_has_desktop_web_and_android_layout_contracts() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var search_input := scene.get_node_or_null("%DeckSearchInput") as LineEdit
+	var clear_button := scene.get_node_or_null("%DeckSearchClearButton") as Button
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var desktop_size := search_input.custom_minimum_size if search_input != null else Vector2.ZERO
+	var desktop_font := search_input.get_theme_font_size("font_size") if search_input != null else 0
+	var desktop_clear_size := clear_button.custom_minimum_size if clear_button != null else Vector2.ZERO
+
+	scene.set("_test_web_runtime_override", true)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var web_size := search_input.custom_minimum_size if search_input != null else Vector2.ZERO
+	var web_font := search_input.get_theme_font_size("font_size") if search_input != null else 0
+
+	scene.set("_test_web_runtime_override", false)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var android_size := search_input.custom_minimum_size if search_input != null else Vector2.ZERO
+	var android_font := search_input.get_theme_font_size("font_size") if search_input != null else 0
+	var native_text_input := search_input != null and bool(search_input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false))
+	var select_all_bound := search_input != null and bool(search_input.get_meta(NonBattleTouchBridgeScript.LINE_EDIT_SELECT_ALL_BOUND_META, false))
+	var clear_touch_bound := clear_button != null and bool(clear_button.get_meta(NonBattleTouchBridgeScript.BUTTON_TOUCH_BOUND_META, false))
+	var android_clear_size := clear_button.custom_minimum_size if clear_button != null else Vector2.ZERO
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(search_input, "Deck center should expose one named local-deck search field on every platform"),
+		assert_true(search_input != null and search_input.placeholder_text == "搜索本地卡组名称" and not search_input.clear_button_enabled, "Local deck search should disable Godot's unreliable built-in mobile clear icon"),
+		assert_not_null(clear_button, "Local deck search should expose a dedicated HUD clear button"),
+		assert_true(desktop_size.x >= 360.0 and desktop_size.y >= 38.0 and desktop_font >= 15, "Windows desktop search should keep a readable wide landscape field"),
+		assert_true(desktop_clear_size.x >= 38.0 and desktop_clear_size.y >= 38.0, "Windows desktop clear button should remain an explicit click target"),
+		assert_true(web_size.y >= 98.0 and web_font >= 29, "Portrait Web search should be large enough for browser touch typing"),
+		assert_true(android_size.y >= 98.0 and android_font >= 29, "Android portrait search should use phone-readable input metrics"),
+		assert_true(android_clear_size.x >= 98.0 and android_clear_size.y >= 98.0, "Portrait clear button should be a full phone-sized touch target"),
+		assert_true(search_input != null and search_input.virtual_keyboard_enabled and search_input.virtual_keyboard_show_on_focus, "Mobile local deck search should request the platform keyboard on focus"),
+		assert_true(native_text_input, "Android local deck search should use the shared native text bridge"),
+		assert_false(select_all_bound, "Persistent deck search must preserve the native caret and Backspace range instead of selecting all on every touch"),
+		assert_true(clear_touch_bound, "The dedicated clear button should use the shared Android touch bridge"),
+	])
+
+
+func test_deck_manager_local_search_clear_button_works_from_android_touch() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	tree.root.add_child(scene)
+	await tree.process_frame
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var search_input := scene.get_node_or_null("%DeckSearchInput") as LineEdit
+	var clear_button := scene.get_node_or_null("%DeckSearchClearButton") as Button
+	if search_input != null:
+		search_input.text = "Dragapult ex"
+		search_input.text_changed.emit(search_input.text)
+	var visible_with_query := clear_button != null and clear_button.visible
+	var clear_press_count := [0]
+	if clear_button != null:
+		clear_button.pressed.connect(func() -> void:
+			clear_press_count[0] = int(clear_press_count[0]) + 1
+		)
+	var clear_available := clear_button != null and NonBattleTouchBridgeScript.button_can_bridge_touch(clear_button)
+	var mouse_emulation_during_touch := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	if clear_button != null:
+		_emit_android_touch_on_button(clear_button)
+	var query_after_clear := str(scene.get("_local_deck_search_query"))
+	var text_after_clear := search_input.text if search_input != null else "missing"
+	var disabled_after_clear := clear_button != null and clear_button.visible and clear_button.disabled
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_true(visible_with_query, "Typing a local deck query should reveal the explicit clear button"),
+		assert_true(clear_available, "The visible local-search clear button should be available to the Android touch bridge"),
+		assert_false(mouse_emulation_during_touch, "Android clear-button regression should run without mouse-from-touch emulation"),
+		assert_eq(int(clear_press_count[0]), 1, "Android ScreenTouch should emit exactly one clear-button press"),
+		assert_eq(text_after_clear, "", "Android ScreenTouch on the clear button should clear the visible search input"),
+		assert_eq(query_after_clear, "", "Clearing the input should reset the active local-deck filter"),
+		assert_true(disabled_after_clear, "The clear button should keep its reserved slot but become disabled once the query is empty"),
+	])
+
+
 func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	var old_v18_deck := _make_deck(910027, "18.0 Old Edited Deck")
@@ -1057,6 +1303,118 @@ func test_deck_manager_portrait_rename_uses_hud_dialog() -> String:
 	])
 
 
+func test_deck_manager_portrait_rename_modal_disables_and_restores_controls_behind_it() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var content_root := scene.get_node_or_null("MarginContainer") as Control
+	var behind_button := Button.new()
+	behind_button.name = "RenameModalBehindButton"
+	behind_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if content_root != null:
+		content_root.add_child(behind_button)
+	scene._on_rename_deck(_make_deck(910034, "Rename Modal Ownership"))
+	var blocked_while_open := behind_button.mouse_filter == Control.MOUSE_FILTER_IGNORE
+	scene._close_rename_dialog()
+	var restored_after_close := behind_button.mouse_filter == Control.MOUSE_FILTER_STOP
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(blocked_while_open, "Android rename HUD must disable every deck-center control behind the modal instead of relying on hit-test timing"),
+		assert_true(restored_after_close, "Closing Android rename HUD must restore the original mouse filters of controls behind it"),
+	])
+
+
+func test_deck_manager_hud_close_quarantines_android_release_tail_and_mouse_echo() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	tree.root.add_child(scene)
+	await tree.process_frame
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+
+	var behind_button := Button.new()
+	behind_button.name = "DeckHudEchoProbeButton"
+	behind_button.position = Vector2(12, 12)
+	behind_button.size = Vector2(180, 96)
+	behind_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	var pressed_count := [0]
+	behind_button.pressed.connect(func() -> void:
+		pressed_count[0] = int(pressed_count[0]) + 1
+	)
+	scene.add_child(behind_button)
+
+	scene._on_delete_deck(_make_deck(910035, "Delete Touch Tail Probe"))
+	scene.call("_close_deck_action_hud_dialog", "delete")
+	var release_tail := InputEventScreenTouch.new()
+	release_tail.pressed = false
+	release_tail.position = behind_button.get_global_rect().get_center()
+	scene._input(release_tail)
+	var count_after_touch_tail := int(pressed_count[0])
+
+	await tree.process_frame
+	scene.set("_deck_action_hud_input_suppress_until_msec", Time.get_ticks_msec() - 1)
+	var fresh_press := InputEventScreenTouch.new()
+	fresh_press.pressed = true
+	fresh_press.position = behind_button.get_global_rect().get_center()
+	scene._input(fresh_press)
+	var fresh_release := InputEventScreenTouch.new()
+	fresh_release.pressed = false
+	fresh_release.position = fresh_press.position
+	scene._input(fresh_release)
+	var count_after_fresh_tap := int(pressed_count[0])
+
+	scene._on_delete_deck(_make_deck(910036, "Delete Mouse Echo Probe"))
+	scene.call("_close_deck_action_hud_dialog", "delete")
+	var mouse_echo := InputEventMouseButton.new()
+	mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	mouse_echo.pressed = false
+	mouse_echo.position = behind_button.get_global_rect().get_center()
+	mouse_echo.global_position = mouse_echo.position
+	scene._input(mouse_echo)
+	var count_after_mouse_echo := int(pressed_count[0])
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_eq(count_after_touch_tail, 0, "Closing a deck HUD must swallow the Android release tail instead of tapping a button behind the removed modal"),
+		assert_eq(count_after_fresh_tap, 1, "Deck-center controls must accept a genuinely new tap after the short modal-close quarantine expires"),
+		assert_eq(count_after_mouse_echo, 1, "Closing a deck HUD must swallow Android's synthetic MouseButton echo across different button instances"),
+	])
+
+
+func test_deck_manager_hud_close_hides_stale_overlay_and_releases_rename_focus_immediately() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	tree.root.add_child(scene)
+	await tree.process_frame
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene._on_rename_deck(_make_deck(910037, "Rename Focus Probe"))
+	var overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var rename_input := scene._rename_input as LineEdit
+	if rename_input != null:
+		rename_input.grab_focus()
+	var focused_before_close := rename_input != null and rename_input.has_focus()
+	scene._close_rename_dialog()
+	var overlay_hidden_immediately := overlay != null and not overlay.visible
+	var focus_released_immediately := rename_input != null and not rename_input.has_focus()
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(focused_before_close, "Rename regression probe should hold native text focus before the HUD closes"),
+		assert_true(overlay_hidden_immediately, "A queued-for-deletion deck HUD must become non-visible immediately so it cannot retain Android hit testing"),
+		assert_true(focus_released_immediately, "Closing rename must release the native LineEdit before its node is queued for deletion"),
+	])
+
+
 func test_deck_manager_portrait_delete_uses_hud_dialog() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene.position = Vector2.ZERO
@@ -1289,6 +1647,7 @@ func test_deck_manager_web_portrait_edit_prompts_before_deck_editor() -> String:
 	var title := scene.find_child("DeckActionHudTitle", true, false) as Label
 	var continue_button := scene.find_child("WebDeckEditContinueButton", true, false) as Button
 	var cancel_button := scene.find_child("WebDeckEditCancelButton", true, false) as Button
+	var overlay_visible_before_confirm := overlay != null and overlay.visible
 	if continue_button != null:
 		continue_button.emit_signal("pressed")
 	var requested_after_confirm := str(GameManager.call("consume_last_requested_scene_path"))
@@ -1303,7 +1662,7 @@ func test_deck_manager_web_portrait_edit_prompts_before_deck_editor() -> String:
 		assert_eq(requested_before_confirm, "", "Web portrait deck center edit should not open DeckEditor before confirmation"),
 		assert_eq(editor_deck_id_before_confirm, -1, "Web portrait deck center edit should not pass a deck id before confirmation"),
 		assert_not_null(overlay, "Web portrait deck center edit should show a HUD prompt"),
-		assert_true(overlay != null and overlay.visible, "Web portrait deck edit prompt should be visible"),
+		assert_true(overlay_visible_before_confirm, "Web portrait deck edit prompt should be visible"),
 		assert_eq(title.text if title != null else "", "\u8bf7\u5148\u6a2a\u5c4f", "Web portrait deck edit prompt should ask the user to rotate manually"),
 		assert_not_null(cancel_button, "Web portrait deck edit prompt should provide a cancel button"),
 		assert_not_null(continue_button, "Web portrait deck edit prompt should provide a confirmation button"),
@@ -2692,27 +3051,27 @@ func test_existing_deck_rename_clear_button_clears_current_name() -> String:
 	])
 
 
-func test_duplicate_import_rename_dialog_stays_clamped_with_visible_confirm_controls() -> String:
+func test_duplicate_import_rename_uses_hud_controls_instead_of_native_dialog() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene._show_import_rename_dialog("Duplicate Deck Name")
 
 	var dialog: AcceptDialog = scene._rename_dialog
-	var scroll: ScrollContainer = null
-	if dialog != null:
-		for child: Node in dialog.get_children():
-			if child is ScrollContainer:
-				scroll = child
-				break
+	var overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var panel := scene.get("_deck_action_hud_panel") as PanelContainer
 	var clear_button := scene.find_child("DeckRenameClearButton", true, false) as Button
+	var cancel_button := scene.find_child("DeckRenameCancelButton", true, false) as Button
+	var confirm_button := scene.find_child("DeckRenameConfirmButton", true, false) as Button
 
 	scene.queue_free()
 
 	return run_checks([
-		assert_not_null(dialog, "duplicate import should open the rename dialog"),
-		assert_eq(dialog.size, Vector2i(460, 300), "rename dialog should use the fixed clamped size with room for the clear button"),
-		assert_not_null(scroll, "rename dialog should wrap content in a scroll container"),
-		assert_not_null(clear_button, "rename dialog should expose a clear-name button"),
-		assert_not_null(scene._rename_confirm_button, "rename dialog should still expose the confirm button"),
+		assert_null(dialog, "duplicate import must not open an unresponsive Godot native dialog"),
+		assert_not_null(overlay, "duplicate import should open the shared HUD dialog overlay"),
+		assert_not_null(panel, "duplicate import should render inside a styled HUD panel"),
+		assert_not_null(clear_button, "HUD rename should expose a clear-name button"),
+		assert_true(cancel_button != null and cancel_button.text == "放弃导入", "HUD rename should let users abandon a duplicate import explicitly"),
+		assert_not_null(confirm_button, "HUD rename should expose the confirm action"),
+		assert_true(confirm_button != null and bool(confirm_button.get_meta(NonBattleTouchBridgeScript.BUTTON_TOUCH_BOUND_META, false)), "HUD rename confirmation should use the mobile touch bridge"),
 	])
 
 
@@ -2724,12 +3083,7 @@ func test_duplicate_import_rename_dialog_uses_phone_sized_controls_in_portrait()
 	scene._show_import_rename_dialog("Duplicate Deck Name")
 
 	var dialog: AcceptDialog = scene._rename_dialog
-	var scroll: ScrollContainer = null
-	if dialog != null:
-		for child: Node in dialog.get_children():
-			if child is ScrollContainer:
-				scroll = child
-				break
+	var panel := scene.get("_deck_action_hud_panel") as PanelContainer
 	var input_height: float = scene._rename_input.custom_minimum_size.y if scene._rename_input != null else 0.0
 	var input_font: int = scene._rename_input.get_theme_font_size("font_size") if scene._rename_input != null else 0
 	var confirm_height: float = scene._rename_confirm_button.custom_minimum_size.y if scene._rename_confirm_button != null else 0.0
@@ -2737,11 +3091,9 @@ func test_duplicate_import_rename_dialog_uses_phone_sized_controls_in_portrait()
 
 	scene.queue_free()
 	return run_checks([
-		assert_not_null(dialog, "duplicate import should open the rename dialog"),
-		assert_true(dialog != null and dialog.size.x >= 330, "portrait rename dialog should use most of a phone-width screen"),
-		assert_true(dialog != null and dialog.size.y >= 440, "portrait rename dialog should be tall enough for readable duplicate-name guidance"),
-		assert_not_null(scroll, "portrait rename dialog should keep content inside a scroll container"),
-		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "portrait rename dialog should support touch drag scrolling without a visible scrollbar"),
+		assert_null(dialog, "portrait duplicate import must use HUD controls instead of a native dialog"),
+		assert_not_null(panel, "portrait duplicate import should expose the HUD panel"),
+		assert_true(panel != null and panel.custom_minimum_size.x >= 320.0, "portrait HUD rename should use most of a phone-width screen"),
 		assert_true(input_height >= 98.0 and input_font >= 29, "portrait rename input should be large enough to tap and read"),
 		assert_true(confirm_height >= 104.0 and confirm_font >= 33, "portrait rename confirm button should be large enough to tap and read"),
 	])
@@ -2992,6 +3344,7 @@ func _configure_recommendation_test_state(scene: Control, cache_path: String = "
 	scene._recommendation_store.call("load_cache")
 	scene._recommendation_articles = scene._load_recommendation_articles()
 	scene._embedded_recommendations = scene._normalize_recommendation_articles(scene._recommendation_articles)
+	scene._web_recommendation_snapshot = scene._load_web_recommendation_snapshot()
 	if not scene._embedded_recommendations.is_empty():
 		scene._current_recommendation = scene._embedded_recommendations[0]
 

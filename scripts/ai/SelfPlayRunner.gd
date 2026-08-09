@@ -228,6 +228,9 @@ func _make_agent(player_index: int, config: Dictionary, fast_mode: bool = false)
 	var interaction_scorer_path: Variant = config.get("interaction_scorer_path", "")
 	if interaction_scorer_path is String and (interaction_scorer_path as String) != "":
 		agent.interaction_scorer_path = interaction_scorer_path as String
+	var matchup_artifacts: Variant = config.get("matchup_policy_artifacts", {})
+	if matchup_artifacts is Dictionary:
+		agent.matchup_policy_artifacts = (matchup_artifacts as Dictionary).duplicate(true)
 	return agent
 
 

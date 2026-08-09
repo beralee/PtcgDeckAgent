@@ -5,6 +5,7 @@ const UpdateCheckerPath := "res://scripts/network/UpdateChecker.gd"
 const FeedbackClientPath := "res://scripts/network/FeedbackClient.gd"
 const UserVisitClientPath := "res://scripts/network/UserVisitClient.gd"
 const AppVersionPath := "res://scripts/app/AppVersion.gd"
+const MockUpdateCheckEnvironmentScript := preload("res://tests/mocks/MockUpdateCheckEnvironment.gd")
 const STATE_PATH := "user://update_check_state.json"
 const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 
@@ -83,12 +84,12 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_not_null(update_instance, "UpdateChecker.gd should instantiate"),
 		assert_not_null(feedback_instance, "FeedbackClient.gd should instantiate"),
 		assert_not_null(user_visit_instance, "UserVisitClient.gd should instantiate"),
-		assert_eq(str(app_version_script.VERSION), "0.5.2", "AppVersion should expose the current version"),
-		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.5.2", "AppVersion should expose display version"),
-		assert_eq(int(app_version_script.BUILD_NUMBER), 52, "AppVersion should expose the current mobile build number"),
-		assert_eq(str(app_version_script.WEB_VERSION), "0.5.2.6", "AppVersion should expose the Web patch version"),
-		assert_eq(str(app_version_script.WEB_DISPLAY_VERSION), "v0.5.2.6", "AppVersion should expose the Web display version"),
-		assert_eq(int(app_version_script.WEB_BUILD_NUMBER), 526, "AppVersion should expose the Web build number"),
+		assert_eq(str(app_version_script.VERSION), "0.5.4", "AppVersion should expose the current version"),
+		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.5.4", "AppVersion should expose display version"),
+		assert_eq(int(app_version_script.BUILD_NUMBER), 54, "AppVersion should expose the current mobile build number"),
+		assert_eq(str(app_version_script.WEB_VERSION), "0.5.4.4", "AppVersion should expose the Web patch version"),
+		assert_eq(str(app_version_script.WEB_DISPLAY_VERSION), "v0.5.4.4", "AppVersion should expose the Web display version"),
+		assert_eq(int(app_version_script.WEB_BUILD_NUMBER), 544, "AppVersion should expose the Web build number"),
 		assert_eq(str(feedback_script.ENDPOINT_URL), "http://fc.skillserver.cn/ptcg", "Feedback client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.ENDPOINT_URL), "http://fc.skillserver.cn/userptcg", "User visit client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.WEB_BRIDGE_PAGE), "userptcg_bridge.html", "User visit client should expose the static Web bridge page"),
@@ -445,6 +446,136 @@ func test_forced_update_check_cancels_inflight_request_state() -> String:
 	return checks
 
 
+func test_due_cached_update_survives_mock_refresh_failure() -> String:
+	var checker_result: Dictionary = _new_checker()
+	if not bool(checker_result.get("ok", false)):
+		return str(checker_result.get("error", "checker setup failed"))
+	var checker: Node = checker_result.get("value") as Node
+	var environment := MockUpdateCheckEnvironmentScript.new()
+	var update_script := load(UpdateCheckerPath)
+	environment.state = {
+		"last_checked_at": environment.now_unix - int(update_script.CHECK_INTERVAL_SECONDS) - 1,
+		"latest_info": {
+			"latest_version": "0.5.5",
+			"display_version": "v0.5.5",
+		},
+	}
+	checker.call("configure_environment_for_tests", environment)
+	var available: Array[Dictionary] = []
+	var no_update: Array[Dictionary] = []
+	var failures: Array[String] = []
+	checker.update_available.connect(func(info: Dictionary) -> void: available.append(info.duplicate(true)))
+	checker.no_update.connect(func(info: Dictionary) -> void: no_update.append(info.duplicate(true)))
+	checker.check_failed.connect(func(message: String) -> void: failures.append(message))
+
+	var err: int = int(checker.call("check_for_updates", false))
+	var request := environment.latest_request()
+	var available_before_failure := available.size()
+	if request != null:
+		request.complete_transport_failure()
+
+	var checks := run_checks([
+		assert_eq(err, OK, "A due background refresh should start through the injected request port"),
+		assert_eq(environment.requests.size(), 1, "The mock environment should observe exactly one background request"),
+		assert_eq(available_before_failure, 1, "A known cached update should be presented before the network refresh completes"),
+		assert_eq(str(available[0].get("notification_source", "")) if not available.is_empty() else "", "cache", "Cached reminders should identify their source"),
+		assert_eq(available.size(), 1, "A failed refresh must not discard or duplicate the cached reminder"),
+		assert_eq(no_update.size(), 0, "A network failure must not clear a still-valid cached reminder"),
+		assert_eq(failures.size(), 1, "The failed mock transport should still publish diagnostics"),
+	])
+	checker.free()
+	return checks
+
+
+func test_mock_refresh_deduplicates_same_cached_update() -> String:
+	var checker_result: Dictionary = _new_checker()
+	if not bool(checker_result.get("ok", false)):
+		return str(checker_result.get("error", "checker setup failed"))
+	var checker: Node = checker_result.get("value") as Node
+	var environment := MockUpdateCheckEnvironmentScript.new()
+	var update_script := load(UpdateCheckerPath)
+	environment.state = {
+		"last_checked_at": environment.now_unix - int(update_script.CHECK_INTERVAL_SECONDS) - 1,
+		"latest_info": {"latest_version": "0.5.5", "display_version": "v0.5.5"},
+	}
+	checker.call("configure_environment_for_tests", environment)
+	var available: Array[Dictionary] = []
+	checker.update_available.connect(func(info: Dictionary) -> void: available.append(info.duplicate(true)))
+
+	checker.call("check_for_updates", false)
+	var request := environment.latest_request()
+	if request != null:
+		request.complete_json({"latest_version": "0.5.5", "summary": ["same release"]})
+
+	var checks := run_checks([
+		assert_eq(available.size(), 1, "Refreshing the same cached version should not restart the reminder animation"),
+		assert_eq(str(available[0].get("notification_source", "")) if not available.is_empty() else "", "cache", "The one reminder should be the immediate cached presentation"),
+		assert_eq(str(environment.state.get("latest_info", {}).get("latest_version", "")), "0.5.5", "A successful mock refresh should still persist normalized server state"),
+	])
+	checker.free()
+	return checks
+
+
+func test_mock_refresh_replaces_cached_reminder_when_server_version_changes() -> String:
+	var checker_result: Dictionary = _new_checker()
+	if not bool(checker_result.get("ok", false)):
+		return str(checker_result.get("error", "checker setup failed"))
+	var checker: Node = checker_result.get("value") as Node
+	var environment := MockUpdateCheckEnvironmentScript.new()
+	var update_script := load(UpdateCheckerPath)
+	environment.state = {
+		"last_checked_at": environment.now_unix - int(update_script.CHECK_INTERVAL_SECONDS) - 1,
+		"latest_info": {"latest_version": "0.5.5", "display_version": "v0.5.5"},
+	}
+	checker.call("configure_environment_for_tests", environment)
+	var available: Array[Dictionary] = []
+	checker.update_available.connect(func(info: Dictionary) -> void: available.append(info.duplicate(true)))
+
+	checker.call("check_for_updates", false)
+	var request := environment.latest_request()
+	if request != null:
+		request.complete_json({"latest_version": "0.5.6", "summary": ["new release"]})
+
+	var checks := run_checks([
+		assert_eq(available.size(), 2, "A newer server version should replace the provisional cached reminder exactly once"),
+		assert_eq(str(available[1].get("latest_version", "")) if available.size() > 1 else "", "0.5.6", "The replacement reminder should carry the refreshed version"),
+		assert_eq(str(available[1].get("notification_source", "")) if available.size() > 1 else "", "network", "The replacement reminder should identify the live response"),
+	])
+	checker.free()
+	return checks
+
+
+func test_mock_refresh_clears_cached_reminder_when_server_reports_current_version() -> String:
+	var checker_result: Dictionary = _new_checker()
+	if not bool(checker_result.get("ok", false)):
+		return str(checker_result.get("error", "checker setup failed"))
+	var checker: Node = checker_result.get("value") as Node
+	var environment := MockUpdateCheckEnvironmentScript.new()
+	var update_script := load(UpdateCheckerPath)
+	environment.state = {
+		"last_checked_at": environment.now_unix - int(update_script.CHECK_INTERVAL_SECONDS) - 1,
+		"latest_info": {"latest_version": "0.5.5", "display_version": "v0.5.5"},
+	}
+	checker.call("configure_environment_for_tests", environment)
+	var available: Array[Dictionary] = []
+	var no_update: Array[Dictionary] = []
+	checker.update_available.connect(func(info: Dictionary) -> void: available.append(info.duplicate(true)))
+	checker.no_update.connect(func(info: Dictionary) -> void: no_update.append(info.duplicate(true)))
+
+	checker.call("check_for_updates", false)
+	var request := environment.latest_request()
+	if request != null:
+		request.complete_json({"latest_version": "0.5.4", "summary": []})
+
+	var checks := run_checks([
+		assert_eq(available.size(), 1, "The stale cached update should be visible while the mock refresh is pending"),
+		assert_eq(no_update.size(), 1, "A current server version should explicitly clear the provisional reminder"),
+		assert_eq(str(no_update[0].get("notification_source", "")) if not no_update.is_empty() else "", "network", "The clearing event should come from the live mock response"),
+	])
+	checker.free()
+	return checks
+
+
 func test_manifest_normalization_keeps_download_page_and_summary() -> String:
 	var checker_result: Dictionary = _new_checker()
 	if not bool((checker_result as Dictionary).get("ok", false)):
@@ -474,8 +605,8 @@ func test_update_available_uses_current_version() -> String:
 		return str((checker_result as Dictionary).get("error", "checker setup failed"))
 	var checker: Object = (checker_result as Dictionary).get("value") as Object
 	var checks := run_checks([
-		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.5.3"})), "0.5.3 should be available over current 0.5.2"),
-		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.5.2"})), "Current version should not be treated as an update"),
+		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.5.5"})), "0.5.5 should be available over current 0.5.4"),
+		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.5.4"})), "Current version should not be treated as an update"),
 	])
 	checker.free()
 	return checks

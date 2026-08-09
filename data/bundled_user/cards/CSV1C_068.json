@@ -1,0 +1,66 @@
+{
+    "name":  "巨锻匠ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【无】【无】 大锤 30×\n造成自己手牌张数×30伤害。\n\n【超】【无】【无】 粉碎压制 140\n这个招式的伤害，不计算对手战斗宝可梦身上所附加的效果。\n\n",
+    "yoren_code":  "Y1198",
+    "set_code":  "CSV1C",
+    "card_index":  "068",
+    "set_code_en":  "SVP",
+    "card_index_en":  "31",
+    "name_en":  "Tinkaton ex",
+    "name_zh":  "",
+    "artist":  "takuyoa",
+    "rarity":  "RR",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "132754175b93ba17efadd9d03dabaae9",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV1C/068.png",
+    "image_local_path":  "user://cards/images/CSV1C/068.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV1C/068",
+    "source_set_code":  "CSV1C",
+    "source_card_index":  "068",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Stage 2",
+    "hp":  300,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "巧锻匠",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "大锤",
+                        "text":  "造成自己手牌张数×30伤害。",
+                        "cost":  "CC",
+                        "damage":  "30×",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "粉碎压制",
+                        "text":  "这个招式的伤害，不计算对手战斗宝可梦身上所附加的效果。",
+                        "cost":  "PCC",
+                        "damage":  "140",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

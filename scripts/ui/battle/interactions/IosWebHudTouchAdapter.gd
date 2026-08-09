@@ -1,6 +1,12 @@
 class_name IosWebHudTouchAdapter
 extends RefCounted
 
+## Direct touch dispatcher for marked battle HUD controls.
+##
+## The class name is retained for compatibility with the original iOS Web
+## workaround, but native Android uses the same path so modal buttons do not
+## depend on Godot's delayed touch-to-mouse compatibility events.
+
 const PointerGeometryScript := preload("res://scripts/ui/input/PointerGeometry.gd")
 
 const HUD_TOUCH_ROOT_META := "_ios_web_hud_touch_root"
@@ -36,7 +42,15 @@ func current_candidate_button() -> BaseButton:
 
 
 static func should_enable_for_profile(profile: UiRuntimeProfile) -> bool:
-	if profile == null or not profile.is_web():
+	if profile == null:
+		return false
+	if profile.is_native():
+		return (
+			profile.native_os == UiRuntimeProfile.OS_ANDROID
+			and profile.mobile_like
+			and profile.prefers_touch()
+		)
+	if not profile.is_web():
 		return false
 	if bool(profile.feature_flags.get("web_ios", false)):
 		return true

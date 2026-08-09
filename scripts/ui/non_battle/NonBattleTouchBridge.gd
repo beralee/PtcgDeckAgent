@@ -31,8 +31,10 @@ const VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META := "_non_battle_virtual_keyboard_re
 const LINE_EDIT_SELECT_ALL_BOUND_META := "_non_battle_line_edit_select_all_bound"
 const LINE_EDIT_SELECTED_ALL_META := "_non_battle_line_edit_selected_all"
 const LINE_EDIT_SELECTED_ALL_META_NAME := "_non_battle_line_edit_selected_all_meta_name"
+const PERSISTENT_TEXT_INPUT_META := "_non_battle_persistent_text_input"
 const NATIVE_TEXT_INPUT_META := "_non_battle_native_text_input"
 const NATIVE_TEXT_INPUT_CANDIDATE_META := "_non_battle_native_text_input_candidate"
+const NATIVE_TEXT_INPUT_KEYBOARD_REOPEN_BOUND_META := "_non_battle_native_text_input_keyboard_reopen_bound"
 const WEB_TEXT_INPUT_BOUND_META := "_non_battle_web_text_input_bound"
 const RANGE_TOUCH_BOUND_META := "_non_battle_range_touch_bound"
 const RANGE_TOUCH_ACTIVE_META := "_non_battle_range_touch_active"
@@ -65,6 +67,10 @@ static func get_test_web_text_input_request_count() -> int:
 	return WebTextInputBridgeScript.get_test_request_count()
 
 
+static func get_test_web_text_input_prepare_count() -> int:
+	return WebTextInputBridgeScript.get_test_prepare_count()
+
+
 static func get_test_web_text_input_last_payload() -> Dictionary:
 	return WebTextInputBridgeScript.get_test_last_payload()
 
@@ -74,7 +80,13 @@ static func request_test_web_text_input(control: Control) -> bool:
 
 
 static func request_web_text_input(control: Control) -> bool:
+	_disable_godot_virtual_keyboard_for_web(control)
 	return WebTextInputBridgeScript.request_focus(control)
+
+
+static func prepare_web_text_input(control: Control) -> bool:
+	_disable_godot_virtual_keyboard_for_web(control)
+	return WebTextInputBridgeScript.prepare(control)
 
 
 static func close_web_text_input(reason: String = "complete") -> void:
@@ -83,6 +95,29 @@ static func close_web_text_input(reason: String = "complete") -> void:
 
 static func commit_test_web_text_input_value(value: String, finished: bool = true) -> void:
 	WebTextInputBridgeScript.commit_active_value(value, finished)
+
+
+static func replace_text_input_value(control: Control, value: String, keep_focused: bool = true) -> void:
+	WebTextInputBridgeScript.replace_control_value(control, value, keep_focused)
+	if not keep_focused or control == null or not control.is_inside_tree():
+		return
+	if not control.has_focus():
+		control.grab_focus()
+	_request_hidden_native_keyboard_reopen(control)
+
+
+static func _disable_godot_virtual_keyboard_for_web(control: Control) -> void:
+	if control == null or not WebTextInputBridgeScript.is_web_runtime():
+		return
+	var target := control
+	if control is SpinBox:
+		target = (control as SpinBox).get_line_edit()
+	if target is LineEdit:
+		(target as LineEdit).virtual_keyboard_enabled = false
+		(target as LineEdit).virtual_keyboard_show_on_focus = false
+	elif target is TextEdit:
+		(target as TextEdit).virtual_keyboard_enabled = false
+		(target as TextEdit).virtual_keyboard_show_on_focus = false
 
 
 static func set_touch_bridge_enabled(node: Node, enabled: bool) -> void:
@@ -407,15 +442,24 @@ static func configure_native_line_edit(input: LineEdit, keyboard_type: int = Lin
 	input.focus_mode = Control.FOCUS_ALL
 	input.mouse_filter = Control.MOUSE_FILTER_STOP
 	input.context_menu_enabled = true
-	input.virtual_keyboard_enabled = true
-	input.virtual_keyboard_show_on_focus = true
+	var dom_managed := WebTextInputBridgeScript.is_web_runtime()
+	input.virtual_keyboard_enabled = not dom_managed
+	input.virtual_keyboard_show_on_focus = not dom_managed
 	input.virtual_keyboard_type = keyboard_type
 	input.set("shortcut_keys_enabled", true)
 	input.set("middle_mouse_paste_enabled", true)
 	mark_native_text_input(input)
+	_bind_native_keyboard_reopen_on_focus(input)
 	bind_web_text_input(input)
 	if input.has_meta(FOCUS_TOUCH_BOUND_META):
 		input.remove_meta(FOCUS_TOUCH_BOUND_META)
+
+
+static func configure_persistent_native_line_edit(input: LineEdit, keyboard_type: int = LineEdit.KEYBOARD_TYPE_DEFAULT) -> void:
+	if input == null:
+		return
+	input.set_meta(PERSISTENT_TEXT_INPUT_META, true)
+	configure_native_line_edit(input, keyboard_type)
 
 
 static func configure_native_text_edit(input: TextEdit) -> void:
@@ -424,11 +468,13 @@ static func configure_native_text_edit(input: TextEdit) -> void:
 	input.focus_mode = Control.FOCUS_ALL
 	input.mouse_filter = Control.MOUSE_FILTER_STOP
 	input.context_menu_enabled = true
-	input.virtual_keyboard_enabled = true
-	input.virtual_keyboard_show_on_focus = true
+	var dom_managed := WebTextInputBridgeScript.is_web_runtime()
+	input.virtual_keyboard_enabled = not dom_managed
+	input.virtual_keyboard_show_on_focus = not dom_managed
 	input.set("shortcut_keys_enabled", true)
 	input.set("middle_mouse_paste_enabled", true)
 	mark_native_text_input(input)
+	_bind_native_keyboard_reopen_on_focus(input)
 	bind_web_text_input(input)
 	if input.has_meta(FOCUS_TOUCH_BOUND_META):
 		input.remove_meta(FOCUS_TOUCH_BOUND_META)
@@ -602,6 +648,8 @@ static func bind_line_edit_select_all(
 	bound_meta: String = LINE_EDIT_SELECT_ALL_BOUND_META
 ) -> void:
 	if input == null:
+		return
+	if bool(input.get_meta(PERSISTENT_TEXT_INPUT_META, false)):
 		return
 	if bool(input.get_meta(bound_meta, false)) or bool(input.get_meta(LINE_EDIT_SELECT_ALL_BOUND_META, false)):
 		return
@@ -795,6 +843,7 @@ static func _should_bypass_bridge_for_native_text_input(host: Control, position:
 			_accept_event(host)
 			return true
 		_store_native_text_input_candidate(host, native_input)
+		_focus_native_text_input_from_pointer(native_input)
 		_request_hidden_native_keyboard_reopen(native_input)
 		return true
 	if host.has_meta(NATIVE_TEXT_INPUT_CANDIDATE_META):
@@ -839,6 +888,11 @@ static func event_targets_native_text_input(host: Control, event: InputEvent) ->
 static func _request_hidden_native_keyboard_reopen(control: Control) -> void:
 	if control == null or not control.has_focus():
 		return
+	# Web text fields are backed by a real DOM input. Asking Godot to show its
+	# virtual keyboard at the same time makes iOS Safari alternate focus between
+	# the canvas and the DOM editor, which presents as a keyboard open/close loop.
+	if WebTextInputBridgeScript.is_web_runtime():
+		return
 	if DisplayServer.get_name() == "headless":
 		control.set_meta(VIRTUAL_KEYBOARD_REOPEN_REQUESTED_META, true)
 		return
@@ -853,6 +907,29 @@ static func _request_hidden_native_keyboard_reopen(control: Control) -> void:
 	elif control is TextEdit:
 		text = (control as TextEdit).text
 	DisplayServer.virtual_keyboard_show(text, control.get_global_rect())
+
+
+static func _bind_native_keyboard_reopen_on_focus(control: Control) -> void:
+	if control == null or bool(control.get_meta(NATIVE_TEXT_INPUT_KEYBOARD_REOPEN_BOUND_META, false)):
+		return
+	control.set_meta(NATIVE_TEXT_INPUT_KEYBOARD_REOPEN_BOUND_META, true)
+	control.focus_entered.connect(func() -> void:
+		if WebTextInputBridgeScript.is_web_runtime():
+			return
+		_request_hidden_native_keyboard_reopen(control)
+	)
+
+
+static func _focus_native_text_input_from_pointer(control: Control) -> void:
+	if control == null or not control.is_inside_tree():
+		return
+	if control is LineEdit and not (control as LineEdit).editable:
+		return
+	if control is TextEdit and not (control as TextEdit).editable:
+		return
+	control.focus_mode = Control.FOCUS_ALL
+	if not control.has_focus():
+		control.grab_focus()
 
 
 static func _handle_range_drag(host: Control, position: Vector2) -> bool:

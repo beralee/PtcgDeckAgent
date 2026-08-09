@@ -333,7 +333,7 @@ class SylveonExAngelite extends BaseEffect:
 		var opponent: PlayerState = state.players[1 - top.owner_index]
 		var chosen := _selected_slots(opponent, 2)
 		for slot: PokemonSlot in chosen:
-			AdvancedHelpers.return_slot_to_deck(slot, opponent)
+			AdvancedHelpers.return_slot_to_deck(slot, opponent, state)
 		if not chosen.is_empty():
 			opponent.shuffle_deck()
 		state.shared_turn_flags["%s%d" % [USED_FLAG_PREFIX, top.owner_index]] = state.turn_number
@@ -554,7 +554,7 @@ class GholdengoSurfingTurn extends BaseEffect:
 		if top == null:
 			return
 		var player := state.players[top.owner_index]
-		AdvancedHelpers.return_slot_to_deck(attacker, player)
+		AdvancedHelpers.return_slot_to_deck(attacker, player, state)
 		player.shuffle_deck()
 
 

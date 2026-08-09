@@ -8,6 +8,7 @@ var _model: RefCounted = NeuralNetInferenceScript.new()
 var _loaded: bool = false
 var _overall_runtime_weight: float = 0.0
 var _per_kind_runtime_weight: Dictionary = {}
+var _matchup_strategy_id: String = ""
 
 
 func is_loaded() -> bool:
@@ -18,6 +19,7 @@ func load_weights(path: String) -> bool:
 	if _model == null:
 		_model = NeuralNetInferenceScript.new()
 	_loaded = _model.has_method("load_weights") and bool(_model.call("load_weights", path))
+	_load_matchup_metadata(path)
 	_load_runtime_weights(path)
 	return _loaded
 
@@ -45,6 +47,23 @@ func get_runtime_weight(action_kind: String = "") -> float:
 	if action_kind != "" and _per_kind_runtime_weight.has(action_kind):
 		weight = min(weight, float(_per_kind_runtime_weight.get(action_kind, 0.0)))
 	return max(0.0, min(1.0, weight))
+
+
+func get_matchup_strategy_id() -> String:
+	return _matchup_strategy_id
+
+
+func _load_matchup_metadata(weights_path: String) -> void:
+	_matchup_strategy_id = ""
+	if weights_path == "" or not FileAccess.file_exists(weights_path):
+		return
+	var file := FileAccess.open(weights_path, FileAccess.READ)
+	if file == null:
+		return
+	var payload: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if payload is Dictionary and (payload as Dictionary).get("matchup_policy", {}) is Dictionary:
+		_matchup_strategy_id = str(((payload as Dictionary).get("matchup_policy", {}) as Dictionary).get("opponent_strategy_id", ""))
 
 
 func _load_runtime_weights(weights_path: String) -> void:

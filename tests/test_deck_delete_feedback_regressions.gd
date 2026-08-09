@@ -152,7 +152,9 @@ func test_ios_web_text_proxy_and_windows_native_mouse_keep_separate_owners() -> 
 		assert_true(install_script.contains("userSelect = 'text'") and install_script.contains("webkitUserSelect = 'text'"), "The iOS editor must override the shell-wide selection ban so long-press paste is available"),
 		assert_true(install_script.contains("webkitTouchCallout = 'default'") and install_script.contains("touchAction = 'auto'"), "The iOS editor must allow the native paste callout and text gestures"),
 		assert_true(install_script.contains("input.onpaste") and install_script.contains("clipboardData"), "Native paste events must explicitly synchronize their value back to Godot"),
-		assert_true(install_script.contains("_blurRefocusOptionsError"), "A canvas focus echo immediately after the touch must not tear down the iOS editor transaction"),
+		assert_true(install_script.contains("version === 10") and install_script.contains("}, 80);"), "The iOS editor should use the stable second-focus transaction bridge"),
+		assert_false(install_script.contains("_blurRefocusOptionsError"), "A DOM blur must commit once instead of forcibly reopening the iOS keyboard"),
+		assert_false(install_script.contains("'touchend'") or install_script.contains("'pointerup'") or install_script.contains("'mouseup'"), "One tap must not issue focus work again during every release phase"),
 		assert_false(windows_root_owned, "Windows mouse input should remain owned by Godot's native Control pipeline"),
 		assert_false(windows_requested_compat_focus, "Windows native input should not receive synthetic compatibility focus"),
 	])

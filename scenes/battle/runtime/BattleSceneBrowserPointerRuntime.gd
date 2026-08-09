@@ -6,9 +6,16 @@
 extends "res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd"
 
 const PointerGeometryScript := preload("res://scripts/ui/input/PointerGeometry.gd")
+const PointerGesturePolicyScript := preload("res://scripts/ui/input/PointerGesturePolicy.gd")
+const HAND_SURFACE_MAX_PROJECTION_REPAIRS := 2
 
 var _ios_web_hand_touch_active_card: BattleCardView = null
 var _ios_web_hand_touch_index: int = -1
+var _hand_pointer_surface_signature: String = ""
+var _hand_surface_layout_transaction: Dictionary = {}
+var _hand_surface_integrity_serial: int = 0
+var _hand_surface_integrity_repair_generation: int = -1
+var _hand_surface_integrity_repair_attempts: int = 0
 
 
 func _observe_battle_pointer_event(event: InputEvent) -> Dictionary:
@@ -44,12 +51,15 @@ func _configure_battle_pointer_runtime(
 		)
 	if _battle_pointer_surface_controller == null:
 		return
-	var enabled: bool = (
-		runtime_profile != null
-		and runtime_profile.is_web()
-		and runtime_profile.prefers_touch()
-		and WebUiFeatureGateScript.web_input_adapter_v2_enabled(runtime_profile)
-	)
+	var enabled := false
+	if runtime_profile != null and runtime_profile.prefers_touch():
+		if runtime_profile.is_native() and runtime_profile.mobile_like:
+			enabled = true
+		elif (
+			runtime_profile.is_web()
+			and WebUiFeatureGateScript.web_input_adapter_v2_enabled(runtime_profile)
+		):
+			enabled = true
 	if _battle_pointer_surface_test_override >= 0:
 		enabled = _battle_pointer_surface_test_override == 1
 	_battle_pointer_surface_controller.configure(
@@ -209,6 +219,18 @@ func _prepare_ios_web_hand_rebuild(reason: String = "hand_rebuild") -> void:
 func _reconcile_hand_pointer_surface(signature: String) -> int:
 	if _battle_pointer_surface_controller == null:
 		return 0
+	var signature_changed := signature != _hand_pointer_surface_signature
+	var scroll_snapshot: Dictionary = {}
+	if (
+		signature_changed
+		and _battle_drag_scroll_coordinator != null
+		and _hand_scroll != null
+	):
+		scroll_snapshot = _battle_drag_scroll_coordinator.call(
+			"capture_hand_drag_scroll_anchor",
+			_hand_scroll
+		)
+	var previous_signature := _hand_pointer_surface_signature
 	var runtime_profile: UiRuntimeProfile = (
 		GameManager.get_ui_runtime_profile()
 		if GameManager != null
@@ -227,23 +249,30 @@ func _reconcile_hand_pointer_surface(signature: String) -> int:
 			"has_horizontal_overflow": Callable(self, "_hand_pointer_surface_has_overflow"),
 			"get_horizontal_scroll": Callable(self, "_hand_pointer_surface_scroll"),
 			"set_horizontal_scroll": Callable(self, "_set_hand_pointer_surface_scroll"),
-			"horizontal_tap_tolerance": 36.0,
-			"vertical_tap_tolerance": 48.0,
-			# A deliberate swipe must win before a held hand card can be
-			# interpreted as a tap. Keep this aligned with card-picking HUDs.
-			"horizontal_drag_threshold": 12.0,
+			"horizontal_tap_tolerance": PointerGesturePolicyScript.BROWSER_TOUCH_HORIZONTAL_TAP_TOLERANCE,
+			"vertical_tap_tolerance": PointerGesturePolicyScript.BROWSER_TOUCH_VERTICAL_TAP_TOLERANCE,
+			"horizontal_drag_threshold": PointerGesturePolicyScript.HORIZONTAL_DRAG_SLOP,
 		}
 	)
 	_hand_pointer_surface_generation = generation
 	if generation != previous_generation:
+		var added_instance_ids := _hand_surface_added_instance_ids(
+			previous_signature,
+			signature
+		)
+		_hand_pointer_surface_signature = signature
+		_hand_surface_layout_transaction = {
+			"generation": generation,
+			"signature": signature,
+			"scroll_snapshot": scroll_snapshot,
+			"focus_instance_ids": added_instance_ids,
+		}
+		_hand_surface_integrity_repair_generation = generation
+		_hand_surface_integrity_repair_attempts = 0
 		_clear_ios_web_hand_touch_bridge()
 		if _battle_drag_scroll_coordinator != null:
 			_battle_drag_scroll_coordinator.call(
 				"clear_hand_drag_click_suppression",
-				"hand_surface_generation_%d" % generation
-			)
-			_battle_drag_scroll_coordinator.call(
-				"reset_hand_drag_scroll_layout",
 				"hand_surface_generation_%d" % generation
 			)
 		var browser_hand_path_active := (
@@ -261,6 +290,8 @@ func _reconcile_hand_pointer_surface(signature: String) -> int:
 			_web_battle_input_adapter.cancel_all(
 				"hand_surface_generation_%d" % generation
 			)
+	else:
+		_hand_pointer_surface_signature = signature
 	return generation
 
 
@@ -269,15 +300,185 @@ func _commit_hand_pointer_surface_layout(generation: int) -> void:
 
 
 func _deferred_commit_hand_pointer_surface_layout(generation: int) -> void:
-	if generation != _hand_pointer_surface_generation:
+	if not is_inside_tree() or generation != _hand_pointer_surface_generation:
 		return
 	if _hand_container != null:
 		_hand_container.update_minimum_size()
 	if _battle_drag_scroll_coordinator != null and _hand_scroll != null:
+		var transaction := _hand_surface_layout_transaction
+		if int(transaction.get("generation", -1)) != generation:
+			transaction = {
+				"generation": generation,
+				"signature": _hand_pointer_surface_signature,
+				"scroll_snapshot": _battle_drag_scroll_coordinator.call(
+					"capture_hand_drag_scroll_anchor",
+					_hand_scroll
+				),
+				"focus_instance_ids": [],
+			}
+			_hand_surface_layout_transaction = transaction
 		_battle_drag_scroll_coordinator.call(
-			"refresh_hand_drag_scroll_extents",
-			_hand_scroll
+			"restore_hand_drag_scroll_anchor",
+			_hand_scroll,
+			transaction.get("scroll_snapshot", {}),
+			transaction.get("focus_instance_ids", [])
 		)
+	_schedule_hand_surface_integrity_check(
+		generation,
+		str(_hand_surface_layout_transaction.get(
+			"signature",
+			_hand_pointer_surface_signature
+		)),
+		_hand_surface_layout_transaction.get("focus_instance_ids", [])
+	)
+
+
+func _schedule_hand_surface_integrity_check(
+	generation: int,
+	signature: String,
+	focus_instance_ids: Array
+) -> void:
+	if not is_inside_tree():
+		return
+	_hand_surface_integrity_serial += 1
+	_run_hand_surface_integrity_check(
+		generation,
+		signature,
+		focus_instance_ids.duplicate(),
+		_hand_surface_integrity_serial
+	)
+
+
+func _run_hand_surface_integrity_check(
+	generation: int,
+	signature: String,
+	focus_instance_ids: Array,
+	serial: int
+) -> void:
+	if not is_inside_tree():
+		return
+	var tree := get_tree()
+	# Validate twice on consecutive frames. The first sample covers the layout
+	# commit; the second covers deferred portrait/modal teardown that used to
+	# leave the hand stale until the next unrelated card action.
+	for _sample: int in 2:
+		await tree.process_frame
+		if (
+			not is_inside_tree()
+			or serial != _hand_surface_integrity_serial
+			or generation != _hand_pointer_surface_generation
+		):
+			return
+		if not _hand_surface_projection_matches(signature, focus_instance_ids):
+			_repair_hand_surface_projection(
+				generation,
+				signature,
+				focus_instance_ids
+			)
+			return
+	if int(_hand_surface_layout_transaction.get("generation", -1)) == generation:
+		_hand_surface_layout_transaction.clear()
+
+
+func _repair_hand_surface_projection(
+	generation: int,
+	signature: String,
+	focus_instance_ids: Array
+) -> void:
+	if _hand_surface_integrity_repair_generation != generation:
+		_hand_surface_integrity_repair_generation = generation
+		_hand_surface_integrity_repair_attempts = 0
+	if _hand_surface_integrity_repair_attempts >= HAND_SURFACE_MAX_PROJECTION_REPAIRS:
+		push_warning(
+			"Hand surface projection remained inconsistent after %d repairs: %s" % [
+				HAND_SURFACE_MAX_PROJECTION_REPAIRS,
+				signature,
+			]
+		)
+		return
+	_hand_surface_integrity_repair_attempts += 1
+	_hand_surface_layout_transaction = {
+		"generation": generation,
+		"signature": signature,
+		"scroll_snapshot": (
+			_battle_drag_scroll_coordinator.call(
+				"capture_hand_drag_scroll_anchor",
+				_hand_scroll
+			)
+			if _battle_drag_scroll_coordinator != null and _hand_scroll != null
+			else {}
+		),
+		"focus_instance_ids": focus_instance_ids.duplicate(),
+	}
+	_runtime_log(
+		"hand_surface_projection_repair",
+		"generation=%d attempt=%d signature=%s" % [
+			generation,
+			_hand_surface_integrity_repair_attempts,
+			signature,
+		]
+	)
+	# This is intentionally the same idempotent projection path used by normal
+	# UI refreshes. It cannot mutate GameState or advance the semantic generation.
+	_refresh_hand()
+
+
+func _hand_surface_projection_matches(
+	signature: String,
+	focus_instance_ids: Array
+) -> bool:
+	if _hand_container == null or _hand_scroll == null:
+		return false
+	var parsed := _parse_hand_surface_signature(signature)
+	var expected_ids: Array = parsed.get("instance_ids", [])
+	var rendered_ids: Array[int] = []
+	for child: Node in _hand_container.get_children():
+		var card_view := child as BattleCardView
+		if card_view != null and card_view.card_instance != null:
+			rendered_ids.append(card_view.card_instance.instance_id)
+	if rendered_ids != expected_ids:
+		return false
+	if _battle_drag_scroll_coordinator == null:
+		return true
+	return bool(_battle_drag_scroll_coordinator.call(
+		"hand_drag_projection_layout_is_sane",
+		_hand_scroll,
+		focus_instance_ids
+	))
+
+
+func _hand_surface_added_instance_ids(
+	previous_signature: String,
+	current_signature: String
+) -> Array[int]:
+	var previous := _parse_hand_surface_signature(previous_signature)
+	var current := _parse_hand_surface_signature(current_signature)
+	if (
+		str(previous.get("mode", "")) != "cards"
+		or str(current.get("mode", "")) != "cards"
+	):
+		return []
+	var previous_ids: Array = previous.get("instance_ids", [])
+	var added_ids: Array[int] = []
+	for raw_id: Variant in current.get("instance_ids", []):
+		var instance_id := int(raw_id)
+		if instance_id not in previous_ids:
+			added_ids.append(instance_id)
+	return added_ids
+
+
+func _parse_hand_surface_signature(signature: String) -> Dictionary:
+	var separator := signature.find("|")
+	var mode := signature if separator < 0 else signature.substr(0, separator)
+	var encoded_ids := "" if separator < 0 else signature.substr(separator + 1)
+	var instance_ids: Array[int] = []
+	if encoded_ids != "":
+		for encoded_id: String in encoded_ids.split(",", false):
+			instance_ids.append(int(encoded_id))
+	return {
+		"mode": mode,
+		"instance_ids": instance_ids,
+	}
 
 
 func _try_handle_web_pointer_surface_input(
@@ -289,10 +490,192 @@ func _try_handle_web_pointer_surface_input(
 		or not _battle_pointer_surface_controller.is_enabled()
 	):
 		return false
-	return bool(_battle_pointer_surface_controller.handle_event(
+	var debug_relevant := _hand_surface_debug_event_relevant(event)
+	if debug_relevant:
+		_debug_hand_surface_pointer_event(
+			"before_surface",
+			event,
+			pointer_observation,
+			false,
+			false
+		)
+	var handled := bool(_battle_pointer_surface_controller.handle_event(
 		event,
 		pointer_observation
 	))
+	if handled:
+		if debug_relevant:
+			_debug_hand_surface_pointer_event(
+				"after_surface",
+				event,
+				pointer_observation,
+				true,
+				false
+			)
+		return true
+	var swallowed_echo := _should_swallow_hand_surface_companion_motion(
+		event,
+		pointer_observation
+	)
+	if debug_relevant or swallowed_echo:
+		_debug_hand_surface_pointer_event(
+			"after_surface",
+			event,
+			pointer_observation,
+			false,
+			swallowed_echo
+		)
+	return swallowed_echo
+
+
+func _should_swallow_hand_surface_companion_motion(
+	event: InputEvent,
+	pointer_observation: Dictionary
+) -> bool:
+	if not _hand_surface_has_active_gesture():
+		return false
+	if pointer_observation.get("sequence", null) != null:
+		return false
+	var phase := str(pointer_observation.get("phase", ""))
+	# Native Android emits both MouseMotion and ScreenDrag for one physical
+	# sample. Which half arrives first varies by device/driver. The router makes
+	# the first half canonical; the companion can therefore appear either as a
+	# button-held mouse_hover or as an orphan touch drag. Once the semantic hand
+	# Surface owns the physical gesture, neither companion may escape to the
+	# legacy hand dragger and become a second scroll writer.
+	if event is InputEventMouseMotion and phase == "mouse_hover":
+		var motion := event as InputEventMouseMotion
+		return (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0
+	if event is InputEventScreenDrag:
+		return phase in ["orphan_touch_drag", "inactive_touch_drag"]
+	return false
+
+
+func _hand_surface_debug_event_relevant(event: InputEvent) -> bool:
+	if not _hand_surface_debug_enabled():
+		return false
+	if _hand_surface_has_active_gesture():
+		return true
+	return _hand_pointer_surface_contains(_hand_surface_event_position(event))
+
+
+func _hand_surface_debug_enabled() -> bool:
+	return (
+		_battle_drag_scroll_coordinator != null
+		and bool(_battle_drag_scroll_coordinator.call(
+			"debug_hand_drag_scroll_enabled"
+		))
+	)
+
+
+func _hand_surface_has_active_gesture() -> bool:
+	if _battle_pointer_surface_controller == null:
+		return false
+	for snapshot_variant: Variant in _battle_pointer_surface_controller.active_snapshots():
+		var snapshot: Dictionary = snapshot_variant
+		if str(snapshot.get("surface_id", "")) == "hand":
+			return true
+	return false
+
+
+func _debug_hand_surface_pointer_event(
+	stage: String,
+	event: InputEvent,
+	pointer_observation: Dictionary,
+	handled: bool,
+	swallowed_echo: bool
+) -> void:
+	if not _hand_surface_debug_enabled():
+		return
+	var sequence_variant: Variant = pointer_observation.get("sequence", null)
+	var sequence_text := "<none>"
+	if sequence_variant is PointerSequence:
+		sequence_text = str((sequence_variant as PointerSequence).snapshot())
+	var hand_snapshots: Array[Dictionary] = []
+	if _battle_pointer_surface_controller != null:
+		for snapshot_variant: Variant in _battle_pointer_surface_controller.active_snapshots():
+			var snapshot: Dictionary = snapshot_variant
+			if str(snapshot.get("surface_id", "")) == "hand":
+				hand_snapshots.append(snapshot)
+	_battle_drag_scroll_coordinator.call(
+		"debug_hand_drag_scroll",
+		"surface-event stage=%s type=%s device=%d pos=%s relative=%s pressed=%s phase=%s deliver=%s synthetic=%s handled=%s swallowed_echo=%s sequence=%s gestures=%s %s" % [
+			stage,
+			event.get_class(),
+			event.device,
+			str(_hand_surface_event_position(event)),
+			str(_hand_surface_event_relative(event)),
+			str(_hand_surface_event_pressed(event)),
+			str(pointer_observation.get("phase", "")),
+			str(pointer_observation.get("deliver", true)),
+			str(pointer_observation.get("synthetic", false)),
+			str(handled),
+			str(swallowed_echo),
+			sequence_text,
+			str(hand_snapshots),
+			_hand_surface_geometry_debug_text(),
+		]
+	)
+
+
+func _hand_surface_event_position(event: InputEvent) -> Vector2:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).position
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		return button.global_position if button.global_position != Vector2.ZERO else button.position
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		return motion.global_position if motion.global_position != Vector2.ZERO else motion.position
+	return Vector2.ZERO
+
+
+func _hand_surface_event_relative(event: InputEvent) -> Vector2:
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).relative
+	if event is InputEventMouseMotion:
+		return (event as InputEventMouseMotion).relative
+	return Vector2.ZERO
+
+
+func _hand_surface_event_pressed(event: InputEvent) -> Variant:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).pressed
+	if event is InputEventMouseButton:
+		return (event as InputEventMouseButton).pressed
+	return "n/a"
+
+
+func _hand_surface_geometry_debug_text() -> String:
+	if _hand_scroll == null:
+		return "scroll=<null>"
+	var bar := _hand_scroll.get_h_scroll_bar()
+	var range_text := "bar=<null>"
+	if bar != null:
+		range_text = "bar(value=%.1f,min=%.1f,max=%.1f,page=%.1f)" % [
+			bar.value,
+			bar.min_value,
+			bar.max_value,
+			bar.page,
+		]
+	var content_text := "content=<null>"
+	if _hand_container != null:
+		content_text = "content(pos=%s,global=%s,size=%s,min=%s,combined=%s,children=%d)" % [
+			str(_hand_container.position),
+			str(_hand_container.global_position),
+			str(_hand_container.size),
+			str(_hand_container.custom_minimum_size),
+			str(_hand_container.get_combined_minimum_size()),
+			_hand_container.get_child_count(),
+		]
+	return "scroll=%d scroll_size=%s %s %s" % [
+		_hand_scroll.scroll_horizontal,
+		str(_hand_scroll.size),
+		range_text,
+		content_text,
+	]
 
 
 func _hand_pointer_surface_contains(screen_position: Vector2) -> bool:
@@ -353,6 +736,7 @@ func _hand_pointer_surface_scroll() -> int:
 func _set_hand_pointer_surface_scroll(value: int) -> void:
 	if _hand_scroll == null:
 		return
+	var before_scroll := _hand_scroll.scroll_horizontal
 	var bar := _hand_scroll.get_h_scroll_bar()
 	var max_scroll := 0
 	if bar != null:
@@ -367,7 +751,21 @@ func _set_hand_pointer_surface_scroll(value: int) -> void:
 		bar,
 		geometry_max_scroll
 	)
-	_hand_scroll.scroll_horizontal = clampi(value, 0, max_scroll)
+	var clamped_value := clampi(value, 0, max_scroll)
+	_hand_scroll.scroll_horizontal = clamped_value
+	if _hand_surface_debug_enabled():
+		_battle_drag_scroll_coordinator.call(
+			"debug_hand_drag_scroll",
+			"surface-write requested=%d clamped=%d before=%d after=%d bar_max=%d geometry_max=%d %s" % [
+				value,
+				clamped_value,
+				before_scroll,
+				_hand_scroll.scroll_horizontal,
+				max_scroll,
+				geometry_max_scroll,
+				_hand_surface_geometry_debug_text(),
+			]
+		)
 
 
 func _forward_ios_web_hand_card_touch_event(card_view: BattleCardView, event: InputEvent) -> void:
@@ -446,12 +844,9 @@ func _sync_card_gallery_pointer_surface(scroll: ScrollContainer) -> void:
 				self,
 				"_set_card_gallery_pointer_scroll"
 			).bind(scroll),
-			"horizontal_tap_tolerance": 36.0,
-			"vertical_tap_tolerance": 48.0,
-			# Match the proven legacy gallery threshold. Browser touch samples
-			# arrive in small increments; waiting for a 30px jump lets a held
-			# card win before the horizontal row owns the gesture.
-			"horizontal_drag_threshold": 12.0,
+			"horizontal_tap_tolerance": PointerGesturePolicyScript.BROWSER_TOUCH_HORIZONTAL_TAP_TOLERANCE,
+			"vertical_tap_tolerance": PointerGesturePolicyScript.BROWSER_TOUCH_VERTICAL_TAP_TOLERANCE,
+			"horizontal_drag_threshold": PointerGesturePolicyScript.HORIZONTAL_DRAG_SLOP,
 		}
 	)
 

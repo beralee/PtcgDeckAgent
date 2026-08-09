@@ -12,11 +12,11 @@ const MODE_CHOICE := "choice"
 const MODE_PREVIEW := "preview"
 const TOUCH_LONG_PRESS_SECONDS := 0.42
 const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
-const HAND_PRIMARY_CLICK_MOVE_TOLERANCE := 12.0
-const IOS_WEB_HAND_TOUCH_HORIZONTAL_TOLERANCE := 36.0
-const IOS_WEB_HAND_TOUCH_VERTICAL_TOLERANCE := 48.0
-const CARD_GALLERY_TOUCH_CLICK_MOVE_TOLERANCE := 28.0
-const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := 36.0
+const PointerGesturePolicyScript := preload("res://scripts/ui/input/PointerGesturePolicy.gd")
+const HAND_PRIMARY_CLICK_MOVE_TOLERANCE := PointerGesturePolicyScript.MOUSE_HORIZONTAL_TAP_TOLERANCE
+const IOS_WEB_HAND_TOUCH_HORIZONTAL_TOLERANCE := PointerGesturePolicyScript.BROWSER_TOUCH_HORIZONTAL_TAP_TOLERANCE
+const IOS_WEB_HAND_TOUCH_VERTICAL_TOLERANCE := PointerGesturePolicyScript.BROWSER_TOUCH_VERTICAL_TAP_TOLERANCE
+const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := PointerGesturePolicyScript.TOUCH_VERTICAL_TAP_TOLERANCE
 const PRIMARY_RELEASE_FALLBACK_MIN_DELAY_MSEC := 80
 const PRIMARY_RELEASE_FALLBACK_DURATION_MSEC := 1400
 const ENERGY_ROW_MINIMUM_LAYOUT_GAP := 4
@@ -1862,14 +1862,14 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 				_suppress_next_left_click = false
 				accept_event()
 				return true
-			if _is_card_gallery_click_suppressed():
+			if _should_filter_card_gallery_primary_click(event):
 				accept_event()
 				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
 		if _consume_primary_release_fallback():
-			if _is_card_gallery_click_suppressed():
+			if _should_filter_card_gallery_primary_click(event):
 				accept_event()
 				return true
 			left_clicked.emit(card_instance, card_data)
@@ -1905,14 +1905,14 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 				_suppress_next_left_click = false
 				accept_event()
 				return true
-			if _is_card_gallery_click_suppressed():
+			if _should_filter_card_gallery_primary_click(event):
 				accept_event()
 				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
 		if _consume_primary_release_fallback():
-			if _is_card_gallery_click_suppressed():
+			if _should_filter_card_gallery_primary_click(event):
 				accept_event()
 				return true
 			left_clicked.emit(card_instance, card_data)
@@ -1982,8 +1982,17 @@ func _update_hand_primary_click_motion(position: Vector2) -> void:
 	if bool(get_meta("card_gallery_drag_input_enabled", false)):
 		# Card galleries scroll horizontally. Vertical touch jitter on phones should not
 		# cancel a card tap unless it is clearly no longer a tap.
-		var horizontal_tolerance := CARD_GALLERY_TOUCH_CLICK_MOVE_TOLERANCE if _hand_primary_press_from_touch else HAND_PRIMARY_CLICK_MOVE_TOLERANCE
-		if absf(delta.x) > horizontal_tolerance or absf(delta.y) > CARD_GALLERY_VERTICAL_CLICK_TOLERANCE:
+		var horizontal_tolerance := (
+			PointerGesturePolicyScript.touch_horizontal_tap_tolerance()
+			if _hand_primary_press_from_touch
+			else HAND_PRIMARY_CLICK_MOVE_TOLERANCE
+		)
+		var vertical_tolerance := (
+			PointerGesturePolicyScript.touch_vertical_tap_tolerance()
+			if _hand_primary_press_from_touch
+			else CARD_GALLERY_VERTICAL_CLICK_TOLERANCE
+		)
+		if absf(delta.x) > horizontal_tolerance or absf(delta.y) > vertical_tolerance:
 			_hand_primary_press_cancelled = true
 		return
 	if (
@@ -2020,14 +2029,14 @@ func _touch_release_position_is_reliable(position: Vector2) -> bool:
 	return position != Vector2.ZERO or _hand_primary_press_start == Vector2.ZERO
 
 
-func _is_card_gallery_click_suppressed() -> bool:
+func _should_filter_card_gallery_primary_click(event: InputEvent) -> bool:
 	if not bool(get_meta("card_gallery_drag_input_enabled", false)):
 		return false
-	var checker_variant: Variant = get_meta("card_gallery_drag_click_suppression_checker", Callable())
+	var checker_variant: Variant = get_meta("card_gallery_primary_click_filter", Callable())
 	if not (checker_variant is Callable):
 		return false
 	var checker := checker_variant as Callable
-	return checker.is_valid() and bool(checker.call())
+	return checker.is_valid() and bool(checker.call(event))
 
 
 func _handle_touch_inspect_input(event: InputEvent) -> bool:

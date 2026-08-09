@@ -3805,6 +3805,8 @@ func _serialize_turn_flags(game_state: GameState, player_index: int, opponent_in
 		"opponent_vstar_power_used": bool(game_state.vstar_power_used[opponent_index]) if opponent_index >= 0 and opponent_index < game_state.vstar_power_used.size() else false,
 		"my_last_knockout_turn_against": int(game_state.last_knockout_turn_against[player_index]) if player_index >= 0 and player_index < game_state.last_knockout_turn_against.size() else -999,
 		"opponent_last_knockout_turn_against": int(game_state.last_knockout_turn_against[opponent_index]) if opponent_index >= 0 and opponent_index < game_state.last_knockout_turn_against.size() else -999,
+		"my_was_knocked_out_during_opponents_previous_turn": game_state.was_knocked_out_during_opponents_previous_turn(player_index),
+		"opponent_was_knocked_out_during_their_opponents_previous_turn": game_state.was_knocked_out_during_opponents_previous_turn(opponent_index),
 		"shared_turn_flags": game_state.shared_turn_flags.duplicate(true),
 	}
 

@@ -4,7 +4,7 @@ extends BaseEffect
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var pi: int = card.owner_index
-	if state.last_knockout_turn_against[pi] != state.turn_number - 1:
+	if not state.was_knocked_out_during_opponents_previous_turn(pi):
 		return false
 	var player: PlayerState = state.players[pi]
 	return _get_fire_energy(player).size() >= 1 and not player.get_all_pokemon().is_empty()

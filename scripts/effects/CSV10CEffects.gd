@@ -334,7 +334,7 @@ class TeamRocketsArcher:
 		if card == null or state == null:
 			return false
 		var owner := card.owner_index
-		if owner < 0 or owner >= state.last_knockout_turn_against.size() or state.last_knockout_turn_against[owner] != state.turn_number - 1:
+		if not state.was_knocked_out_during_opponents_previous_turn(owner):
 			return false
 		var key := "knockout_names:%d:%d" % [owner, state.turn_number - 1]
 		var names: Variant = state.shared_turn_flags.get(key, [])
@@ -399,8 +399,8 @@ class TeamRocketsGiovanni:
 		var opponent_target := _selected_slot(context.get(OPPONENT_STEP_ID, []), _opponent_targets(card, state))
 		if own_target == null or opponent_target == null:
 			return
-		_switch_active(player, own_target)
-		_switch_active(opponent, opponent_target)
+		_switch_active_with_bench(state, card.owner_index, own_target, "team_rockets_giovanni_self")
+		_switch_active_with_bench(state, 1 - card.owner_index, opponent_target, "team_rockets_giovanni_opponent")
 
 	func _own_targets(player: PlayerState) -> Array[PokemonSlot]:
 		var result: Array[PokemonSlot] = []
@@ -434,15 +434,6 @@ class TeamRocketsGiovanni:
 			if raw is PokemonSlot and raw in legal:
 				return raw
 		return legal[0] if not legal.is_empty() else null
-
-	func _switch_active(player: PlayerState, target: PokemonSlot) -> void:
-		if player.active_pokemon == null or target == null or target not in player.bench:
-			return
-		var old_active := player.active_pokemon
-		player.bench.erase(target)
-		old_active.clear_on_leave_active()
-		player.bench.append(old_active)
-		player.active_pokemon = target
 
 	func get_description() -> String:
 		return "Switch your Active Team Rocket's Pokemon with a Benched Team Rocket's Pokemon, then switch in 1 opposing Benched Pokemon."
@@ -1279,12 +1270,7 @@ class AbilitySwitchSelfFromBench extends BaseEffect:
 			return
 		var owner := pokemon.get_top_card().owner_index
 		var player := state.players[owner]
-		var bench_index := player.bench.find(pokemon)
-		var old_active := player.active_pokemon
-		player.bench[bench_index] = old_active
-		old_active.clear_on_leave_active()
-		player.active_pokemon = pokemon
-		pokemon.mark_entered_active_from_bench(state.turn_number)
+		_switch_active_with_bench(state, owner, pokemon, "ability_switch_self_from_bench", true)
 		pokemon.mark_ability_used(state.turn_number)
 
 
@@ -1522,6 +1508,14 @@ class AttackDiscardTeamRocketEnergyAndOpponentActive extends BaseEffect:
 				return
 		var defender_owner := defender.get_top_card().owner_index
 		var defender_player := state.players[defender_owner]
+		var defender_was_active := defender_player.active_pokemon == defender
+		if defender_was_active and not _remove_active(
+			state,
+			defender_owner,
+			defender,
+			"attack_discard_defending_pokemon"
+		):
+			return
 		for attached: CardInstance in defender.collect_all_cards():
 			attached.face_up = true
 			defender_player.discard_pile.append(attached)
@@ -1530,9 +1524,7 @@ class AttackDiscardTeamRocketEnergyAndOpponentActive extends BaseEffect:
 		defender.attached_tool = null
 		defender.damage_counters = 0
 		defender.clear_all_status()
-		if defender_player.active_pokemon == defender:
-			defender_player.active_pokemon = null
-		else:
+		if not defender_was_active:
 			defender_player.bench.erase(defender)
 
 	func _eligible_energy(slot: PokemonSlot) -> Array[CardInstance]:
@@ -3138,12 +3130,12 @@ class AttackForceOutThenDamage extends BaseEffect:
 				break
 		if target == null:
 			target = opponent.bench[0]
-		var old_active := opponent.active_pokemon
-		opponent.bench.erase(target)
-		old_active.clear_on_leave_active()
-		opponent.bench.append(old_active)
-		opponent.active_pokemon = target
-		target.mark_entered_active_from_bench(state.turn_number)
+		_switch_active_with_bench(
+			state,
+			1 - attacker.get_top_card().owner_index,
+			target,
+			"attack_switch_then_damage"
+		)
 		var resolved_damage := _calculate_attack_target_damage(attacker, target, damage_amount, state)
 		if resolved_damage <= 0:
 			return

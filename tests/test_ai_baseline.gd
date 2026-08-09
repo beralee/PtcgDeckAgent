@@ -158,6 +158,14 @@ class SpyHeavyBatonResolveGameStateMachine extends GameStateMachine:
 		return true
 
 
+class RejectingHeavyBatonResolveGameStateMachine extends GameStateMachine:
+	var resolve_heavy_baton_choice_calls: int = 0
+
+	func resolve_heavy_baton_choice(_player_index: int, _bench_slot: PokemonSlot) -> bool:
+		resolve_heavy_baton_choice_calls += 1
+		return false
+
+
 class FakeSendOutStrategy extends RefCounted:
 	var preferred_name: String = ""
 
@@ -2015,6 +2023,35 @@ func test_battle_scene_ai_first_player_setup_hands_off_into_first_turn() -> Stri
 	])
 
 
+func test_ai_heavy_baton_rejection_keeps_authoritative_prompt_visible_for_retry() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := RejectingHeavyBatonResolveGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var target := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Baton Retry Target"), 1))
+	scene.set("_gsm", gsm)
+	scene.set("_pending_choice", "heavy_baton_target")
+	scene.set("_dialog_data", {
+		"player": 1,
+		"bench": [target],
+		"count": 1,
+		"source_name": "Heavy Baton",
+	})
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_false(handled, "A rejected Heavy Baton target must be reported as unresolved"),
+		assert_eq(gsm.resolve_heavy_baton_choice_calls, 1, "The AI should attempt the pending engine decision exactly once"),
+		assert_eq(str(scene.get("_pending_choice")), "heavy_baton_target", "A rejected engine decision must retain its scene prompt for retry or watchdog reconciliation"),
+		assert_eq(int((scene.get("_dialog_data") as Dictionary).get("player", -1)), 1, "The retained prompt should preserve its AI owner"),
+	])
+
+
 func test_ai_send_out_prompt_preserves_followup_take_prize_prompt() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()
@@ -2397,6 +2434,84 @@ func test_battle_scene_schedules_ai_in_vs_ai_when_unblocked() -> String:
 		assert_true(scheduled_after_maybe_run, "BattleScene should request a deferred AI step in VS_AI mode on the AI turn"),
 		assert_eq(spy_ai.run_count, 1, "BattleScene should execute exactly one AI step when the deferred step runs"),
 		assert_false(scene.get("_ai_step_scheduled"), "BattleScene should clear the scheduled AI step flag after running"),
+	])
+	GameManager.current_mode = previous_mode
+	return checks
+
+
+func test_human_bench_click_after_ai_secret_box_does_not_block_scheduled_ai_step() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players[0].bench = [
+		_make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("N's Zoroark ex"), 0)),
+	]
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene.set("_ai_step_scheduled", true)
+
+	# Reproduces the Windows runtime log: Secret Box has resolved, the short AI
+	# action pause has ended, and a human bench click races the deferred AI step.
+	scene.call("_handle_slot_left_click", "my_bench_0")
+	var pending_after_click := str(scene.get("_pending_choice"))
+	var dialog_after_click := bool(scene.get("_dialog_overlay").visible)
+	scene._run_ai_step()
+	var checks := run_checks([
+		assert_eq(pending_after_click, "", "A human bench click during the AI turn must not create a Pokemon action prompt"),
+		assert_false(dialog_after_click, "The AI turn must not expose the human Pokemon action HUD"),
+		assert_eq(spy_ai.run_count, 1, "The already-scheduled AI continuation must still execute after the ignored click"),
+	])
+	GameManager.current_mode = previous_mode
+	return checks
+
+
+func test_human_zeus_action_cannot_interrupt_ai_turn() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players[0].deck.append(
+		CardInstance.create(_make_ai_pokemon_card_data("Human Deck Card"), 0)
+	)
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", SpyAIOpponent.new())
+
+	# This live-only helper mutates the human deck/hand. It must obey the same
+	# action-ownership policy as hand, board, Stadium, and end-turn inputs.
+	scene.call("_on_zeus_help_pressed")
+	var checks := run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "", "Human helper actions must not create a selection prompt during the AI turn"),
+		assert_false(bool(scene.get("_dialog_overlay").visible), "The AI turn must not expose the human deck-mutation dialog"),
+	])
+	GameManager.current_mode = previous_mode
+	return checks
+
+
+func test_closing_stale_pokemon_action_hud_immediately_resumes_ai_turn() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	var human_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Human Active"), 0))
+	gsm.game_state.players[0].active_pokemon = human_slot
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", SpyAIOpponent.new())
+	scene.call("_show_pokemon_action_dialog", 0, human_slot, true)
+	gsm.game_state.current_player_index = 1
+	scene._on_dialog_cancel()
+	var checks := run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "", "Cancelling a stale action HUD should clear its pending choice"),
+		assert_true(bool(scene.get("_ai_step_scheduled")), "Closing any stale human action HUD during the AI turn must resume AI scheduling immediately"),
 	])
 	GameManager.current_mode = previous_mode
 	return checks

@@ -728,6 +728,8 @@ func _finish_effect_interaction(scene: Object) -> void:
 			success = gsm.enforce_current_bench_limits("bench_limit_cleanup", pending_effect_player_index, "", -1, [pending_effect_context])
 		"powerglass_end_turn":
 			success = gsm.resolve_powerglass_end_turn_choice(pending_effect_player_index, [pending_effect_context])
+		"amulet_of_hope_knockout":
+			success = gsm.resolve_amulet_of_hope_choice(pending_effect_player_index, [pending_effect_context])
 	if success and scene.has_method("_play_battle_interaction_success"):
 		var feedback_kind := pending_effect_kind
 		if pending_effect_kind == "play_stadium":
@@ -770,6 +772,11 @@ func _finish_effect_interaction(scene: Object) -> void:
 		if not current_effect_replaced and scene.has_method("_restore_pending_engine_prize_choice_if_needed"):
 			scene.call("_restore_pending_engine_prize_choice_if_needed", "effect_interaction_complete")
 	scene.call("_refresh_ui")
+	if success and scene.has_method("_request_authoritative_hand_reconciliation"):
+		scene.call(
+			"_request_authoritative_hand_reconciliation",
+			"effect_interaction_complete:%s" % pending_effect_kind
+		)
 	if not success:
 		scene.call("_maybe_run_ai")
 		return

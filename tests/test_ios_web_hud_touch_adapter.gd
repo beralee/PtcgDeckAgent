@@ -39,6 +39,32 @@ func test_ios_web_touch_release_activates_marked_hud_button_once() -> String:
 	return result
 
 
+func test_native_android_touch_release_activates_marked_hud_button_once() -> String:
+	var fixture := await _make_fixture(true)
+	var host := fixture.get("host") as Control
+	var button := fixture.get("button") as Button
+	var activation_count := {"value": 0}
+	button.pressed.connect(func() -> void:
+		activation_count["value"] = int(activation_count.get("value", 0)) + 1
+	)
+	var adapter := AdapterScript.new()
+	adapter.configure(_profile({"android": true}, true, UiRuntimeProfile.HOST_NATIVE))
+	var center := button.get_global_rect().get_center()
+	var press_handled := adapter.handle_event(host, _touch(true, center))
+	var release_handled := adapter.handle_event(host, _touch(false, center))
+	var mouse_echo_press_handled := adapter.handle_event(host, _mouse_button(true, center))
+	var mouse_echo_release_handled := adapter.handle_event(host, _mouse_button(false, center))
+	var result := run_checks([
+		assert_true(press_handled, "Native Android should claim the marked HUD button touch-down"),
+		assert_true(release_handled, "Native Android should claim the matching HUD button touch-up"),
+		assert_true(mouse_echo_press_handled and mouse_echo_release_handled, "Android compatibility-mouse echoes must stay owned by the direct-touch path"),
+		assert_eq(int(activation_count.get("value", 0)), 1, "One physical Android touch should activate the HUD action exactly once"),
+	])
+	host.queue_free()
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	return result
+
+
 func test_ios_web_touch_delegates_rotated_portrait_geometry_to_battle_host() -> String:
 	var tree := Engine.get_main_loop() as SceneTree
 	var host := CanonicalHitTestHost.new()
@@ -206,8 +232,8 @@ func test_ios_web_adapter_ignores_unmarked_controls_and_all_other_platforms() ->
 		var center := button.get_global_rect().get_center()
 		var press_handled := adapter.handle_event(host, _touch(true, center))
 		var release_handled := adapter.handle_event(host, _touch(false, center))
-		checks.append(assert_false(press_handled or release_handled, "Android, native iOS and Windows must keep their established button pipeline"))
-		checks.append(assert_eq(int(count.get("value", 0)), 0, "Non-iOS-Web profiles must not be activated by the compatibility adapter"))
+		checks.append(assert_false(press_handled or release_handled, "Web Android, native iOS and Windows must keep their established button pipeline"))
+		checks.append(assert_eq(int(count.get("value", 0)), 0, "Profiles outside iOS Web and native Android must not be activated by the direct-touch adapter"))
 		host.queue_free()
 		await (Engine.get_main_loop() as SceneTree).process_frame
 	return run_checks(checks)
@@ -322,6 +348,10 @@ func test_real_pokemon_action_hud_cancel_completes_from_ios_web_touch() -> Strin
 	gsm.game_state = state
 	scene.set("_gsm", gsm)
 	scene.set("_view_player", 0)
+	# The real scene may have opened a setup prompt from the globally configured
+	# battle launch before this test replaces its GameStateMachine. Clear that
+	# obsolete fixture state instead of asking a turn-action HUD to overwrite it.
+	scene.set("_pending_choice", "")
 	scene.call("_show_pokemon_action_dialog", 0, active_slot, false)
 	await tree.process_frame
 
@@ -409,6 +439,60 @@ func test_real_card_detail_hud_cancel_and_use_complete_from_ios_web_touch() -> S
 		assert_false(overlay.visible, "The card HUD primary bottom button should close the detail overlay"),
 		assert_true(scene.get("_selected_hand_card") == card, "The Place/Use path should preserve the selected Pokemon for the board action"),
 		assert_true(adapter.current_candidate_button() == null, "The card HUD touch owner should be released after both bottom actions"),
+	])
+	scene.queue_free()
+	await tree.process_frame
+	return result
+
+
+func test_real_stadium_detail_use_completes_from_one_native_android_touch() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene := (load("res://scenes/battle/BattleScene.tscn") as PackedScene).instantiate()
+	tree.root.add_child(scene)
+	await tree.process_frame
+	await tree.process_frame
+	var adapter := scene.get("_ios_web_hud_touch_adapter") as IosWebHudTouchAdapter
+	adapter.configure(_profile({"android": true}, true, UiRuntimeProfile.HOST_NATIVE))
+	_hide_ios_web_modal_hud_roots(scene)
+	var overlay := scene.find_child("DetailOverlay", true, false) as Control
+	var coordinator := scene.get("_battle_card_detail_coordinator") as RefCounted
+	var use_button := scene.find_child("DetailUseButton", true, false) as Button
+	var use_count := {"value": 0}
+	use_button.pressed.connect(func() -> void:
+		use_count["value"] = int(use_count.get("value", 0)) + 1
+	)
+
+	var stadium_data := CardData.new()
+	stadium_data.name = "Android Touch Stadium"
+	stadium_data.name_zh = "Android Touch Stadium"
+	stadium_data.card_type = "Stadium"
+	stadium_data.effect_id = ""
+	var card := CardInstance.create(stadium_data, 0)
+	var gsm := GameStateMachine.new()
+	var state := GameState.new()
+	state.current_player_index = 0
+	state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		state.players.append(player)
+	state.players[0].hand.append(card)
+	gsm.game_state = state
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "")
+	coordinator.call("show_hand_card_detail", card)
+	await tree.process_frame
+	var use_center := use_button.get_global_rect().get_center()
+	scene.call("_input", _touch(true, use_center))
+	scene.call("_input", _touch(false, use_center))
+	var result := run_checks([
+		assert_true(adapter.is_enabled(), "Native Android must enable direct touch dispatch for marked battle HUDs"),
+		assert_eq(int(use_count.get("value", 0)), 1, "The Stadium detail Use button must fire from the first Android touch"),
+		assert_false(overlay.visible, "The first Android touch must complete and close the Stadium detail action"),
+		assert_true(state.stadium_card == card, "The first Android touch must actually play the Stadium, not only emit the button signal"),
+		assert_false(card in state.players[0].hand, "The played Stadium must leave the hand after one Android touch"),
+		assert_true(adapter.current_candidate_button() == null, "Android HUD ownership must be released after Use"),
 	])
 	scene.queue_free()
 	await tree.process_frame
@@ -618,23 +702,27 @@ func test_turn_cycle_hand_rebuild_cancels_missing_ios_touch_release() -> String:
 	return result
 
 
-func test_hand_rebuild_input_reset_is_isolated_from_non_ios_platforms() -> String:
+func test_hand_rebuild_input_reset_cleans_native_android_touch_ownership() -> String:
 	var tree := Engine.get_main_loop() as SceneTree
 	var scene := (load("res://scenes/battle/BattleScene.tscn") as PackedScene).instantiate()
 	tree.root.add_child(scene)
 	await tree.process_frame
 	await tree.process_frame
 	var adapter := scene.get("_ios_web_hud_touch_adapter") as IosWebHudTouchAdapter
-	adapter.configure(_profile({"android": true, "mobile": true}, true))
+	adapter.configure(_profile(
+		{"android": true, "mobile": true},
+		true,
+		UiRuntimeProfile.HOST_NATIVE
+	))
 	scene.set("_hand_drag_active", true)
 	var pointer_router := scene.get("_battle_pointer_input_router") as BattlePointerInputRouter
 	pointer_router.observe(_touch(true, Vector2(120, 120)))
 
 	scene.call("_prepare_ios_web_hand_rebuild", "platform_isolation_test")
 	var result := run_checks([
-		assert_false(adapter.is_enabled(), "Native Android must not enable the iOS Web hand bridge"),
-		assert_true(bool(scene.get("_hand_drag_active")), "The iOS Web rebuild reset must not mutate native-platform hand state"),
-		assert_eq(pointer_router.active_sequence_count(), 1, "The iOS Web rebuild reset must not cancel native-platform pointer ownership"),
+		assert_true(adapter.is_enabled(), "Native Android must share the direct-touch battle HUD bridge"),
+		assert_false(bool(scene.get("_hand_drag_active")), "Rebuilding the Android hand must clear stale drag state"),
+		assert_eq(pointer_router.active_sequence_count(), 0, "Rebuilding the Android hand must cancel stale pointer ownership"),
 	])
 	scene.call("_cancel_transient_platform_input", "test_cleanup")
 	scene.queue_free()
@@ -867,7 +955,13 @@ func _profile(
 ) -> UiRuntimeProfile:
 	return RuntimeProfileScript.new({
 		"host_kind": host_kind,
-		"native_os": UiRuntimeProfile.OS_IOS if bool(feature_flags.get("ios", false)) else UiRuntimeProfile.OS_UNKNOWN,
+		"native_os": (
+			UiRuntimeProfile.OS_ANDROID
+			if bool(feature_flags.get("android", false))
+			else UiRuntimeProfile.OS_IOS
+			if bool(feature_flags.get("ios", false))
+			else UiRuntimeProfile.OS_UNKNOWN
+		),
 		"pointer_mode": UiRuntimeProfile.POINTER_TOUCH if mobile_like else UiRuntimeProfile.POINTER_MOUSE,
 		"mobile_like": mobile_like,
 		"feature_flags": feature_flags,

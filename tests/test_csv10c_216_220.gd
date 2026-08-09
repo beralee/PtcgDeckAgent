@@ -113,6 +113,38 @@ func test_csv10c_219_watchtower_disables_only_colorless_pokemon_abilities() -> S
 	])
 
 
+func test_csv10c_219_watchtower_removes_colorless_abilities_from_scizor_damage_count() -> String:
+	var tower := _load_card("219")
+	var scizor := _load_bundled_card("CSV4C", "081")
+	if tower == null or scizor == null:
+		return "CSV10C_219 and CSV4C_081 bundled cards are required"
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	state.stadium_card = CardInstance.create(tower, 0)
+	var scizor_slot := PokemonSlot.new()
+	scizor_slot.pokemon_stack.append(CardInstance.create(scizor, 0))
+	state.players[0].active_pokemon = scizor_slot
+	var colorless_ability := _slot_with_ability("被监视塔消除特性的无色宝可梦", "C", 1)
+	var lightning_ability := _slot_with_ability("仍拥有特性的雷宝可梦", "L", 1)
+	state.players[1].active_pokemon = colorless_ability
+	state.players[1].bench = [lightning_ability]
+	processor.register_pokemon_card(scizor)
+
+	var bonus := processor.get_attack_damage_modifier(
+		scizor_slot,
+		colorless_ability,
+		scizor.attacks[0],
+		state,
+		[],
+		0
+	)
+	return run_checks([
+		assert_true(processor.is_ability_disabled(colorless_ability, state), "Watchtower should make the Colorless Pokemon have no Ability"),
+		assert_false(processor.is_ability_disabled(lightning_ability, state), "Watchtower should leave the Lightning Pokemon's Ability intact"),
+		assert_eq(bonus, 50, "Punishing Scissors should count only Pokemon that currently have an Ability"),
+	])
+
+
 func test_csv10c_220_factory_requires_rocket_supporter_this_turn_then_draws_two() -> String:
 	var card := _load_card("220")
 	if card == null:
@@ -153,6 +185,14 @@ func test_csv10c_220_game_state_machine_records_rocket_supporter_played_from_han
 
 func _load_card(index: String) -> CardData:
 	var path := "res://data/bundled_user/cards/CSV10C_%s.json" % index
+	return _load_card_path(path)
+
+
+func _load_bundled_card(set_code: String, index: String) -> CardData:
+	return _load_card_path("res://data/bundled_user/cards/%s_%s.json" % [set_code, index])
+
+
+func _load_card_path(path: String) -> CardData:
 	if not FileAccess.file_exists(path):
 		return null
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
@@ -176,6 +216,12 @@ func _make_state() -> GameState:
 func _slot(name: String, energy_type: String, owner: int) -> PokemonSlot:
 	var slot := PokemonSlot.new()
 	slot.pokemon_stack.append(_pokemon_card(name, "Basic", energy_type, owner))
+	return slot
+
+
+func _slot_with_ability(name: String, energy_type: String, owner: int) -> PokemonSlot:
+	var slot := _slot(name, energy_type, owner)
+	slot.get_card_data().abilities = [{"name": "测试特性", "text": "测试"}]
 	return slot
 
 

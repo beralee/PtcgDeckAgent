@@ -167,7 +167,7 @@ class SetupThenEndTurnAIOpponent extends RefCounted:
 			and str(battle_scene.get("_pending_choice")) == ""
 		):
 			end_turn_calls += 1
-			battle_scene.call("_on_end_turn")
+			battle_scene.call("_on_end_turn", player_index)
 			return true
 		return _delegate.run_single_step(battle_scene, gsm)
 

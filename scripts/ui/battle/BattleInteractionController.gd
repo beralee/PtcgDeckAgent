@@ -1030,8 +1030,6 @@ func add_field_assignment_source_card(
 
 
 func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void:
-	if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
-		return
 	if scene.has_method("_consume_field_assignment_source_followup_choice") and bool(scene.call("_consume_field_assignment_source_followup_choice", source_index)):
 		return
 	mark_modal_input_consumed(scene, "field_assignment_source", false)

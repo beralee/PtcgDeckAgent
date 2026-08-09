@@ -1,6 +1,7 @@
 {
 	"cards": [
 		{
+			"ancient_trait": "",
 			"card_index": "004",
 			"card_index_en": "7",
 			"card_type": "Pokemon",
@@ -30,6 +31,7 @@
 			"uid": "151C_004"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "005",
 			"card_index_en": "5",
 			"card_type": "Pokemon",
@@ -59,6 +61,7 @@
 			"uid": "151C_005"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "016",
 			"card_index_en": "16",
 			"card_type": "Pokemon",
@@ -90,6 +93,7 @@
 			"uid": "151C_016"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "017",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -119,6 +123,7 @@
 			"uid": "151C_017"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "081",
 			"card_index_en": "81",
 			"card_type": "Pokemon",
@@ -150,6 +155,97 @@
 			"uid": "151C_081"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "092",
+			"card_index_en": "92",
+			"card_type": "Pokemon",
+			"effect_id": "afe72cfaed6efc3c59572098c9db11f9",
+			"energy_type": "P",
+			"hp": 50,
+			"image_key": "151C/092",
+			"image_url": "https://tcg.mik.moe/static/img/151C/092.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "鬼斯",
+			"name_en": "Gastly",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "G",
+			"set_code": "151C",
+			"set_code_en": "MEW",
+			"set_file": "sets/151C.json",
+			"source_card_index": "092",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "151C",
+			"stage": "Basic",
+			"uid": "151C_092"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "093",
+			"card_index_en": "93",
+			"card_type": "Pokemon",
+			"effect_id": "645a088d30f06cad09e9f187d68e8235",
+			"energy_type": "P",
+			"hp": 80,
+			"image_key": "151C/093",
+			"image_url": "https://tcg.mik.moe/static/img/151C/093.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "鬼斯通",
+			"name_en": "Haunter",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "G",
+			"set_code": "151C",
+			"set_code_en": "MEW",
+			"set_file": "sets/151C.json",
+			"source_card_index": "093",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "151C",
+			"stage": "Stage 1",
+			"uid": "151C_093"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "094",
+			"card_index_en": "94",
+			"card_type": "Pokemon",
+			"effect_id": "ca20baa5307608ad3500c000630bc417",
+			"energy_type": "P",
+			"hp": 130,
+			"image_key": "151C/094",
+			"image_url": "https://tcg.mik.moe/static/img/151C/094.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "耿鬼",
+			"name_en": "Gengar",
+			"name_zh": "",
+			"rarity": "R",
+			"regulation_mark": "G",
+			"set_code": "151C",
+			"set_code_en": "MEW",
+			"set_file": "sets/151C.json",
+			"source_card_index": "094",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "151C",
+			"stage": "Stage 2",
+			"uid": "151C_094"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "113",
 			"card_type": "Pokemon",
@@ -179,6 +275,7 @@
 			"uid": "151C_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "123",
 			"card_index_en": "123",
 			"card_type": "Pokemon",
@@ -208,6 +305,7 @@
 			"uid": "151C_123"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "132",
 			"card_index_en": "132",
 			"card_type": "Pokemon",
@@ -237,6 +335,7 @@
 			"uid": "151C_132"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "133",
 			"card_index_en": "133",
 			"card_type": "Pokemon",
@@ -266,6 +365,7 @@
 			"uid": "151C_133"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "151",
 			"card_index_en": "151",
 			"card_type": "Pokemon",
@@ -295,6 +395,7 @@
 			"uid": "151C_151"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "0301",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -324,6 +425,7 @@
 			"uid": "CBB5C_0301"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "1501",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -353,6 +455,7 @@
 			"uid": "CBB5C_1501"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "156",
 			"card_type": "Tool",
@@ -382,6 +485,7 @@
 			"uid": "CS1bC_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "018",
 			"card_index_en": "060",
 			"card_type": "Pokemon",
@@ -413,6 +517,7 @@
 			"uid": "CS4.5C_018"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "056",
 			"card_index_en": "22",
 			"card_type": "Pokemon",
@@ -442,6 +547,7 @@
 			"uid": "CS4DaC_056"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "137",
 			"card_index_en": "48",
 			"card_type": "Pokemon",
@@ -471,6 +577,7 @@
 			"uid": "CS4DaC_137"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "313",
 			"card_index_en": "105",
 			"card_type": "Pokemon",
@@ -503,6 +610,7 @@
 			"uid": "CS4DaC_313"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "388",
 			"card_index_en": "149",
 			"card_type": "Supporter",
@@ -532,6 +640,7 @@
 			"uid": "CS4DaC_388"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "003",
 			"card_index_en": "294",
 			"card_type": "Pokemon",
@@ -564,6 +673,7 @@
 			"uid": "CS5.5C_003"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "007",
 			"card_index_en": "20",
 			"card_type": "Pokemon",
@@ -593,6 +703,7 @@
 			"uid": "CS5.5C_007"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "021",
 			"card_index_en": "037",
 			"card_type": "Pokemon",
@@ -624,6 +735,7 @@
 			"uid": "CS5.5C_021"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "032",
 			"card_index_en": "60",
 			"card_type": "Pokemon",
@@ -653,6 +765,7 @@
 			"uid": "CS5.5C_032"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "047",
 			"card_index_en": "075",
 			"card_type": "Pokemon",
@@ -684,6 +797,7 @@
 			"uid": "CS5.5C_047"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "051",
 			"card_index_en": "108",
 			"card_type": "Pokemon",
@@ -715,6 +829,7 @@
 			"uid": "CS5.5C_051"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "136",
 			"card_type": "Pokemon",
@@ -744,6 +859,7 @@
 			"uid": "CS5.5C_053"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "118",
 			"card_type": "Pokemon",
@@ -775,6 +891,7 @@
 			"uid": "CS5.5C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "056",
 			"card_index_en": "130",
 			"card_type": "Pokemon",
@@ -806,6 +923,7 @@
 			"uid": "CS5.5C_056"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "060",
 			"card_index_en": "146",
 			"card_type": "Item",
@@ -835,6 +953,7 @@
 			"uid": "CS5.5C_060"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "064",
 			"card_index_en": "134",
 			"card_type": "Supporter",
@@ -864,6 +983,7 @@
 			"uid": "CS5.5C_064"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "065",
 			"card_index_en": "150",
 			"card_type": "Supporter",
@@ -893,6 +1013,7 @@
 			"uid": "CS5.5C_065"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "066",
 			"card_index_en": "142",
 			"card_type": "Stadium",
@@ -922,6 +1043,7 @@
 			"uid": "CS5.5C_066"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "085",
 			"card_index_en": "98",
 			"card_type": "Pokemon",
@@ -951,6 +1073,7 @@
 			"uid": "CS5DC_085"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "086",
 			"card_index_en": "99",
 			"card_type": "Pokemon",
@@ -980,6 +1103,7 @@
 			"uid": "CS5DC_086"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "134",
 			"card_type": "Pokemon",
@@ -1009,6 +1133,7 @@
 			"uid": "CS5DC_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "154",
 			"card_type": "Item",
@@ -1038,6 +1163,7 @@
 			"uid": "CS5DC_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "122",
 			"card_type": "Item",
@@ -1067,6 +1193,7 @@
 			"uid": "CS5DC_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "126",
 			"card_index_en": "139",
 			"card_type": "Item",
@@ -1096,6 +1223,7 @@
 			"uid": "CS5DC_126"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "138",
 			"card_index_en": "147",
 			"card_type": "Supporter",
@@ -1125,6 +1253,7 @@
 			"uid": "CS5DC_138"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "140",
 			"card_index_en": "138",
 			"card_type": "Supporter",
@@ -1154,6 +1283,7 @@
 			"uid": "CS5DC_140"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "147",
 			"card_index_en": "153",
 			"card_type": "Supporter",
@@ -1183,6 +1313,7 @@
 			"uid": "CS5DC_147"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "152",
 			"card_index_en": "144",
 			"card_type": "Stadium",
@@ -1212,6 +1343,7 @@
 			"uid": "CS5DC_152"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "006",
 			"card_index_en": "21",
 			"card_type": "Pokemon",
@@ -1241,6 +1373,7 @@
 			"uid": "CS5aC_006"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "019",
 			"card_index_en": "45",
 			"card_type": "Pokemon",
@@ -1270,6 +1403,7 @@
 			"uid": "CS5aC_019"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "043",
 			"card_index_en": "60",
 			"card_type": "Pokemon",
@@ -1299,6 +1433,7 @@
 			"uid": "CS5aC_043"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "046",
 			"card_index_en": "69",
 			"card_type": "Pokemon",
@@ -1328,6 +1463,7 @@
 			"uid": "CS5aC_046"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "068",
 			"card_index_en": "105",
 			"card_type": "Pokemon",
@@ -1359,6 +1495,7 @@
 			"uid": "CS5aC_068"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "079",
 			"card_index_en": "123",
 			"card_type": "Pokemon",
@@ -1391,6 +1528,7 @@
 			"uid": "CS5aC_079"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "086",
 			"card_index_en": "102",
 			"card_type": "Pokemon",
@@ -1420,6 +1558,7 @@
 			"uid": "CS5aC_086"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "093",
 			"card_index_en": "55",
 			"card_type": "Pokemon",
@@ -1449,6 +1588,7 @@
 			"uid": "CS5aC_093"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "104",
 			"card_index_en": "120",
 			"card_type": "Pokemon",
@@ -1478,6 +1618,7 @@
 			"uid": "CS5aC_104"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "105",
 			"card_index_en": "121",
 			"card_type": "Pokemon",
@@ -1507,6 +1648,7 @@
 			"uid": "CS5aC_105"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "107",
 			"card_index_en": "123",
 			"card_type": "Pokemon",
@@ -1536,6 +1678,7 @@
 			"uid": "CS5aC_107"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "136",
 			"card_type": "Item",
@@ -1565,6 +1708,7 @@
 			"uid": "CS5aC_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "141",
 			"card_type": "Item",
@@ -1594,6 +1738,7 @@
 			"uid": "CS5aC_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "152",
 			"card_type": "Tool",
@@ -1623,6 +1768,7 @@
 			"uid": "CS5aC_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "040",
 			"card_index_en": "20",
 			"card_type": "Pokemon",
@@ -1652,6 +1798,7 @@
 			"uid": "CS5bC_040"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "045",
 			"card_index_en": "34",
 			"card_type": "Pokemon",
@@ -1681,6 +1828,7 @@
 			"uid": "CS5bC_045"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "049",
 			"card_index_en": "40",
 			"card_type": "Pokemon",
@@ -1710,6 +1858,7 @@
 			"uid": "CS5bC_049"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "051",
 			"card_index_en": "40",
 			"card_type": "Pokemon",
@@ -1739,6 +1888,7 @@
 			"uid": "CS5bC_051"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "052",
 			"card_index_en": "41",
 			"card_type": "Pokemon",
@@ -1768,6 +1918,7 @@
 			"uid": "CS5bC_052"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "096",
 			"card_index_en": "114",
 			"card_type": "Pokemon",
@@ -1797,6 +1948,7 @@
 			"uid": "CS5bC_096"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "111",
 			"card_type": "Pokemon",
@@ -1826,6 +1978,7 @@
 			"uid": "CS5bC_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "133",
 			"card_type": "Pokemon",
@@ -1858,6 +2011,7 @@
 			"uid": "CS5bC_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "125",
 			"card_index_en": "148",
 			"card_type": "Supporter",
@@ -1887,6 +2041,7 @@
 			"uid": "CS5bC_125"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "155",
 			"card_type": "Stadium",
@@ -1916,6 +2071,7 @@
 			"uid": "CS5bC_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "012",
 			"card_index_en": "27",
 			"card_type": "Pokemon",
@@ -1945,6 +2101,7 @@
 			"uid": "CS6.5C_012"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "020",
 			"card_index_en": "46",
 			"card_type": "Pokemon",
@@ -1974,6 +2131,7 @@
 			"uid": "CS6.5C_020"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "023",
 			"card_index_en": "58",
 			"card_type": "Pokemon",
@@ -2003,6 +2161,7 @@
 			"uid": "CS6.5C_023"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "029",
 			"card_index_en": "67",
 			"card_type": "Pokemon",
@@ -2032,6 +2191,7 @@
 			"uid": "CS6.5C_029"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "030",
 			"card_index_en": "68",
 			"card_type": "Pokemon",
@@ -2061,6 +2221,7 @@
 			"uid": "CS6.5C_030"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "032",
 			"card_index_en": "70",
 			"card_type": "Pokemon",
@@ -2090,6 +2251,7 @@
 			"uid": "CS6.5C_032"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "033",
 			"card_index_en": "74",
 			"card_type": "Pokemon",
@@ -2119,6 +2281,7 @@
 			"uid": "CS6.5C_033"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "049",
 			"card_index_en": "97",
 			"card_type": "Pokemon",
@@ -2148,6 +2311,7 @@
 			"uid": "CS6.5C_049"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "135",
 			"card_type": "Pokemon",
@@ -2177,6 +2341,7 @@
 			"uid": "CS6.5C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "055",
 			"card_index_en": "136",
 			"card_type": "Pokemon",
@@ -2206,6 +2371,7 @@
 			"uid": "CS6.5C_055"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "063",
 			"card_index_en": "156",
 			"card_type": "Item",
@@ -2235,6 +2401,7 @@
 			"uid": "CS6.5C_063"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "064",
 			"card_index_en": "155",
 			"card_type": "Tool",
@@ -2264,6 +2431,7 @@
 			"uid": "CS6.5C_064"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "066",
 			"card_index_en": "156",
 			"card_type": "Tool",
@@ -2293,6 +2461,7 @@
 			"uid": "CS6.5C_066"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "070",
 			"card_index_en": "159",
 			"card_type": "Supporter",
@@ -2322,6 +2491,7 @@
 			"uid": "CS6.5C_070"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "071",
 			"card_index_en": "137",
 			"card_type": "Stadium",
@@ -2351,6 +2521,7 @@
 			"uid": "CS6.5C_071"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "072",
 			"card_index_en": "169",
 			"card_type": "Special Energy",
@@ -2380,6 +2551,7 @@
 			"uid": "CS6.5C_072"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "027",
 			"card_index_en": "16",
 			"card_type": "Pokemon",
@@ -2409,6 +2581,7 @@
 			"uid": "CS6aC_027"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "057",
 			"card_index_en": "29",
 			"card_type": "Pokemon",
@@ -2438,6 +2611,7 @@
 			"uid": "CS6aC_057"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "073",
 			"card_index_en": "56",
 			"card_type": "Pokemon",
@@ -2467,6 +2641,7 @@
 			"uid": "CS6aC_073"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "083",
 			"card_index_en": "117",
 			"card_type": "Pokemon",
@@ -2496,6 +2671,7 @@
 			"uid": "CS6aC_083"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "094",
 			"card_index_en": "126",
 			"card_type": "Pokemon",
@@ -2525,6 +2701,7 @@
 			"uid": "CS6aC_094"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "099",
 			"card_index_en": "99",
 			"card_type": "Pokemon",
@@ -2557,6 +2734,7 @@
 			"uid": "CS6aC_099"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "102",
 			"card_index_en": "138",
 			"card_type": "Pokemon",
@@ -2586,6 +2764,7 @@
 			"uid": "CS6aC_102"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "103",
 			"card_index_en": "139",
 			"card_type": "Pokemon",
@@ -2615,6 +2794,7 @@
 			"uid": "CS6aC_103"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "147",
 			"card_type": "Pokemon",
@@ -2644,6 +2824,7 @@
 			"uid": "CS6aC_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "120",
 			"card_index_en": "153",
 			"card_type": "Item",
@@ -2673,6 +2854,7 @@
 			"uid": "CS6aC_120"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "126",
 			"card_index_en": "164",
 			"card_type": "Supporter",
@@ -2702,6 +2884,7 @@
 			"uid": "CS6aC_126"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "167",
 			"card_type": "Supporter",
@@ -2731,6 +2914,7 @@
 			"uid": "CS6aC_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "129",
 			"card_index_en": "164",
 			"card_type": "Supporter",
@@ -2760,6 +2944,7 @@
 			"uid": "CS6aC_129"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "131",
 			"card_index_en": "171",
 			"card_type": "Special Energy",
@@ -2789,6 +2974,7 @@
 			"uid": "CS6aC_131"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "026",
 			"card_index_en": "50",
 			"card_type": "Pokemon",
@@ -2818,6 +3004,7 @@
 			"uid": "CS6bC_026"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "028",
 			"card_index_en": "59",
 			"card_type": "Pokemon",
@@ -2847,6 +3034,7 @@
 			"uid": "CS6bC_028"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "035",
 			"card_index_en": "71",
 			"card_type": "Pokemon",
@@ -2878,6 +3066,7 @@
 			"uid": "CS6bC_035"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "047",
 			"card_index_en": "79",
 			"card_type": "Pokemon",
@@ -2907,6 +3096,7 @@
 			"uid": "CS6bC_047"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "052",
 			"card_index_en": "79",
 			"card_type": "Pokemon",
@@ -2936,6 +3126,7 @@
 			"uid": "CS6bC_052"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "058",
 			"card_index_en": "89",
 			"card_type": "Pokemon",
@@ -2965,6 +3156,7 @@
 			"uid": "CS6bC_058"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "107",
 			"card_index_en": "130",
 			"card_type": "Pokemon",
@@ -2994,6 +3186,7 @@
 			"uid": "CS6bC_107"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "108",
 			"card_index_en": "131",
 			"card_type": "Pokemon",
@@ -3023,6 +3216,7 @@
 			"uid": "CS6bC_108"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "112",
 			"card_index_en": "137",
 			"card_type": "Pokemon",
@@ -3052,6 +3246,7 @@
 			"uid": "CS6bC_112"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "143",
 			"card_type": "Pokemon",
@@ -3081,6 +3276,7 @@
 			"uid": "CS6bC_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "124",
 			"card_type": "Pokemon",
@@ -3110,6 +3306,7 @@
 			"uid": "CS6bC_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "122",
 			"card_index_en": "163",
 			"card_type": "Item",
@@ -3139,6 +3336,7 @@
 			"uid": "CS6bC_122"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "123",
 			"card_index_en": "135",
 			"card_type": "Item",
@@ -3168,6 +3366,7 @@
 			"uid": "CS6bC_123"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "125",
 			"card_index_en": "155",
 			"card_type": "Supporter",
@@ -3197,6 +3396,7 @@
 			"uid": "CS6bC_125"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "130",
 			"card_index_en": "161",
 			"card_type": "Stadium",
@@ -3226,6 +3426,7 @@
 			"uid": "CS6bC_130"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "003",
 			"card_index_en": "39",
 			"card_type": "Pokemon",
@@ -3255,6 +3456,7 @@
 			"uid": "CSNC_003"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "007",
 			"card_index_en": "239",
 			"card_type": "Pokemon",
@@ -3284,6 +3486,7 @@
 			"uid": "CSNC_007"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "008",
 			"card_index_en": "113",
 			"card_type": "Pokemon",
@@ -3313,6 +3516,7 @@
 			"uid": "CSNC_008"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "009",
 			"card_index_en": "122",
 			"card_type": "Pokemon",
@@ -3342,6 +3546,7 @@
 			"uid": "CSNC_009"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "020",
 			"card_index_en": "138",
 			"card_type": "Supporter",
@@ -3371,6 +3576,7 @@
 			"uid": "CSNC_020"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "024",
 			"card_index_en": "151",
 			"card_type": "Special Energy",
@@ -3400,6 +3606,7 @@
 			"uid": "CSNC_024"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "001",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3429,6 +3636,7 @@
 			"uid": "CSV10C_001"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "002",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3458,6 +3666,7 @@
 			"uid": "CSV10C_002"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "003",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3487,6 +3696,7 @@
 			"uid": "CSV10C_003"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "004",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3516,6 +3726,7 @@
 			"uid": "CSV10C_004"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "005",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3545,6 +3756,7 @@
 			"uid": "CSV10C_005"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "006",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3574,6 +3786,7 @@
 			"uid": "CSV10C_006"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "007",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3603,6 +3816,7 @@
 			"uid": "CSV10C_007"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "008",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3632,6 +3846,7 @@
 			"uid": "CSV10C_008"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "009",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3661,6 +3876,7 @@
 			"uid": "CSV10C_009"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "010",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3690,6 +3906,7 @@
 			"uid": "CSV10C_010"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "011",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3719,6 +3936,7 @@
 			"uid": "CSV10C_011"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "012",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3748,6 +3966,7 @@
 			"uid": "CSV10C_012"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "013",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -3777,6 +3996,7 @@
 			"uid": "CSV10C_013"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "014",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3806,6 +4026,7 @@
 			"uid": "CSV10C_014"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "015",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3835,6 +4056,7 @@
 			"uid": "CSV10C_015"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "016",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -3864,6 +4086,7 @@
 			"uid": "CSV10C_016"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "017",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3893,6 +4116,7 @@
 			"uid": "CSV10C_017"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "018",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3922,6 +4146,7 @@
 			"uid": "CSV10C_018"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "019",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3951,6 +4176,7 @@
 			"uid": "CSV10C_019"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "020",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -3980,6 +4206,7 @@
 			"uid": "CSV10C_020"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "021",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4009,6 +4236,7 @@
 			"uid": "CSV10C_021"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "022",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4038,6 +4266,7 @@
 			"uid": "CSV10C_022"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "023",
 			"card_index_en": "29",
 			"card_type": "Pokemon",
@@ -4067,6 +4296,7 @@
 			"uid": "CSV10C_023"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "024",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4096,6 +4326,7 @@
 			"uid": "CSV10C_024"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "025",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4125,6 +4356,7 @@
 			"uid": "CSV10C_025"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "026",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4154,6 +4386,7 @@
 			"uid": "CSV10C_026"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "027",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4183,6 +4416,7 @@
 			"uid": "CSV10C_027"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "028",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4212,6 +4446,7 @@
 			"uid": "CSV10C_028"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "029",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4241,6 +4476,7 @@
 			"uid": "CSV10C_029"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "030",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4270,6 +4506,7 @@
 			"uid": "CSV10C_030"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "031",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4299,6 +4536,7 @@
 			"uid": "CSV10C_031"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "032",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4328,6 +4566,7 @@
 			"uid": "CSV10C_032"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "033",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4357,6 +4596,7 @@
 			"uid": "CSV10C_033"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "034",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4386,6 +4626,7 @@
 			"uid": "CSV10C_034"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "035",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4415,6 +4656,7 @@
 			"uid": "CSV10C_035"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "036",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4444,6 +4686,7 @@
 			"uid": "CSV10C_036"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "037",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4473,6 +4716,7 @@
 			"uid": "CSV10C_037"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "038",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4502,6 +4746,7 @@
 			"uid": "CSV10C_038"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "039",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4531,6 +4776,7 @@
 			"uid": "CSV10C_039"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "040",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4560,6 +4806,7 @@
 			"uid": "CSV10C_040"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "041",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4589,6 +4836,7 @@
 			"uid": "CSV10C_041"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "042",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4618,6 +4866,7 @@
 			"uid": "CSV10C_042"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "043",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4647,6 +4896,7 @@
 			"uid": "CSV10C_043"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "044",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4676,6 +4926,7 @@
 			"uid": "CSV10C_044"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "045",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4705,6 +4956,7 @@
 			"uid": "CSV10C_045"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "046",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4734,6 +4986,7 @@
 			"uid": "CSV10C_046"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "047",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4763,6 +5016,7 @@
 			"uid": "CSV10C_047"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "048",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4792,6 +5046,7 @@
 			"uid": "CSV10C_048"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "049",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4821,6 +5076,7 @@
 			"uid": "CSV10C_049"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "050",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4850,6 +5106,7 @@
 			"uid": "CSV10C_050"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "051",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4879,6 +5136,7 @@
 			"uid": "CSV10C_051"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "052",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4908,6 +5166,7 @@
 			"uid": "CSV10C_052"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4937,6 +5196,7 @@
 			"uid": "CSV10C_053"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "162",
 			"card_type": "Pokemon",
@@ -4966,6 +5226,7 @@
 			"uid": "CSV10C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "055",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -4995,6 +5256,7 @@
 			"uid": "CSV10C_055"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "056",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5024,6 +5286,7 @@
 			"uid": "CSV10C_056"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "057",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5053,6 +5316,7 @@
 			"uid": "CSV10C_057"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "058",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5082,6 +5346,7 @@
 			"uid": "CSV10C_058"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "059",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5111,6 +5376,7 @@
 			"uid": "CSV10C_059"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "060",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5140,6 +5406,7 @@
 			"uid": "CSV10C_060"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "061",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5169,6 +5436,7 @@
 			"uid": "CSV10C_061"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "062",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5198,6 +5466,7 @@
 			"uid": "CSV10C_062"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "063",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5227,6 +5496,7 @@
 			"uid": "CSV10C_063"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "064",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5256,6 +5526,7 @@
 			"uid": "CSV10C_064"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "065",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5285,6 +5556,7 @@
 			"uid": "CSV10C_065"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "066",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5314,6 +5586,7 @@
 			"uid": "CSV10C_066"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "067",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5343,6 +5616,7 @@
 			"uid": "CSV10C_067"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "068",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5372,6 +5646,7 @@
 			"uid": "CSV10C_068"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "069",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5401,6 +5676,7 @@
 			"uid": "CSV10C_069"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "070",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5430,6 +5706,7 @@
 			"uid": "CSV10C_070"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "071",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5459,6 +5736,7 @@
 			"uid": "CSV10C_071"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "072",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5488,6 +5766,7 @@
 			"uid": "CSV10C_072"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "073",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5517,6 +5796,7 @@
 			"uid": "CSV10C_073"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "074",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5546,6 +5826,7 @@
 			"uid": "CSV10C_074"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "075",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5575,6 +5856,7 @@
 			"uid": "CSV10C_075"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "076",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5604,6 +5886,7 @@
 			"uid": "CSV10C_076"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "077",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5633,6 +5916,7 @@
 			"uid": "CSV10C_077"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "078",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5662,6 +5946,7 @@
 			"uid": "CSV10C_078"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "079",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5691,6 +5976,7 @@
 			"uid": "CSV10C_079"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "080",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5720,6 +6006,7 @@
 			"uid": "CSV10C_080"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "081",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5749,6 +6036,7 @@
 			"uid": "CSV10C_081"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "082",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5778,6 +6066,7 @@
 			"uid": "CSV10C_082"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "083",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5807,6 +6096,7 @@
 			"uid": "CSV10C_083"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "084",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5836,6 +6126,7 @@
 			"uid": "CSV10C_084"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "085",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5865,6 +6156,7 @@
 			"uid": "CSV10C_085"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "086",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5894,6 +6186,7 @@
 			"uid": "CSV10C_086"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "087",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5923,6 +6216,7 @@
 			"uid": "CSV10C_087"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "088",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5952,6 +6246,7 @@
 			"uid": "CSV10C_088"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "089",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -5981,6 +6276,7 @@
 			"uid": "CSV10C_089"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "090",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6010,6 +6306,7 @@
 			"uid": "CSV10C_090"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "091",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6039,6 +6336,7 @@
 			"uid": "CSV10C_091"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "092",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6068,6 +6366,7 @@
 			"uid": "CSV10C_092"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "093",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6097,6 +6396,7 @@
 			"uid": "CSV10C_093"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "094",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6126,6 +6426,7 @@
 			"uid": "CSV10C_094"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "095",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6155,6 +6456,7 @@
 			"uid": "CSV10C_095"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "096",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6184,6 +6486,7 @@
 			"uid": "CSV10C_096"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "097",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6213,6 +6516,7 @@
 			"uid": "CSV10C_097"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "098",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6242,6 +6546,7 @@
 			"uid": "CSV10C_098"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "099",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6271,6 +6576,7 @@
 			"uid": "CSV10C_099"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "100",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6300,6 +6606,7 @@
 			"uid": "CSV10C_100"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "101",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6329,6 +6636,7 @@
 			"uid": "CSV10C_101"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "102",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6358,6 +6666,7 @@
 			"uid": "CSV10C_102"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "103",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6387,6 +6696,7 @@
 			"uid": "CSV10C_103"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "104",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6416,6 +6726,7 @@
 			"uid": "CSV10C_104"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "105",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6445,6 +6756,7 @@
 			"uid": "CSV10C_105"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "106",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6474,6 +6786,7 @@
 			"uid": "CSV10C_106"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "107",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6503,6 +6816,7 @@
 			"uid": "CSV10C_107"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "108",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6532,6 +6846,7 @@
 			"uid": "CSV10C_108"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "109",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6561,6 +6876,7 @@
 			"uid": "CSV10C_109"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "110",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6590,6 +6906,7 @@
 			"uid": "CSV10C_110"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6619,6 +6936,7 @@
 			"uid": "CSV10C_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "112",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6648,6 +6966,7 @@
 			"uid": "CSV10C_112"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6677,6 +6996,7 @@
 			"uid": "CSV10C_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "114",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6706,6 +7026,7 @@
 			"uid": "CSV10C_114"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "115",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6735,6 +7056,7 @@
 			"uid": "CSV10C_115"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6764,6 +7086,7 @@
 			"uid": "CSV10C_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6793,6 +7116,7 @@
 			"uid": "CSV10C_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6822,6 +7146,7 @@
 			"uid": "CSV10C_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "119",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6851,6 +7176,7 @@
 			"uid": "CSV10C_119"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "120",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6880,6 +7206,7 @@
 			"uid": "CSV10C_120"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "121",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6909,6 +7236,7 @@
 			"uid": "CSV10C_121"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "122",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6938,6 +7266,7 @@
 			"uid": "CSV10C_122"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "123",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6967,6 +7296,7 @@
 			"uid": "CSV10C_123"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "124",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -6996,6 +7326,7 @@
 			"uid": "CSV10C_124"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "125",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7025,6 +7356,7 @@
 			"uid": "CSV10C_125"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "126",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7054,6 +7386,7 @@
 			"uid": "CSV10C_126"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7083,6 +7416,7 @@
 			"uid": "CSV10C_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7112,6 +7446,7 @@
 			"uid": "CSV10C_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "129",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7141,6 +7476,7 @@
 			"uid": "CSV10C_129"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "130",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7170,6 +7506,7 @@
 			"uid": "CSV10C_130"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "131",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7199,6 +7536,7 @@
 			"uid": "CSV10C_131"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "132",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7228,6 +7566,7 @@
 			"uid": "CSV10C_132"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "133",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7257,6 +7596,7 @@
 			"uid": "CSV10C_133"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "134",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7286,6 +7626,7 @@
 			"uid": "CSV10C_134"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "135",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7315,6 +7656,7 @@
 			"uid": "CSV10C_135"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "136",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7344,6 +7686,7 @@
 			"uid": "CSV10C_136"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "137",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7373,6 +7716,7 @@
 			"uid": "CSV10C_137"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "138",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7402,6 +7746,7 @@
 			"uid": "CSV10C_138"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "139",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7431,6 +7776,7 @@
 			"uid": "CSV10C_139"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "140",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7460,6 +7806,7 @@
 			"uid": "CSV10C_140"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "141",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7489,6 +7836,7 @@
 			"uid": "CSV10C_141"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "142",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7518,6 +7866,7 @@
 			"uid": "CSV10C_142"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "143",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7547,6 +7896,7 @@
 			"uid": "CSV10C_143"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "144",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7576,6 +7926,7 @@
 			"uid": "CSV10C_144"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "145",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7605,6 +7956,7 @@
 			"uid": "CSV10C_145"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "146",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7634,6 +7986,7 @@
 			"uid": "CSV10C_146"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "147",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7663,6 +8016,7 @@
 			"uid": "CSV10C_147"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "148",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7692,6 +8046,7 @@
 			"uid": "CSV10C_148"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "149",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7721,6 +8076,7 @@
 			"uid": "CSV10C_149"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "150",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7750,6 +8106,7 @@
 			"uid": "CSV10C_150"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "151",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7779,6 +8136,7 @@
 			"uid": "CSV10C_151"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "152",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7808,6 +8166,7 @@
 			"uid": "CSV10C_152"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "153",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7837,6 +8196,7 @@
 			"uid": "CSV10C_153"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "154",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7866,6 +8226,7 @@
 			"uid": "CSV10C_154"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "155",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7895,6 +8256,7 @@
 			"uid": "CSV10C_155"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "156",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7924,6 +8286,7 @@
 			"uid": "CSV10C_156"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "157",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7953,6 +8316,7 @@
 			"uid": "CSV10C_157"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "158",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -7982,6 +8346,7 @@
 			"uid": "CSV10C_158"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "159",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8011,6 +8376,7 @@
 			"uid": "CSV10C_159"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "160",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8040,6 +8406,7 @@
 			"uid": "CSV10C_160"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "161",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8069,6 +8436,7 @@
 			"uid": "CSV10C_161"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "162",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8098,6 +8466,7 @@
 			"uid": "CSV10C_162"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "163",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8127,6 +8496,7 @@
 			"uid": "CSV10C_163"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "164",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8156,6 +8526,7 @@
 			"uid": "CSV10C_164"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "165",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8185,6 +8556,7 @@
 			"uid": "CSV10C_165"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "166",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8214,6 +8586,7 @@
 			"uid": "CSV10C_166"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "167",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8243,6 +8616,7 @@
 			"uid": "CSV10C_167"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "168",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8272,6 +8646,7 @@
 			"uid": "CSV10C_168"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "169",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8301,6 +8676,7 @@
 			"uid": "CSV10C_169"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "170",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8330,6 +8706,7 @@
 			"uid": "CSV10C_170"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "171",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8359,6 +8736,7 @@
 			"uid": "CSV10C_171"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "172",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8388,6 +8766,7 @@
 			"uid": "CSV10C_172"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "173",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8417,6 +8796,7 @@
 			"uid": "CSV10C_173"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "174",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8446,6 +8826,7 @@
 			"uid": "CSV10C_174"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "175",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8475,6 +8856,7 @@
 			"uid": "CSV10C_175"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "176",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8504,6 +8886,7 @@
 			"uid": "CSV10C_176"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "177",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8533,6 +8916,7 @@
 			"uid": "CSV10C_177"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "178",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8562,6 +8946,7 @@
 			"uid": "CSV10C_178"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "179",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8591,6 +8976,7 @@
 			"uid": "CSV10C_179"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "180",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8620,6 +9006,7 @@
 			"uid": "CSV10C_180"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "181",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8649,6 +9036,7 @@
 			"uid": "CSV10C_181"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "182",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8678,6 +9066,7 @@
 			"uid": "CSV10C_182"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "183",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8707,6 +9096,7 @@
 			"uid": "CSV10C_183"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "184",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8736,6 +9126,7 @@
 			"uid": "CSV10C_184"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "185",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8765,6 +9156,7 @@
 			"uid": "CSV10C_185"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "186",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8794,6 +9186,7 @@
 			"uid": "CSV10C_186"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "187",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8823,6 +9216,7 @@
 			"uid": "CSV10C_187"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "188",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -8852,6 +9246,7 @@
 			"uid": "CSV10C_188"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "189",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -8881,6 +9276,7 @@
 			"uid": "CSV10C_189"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "190",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -8910,6 +9306,7 @@
 			"uid": "CSV10C_190"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "191",
 			"card_index_en": "123",
 			"card_type": "Item",
@@ -8939,6 +9336,7 @@
 			"uid": "CSV10C_191"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "192",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -8968,6 +9366,7 @@
 			"uid": "CSV10C_192"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "193",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -8997,6 +9396,7 @@
 			"uid": "CSV10C_193"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "194",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -9026,6 +9426,7 @@
 			"uid": "CSV10C_194"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "195",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -9055,6 +9456,7 @@
 			"uid": "CSV10C_195"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "196",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -9084,6 +9486,7 @@
 			"uid": "CSV10C_196"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "197",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -9113,6 +9516,7 @@
 			"uid": "CSV10C_197"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "198",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -9142,6 +9546,7 @@
 			"uid": "CSV10C_198"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "199",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -9171,6 +9576,7 @@
 			"uid": "CSV10C_199"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "200",
 			"card_index_en": "",
 			"card_type": "Tool",
@@ -9200,6 +9606,7 @@
 			"uid": "CSV10C_200"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "201",
 			"card_index_en": "",
 			"card_type": "Tool",
@@ -9229,6 +9636,7 @@
 			"uid": "CSV10C_201"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "202",
 			"card_index_en": "",
 			"card_type": "Tool",
@@ -9258,6 +9666,7 @@
 			"uid": "CSV10C_202"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "203",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9287,6 +9696,7 @@
 			"uid": "CSV10C_203"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "204",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9316,6 +9726,7 @@
 			"uid": "CSV10C_204"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "205",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9345,6 +9756,7 @@
 			"uid": "CSV10C_205"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "206",
 			"card_index_en": "108",
 			"card_type": "Supporter",
@@ -9374,6 +9786,7 @@
 			"uid": "CSV10C_206"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "207",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9403,6 +9816,7 @@
 			"uid": "CSV10C_207"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "208",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9432,6 +9846,7 @@
 			"uid": "CSV10C_208"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "209",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9461,6 +9876,7 @@
 			"uid": "CSV10C_209"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "210",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9490,6 +9906,7 @@
 			"uid": "CSV10C_210"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "211",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9519,6 +9936,7 @@
 			"uid": "CSV10C_211"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "212",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9548,6 +9966,7 @@
 			"uid": "CSV10C_212"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "213",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -9577,6 +9996,7 @@
 			"uid": "CSV10C_213"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "214",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9606,6 +10026,7 @@
 			"uid": "CSV10C_214"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "215",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9635,6 +10056,7 @@
 			"uid": "CSV10C_215"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "216",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9664,6 +10086,7 @@
 			"uid": "CSV10C_216"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "217",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9693,6 +10116,7 @@
 			"uid": "CSV10C_217"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "218",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9722,6 +10146,7 @@
 			"uid": "CSV10C_218"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "219",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9751,6 +10176,7 @@
 			"uid": "CSV10C_219"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "220",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -9780,6 +10206,7 @@
 			"uid": "CSV10C_220"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "221",
 			"card_index_en": "",
 			"card_type": "Special Energy",
@@ -9809,6 +10236,7 @@
 			"uid": "CSV10C_221"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "222",
 			"card_index_en": "",
 			"card_type": "Special Energy",
@@ -9838,6 +10266,7 @@
 			"uid": "CSV10C_222"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "223",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -9867,6 +10296,7 @@
 			"uid": "CSV10C_223"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "224",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -9896,6 +10326,7 @@
 			"uid": "CSV10C_224"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "225",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -9925,6 +10356,7 @@
 			"uid": "CSV10C_225"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "226",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -9954,6 +10386,7 @@
 			"uid": "CSV10C_226"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "227",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -9983,6 +10416,7 @@
 			"uid": "CSV10C_227"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "228",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10012,6 +10446,7 @@
 			"uid": "CSV10C_228"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "229",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10041,6 +10476,7 @@
 			"uid": "CSV10C_229"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "230",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10070,6 +10506,7 @@
 			"uid": "CSV10C_230"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "231",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10099,6 +10536,7 @@
 			"uid": "CSV10C_231"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "232",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10128,6 +10566,7 @@
 			"uid": "CSV10C_232"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "233",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10157,6 +10596,7 @@
 			"uid": "CSV10C_233"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "234",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10186,6 +10626,7 @@
 			"uid": "CSV10C_234"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "235",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10215,6 +10656,7 @@
 			"uid": "CSV10C_235"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "236",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10244,6 +10686,7 @@
 			"uid": "CSV10C_236"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "237",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10273,6 +10716,7 @@
 			"uid": "CSV10C_237"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "238",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10302,6 +10746,7 @@
 			"uid": "CSV10C_238"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "239",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10331,6 +10776,7 @@
 			"uid": "CSV10C_239"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "240",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10360,6 +10806,7 @@
 			"uid": "CSV10C_240"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "241",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10389,6 +10836,7 @@
 			"uid": "CSV10C_241"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "242",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10418,6 +10866,7 @@
 			"uid": "CSV10C_242"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "243",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10447,6 +10896,7 @@
 			"uid": "CSV10C_243"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "244",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10476,6 +10926,7 @@
 			"uid": "CSV10C_244"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "245",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10505,6 +10956,7 @@
 			"uid": "CSV10C_245"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "246",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10534,6 +10986,7 @@
 			"uid": "CSV10C_246"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "247",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10563,6 +11016,7 @@
 			"uid": "CSV10C_247"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "248",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10592,6 +11046,7 @@
 			"uid": "CSV10C_248"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "249",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10621,6 +11076,7 @@
 			"uid": "CSV10C_249"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "250",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10650,6 +11106,7 @@
 			"uid": "CSV10C_250"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "251",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10679,6 +11136,7 @@
 			"uid": "CSV10C_251"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "252",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10708,6 +11166,7 @@
 			"uid": "CSV10C_252"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "253",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10737,6 +11196,7 @@
 			"uid": "CSV10C_253"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "254",
 			"card_index_en": "108",
 			"card_type": "Supporter",
@@ -10766,6 +11226,7 @@
 			"uid": "CSV10C_254"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "255",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10795,6 +11256,7 @@
 			"uid": "CSV10C_255"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "256",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10824,6 +11286,7 @@
 			"uid": "CSV10C_256"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "257",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10853,6 +11316,7 @@
 			"uid": "CSV10C_257"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "258",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10882,6 +11346,7 @@
 			"uid": "CSV10C_258"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "259",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10911,6 +11376,7 @@
 			"uid": "CSV10C_259"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "260",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10940,6 +11406,7 @@
 			"uid": "CSV10C_260"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "261",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -10969,6 +11436,7 @@
 			"uid": "CSV10C_261"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "262",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -10998,6 +11466,7 @@
 			"uid": "CSV10C_262"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "263",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11027,6 +11496,7 @@
 			"uid": "CSV10C_263"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "264",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11056,6 +11526,7 @@
 			"uid": "CSV10C_264"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "265",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11085,6 +11556,7 @@
 			"uid": "CSV10C_265"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "266",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11114,6 +11586,7 @@
 			"uid": "CSV10C_266"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "267",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11143,6 +11616,7 @@
 			"uid": "CSV10C_267"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "268",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11172,6 +11646,7 @@
 			"uid": "CSV10C_268"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "269",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11201,6 +11676,7 @@
 			"uid": "CSV10C_269"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "270",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11230,6 +11706,7 @@
 			"uid": "CSV10C_270"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "271",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11259,6 +11736,7 @@
 			"uid": "CSV10C_271"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "272",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11288,6 +11766,7 @@
 			"uid": "CSV10C_272"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "273",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11317,6 +11796,7 @@
 			"uid": "CSV10C_273"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "274",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11346,6 +11826,7 @@
 			"uid": "CSV10C_274"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "275",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11375,6 +11856,7 @@
 			"uid": "CSV10C_275"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "276",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -11404,6 +11886,7 @@
 			"uid": "CSV10C_276"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "277",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -11433,6 +11916,7 @@
 			"uid": "CSV10C_277"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "278",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -11462,6 +11946,7 @@
 			"uid": "CSV10C_278"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "279",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -11491,6 +11976,7 @@
 			"uid": "CSV10C_279"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "280",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11520,6 +12006,7 @@
 			"uid": "CSV10C_280"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "281",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11549,6 +12036,7 @@
 			"uid": "CSV10C_281"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "282",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11578,6 +12066,7 @@
 			"uid": "CSV10C_282"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "283",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11607,6 +12096,7 @@
 			"uid": "CSV10C_283"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "284",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11636,6 +12126,7 @@
 			"uid": "CSV10C_284"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "285",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -11665,6 +12156,7 @@
 			"uid": "CSV10C_285"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "286",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -11694,6 +12186,7 @@
 			"uid": "CSV10C_286"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "287",
 			"card_index_en": "",
 			"card_type": "Special Energy",
@@ -11723,6 +12216,7 @@
 			"uid": "CSV10C_287"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "028",
 			"card_index_en": "15",
 			"card_type": "Pokemon",
@@ -11752,6 +12246,7 @@
 			"uid": "CSV1C_028"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "042",
 			"card_index_en": "63",
 			"card_type": "Pokemon",
@@ -11781,6 +12276,7 @@
 			"uid": "CSV1C_042"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "050",
 			"card_index_en": "81",
 			"card_type": "Pokemon",
@@ -11810,6 +12306,7 @@
 			"uid": "CSV1C_050"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "87",
 			"card_type": "Pokemon",
@@ -11839,6 +12336,7 @@
 			"uid": "CSV1C_053"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "88",
 			"card_type": "Pokemon",
@@ -11868,6 +12366,7 @@
 			"uid": "CSV1C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "055",
 			"card_index_en": "89",
 			"card_type": "Pokemon",
@@ -11897,6 +12396,7 @@
 			"uid": "CSV1C_055"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "060",
 			"card_index_en": "96",
 			"card_type": "Pokemon",
@@ -11926,6 +12426,67 @@
 			"uid": "CSV1C_060"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "067",
+			"card_index_en": "167",
+			"card_type": "Pokemon",
+			"effect_id": "4facb3836ec30a5640ab3ce81d4310f1",
+			"energy_type": "P",
+			"hp": 140,
+			"image_key": "CSV1C/067",
+			"image_url": "https://tcg.mik.moe/static/img/CSV1C/067.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "巨锻匠",
+			"name_en": "Tinkaton",
+			"name_zh": "",
+			"rarity": "R",
+			"regulation_mark": "G",
+			"set_code": "CSV1C",
+			"set_code_en": "PAF",
+			"set_file": "sets/CSV1C.json",
+			"source_card_index": "067",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV1C",
+			"stage": "Stage 2",
+			"uid": "CSV1C_067"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "068",
+			"card_index_en": "31",
+			"card_type": "Pokemon",
+			"effect_id": "132754175b93ba17efadd9d03dabaae9",
+			"energy_type": "P",
+			"hp": 300,
+			"image_key": "CSV1C/068",
+			"image_url": "https://tcg.mik.moe/static/img/CSV1C/068.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "巨锻匠ex",
+			"name_en": "Tinkaton ex",
+			"name_zh": "",
+			"rarity": "RR",
+			"regulation_mark": "G",
+			"set_code": "CSV1C",
+			"set_code_en": "SVP",
+			"set_file": "sets/CSV1C.json",
+			"source_card_index": "068",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV1C",
+			"stage": "Stage 2",
+			"uid": "CSV1C_068"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "079",
 			"card_index_en": "118",
 			"card_type": "Pokemon",
@@ -11955,6 +12516,7 @@
 			"uid": "CSV1C_079"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "099",
 			"card_index_en": "151",
 			"card_type": "Pokemon",
@@ -11984,6 +12546,7 @@
 			"uid": "CSV1C_099"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "107",
 			"card_index_en": "79",
 			"card_type": "Item",
@@ -12013,6 +12576,7 @@
 			"uid": "CSV1C_107"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "108",
 			"card_index_en": "115",
 			"card_type": "Item",
@@ -12042,6 +12606,7 @@
 			"uid": "CSV1C_108"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "109",
 			"card_index_en": "188",
 			"card_type": "Item",
@@ -12071,6 +12636,7 @@
 			"uid": "CSV1C_109"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "110",
 			"card_index_en": "162",
 			"card_type": "Item",
@@ -12100,6 +12666,7 @@
 			"uid": "CSV1C_110"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "132",
 			"card_type": "Item",
@@ -12129,6 +12696,7 @@
 			"uid": "CSV1C_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "112",
 			"card_index_en": "68",
 			"card_type": "Item",
@@ -12158,6 +12726,7 @@
 			"uid": "CSV1C_112"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "132",
 			"card_type": "Item",
@@ -12187,6 +12756,7 @@
 			"uid": "CSV1C_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "115",
 			"card_index_en": "118",
 			"card_type": "Tool",
@@ -12216,6 +12786,7 @@
 			"uid": "CSV1C_115"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "135",
 			"card_type": "Tool",
@@ -12245,6 +12816,7 @@
 			"uid": "CSV1C_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "169",
 			"card_type": "Tool",
@@ -12274,6 +12846,7 @@
 			"uid": "CSV1C_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "173",
 			"card_type": "Tool",
@@ -12303,6 +12876,7 @@
 			"uid": "CSV1C_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "120",
 			"card_index_en": "175",
 			"card_type": "Supporter",
@@ -12332,6 +12906,7 @@
 			"uid": "CSV1C_120"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "121",
 			"card_index_en": "178",
 			"card_type": "Supporter",
@@ -12361,6 +12936,7 @@
 			"uid": "CSV1C_121"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "123",
 			"card_index_en": "166",
 			"card_type": "Supporter",
@@ -12390,6 +12966,7 @@
 			"uid": "CSV1C_123"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "124",
 			"card_index_en": "183",
 			"card_type": "Supporter",
@@ -12419,6 +12996,7 @@
 			"uid": "CSV1C_124"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "126",
 			"card_index_en": "178",
 			"card_type": "Stadium",
@@ -12448,6 +13026,7 @@
 			"uid": "CSV1C_126"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "191",
 			"card_type": "Special Energy",
@@ -12477,6 +13056,7 @@
 			"uid": "CSV1C_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "011",
 			"card_index_en": "14",
 			"card_type": "Pokemon",
@@ -12508,6 +13088,7 @@
 			"uid": "CSV2C_011"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "028",
 			"card_index_en": "56",
 			"card_type": "Pokemon",
@@ -12537,6 +13118,7 @@
 			"uid": "CSV2C_028"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "036",
 			"card_index_en": "63",
 			"card_type": "Pokemon",
@@ -12568,6 +13150,7 @@
 			"uid": "CSV2C_036"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "041",
 			"card_index_en": "71",
 			"card_type": "Pokemon",
@@ -12597,6 +13180,7 @@
 			"uid": "CSV2C_041"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "84",
 			"card_type": "Pokemon",
@@ -12626,6 +13210,7 @@
 			"uid": "CSV2C_053"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "85",
 			"card_type": "Pokemon",
@@ -12657,6 +13242,7 @@
 			"uid": "CSV2C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "055",
 			"card_index_en": "86",
 			"card_type": "Pokemon",
@@ -12686,6 +13272,7 @@
 			"uid": "CSV2C_055"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "060",
 			"card_index_en": "89",
 			"card_type": "Pokemon",
@@ -12715,6 +13302,7 @@
 			"uid": "CSV2C_060"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "105",
 			"card_index_en": "75",
 			"card_type": "Pokemon",
@@ -12744,6 +13332,7 @@
 			"uid": "CSV2C_105"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "189",
 			"card_type": "Item",
@@ -12773,6 +13362,7 @@
 			"uid": "CSV2C_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "113",
 			"card_index_en": "182",
 			"card_type": "Item",
@@ -12802,6 +13392,7 @@
 			"uid": "CSV2C_113"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "114",
 			"card_index_en": "165",
 			"card_type": "Tool",
@@ -12831,6 +13422,7 @@
 			"uid": "CSV2C_114"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "160",
 			"card_type": "Supporter",
@@ -12860,6 +13452,7 @@
 			"uid": "CSV2C_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "125",
 			"card_index_en": "195",
 			"card_type": "Supporter",
@@ -12889,6 +13482,7 @@
 			"uid": "CSV2C_125"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "126",
 			"card_index_en": "81",
 			"card_type": "Stadium",
@@ -12918,6 +13512,7 @@
 			"uid": "CSV2C_126"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "171",
 			"card_type": "Stadium",
@@ -12947,6 +13542,7 @@
 			"uid": "CSV2C_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "192",
 			"card_type": "Special Energy",
@@ -12976,6 +13572,7 @@
 			"uid": "CSV2C_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "031",
 			"card_index_en": "40",
 			"card_type": "Pokemon",
@@ -13005,6 +13602,7 @@
 			"uid": "CSV3C_031"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "040",
 			"card_index_en": "57",
 			"card_type": "Pokemon",
@@ -13034,6 +13632,7 @@
 			"uid": "CSV3C_040"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "042",
 			"card_index_en": "60",
 			"card_type": "Pokemon",
@@ -13063,6 +13662,7 @@
 			"uid": "CSV3C_042"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "043",
 			"card_index_en": "30",
 			"card_type": "Pokemon",
@@ -13092,6 +13692,7 @@
 			"uid": "CSV3C_043"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "062",
 			"card_index_en": "37",
 			"card_type": "Pokemon",
@@ -13121,6 +13722,37 @@
 			"uid": "CSV3C_062"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "079",
+			"card_index_en": "126",
+			"card_type": "Pokemon",
+			"effect_id": "8d661d82a0867cc1d450e0eb137be5ee",
+			"energy_type": "F",
+			"hp": 130,
+			"image_key": "CSV3C/079",
+			"image_url": "https://tcg.mik.moe/static/img/CSV3C/079.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "晶光花",
+			"name_en": "Glimmora",
+			"name_zh": "",
+			"rarity": "R",
+			"regulation_mark": "G",
+			"set_code": "CSV3C",
+			"set_code_en": "PAL",
+			"set_file": "sets/CSV3C.json",
+			"source_card_index": "079",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV3C",
+			"stage": "Stage 1",
+			"uid": "CSV3C_079"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "086",
 			"card_index_en": "121",
 			"card_type": "Pokemon",
@@ -13150,6 +13782,7 @@
 			"uid": "CSV3C_086"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "115",
 			"card_index_en": "189",
 			"card_type": "Item",
@@ -13179,6 +13812,7 @@
 			"uid": "CSV3C_115"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "60",
 			"card_type": "Item",
@@ -13208,6 +13842,7 @@
 			"uid": "CSV3C_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "184",
 			"card_type": "Item",
@@ -13237,6 +13872,7 @@
 			"uid": "CSV3C_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "123",
 			"card_index_en": "185",
 			"card_type": "Supporter",
@@ -13266,6 +13902,7 @@
 			"uid": "CSV3C_123"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "125",
 			"card_index_en": "182",
 			"card_type": "Supporter",
@@ -13295,6 +13932,7 @@
 			"uid": "CSV3C_125"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "129",
 			"card_index_en": "174",
 			"card_type": "Stadium",
@@ -13324,6 +13962,7 @@
 			"uid": "CSV3C_129"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "130",
 			"card_index_en": "193",
 			"card_type": "Special Energy",
@@ -13353,6 +13992,7 @@
 			"uid": "CSV3C_130"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "013",
 			"card_index_en": "26",
 			"card_type": "Pokemon",
@@ -13382,6 +14022,7 @@
 			"uid": "CSV4C_013"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "015",
 			"card_index_en": "199",
 			"card_type": "Pokemon",
@@ -13415,6 +14056,7 @@
 			"uid": "CSV4C_015"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "044",
 			"card_index_en": "202",
 			"card_type": "Pokemon",
@@ -13444,6 +14086,7 @@
 			"uid": "CSV4C_044"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "063",
 			"card_index_en": "88",
 			"card_type": "Pokemon",
@@ -13473,6 +14116,7 @@
 			"uid": "CSV4C_063"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "074",
 			"card_index_en": "123",
 			"card_type": "Pokemon",
@@ -13502,6 +14146,7 @@
 			"uid": "CSV4C_074"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "081",
 			"card_index_en": "205",
 			"card_type": "Pokemon",
@@ -13531,6 +14176,7 @@
 			"uid": "CSV4C_081"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "089",
 			"card_index_en": "139",
 			"card_type": "Pokemon",
@@ -13560,6 +14206,7 @@
 			"uid": "CSV4C_089"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "099",
 			"card_index_en": "162",
 			"card_type": "Pokemon",
@@ -13589,6 +14236,7 @@
 			"uid": "CSV4C_099"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "101",
 			"card_index_en": "164",
 			"card_type": "Pokemon",
@@ -13618,6 +14266,7 @@
 			"uid": "CSV4C_101"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "166",
 			"card_type": "Tool",
@@ -13647,6 +14296,7 @@
 			"uid": "CSV4C_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "162",
 			"card_type": "Tool",
@@ -13676,6 +14326,7 @@
 			"uid": "CSV4C_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "119",
 			"card_index_en": "179",
 			"card_type": "Tool",
@@ -13705,6 +14356,7 @@
 			"uid": "CSV4C_119"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "129",
 			"card_index_en": "190",
 			"card_type": "Special Energy",
@@ -13734,6 +14386,7 @@
 			"uid": "CSV4C_129"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "009",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -13765,6 +14418,7 @@
 			"uid": "CSV5C_009"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "010",
 			"card_index_en": "5",
 			"card_type": "Pokemon",
@@ -13794,6 +14448,7 @@
 			"uid": "CSV5C_010"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "014",
 			"card_index_en": "26",
 			"card_type": "Pokemon",
@@ -13823,6 +14478,7 @@
 			"uid": "CSV5C_014"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "015",
 			"card_index_en": "8",
 			"card_type": "Pokemon",
@@ -13852,6 +14508,7 @@
 			"uid": "CSV5C_015"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "022",
 			"card_index_en": "29",
 			"card_type": "Pokemon",
@@ -13881,6 +14538,7 @@
 			"uid": "CSV5C_022"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "25",
 			"card_type": "Pokemon",
@@ -13912,6 +14570,7 @@
 			"uid": "CSV5C_053"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "26",
 			"card_type": "Pokemon",
@@ -13943,6 +14602,37 @@
 			"uid": "CSV5C_054"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "073",
+			"card_index_en": "123",
+			"card_type": "Pokemon",
+			"effect_id": "ea9a967a89789870e4495d6b26f9c8a2",
+			"energy_type": "F",
+			"hp": 270,
+			"image_key": "CSV5C/073",
+			"image_url": "https://tcg.mik.moe/static/img/CSV5C/073.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "晶光花ex",
+			"name_en": "Glimmora ex",
+			"name_zh": "",
+			"rarity": "RR",
+			"regulation_mark": "G",
+			"set_code": "CSV5C",
+			"set_code_en": "OBF",
+			"set_file": "sets/CSV5C.json",
+			"source_card_index": "073",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV5C",
+			"stage": "Stage 1",
+			"uid": "CSV5C_073"
+		},
+		{
+			"ancient_trait": "Tera",
 			"card_index": "075",
 			"card_index_en": "125",
 			"card_type": "Pokemon",
@@ -13972,6 +14662,7 @@
 			"uid": "CSV5C_075"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "114",
 			"card_index_en": "159",
 			"card_type": "Item",
@@ -14001,6 +14692,7 @@
 			"uid": "CSV5C_114"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "119",
 			"card_index_en": "178",
 			"card_type": "Tool",
@@ -14030,6 +14722,7 @@
 			"uid": "CSV5C_119"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "120",
 			"card_index_en": "177",
 			"card_type": "Tool",
@@ -14059,6 +14752,7 @@
 			"uid": "CSV5C_120"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "167",
 			"card_type": "Supporter",
@@ -14088,6 +14782,7 @@
 			"uid": "CSV5C_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "196",
 			"card_type": "Stadium",
@@ -14117,6 +14812,7 @@
 			"uid": "CSV5C_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "042",
 			"card_index_en": "56",
 			"card_type": "Pokemon",
@@ -14148,6 +14844,7 @@
 			"uid": "CSV6C_042"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "051",
 			"card_index_en": "31",
 			"card_type": "Pokemon",
@@ -14179,6 +14876,97 @@
 			"uid": "CSV6C_051"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "056",
+			"card_index_en": "75",
+			"card_type": "Pokemon",
+			"effect_id": "61acdd76828977fa4ea85995594b3933",
+			"energy_type": "P",
+			"hp": 70,
+			"image_key": "CSV6C/056",
+			"image_url": "https://tcg.mik.moe/static/img/CSV6C/056.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "哭哭面具",
+			"name_en": "Yamask",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "G",
+			"set_code": "CSV6C",
+			"set_code_en": "PAR",
+			"set_file": "sets/CSV6C.json",
+			"source_card_index": "056",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV6C",
+			"stage": "Basic",
+			"uid": "CSV6C_056"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "062",
+			"card_index_en": "82",
+			"card_type": "Pokemon",
+			"effect_id": "2a29a8d92c90a166e603d72bc855c862",
+			"energy_type": "P",
+			"hp": 60,
+			"image_key": "CSV6C/062",
+			"image_url": "https://tcg.mik.moe/static/img/CSV6C/062.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "小锻匠",
+			"name_en": "Tinkatink",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "G",
+			"set_code": "CSV6C",
+			"set_code_en": "PAR",
+			"set_file": "sets/CSV6C.json",
+			"source_card_index": "062",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV6C",
+			"stage": "Basic",
+			"uid": "CSV6C_062"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "063",
+			"card_index_en": "84",
+			"card_type": "Pokemon",
+			"effect_id": "b5670f3ae026615178352ddd7b9755ec",
+			"energy_type": "P",
+			"hp": 80,
+			"image_key": "CSV6C/063",
+			"image_url": "https://tcg.mik.moe/static/img/CSV6C/063.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "巧锻匠",
+			"name_en": "Tinkatuff",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "G",
+			"set_code": "CSV6C",
+			"set_code_en": "PAR",
+			"set_file": "sets/CSV6C.json",
+			"source_card_index": "063",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV6C",
+			"stage": "Stage 1",
+			"uid": "CSV6C_063"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "065",
 			"card_index_en": "42",
 			"card_type": "Pokemon",
@@ -14210,6 +14998,7 @@
 			"uid": "CSV6C_065"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "078",
 			"card_index_en": "118",
 			"card_type": "Pokemon",
@@ -14239,6 +15028,7 @@
 			"uid": "CSV6C_078"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "080",
 			"card_index_en": "105",
 			"card_type": "Pokemon",
@@ -14271,6 +15061,7 @@
 			"uid": "CSV6C_080"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "082",
 			"card_index_en": "107",
 			"card_type": "Pokemon",
@@ -14302,6 +15093,7 @@
 			"uid": "CSV6C_082"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "095",
 			"card_index_en": "123",
 			"card_type": "Pokemon",
@@ -14334,6 +15126,7 @@
 			"uid": "CSV6C_095"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "096",
 			"card_index_en": "124",
 			"card_type": "Pokemon",
@@ -14365,6 +15158,7 @@
 			"uid": "CSV6C_096"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "112",
 			"card_index_en": "156",
 			"card_type": "Pokemon",
@@ -14394,6 +15188,7 @@
 			"uid": "CSV6C_112"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "114",
 			"card_index_en": "91",
 			"card_type": "Item",
@@ -14423,6 +15218,7 @@
 			"uid": "CSV6C_114"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "115",
 			"card_index_en": "106",
 			"card_type": "Item",
@@ -14454,6 +15250,7 @@
 			"uid": "CSV6C_115"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "130",
 			"card_type": "Item",
@@ -14483,6 +15280,7 @@
 			"uid": "CSV6C_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "159",
 			"card_type": "Tool",
@@ -14514,6 +15312,7 @@
 			"uid": "CSV6C_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "119",
 			"card_index_en": "149",
 			"card_type": "Tool",
@@ -14543,6 +15342,7 @@
 			"uid": "CSV6C_119"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "121",
 			"card_index_en": "170",
 			"card_type": "Supporter",
@@ -14574,6 +15374,37 @@
 			"uid": "CSV6C_121"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "124",
+			"card_index_en": "173",
+			"card_type": "Supporter",
+			"effect_id": "2a5c07699e0820cfe5c46e053652023f",
+			"energy_type": "",
+			"hp": 0,
+			"image_key": "CSV6C/124",
+			"image_url": "https://tcg.mik.moe/static/img/CSV6C/124.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "瓢太",
+			"name_en": "Roark",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "G",
+			"set_code": "CSV6C",
+			"set_code_en": "PAR",
+			"set_file": "sets/CSV6C.json",
+			"source_card_index": "124",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV6C",
+			"stage": "",
+			"uid": "CSV6C_124"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "125",
 			"card_index_en": "121",
 			"card_type": "Supporter",
@@ -14603,6 +15434,7 @@
 			"uid": "CSV6C_125"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "157",
 			"card_type": "Stadium",
@@ -14632,6 +15464,7 @@
 			"uid": "CSV6C_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "192",
 			"card_type": "Stadium",
@@ -14661,6 +15494,7 @@
 			"uid": "CSV6C_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "030",
 			"card_index_en": "23",
 			"card_type": "Pokemon",
@@ -14690,6 +15524,7 @@
 			"uid": "CSV7C_030"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "031",
 			"card_index_en": "24",
 			"card_type": "Pokemon",
@@ -14719,6 +15554,7 @@
 			"uid": "CSV7C_031"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "032",
 			"card_index_en": "19",
 			"card_type": "Pokemon",
@@ -14748,6 +15584,7 @@
 			"uid": "CSV7C_032"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "033",
 			"card_index_en": "25",
 			"card_type": "Pokemon",
@@ -14779,6 +15616,7 @@
 			"uid": "CSV7C_033"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "036",
 			"card_index_en": "22",
 			"card_type": "Pokemon",
@@ -14808,6 +15646,7 @@
 			"uid": "CSV7C_036"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "037",
 			"card_index_en": "23",
 			"card_type": "Pokemon",
@@ -14839,6 +15678,7 @@
 			"uid": "CSV7C_037"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "038",
 			"card_index_en": "24",
 			"card_type": "Pokemon",
@@ -14868,6 +15708,7 @@
 			"uid": "CSV7C_038"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "047",
 			"card_index_en": "34",
 			"card_type": "Pokemon",
@@ -14897,6 +15738,7 @@
 			"uid": "CSV7C_047"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "051",
 			"card_index_en": "38",
 			"card_type": "Pokemon",
@@ -14928,6 +15770,7 @@
 			"uid": "CSV7C_051"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "052",
 			"card_index_en": "39",
 			"card_type": "Pokemon",
@@ -14957,6 +15800,7 @@
 			"uid": "CSV7C_052"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "40",
 			"card_type": "Pokemon",
@@ -14986,6 +15830,7 @@
 			"uid": "CSV7C_053"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "054",
 			"card_index_en": "41",
 			"card_type": "Pokemon",
@@ -15015,6 +15860,7 @@
 			"uid": "CSV7C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "059",
 			"card_index_en": "53",
 			"card_type": "Pokemon",
@@ -15044,6 +15890,7 @@
 			"uid": "CSV7C_059"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "065",
 			"card_index_en": "57",
 			"card_type": "Pokemon",
@@ -15073,6 +15920,7 @@
 			"uid": "CSV7C_065"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "091",
 			"card_index_en": "77",
 			"card_type": "Pokemon",
@@ -15104,6 +15952,67 @@
 			"uid": "CSV7C_091"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "102",
+			"card_index_en": "75",
+			"card_type": "Pokemon",
+			"effect_id": "f3c78cc77685fbe6dd76f66795e8a017",
+			"energy_type": "P",
+			"hp": 30,
+			"image_key": "CSV7C/102",
+			"image_url": "https://tcg.mik.moe/static/img/CSV7C/102.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "萌虻",
+			"name_en": "Cutiefly",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV7C",
+			"set_code_en": "TEF",
+			"set_file": "sets/CSV7C.json",
+			"source_card_index": "102",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV7C",
+			"stage": "Basic",
+			"uid": "CSV7C_102"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "103",
+			"card_index_en": "76",
+			"card_type": "Pokemon",
+			"effect_id": "e2ee371632f10e68b3bba36e35aedc1b",
+			"energy_type": "P",
+			"hp": 70,
+			"image_key": "CSV7C/103",
+			"image_url": "https://tcg.mik.moe/static/img/CSV7C/103.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "蝶结萌虻",
+			"name_en": "Ribombee",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "H",
+			"set_code": "CSV7C",
+			"set_code_en": "TEF",
+			"set_file": "sets/CSV7C.json",
+			"source_card_index": "103",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV7C",
+			"stage": "Stage 1",
+			"uid": "CSV7C_103"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "104",
 			"card_index_en": "93",
 			"card_type": "Pokemon",
@@ -15135,6 +16044,7 @@
 			"uid": "CSV7C_104"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "109",
 			"card_index_en": "43",
 			"card_type": "Pokemon",
@@ -15166,6 +16076,7 @@
 			"uid": "CSV7C_109"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "81",
 			"card_type": "Pokemon",
@@ -15197,6 +16108,7 @@
 			"uid": "CSV7C_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "84",
 			"card_type": "Pokemon",
@@ -15226,6 +16138,7 @@
 			"uid": "CSV7C_118"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "123",
 			"card_index_en": "106",
 			"card_type": "Pokemon",
@@ -15255,6 +16168,7 @@
 			"uid": "CSV7C_123"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "131",
 			"card_index_en": "97",
 			"card_type": "Pokemon",
@@ -15286,6 +16200,7 @@
 			"uid": "CSV7C_131"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "132",
 			"card_index_en": "98",
 			"card_type": "Pokemon",
@@ -15317,6 +16232,7 @@
 			"uid": "CSV7C_132"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "141",
 			"card_index_en": "108",
 			"card_type": "Pokemon",
@@ -15346,6 +16262,7 @@
 			"uid": "CSV7C_141"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "142",
 			"card_index_en": "118",
 			"card_type": "Pokemon",
@@ -15378,6 +16295,7 @@
 			"uid": "CSV7C_142"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "143",
 			"card_index_en": "65",
 			"card_type": "Pokemon",
@@ -15409,6 +16327,7 @@
 			"uid": "CSV7C_143"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "147",
 			"card_index_en": "114",
 			"card_type": "Pokemon",
@@ -15438,6 +16357,7 @@
 			"uid": "CSV7C_147"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "153",
 			"card_index_en": "121",
 			"card_type": "Pokemon",
@@ -15469,6 +16389,7 @@
 			"uid": "CSV7C_153"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "154",
 			"card_index_en": "123",
 			"card_type": "Pokemon",
@@ -15500,6 +16421,7 @@
 			"uid": "CSV7C_154"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "159",
 			"card_index_en": "126",
 			"card_type": "Pokemon",
@@ -15531,6 +16453,7 @@
 			"uid": "CSV7C_159"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "161",
 			"card_index_en": "128",
 			"card_type": "Pokemon",
@@ -15560,6 +16483,7 @@
 			"uid": "CSV7C_161"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "162",
 			"card_index_en": "129",
 			"card_type": "Pokemon",
@@ -15589,6 +16513,7 @@
 			"uid": "CSV7C_162"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "170",
 			"card_index_en": "136",
 			"card_type": "Pokemon",
@@ -15618,6 +16543,7 @@
 			"uid": "CSV7C_170"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "171",
 			"card_index_en": "137",
 			"card_type": "Pokemon",
@@ -15647,6 +16573,7 @@
 			"uid": "CSV7C_171"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "175",
 			"card_index_en": "124",
 			"card_type": "Item",
@@ -15676,6 +16603,7 @@
 			"uid": "CSV7C_175"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "177",
 			"card_index_en": "101",
 			"card_type": "Item",
@@ -15705,6 +16633,7 @@
 			"uid": "CSV7C_177"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "178",
 			"card_index_en": "152",
 			"card_type": "Item",
@@ -15734,6 +16663,7 @@
 			"uid": "CSV7C_178"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "180",
 			"card_index_en": "119",
 			"card_type": "Item",
@@ -15763,6 +16693,7 @@
 			"uid": "CSV7C_180"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "181",
 			"card_index_en": "153",
 			"card_type": "Item",
@@ -15792,6 +16723,7 @@
 			"uid": "CSV7C_181"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "182",
 			"card_index_en": "156",
 			"card_type": "Item",
@@ -15821,6 +16753,7 @@
 			"uid": "CSV7C_182"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "185",
 			"card_index_en": "159",
 			"card_type": "Tool",
@@ -15850,6 +16783,7 @@
 			"uid": "CSV7C_185"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "187",
 			"card_index_en": "152",
 			"card_type": "Tool",
@@ -15879,6 +16813,7 @@
 			"uid": "CSV7C_187"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "188",
 			"card_index_en": "151",
 			"card_type": "Tool",
@@ -15908,6 +16843,7 @@
 			"uid": "CSV7C_188"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "189",
 			"card_index_en": "117",
 			"card_type": "Tool",
@@ -15937,6 +16873,7 @@
 			"uid": "CSV7C_189"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "190",
 			"card_index_en": "158",
 			"card_type": "Tool",
@@ -15966,6 +16903,7 @@
 			"uid": "CSV7C_190"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "191",
 			"card_index_en": "145",
 			"card_type": "Supporter",
@@ -15995,6 +16933,7 @@
 			"uid": "CSV7C_191"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "193",
 			"card_index_en": "155",
 			"card_type": "Supporter",
@@ -16024,6 +16963,7 @@
 			"uid": "CSV7C_193"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "194",
 			"card_index_en": "160",
 			"card_type": "Supporter",
@@ -16053,6 +16993,7 @@
 			"uid": "CSV7C_194"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "195",
 			"card_index_en": "147",
 			"card_type": "Supporter",
@@ -16084,6 +17025,7 @@
 			"uid": "CSV7C_195"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "196",
 			"card_index_en": "151",
 			"card_type": "Supporter",
@@ -16113,6 +17055,7 @@
 			"uid": "CSV7C_196"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "197",
 			"card_index_en": "146",
 			"card_type": "Supporter",
@@ -16142,6 +17085,7 @@
 			"uid": "CSV7C_197"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "200",
 			"card_index_en": "156",
 			"card_type": "Stadium",
@@ -16171,6 +17115,7 @@
 			"uid": "CSV7C_200"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "201",
 			"card_index_en": "177",
 			"card_type": "Stadium",
@@ -16200,6 +17145,7 @@
 			"uid": "CSV7C_201"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "202",
 			"card_index_en": "148",
 			"card_type": "Stadium",
@@ -16229,6 +17175,7 @@
 			"uid": "CSV7C_202"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "203",
 			"card_index_en": "162",
 			"card_type": "Special Energy",
@@ -16258,6 +17205,7 @@
 			"uid": "CSV7C_203"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "204",
 			"card_index_en": "161",
 			"card_type": "Special Energy",
@@ -16287,6 +17235,7 @@
 			"uid": "CSV7C_204"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "010",
 			"card_index_en": "2",
 			"card_type": "Pokemon",
@@ -16316,6 +17265,7 @@
 			"uid": "CSV8C_010"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "020",
 			"card_index_en": "14",
 			"card_type": "Pokemon",
@@ -16345,6 +17295,7 @@
 			"uid": "CSV8C_020"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "021",
 			"card_index_en": "15",
 			"card_type": "Pokemon",
@@ -16374,6 +17325,7 @@
 			"uid": "CSV8C_021"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "022",
 			"card_index_en": "16",
 			"card_type": "Pokemon",
@@ -16403,6 +17355,7 @@
 			"uid": "CSV8C_022"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "023",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -16432,6 +17385,7 @@
 			"uid": "CSV8C_023"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "024",
 			"card_index_en": "10",
 			"card_type": "Pokemon",
@@ -16461,6 +17415,7 @@
 			"uid": "CSV8C_024"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "028",
 			"card_index_en": "25",
 			"card_type": "Pokemon",
@@ -16490,6 +17445,7 @@
 			"uid": "CSV8C_028"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "041",
 			"card_index_en": "35",
 			"card_type": "Pokemon",
@@ -16519,6 +17475,7 @@
 			"uid": "CSV8C_041"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "050",
 			"card_index_en": "44",
 			"card_type": "Pokemon",
@@ -16548,6 +17505,7 @@
 			"uid": "CSV8C_050"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "056",
 			"card_index_en": "41",
 			"card_type": "Pokemon",
@@ -16577,6 +17535,7 @@
 			"uid": "CSV8C_056"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "057",
 			"card_index_en": "42",
 			"card_type": "Pokemon",
@@ -16609,6 +17568,7 @@
 			"uid": "CSV8C_057"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "067",
 			"card_index_en": "64",
 			"card_type": "Pokemon",
@@ -16638,6 +17598,7 @@
 			"uid": "CSV8C_067"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "078",
 			"card_index_en": "83",
 			"card_type": "Pokemon",
@@ -16667,6 +17628,7 @@
 			"uid": "CSV8C_078"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "081",
 			"card_index_en": "35",
 			"card_type": "Pokemon",
@@ -16696,6 +17658,7 @@
 			"uid": "CSV8C_081"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "082",
 			"card_index_en": "19",
 			"card_type": "Pokemon",
@@ -16725,6 +17688,7 @@
 			"uid": "CSV8C_082"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "083",
 			"card_index_en": "20",
 			"card_type": "Pokemon",
@@ -16754,6 +17718,7 @@
 			"uid": "CSV8C_083"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "088",
 			"card_index_en": "179",
 			"card_type": "Pokemon",
@@ -16783,6 +17748,7 @@
 			"uid": "CSV8C_088"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "094",
 			"card_index_en": "95",
 			"card_type": "Pokemon",
@@ -16812,6 +17778,7 @@
 			"uid": "CSV8C_094"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "110",
 			"card_index_en": "103",
 			"card_type": "Pokemon",
@@ -16841,6 +17808,7 @@
 			"uid": "CSV8C_110"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "111",
 			"card_index_en": "104",
 			"card_type": "Pokemon",
@@ -16870,6 +17838,7 @@
 			"uid": "CSV8C_111"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "112",
 			"card_index_en": "105",
 			"card_type": "Pokemon",
@@ -16899,6 +17868,7 @@
 			"uid": "CSV8C_112"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "119",
 			"card_index_en": "26",
 			"card_type": "Pokemon",
@@ -16931,6 +17901,7 @@
 			"uid": "CSV8C_119"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "121",
 			"card_index_en": "112",
 			"card_type": "Pokemon",
@@ -16960,6 +17931,7 @@
 			"uid": "CSV8C_121"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "122",
 			"card_index_en": "27",
 			"card_type": "Pokemon",
@@ -16989,6 +17961,37 @@
 			"uid": "CSV8C_122"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "130",
+			"card_index_en": "117",
+			"card_type": "Pokemon",
+			"effect_id": "6e1f0a70900ecdcee11e3a3b1c10e302",
+			"energy_type": "D",
+			"hp": 170,
+			"image_key": "CSV8C/130",
+			"image_url": "https://tcg.mik.moe/static/img/CSV8C/130.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "蜈蚣王",
+			"name_en": "Scolipede",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "H",
+			"set_code": "CSV8C",
+			"set_code_en": "TWM",
+			"set_file": "sets/CSV8C.json",
+			"source_card_index": "130",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV8C",
+			"stage": "Stage 2",
+			"uid": "CSV8C_130"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "133",
 			"card_index_en": "36",
 			"card_type": "Pokemon",
@@ -17018,6 +18021,7 @@
 			"uid": "CSV8C_133"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "135",
 			"card_index_en": "38",
 			"card_type": "Pokemon",
@@ -17047,6 +18051,7 @@
 			"uid": "CSV8C_135"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "136",
 			"card_index_en": "39",
 			"card_type": "Pokemon",
@@ -17076,6 +18081,7 @@
 			"uid": "CSV8C_136"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "153",
 			"card_index_en": "46",
 			"card_type": "Pokemon",
@@ -17105,6 +18111,7 @@
 			"uid": "CSV8C_153"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "154",
 			"card_index_en": "137",
 			"card_type": "Pokemon",
@@ -17134,6 +18141,37 @@
 			"uid": "CSV8C_154"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "156",
+			"card_index_en": "127",
+			"card_type": "Pokemon",
+			"effect_id": "43543442a95ed97f78dc11922cd57534",
+			"energy_type": "N",
+			"hp": 80,
+			"image_key": "CSV8C/156",
+			"image_url": "https://tcg.mik.moe/static/img/CSV8C/156.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "裹蜜虫",
+			"name_en": "Dipplin",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "H",
+			"set_code": "CSV8C",
+			"set_code_en": "TWM",
+			"set_file": "sets/CSV8C.json",
+			"source_card_index": "156",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV8C",
+			"stage": "Stage 1",
+			"uid": "CSV8C_156"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "157",
 			"card_index_en": "71",
 			"card_type": "Pokemon",
@@ -17163,6 +18201,7 @@
 			"uid": "CSV8C_157"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "158",
 			"card_index_en": "72",
 			"card_type": "Pokemon",
@@ -17192,6 +18231,7 @@
 			"uid": "CSV8C_158"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "159",
 			"card_index_en": "73",
 			"card_type": "Pokemon",
@@ -17221,6 +18261,7 @@
 			"uid": "CSV8C_159"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "160",
 			"card_index_en": "131",
 			"card_type": "Pokemon",
@@ -17250,6 +18291,7 @@
 			"uid": "CSV8C_160"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "161",
 			"card_index_en": "111",
 			"card_type": "Pokemon",
@@ -17282,6 +18324,7 @@
 			"uid": "CSV8C_161"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "164",
 			"card_index_en": "133",
 			"card_type": "Pokemon",
@@ -17311,6 +18354,7 @@
 			"uid": "CSV8C_164"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "165",
 			"card_index_en": "134",
 			"card_type": "Pokemon",
@@ -17340,6 +18384,7 @@
 			"uid": "CSV8C_165"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "172",
 			"card_index_en": "141",
 			"card_type": "Pokemon",
@@ -17369,6 +18414,7 @@
 			"uid": "CSV8C_172"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "173",
 			"card_index_en": "165",
 			"card_type": "Item",
@@ -17398,6 +18444,7 @@
 			"uid": "CSV8C_173"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "175",
 			"card_index_en": "142",
 			"card_type": "Item",
@@ -17427,6 +18474,7 @@
 			"uid": "CSV8C_175"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "176",
 			"card_index_en": "163",
 			"card_type": "Item",
@@ -17456,6 +18504,7 @@
 			"uid": "CSV8C_176"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "177",
 			"card_index_en": "175",
 			"card_type": "Item",
@@ -17485,6 +18534,7 @@
 			"uid": "CSV8C_177"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "181",
 			"card_index_en": "128",
 			"card_type": "Item",
@@ -17514,6 +18564,7 @@
 			"uid": "CSV8C_181"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "182",
 			"card_index_en": "143",
 			"card_type": "Item",
@@ -17543,6 +18594,7 @@
 			"uid": "CSV8C_182"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "183",
 			"card_index_en": "61",
 			"card_type": "Item",
@@ -17572,6 +18624,7 @@
 			"uid": "CSV8C_183"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "186",
 			"card_index_en": "129",
 			"card_type": "Tool",
@@ -17601,6 +18654,7 @@
 			"uid": "CSV8C_186"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "187",
 			"card_index_en": "55",
 			"card_type": "Tool",
@@ -17630,6 +18684,7 @@
 			"uid": "CSV8C_187"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "188",
 			"card_index_en": "63",
 			"card_type": "Tool",
@@ -17659,6 +18714,7 @@
 			"uid": "CSV8C_188"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "190",
 			"card_index_en": "150",
 			"card_type": "Tool",
@@ -17688,6 +18744,7 @@
 			"uid": "CSV8C_190"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "191",
 			"card_index_en": "57",
 			"card_type": "Supporter",
@@ -17717,6 +18774,7 @@
 			"uid": "CSV8C_191"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "192",
 			"card_index_en": "112",
 			"card_type": "Supporter",
@@ -17746,6 +18804,7 @@
 			"uid": "CSV8C_192"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "195",
 			"card_index_en": "64",
 			"card_type": "Supporter",
@@ -17775,6 +18834,7 @@
 			"uid": "CSV8C_195"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "196",
 			"card_index_en": "187",
 			"card_type": "Supporter",
@@ -17804,6 +18864,7 @@
 			"uid": "CSV8C_196"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "198",
 			"card_index_en": "154",
 			"card_type": "Supporter",
@@ -17833,6 +18894,7 @@
 			"uid": "CSV8C_198"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "199",
 			"card_index_en": "145",
 			"card_type": "Supporter",
@@ -17862,6 +18924,37 @@
 			"uid": "CSV8C_199"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "200",
+			"card_index_en": "138",
+			"card_type": "Supporter",
+			"effect_id": "2d43eb3b21ee954281030e8da5c7eb94",
+			"energy_type": "",
+			"hp": 0,
+			"image_key": "CSV8C/200",
+			"image_url": "https://tcg.mik.moe/static/img/CSV8C/200.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "海岱",
+			"name_en": "Kofu",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "H",
+			"set_code": "CSV8C",
+			"set_code_en": "SCR",
+			"set_file": "sets/CSV8C.json",
+			"source_card_index": "200",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV8C",
+			"stage": "",
+			"uid": "CSV8C_200"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "201",
 			"card_index_en": "108",
 			"card_type": "Stadium",
@@ -17891,6 +18984,7 @@
 			"uid": "CSV8C_201"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "203",
 			"card_index_en": "153",
 			"card_type": "Stadium",
@@ -17920,6 +19014,7 @@
 			"uid": "CSV8C_203"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "205",
 			"card_index_en": "54",
 			"card_type": "Stadium",
@@ -17949,6 +19044,7 @@
 			"uid": "CSV8C_205"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "206",
 			"card_index_en": "166",
 			"card_type": "Special Energy",
@@ -17978,6 +19074,7 @@
 			"uid": "CSV8C_206"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "207",
 			"card_index_en": "167",
 			"card_type": "Special Energy",
@@ -18007,6 +19104,7 @@
 			"uid": "CSV8C_207"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "004",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18036,6 +19134,7 @@
 			"uid": "CSV9.5C_004"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "006",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18065,6 +19164,37 @@
 			"uid": "CSV9.5C_006"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "019",
+			"card_index_en": "20",
+			"card_type": "Pokemon",
+			"effect_id": "c2a4f4ce310fd236994b700562ce2892",
+			"energy_type": "G",
+			"hp": 30,
+			"image_key": "CSV9.5C/019",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/019.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "斯魔茶",
+			"name_en": "Poltchageist",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV9.5C",
+			"set_code_en": "TWM",
+			"set_file": "sets/CSV9.5C.json",
+			"source_card_index": "019",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9.5C",
+			"stage": "Basic",
+			"uid": "CSV9.5C_019"
+		},
+		{
+			"ancient_trait": "Tera",
 			"card_index": "023",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18094,6 +19224,7 @@
 			"uid": "CSV9.5C_023"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "029",
 			"card_index_en": "40",
 			"card_type": "Pokemon",
@@ -18123,6 +19254,7 @@
 			"uid": "CSV9.5C_029"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "031",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18152,6 +19284,7 @@
 			"uid": "CSV9.5C_031"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "034",
 			"card_index_en": "21",
 			"card_type": "Pokemon",
@@ -18181,6 +19314,7 @@
 			"uid": "CSV9.5C_034"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "036",
 			"card_index_en": "23",
 			"card_type": "Pokemon",
@@ -18210,6 +19344,7 @@
 			"uid": "CSV9.5C_036"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "043",
 			"card_index_en": "51",
 			"card_type": "Pokemon",
@@ -18239,6 +19374,67 @@
 			"uid": "CSV9.5C_043"
 		},
 		{
+			"ancient_trait": "Tera",
+			"card_index": "047",
+			"card_index_en": "26",
+			"card_type": "Pokemon",
+			"effect_id": "4221c41ba964470cc5e7394886cd7716",
+			"energy_type": "W",
+			"hp": 270,
+			"image_key": "CSV9.5C/047",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/047.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "冰伊布ex",
+			"name_en": "Glaceon ex",
+			"name_zh": "",
+			"rarity": "RR",
+			"regulation_mark": "H",
+			"set_code": "CSV9.5C",
+			"set_code_en": "PRE",
+			"set_file": "sets/CSV9.5C.json",
+			"source_card_index": "047",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9.5C",
+			"stage": "Stage 1",
+			"uid": "CSV9.5C_047"
+		},
+		{
+			"ancient_trait": "Tera",
+			"card_index": "058",
+			"card_index_en": "30",
+			"card_type": "Pokemon",
+			"effect_id": "ea603744a76e329006742da58c0f7514",
+			"energy_type": "L",
+			"hp": 260,
+			"image_key": "CSV9.5C/058",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/058.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "雷伊布ex",
+			"name_en": "Jolteon ex",
+			"name_zh": "",
+			"rarity": "RR",
+			"regulation_mark": "H",
+			"set_code": "CSV9.5C",
+			"set_code_en": "PRE",
+			"set_file": "sets/CSV9.5C.json",
+			"source_card_index": "058",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9.5C",
+			"stage": "Stage 1",
+			"uid": "CSV9.5C_058"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "061",
 			"card_index_en": "62",
 			"card_type": "Pokemon",
@@ -18270,6 +19466,7 @@
 			"uid": "CSV9.5C_061"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "068",
 			"card_index_en": "34",
 			"card_type": "Pokemon",
@@ -18299,6 +19496,7 @@
 			"uid": "CSV9.5C_068"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "081",
 			"card_index_en": "89",
 			"card_type": "Pokemon",
@@ -18330,6 +19528,37 @@
 			"uid": "CSV9.5C_081"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "094",
+			"card_index_en": "85",
+			"card_type": "Pokemon",
+			"effect_id": "7c840e8bed0d40dba697cfd3faeed75d",
+			"energy_type": "F",
+			"hp": 70,
+			"image_key": "CSV9.5C/094",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/094.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "螺钉地鼠",
+			"name_en": "Drilbur",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV9.5C",
+			"set_code_en": "TEF",
+			"set_file": "sets/CSV9.5C.json",
+			"source_card_index": "094",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9.5C",
+			"stage": "Basic",
+			"uid": "CSV9.5C_094"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "096",
 			"card_index_en": "25",
 			"card_type": "Pokemon",
@@ -18359,6 +19588,37 @@
 			"uid": "CSV9.5C_096"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "100",
+			"card_index_en": "109",
+			"card_type": "Pokemon",
+			"effect_id": "a1a72373d6d9233349e8a3ef92a0c14d",
+			"energy_type": "F",
+			"hp": 140,
+			"image_key": "CSV9.5C/100",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/100.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "古鼎鹿",
+			"name_en": "Ting-Lu",
+			"name_zh": "",
+			"rarity": "R",
+			"regulation_mark": "G",
+			"set_code": "CSV9.5C",
+			"set_code_en": "PAR",
+			"set_file": "sets/CSV9.5C.json",
+			"source_card_index": "100",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9.5C",
+			"stage": "Basic",
+			"uid": "CSV9.5C_100"
+		},
+		{
+			"ancient_trait": "Tera",
 			"card_index": "104",
 			"card_index_en": "60",
 			"card_type": "Pokemon",
@@ -18388,6 +19648,7 @@
 			"uid": "CSV9.5C_104"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "126",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18417,6 +19678,7 @@
 			"uid": "CSV9.5C_126"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "128",
 			"card_index_en": "43",
 			"card_type": "Pokemon",
@@ -18446,6 +19708,7 @@
 			"uid": "CSV9.5C_128"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "129",
 			"card_index_en": "65",
 			"card_type": "Pokemon",
@@ -18475,6 +19738,7 @@
 			"uid": "CSV9.5C_129"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "140",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18504,6 +19768,7 @@
 			"uid": "CSV9.5C_140"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "141",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18533,6 +19798,7 @@
 			"uid": "CSV9.5C_141"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "149",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18562,6 +19828,7 @@
 			"uid": "CSV9.5C_149"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "163",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -18593,6 +19860,7 @@
 			"uid": "CSV9.5C_163"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "182",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -18622,6 +19890,7 @@
 			"uid": "CSV9.5C_182"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "188",
 			"card_index_en": "96",
 			"card_type": "Supporter",
@@ -18651,6 +19920,7 @@
 			"uid": "CSV9.5C_188"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "199",
 			"card_index_en": "155",
 			"card_type": "Supporter",
@@ -18680,6 +19950,7 @@
 			"uid": "CSV9.5C_199"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "205",
 			"card_index_en": "60",
 			"card_type": "Stadium",
@@ -18709,6 +19980,7 @@
 			"uid": "CSV9.5C_205"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "001",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18738,6 +20010,7 @@
 			"uid": "CSV9C_001"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "006",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18767,6 +20040,7 @@
 			"uid": "CSV9C_006"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "011",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18796,6 +20070,7 @@
 			"uid": "CSV9C_011"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "012",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18825,6 +20100,7 @@
 			"uid": "CSV9C_012"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "013",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18854,6 +20130,7 @@
 			"uid": "CSV9C_013"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "021",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18883,6 +20160,7 @@
 			"uid": "CSV9C_021"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "023",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18912,6 +20190,7 @@
 			"uid": "CSV9C_023"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "033",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18941,6 +20220,7 @@
 			"uid": "CSV9C_033"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "034",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18970,6 +20250,7 @@
 			"uid": "CSV9C_034"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "038",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -18999,6 +20280,7 @@
 			"uid": "CSV9C_038"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "039",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19028,6 +20310,7 @@
 			"uid": "CSV9C_039"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "053",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19057,6 +20340,7 @@
 			"uid": "CSV9C_053"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "054",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19086,6 +20370,7 @@
 			"uid": "CSV9C_054"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "055",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19117,6 +20402,7 @@
 			"uid": "CSV9C_055"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "063",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19146,6 +20432,7 @@
 			"uid": "CSV9C_063"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "064",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19175,6 +20462,7 @@
 			"uid": "CSV9C_064"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "071",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19204,6 +20492,7 @@
 			"uid": "CSV9C_071"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "072",
 			"card_index_en": "58",
 			"card_type": "Pokemon",
@@ -19235,6 +20524,7 @@
 			"uid": "CSV9C_072"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "073",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19264,6 +20554,7 @@
 			"uid": "CSV9C_073"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "074",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19293,6 +20584,7 @@
 			"uid": "CSV9C_074"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "075",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19322,6 +20614,7 @@
 			"uid": "CSV9C_075"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "078",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19351,6 +20644,127 @@
 			"uid": "CSV9C_078"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "082",
+			"card_index_en": "78",
+			"card_type": "Pokemon",
+			"effect_id": "9ed8dedf70df1133f656418c3a41cb0d",
+			"energy_type": "P",
+			"hp": 70,
+			"image_key": "CSV9C/082",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9C/082.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "由克希",
+			"name_en": "Uxie",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV9C",
+			"set_code_en": "SSP",
+			"set_file": "sets/CSV9C.json",
+			"source_card_index": "082",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9C",
+			"stage": "Basic",
+			"uid": "CSV9C_082"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "084",
+			"card_index_en": "80",
+			"card_type": "Pokemon",
+			"effect_id": "eae2a9a7d9e741b30837cc8e41c58780",
+			"energy_type": "P",
+			"hp": 70,
+			"image_key": "CSV9C/084",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9C/084.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "亚克诺姆",
+			"name_en": "Azelf",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV9C",
+			"set_code_en": "SSP",
+			"set_file": "sets/CSV9C.json",
+			"source_card_index": "084",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9C",
+			"stage": "Basic",
+			"uid": "CSV9C_084"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "086",
+			"card_index_en": "82",
+			"card_type": "Pokemon",
+			"effect_id": "44f103a4497ed27afdd7b0c5b107ad12",
+			"energy_type": "P",
+			"hp": 70,
+			"image_key": "CSV9C/086",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9C/086.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "哭哭面具",
+			"name_en": "Yamask",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV9C",
+			"set_code_en": "SSP",
+			"set_file": "sets/CSV9C.json",
+			"source_card_index": "086",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9C",
+			"stage": "Basic",
+			"uid": "CSV9C_086"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "087",
+			"card_index_en": "83",
+			"card_type": "Pokemon",
+			"effect_id": "17727f6b35cbad5906fab2edecf4236d",
+			"energy_type": "P",
+			"hp": 120,
+			"image_key": "CSV9C/087",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9C/087.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "迭失棺",
+			"name_en": "Cofagrigus",
+			"name_zh": "",
+			"rarity": "R",
+			"regulation_mark": "H",
+			"set_code": "CSV9C",
+			"set_code_en": "SSP",
+			"set_file": "sets/CSV9C.json",
+			"source_card_index": "087",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9C",
+			"stage": "Stage 1",
+			"uid": "CSV9C_087"
+		},
+		{
+			"ancient_trait": "Tera",
 			"card_index": "090",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19380,6 +20794,7 @@
 			"uid": "CSV9C_090"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "096",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19409,6 +20824,7 @@
 			"uid": "CSV9C_096"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "097",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19438,6 +20854,7 @@
 			"uid": "CSV9C_097"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "098",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19467,6 +20884,7 @@
 			"uid": "CSV9C_098"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "099",
 			"card_index_en": "100",
 			"card_type": "Pokemon",
@@ -19496,6 +20914,7 @@
 			"uid": "CSV9C_099"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "106",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19525,6 +20944,37 @@
 			"uid": "CSV9C_106"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "110",
+			"card_index_en": "114",
+			"card_type": "Pokemon",
+			"effect_id": "af4015d8313faa7fe639023c5add6a38",
+			"energy_type": "F",
+			"hp": 70,
+			"image_key": "CSV9C/110",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9C/110.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "晶光芽",
+			"name_en": "Glimmet",
+			"name_zh": "",
+			"rarity": "C",
+			"regulation_mark": "H",
+			"set_code": "CSV9C",
+			"set_code_en": "SSP",
+			"set_file": "sets/CSV9C.json",
+			"source_card_index": "110",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9C",
+			"stage": "Basic",
+			"uid": "CSV9C_110"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "112",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19556,6 +21006,7 @@
 			"uid": "CSV9C_112"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "117",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19585,6 +21036,7 @@
 			"uid": "CSV9C_117"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19614,6 +21066,7 @@
 			"uid": "CSV9C_118"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "119",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19643,6 +21096,7 @@
 			"uid": "CSV9C_119"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "127",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19672,6 +21126,7 @@
 			"uid": "CSV9C_127"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "133",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19701,6 +21156,7 @@
 			"uid": "CSV9C_133"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "136",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19730,6 +21186,7 @@
 			"uid": "CSV9C_136"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "138",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19759,6 +21216,7 @@
 			"uid": "CSV9C_138"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "142",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19788,6 +21246,7 @@
 			"uid": "CSV9C_142"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "144",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19817,6 +21276,7 @@
 			"uid": "CSV9C_144"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "147",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19846,6 +21306,7 @@
 			"uid": "CSV9C_147"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "148",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19875,6 +21336,7 @@
 			"uid": "CSV9C_148"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "152",
 			"card_index_en": "142",
 			"card_type": "Pokemon",
@@ -19904,6 +21366,7 @@
 			"uid": "CSV9C_152"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "153",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19933,6 +21396,7 @@
 			"uid": "CSV9C_153"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "154",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19962,6 +21426,7 @@
 			"uid": "CSV9C_154"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "155",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -19991,6 +21456,7 @@
 			"uid": "CSV9C_155"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "161",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -20020,6 +21486,7 @@
 			"uid": "CSV9C_161"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "162",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -20049,6 +21516,7 @@
 			"uid": "CSV9C_162"
 		},
 		{
+			"ancient_trait": "Tera",
 			"card_index": "175",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -20078,6 +21546,7 @@
 			"uid": "CSV9C_175"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "176",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -20109,6 +21578,7 @@
 			"uid": "CSV9C_176"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "178",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -20138,6 +21608,7 @@
 			"uid": "CSV9C_178"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "180",
 			"card_index_en": "186",
 			"card_type": "Item",
@@ -20169,6 +21640,7 @@
 			"uid": "CSV9C_180"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "181",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -20198,6 +21670,7 @@
 			"uid": "CSV9C_181"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "183",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -20229,6 +21702,7 @@
 			"uid": "CSV9C_183"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "186",
 			"card_index_en": "",
 			"card_type": "Item",
@@ -20260,6 +21734,7 @@
 			"uid": "CSV9C_186"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "190",
 			"card_index_en": "170",
 			"card_type": "Tool",
@@ -20289,6 +21764,7 @@
 			"uid": "CSV9C_190"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "192",
 			"card_index_en": "137",
 			"card_type": "Tool",
@@ -20318,6 +21794,7 @@
 			"uid": "CSV9C_192"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "196",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -20347,6 +21824,7 @@
 			"uid": "CSV9C_196"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "198",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -20376,6 +21854,37 @@
 			"uid": "CSV9C_198"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "200",
+			"card_index_en": "139",
+			"card_type": "Supporter",
+			"effect_id": "a3c4d099d726c7dfa4393e7e218661db",
+			"energy_type": "",
+			"hp": 0,
+			"image_key": "CSV9C/200",
+			"image_url": "https://tcg.mik.moe/static/img/CSV9C/200.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "紫竽",
+			"name_en": "Lacey",
+			"name_zh": "",
+			"rarity": "U",
+			"regulation_mark": "H",
+			"set_code": "CSV9C",
+			"set_code_en": "SCR",
+			"set_file": "sets/CSV9C.json",
+			"source_card_index": "200",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSV9C",
+			"stage": "",
+			"uid": "CSV9C_200"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "202",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -20405,6 +21914,7 @@
 			"uid": "CSV9C_202"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "204",
 			"card_index_en": "",
 			"card_type": "Supporter",
@@ -20434,6 +21944,7 @@
 			"uid": "CSV9C_204"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "205",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -20465,6 +21976,7 @@
 			"uid": "CSV9C_205"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "206",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -20494,6 +22006,7 @@
 			"uid": "CSV9C_206"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "207",
 			"card_index_en": "",
 			"card_type": "Stadium",
@@ -20523,6 +22036,7 @@
 			"uid": "CSV9C_207"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "208",
 			"card_index_en": "",
 			"card_type": "Special Energy",
@@ -20554,6 +22068,7 @@
 			"uid": "CSV9C_208"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "DAR",
 			"card_index_en": "7",
 			"card_type": "Basic Energy",
@@ -20583,6 +22098,7 @@
 			"uid": "CSVE1C_DAR"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "FIG",
 			"card_index_en": "6",
 			"card_type": "Basic Energy",
@@ -20612,6 +22128,7 @@
 			"uid": "CSVE1C_FIG"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "FIR",
 			"card_index_en": "2",
 			"card_type": "Basic Energy",
@@ -20641,6 +22158,7 @@
 			"uid": "CSVE1C_FIR"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "GRA",
 			"card_index_en": "1",
 			"card_type": "Basic Energy",
@@ -20670,6 +22188,7 @@
 			"uid": "CSVE1C_GRA"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "LIG",
 			"card_index_en": "4",
 			"card_type": "Basic Energy",
@@ -20699,6 +22218,7 @@
 			"uid": "CSVE1C_LIG"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "MET",
 			"card_index_en": "8",
 			"card_type": "Basic Energy",
@@ -20728,6 +22248,7 @@
 			"uid": "CSVE1C_MET"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "PSY",
 			"card_index_en": "5",
 			"card_type": "Basic Energy",
@@ -20757,6 +22278,7 @@
 			"uid": "CSVE1C_PSY"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "WAT",
 			"card_index_en": "3",
 			"card_type": "Basic Energy",
@@ -20786,6 +22308,7 @@
 			"uid": "CSVE1C_WAT"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "045",
 			"card_index_en": "59",
 			"card_type": "Pokemon",
@@ -20817,6 +22340,7 @@
 			"uid": "CSVE2C_045"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "034",
 			"card_index_en": "116",
 			"card_type": "Item",
@@ -20846,6 +22370,7 @@
 			"uid": "CSVH1C_034"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "035",
 			"card_index_en": "128",
 			"card_type": "Item",
@@ -20875,6 +22400,7 @@
 			"uid": "CSVH1C_035"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "043",
 			"card_index_en": "123",
 			"card_type": "Item",
@@ -20904,6 +22430,7 @@
 			"uid": "CSVH1C_043"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "045",
 			"card_index_en": "129",
 			"card_type": "Item",
@@ -20933,6 +22460,7 @@
 			"uid": "CSVH1C_045"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "047",
 			"card_index_en": "126",
 			"card_type": "Item",
@@ -20962,6 +22490,7 @@
 			"uid": "CSVH1C_047"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "050",
 			"card_index_en": "185",
 			"card_type": "Tool",
@@ -20993,6 +22522,7 @@
 			"uid": "CSVH1C_050"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "051",
 			"card_index_en": "108",
 			"card_type": "Supporter",
@@ -21022,6 +22552,7 @@
 			"uid": "CSVH1C_051"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "008",
 			"card_index_en": "129",
 			"card_type": "Item",
@@ -21051,6 +22582,7 @@
 			"uid": "CSVH1aC_008"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "023",
 			"card_index_en": "154",
 			"card_type": "Supporter",
@@ -21080,6 +22612,7 @@
 			"uid": "CSVH1aC_023"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "002",
 			"card_index_en": "156",
 			"card_type": "Pokemon",
@@ -21109,6 +22642,7 @@
 			"uid": "CSVH3aC_002"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "017",
 			"card_index_en": "90",
 			"card_type": "Tool",
@@ -21138,6 +22672,7 @@
 			"uid": "CSVH3aC_017"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "001",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -21167,6 +22702,97 @@
 			"uid": "CSVH3pC_001"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "002",
+			"card_index_en": "22",
+			"card_type": "Pokemon",
+			"effect_id": "defef39f399206a6de240aab5caa7f6b",
+			"energy_type": "G",
+			"hp": 70,
+			"image_key": "CSVH5C/002",
+			"image_url": "https://tcg.mik.moe/static/img/CSVH5C/002.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "来悲粗茶",
+			"name_en": "Sinistcha",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_mark": "H",
+			"set_code": "CSVH5C",
+			"set_code_en": "TWM",
+			"set_file": "sets/CSVH5C.json",
+			"source_card_index": "002",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVH5C",
+			"stage": "Stage 1",
+			"uid": "CSVH5C_002"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "036",
+			"card_index_en": "127",
+			"card_type": "Pokemon",
+			"effect_id": "6db296a19d741896c070fe471e92b8f3",
+			"energy_type": "F",
+			"hp": 240,
+			"image_key": "CSVL1C/036",
+			"image_url": "https://tcg.mik.moe/static/img/CSVL1C/036.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "古鼎鹿ex",
+			"name_en": "Ting-Lu ex",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_mark": "G",
+			"set_code": "CSVL1C",
+			"set_code_en": "PAL",
+			"set_file": "sets/CSVL1C.json",
+			"source_card_index": "036",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVL1C",
+			"stage": "Basic",
+			"uid": "CSVL1C_036"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "037",
+			"card_index_en": "125",
+			"card_type": "Pokemon",
+			"effect_id": "94df9ff8b811a6ae267a87194abd5323",
+			"energy_type": "F",
+			"hp": 230,
+			"image_key": "CSVL1C/037",
+			"image_url": "https://tcg.mik.moe/static/img/CSVL1C/037.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "故勒顿ex",
+			"name_en": "Koraidon ex",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_mark": "G",
+			"set_code": "CSVL1C",
+			"set_code_en": "SVI",
+			"set_file": "sets/CSVL1C.json",
+			"source_card_index": "037",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVL1C",
+			"stage": "Basic",
+			"uid": "CSVL1C_037"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "045",
 			"card_index_en": "69",
 			"card_type": "Pokemon",
@@ -21199,6 +22825,67 @@
 			"uid": "CSVL1C_045"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "041",
+			"card_index_en": "124",
+			"card_type": "Pokemon",
+			"effect_id": "6c4382c1f802fa873ec01976306d44be",
+			"energy_type": "F",
+			"hp": 40,
+			"image_key": "CSVL2C/041",
+			"image_url": "https://tcg.mik.moe/static/img/CSVL2C/041.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "晶光芽",
+			"name_en": "Glimmet",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_mark": "G",
+			"set_code": "CSVL2C",
+			"set_code_en": "PAL",
+			"set_file": "sets/CSVL2C.json",
+			"source_card_index": "041",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVL2C",
+			"stage": "Basic",
+			"uid": "CSVL2C_041"
+		},
+		{
+			"ancient_trait": "",
+			"card_index": "008",
+			"card_index_en": "23",
+			"card_type": "Pokemon",
+			"effect_id": "3393a671748e17d4cf292b6e0201bb7c",
+			"energy_type": "G",
+			"hp": 240,
+			"image_key": "CSVNC/008",
+			"image_url": "https://tcg.mik.moe/static/img/CSVNC/008.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "ex",
+			"name": "来悲粗茶ex",
+			"name_en": "Sinistcha ex",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_mark": "H",
+			"set_code": "CSVNC",
+			"set_code_en": "TWM",
+			"set_file": "sets/CSVNC.json",
+			"source_card_index": "008",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVNC",
+			"stage": "Stage 1",
+			"uid": "CSVNC_008"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "005",
 			"card_index_en": "17",
 			"card_type": "Pokemon",
@@ -21228,6 +22915,7 @@
 			"uid": "CSVSC_005"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "79",
 			"card_index_en": "79",
 			"card_type": "Tool",
@@ -21259,6 +22947,7 @@
 			"uid": "LEN_BLK_79"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "10",
 			"card_index_en": "10",
 			"card_type": "Pokemon",
@@ -21299,6 +22988,7 @@
 			"uid": "LEN_DRI_10"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "134",
 			"card_index_en": "134",
 			"card_type": "Pokemon",
@@ -21333,6 +23023,7 @@
 			"uid": "LEN_DRI_134"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "135",
 			"card_index_en": "135",
 			"card_type": "Pokemon",
@@ -21367,6 +23058,7 @@
 			"uid": "LEN_DRI_135"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "136",
 			"card_index_en": "136",
 			"card_type": "Pokemon",
@@ -21404,6 +23096,7 @@
 			"uid": "LEN_DRI_136"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "169",
 			"card_index_en": "169",
 			"card_type": "Stadium",
@@ -21436,6 +23129,7 @@
 			"uid": "LEN_DRI_169"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "116",
 			"card_index_en": "116",
 			"card_type": "Pokemon",
@@ -21475,6 +23169,7 @@
 			"uid": "LEN_JTG_116"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "146",
 			"card_index_en": "146",
 			"card_type": "Supporter",
@@ -21509,6 +23204,7 @@
 			"uid": "LEN_JTG_146"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "152",
 			"card_index_en": "152",
 			"card_type": "Stadium",
@@ -21542,6 +23238,7 @@
 			"uid": "LEN_JTG_152"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "153",
 			"card_index_en": "153",
 			"card_type": "Item",
@@ -21579,6 +23276,7 @@
 			"uid": "LEN_JTG_153"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "26",
 			"card_index_en": "26",
 			"card_type": "Pokemon",
@@ -21616,6 +23314,7 @@
 			"uid": "LEN_JTG_26"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "27",
 			"card_index_en": "27",
 			"card_type": "Pokemon",
@@ -21654,6 +23353,7 @@
 			"uid": "LEN_JTG_27"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "56",
 			"card_index_en": "56",
 			"card_type": "Pokemon",
@@ -21699,6 +23399,7 @@
 			"uid": "LEN_JTG_56"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "8",
 			"card_index_en": "8",
 			"card_type": "Pokemon",
@@ -21735,6 +23436,7 @@
 			"uid": "LEN_JTG_8"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "97",
 			"card_index_en": "97",
 			"card_type": "Pokemon",
@@ -21775,6 +23477,7 @@
 			"uid": "LEN_JTG_97"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "98",
 			"card_index_en": "98",
 			"card_type": "Pokemon",
@@ -21821,6 +23524,7 @@
 			"uid": "LEN_JTG_98"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "4",
 			"card_index_en": "4",
 			"card_type": "Pokemon",
@@ -21859,6 +23563,7 @@
 			"uid": "LEN_PRE_4"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "77",
 			"card_index_en": "77",
 			"card_type": "Pokemon",
@@ -21893,6 +23598,7 @@
 			"uid": "LEN_PRE_77"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "114",
 			"card_index_en": "114",
 			"card_type": "Pokemon",
@@ -21932,6 +23638,7 @@
 			"uid": "LEN_SCR_114"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "115",
 			"card_index_en": "115",
 			"card_type": "Pokemon",
@@ -21976,6 +23683,7 @@
 			"uid": "LEN_SCR_115"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "118",
 			"card_index_en": "118",
 			"card_type": "Pokemon",
@@ -22016,6 +23724,7 @@
 			"uid": "LEN_SCR_118"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "131",
 			"card_index_en": "131",
 			"card_type": "Stadium",
@@ -22053,6 +23762,7 @@
 			"uid": "LEN_SCR_131"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "133",
 			"card_index_en": "133",
 			"card_type": "Supporter",
@@ -22096,6 +23806,7 @@
 			"uid": "LEN_SCR_133"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "170",
 			"card_index_en": "170",
 			"card_type": "Supporter",
@@ -22130,6 +23841,7 @@
 			"uid": "LEN_SSP_170"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "76",
 			"card_index_en": "76",
 			"card_type": "Pokemon",
@@ -22172,6 +23884,7 @@
 			"uid": "LEN_SSP_76"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "85",
 			"card_index_en": "85",
 			"card_type": "Pokemon",
@@ -22212,6 +23925,7 @@
 			"uid": "LEN_SVI_85"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "067",
 			"card_index_en": "47",
 			"card_type": "Pokemon",
@@ -22241,6 +23955,7 @@
 			"uid": "SVP_067"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "080",
 			"card_index_en": "102",
 			"card_type": "Pokemon",
@@ -22270,6 +23985,7 @@
 			"uid": "SVP_080"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "102",
 			"card_index_en": "65",
 			"card_type": "Pokemon",
@@ -22299,6 +24015,7 @@
 			"uid": "SVP_102"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "105",
 			"card_index_en": "87",
 			"card_type": "Pokemon",
@@ -22328,6 +24045,7 @@
 			"uid": "SVP_105"
 		},
 		{
+			"ancient_trait": "",
 			"card_index": "144",
 			"card_index_en": "88",
 			"card_type": "Pokemon",
@@ -22359,6 +24077,37 @@
 			"uid": "SVP_144"
 		},
 		{
+			"ancient_trait": "",
+			"card_index": "159",
+			"card_index_en": "102",
+			"card_type": "Pokemon",
+			"effect_id": "cfc98cad588e26c7060a44ac7ed2b371",
+			"energy_type": "P",
+			"hp": 70,
+			"image_key": "SVP/159",
+			"image_url": "https://tcg.mik.moe/static/img/SVP/159.png",
+			"implementation_reason": "",
+			"implementation_status": "implemented",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "小锻匠",
+			"name_en": "Tinkatink",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_mark": "G",
+			"set_code": "SVP",
+			"set_code_en": "PAL",
+			"set_file": "sets/SVP.json",
+			"source_card_index": "159",
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "SVP",
+			"stage": "Basic",
+			"uid": "SVP_159"
+		},
+		{
+			"ancient_trait": "",
 			"card_index": "001",
 			"card_index_en": "",
 			"card_type": "Pokemon",
@@ -22388,6 +24137,6 @@
 			"uid": "UTEST_001"
 		}
 	],
-	"catalog_version": "2026.07.12.1",
-	"schema_version": 1
+	"catalog_version": "2026.08.02.1",
+	"schema_version": 2
 }

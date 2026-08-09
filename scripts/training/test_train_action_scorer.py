@@ -75,6 +75,50 @@ def _make_legal_action(
 
 
 class TrainActionScorerTests(unittest.TestCase):
+    def test_load_data_filters_on_public_opponent_strategy_id(self):
+        tmp_dir = os.path.join(os.getcwd(), "tmp_test_matchup_filter_%s" % uuid.uuid4().hex)
+        os.makedirs(tmp_dir, exist_ok=True)
+        try:
+            target = _make_decision_record(
+                1,
+                0,
+                [0.1, 0.2],
+                1.0,
+                [
+                    _make_legal_action(0, "attack", 100.0, [1.0, 0.0], chosen=True),
+                    _make_legal_action(1, "play_trainer", 10.0, [0.0, 1.0]),
+                ],
+            )
+            target["opponent_deck_identity"] = "v18_800017097_no_balloon_gardevoir"
+            sibling = dict(target)
+            sibling["decision_id"] = 2
+            sibling["opponent_deck_identity"] = "v18_800018497_standard_gardevoir"
+            with open(os.path.join(tmp_dir, "match.json"), "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "failure_reason": "normal_game_end",
+                        "match_quality_weight": 1.0,
+                        "meta": {"match_id": "match_public_filter"},
+                        "records": [target, sibling],
+                    },
+                    handle,
+                )
+
+            samples, *_rest = train_action_scorer.load_data(
+                tmp_dir,
+                opponent_strategy_id="v18_800017097_no_balloon_gardevoir",
+            )
+
+            self.assertEqual(len(samples), 2)
+            self.assertTrue(
+                all(
+                    sample["opponent_deck_identity"] == "v18_800017097_no_balloon_gardevoir"
+                    for sample in samples
+                )
+            )
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
     def test_build_grouped_split_indices_keeps_groups_isolated(self):
         group_ids = [
             "match_a", "match_a",

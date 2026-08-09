@@ -47,9 +47,14 @@ var heuristic_weights: Dictionary = {}
 var value_net_path: String = ""
 var action_scorer_path: String = ""
 var interaction_scorer_path: String = ""
+## opponent strategy id -> {action_scorer_path, interaction_scorer_path}.
+## Keys are activated only by a unique public fingerprint.
+var matchup_policy_artifacts: Dictionary = {}
 var _value_net: RefCounted = null
 var _action_scorer: RefCounted = null
 var _interaction_scorer: RefCounted = null
+var _matchup_action_scorers: Dictionary = {}
+var _matchup_interaction_scorers: Dictionary = {}
 var _setup_planner = AISetupPlannerScript.new()
 var _legal_action_builder = AILegalActionBuilderScript.new()
 var _feature_extractor = AIFeatureExtractorScript.new()
@@ -130,11 +135,66 @@ func _build_turn_contract(gsm: GameStateMachine, extra_context: Dictionary = {})
 	if gsm == null or gsm.game_state == null:
 		return {}
 	var plan_context: Dictionary = extra_context.duplicate(true)
+	var matchup_context := _build_matchup_context(gsm.game_state)
+	plan_context["matchup_context"] = matchup_context.duplicate(true)
+	var turn_contract: Dictionary = {}
 	if _deck_strategy.has_method("build_turn_contract"):
-		return _deck_strategy.call("build_turn_contract", gsm.game_state, player_index, plan_context)
-	if _deck_strategy.has_method("build_turn_plan"):
-		return _deck_strategy.call("build_turn_plan", gsm.game_state, player_index, plan_context)
-	return {}
+		turn_contract = _deck_strategy.call("build_turn_contract", gsm.game_state, player_index, plan_context)
+	elif _deck_strategy.has_method("build_turn_plan"):
+		turn_contract = _deck_strategy.call("build_turn_plan", gsm.game_state, player_index, plan_context)
+	if _deck_strategy.has_method("apply_matchup_overlay_to_turn_contract"):
+		turn_contract = _deck_strategy.call(
+			"apply_matchup_overlay_to_turn_contract",
+			turn_contract,
+			gsm.game_state,
+			player_index,
+			matchup_context
+		)
+	return turn_contract
+
+
+func _build_matchup_context(game_state: GameState) -> Dictionary:
+	if game_state == null or _deck_strategy == null:
+		return {
+			"status": "unknown",
+			"is_unique": false,
+			"opponent_deck_id": 0,
+			"opponent_strategy_id": "",
+			"opponent_archetype": "",
+		}
+	if _deck_strategy.has_method("build_matchup_context"):
+		var built: Variant = _deck_strategy.call("build_matchup_context", game_state, player_index)
+		if built is Dictionary:
+			return (built as Dictionary).duplicate(true)
+	return {
+		"status": "unsupported",
+		"is_unique": false,
+		"opponent_deck_id": 0,
+		"opponent_strategy_id": "",
+		"opponent_archetype": "",
+	}
+
+
+func resolve_matchup_policy_artifacts(game_state: GameState) -> Dictionary:
+	var matchup_context := _build_matchup_context(game_state)
+	var strategy_id := str(matchup_context.get("opponent_strategy_id", ""))
+	var result := {
+		"active": false,
+		"status": str(matchup_context.get("status", "unknown")),
+		"opponent_strategy_id": strategy_id,
+		"action_scorer_path": "",
+		"interaction_scorer_path": "",
+	}
+	if not bool(matchup_context.get("is_unique", false)) or strategy_id == "":
+		return result
+	var entry: Variant = matchup_policy_artifacts.get(strategy_id, {})
+	if not (entry is Dictionary):
+		return result
+	result["action_scorer_path"] = str((entry as Dictionary).get("action_scorer_path", ""))
+	result["interaction_scorer_path"] = str((entry as Dictionary).get("interaction_scorer_path", ""))
+	result["active"] = str(result["action_scorer_path"]) != "" \
+		or str(result["interaction_scorer_path"]) != ""
+	return result
 
 
 func _resolve_decision_runtime_mode() -> String:
@@ -166,6 +226,76 @@ func _ensure_interaction_scorer_loaded() -> void:
 		_interaction_scorer = null
 	if _step_resolver != null:
 		_step_resolver.interaction_scorer = _interaction_scorer
+
+
+func _action_scorer_for_matchup(matchup_context: Dictionary) -> RefCounted:
+	var path := _matchup_artifact_path(matchup_context, "action_scorer_path")
+	if path == "":
+		_ensure_action_scorer_loaded()
+		return _action_scorer
+	if _matchup_action_scorers.has(path):
+		var cached: Variant = _matchup_action_scorers.get(path, null)
+		if cached != null:
+			return cached
+		_ensure_action_scorer_loaded()
+		return _action_scorer
+	var scorer: RefCounted = AIActionScorerScript.new()
+	if not bool(scorer.call("load_weights", path)):
+		push_warning("[AIOpponent] 无法加载 matchup 动作评分器，回退通用模型: %s" % path)
+		_matchup_action_scorers[path] = null
+		_ensure_action_scorer_loaded()
+		return _action_scorer
+	var expected_strategy_id := str(matchup_context.get("opponent_strategy_id", ""))
+	var model_strategy_id := str(scorer.call("get_matchup_strategy_id")) \
+		if scorer.has_method("get_matchup_strategy_id") else ""
+	if model_strategy_id != "" and model_strategy_id != expected_strategy_id:
+		push_warning("[AIOpponent] matchup 动作评分器身份不匹配，回退通用模型: %s != %s" % [model_strategy_id, expected_strategy_id])
+		_matchup_action_scorers[path] = null
+		_ensure_action_scorer_loaded()
+		return _action_scorer
+	_matchup_action_scorers[path] = scorer
+	return scorer
+
+
+func _interaction_scorer_for_matchup(matchup_context: Dictionary) -> RefCounted:
+	var path := _matchup_artifact_path(matchup_context, "interaction_scorer_path")
+	if path == "":
+		_ensure_interaction_scorer_loaded()
+		return _interaction_scorer
+	if _matchup_interaction_scorers.has(path):
+		var cached: Variant = _matchup_interaction_scorers.get(path, null)
+		if cached != null:
+			return cached
+		_ensure_interaction_scorer_loaded()
+		return _interaction_scorer
+	var scorer: RefCounted = AIInteractionScorerScript.new()
+	if not bool(scorer.call("load_weights", path)):
+		push_warning("[AIOpponent] 无法加载 matchup 交互评分器，回退通用模型: %s" % path)
+		_matchup_interaction_scorers[path] = null
+		_ensure_interaction_scorer_loaded()
+		return _interaction_scorer
+	var expected_strategy_id := str(matchup_context.get("opponent_strategy_id", ""))
+	var model_strategy_id := str(scorer.call("get_matchup_strategy_id")) \
+		if scorer.has_method("get_matchup_strategy_id") else ""
+	if model_strategy_id != "" and model_strategy_id != expected_strategy_id:
+		push_warning("[AIOpponent] matchup 交互评分器身份不匹配，回退通用模型: %s != %s" % [model_strategy_id, expected_strategy_id])
+		_matchup_interaction_scorers[path] = null
+		_ensure_interaction_scorer_loaded()
+		return _interaction_scorer
+	_matchup_interaction_scorers[path] = scorer
+	return scorer
+
+
+func _matchup_artifact_path(matchup_context: Dictionary, field_name: String) -> String:
+	if not bool(matchup_context.get("is_unique", false)):
+		return ""
+	var strategy_id := str(matchup_context.get("opponent_strategy_id", ""))
+	if strategy_id == "":
+		return ""
+	var entry: Variant = matchup_policy_artifacts.get(strategy_id, {})
+	if not (entry is Dictionary):
+		return ""
+	return str((entry as Dictionary).get(field_name, ""))
 
 
 func set_decision_exporter(exporter) -> void:
@@ -205,8 +335,19 @@ func build_rule_floor_certificate(
 		"build_rule_floor_turn_plan",
 		gsm.game_state,
 		player_index,
-		{"prompt_kind": "v18cpg_rule_floor_certificate"}
+		{
+			"prompt_kind": "v18cpg_rule_floor_certificate",
+			"matchup_context": _build_matchup_context(gsm.game_state),
+		}
 	)
+	if _deck_strategy.has_method("apply_matchup_overlay_to_turn_contract"):
+		turn_plan = _deck_strategy.call(
+			"apply_matchup_overlay_to_turn_contract",
+			turn_plan,
+			gsm.game_state,
+			player_index,
+			_build_matchup_context(gsm.game_state)
+		)
 	var scoreable: Array[Dictionary] = []
 	var end_entry: Dictionary = {}
 	var scores: Dictionary = {}
@@ -336,10 +477,12 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 		_clear_consumed_prompt(battle_scene)
 		return _run_setup_bench_step(battle_scene, gsm, pending_choice, dialog_data)
 	if pending_choice == "effect_interaction":
-		_ensure_interaction_scorer_loaded()
+		var interaction_matchup_context := _build_matchup_context(gsm.game_state)
 		if _step_resolver != null:
-			_step_resolver.interaction_scorer = _interaction_scorer
+			_step_resolver.interaction_scorer = _interaction_scorer_for_matchup(interaction_matchup_context)
 			_step_resolver.decision_exporter = _decision_exporter
+			if _step_resolver.has_method("set_matchup_context"):
+				_step_resolver.call("set_matchup_context", interaction_matchup_context)
 		var llm_before_interaction: Dictionary = _llm_runtime_snapshot(gsm)
 		var public_step_context := _current_effect_step_public_context(battle_scene)
 		var interaction_handled: bool = _step_resolver.resolve_pending_step(
@@ -688,6 +831,7 @@ func _augment_action_for_scoring(gsm: GameStateMachine, action: Dictionary) -> D
 func _build_trace_scored_actions(gsm: GameStateMachine, actions: Array[Dictionary]) -> Array[Dictionary]:
 	_heuristics.weights = heuristic_weights
 	var state_features: Array = _encode_state_features(gsm.game_state if gsm != null else null)
+	var matchup_context := _build_matchup_context(gsm.game_state if gsm != null else null)
 	var scored_actions: Array[Dictionary] = []
 	var teacher_estimates: Array[Dictionary] = []
 	if _should_collect_action_teachers():
@@ -702,7 +846,12 @@ func _build_trace_scored_actions(gsm: GameStateMachine, actions: Array[Dictionar
 			"features": _feature_extractor.build_context(gsm, player_index, scored_action),
 		}
 		var heuristic_score: float = _heuristics.score_action(scored_action, score_context)
-		var learned_action_score: float = _score_action_with_action_scorer(str(scored_action.get("kind", "")), state_features, score_context["features"])
+		var learned_action_score: float = _score_action_with_action_scorer(
+			str(scored_action.get("kind", "")),
+			state_features,
+			score_context["features"],
+			matchup_context
+		)
 		var score: float = heuristic_score + learned_action_score
 		score_context["features"]["heuristic_score"] = heuristic_score
 		score_context["features"]["learned_action_score"] = learned_action_score
@@ -718,16 +867,21 @@ func _build_trace_scored_actions(gsm: GameStateMachine, actions: Array[Dictionar
 	return scored_actions
 
 
-func _score_action_with_action_scorer(action_kind: String, state_features: Array, features: Dictionary) -> float:
+func _score_action_with_action_scorer(
+	action_kind: String,
+	state_features: Array,
+	features: Dictionary,
+	matchup_context: Dictionary = {}
+) -> float:
 	if not ACTION_SCORER_SUPPORTED_KINDS.has(action_kind):
 		return 0.0
 	var action_vector_variant: Variant = features.get("action_vector", [])
 	if not (action_vector_variant is Array) or (action_vector_variant as Array).is_empty():
 		return 0.0
-	_ensure_action_scorer_loaded()
-	if _action_scorer == null or not _action_scorer.has_method("score_delta"):
+	var scorer := _action_scorer_for_matchup(matchup_context)
+	if scorer == null or not scorer.has_method("score_delta"):
 		return 0.0
-	return float(_action_scorer.call("score_delta", state_features, action_vector_variant, action_kind))
+	return float(scorer.call("score_delta", state_features, action_vector_variant, action_kind))
 
 
 func _should_collect_action_teachers() -> bool:
@@ -785,6 +939,13 @@ func _record_decision_trace_from_choice(
 	trace.used_mcts = used_mcts
 	trace.runtime_mode = runtime_mode
 	trace.turn_contract = turn_contract.duplicate(true)
+	trace.strategy_id = str(_deck_strategy.call("get_strategy_id")) \
+		if _deck_strategy != null and _deck_strategy.has_method("get_strategy_id") else ""
+	var trace_matchup_context: Dictionary = turn_contract.get("matchup_context", {}) \
+		if turn_contract.get("matchup_context", {}) is Dictionary else {}
+	if trace_matchup_context.is_empty():
+		trace_matchup_context = _build_matchup_context(gsm.game_state if gsm != null else null)
+	trace.matchup_context = trace_matchup_context.duplicate(true)
 	trace.legal_actions = actions.duplicate(true)
 	trace.scored_actions = scored_actions.duplicate(true)
 	var chosen_scored_action: Dictionary = _find_matching_scored_action(scored_actions, chosen_action)
@@ -1163,8 +1324,6 @@ func _run_heavy_baton_step(battle_scene: Control, gsm: GameStateMachine) -> bool
 	var best_slot: PokemonSlot = _pick_best_handoff_target(bench_slots, gsm, "heavy_baton_target")
 	if best_slot == null:
 		best_slot = bench_slots[0]
-	if str(battle_scene.get("_pending_choice")) == "heavy_baton_target":
-		_clear_consumed_prompt(battle_scene)
 	var source_energy_raw: Array = dialog_data.get("source_energy", [])
 	var selected_energy: Array[CardInstance] = []
 	for energy_variant: Variant in source_energy_raw:
@@ -1178,6 +1337,15 @@ func _run_heavy_baton_step(battle_scene: Control, gsm: GameStateMachine) -> bool
 	else:
 		resolved = gsm.resolve_heavy_baton_choice_with_energy(player_index_hb, best_slot, selected_energy)
 	if resolved:
+		# Resolution can synchronously emit the next rule prompt. Clear only the
+		# exact prompt we consumed, and never erase a newly emitted continuation.
+		var current_dialog_data: Dictionary = battle_scene.get("_dialog_data")
+		if (
+			str(battle_scene.get("_pending_choice")) == "heavy_baton_target"
+			and int(current_dialog_data.get("player", -1)) == player_index_hb
+			and current_dialog_data.get("source_slot", null) == dialog_data.get("source_slot", null)
+		):
+			_clear_consumed_prompt(battle_scene)
 		if battle_scene.has_method("_refresh_ui_after_successful_action"):
 			battle_scene.call("_refresh_ui_after_successful_action", false, player_index)
 		elif battle_scene.has_method("_refresh_ui"):
@@ -1208,9 +1376,14 @@ func _run_exp_share_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 		if energy_variant is CardInstance:
 			selected_energy = energy_variant
 			break
-	if str(battle_scene.get("_pending_choice")) == "exp_share_target":
-		_clear_consumed_prompt(battle_scene)
 	if gsm.resolve_exp_share_choice(player_index_exp, best_slot, selected_energy):
+		var current_dialog_data: Dictionary = battle_scene.get("_dialog_data")
+		if (
+			str(battle_scene.get("_pending_choice")) == "exp_share_target"
+			and int(current_dialog_data.get("player", -1)) == player_index_exp
+			and current_dialog_data.get("source_slot", null) == dialog_data.get("source_slot", null)
+		):
+			_clear_consumed_prompt(battle_scene)
 		if battle_scene.has_method("_refresh_ui_after_successful_action"):
 			battle_scene.call("_refresh_ui_after_successful_action", false, player_index)
 		elif battle_scene.has_method("_refresh_ui"):
@@ -1269,6 +1442,7 @@ func _pick_best_handoff_target(bench_slots: Array[PokemonSlot], gsm: GameStateMa
 		"game_state": gsm.game_state if gsm != null else null,
 		"player_index": player_index,
 		"all_items": bench_slots,
+		"matchup_context": _build_matchup_context(gsm.game_state if gsm != null else null),
 	}
 	handoff_context["turn_plan"] = _build_turn_plan(gsm, {"step_id": step_id, "prompt_kind": "handoff"})
 	var state_features: Array = _encode_state_features(gsm.game_state if gsm != null else null)
@@ -1335,13 +1509,15 @@ func _score_interaction_with_interaction_scorer(
 	state_features: Array,
 	strategy_score: float
 ) -> float:
-	_ensure_interaction_scorer_loaded()
-	if _interaction_scorer == null or not _interaction_scorer.has_method("score_delta"):
+	var matchup_context: Dictionary = context.get("matchup_context", {}) \
+		if context.get("matchup_context", {}) is Dictionary else {}
+	var scorer := _interaction_scorer_for_matchup(matchup_context)
+	if scorer == null or not scorer.has_method("score_delta"):
 		return 0.0
 	var feature_context: Dictionary = context.duplicate(true)
 	feature_context["strategy_score"] = strategy_score
 	var interaction_vector: Array[float] = _interaction_feature_encoder.build_vector(item, step, feature_context)
-	return float(_interaction_scorer.call("score_delta", state_features, interaction_vector))
+	return float(scorer.call("score_delta", state_features, interaction_vector))
 
 
 func _clear_consumed_prompt(battle_scene: Control) -> void:
@@ -1367,8 +1543,7 @@ func _choose_mcts_action(gsm: GameStateMachine) -> Dictionary:
 			_value_net = null
 	if _mcts_planner != null:
 		_mcts_planner.value_net = _value_net
-		_ensure_action_scorer_loaded()
-		_mcts_planner.action_scorer = _action_scorer
+		_mcts_planner.action_scorer = _action_scorer_for_matchup(_build_matchup_context(gsm.game_state))
 		_mcts_planner.state_encoder_class = _get_state_encoder_class()
 	## 如果还有预规划的序列动作，继续执行
 	if _mcts_sequence_index < _mcts_planned_sequence.size():
@@ -1499,6 +1674,17 @@ func _score_end_turn_candidate(gsm: GameStateMachine, action: Dictionary, turn_c
 			absolute_score = float(_deck_strategy.call("score_action_absolute_with_plan", augmented, gsm.game_state, player_index, turn_contract))
 		else:
 			absolute_score = _deck_strategy.score_action_absolute(augmented, gsm.game_state, player_index)
+	var matchup_context: Dictionary = turn_contract.get("matchup_context", {}) \
+		if turn_contract.get("matchup_context", {}) is Dictionary else {}
+	if matchup_context.is_empty():
+		matchup_context = _build_matchup_context(gsm.game_state if gsm != null else null)
+	var matchup_score_adjustment := _score_matchup_action_delta(
+		augmented,
+		gsm.game_state if gsm != null else null,
+		matchup_context,
+		turn_contract
+	)
+	absolute_score += matchup_score_adjustment
 	return {
 		"action": action,
 		"scored_action": augmented,
@@ -1506,6 +1692,7 @@ func _score_end_turn_candidate(gsm: GameStateMachine, action: Dictionary, turn_c
 		"runtime_score": absolute_score,
 		"absolute_score": absolute_score,
 		"learned_action_score": 0.0,
+		"matchup_score_adjustment": matchup_score_adjustment,
 	}
 
 
@@ -1524,6 +1711,10 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 	var scored_candidates: Array[Dictionary] = []
 	var state_features: Array = _encode_state_features(gsm.game_state if gsm != null else null)
 	var runtime_mode := _resolve_decision_runtime_mode()
+	var matchup_context: Dictionary = turn_contract.get("matchup_context", {}) \
+		if turn_contract.get("matchup_context", {}) is Dictionary else {}
+	if matchup_context.is_empty():
+		matchup_context = _build_matchup_context(gsm.game_state if gsm != null else null)
 	var intent_context: Dictionary = _build_intent_score_context(candidate_actions, gsm)
 	var intent_ids: Array = intent_context.get("ids_by_index", []) if intent_context.get("ids_by_index", []) is Array else []
 	var intent_adjustments: Dictionary = intent_context.get("adjustments", {}) if intent_context.get("adjustments", {}) is Dictionary else {}
@@ -1537,6 +1728,16 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 				absolute_score = float(_deck_strategy.call("score_action_absolute_with_plan", augmented, gsm.game_state, player_index, turn_contract))
 			else:
 				absolute_score = _deck_strategy.score_action_absolute(augmented, gsm.game_state, player_index)
+		var matchup_score_adjustment := _score_matchup_action_delta(
+			augmented,
+			gsm.game_state,
+			matchup_context,
+			turn_contract
+		)
+		absolute_score += matchup_score_adjustment
+		if matchup_score_adjustment != 0.0:
+			features["matchup_score_adjustment"] = matchup_score_adjustment
+			features["matchup_overlay_id"] = str(turn_contract.get("matchup_overlay_id", ""))
 		var intent_action_id := str(intent_ids[action_index]) if action_index < intent_ids.size() else ""
 		var intent_score_adjustment := float(intent_adjustments.get(intent_action_id, 0.0))
 		absolute_score += intent_score_adjustment
@@ -1548,7 +1749,8 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 			learned_action_score = _score_action_with_action_scorer(
 				str(augmented.get("kind", "")),
 				state_features,
-				features
+				features,
+				matchup_context
 			)
 		scored_candidates.append({
 			"action": action,
@@ -1557,11 +1759,32 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 			"runtime_score": absolute_score + learned_action_score,
 			"absolute_score": absolute_score,
 			"learned_action_score": learned_action_score,
+			"matchup_score_adjustment": matchup_score_adjustment,
 			"intent_score_adjustment": intent_score_adjustment,
 			"features": features.duplicate(true),
 			"runtime_mode": runtime_mode,
 		})
 	return scored_candidates
+
+
+func _score_matchup_action_delta(
+	action: Dictionary,
+	game_state: GameState,
+	matchup_context: Dictionary,
+	turn_contract: Dictionary
+) -> float:
+	if _deck_strategy == null or not bool(matchup_context.get("is_unique", false)):
+		return 0.0
+	if not _deck_strategy.has_method("score_matchup_action"):
+		return 0.0
+	return float(_deck_strategy.call(
+		"score_matchup_action",
+		action,
+		game_state,
+		player_index,
+		matchup_context,
+		turn_contract
+	))
 
 
 func _build_intent_score_context(candidate_actions: Array[Dictionary], gsm: GameStateMachine) -> Dictionary:

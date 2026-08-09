@@ -44,7 +44,7 @@ func _state(bench_size: int) -> GameState:
 		var player := PlayerState.new()
 		player.player_index = player_index
 		state.players.append(player)
-	state.players[0].active_pokemon = _slot(_pokemon("Yanmega ex", "Stage 1", "GGG"))
+	state.players[0].active_pokemon = _slot(_pokemon("Yanmega ex", "Stage 1", "GGGC"))
 	var bench_names := ["Yanma", "Dunsparce", "Dudunsparce", "Crustle", "Tatsugiri"]
 	for index: int in bench_size:
 		state.players[0].bench.append(_slot(_pokemon(str(bench_names[index]), "Basic", "C")))

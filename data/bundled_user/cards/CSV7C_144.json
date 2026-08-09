@@ -1,0 +1,66 @@
+{
+    "name":  "巨钳螳螂ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【无】【无】 钢翼 70\n在下一个对手的回合，这只宝可梦所受到的招式的伤害「-50」。\n\n【钢】【钢】 交错毁坏 120×\n将这只宝可梦身上附着的最多2张【钢】能量放于弃牌区，造成其张数×120伤害。\n\n",
+    "yoren_code":  "Y1398",
+    "set_code":  "CSV7C",
+    "card_index":  "144",
+    "set_code_en":  "TEF",
+    "card_index_en":  "111",
+    "name_en":  "Scizor ex",
+    "name_zh":  "",
+    "artist":  "toriyufu",
+    "rarity":  "RR",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "6c13a1afb0238ba7cea406803c64383d",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV7C/144.png",
+    "image_local_path":  "user://cards/images/CSV7C/144.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV7C/144",
+    "source_set_code":  "CSV7C",
+    "source_card_index":  "144",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "M",
+    "stage":  "Stage 1",
+    "hp":  270,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "G",
+    "resistance_value":  "-30",
+    "retreat_cost":  2,
+    "evolves_from":  "飞天螳螂",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "钢翼",
+                        "text":  "在下一个对手的回合，这只宝可梦所受到的招式的伤害「-50」。",
+                        "cost":  "CC",
+                        "damage":  "70",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "交错毁坏",
+                        "text":  "将这只宝可梦身上附着的最多2张【钢】能量放于弃牌区，造成其张数×120伤害。",
+                        "cost":  "MM",
+                        "damage":  "120×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

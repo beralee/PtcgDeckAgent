@@ -657,6 +657,9 @@ func _make_benchmark_agent(player_index: int, agent_config: Dictionary, comparis
 	var interaction_scorer_path := str(agent_config.get("interaction_scorer_path", ""))
 	if interaction_scorer_path != "":
 		agent.interaction_scorer_path = interaction_scorer_path
+	var matchup_artifacts: Variant = agent_config.get("matchup_policy_artifacts", {})
+	if matchup_artifacts is Dictionary:
+		agent.matchup_policy_artifacts = (matchup_artifacts as Dictionary).duplicate(true)
 	return agent
 
 

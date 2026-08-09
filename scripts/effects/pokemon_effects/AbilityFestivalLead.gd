@@ -65,6 +65,18 @@ static func consume_second_attack_pending(slot: PokemonSlot, state: GameState) -
 	return true
 
 
+static func has_second_attack_pending(slot: PokemonSlot, state: GameState) -> bool:
+	if slot == null or state == null:
+		return false
+	var top: CardInstance = slot.get_top_card()
+	if top == null:
+		return false
+	return (
+		int(state.shared_turn_flags.get(PENDING_PLAYER_KEY, -1)) == top.owner_index
+		and int(state.shared_turn_flags.get(PENDING_SLOT_KEY, -1)) == int(slot.get_instance_id())
+	)
+
+
 static func _used_key(slot: PokemonSlot, state: GameState) -> String:
 	return "festival_lead_used_%d_%d" % [int(slot.get_instance_id()), state.turn_number]
 

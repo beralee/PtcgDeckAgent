@@ -45,6 +45,15 @@ func execute_attack(
 	if CSV9CEffects.player_field_return_to_hand_blocked(top.owner_index, state):
 		return
 	var replacement: PokemonSlot = _resolve_replacement(player)
+	var was_active := player.active_pokemon == attacker
+	if was_active and not _remove_active_and_promote(
+		state,
+		top.owner_index,
+		attacker,
+		replacement,
+		"attack_return_self_to_hand"
+	):
+		return
 
 	for card: CardInstance in attacker.collect_all_cards():
 		card.face_up = true
@@ -56,11 +65,7 @@ func execute_attack(
 	attacker.damage_counters = 0
 	attacker.clear_all_status()
 
-	if player.active_pokemon == attacker:
-		player.active_pokemon = replacement
-		if replacement != null:
-			player.bench.erase(replacement)
-	else:
+	if not was_active:
 		player.bench.erase(attacker)
 
 

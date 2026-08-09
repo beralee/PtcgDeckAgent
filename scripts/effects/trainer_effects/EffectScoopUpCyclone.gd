@@ -89,13 +89,19 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		if replacement == null:
 			return
 
-	_return_slot_cards_to_hand(target, player)
-
 	if is_active:
-		player.active_pokemon = replacement
-		player.bench.erase(replacement)
+		if not _remove_active_and_promote(
+			state,
+			card.owner_index,
+			target,
+			replacement,
+			"scoop_up_cyclone"
+		):
+			return
 	else:
 		player.bench.erase(target)
+
+	_return_slot_cards_to_hand(target, player)
 
 
 func get_description() -> String:

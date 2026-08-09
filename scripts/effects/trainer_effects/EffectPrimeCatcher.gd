@@ -54,11 +54,7 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 			target = opp_raw[0]
 		if target == null:
 			target = opp.bench[0]
-		var old_active: PokemonSlot = opp.active_pokemon
-		opp.bench.erase(target)
-		old_active.clear_on_leave_active()
-		opp.bench.append(old_active)
-		opp.active_pokemon = target
+		_switch_active_with_bench(state, 1 - pi, target, "prime_catcher_opponent")
 
 	# 2. 己方战斗宝可梦与备战宝可梦互换
 	if player.active_pokemon != null and not player.bench.is_empty():
@@ -68,11 +64,7 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 			my_target = own_raw[0]
 		if my_target == null:
 			my_target = player.bench[0]
-		var my_old: PokemonSlot = player.active_pokemon
-		player.bench.erase(my_target)
-		my_old.clear_on_leave_active()
-		player.bench.append(my_old)
-		player.active_pokemon = my_target
+		_switch_active_with_bench(state, pi, my_target, "prime_catcher_self")
 
 
 func get_description() -> String:

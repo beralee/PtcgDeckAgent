@@ -586,6 +586,8 @@ func test_desktop_render_resolution_caps_high_density_windows() -> String:
 		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(1600, 900), cap), Vector2i(1600, 900), "Default 1600x900 windows should keep their native render size"),
 		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160))), "Windows 4K should enable the desktop render cap"),
 		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Linux", {}, "", Vector2i(2560, 1440))), "Linux 1440p should enable the desktop render cap"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "macOS", {}, "", Vector2i(2512, 1413))), "macOS Retina windows should render UI text natively instead of upscaling a 1080p viewport"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "OSX", {}, "", Vector2i(2512, 1413))), "Older macOS platform names should keep Retina-native canvas text"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(1920, 1080))), "Windows 1080p should keep native desktop rendering"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160), DisplayServer.WINDOW_MODE_MAXIMIZED)), "Windows maximized mode should render at the monitor's native resolution instead of looking like blurry fullscreen"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160), DisplayServer.WINDOW_MODE_FULLSCREEN)), "Windows fullscreen should render at the monitor's native resolution instead of a blurry 1080p viewport"),

@@ -14,7 +14,8 @@ func test_portrait_assignment_hud_uses_shared_drag_for_both_scrollable_card_lane
 		source_items.append(CardInstance.create(_make_energy_cd("Source Energy %d" % index, "P"), 0))
 		target_items.append(CardInstance.create(_make_pokemon_cd("Target %d" % index, 70, "P"), 0))
 
-	battle_scene.call("_show_assignment_dialog", {
+	battle_scene.call("_show_dialog", "Assign Energy", [], {
+		"ui_mode": "card_assignment",
 		"source_items": source_items,
 		"source_labels": [],
 		"target_items": target_items,
@@ -29,9 +30,38 @@ func test_portrait_assignment_hud_uses_shared_drag_for_both_scrollable_card_lane
 	var target_row := battle_scene.get("_dialog_assignment_target_row") as HBoxContainer
 	var source_card := source_row.get_child(0) as BattleCardView if source_row.get_child_count() > 0 else null
 	var target_card := target_row.get_child(0) as BattleCardView if target_row.get_child_count() > 0 else null
-	battle_scene.set("_card_gallery_drag_suppress_click_until_msec", Time.get_ticks_msec() + 1000)
-	battle_scene.call("_on_assignment_source_chosen", 0)
-	var selected_source_after_suppressed_drag := int(battle_scene.get("_dialog_assignment_selected_source_index"))
+	var source_press := InputEventScreenTouch.new()
+	source_press.index = 0
+	source_press.pressed = true
+	source_press.position = Vector2(200, 80)
+	source_card.handle_bridged_pointer_input(source_press)
+	var source_jitter := InputEventScreenDrag.new()
+	source_jitter.index = 0
+	source_jitter.position = Vector2(216, 82)
+	source_jitter.relative = Vector2(16, 2)
+	source_card.handle_bridged_pointer_input(source_jitter)
+	var source_release := InputEventScreenTouch.new()
+	source_release.index = 0
+	source_release.pressed = false
+	source_release.position = Vector2(216, 82)
+	source_card.handle_bridged_pointer_input(source_release)
+	var selected_source_after_touch := int(battle_scene.get("_dialog_assignment_selected_source_index"))
+	var target_press := InputEventScreenTouch.new()
+	target_press.index = 1
+	target_press.pressed = true
+	target_press.position = Vector2(200, 80)
+	target_card.handle_bridged_pointer_input(target_press)
+	var target_jitter := InputEventScreenDrag.new()
+	target_jitter.index = 1
+	target_jitter.position = Vector2(216, 82)
+	target_jitter.relative = Vector2(16, 2)
+	target_card.handle_bridged_pointer_input(target_jitter)
+	var target_release := InputEventScreenTouch.new()
+	target_release.index = 1
+	target_release.pressed = false
+	target_release.position = Vector2(216, 82)
+	target_card.handle_bridged_pointer_input(target_release)
+	var assignments_after_touch: Array = battle_scene.get("_dialog_assignment_assignments")
 
 	return run_checks([
 		assert_true(
@@ -61,9 +91,14 @@ func test_portrait_assignment_hud_uses_shared_drag_for_both_scrollable_card_lane
 			"Portrait assignment lanes must keep their bottom touch scrollbars visible"
 		),
 		assert_eq(
-			selected_source_after_suppressed_drag,
-			-1,
-			"A card release immediately after dragging an assignment lane must not select a source"
+			selected_source_after_touch,
+			0,
+			"Normal touch jitter must still select a source in the upper assignment lane"
+		),
+		assert_eq(
+			assignments_after_touch.size(),
+			1,
+			"Normal touch jitter must still assign the selected source to a target in the lower lane"
 		),
 	])
 
@@ -103,9 +138,22 @@ func test_field_assignment_card_strip_uses_shared_drag_without_hiding_bottom_scr
 	var scroll := battle_scene.get("_field_interaction_scroll") as ScrollContainer
 	var row := battle_scene.get("_field_interaction_row") as HBoxContainer
 	var source_card := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
-	battle_scene.set("_card_gallery_drag_suppress_click_until_msec", Time.get_ticks_msec() + 1000)
-	battle_scene.call("_on_field_assignment_source_chosen", 0)
-	var selected_source_after_suppressed_drag := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
+	var source_press := InputEventScreenTouch.new()
+	source_press.index = 0
+	source_press.pressed = true
+	source_press.position = Vector2(200, 80)
+	source_card.handle_bridged_pointer_input(source_press)
+	var source_jitter := InputEventScreenDrag.new()
+	source_jitter.index = 0
+	source_jitter.position = Vector2(216, 82)
+	source_jitter.relative = Vector2(16, 2)
+	source_card.handle_bridged_pointer_input(source_jitter)
+	var source_release := InputEventScreenTouch.new()
+	source_release.index = 0
+	source_release.pressed = false
+	source_release.position = Vector2(216, 82)
+	source_card.handle_bridged_pointer_input(source_release)
+	var selected_source_after_touch := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
 	return run_checks([
 		assert_true(
 			scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_enabled", false)),
@@ -124,9 +172,9 @@ func test_field_assignment_card_strip_uses_shared_drag_without_hiding_bottom_scr
 			"Field-assignment cards must forward touch motion instead of turning a held swipe into selection"
 		),
 		assert_eq(
-			selected_source_after_suppressed_drag,
-			-1,
-			"A card release immediately after dragging the field strip must not select an energy"
+			selected_source_after_touch,
+			0,
+			"Normal touch jitter must still select an Energy in the field assignment strip"
 		),
 	])
 
@@ -248,11 +296,12 @@ func test_portrait_crispin_cannot_skip_energy_steps_from_empty_or_stale_confirm(
 	crispin.card_data.effect_id = "136fdb6578daa3b81aef369495de4c3d"
 	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
 	var water := CardInstance.create(_make_energy_cd("Water Energy", "W"), 0)
+	var grass := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
 	var active := PokemonSlot.new()
 	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Crispin Target", 120, "C"), 0))
 	player.active_pokemon = active
 	player.hand = [crispin]
-	player.deck = [fire, water]
+	player.deck = [fire, water, grass]
 	gsm.effect_processor.register_effect(crispin.card_data.effect_id, CSV9C196Crispin.new())
 
 	battle_scene.call("_try_play_trainer_with_interaction", 0, crispin)
@@ -279,7 +328,24 @@ func test_portrait_crispin_cannot_skip_energy_steps_from_empty_or_stale_confirm(
 		and crispin in player.hand
 	)
 
-	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var source_row := battle_scene.get("_field_interaction_row") as HBoxContainer
+	var source_card := source_row.get_child(0) as BattleCardView
+	var source_press := InputEventScreenTouch.new()
+	source_press.index = 0
+	source_press.pressed = true
+	source_press.position = Vector2(200, 80)
+	source_card.handle_bridged_pointer_input(source_press)
+	var source_jitter := InputEventScreenDrag.new()
+	source_jitter.index = 0
+	source_jitter.position = Vector2(216, 82)
+	source_jitter.relative = Vector2(16, 2)
+	source_card.handle_bridged_pointer_input(source_jitter)
+	var source_release := InputEventScreenTouch.new()
+	source_release.index = 0
+	source_release.pressed = false
+	source_release.position = Vector2(216, 82)
+	source_card.handle_bridged_pointer_input(source_release)
+	var selected_source_after_touch := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
 	battle_scene.call("_handle_field_assignment_target_index", 0)
 	battle_scene.call("_on_field_interaction_confirm_pressed")
 
@@ -287,9 +353,11 @@ func test_portrait_crispin_cannot_skip_energy_steps_from_empty_or_stale_confirm(
 		assert_eq(first_step_after_empty_confirm, CSV9C196Crispin.HAND_STEP_ID, "Crispin must not skip its first Energy search on an empty confirm"),
 		assert_eq(attachment_step_id, CSV9C196Crispin.ATTACH_STEP_ID, "Choosing the hand Energy should open Crispin's attachment step"),
 		assert_true(stayed_on_attachment_after_echo, "The first dialog's delayed Android confirm must not immediately skip Crispin's attachment step"),
+		assert_eq(selected_source_after_touch, 0, "Crispin's follow-up must accept a real Energy touch with normal 16px finger jitter"),
 		assert_true(crispin in player.discard_pile, "Crispin should resolve after a fresh assignment confirmation"),
 		assert_true(fire in player.hand, "The explicitly selected first Energy should enter the hand"),
 		assert_true(water in active.attached_energy, "The different-type second Energy should attach to the selected Pokemon"),
+		assert_true(grass in player.deck, "The unselected different-type Energy should remain in the shuffled deck"),
 	])
 
 func test_battle_scene_two_player_terminal_draw_reveal_finishes_before_handover() -> String:
@@ -1340,6 +1408,43 @@ func test_battle_scene_discard_item_list_right_click_opens_card_detail() -> Stri
 		assert_eq(discard_list.item_count, 1, "Fallback discard list should keep a visible card row"),
 		assert_true(detail_overlay.visible, "Right-clicking a fallback discard list item should open card detail"),
 		assert_true(detail_overlay.z_index > discard_overlay.z_index, "Fallback card detail should also render above the discard viewer"),
+	])
+
+
+func test_battle_scene_card_detail_owns_pointer_above_tm_evolution_library_search() -> String:
+	var scene := _make_battle_scene_stub()
+	var detail_overlay := scene.get("_detail_overlay") as Panel
+	var dialog_overlay := scene.get("_dialog_overlay") as Panel
+	var board := Control.new()
+	board.name = "LibrarySearchBoard"
+	board.position = Vector2.ZERO
+	board.size = Vector2(900, 620)
+	var library_scroll := ScrollContainer.new()
+	library_scroll.name = "LibrarySearchLibraryScroll"
+	library_scroll.position = Vector2(40, 40)
+	library_scroll.size = Vector2(760, 420)
+	board.add_child(library_scroll)
+	var library_row := HBoxContainer.new()
+	library_row.name = "LibraryCardRow"
+	library_row.custom_minimum_size = Vector2(1200, 300)
+	library_scroll.add_child(library_row)
+	scene.add_child(board)
+	scene.set("_dialog_library_search_board_mode", true)
+	scene.set("_dialog_library_search_board", board)
+	dialog_overlay.visible = true
+	detail_overlay.visible = true
+
+	var close_area_press := InputEventMouseButton.new()
+	close_area_press.button_index = MOUSE_BUTTON_LEFT
+	close_area_press.pressed = true
+	close_area_press.position = Vector2(120, 120)
+	close_area_press.global_position = close_area_press.position
+	scene.call("_input", close_area_press)
+	var underlying_search_received_press := bool(library_scroll.get_meta("library_search_press_active", false))
+
+	scene.queue_free()
+	return run_checks([
+		assert_false(underlying_search_received_press, "A topmost card detail must keep its close-button click away from the TM Evolution library search underneath"),
 	])
 
 

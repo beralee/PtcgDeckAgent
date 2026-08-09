@@ -73,13 +73,19 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		if replacement == null:
 			return
 
-	_return_slot_cards_to_hand(target, player)
-
 	if is_active:
-		player.active_pokemon = replacement
-		player.bench.erase(replacement)
+		if not _remove_active_and_promote(
+			state,
+			card.owner_index,
+			target,
+			replacement,
+			"penny"
+		):
+			return
 	else:
 		player.bench.erase(target)
+
+	_return_slot_cards_to_hand(target, player)
 
 
 func _is_basic(slot: PokemonSlot) -> bool:

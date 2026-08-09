@@ -794,7 +794,7 @@ func test_setup_active_touch_with_horizontal_jitter_still_selects_basic() -> Str
 	var result := run_checks([
 		assert_true(card_view != null, "Setup active dialog should render a card view for the basic Pokemon"),
 		assert_eq(active_card, lead_card, "A mobile setup-card tap with minor horizontal jitter should still choose the active Pokemon"),
-		assert_false(bool(battle_scene.call("_is_card_gallery_drag_click_suppressed")), "Minor touch jitter in setup should not arm gallery drag click suppression"),
+		assert_false(bool(battle_scene.get("_card_gallery_dragging")), "Minor touch jitter in setup should remain a tap rather than gallery drag"),
 	])
 	battle_scene.free()
 	return result
@@ -1207,7 +1207,7 @@ func test_global_input_clears_hidden_stale_card_gallery_capture_before_hand_drag
 	return result
 
 
-func test_card_gallery_drag_scroll_suppresses_card_click() -> String:
+func test_card_gallery_mouse_drag_scrolls_without_clicking_card() -> String:
 	var scene: Control = BattleScenePacked.instantiate()
 	var scroll := ScrollContainer.new()
 	var row := HBoxContainer.new()
@@ -1255,7 +1255,6 @@ func test_card_gallery_drag_scroll_suppresses_card_click() -> String:
 		assert_true(scrollbar_hidden, "Card-gallery scrolls should hide the visible horizontal scrollbar when drag scrolling is active"),
 		assert_true(scroll_after_drag > start_scroll, "Dragging a card-gallery card left should scroll toward later cards"),
 		assert_eq(clicked["count"], 0, "Dragging a card-gallery card should not trigger card selection/detail"),
-		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Gallery drag release should suppress follow-up card clicks briefly"),
 	])
 	scene.free()
 	return result
@@ -1297,13 +1296,12 @@ func test_card_gallery_click_without_drag_still_clicks_card() -> String:
 
 	var result := run_checks([
 		assert_eq(clicked["count"], 1, "A card-gallery tap without drag should keep the original card click behavior"),
-		assert_false(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A plain card-gallery tap should not suppress clicks"),
 	])
 	scene.free()
 	return result
 
 
-func test_card_gallery_touch_horizontal_drag_still_scrolls_and_suppresses_card_click() -> String:
+func test_card_gallery_touch_drag_does_not_poison_next_real_tap() -> String:
 	var scene: Control = BattleScenePacked.instantiate()
 	var scroll := ScrollContainer.new()
 	var row := HBoxContainer.new()
@@ -1342,17 +1340,29 @@ func test_card_gallery_touch_horizontal_drag_still_scrolls_and_suppresses_card_c
 	release.index = 0
 	release.position = Vector2(120, 24)
 	card_view.call("_gui_input", release)
+	var clicked_after_drag := int(clicked["count"])
+
+	var next_press := InputEventScreenTouch.new()
+	next_press.pressed = true
+	next_press.index = 1
+	next_press.position = Vector2(220, 24)
+	card_view.call("_gui_input", next_press)
+	var next_release := InputEventScreenTouch.new()
+	next_release.pressed = false
+	next_release.index = 1
+	next_release.position = Vector2(220, 24)
+	card_view.call("_gui_input", next_release)
 
 	var result := run_checks([
 		assert_true(scroll_after_drag > start_scroll, "A real touch drag on card-gallery cards should still scroll horizontally"),
-		assert_eq(clicked["count"], 0, "A real touch drag on card-gallery cards should not choose the card"),
-		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A real touch drag release should still suppress follow-up card clicks briefly"),
+		assert_eq(clicked_after_drag, 0, "A real touch drag on card-gallery cards should not choose the card"),
+		assert_eq(clicked["count"], 1, "A fresh touch sequence after a drag must work immediately instead of inheriting a global time-window suppression"),
 	])
 	scene.free()
 	return result
 
 
-func test_card_gallery_touch_drag_at_scroll_threshold_never_emits_card_click() -> String:
+func test_card_gallery_touch_jitter_within_tap_tolerance_emits_card_click() -> String:
 	var scene: Control = BattleScenePacked.instantiate()
 	var scroll := ScrollContainer.new()
 	var row := HBoxContainer.new()
@@ -1392,8 +1402,7 @@ func test_card_gallery_touch_drag_at_scroll_threshold_never_emits_card_click() -
 	card_view.call("_gui_input", release)
 
 	var result := run_checks([
-		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A 16px touch move must already be treated as a gallery drag"),
-		assert_eq(clicked["count"], 0, "The card and gallery drag thresholds must agree so a real drag cannot also emit a card click"),
+		assert_eq(clicked["count"], 1, "A 16px finger wobble is inside the shared card-gallery tap tolerance and must activate the card"),
 	])
 	scene.free()
 	return result
@@ -1443,7 +1452,6 @@ func test_card_gallery_touch_release_moved_by_scroll_container_does_not_click_ca
 	var result := run_checks([
 		assert_true(scroll_after_drag < start_scroll, "A rightward scroll-container drag should move toward earlier cards when not at the edge"),
 		assert_eq(clicked["count"], 0, "A card release far from its press point should not click even if the card missed the intermediate drag event"),
-		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "The scroll-container drag release should still suppress follow-up card clicks briefly"),
 	])
 	scene.free()
 	return result
@@ -1493,7 +1501,6 @@ func test_card_gallery_vertical_touch_jitter_still_clicks_card() -> String:
 	var result := run_checks([
 		assert_eq(clicked["count"], 1, "Vertical touch jitter in a horizontal card gallery should still count as a card tap"),
 		assert_eq(scroll.scroll_horizontal, start_scroll, "Vertical jitter should not move the horizontal card gallery"),
-		assert_false(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Vertical jitter should not leave gallery drag click suppression active"),
 	])
 	scene.free()
 	return result
@@ -1580,7 +1587,7 @@ func test_discard_collection_viewer_uses_shared_card_gallery_drag_scroll() -> St
 		assert_true(drag_active, "Discard collection scroll should be active while the viewer is open"),
 		assert_true(card_input_enabled, "Discard collection card views should forward pointer input to shared drag scrolling"),
 		assert_true(scroll_after_drag > start_scroll, "Dragging a discard collection card should scroll the collection row"),
-		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Dragging a discard collection card should suppress card detail clicks briefly"),
+		assert_false(bool(scene.get("_card_gallery_drag_active")), "Gallery drag capture should end cleanly on release"),
 	])
 	scene.queue_free()
 	return result

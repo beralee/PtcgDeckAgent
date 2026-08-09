@@ -17,7 +17,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var pi: int = top.owner_index
 	if state.current_player_index != pi:
 		return false
-	if state.last_knockout_turn_against[pi] != state.turn_number - 1:
+	if not state.was_knocked_out_during_opponents_previous_turn(pi):
 		return false
 	var shared_key := "%s_%d" % [shared_flag_key, pi]
 	if int(state.shared_turn_flags.get(shared_key, -1)) == state.turn_number:

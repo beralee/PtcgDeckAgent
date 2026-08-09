@@ -824,6 +824,7 @@ func refresh_hand(scene: Object) -> void:
 			visible_hand.append(card_inst)
 
 	var hand_signature := _hand_surface_signature(hand_mode, visible_hand)
+	hand_container.set_meta("battle_hand_surface_mode", hand_mode)
 	var hand_generation := 0
 	if scene.has_method("_reconcile_hand_pointer_surface"):
 		hand_generation = int(scene.call(
@@ -1231,8 +1232,6 @@ func _populate_card_collection(scene: Object, card_row: HBoxContainer, ordered_c
 		if scene.has_method("_configure_card_gallery_card_view"):
 			scene.call("_configure_card_gallery_card_view", card_view, scene.get("_discard_card_scroll"), "discard_collection")
 		card_view.left_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
-			if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
-				return
 			if ci != null and scene.has_method("_show_card_detail_for_instance"):
 				scene.call("_show_card_detail_for_instance", ci)
 				return
@@ -1240,8 +1239,6 @@ func _populate_card_collection(scene: Object, card_row: HBoxContainer, ordered_c
 				scene.call("_show_card_detail", cd)
 		)
 		card_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
-			if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
-				return
 			if ci != null and scene.has_method("_show_card_detail_for_instance"):
 				scene.call("_show_card_detail_for_instance", ci)
 				return

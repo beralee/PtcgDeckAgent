@@ -41,12 +41,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	if chosen == null:
 		return
 
-	var old_active: PokemonSlot = opponent.active_pokemon
-	opponent.bench.erase(chosen)
-	old_active.clear_on_leave_active()
-	opponent.bench.append(old_active)
-	opponent.active_pokemon = chosen
-	chosen.mark_entered_active_from_bench(state.turn_number)
+	_switch_active_with_bench(state, 1 - card.owner_index, chosen, "lucians_appeal")
 	_apply_special_status(chosen, "confused", state)
 
 

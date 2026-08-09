@@ -36,8 +36,8 @@ func _state() -> GameState:
 		player.player_index = player_index
 		state.players.append(player)
 	state.players[0].active_pokemon = _slot(_pokemon("Dunsparce", "Basic", "C"))
-	var yanmega := _slot(_pokemon("Yanmega ex", "Stage 1", "GGG"))
-	for index: int in 3:
+	var yanmega := _slot(_pokemon("Yanmega ex", "Stage 1", "GGGC"))
+	for index: int in 4:
 		yanmega.attached_energy.append(_grass())
 	state.players[0].bench.append(yanmega)
 	state.players[1].active_pokemon = _slot(_pokemon("Opponent ex", "Basic", "C", true), 1)
