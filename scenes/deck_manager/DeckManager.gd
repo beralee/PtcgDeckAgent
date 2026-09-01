@@ -135,6 +135,7 @@ var _recommendation_store: RefCounted = null
 var _recommendation_articles: Array[Dictionary] = []
 var _embedded_recommendations: Array[Dictionary] = []
 var _web_recommendation_snapshot: Array[Dictionary] = []
+var _bundled_recommendation_records_by_id: Dictionary = {}
 var _current_recommendation: Dictionary = {}
 var _deck_center_latest_meta: Dictionary = {}
 var _deck_center_recommendation_badge_seen_revision := ""
@@ -1120,6 +1121,7 @@ func _normalize_recommendation_articles(articles: Array[Dictionary]) -> Array[Di
 
 func _load_web_recommendation_snapshot() -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
+	_bundled_recommendation_records_by_id.clear()
 	if not FileAccess.file_exists(WEB_RECOMMENDATION_SNAPSHOT_PATH):
 		return candidates
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(WEB_RECOMMENDATION_SNAPSHOT_PATH))
@@ -1131,7 +1133,11 @@ func _load_web_recommendation_snapshot() -> Array[Dictionary]:
 	for item_raw: Variant in items_raw:
 		if item_raw is not Dictionary:
 			continue
-		var normalized: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(item_raw as Dictionary)
+		var item := item_raw as Dictionary
+		var item_id := str(item.get("id", item.get("slug", ""))).strip_edges()
+		if item_id != "":
+			_bundled_recommendation_records_by_id[item_id] = item.duplicate(true)
+		var normalized := _normalize_recommendation_input(item)
 		if not normalized.is_empty():
 			# Sort from the recommendation's own date first. The service response is
 			# normally newest-first, but the bundled Web fallback must not depend on
@@ -1731,6 +1737,9 @@ func _request_recommendation_poster(recommendation: Dictionary) -> void:
 
 
 func _resolve_recommendation_poster_deck(recommendation: Dictionary) -> DeckData:
+	var snapshot_deck := _build_bundled_recommendation_deck(recommendation)
+	if snapshot_deck != null:
+		return snapshot_deck
 	var deck_id := int(recommendation.get("deck_id", 0))
 	if deck_id <= 0:
 		return null
@@ -2141,9 +2150,18 @@ func _recommendation_source_text(recommendation: Dictionary) -> String:
 
 
 func _normalize_recommendation_input(item: Dictionary) -> Dictionary:
-	var normalized: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(item)
+	var source := item
+	var item_id := str(item.get("id", item.get("slug", ""))).strip_edges()
+	if item_id != "" and _bundled_recommendation_records_by_id.has(item_id):
+		source = (_bundled_recommendation_records_by_id[item_id] as Dictionary).duplicate(true)
+		# Keep only transport ordering from the live/cache record. All article and
+		# source-deck identity fields come from the audited immutable bundle.
+		for order_key: String in ["server_order", "server_order_batch", "_server_order", "_server_order_batch"]:
+			if item.has(order_key):
+				source[order_key] = item[order_key]
+	var normalized: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(source)
 	if normalized.is_empty():
-		normalized = DeckRecommendationStoreScript.normalize_embedded_article(item)
+		normalized = DeckRecommendationStoreScript.normalize_embedded_article(source)
 	return normalized
 
 
@@ -2332,6 +2350,11 @@ func _combined_recommendation_pool() -> Array[Dictionary]:
 			_append_recommendation_to_pool(pool, seen, cached)
 	if not pool.is_empty():
 		return pool
+
+	for snapshot_item: Dictionary in _web_recommendation_snapshot:
+		_append_recommendation_to_pool(pool, seen, snapshot_item)
+	if not pool.is_empty():
+		return _sort_recommendations_for_pool(pool)
 
 	for embedded: Dictionary in _embedded_recommendations:
 		_append_recommendation_to_pool(pool, seen, embedded)
@@ -3635,15 +3658,17 @@ func _on_recommendation_import_pressed(recommendation: Dictionary) -> void:
 		_set_recommendation_status("这套推荐缺少可导入的卡组链接。")
 		return
 	var recommended_deck_name := str(normalized.get("deck_name", "")).strip_edges()
-	if _is_deck_manager_web_runtime():
-		var embedded_deck := _build_embedded_recommendation_deck(normalized)
-		if embedded_deck != null:
-			_start_embedded_recommendation_import(embedded_deck, import_url)
-			return
+	var embedded_deck := _build_embedded_recommendation_deck(normalized)
+	if embedded_deck != null:
+		_start_embedded_recommendation_import(embedded_deck, import_url)
+		return
 	_start_import_from_url(import_url, "正在导入推荐卡组...", recommended_deck_name)
 
 
 func _build_embedded_recommendation_deck(recommendation: Dictionary) -> DeckData:
+	var bundled_deck := _build_bundled_recommendation_deck(recommendation)
+	if bundled_deck != null:
+		return bundled_deck
 	var expected_deck_id := int(recommendation.get("deck_id", 0))
 	var expected_url := str(recommendation.get("import_url", "")).strip_edges()
 	for article: Dictionary in _recommendation_articles:
@@ -3701,6 +3726,58 @@ func _build_embedded_recommendation_deck(recommendation: Dictionary) -> DeckData
 		if deck.total_cards == 60:
 			return deck
 	return null
+
+
+func _build_bundled_recommendation_deck(recommendation: Dictionary) -> DeckData:
+	var item_id := str(recommendation.get("id", "")).strip_edges()
+	if item_id == "" or not _bundled_recommendation_records_by_id.has(item_id):
+		return null
+	var bundled := _bundled_recommendation_records_by_id[item_id] as Dictionary
+	var snapshot := _as_dictionary(bundled.get("deck_snapshot", {}))
+	var cards_raw: Variant = snapshot.get("cards", [])
+	var snapshot_cards: Array = cards_raw if cards_raw is Array else []
+	var deck_id := int(snapshot.get("deck_id", 0))
+	var import_url := str(bundled.get("import_url", recommendation.get("import_url", ""))).strip_edges()
+	if deck_id <= 0 or int(snapshot.get("total_cards", 0)) != 60:
+		return null
+	if DeckImporter.parse_deck_id(import_url) != deck_id or snapshot_cards.is_empty():
+		return null
+
+	var deck := DeckData.new()
+	deck.id = deck_id
+	deck.source_url = import_url
+	deck.source_provider = str(snapshot.get("source_provider", "tcg_mik")).strip_edges()
+	deck.source_id = str(deck_id)
+	deck.import_date = Time.get_datetime_string_from_system()
+	deck.updated_at = int(Time.get_unix_time_from_system() * 1000.0)
+	deck.deck_code = str(snapshot.get("deck_code", ""))
+	deck.deck_name = str(bundled.get("deck_name", recommendation.get("deck_name", "推荐卡组"))).strip_edges()
+	deck.variant_name = str(snapshot.get("variant_name", deck.deck_name)).strip_edges()
+	var total := 0
+	for card_raw: Variant in snapshot_cards:
+		if card_raw is not Dictionary:
+			return null
+		var snapshot_card := card_raw as Dictionary
+		var set_code := str(snapshot_card.get("set_code", "")).strip_edges()
+		var card_index := str(snapshot_card.get("card_index", "")).strip_edges()
+		var count := int(snapshot_card.get("count", 0))
+		if set_code == "" or card_index == "" or count <= 0:
+			return null
+		var catalog_card: CardData = CardDatabase.get_card(set_code, card_index) if CardDatabase != null else null
+		if catalog_card == null:
+			return null
+		deck.cards.append({
+			"set_code": set_code,
+			"card_index": card_index,
+			"count": count,
+			"card_type": catalog_card.card_type,
+			"name": catalog_card.name,
+			"effect_id": catalog_card.effect_id,
+			"name_en": catalog_card.name_en,
+		})
+		total += count
+	deck.total_cards = total
+	return deck if total == 60 else null
 
 
 func _start_embedded_recommendation_import(deck: DeckData, import_url: String) -> void:

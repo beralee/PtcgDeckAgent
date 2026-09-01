@@ -431,6 +431,44 @@ func test_csv9c_155_noctowl_accepts_effect_id_only_tera_in_play() -> String:
 	])
 
 
+func test_csv9c_155_eevee_box_player_click_evolves_both_real_hoothoot_prints() -> String:
+	var hoothoot_csv9c: CardData = CardDatabase.get_card("CSV9C", "154")
+	var hoothoot_csv95c: CardData = CardDatabase.get_card("CSV9.5C", "141")
+	var noctowl_data: CardData = CardDatabase.get_card("CSV9C", "155")
+	if hoothoot_csv9c == null or hoothoot_csv95c == null or noctowl_data == null:
+		return "The Eevee Box Hoothoot and Noctowl cards must load from CardDatabase"
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.turn_number = 3
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.current_player_index = 0
+	var first_hoothoot := _make_slot(hoothoot_csv9c, 0, 1)
+	var second_hoothoot := _make_slot(hoothoot_csv95c, 0, 1)
+	gsm.game_state.players[0].bench = [first_hoothoot, second_hoothoot]
+	var first_noctowl := CardInstance.create(noctowl_data, 0)
+	var second_noctowl := CardInstance.create(noctowl_data, 0)
+	gsm.game_state.players[0].hand = [first_noctowl, second_noctowl]
+
+	var battle_scene: Control = BattleScene.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_selected_hand_card", first_noctowl)
+	battle_scene.call("_handle_slot_left_click", "my_bench_0")
+	battle_scene.set("_selected_hand_card", second_noctowl)
+	battle_scene.call("_handle_slot_left_click", "my_bench_1")
+	var selected_after: CardInstance = battle_scene.get("_selected_hand_card") as CardInstance
+	battle_scene.free()
+
+	return run_checks([
+		assert_eq(first_hoothoot.get_top_card(), first_noctowl, "The Eevee Box CSV9C_154 Hoothoot should evolve by clicking its field slot"),
+		assert_eq(second_hoothoot.get_top_card(), second_noctowl, "The Eevee Box CSV9.5C_141 Hoothoot should evolve by clicking its field slot"),
+		assert_false(first_noctowl in gsm.game_state.players[0].hand, "The first evolved Noctowl should leave the hand"),
+		assert_false(second_noctowl in gsm.game_state.players[0].hand, "The second evolved Noctowl should leave the hand"),
+		assert_null(selected_after, "Successful Noctowl evolution should clear the selected hand card"),
+	])
+
+
 func test_csv9c_054_075_133_survival_extra_prize_and_ace_lock_helpers() -> String:
 	var state := _make_state()
 	var pikachu := _make_slot(_pokemon("Pikachu ex", "Basic", "", "L", 200), 0)
@@ -645,6 +683,44 @@ func test_csv9c_153_real_player_slot_click_executes_early_evolution() -> String:
 	return run_checks([
 		assert_eq(eevee.get_top_card(), evolution, "Player clicking the Active slot should execute CSV9C_153 early evolution"),
 		assert_null(selected_after, "Successful player early evolution should clear the selected hand card"),
+	])
+
+
+func test_eevee_box_player_click_evolves_both_real_non_ex_eevee_prints() -> String:
+	var rush_evolution_eevee: CardData = CardDatabase.get_card("CSV9C", "153")
+	var colorful_friends_eevee: CardData = CardDatabase.get_card("151C", "133")
+	var flareon_data: CardData = CardDatabase.get_card("CSV9.5C", "023")
+	if rush_evolution_eevee == null or colorful_friends_eevee == null or flareon_data == null:
+		return "The Eevee Box non-ex Eevee and Flareon ex cards must load from CardDatabase"
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.turn_number = 3
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.current_player_index = 0
+	var first_eevee := _make_slot(rush_evolution_eevee, 0, 1)
+	var second_eevee := _make_slot(colorful_friends_eevee, 0, 1)
+	gsm.game_state.players[0].bench = [first_eevee, second_eevee]
+	var first_flareon := CardInstance.create(flareon_data, 0)
+	var second_flareon := CardInstance.create(flareon_data, 0)
+	gsm.game_state.players[0].hand = [first_flareon, second_flareon]
+
+	var battle_scene: Control = BattleScene.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_selected_hand_card", first_flareon)
+	battle_scene.call("_handle_slot_left_click", "my_bench_0")
+	battle_scene.set("_selected_hand_card", second_flareon)
+	battle_scene.call("_handle_slot_left_click", "my_bench_1")
+	var selected_after: CardInstance = battle_scene.get("_selected_hand_card") as CardInstance
+	battle_scene.free()
+
+	return run_checks([
+		assert_eq(first_eevee.get_top_card(), first_flareon, "The Eevee Box CSV9C_153 Eevee should evolve normally after the timing lock has cleared"),
+		assert_eq(second_eevee.get_top_card(), second_flareon, "The Eevee Box 151C_133 Eevee should evolve by clicking its field slot"),
+		assert_false(first_flareon in gsm.game_state.players[0].hand, "The first evolved Flareon ex should leave the hand"),
+		assert_false(second_flareon in gsm.game_state.players[0].hand, "The second evolved Flareon ex should leave the hand"),
+		assert_null(selected_after, "Successful Eevee evolution should clear the selected hand card"),
 	])
 
 

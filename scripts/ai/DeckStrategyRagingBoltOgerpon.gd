@@ -6,9 +6,11 @@ const StateEncoderScript = preload("res://scripts/ai/StateEncoder.gd")
 
 const RAGING_BOLT_EX: Array[String] = ["Raging Bolt ex", "猛雷鼓ex"]
 const TEAL_MASK_OGERPON_EX: Array[String] = ["Teal Mask Ogerpon ex", "厄诡椪 碧草面具ex"]
+const LATIAS_EX: Array[String] = ["Latias ex", "拉帝亚斯ex"]
 const SLITHER_WING: Array[String] = ["Slither Wing", "爬地翅"]
 const IRON_BUNDLE: Array[String] = ["Iron Bundle", "铁包袱"]
 const SQUAWKABILLY_EX: Array[String] = ["Squawkabilly ex", "怒鹦哥ex"]
+const BLOODMOON_URSALUNA_EX: Array[String] = ["Bloodmoon Ursaluna ex", "月月熊 赫月ex"]
 
 const SADA: Array[String] = ["Professor Sada's Vitality", "奥琳博士的气魄"]
 const EARTHEN_VESSEL: Array[String] = ["Earthen Vessel", "大地容器"]
@@ -240,6 +242,9 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 	if item is CardInstance:
 		var card := item as CardInstance
 		if step_id in ["search_pokemon", "search_cards", "search_future_pokemon"]:
+			var player := _get_player(context.get("game_state"), int(context.get("player_index", -1)))
+			if _card_matches(card, LATIAS_EX) and _latias_emergency_handoff_live(player):
+				return 1200.0
 			return float(get_search_priority(card))
 		if step_id == "look_top_cards":
 			return _score_supporter_candidate(card, context)
@@ -266,6 +271,8 @@ func _score_bench_basic(card: CardInstance, game_state: GameState = null, player
 		return float(_setup_priority(name) * 3)
 	var base: float = float(_setup_priority(name) * 3)
 	var player: PlayerState = _get_player(game_state, player_index)
+	if _card_matches(card, LATIAS_EX) and _latias_emergency_handoff_live(player):
+		return 1300.0
 	if player != null and _has_attack_ready_raging_bolt(player) and player.deck.size() > 8 and _current_phase(player) == PHASE_PRESSURE:
 		if _matches_name(name, RAGING_BOLT_EX) and _count_pokemon_on_field(player, RAGING_BOLT_EX) < 2:
 			return 900.0
@@ -279,12 +286,31 @@ func _score_bench_basic(card: CardInstance, game_state: GameState = null, player
 	return base
 
 
+func _latias_emergency_handoff_live(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null or not _active_is_non_attacker(player):
+		return false
+	var active_data := player.active_pokemon.get_card_data()
+	if active_data == null or not active_data.is_basic_pokemon() \
+			or _count_pokemon_on_field(player, LATIAS_EX) > 0:
+		return false
+	for slot: PokemonSlot in player.bench:
+		if _slot_matches(slot, RAGING_BOLT_EX) and _raging_bolt_core_cost_ready(slot):
+			return true
+	return false
+
+
 func _score_attach_energy(card: CardInstance, target_slot: PokemonSlot, game_state: GameState, player_index: int) -> float:
 	if card == null or card.card_data == null or target_slot == null:
 		return 0.0
 	var player: PlayerState = _get_player(game_state, player_index)
 	var phase: String = _current_phase(player)
 	var energy_type: String = str(card.card_data.energy_provides)
+	if (
+		_slot_matches(target_slot, BLOODMOON_URSALUNA_EX)
+		and _count_pokemon_on_field(player, RAGING_BOLT_EX) > 0
+		and not _has_attack_ready_raging_bolt(player)
+	):
+		return -5000.0
 	if _slot_matches(target_slot, RAGING_BOLT_EX):
 		var core_ready: bool = _raging_bolt_core_cost_ready(target_slot)
 		var gap: int = _preferred_attack_energy_gap(target_slot)
@@ -985,8 +1011,6 @@ func _desired_bellowing_thunder_discard_count(player: PlayerState, target_hp: in
 	if target_hp <= 0:
 		return 0
 	var lethal_count: int = int(ceili(float(target_hp) / 70.0))
-	if turn_number > 0 and turn_number <= 4:
-		lethal_count = maxi(lethal_count, 3)
 	if lethal_count <= available_count:
 		return maxi(1, lethal_count)
 	var core_reserve := 2 if _raging_bolt_core_cost_ready(player.active_pokemon) else 0

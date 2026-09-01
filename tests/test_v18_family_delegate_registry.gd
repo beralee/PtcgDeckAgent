@@ -116,6 +116,7 @@ const MATURE_REGISTRY_CONTRACT := [
 	{"deck_id": 18000230, "path": "res://scripts/ai/DeckStrategyDragapultCharizard.gd", "delegate_id": "dragapult_charizard"},
 	{"deck_id": 800016834, "path": "res://scripts/ai/DeckStrategyV18Gholdengo.gd", "delegate_id": "v18_pure_gholdengo_core"},
 	{"deck_id": 800017047, "path": "res://scripts/ai/DeckStrategyV18Stage2Core.gd", "delegate_id": "v18_stage2_core_800017047"},
+	{"deck_id": 800017280, "path": "res://scripts/ai/DeckStrategyV18ArchaludonPoison.gd", "delegate_id": "v18_archaludon_metal_800017280"},
 	{"deck_id": 800018497, "path": "res://scripts/ai/DeckStrategyGardevoir.gd", "delegate_id": "gardevoir"},
 	{"deck_id": 800018499, "path": "res://scripts/ai/DeckStrategy175PureDragapult.gd", "delegate_id": "v175_pure_dragapult"},
 	{"deck_id": 800018502, "path": "res://scripts/ai/DeckStrategyNsZoroark.gd", "delegate_id": "ns_zoroark"},
@@ -197,7 +198,7 @@ func test_normal_and_strong_fixed_openings_share_the_same_registry_family() -> S
 	return run_checks(checks)
 
 
-func test_planned_and_mature_contracts_cover_all_24_v18_decks_once() -> String:
+func test_planned_and_mature_contracts_cover_all_25_v18_decks_once() -> String:
 	var seen: Dictionary = {}
 	var checks: Array[String] = []
 	for contract_variant: Variant in [PLANNED_REGISTRY_CONTRACT, MATURE_REGISTRY_CONTRACT]:
@@ -207,8 +208,8 @@ func test_planned_and_mature_contracts_cover_all_24_v18_decks_once() -> String:
 			checks.append(assert_false(seen.has(deck_id), "Deck %d should have exactly one planned Registry owner" % deck_id))
 			seen[deck_id] = true
 	var catalog_ids: Array[int] = PROFILE_CATALOG_SCRIPT.deck_ids()
-	checks.append(assert_eq(seen.size(), 24, "The Registry contract should cover all 24 V18 decks exactly once"))
-	checks.append(assert_eq(catalog_ids.size(), 24, "The production V18 profile catalog should still contain 24 decks"))
+	checks.append(assert_eq(seen.size(), 25, "The Registry contract should cover all 25 V18 decks exactly once"))
+	checks.append(assert_eq(catalog_ids.size(), 25, "The production V18 profile catalog should contain 25 decks"))
 	for deck_id: int in catalog_ids:
 		checks.append(assert_true(seen.has(deck_id), "Catalog deck %d should have exactly one Registry contract owner" % deck_id))
 	for deck_id_variant: Variant in seen:

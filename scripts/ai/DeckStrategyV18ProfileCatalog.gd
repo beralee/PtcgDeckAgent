@@ -155,6 +155,9 @@ const GARDEVOIR_FAMILY := "res://scripts/ai/DeckStrategyV18GardevoirFamily.gd"
 const GARDEVOIR_VARIANTS_FAMILY := "res://scripts/ai/DeckStrategyV18GardevoirVariants.gd"
 const HOP_FROSLASS_FAMILY := "res://scripts/ai/DeckStrategyV18HopFroslass.gd"
 const MARNIE_CYNTHIA_FAMILY := "res://scripts/ai/DeckStrategyV18MarnieCynthia.gd"
+## The resource path is retained for compatibility with existing imports; the
+## deck and delegate now implement the pure-Metal Archaludon route.
+const ARCHALUDON_METAL := "res://scripts/ai/DeckStrategyV18ArchaludonPoison.gd"
 const PARTNER_FAMILIES := "res://scripts/ai/DeckStrategyV18PartnerFamilies.gd"
 const PIDGEOT_ACADEMY_FAMILY := "res://scripts/ai/DeckStrategyV18PidgeotAcademy.gd"
 const TERA_NOCTOWL_FAMILY := "res://scripts/ai/DeckStrategyV18TeraNoctowl.gd"
@@ -164,6 +167,7 @@ const FAMILY_DELEGATE_OVERRIDES := {
 	800015734: DRAGAPULT_FAMILY,
 	800015934: TERA_NOCTOWL_FAMILY,
 	800017097: GARDEVOIR_VARIANTS_FAMILY,
+	800017280: ARCHALUDON_METAL,
 	800017407: HOP_FROSLASS_FAMILY,
 	800017631: HOP_FROSLASS_FAMILY,
 	800017643: TERA_NOCTOWL_FAMILY,
@@ -222,6 +226,13 @@ static func all_profiles() -> Array[Dictionary]:
 			["沙奈朵ex", "吼叫尾", "莉莉艾的皮皮ex"], ["沙奈朵ex", "奇鲁莉安"],
 			["沙奈朵ex", "奇鲁莉安", "愿增猿"], ["沙奈朵ex", "奇鲁莉安", "愿增猿"],
 			["高级球", "大地容器", "巢穴球", "神奇糖果", "夜间担架", "深钵镇"], GARDEVOIR),
+		_profile(800017280, "18.0 铝钢龙钢铁防线", "archaludon_metal", "合金建设、双攻击路线与老大取奖",
+			["铝钢桥龙ex", "玛纳霏"], ["铝钢龙", "怒鹦哥ex", "玛纳霏"],
+			["铝钢龙", "玛纳霏", "怒鹦哥ex", "拉帝亚斯ex", "吉雉鸡ex"],
+			["铝钢桥龙ex", "铝钢龙"], ["铝钢桥龙ex"],
+			["铝钢桥龙ex", "铝钢龙", "拉帝亚斯ex", "吉雉鸡ex"],
+			["铝钢桥龙ex", "怒鹦哥ex", "吉雉鸡ex"],
+			["高级球", "大地容器", "巢穴球", "夜间担架", "老大的指令", "秘密箱"], ARCHALUDON_METAL),
 		_profile(800017407, "18.0 赫普苍响", "hops_zacian", "道具强化单回合爆发",
 			["赫普的苍响ex", "赫普的卡比兽", "赫普的古月鸟"], ["赫普的古月鸟", "赫普的卡比兽", "梦幻ex"],
 			["赫普的苍响ex", "赫普的卡比兽", "愿增猿", "拉帝亚斯ex"],

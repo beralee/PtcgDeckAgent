@@ -5,12 +5,12 @@ const ResolverScript = preload("res://scripts/ai/OpponentDeckFingerprintResolver
 const ProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
 
 
-func test_catalog_uses_exact_24_complete_v18_decks() -> String:
+func test_catalog_uses_exact_25_complete_v18_decks() -> String:
 	ResolverScript.reset_catalog_cache_for_tests()
 	var report: Dictionary = ResolverScript.catalog_report()
 	var checks: Array[String] = [
 		assert_true(bool(report.get("valid", false)), "Fingerprint catalog should load without errors: %s" % str(report.get("errors", []))),
-		assert_eq(int(report.get("deck_count", 0)), 24, "Fingerprint scope must remain the exact 24 built-in V18 decks"),
+		assert_eq(int(report.get("deck_count", 0)), 25, "Fingerprint scope must cover the exact 25 built-in V18 decks"),
 	]
 	var totals: Dictionary = report.get("deck_total_cards", {})
 	for deck_id: int in ProfileCatalogScript.deck_ids():

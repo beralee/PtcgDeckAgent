@@ -1,6 +1,8 @@
 class_name RuleValidator
 extends RefCounted
 
+const EvolutionEntryRestriction := preload("res://scripts/engine/PokemonEvolutionEntryRestriction.gd")
+
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 
@@ -235,6 +237,8 @@ func get_evolve_unusable_reason(
 		return "没有选择要用于进化的宝可梦。"
 	if not evolution.card_data.is_pokemon():
 		return "选择的卡不是宝可梦，不能用于进化。"
+	if not EvolutionEntryRestriction.allows(evolution.card_data, "normal_hand_evolution"):
+		return "%s 只能通过其指定特性的效果放于场上。" % evolution.card_data.name
 	var top_card: CardInstance = slot.get_top_card()
 	var top_data: CardData = top_card.card_data if top_card != null else null
 	var top_name: String = slot.get_pokemon_name()
@@ -383,6 +387,16 @@ func get_granted_attack_unusable_reason(
 			return "这只宝可梦没有附着工具"
 		if effect_processor != null and effect_processor.is_tool_effect_suppressed(slot, state):
 			return "这只宝可梦身上的道具效果当前不可用"
+	var granted_attack_name := str(granted_attack.get("name", ""))
+	for effect_data: Dictionary in slot.effects:
+		if effect_data.get("type", "") == AttackSelfLockUntilLeaveActiveEffect.EFFECT_TYPE:
+			if str(effect_data.get("attack_name", "")) == granted_attack_name:
+				return "该招式在离开战斗场前无法再次使用"
+		if effect_data.get("type", "") == ATTACK_LOCK_ALL_TYPE and int(effect_data.get("turn", -999)) == state.turn_number - 2:
+			return "This Pokemon cannot use attacks during your next turn"
+		if effect_data.get("type", "") == "attack_lock" and int(effect_data.get("turn", -999)) == state.turn_number - 2:
+			if str(effect_data.get("attack_name", "")) == granted_attack_name:
+				return "该招式下回合无法再次使用"
 	var cost: String = str(granted_attack.get("cost", ""))
 	if not has_enough_energy(slot, cost, effect_processor, state):
 		return "能量不足，无法满足这个招式的费用"

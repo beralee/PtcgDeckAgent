@@ -9,6 +9,10 @@ param(
 	[int]$To,
 
 	[Parameter(Mandatory = $false)]
+	[ValidateRange(1, 8)]
+	[int]$IndexWidth = 3,
+
+	[Parameter(Mandatory = $false)]
 	[string]$SourceCacheDir = ""
 )
 
@@ -58,6 +62,31 @@ function Convert-ToTags([object]$Value) {
 		}
 	}
 	return $tags.ToArray()
+}
+
+function Test-SupportedCardImage([byte[]]$Bytes) {
+	if ($null -eq $Bytes) {
+		return $false
+	}
+	$isPng = $Bytes.Length -ge 8 `
+		-and $Bytes[0] -eq 0x89 `
+		-and $Bytes[1] -eq 0x50 `
+		-and $Bytes[2] -eq 0x4E `
+		-and $Bytes[3] -eq 0x47
+	$isJpeg = $Bytes.Length -ge 3 `
+		-and $Bytes[0] -eq 0xFF `
+		-and $Bytes[1] -eq 0xD8 `
+		-and $Bytes[2] -eq 0xFF
+	$isWebP = $Bytes.Length -ge 12 `
+		-and $Bytes[0] -eq 0x52 `
+		-and $Bytes[1] -eq 0x49 `
+		-and $Bytes[2] -eq 0x46 `
+		-and $Bytes[3] -eq 0x46 `
+		-and $Bytes[8] -eq 0x57 `
+		-and $Bytes[9] -eq 0x45 `
+		-and $Bytes[10] -eq 0x42 `
+		-and $Bytes[11] -eq 0x50
+	return $isPng -or $isJpeg -or $isWebP
 }
 
 function Get-SourceCard([string]$CardIndex) {
@@ -217,7 +246,7 @@ if (Test-Path -LiteralPath $manifestPath) {
 
 $imported = New-Object System.Collections.Generic.List[string]
 for ($number = $From; $number -le $To; $number++) {
-	$cardIndex = "{0:D3}" -f $number
+	$cardIndex = $number.ToString("D$IndexWidth")
 	$source = Get-SourceCard $cardIndex
 	if ((Convert-ToString $source.setCode) -ne $SetCode -or (Convert-ToString $source.cardIndex) -ne $cardIndex) {
 		throw "API identity mismatch for ${SetCode}_${cardIndex}"
@@ -232,8 +261,8 @@ for ($number = $From; $number -le $To; $number++) {
 	$imageUrl = "https://tcg.mik.moe/static/img/$SetCode/$cardIndex.png"
 	Invoke-WebRequest -Uri $imageUrl -Headers $headers -OutFile $imagePath -UseBasicParsing
 	$imageBytes = [System.IO.File]::ReadAllBytes($imagePath)
-	if ($imageBytes.Length -lt 8 -or $imageBytes[0] -ne 0x89 -or $imageBytes[1] -ne 0x50 -or $imageBytes[2] -ne 0x4E -or $imageBytes[3] -ne 0x47) {
-		throw "Downloaded image is not PNG: $imageUrl"
+	if (-not (Test-SupportedCardImage $imageBytes)) {
+		throw "Downloaded image has an unsupported signature: $imageUrl"
 	}
 
 	[void]$manifestEntries.Add("res://data/bundled_user/cards/${SetCode}_${cardIndex}.json")

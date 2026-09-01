@@ -8,6 +8,38 @@ class HeadsCoinFlipper extends CoinFlipper:
 		return true
 
 
+class TwoStageCopiedAttackEffect extends BaseEffect:
+	const FIRST_STEP_ID := "copied_contract_first"
+	const SECOND_STEP_ID := "copied_contract_second"
+
+	func get_attack_interaction_steps(_card: CardInstance, _attack: Dictionary, _state: GameState) -> Array[Dictionary]:
+		return [{
+			"id": FIRST_STEP_ID,
+			"items": ["first"],
+			"labels": ["First"],
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+		}]
+
+	func get_followup_attack_interaction_steps(
+		_card: CardInstance,
+		_attack: Dictionary,
+		_state: GameState,
+		resolved_context: Dictionary
+	) -> Array[Dictionary]:
+		if not resolved_context.has(FIRST_STEP_ID) or resolved_context.has(SECOND_STEP_ID):
+			return []
+		return [{
+			"id": SECOND_STEP_ID,
+			"items": ["second"],
+			"labels": ["Second"],
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+		}]
+
+
 func _pokemon_data(name: String, effect_id: String = "", attacks: Array[Dictionary] = []) -> CardData:
 	var card := CardData.new()
 	card.name = name
@@ -275,4 +307,90 @@ func test_pre_evolution_granted_attack_forwards_dynamic_followup_steps() -> Stri
 	return run_checks([
 		assert_eq(str(initial[0].get("id", "")) if not initial.is_empty() else "", "return_energy_to_deck", "Memory Dive should expose the borrowed attack's initial interaction"),
 		assert_eq(str(followup[0].get("id", "")) if not followup.is_empty() else "", "bench_target", "Memory Dive should also forward the borrowed attack's dynamic follow-up"),
+	])
+
+
+func test_every_live_copy_adapter_forwards_second_level_dynamic_steps() -> String:
+	var state := _state()
+	var processor := EffectProcessor.new()
+	var source := _pokemon_data(
+		"Contract Dragon",
+		"fixture_two_stage_copied_attack",
+		[_attack("Two-stage attack")]
+	)
+	source.energy_type = "N"
+	processor.register_attack_effect(source.effect_id, TwoStageCopiedAttackEffect.new())
+	var attacker := state.players[0].active_pokemon
+	var checks: Array[String] = []
+
+	var discard_source := CardInstance.create(source, 0)
+	state.players[0].discard_pile = [discard_source]
+	var regidrago := AttackUseDiscardDragonAttack.new(processor)
+	checks.append(_assert_copy_adapter_second_stage(
+		regidrago,
+		attacker,
+		state,
+		"copied_attack",
+		"Regidrago VSTAR"
+	))
+
+	state.players[0].bench = [_slot(source, 0)]
+	var own_bench := AttackCopyOwnBenchNamedPokemonAttack.new(processor)
+	checks.append(_assert_copy_adapter_second_stage(
+		own_bench,
+		attacker,
+		state,
+		AttackCopyOwnBenchNamedPokemonAttack.STEP_ID,
+		"N's Zoroark / own-Bench copy"
+	))
+
+	state.players[1].deck = [CardInstance.create(source, 1)]
+	var persian := CSV10C101To200Effects.AttackCopyOpponentTopDeckPokemonAttack.new(processor, 10, 0)
+	checks.append(_assert_copy_adapter_second_stage(
+		persian,
+		attacker,
+		state,
+		"csv10c_persian_top_attack",
+		"Team Rocket's Persian ex"
+	))
+
+	state.players[0].deck = [CardInstance.create(source, 0)]
+	var slowking := CSV9CEffects.AttackSlowkingInspiration.new(0, processor)
+	checks.append(_assert_copy_adapter_second_stage(
+		slowking,
+		attacker,
+		state,
+		"csv9c_slowking_copied_attack",
+		"Slowking"
+	))
+
+	for standard_adapter: BaseEffect in [regidrago, own_bench, persian]:
+		var adapter_name: String = standard_adapter.get_script().resource_path.get_file()
+		checks.append(assert_true(standard_adapter.has_method("validate_attack_interaction"), "%s must forward source validation" % adapter_name))
+		checks.append(assert_true(standard_adapter.has_method("before_attack_damage"), "%s must forward source before-damage effects" % adapter_name))
+		checks.append(assert_true(standard_adapter.has_method("cancels_attack_damage"), "%s must forward source damage cancellation" % adapter_name))
+	return run_checks(checks)
+
+
+func _assert_copy_adapter_second_stage(
+	effect: BaseEffect,
+	attacker: PokemonSlot,
+	state: GameState,
+	outer_step_id: String,
+	label: String
+) -> String:
+	var attack := attacker.get_attacks()[0]
+	var initial := effect.get_attack_interaction_steps(attacker.get_top_card(), attack, state)
+	var outer_step: Dictionary = initial[0] if not initial.is_empty() else {}
+	var items: Array = outer_step.get("items", [])
+	var option: Dictionary = items[0] if not items.is_empty() and items[0] is Dictionary else {}
+	var first_context := {outer_step_id: [option]}
+	var first := effect.get_followup_attack_interaction_steps(attacker.get_top_card(), attack, state, first_context)
+	var second_context := first_context.duplicate(true)
+	second_context[TwoStageCopiedAttackEffect.FIRST_STEP_ID] = ["first"]
+	var second := effect.get_followup_attack_interaction_steps(attacker.get_top_card(), attack, state, second_context)
+	return run_checks([
+		assert_false(option.is_empty(), "%s should expose the source attack" % label),
+		assert_eq(str(first[0].get("id", "")) if not first.is_empty() else "", TwoStageCopiedAttackEffect.FIRST_STEP_ID, "%s should forward the source's initial step" % label),
+		assert_eq(str(second[0].get("id", "")) if not second.is_empty() else "", TwoStageCopiedAttackEffect.SECOND_STEP_ID, "%s should forward the source's dynamic follow-up" % label),
 	])

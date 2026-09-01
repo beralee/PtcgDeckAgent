@@ -1405,3 +1405,24 @@ func test_assignment_at_max_auto_confirms_unless_effect_requires_review() -> Str
 			"Assignment effects must opt in before reaching max skips their review step",
 		),
 	])
+
+
+func test_any_energy_cost_icon_uses_luminous_texture() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var luminous_icon := controller.call("_build_energy_cost_icon", "ANY", true) as TextureRect
+	var colorless_icon := controller.call("_build_energy_cost_icon", "C", true) as TextureRect
+	var luminous_texture := luminous_icon.texture if luminous_icon != null else null
+	var colorless_texture := colorless_icon.texture if colorless_icon != null else null
+	var result := run_checks([
+		assert_true(luminous_texture != null, "ANY Energy costs should render the luminous Energy texture"),
+		assert_eq(luminous_texture.get_size() if luminous_texture != null else Vector2.ZERO, Vector2(256, 256), "Dialog ANY markers should use the standard Energy icon source size"),
+		assert_true(
+			luminous_texture.resource_path != colorless_texture.resource_path if luminous_texture != null and colorless_texture != null else false,
+			"ANY Energy costs should no longer fall back to the Colorless Energy texture",
+		),
+	])
+	if luminous_icon != null:
+		luminous_icon.free()
+	if colorless_icon != null:
+		colorless_icon.free()
+	return result

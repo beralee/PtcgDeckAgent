@@ -6,7 +6,7 @@ func get_attack_any_cost_modifier(attacker: PokemonSlot, _attack: Dictionary, _s
 	var card_data: CardData = attacker.get_card_data()
 	if card_data == null:
 		return 0
-	return -1 if card_data.ancient_trait == "Tera" else 0
+	return -1 if card_data.is_tera_pokemon() else 0
 
 
 func get_description() -> String:

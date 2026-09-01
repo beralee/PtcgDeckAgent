@@ -10,6 +10,7 @@ const EXPECTED_V18_STRENGTH_ORDER_IDS: Array[int] = [
 	800016834, 800018543, 800017047, 800017407, 18000230, 800015734,
 	800018502, 800018498, 800019125, 800018499, 800018105, 800033475,
 	800018497, 800017097, 800015934, 800017643, 800018539, 800018359,
+	800017280,
 ]
 
 
@@ -843,7 +844,7 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		assert_true(1700007 in resolved_ids, "AI deck list should include 17.0 Miraidon"),
 		assert_true(1700008 in resolved_ids, "AI deck list should include 17.0 Dragapult / Dusknoir"),
 		assert_true(1700011 in resolved_ids, "AI deck list should include 17.0 Regidrago"),
-		assert_eq(missing_v18_ids, [], "AI deck list should include all 24 registered 18.0 rule-AI decks"),
+		assert_eq(missing_v18_ids, [], "AI deck list should include all 25 registered 18.0 rule-AI decks"),
 		assert_eq(resolved_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck dropdown should order all 18.0 decks by final normal win rate, using strong win rate as the tie-breaker"),
 	])
 

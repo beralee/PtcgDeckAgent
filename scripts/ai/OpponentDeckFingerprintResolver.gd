@@ -1,7 +1,7 @@
 class_name OpponentDeckFingerprintResolver
 extends RefCounted
 
-## Deterministic opponent-deck inference for the exact 24 built-in V18 decks.
+## Deterministic opponent-deck inference for the exact 25 built-in V18 decks.
 ##
 ## This resolver never selects the local player's production strategy. Own-deck
 ## strategy selection must continue to use the exact deck ID through
@@ -16,7 +16,7 @@ const STATUS_UNKNOWN := "unknown"
 const STATUS_NO_MATCH := "no_match"
 const STATUS_CATALOG_ERROR := "catalog_error"
 const DECK_PATH_FORMAT := "res://data/bundled_user/decks/%d.json"
-const EXPECTED_DECK_COUNT := 24
+const EXPECTED_DECK_COUNT := 25
 
 static var _catalog_ready := false
 static var _catalog_errors: Array[String] = []
@@ -167,7 +167,7 @@ static func _result(
 	var result := {
 		"status": status,
 		"is_unique": status == STATUS_UNIQUE,
-		"scope": "v18_builtin_24",
+		"scope": "v18_builtin_25",
 		"deck_id": 0,
 		"deck_name": "",
 		"strategy_id": "",

@@ -6,6 +6,7 @@ class_name AttackTMEvolution
 extends BaseEffect
 
 const GRANTED_ATTACK_ID := "tm_evolution"
+const EvolutionEntryRestriction := preload("res://scripts/engine/PokemonEvolutionEntryRestriction.gd")
 
 var max_targets: int = 2
 
@@ -225,6 +226,8 @@ func _can_evolve_card_onto_slot(evo_card: CardInstance, slot: PokemonSlot) -> bo
 		return false
 	if not evo_card.card_data.is_pokemon():
 		return false
+	if not EvolutionEntryRestriction.allows(evo_card.card_data, "tm_evolution"):
+		return false
 	var slot_top: CardInstance = slot.get_top_card()
 	if slot_top == null or slot_top.card_data == null:
 		return false
@@ -238,6 +241,8 @@ func _find_evolution_in_deck(player: PlayerState, pokemon_data: CardData) -> Car
 		if deck_card.card_data == null:
 			continue
 		if not deck_card.card_data.is_pokemon():
+			continue
+		if not EvolutionEntryRestriction.allows(deck_card.card_data, "tm_evolution"):
 			continue
 		if deck_card.card_data.evolves_from_matches(pokemon_data):
 			return deck_card

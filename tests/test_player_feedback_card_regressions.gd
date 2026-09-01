@@ -2,6 +2,13 @@ class_name TestPlayerFeedbackCardRegressions
 extends TestBase
 
 const WELLS_PRING_EFFECT_ID := "14cf8080c35f652fe13a579f1b50542a"
+const NOIVERN_EX_EFFECT_ID := "7f21a88085207d28e38ca3593994edc2"
+const REGIDRAGO_VSTAR_EFFECT_ID := "749d2f12d33057c8cc20e52c1b11bcbf"
+const GENOME_HACKING_MEW_EFFECT_ID := "49669fcf461deacebeb5755c11ec51f1"
+const ARVENS_GREEDENT_EFFECT_ID := "bd60c6a39ca30046d3e3610e1bbf7595"
+const HOPS_CRAMORANT_EFFECT_ID := "a250d62a3355b00d48f2eaa8be6a5dfb"
+const ZAMAZENTA_POWER_SLAM_EFFECT_ID := "08e4abe39ce058b6724cf68c1e9828e4"
+const ANNIHILAPE_SELF_LOCK_EFFECT_ID := "69ce58aa80cbc0551b2764da9c3b5735"
 const YANMEGA_EFFECT_ID := "88367894eb8e5dc6ae6b2b8350eb75f9"
 const FEZANDIPITI_EFFECT_ID := "ab6c3357e2b8a8385a68da738f41e0c1"
 const FESTIVAL_GROUNDS_EFFECT_ID := "357d55b54ded5db071b55ebe165749fc"
@@ -11,6 +18,7 @@ const ScenarioStateSnapshotScript = preload("res://scripts/engine/scenario/Scena
 const ScenarioStateRestorerScript = preload("res://scripts/engine/scenario/ScenarioStateRestorer.gd")
 const BattleReplayStateRestorerScript = preload("res://scripts/engine/BattleReplayStateRestorer.gd")
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
+const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 
 
 func test_wellspring_attacks_keep_retreat_lock_scoped_to_sob_defender() -> String:
@@ -41,6 +49,452 @@ func test_wellspring_attacks_keep_retreat_lock_scoped_to_sob_defender() -> Strin
 		assert_false(first_locked_attacker, "Sob must never bind the retreat lock to Wellspring Ogerpon itself"),
 		assert_false(_has_retreat_lock(defender), "Torrential Pump must not inherit Sob's retreat lock"),
 		assert_false(_has_retreat_lock(attacker), "Torrential Pump must not place a retreat lock on its user"),
+	])
+
+
+func test_regidrago_copied_hidden_flight_protects_the_actual_copying_pokemon() -> String:
+	var regidrago := _load_card("res://data/bundled_user/cards/CS6.5C_055.json")
+	var noivern := _load_card("res://data/bundled_user/cards/CSVL1C_045.json")
+	if regidrago == null or noivern == null:
+		return "Regidrago VSTAR and Noivern ex bundled cards should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var regidrago_slot := _slot(regidrago, 0)
+	state.players[0].active_pokemon = regidrago_slot
+	state.players[0].discard_pile = [CardInstance.create(noivern, 0)]
+	state.players[0].deck = [_dummy_card("Own next draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent next draw", 1)]
+	regidrago_slot.attached_energy = [
+		_energy("Grass A", "G", 0),
+		_energy("Grass B", "G", 0),
+		_energy("Fire", "R", 0),
+	]
+	gsm.effect_processor.register_pokemon_card(regidrago)
+	gsm.effect_processor.register_pokemon_card(noivern)
+
+	var effects := gsm.effect_processor.get_attack_effects_for_slot(regidrago_slot, 0)
+	var steps: Array[Dictionary] = effects[0].get_attack_interaction_steps(
+		regidrago_slot.get_top_card(),
+		regidrago.attacks[0],
+		state
+	) if not effects.is_empty() else []
+	var hidden_flight_option: Dictionary = {}
+	if not steps.is_empty():
+		for option: Variant in steps[0].get("items", []):
+			if option is Dictionary and int(option.get("attack_index", -1)) == 0:
+				var source_card: Variant = option.get("source_card", null)
+				if source_card is CardInstance and source_card.card_data != null and source_card.card_data.effect_id == NOIVERN_EX_EFFECT_ID:
+					hidden_flight_option = option
+					break
+	var copied_attack_used := gsm.use_attack(0, 0, [{"copied_attack": [hidden_flight_option]}])
+
+	var basic_attacker := _slot(_pokemon("Basic attacker", 200), 1)
+	state.players[1].active_pokemon = basic_attacker
+	var basic_attack_reason := gsm.get_attack_unusable_reason(1, 0)
+	var basic_attack_used := gsm.use_attack(1, 0)
+
+	return run_checks([
+		assert_eq(regidrago.effect_id, REGIDRAGO_VSTAR_EFFECT_ID, "Regidrago VSTAR should retain its copied-attack effect identity"),
+		assert_false(hidden_flight_option.is_empty(), "Apex Dragon should expose Noivern ex's first attack as a copy option"),
+		assert_true(copied_attack_used, "Regidrago VSTAR should copy Hidden Flight through the real attack path"),
+		assert_true(basic_attack_used, "The opposing Basic Pokemon should still be allowed to attack (reason=%s)" % basic_attack_reason),
+		assert_eq(regidrago_slot.damage_counters, 0, "Copied Hidden Flight should prevent Basic Pokemon attack damage to Regidrago VSTAR"),
+	])
+
+
+func test_old_mew_ex_genome_hacking_copies_torrential_pump_bench_damage_end_to_end() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var wellspring := _load_card("res://data/bundled_user/cards/CSV8C_067.json")
+	if mew == null or wellspring == null:
+		return "151C_151 Mew ex and Wellspring Mask Ogerpon ex bundled cards should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var mew_slot := _slot(mew, 0)
+	var wellspring_slot := _slot(wellspring, 0)
+	var bench_target := _slot(_pokemon("Bench target", 200), 1)
+	state.players[0].active_pokemon = mew_slot
+	state.players[0].bench = []
+	state.players[1].active_pokemon = wellspring_slot
+	state.players[1].bench = [bench_target]
+	state.players[0].deck = [_dummy_card("Own next draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent next draw", 1)]
+	var water := _energy("Water", "W", 0)
+	var colorless_a := _energy("Colorless A", "C", 0)
+	var colorless_b := _energy("Colorless B", "C", 0)
+	mew_slot.attached_energy = [water, colorless_a, colorless_b]
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(wellspring)
+
+	var bridge := HeadlessMatchBridgeScript.new()
+	bridge.bind(gsm)
+	var interaction_started := bridge._try_use_attack_with_interaction(0, mew_slot, 0)
+	var initial_steps: Array = bridge.get("_pending_effect_steps")
+	var initial_step: Dictionary = initial_steps[0] if not initial_steps.is_empty() else {}
+	var torrential_pump_option_index := -1
+	var copied_attack_items: Array = initial_step.get("items", [])
+	for option_index: int in copied_attack_items.size():
+		var option: Variant = copied_attack_items[option_index]
+		if (
+			option is Dictionary
+			and str(option.get("source_effect_id", "")) == WELLS_PRING_EFFECT_ID
+			and int(option.get("attack_index", -1)) == 1
+		):
+			torrential_pump_option_index = option_index
+			break
+	if torrential_pump_option_index >= 0:
+		bridge._handle_effect_interaction_choice(PackedInt32Array([torrential_pump_option_index]))
+	var energy_steps: Array = bridge.get("_pending_effect_steps")
+	var energy_step_index := int(bridge.get("_pending_effect_step_index"))
+	var energy_step: Dictionary = energy_steps[energy_step_index] if energy_step_index >= 0 and energy_step_index < energy_steps.size() else {}
+	bridge._handle_effect_interaction_choice(PackedInt32Array([0, 1, 2]))
+	var current_steps: Array = bridge.get("_pending_effect_steps")
+	var step_index := int(bridge.get("_pending_effect_step_index"))
+	var followup_step: Dictionary = current_steps[step_index] if step_index >= 0 and step_index < current_steps.size() else {}
+	if str(followup_step.get("id", "")) == "bench_target":
+		bridge._handle_effect_interaction_choice(PackedInt32Array([0]))
+	var interaction_finished := str(bridge.get("_pending_effect_kind")) == ""
+
+	return run_checks([
+		assert_eq(mew.effect_id, GENOME_HACKING_MEW_EFFECT_ID, "151C_151 Mew ex should retain its Genome Hacking effect identity"),
+		assert_true(interaction_started, "The real Headless/UI interaction path should start Genome Hacking"),
+		assert_eq(str(initial_step.get("id", "")), "copied_attack", "Genome Hacking should first ask which opposing Active attack to copy"),
+		assert_true(torrential_pump_option_index >= 0, "Genome Hacking should expose Wellspring Mask Ogerpon ex's second attack"),
+		assert_eq(str(energy_step.get("id", "")), "return_energy_to_deck", "Copied Torrential Pump should ask Mew to return Energy"),
+		assert_eq(str(followup_step.get("id", "")), "bench_target", "Copied Torrential Pump should dynamically expose its follow-up Bench target"),
+		assert_true(interaction_finished, "The copied attack interaction should finish after selecting the Bench target"),
+		assert_eq(wellspring_slot.damage_counters, 100, "Copied Torrential Pump should deal 100 damage to Wellspring Mask Ogerpon ex"),
+		assert_eq(bench_target.damage_counters, 120, "Copied Torrential Pump should deal 120 damage to the chosen Benched Pokemon"),
+		assert_eq(mew_slot.attached_energy.size(), 0, "Copied Torrential Pump should return the three selected Energy"),
+	])
+
+
+func test_old_mew_ex_copy_forwards_before_damage_tool_discard() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var greedent := _load_card("res://data/bundled_user/cards/CSV10C_182.json")
+	if mew == null or greedent == null:
+		return "151C_151 Mew ex and CSV10C_182 Arven's Greedent should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var mew_slot := _slot(mew, 0)
+	var greedent_slot := _slot(greedent, 1)
+	state.players[0].active_pokemon = mew_slot
+	state.players[1].active_pokemon = greedent_slot
+	state.players[0].deck = [_dummy_card("Own draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	mew_slot.attached_energy = [_energy("C1", "C", 0), _energy("C2", "C", 0), _energy("C3", "C", 0)]
+	var tool_data := CardData.new()
+	tool_data.name = "Defender Tool"
+	tool_data.card_type = "Tool"
+	var defender_tool := CardInstance.create(tool_data, 1)
+	greedent_slot.attached_tool = defender_tool
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(greedent)
+
+	var used := gsm.use_attack(0, 0, [_copied_attack_context(greedent, 0)])
+
+	return run_checks([
+		assert_eq(greedent.effect_id, ARVENS_GREEDENT_EFFECT_ID, "Greedent should retain the audited before-damage effect identity"),
+		assert_true(used, "Genome Hacking should resolve the copied Greedent attack"),
+		assert_eq(greedent_slot.attached_tool, null, "The copied attack must discard the Defending Pokemon's Tool before damage"),
+		assert_true(defender_tool in state.players[1].discard_pile, "The discarded Tool should enter its owner's discard pile"),
+		assert_eq(greedent_slot.damage_counters, 10, "The copied attack should still deal its printed damage"),
+	])
+
+
+func test_old_mew_ex_copy_forwards_damage_cancellation() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var cramorant := _load_card("res://data/bundled_user/cards/CSV10C_188.json")
+	if mew == null or cramorant == null:
+		return "151C_151 Mew ex and CSV10C_188 Hop's Cramorant should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state, 6)
+	var mew_slot := _slot(mew, 0)
+	var defender := _slot(cramorant, 1)
+	state.players[0].active_pokemon = mew_slot
+	state.players[1].active_pokemon = defender
+	state.players[0].deck = [_dummy_card("Own draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	mew_slot.attached_energy = [_energy("C1", "C", 0), _energy("C2", "C", 0), _energy("C3", "C", 0)]
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(cramorant)
+
+	var used := gsm.use_attack(0, 0, [_copied_attack_context(cramorant, 0)])
+
+	return run_checks([
+		assert_eq(cramorant.effect_id, HOPS_CRAMORANT_EFFECT_ID, "Cramorant should retain the audited attack-failure effect identity"),
+		assert_true(used, "A legally declared copied attack still resolves even when its damage is cancelled"),
+		assert_eq(defender.damage_counters, 0, "Genome Hacking must inherit the copied attack's prize-count failure condition"),
+	])
+
+
+func test_old_mew_ex_copy_forwards_source_validation_before_mutation() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var source := _load_card("res://data/bundled_user/cards/CSV10C_099.json")
+	if mew == null or source == null:
+		return "151C_151 Mew ex and CSV10C_099 should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var mew_slot := _slot(mew, 0)
+	var source_slot := _slot(source, 1)
+	var original_bench := state.players[1].bench.duplicate()
+	state.players[0].active_pokemon = mew_slot
+	state.players[1].active_pokemon = source_slot
+	mew_slot.attached_energy = [_energy("C1", "C", 0), _energy("C2", "C", 0), _energy("C3", "C", 0)]
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(source)
+
+	var used := gsm.use_attack(0, 0, [_copied_attack_context(source, 0)])
+
+	return run_checks([
+		assert_false(used, "A copied attack with a mandatory target must reject a missing delegated interaction"),
+		assert_eq(state.players[1].active_pokemon, source_slot, "Validation must fail before the copied switch effect mutates the board"),
+		assert_eq(state.players[1].bench, original_bench, "Validation failure must preserve the opponent Bench"),
+		assert_true(gsm.effect_processor.get_last_interaction_validation_error(state).contains("force_out_target"), "The source validation error should identify the missing copied step"),
+	])
+
+
+func test_old_mew_ex_rejects_forged_copy_source_context() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var forged_source := _load_card("res://data/bundled_user/cards/CSV10C_182.json")
+	if mew == null or forged_source == null:
+		return "151C_151 Mew ex and CSV10C_182 should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var mew_slot := _slot(mew, 0)
+	var actual_defender := _slot(_pokemon("Actual opposing Active", 200), 1)
+	state.players[0].active_pokemon = mew_slot
+	state.players[1].active_pokemon = actual_defender
+	mew_slot.attached_energy = [_energy("C1", "C", 0), _energy("C2", "C", 0), _energy("C3", "C", 0)]
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(forged_source)
+
+	var used := gsm.use_attack(0, 0, [_copied_attack_context(forged_source, 0)])
+
+	return run_checks([
+		assert_false(used, "Genome Hacking must reject a source that is not the opposing Active Pokemon"),
+		assert_eq(actual_defender.damage_counters, 0, "A forged copied-attack context must not deal damage"),
+		assert_eq(gsm.effect_processor.get_last_interaction_validation_error(state), "copied attack source is invalid", "The validation error should identify invalid source provenance"),
+	])
+
+
+func test_old_mew_ex_copied_delayed_reactive_attack_keeps_source_identity() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var zamazenta := _load_card("res://data/bundled_user/cards/CSV10C_162.json")
+	if mew == null or zamazenta == null:
+		return "151C_151 Mew ex and CSV10C_162 Zamazenta should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var mew_slot := _slot(mew, 0)
+	var zamazenta_slot := _slot(zamazenta, 1)
+	state.players[0].active_pokemon = mew_slot
+	state.players[1].active_pokemon = zamazenta_slot
+	state.players[0].deck = [_dummy_card("Own draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	mew_slot.attached_energy = [_energy("C1", "C", 0), _energy("C2", "C", 0), _energy("C3", "C", 0)]
+	zamazenta_slot.attached_energy = [_energy("Metal 1", "M", 1), _energy("Metal 2", "M", 1), _energy("Colorless", "C", 1)]
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(zamazenta)
+
+	var copied_used := gsm.use_attack(0, 0, [_copied_attack_context(zamazenta, 0)])
+	var marker_kept_source := mew_slot.effects.any(func(entry: Dictionary) -> bool:
+		return str(entry.get("attack_reactive_effect_id", "")) == ZAMAZENTA_POWER_SLAM_EFFECT_ID
+	)
+	var counterattack_used := gsm.use_attack(1, 0)
+
+	return run_checks([
+		assert_true(copied_used, "Mew should use the copied delayed reactive attack"),
+		assert_true(marker_kept_source, "The delayed marker must retain Zamazenta's source effect identity on Mew"),
+		assert_true(counterattack_used, "Zamazenta should attack on the following turn"),
+		assert_eq(mew_slot.damage_counters, 70, "The counterattack should damage Mew"),
+		assert_eq(zamazenta_slot.damage_counters, 140, "Mew's copied Power Slam should reflect the 70 damage back to the attacker"),
+	])
+
+
+func test_pre_evolution_granted_attack_forwards_damage_cancellation() -> String:
+	var relicanth := _load_card("res://data/bundled_user/cards/CSV7C_118.json")
+	var cramorant := _load_card("res://data/bundled_user/cards/CSV10C_188.json")
+	if relicanth == null or cramorant == null:
+		return "CSV7C_118 Relicanth and CSV10C_188 Hop's Cramorant should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state, 6)
+	var evolved_data := _pokemon("Evolved borrower", 200, "Stage 1")
+	evolved_data.evolves_from = cramorant.name
+	var borrower := PokemonSlot.new()
+	borrower.pokemon_stack = [CardInstance.create(cramorant, 0), CardInstance.create(evolved_data, 0)]
+	borrower.attached_energy = [_energy("Colorless", "C", 0)]
+	state.players[0].active_pokemon = borrower
+	state.players[0].bench = [_slot(relicanth, 0)]
+	state.players[0].deck = [_dummy_card("Own draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	gsm.effect_processor.register_pokemon_card(relicanth)
+	gsm.effect_processor.register_pokemon_card(cramorant)
+	var granted_attacks := gsm.effect_processor.get_granted_attacks(borrower, state)
+	var granted: Dictionary = {}
+	for candidate: Dictionary in granted_attacks:
+		if str(candidate.get("original_effect_id", "")) == HOPS_CRAMORANT_EFFECT_ID:
+			granted = candidate
+			break
+
+	var used := gsm.use_granted_attack(0, borrower, granted) if not granted.is_empty() else false
+
+	return run_checks([
+		assert_false(granted.is_empty(), "Memory Dive should expose the pre-evolution Cramorant attack"),
+		assert_true(used, "The granted attack declaration should resolve"),
+		assert_eq(state.players[1].active_pokemon.damage_counters, 0, "Granted attacks must inherit source damage-cancellation rules"),
+	])
+
+
+func test_copied_named_self_lock_does_not_block_the_outer_copy_attack() -> String:
+	var mew := _load_card("res://data/bundled_user/cards/151C_151.json")
+	var annihilape := _load_card("res://data/bundled_user/cards/CSV10C_100.json")
+	if mew == null or annihilape == null:
+		return "151C_151 Mew ex and CSV10C_100 Annihilape should load"
+	annihilape.hp = 400
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var mew_slot := _slot(mew, 0)
+	var defender := _slot(annihilape, 1)
+	state.players[0].active_pokemon = mew_slot
+	state.players[1].active_pokemon = defender
+	state.players[0].deck = [_dummy_card("Own draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	mew_slot.attached_energy = [_energy("C1", "C", 0), _energy("C2", "C", 0), _energy("C3", "C", 0)]
+	gsm.effect_processor.register_pokemon_card(mew)
+	gsm.effect_processor.register_pokemon_card(annihilape)
+
+	var used := gsm.use_attack(0, 0, [_copied_attack_context(annihilape, 0)])
+	var copied_named_lock := mew_slot.effects.any(func(entry: Dictionary) -> bool:
+		return str(entry.get("type", "")) == "attack_lock"
+	)
+	state.turn_number = 4
+	state.current_player_index = 0
+	state.phase = GameState.GamePhase.MAIN
+	var next_turn_reason := gsm.get_attack_unusable_reason(0, 0)
+
+	return run_checks([
+		assert_eq(annihilape.effect_id, ANNIHILAPE_SELF_LOCK_EFFECT_ID, "Annihilape should retain the named self-lock effect identity"),
+		assert_true(used, "Genome Hacking should copy Impact Blow"),
+		assert_false(copied_named_lock, "Copying a named self-lock attack must not attach that name lock to Genome Hacking"),
+		assert_eq(next_turn_reason, "", "Mew should still be able to use Genome Hacking during its next turn"),
+	])
+
+
+func test_granted_named_self_lock_uses_the_original_attack_name() -> String:
+	var relicanth := _load_card("res://data/bundled_user/cards/CSV7C_118.json")
+	var annihilape := _load_card("res://data/bundled_user/cards/CSV10C_100.json")
+	if relicanth == null or annihilape == null:
+		return "CSV7C_118 Relicanth and CSV10C_100 Annihilape should load"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	_add_dummy_prizes(state)
+	var evolved_data := _pokemon("Evolved borrower", 250, "Stage 1")
+	var borrower := PokemonSlot.new()
+	borrower.pokemon_stack = [CardInstance.create(annihilape, 0), CardInstance.create(evolved_data, 0)]
+	borrower.attached_energy = [_energy("Fighting 1", "F", 0), _energy("Fighting 2", "F", 0)]
+	state.players[0].active_pokemon = borrower
+	state.players[0].bench = [_slot(relicanth, 0)]
+	state.players[1].active_pokemon = _slot(_pokemon("Durable defender", 400), 1)
+	state.players[0].deck = [_dummy_card("Own draw", 0)]
+	state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	gsm.effect_processor.register_pokemon_card(relicanth)
+	gsm.effect_processor.register_pokemon_card(annihilape)
+	var granted: Dictionary = {}
+	for candidate: Dictionary in gsm.effect_processor.get_granted_attacks(borrower, state):
+		if str(candidate.get("original_effect_id", "")) == ANNIHILAPE_SELF_LOCK_EFFECT_ID:
+			granted = candidate
+			break
+
+	var used := gsm.use_granted_attack(0, borrower, granted) if not granted.is_empty() else false
+	var lock_name := ""
+	for entry: Dictionary in borrower.effects:
+		if str(entry.get("type", "")) == "attack_lock":
+			lock_name = str(entry.get("attack_name", ""))
+			break
+	state.turn_number = 4
+	state.current_player_index = 0
+	state.phase = GameState.GamePhase.MAIN
+	var next_turn_reason := gsm.rule_validator.get_granted_attack_unusable_reason(state, 0, borrower, granted, gsm.effect_processor) if not granted.is_empty() else "missing"
+
+	return run_checks([
+		assert_false(granted.is_empty(), "Memory Dive should expose Annihilape's previous-evolution attack"),
+		assert_true(used, "The granted Impact Blow should resolve"),
+		assert_eq(lock_name, str(annihilape.attacks[0].get("name", "")), "A granted attack lock should store the original attack name"),
+		assert_true(next_turn_reason.contains("下回合"), "The same granted attack should be unavailable during the user's next turn"),
+	])
+
+
+func test_slowking_routes_before_damage_and_cancellation_through_native_lifecycle() -> String:
+	var slowking := _load_card("res://data/bundled_user/cards/CSV9C_072.json")
+	var greedent := _load_card("res://data/bundled_user/cards/CSV10C_182.json")
+	var cramorant := _load_card("res://data/bundled_user/cards/CSV10C_188.json")
+	if slowking == null or greedent == null or cramorant == null:
+		return "Slowking, Arven's Greedent, and Hop's Cramorant should load"
+
+	var before_gsm := GameStateMachine.new()
+	before_gsm.game_state = _make_state()
+	var before_state := before_gsm.game_state
+	_add_dummy_prizes(before_state)
+	var before_attacker := _slot(slowking, 0)
+	var before_defender := _slot(_pokemon("Tool defender", 300), 1)
+	var tool_data := CardData.new()
+	tool_data.name = "Tool to discard"
+	tool_data.card_type = "Tool"
+	var tool := CardInstance.create(tool_data, 1)
+	before_defender.attached_tool = tool
+	before_state.players[0].active_pokemon = before_attacker
+	before_state.players[1].active_pokemon = before_defender
+	var greedent_source := CardInstance.create(greedent, 0)
+	before_state.players[0].deck = [greedent_source, _dummy_card("Own draw", 0)]
+	before_state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	before_attacker.attached_energy = [_energy("Psychic", "P", 0), _energy("Colorless", "C", 0)]
+	before_gsm.effect_processor.register_pokemon_card(slowking)
+	before_gsm.effect_processor.register_pokemon_card(greedent)
+	var before_used := before_gsm.use_attack(0, 0)
+
+	var cancel_gsm := GameStateMachine.new()
+	cancel_gsm.game_state = _make_state()
+	var cancel_state := cancel_gsm.game_state
+	_add_dummy_prizes(cancel_state, 6)
+	var cancel_attacker := _slot(slowking, 0)
+	var cancel_defender := _slot(_pokemon("Cancel defender", 300), 1)
+	cancel_state.players[0].active_pokemon = cancel_attacker
+	cancel_state.players[1].active_pokemon = cancel_defender
+	var cramorant_source := CardInstance.create(cramorant, 0)
+	cancel_state.players[0].deck = [cramorant_source, _dummy_card("Own draw", 0)]
+	cancel_state.players[1].deck = [_dummy_card("Opponent draw", 1)]
+	cancel_attacker.attached_energy = [_energy("Psychic", "P", 0), _energy("Colorless", "C", 0)]
+	cancel_gsm.effect_processor.register_pokemon_card(slowking)
+	cancel_gsm.effect_processor.register_pokemon_card(cramorant)
+	var cancel_used := cancel_gsm.use_attack(0, 0)
+
+	return run_checks([
+		assert_true(before_used, "Slowking should copy Greedent through the authoritative attack path"),
+		assert_true(greedent_source in before_state.players[0].discard_pile, "Slowking should reveal and discard the source before copied damage"),
+		assert_eq(before_defender.attached_tool, null, "Slowking must forward the copied before-damage Tool discard"),
+		assert_true(tool in before_state.players[1].discard_pile, "The discarded Tool should enter its owner's discard pile"),
+		assert_eq(before_defender.damage_counters, 10, "Slowking should deal the copied Greedent damage through native damage calculation"),
+		assert_true(cancel_used, "Slowking should legally declare the copied Cramorant attack"),
+		assert_true(cramorant_source in cancel_state.players[0].discard_pile, "The cancelled copied attack should still discard Slowking's revealed source"),
+		assert_eq(cancel_defender.damage_counters, 0, "Slowking must inherit the copied attack's damage-cancellation condition"),
 	])
 
 
@@ -306,6 +760,16 @@ func _dummy_card(name: String, owner_index: int) -> CardInstance:
 	card.name = name
 	card.card_type = "Item"
 	return CardInstance.create(card, owner_index)
+
+
+func _copied_attack_context(source: CardData, attack_index: int, nested_context: Dictionary = {}) -> Dictionary:
+	var context := nested_context.duplicate(false)
+	context[AttackCopyAttack.STEP_ID] = [{
+		"source_effect_id": source.effect_id,
+		"attack_index": attack_index,
+		"attack": source.attacks[attack_index],
+	}]
+	return context
 
 
 func _add_dummy_prizes(state: GameState, count: int = 6) -> void:

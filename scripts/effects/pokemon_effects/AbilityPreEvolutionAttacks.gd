@@ -115,7 +115,9 @@ func execute_granted_attack(
 		attacker,
 		defender,
 		state,
-		targets
+		targets,
+		null,
+		{"mode": "granted", "name": str(granted_attack.get("name", ""))}
 	)
 
 

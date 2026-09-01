@@ -732,11 +732,99 @@ func test_web_deck_recommendations_use_latest_snapshot_without_http_request() ->
 	return run_checks([
 		assert_false(should_fetch, "HTTPS Web builds must not call the HTTP-only recommendation service"),
 		assert_null(client, "Web deck center should not create the remote HTTP recommendation client"),
-		assert_eq(snapshot.size(), 5, "Web builds should bundle the five newest server recommendations"),
-		assert_eq(str(source.get("date", "")), "2026-08-02", "Web startup should select the newest snapshot date even when a May 1 recommendation id was persisted"),
-		assert_true(not pool.is_empty() and str((pool[0] as Dictionary).get("deck_id", "")) == "645436", "Web recommendation order should preserve the server's newest-first ranking"),
+		assert_eq(snapshot.size(), 20, "Web builds should bundle the complete audited recommendation window"),
+		assert_eq(str(source.get("date", "")), "2026-08-16", "Web startup should select the newest snapshot date even when an older recommendation id was persisted"),
+		assert_true(not pool.is_empty() and str((pool[0] as Dictionary).get("deck_id", "")) == "665242", "Web recommendation order should preserve the audited newest-first ranking"),
 		assert_not_null(embedded_deck, "The older community feed should remain available as an offline import fallback"),
 		assert_eq(embedded_deck.total_cards if embedded_deck != null else 0, 60, "The offline fallback should still reconstruct a complete 60-card deck"),
+	])
+
+
+func test_bundled_recommendation_corrects_reused_archaludon_source_id() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._web_recommendation_snapshot = scene._load_web_recommendation_snapshot()
+	var stale := {
+		"id": "2026-08-08-t3485-d662781-archaludon-week4",
+		"deck_id": 662781,
+		"deck_name": "东莞亚军铝钢桥龙",
+		"title": "旧缓存推荐",
+		"style_summary": "旧缓存仍指向后来被复用的卡组编号。",
+		"source": {"label": "旧赛事", "date": "2026-08-08"},
+		"import_url": "https://tcg.mik.moe/decks/list/662781",
+		"generated_at": "2026-08-10T00:00:00Z",
+	}
+	var corrected: Dictionary = scene._normalize_recommendation_input(stale)
+	var source: Dictionary = corrected.get("source", {}) if corrected.get("source", {}) is Dictionary else {}
+	var deck: DeckData = scene._build_embedded_recommendation_deck(corrected)
+	var duraludon_count := 0
+	var archaludon_count := 0
+	var dragapult_count := 0
+	if deck != null:
+		for entry: Dictionary in deck.cards:
+			var uid := "%s_%s" % [str(entry.get("set_code", "")), str(entry.get("card_index", ""))]
+			if uid == "CSV9.5C_126":
+				duraludon_count += int(entry.get("count", 0))
+			elif uid == "CSV9C_138":
+				archaludon_count += int(entry.get("count", 0))
+			elif uid == "CSV8C_159":
+				dragapult_count += int(entry.get("count", 0))
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(int(corrected.get("deck_id", 0)), 663151, "The immutable bundle should replace the reused legacy deck id"),
+		assert_eq(str(corrected.get("import_url", "")), "https://tcg.mik.moe/decks/list/663151", "The import link should target the finalized Archaludon list"),
+		assert_eq(str(source.get("city", "")), "东莞", "Corrected source metadata should preserve the actual tournament city"),
+		assert_not_null(deck, "The corrected recommendation should reconstruct without a network request"),
+		assert_eq(deck.id if deck != null else 0, 663151, "The reconstructed deck should use the finalized source id"),
+		assert_eq(deck.total_cards if deck != null else 0, 60, "The corrected snapshot should contain exactly sixty cards"),
+		assert_eq(duraludon_count, 4, "The East Dongguan runner-up list should contain four Duraludon"),
+		assert_eq(archaludon_count, 3, "The East Dongguan runner-up list should contain three Archaludon ex"),
+		assert_eq(dragapult_count, 0, "The corrected Archaludon recommendation must not contain Dragapult ex"),
+	])
+
+
+func test_bundled_recommendation_snapshots_are_complete_and_locally_resolvable() -> String:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/deck_recommendations_web.json"))
+	var root: Dictionary = parsed if parsed is Dictionary else {}
+	var raw_items: Variant = root.get("recommendations", [])
+	var items: Array = raw_items if raw_items is Array else []
+	var seen := {}
+	var all_complete := true
+	var all_cards_available := true
+	var all_fingerprints_present := true
+	for item_raw: Variant in items:
+		if item_raw is not Dictionary:
+			all_complete = false
+			continue
+		var item := item_raw as Dictionary
+		var item_id := str(item.get("id", "")).strip_edges()
+		if item_id == "" or seen.has(item_id):
+			all_complete = false
+		seen[item_id] = true
+		var snapshot: Dictionary = item.get("deck_snapshot", {}) if item.get("deck_snapshot", {}) is Dictionary else {}
+		var cards_raw: Variant = snapshot.get("cards", [])
+		var cards: Array = cards_raw if cards_raw is Array else []
+		var total := 0
+		for card_raw: Variant in cards:
+			if card_raw is not Dictionary:
+				all_complete = false
+				continue
+			var card := card_raw as Dictionary
+			var count := int(card.get("count", 0))
+			total += count
+			if count <= 0 or CardDatabase.get_card(str(card.get("set_code", "")), str(card.get("card_index", ""))) == null:
+				all_cards_available = false
+		if total != 60 or int(snapshot.get("total_cards", 0)) != 60:
+			all_complete = false
+		if str(snapshot.get("fingerprint_sha256", "")).length() != 64:
+			all_fingerprints_present = false
+
+	return run_checks([
+		assert_eq(int(root.get("schema_version", 0)), 2, "Recommendation bundle should use the immutable snapshot schema"),
+		assert_eq(items.size(), 20, "Recommendation bundle should cover all active server articles"),
+		assert_true(all_complete, "Every recommendation id should be unique and every snapshot should total exactly sixty cards"),
+		assert_true(all_cards_available, "Every card print referenced by the recommendation snapshots should be bundled locally"),
+		assert_true(all_fingerprints_present, "Every immutable snapshot should include a SHA-256 fingerprint"),
 	])
 
 

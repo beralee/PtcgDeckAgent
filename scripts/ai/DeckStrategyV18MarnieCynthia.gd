@@ -608,12 +608,20 @@ func _score_marnie_action(action: Dictionary, player: PlayerState, base_score: f
 		"use_stadium_effect":
 			return maxf(base_score, 3900.0) if _marnie_search_is_productive(player) else -500.0
 		"play_trainer":
+			if (
+				_card_matches_names(card, [BOSS_ORDERS, "Boss's Orders", COUNTER_CATCHER, "Counter Catcher"])
+				and not _marnie_has_current_attack_window(player)
+			):
+				return -3200.0
 			if _matches_key(card, RARE_CANDY): return maxf(base_score, 5300.0) if _has_live_marnie_candy_route(player) else -1500.0
 			if _is_recovery_card(card): return maxf(base_score, 3300.0) if _has_recoverable_marnie_card(player) else -1600.0
 		"attach_tool":
 			if _matches_key(card, TM_EVOLUTION): return maxf(base_score, 3500.0) if _marnie_tm_target_count(player) > 0 else -1300.0
 		"granted_attack":
 			if _is_tm_evolution_attack(action): return maxf(base_score, 4900.0) if _marnie_tm_target_count(player) > 0 else -1800.0
+		"retreat":
+			if _matches_key(player.active_pokemon, GRIMMSNARL) and _darkness_units(player.active_pokemon) >= 2:
+				return -4800.0 if _count_ready_grimmsnarl(player) <= 1 else base_score
 		"attack":
 			var source: PokemonSlot = action.get("source_slot", player.active_pokemon)
 			var attack_name := _attack_name(action, source)
@@ -689,6 +697,11 @@ func _score_marnie_attach(action: Dictionary, player: PlayerState, base_score: f
 	var target: PokemonSlot = action.get("target_slot", null)
 	if not _energy_pays(energy, "D", target):
 		return base_score
+	var tm_carrier := _marnie_tm_route_carrier(player)
+	if tm_carrier != null \
+			and _marnie_tm_target_count(player) > 0 \
+			and tm_carrier.attached_energy.is_empty():
+		return maxf(base_score, 5600.0) if target == tm_carrier else minf(base_score, -3000.0)
 	if _matches_key(target, GRIMMSNARL): return maxf(base_score, 4700.0 - float(_darkness_units(target)) * 720.0) if _darkness_units(target) < 2 else 900.0
 	if _matches_key(target, MORGREM): return maxf(base_score, 4100.0 - float(_darkness_units(target)) * 600.0)
 	if _matches_key(target, IMPIDIMP): return maxf(base_score, 3600.0 - float(_darkness_units(target)) * 520.0)
@@ -975,7 +988,23 @@ func _has_recoverable_cynthia_card(player: PlayerState) -> bool:
 
 
 func _marnie_tm_target_count(player: PlayerState) -> int:
-	return _count_slots(player, IMPIDIMP) + _count_slots(player, SNORUNT)
+	if player == null:
+		return 0
+	var available_evolutions: Array[CardInstance] = []
+	for card: CardInstance in player.deck:
+		if _matches_key(card, MORGREM) or _matches_key(card, FROSLASS):
+			available_evolutions.append(card)
+	var count := 0
+	for slot: PokemonSlot in player.bench:
+		if not (_matches_key(slot, IMPIDIMP) or _matches_key(slot, SNORUNT)):
+			continue
+		for index: int in available_evolutions.size():
+			var evolution: CardInstance = available_evolutions[index]
+			if evolution.card_data != null and evolution.card_data.evolves_from_matches(slot.get_card_data()):
+				count += 1
+				available_evolutions.remove_at(index)
+				break
+	return mini(2, count)
 
 
 func _cynthia_tm_target_count(player: PlayerState) -> int:
@@ -1122,6 +1151,33 @@ func _can_fund_tm_evolution_attack(
 
 
 func _cynthia_tm_route_carrier(player: PlayerState) -> PokemonSlot:
+	if player != null and _slot_has_tm_evolution(player.active_pokemon):
+		return player.active_pokemon
+	return null
+
+
+func _count_ready_grimmsnarl(player: PlayerState) -> int:
+	var count := 0
+	for slot: PokemonSlot in _all_slots(player):
+		if _matches_key(slot, GRIMMSNARL) and _darkness_units(slot) >= 2:
+			count += 1
+	return count
+
+
+func _marnie_has_current_attack_window(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	if bool(predict_attacker_damage(player.active_pokemon).get("can_attack", false)):
+		return true
+	var ready := _ready_grimmsnarl(player)
+	if ready == null:
+		return false
+	var active_data := player.active_pokemon.get_card_data()
+	var retreat_cost := int(active_data.retreat_cost) if active_data != null else 99
+	return _slot_energy_count(player.active_pokemon) >= retreat_cost
+
+
+func _marnie_tm_route_carrier(player: PlayerState) -> PokemonSlot:
 	if player != null and _slot_has_tm_evolution(player.active_pokemon):
 		return player.active_pokemon
 	return null

@@ -35,15 +35,17 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	var self_slot := _find_owner_slot(card, player)
 	if self_slot == null:
 		return []
-	return [build_card_assignment_step(
+	return [build_full_library_card_assignment_step(
 		ASSIGNMENT_ID,
 		"选择最多%d张基本%s能量附着给这只宝可梦" % [attach_count, energy_type],
+		player.deck,
 		source_items,
 		source_labels,
 		[self_slot],
 		["%s（自身）" % self_slot.get_pokemon_name()],
 		0,
 		mini(attach_count, source_items.size()),
+		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
 	)]
 

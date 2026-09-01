@@ -66,6 +66,63 @@ func test_csv10c_202_lillies_pearl_reduces_attack_damage_knockout_prizes() -> St
 	])
 
 
+func test_csv10c_202_lillies_comfey_zero_prize_knockout_continues_to_replacement() -> String:
+	var pearl := _load_card("202")
+	var comfey_data: CardData = CardDatabase.get_card("CSV10C", "094")
+	if pearl == null or comfey_data == null:
+		return "CSV10C_202 Lillie's Pearl and CSV10C_094 Lillie's Comfey are required"
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state: GameState = gsm.game_state
+	state.phase = GameState.GamePhase.MAIN
+	state.turn_number = 2
+	state.first_player_index = 0
+	state.current_player_index = 0
+
+	var attacker := _slot("Attack Damage Finisher", 0)
+	attacker.get_card_data().attacks = [{"name": "Knock Out", "cost": "", "damage": "100", "text": "", "is_vstar_power": false}]
+	state.players[0].active_pokemon = attacker
+	var lillies_comfey := PokemonSlot.new()
+	lillies_comfey.pokemon_stack.append(CardInstance.create(comfey_data, 1))
+	lillies_comfey.attached_tool = CardInstance.create(pearl, 1)
+	state.players[1].active_pokemon = lillies_comfey
+	var replacement := _slot("Replacement", 1)
+	state.players[1].bench = [replacement]
+	state.players[0].prizes.clear()
+	state.players[1].prizes.clear()
+	state.players[0].deck.clear()
+	state.players[1].deck.clear()
+	for i: int in 6:
+		state.players[0].prizes.append(_card("Player 0 Prize %d" % i, "Item", 0))
+		state.players[1].prizes.append(_card("Player 1 Prize %d" % i, "Item", 1))
+	state.players[1].deck.append(_card("Next turn draw", "Item", 1))
+
+	var choice_types: Array[String] = []
+	gsm.player_choice_required.connect(func(choice_type: String, _data: Dictionary) -> void:
+		choice_types.append(choice_type)
+	)
+	var attacked := gsm.use_attack(0, 0)
+	var phase_after_knockout := state.phase
+	var active_after_knockout := state.players[1].active_pokemon
+	var prizes_after_knockout := state.players[0].prizes.size()
+	var pending_prizes_after_knockout := int(gsm.get("_pending_prize_remaining"))
+	var sent_out := gsm.send_out_pokemon(1, replacement)
+
+	return run_checks([
+		assert_true(attacked, "The attack-damage knockout fixture should resolve"),
+		assert_null(active_after_knockout, "The Knocked Out Lillie's Comfey should leave the Active Spot before replacement"),
+		assert_eq(prizes_after_knockout, 6, "Lillie's Pearl should reduce a one-Prize Lillie's Pokemon knockout to zero Prizes"),
+		assert_eq(pending_prizes_after_knockout, 0, "A zero-Prize knockout must not leave Prize selection pending"),
+		assert_false("take_prize" in choice_types, "A zero-Prize knockout must not emit a Prize selection prompt"),
+		assert_true("send_out_pokemon" in choice_types, "The knockout flow should continue directly to replacement selection"),
+		assert_eq(phase_after_knockout, GameState.GamePhase.KNOCKOUT_REPLACE, "The game should wait for a replacement instead of stalling in Pokemon Check"),
+		assert_true(sent_out, "The defending player should be able to send out a replacement after the zero-Prize knockout"),
+		assert_eq(state.players[1].active_pokemon, replacement, "The selected replacement should become Active"),
+		assert_eq(state.phase, GameState.GamePhase.MAIN, "After replacement, the defending player's turn should continue normally"),
+	])
+
+
 func test_csv10c_203_iriss_fighting_spirit_discards_one_then_draws_to_six() -> String:
 	var card := _load_card("203")
 	if card == null:

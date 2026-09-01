@@ -163,7 +163,6 @@ const SIMPLIFIED_CHINESE_CARD_OVERRIDES := {
 	"PAR_182": {"set_code": "CSV3C", "card_index": "130"},
 	"SCR_50": {"set_code": "CSV9C", "card_index": "063"},
 	"ASC_40": {"set_code": "CSV10C", "card_index": "044", "deck_rebuild": true},
-	"MEG_119": {"set_code": "CSV1C", "card_index": "121", "deck_rebuild": true},
 	"PFL_11": {"set_code": "151C", "card_index": "004", "deck_rebuild": true},
 	"PFL_12": {"set_code": "CSV5C", "card_index": "015", "deck_rebuild": true},
 	"OBF_163": {"set_code": "151C", "card_index": "017"},

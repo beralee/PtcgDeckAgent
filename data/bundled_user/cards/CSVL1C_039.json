@@ -1,0 +1,58 @@
+{
+  "name": "帕底亚 土王ex",
+  "card_type": "Pokemon",
+  "mechanic": "ex",
+  "label": "",
+  "description": "特性: 毒液沼泽\n如果场上有竞技场的话，则在自己的回合可以使用1次。令对手的战斗宝可梦陷入【中毒】状态。\n\n【恶】【无】【无】 尖刺骨 200\n抛掷1次硬币如果为反面，则在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+  "yoren_code": "Y1251",
+  "set_code": "CSVL1C",
+  "card_index": "039",
+  "set_code_en": "PAL",
+  "card_index_en": "130",
+  "name_en": "Paldean Clodsire ex",
+  "name_zh": "",
+  "artist": "PLANETA Mochizuki",
+  "rarity": "无标记",
+  "release_date": "",
+  "regulation_mark": "G",
+  "effect_id": "87cc640402d6b606ee4ef78b7c9d2689",
+  "image_url": "https://tcg.mik.moe/static/img/CSVL1C/039.png",
+  "image_local_path": "user://cards/images/CSVL1C/039.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSVL1C/039",
+  "source_set_code": "CSVL1C",
+  "source_card_index": "039",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "D",
+  "stage": "Stage 1",
+  "hp": 280,
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 3,
+  "evolves_from": "帕底亚 乌波",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "尖刺骨",
+      "text": "抛掷1次硬币如果为反面，则在下一个自己的回合，这只宝可梦无法使用招式。",
+      "cost": "DCC",
+      "damage": "200",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "毒液沼泽",
+      "text": "如果场上有竞技场的话，则在自己的回合可以使用1次。令对手的战斗宝可梦陷入【中毒】状态。"
+    }
+  ],
+  "energy_provides": ""
+}

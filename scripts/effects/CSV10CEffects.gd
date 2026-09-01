@@ -714,6 +714,8 @@ class ZamazentaPowerSlam:
 	extends BaseEffect
 
 	const EFFECT_TYPE := "csv10c_zamazenta_power_slam_reflect"
+	const SOURCE_EFFECT_ID := "08e4abe39ce058b6724cf68c1e9828e4"
+	const REACTIVE_EFFECT_ID_KEY := "attack_reactive_effect_id"
 	var attack_index_to_match := 0
 
 	func applies_to_attack_index(attack_index: int) -> bool:
@@ -726,7 +728,11 @@ class ZamazentaPowerSlam:
 		if attacker == null or state == null or not applies_to_attack_index(attack_index):
 			return
 		attacker.effects = attacker.effects.filter(func(entry: Dictionary) -> bool: return entry.get("type", "") != EFFECT_TYPE)
-		attacker.effects.append({"type": EFFECT_TYPE, "turn": state.turn_number})
+		attacker.effects.append({
+			"type": EFFECT_TYPE,
+			"turn": state.turn_number,
+			REACTIVE_EFFECT_ID_KEY: SOURCE_EFFECT_ID,
+		})
 
 	func on_damaged_by_attack(defender: PokemonSlot, attacker: PokemonSlot, damage: int, state: GameState) -> void:
 		if defender == null or attacker == null or damage <= 0 or state == null:
@@ -1377,6 +1383,28 @@ class AttackRepeatedTargetDamage extends BaseEffect:
 			labels.append(slot.get_pokemon_name())
 		return [{"id": STEP_ID, "title": "分配%d次伤害" % selection_count, "ui_mode": "counter_distribution", "total_counters": selection_count, "target_items": targets, "target_labels": labels, "min_select": selection_count, "max_select": selection_count, "allow_cancel": false}]
 
+	func validate_attack_interaction(attacker: PokemonSlot, attack_index: int, targets: Array, state: GameState) -> Dictionary:
+		if attacker == null or attacker.get_top_card() == null or state == null or not applies_to_attack_index(attack_index):
+			return interaction_validation_error("Oil Machine Gun is not available")
+		var legal := state.players[1 - attacker.get_top_card().owner_index].get_all_pokemon()
+		var context := get_interaction_context(targets)
+		if not context.has(STEP_ID) or not (context.get(STEP_ID) is Array):
+			return interaction_validation_error("missing interaction step: %s" % STEP_ID)
+		var selected_count := 0
+		for raw: Variant in context.get(STEP_ID, []):
+			if not (raw is Dictionary):
+				return interaction_validation_error("Oil Machine Gun contains an invalid assignment")
+			var target: Variant = (raw as Dictionary).get("target", null)
+			var amount := _selection_units(int((raw as Dictionary).get("amount", 0)))
+			if not (target is PokemonSlot) or target not in legal:
+				return interaction_validation_error("Oil Machine Gun contains an illegal target")
+			if amount <= 0 or selected_count + amount > selection_count:
+				return interaction_validation_error("Oil Machine Gun contains an invalid selection count")
+			selected_count += amount
+		if selected_count != selection_count:
+			return interaction_validation_error("Oil Machine Gun must distribute exactly %d selections" % selection_count)
+		return interaction_validation_ok()
+
 	func execute_attack(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
 		if attacker == null or attacker.get_top_card() == null or state == null or not applies_to_attack_index(attack_index):
 			return
@@ -1389,7 +1417,7 @@ class AttackRepeatedTargetDamage extends BaseEffect:
 			if not (raw is Dictionary):
 				continue
 			var target: Variant = raw.get("target", null)
-			var amount := maxi(0, int(raw.get("amount", 0)))
+			var amount := _selection_units(int(raw.get("amount", 0)))
 			if target is PokemonSlot and target in legal and selected_count + amount <= selection_count:
 				distribution[target] = int(distribution.get(target, 0)) + amount
 				selected_count += amount
@@ -1409,6 +1437,15 @@ class AttackRepeatedTargetDamage extends BaseEffect:
 				if bool(processor.call("is_damage_prevented_by_defender_ability", attacker, target, state)):
 					continue
 			CSV9CHelpers.apply_attack_damage_to_slot(attacker, target, state, int(distribution[target]) * damage_per_selection)
+
+	func _selection_units(raw_amount: int) -> int:
+		if raw_amount <= 0:
+			return 0
+		# The shared counter-distribution UI serializes one selected unit as 10
+		# damage points. Older direct callers used the raw selection count.
+		if raw_amount > selection_count:
+			return raw_amount / 10 if raw_amount % 10 == 0 else 0
+		return raw_amount
 
 	func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 		for index: int in card.card_data.attacks.size():

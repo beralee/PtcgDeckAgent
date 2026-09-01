@@ -256,9 +256,11 @@ static func _extract_same_print_refs(html: String, current_set: String, current_
 		seen[current_ref] = true
 		refs.append(current_ref)
 	var regex := RegEx.new()
-	regex.compile("(?i)href=[\"']/cards/([^/\"']+)/([^?\"'#]+)")
+	regex.compile("(?i)href=[\"']/cards/(?:(jp)/)?([^/\"']+)/([^/?\"'#]+)")
 	for result: RegExMatch in regex.search_all(html):
-		var ref := card_ref_key(result.get_string(1), result.get_string(2))
+		var ref := card_ref_key(result.get_string(2), result.get_string(3))
+		if result.get_string(1).to_lower() == "jp" and ref != "":
+			ref = "JP/%s" % ref
 		if ref == "" or seen.has(ref):
 			continue
 		seen[ref] = true
@@ -270,6 +272,8 @@ static func _extract_regulation_mark(html: String) -> String:
 	var text := _strip_tags(_first_match("(?is)Regulation Mark\\s*</[^>]+>\\s*<[^>]+>(.*?)</[^>]+>", html))
 	if text == "":
 		text = _first_match("(?is)Regulation Mark\\s*:?\\s*([A-Z])", _strip_tags(html))
+	if text == "":
+		text = _first_match("(?is)([A-Z])\\s+Regulation Mark", _strip_tags(html))
 	return text.strip_edges()
 
 

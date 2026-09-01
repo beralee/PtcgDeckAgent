@@ -20,7 +20,7 @@ const SUPPORTED_AI_DECK_IDS: Array[int] = [
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 	1750002,
 	18000230, 18000625,
-	800015734, 800015934, 800016834, 800017047, 800017097, 800017407,
+	800015734, 800015934, 800016834, 800017047, 800017097, 800017280, 800017407,
 	800017631, 800017643, 800018105, 800018359, 800018497, 800018498,
 	800018499, 800018500, 800018501, 800018502, 800018509, 800018539,
 	800018543, 800018880, 800019125, 800033475,
@@ -52,6 +52,7 @@ const V18_AI_DECK_STRENGTH_ORDER_IDS: Array[int] = [
 	800017643, # 20% normal, 35% strong
 	800018539, # 13% normal, 35% strong
 	800018359, # 9% normal, 52% strong
+	800017280, # 72.3% rules-only versus Marnie's Grimmsnarl; Miraidon ordering pending
 ]
 const DEPRECATED_BUNDLED_DECK_IDS: Array[int] = [
 	800018921,
@@ -351,6 +352,11 @@ func _merge_bundled_deck_migrations(bundled_data: Dictionary, user_dict: Diction
 		return false
 	if not BUNDLED_DECK_CARD_REPLACEMENTS.has(deck_id):
 		return false
+	# Card-print migrations are only for untouched seed snapshots. Saving in the
+	# deck editor advances updated_at, so a newer player-selected print must win
+	# even when its UID happens to match the old bundled entry.
+	if _is_player_deck_newer_than_bundled_release(bundled_data, user_dict):
+		return false
 	var replacements: Dictionary = BUNDLED_DECK_CARD_REPLACEMENTS[deck_id]
 	var bundled_cards: Array = bundled_data.get("cards", []) if bundled_data.get("cards", []) is Array else []
 	var user_cards: Array = user_dict.get("cards", []) if user_dict.get("cards", []) is Array else []
@@ -377,6 +383,16 @@ func _merge_bundled_deck_migrations(bundled_data: Dictionary, user_dict: Diction
 	if changed:
 		user_dict["cards"] = user_cards
 	return changed
+
+
+func _is_player_deck_newer_than_bundled_release(bundled_data: Dictionary, user_dict: Dictionary) -> bool:
+	var user_updated_at := int(user_dict.get("updated_at", 0))
+	if user_updated_at <= 0:
+		return false
+	var bundled_updated_at := int(bundled_data.get("updated_at", 0))
+	if bundled_updated_at <= 0:
+		return true
+	return user_updated_at > bundled_updated_at
 
 
 func _deck_entry_uid(entry: Dictionary) -> String:

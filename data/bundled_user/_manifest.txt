@@ -29,6 +29,8 @@ res://data/bundled_user/cards/151C_123.json
 res://data/bundled_user/cards/151C_132.json
 res://data/bundled_user/cards/151C_133.json
 res://data/bundled_user/cards/151C_151.json
+res://data/bundled_user/cards/30THC_057.json
+res://data/bundled_user/cards/CBB4C_0501.json
 res://data/bundled_user/cards/CBB5C_0301.json
 res://data/bundled_user/cards/CBB5C_1501.json
 res://data/bundled_user/cards/CS1bC_128.json
@@ -422,6 +424,8 @@ res://data/bundled_user/cards/CSV10C_284.json
 res://data/bundled_user/cards/CSV10C_285.json
 res://data/bundled_user/cards/CSV10C_286.json
 res://data/bundled_user/cards/CSV10C_287.json
+res://data/bundled_user/cards/CSV1C_009.json
+res://data/bundled_user/cards/CSV1C_010.json
 res://data/bundled_user/cards/CSV1C_028.json
 res://data/bundled_user/cards/CSV1C_042.json
 res://data/bundled_user/cards/CSV1C_050.json
@@ -451,6 +455,7 @@ res://data/bundled_user/cards/CSV1C_124.json
 res://data/bundled_user/cards/CSV1C_126.json
 res://data/bundled_user/cards/CSV1C_127.json
 res://data/bundled_user/cards/CSV2C_011.json
+res://data/bundled_user/cards/CSV2C_012.json
 res://data/bundled_user/cards/CSV2C_028.json
 res://data/bundled_user/cards/CSV2C_036.json
 res://data/bundled_user/cards/CSV2C_041.json
@@ -482,6 +487,8 @@ res://data/bundled_user/cards/CSV3C_125.json
 res://data/bundled_user/cards/CSV3C_129.json
 res://data/bundled_user/cards/CSV3C_130.json
 res://data/bundled_user/cards/CSV4C_013.json
+res://data/bundled_user/cards/CSV4C_032.json
+res://data/bundled_user/cards/CSV4C_043.json
 res://data/bundled_user/cards/CSV4C_044.json
 res://data/bundled_user/cards/CSV4C_063.json
 res://data/bundled_user/cards/CSV4C_074.json
@@ -507,6 +514,9 @@ res://data/bundled_user/cards/CSV5C_119.json
 res://data/bundled_user/cards/CSV5C_120.json
 res://data/bundled_user/cards/CSV5C_127.json
 res://data/bundled_user/cards/CSV5C_128.json
+res://data/bundled_user/cards/CSV6C_009.json
+res://data/bundled_user/cards/CSV6C_010.json
+res://data/bundled_user/cards/CSV6C_038.json
 res://data/bundled_user/cards/CSV6C_042.json
 res://data/bundled_user/cards/CSV6C_051.json
 res://data/bundled_user/cards/CSV6C_056.json
@@ -542,6 +552,7 @@ res://data/bundled_user/cards/CSV7C_051.json
 res://data/bundled_user/cards/CSV7C_052.json
 res://data/bundled_user/cards/CSV7C_053.json
 res://data/bundled_user/cards/CSV7C_054.json
+res://data/bundled_user/cards/CSV7C_057.json
 res://data/bundled_user/cards/CSV7C_059.json
 res://data/bundled_user/cards/CSV7C_065.json
 res://data/bundled_user/cards/CSV7C_091.json
@@ -599,6 +610,8 @@ res://data/bundled_user/cards/CSV8C_041.json
 res://data/bundled_user/cards/CSV8C_050.json
 res://data/bundled_user/cards/CSV8C_056.json
 res://data/bundled_user/cards/CSV8C_057.json
+res://data/bundled_user/cards/CSV8C_059.json
+res://data/bundled_user/cards/CSV8C_062.json
 res://data/bundled_user/cards/CSV8C_067.json
 res://data/bundled_user/cards/CSV8C_078.json
 res://data/bundled_user/cards/CSV8C_081.json
@@ -609,6 +622,7 @@ res://data/bundled_user/cards/CSV8C_094.json
 res://data/bundled_user/cards/CSV8C_110.json
 res://data/bundled_user/cards/CSV8C_111.json
 res://data/bundled_user/cards/CSV8C_112.json
+res://data/bundled_user/cards/CSV8C_115.json
 res://data/bundled_user/cards/CSV8C_119.json
 res://data/bundled_user/cards/CSV8C_121.json
 res://data/bundled_user/cards/CSV8C_122.json
@@ -660,6 +674,8 @@ res://data/bundled_user/cards/CSV9.5C_034.json
 res://data/bundled_user/cards/CSV9.5C_036.json
 res://data/bundled_user/cards/CSV9.5C_043.json
 res://data/bundled_user/cards/CSV9.5C_047.json
+res://data/bundled_user/cards/CSV9.5C_051.json
+res://data/bundled_user/cards/CSV9.5C_052.json
 res://data/bundled_user/cards/CSV9.5C_058.json
 res://data/bundled_user/cards/CSV9.5C_061.json
 res://data/bundled_user/cards/CSV9.5C_068.json
@@ -667,6 +683,7 @@ res://data/bundled_user/cards/CSV9.5C_081.json
 res://data/bundled_user/cards/CSV9.5C_094.json
 res://data/bundled_user/cards/CSV9.5C_096.json
 res://data/bundled_user/cards/CSV9.5C_100.json
+res://data/bundled_user/cards/CSV9.5C_101.json
 res://data/bundled_user/cards/CSV9.5C_104.json
 res://data/bundled_user/cards/CSV9.5C_126.json
 res://data/bundled_user/cards/CSV9.5C_128.json
@@ -675,6 +692,7 @@ res://data/bundled_user/cards/CSV9.5C_140.json
 res://data/bundled_user/cards/CSV9.5C_141.json
 res://data/bundled_user/cards/CSV9.5C_149.json
 res://data/bundled_user/cards/CSV9.5C_163.json
+res://data/bundled_user/cards/CSV9.5C_166.json
 res://data/bundled_user/cards/CSV9.5C_182.json
 res://data/bundled_user/cards/CSV9.5C_188.json
 res://data/bundled_user/cards/CSV9.5C_199.json
@@ -690,6 +708,7 @@ res://data/bundled_user/cards/CSV9C_033.json
 res://data/bundled_user/cards/CSV9C_034.json
 res://data/bundled_user/cards/CSV9C_038.json
 res://data/bundled_user/cards/CSV9C_039.json
+res://data/bundled_user/cards/CSV9C_051.json
 res://data/bundled_user/cards/CSV9C_053.json
 res://data/bundled_user/cards/CSV9C_054.json
 res://data/bundled_user/cards/CSV9C_055.json
@@ -771,9 +790,15 @@ res://data/bundled_user/cards/CSVH1C_051.json
 res://data/bundled_user/cards/CSVH3aC_002.json
 res://data/bundled_user/cards/CSVH3aC_017.json
 res://data/bundled_user/cards/CSVH3pC_001.json
+res://data/bundled_user/cards/CSVH4C_024.json
+res://data/bundled_user/cards/CSVH4eC_001.json
+res://data/bundled_user/cards/CSVH4eC_002.json
+res://data/bundled_user/cards/CSVH4eC_044.json
 res://data/bundled_user/cards/CSVH5C_002.json
+res://data/bundled_user/cards/CSVH5pC_006.json
 res://data/bundled_user/cards/CSVL1C_036.json
 res://data/bundled_user/cards/CSVL1C_037.json
+res://data/bundled_user/cards/CSVL1C_039.json
 res://data/bundled_user/cards/CSVL1C_045.json
 res://data/bundled_user/cards/CSVL2C_041.json
 res://data/bundled_user/cards/CSVNC_008.json
@@ -793,6 +818,8 @@ res://data/bundled_user/cards/images/151C/123.png.bin
 res://data/bundled_user/cards/images/151C/132.png.bin
 res://data/bundled_user/cards/images/151C/133.png.bin
 res://data/bundled_user/cards/images/151C/151.png.bin
+res://data/bundled_user/cards/images/30THC/057.png.bin
+res://data/bundled_user/cards/images/CBB4C/0501.png.bin
 res://data/bundled_user/cards/images/CBB5C/0301.png.bin
 res://data/bundled_user/cards/images/CBB5C/1501.png.bin
 res://data/bundled_user/cards/images/CS1bC/128.png.bin
@@ -1186,6 +1213,8 @@ res://data/bundled_user/cards/images/CSV10C/284.png.bin
 res://data/bundled_user/cards/images/CSV10C/285.png.bin
 res://data/bundled_user/cards/images/CSV10C/286.png.bin
 res://data/bundled_user/cards/images/CSV10C/287.png.bin
+res://data/bundled_user/cards/images/CSV1C/009.png.bin
+res://data/bundled_user/cards/images/CSV1C/010.png.bin
 res://data/bundled_user/cards/images/CSV1C/028.png.bin
 res://data/bundled_user/cards/images/CSV1C/042.png.bin
 res://data/bundled_user/cards/images/CSV1C/050.png.bin
@@ -1215,6 +1244,7 @@ res://data/bundled_user/cards/images/CSV1C/124.png.bin
 res://data/bundled_user/cards/images/CSV1C/126.png.bin
 res://data/bundled_user/cards/images/CSV1C/127.png.bin
 res://data/bundled_user/cards/images/CSV2C/011.png.bin
+res://data/bundled_user/cards/images/CSV2C/012.png.bin
 res://data/bundled_user/cards/images/CSV2C/028.png.bin
 res://data/bundled_user/cards/images/CSV2C/036.png.bin
 res://data/bundled_user/cards/images/CSV2C/041.png.bin
@@ -1247,6 +1277,8 @@ res://data/bundled_user/cards/images/CSV3C/129.png.bin
 res://data/bundled_user/cards/images/CSV3C/130.png.bin
 res://data/bundled_user/cards/images/CSV4C/013.png.bin
 res://data/bundled_user/cards/images/CSV4C/015.png.bin
+res://data/bundled_user/cards/images/CSV4C/032.png.bin
+res://data/bundled_user/cards/images/CSV4C/043.png.bin
 res://data/bundled_user/cards/images/CSV4C/044.png.bin
 res://data/bundled_user/cards/images/CSV4C/063.png.bin
 res://data/bundled_user/cards/images/CSV4C/074.png.bin
@@ -1272,6 +1304,9 @@ res://data/bundled_user/cards/images/CSV5C/119.png.bin
 res://data/bundled_user/cards/images/CSV5C/120.png.bin
 res://data/bundled_user/cards/images/CSV5C/127.png.bin
 res://data/bundled_user/cards/images/CSV5C/128.png.bin
+res://data/bundled_user/cards/images/CSV6C/009.png.bin
+res://data/bundled_user/cards/images/CSV6C/010.png.bin
+res://data/bundled_user/cards/images/CSV6C/038.png.bin
 res://data/bundled_user/cards/images/CSV6C/042.png.bin
 res://data/bundled_user/cards/images/CSV6C/051.png.bin
 res://data/bundled_user/cards/images/CSV6C/056.png.bin
@@ -1307,6 +1342,7 @@ res://data/bundled_user/cards/images/CSV7C/051.png.bin
 res://data/bundled_user/cards/images/CSV7C/052.png.bin
 res://data/bundled_user/cards/images/CSV7C/053.png.bin
 res://data/bundled_user/cards/images/CSV7C/054.png.bin
+res://data/bundled_user/cards/images/CSV7C/057.png.bin
 res://data/bundled_user/cards/images/CSV7C/059.png.bin
 res://data/bundled_user/cards/images/CSV7C/065.png.bin
 res://data/bundled_user/cards/images/CSV7C/091.png.bin
@@ -1364,6 +1400,8 @@ res://data/bundled_user/cards/images/CSV8C/041.png.bin
 res://data/bundled_user/cards/images/CSV8C/050.png.bin
 res://data/bundled_user/cards/images/CSV8C/056.png.bin
 res://data/bundled_user/cards/images/CSV8C/057.png.bin
+res://data/bundled_user/cards/images/CSV8C/059.png.bin
+res://data/bundled_user/cards/images/CSV8C/062.png.bin
 res://data/bundled_user/cards/images/CSV8C/067.png.bin
 res://data/bundled_user/cards/images/CSV8C/078.png.bin
 res://data/bundled_user/cards/images/CSV8C/081.png.bin
@@ -1374,6 +1412,7 @@ res://data/bundled_user/cards/images/CSV8C/094.png.bin
 res://data/bundled_user/cards/images/CSV8C/110.png.bin
 res://data/bundled_user/cards/images/CSV8C/111.png.bin
 res://data/bundled_user/cards/images/CSV8C/112.png.bin
+res://data/bundled_user/cards/images/CSV8C/115.png.bin
 res://data/bundled_user/cards/images/CSV8C/119.png.bin
 res://data/bundled_user/cards/images/CSV8C/121.png.bin
 res://data/bundled_user/cards/images/CSV8C/122.png.bin
@@ -1425,6 +1464,8 @@ res://data/bundled_user/cards/images/CSV9.5C/034.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/036.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/043.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/047.png.bin
+res://data/bundled_user/cards/images/CSV9.5C/051.png.bin
+res://data/bundled_user/cards/images/CSV9.5C/052.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/058.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/061.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/068.png.bin
@@ -1432,6 +1473,7 @@ res://data/bundled_user/cards/images/CSV9.5C/081.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/094.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/096.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/100.png.bin
+res://data/bundled_user/cards/images/CSV9.5C/101.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/104.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/126.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/128.png.bin
@@ -1440,6 +1482,7 @@ res://data/bundled_user/cards/images/CSV9.5C/140.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/141.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/149.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/163.png.bin
+res://data/bundled_user/cards/images/CSV9.5C/166.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/182.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/188.png.bin
 res://data/bundled_user/cards/images/CSV9.5C/199.png.bin
@@ -1455,6 +1498,7 @@ res://data/bundled_user/cards/images/CSV9C/033.png.bin
 res://data/bundled_user/cards/images/CSV9C/034.png.bin
 res://data/bundled_user/cards/images/CSV9C/038.png.bin
 res://data/bundled_user/cards/images/CSV9C/039.png.bin
+res://data/bundled_user/cards/images/CSV9C/051.png.bin
 res://data/bundled_user/cards/images/CSV9C/053.png.bin
 res://data/bundled_user/cards/images/CSV9C/054.png.bin
 res://data/bundled_user/cards/images/CSV9C/055.png.bin
@@ -1536,9 +1580,15 @@ res://data/bundled_user/cards/images/CSVH1C/051.png.bin
 res://data/bundled_user/cards/images/CSVH3aC/002.png.bin
 res://data/bundled_user/cards/images/CSVH3aC/017.png.bin
 res://data/bundled_user/cards/images/CSVH3pC/001.png.bin
+res://data/bundled_user/cards/images/CSVH4C/024.png.bin
+res://data/bundled_user/cards/images/CSVH4eC/001.png.bin
+res://data/bundled_user/cards/images/CSVH4eC/002.png.bin
+res://data/bundled_user/cards/images/CSVH4eC/044.png.bin
 res://data/bundled_user/cards/images/CSVH5C/002.png.bin
+res://data/bundled_user/cards/images/CSVH5pC/006.png.bin
 res://data/bundled_user/cards/images/CSVL1C/036.png.bin
 res://data/bundled_user/cards/images/CSVL1C/037.png.bin
+res://data/bundled_user/cards/images/CSVL1C/039.png.bin
 res://data/bundled_user/cards/images/CSVL1C/045.png.bin
 res://data/bundled_user/cards/images/CSVL2C/041.png.bin
 res://data/bundled_user/cards/images/CSVNC/008.png.bin
@@ -1559,6 +1609,8 @@ res://data/bundled_user/cards/images/LEN_JTG/56.png.bin
 res://data/bundled_user/cards/images/LEN_JTG/8.png.bin
 res://data/bundled_user/cards/images/LEN_JTG/97.png.bin
 res://data/bundled_user/cards/images/LEN_JTG/98.png.bin
+res://data/bundled_user/cards/images/LEN_MEG/119.png.bin
+res://data/bundled_user/cards/images/LEN_POR/81.png.bin
 res://data/bundled_user/cards/images/LEN_PRE/4.png.bin
 res://data/bundled_user/cards/images/LEN_PRE/77.png.bin
 res://data/bundled_user/cards/images/LEN_SCR/114.png.bin
@@ -1569,12 +1621,15 @@ res://data/bundled_user/cards/images/LEN_SCR/133.png.bin
 res://data/bundled_user/cards/images/LEN_SSP/170.png.bin
 res://data/bundled_user/cards/images/LEN_SSP/76.png.bin
 res://data/bundled_user/cards/images/LEN_SVI/85.png.bin
+res://data/bundled_user/cards/images/M6A/060.png.bin
 res://data/bundled_user/cards/images/SVP/067.png.bin
 res://data/bundled_user/cards/images/SVP/080.png.bin
 res://data/bundled_user/cards/images/SVP/102.png.bin
 res://data/bundled_user/cards/images/SVP/105.png.bin
 res://data/bundled_user/cards/images/SVP/144.png.bin
 res://data/bundled_user/cards/images/SVP/159.png.bin
+res://data/bundled_user/cards/images/SVP/175.png.bin
+res://data/bundled_user/cards/images/SVP/176.png.bin
 res://data/bundled_user/cards/images/UTEST/001.png.bin
 res://data/bundled_user/cards/LEN_BLK_79.json
 res://data/bundled_user/cards/LEN_DRI_10.json
@@ -1592,6 +1647,8 @@ res://data/bundled_user/cards/LEN_JTG_56.json
 res://data/bundled_user/cards/LEN_JTG_8.json
 res://data/bundled_user/cards/LEN_JTG_97.json
 res://data/bundled_user/cards/LEN_JTG_98.json
+res://data/bundled_user/cards/LEN_MEG_119.json
+res://data/bundled_user/cards/LEN_POR_81.json
 res://data/bundled_user/cards/LEN_PRE_4.json
 res://data/bundled_user/cards/LEN_PRE_77.json
 res://data/bundled_user/cards/LEN_SCR_114.json
@@ -1602,12 +1659,15 @@ res://data/bundled_user/cards/LEN_SCR_133.json
 res://data/bundled_user/cards/LEN_SSP_170.json
 res://data/bundled_user/cards/LEN_SSP_76.json
 res://data/bundled_user/cards/LEN_SVI_85.json
+res://data/bundled_user/cards/M6A_060.json
 res://data/bundled_user/cards/SVP_067.json
 res://data/bundled_user/cards/SVP_080.json
 res://data/bundled_user/cards/SVP_102.json
 res://data/bundled_user/cards/SVP_105.json
 res://data/bundled_user/cards/SVP_144.json
 res://data/bundled_user/cards/SVP_159.json
+res://data/bundled_user/cards/SVP_175.json
+res://data/bundled_user/cards/SVP_176.json
 res://data/bundled_user/cards/UTEST_001.json
 res://data/bundled_user/decks/1700001.json
 res://data/bundled_user/decks/1700002.json
@@ -1709,4 +1769,6 @@ res://data/bundled_user/decks/800019125.json
 res://data/bundled_user/decks/800021836.json
 res://data/bundled_user/decks/800025404.json
 res://data/bundled_user/decks/800026575.json
+res://data/bundled_user/decks/800030001.json
+res://data/bundled_user/decks/800030002.json
 res://data/bundled_user/decks/800033475.json

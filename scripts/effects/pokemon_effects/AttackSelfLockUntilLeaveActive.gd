@@ -23,11 +23,19 @@ func execute_attack(
 ) -> void:
 	if not applies_to_attack_index(attack_index):
 		return
+	var delegated_raw: Variant = get_attack_interaction_context().get(DELEGATED_ATTACK_CONTEXT_KEY, {})
+	var delegated: Dictionary = delegated_raw if delegated_raw is Dictionary else {}
+	if str(delegated.get("mode", "")) == "copy":
+		return
+	var attack_name := _get_attack_name(attacker, attack_index)
+	if str(delegated.get("mode", "")) == "granted":
+		attack_name = str(delegated.get("name", attack_name))
 	clear_for_slot(attacker)
 	attacker.effects.append({
 		"type": EFFECT_TYPE,
-		"attack_name": _get_attack_name(attacker, attack_index),
+		"attack_name": attack_name,
 		"attack_index": attack_index,
+		"source_effect_id": str(delegated.get("effect_id", "")),
 	})
 
 

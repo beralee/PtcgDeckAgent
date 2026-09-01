@@ -45,10 +45,10 @@ const RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS := [
 	"assets/ui/8187aae7-e467-446f-bcd8-544468eae16b.png",
 ]
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
-const EXPECTED_APP_VERSION := "0.5.4"
-const EXPECTED_BUILD_NUMBER := "54"
-const EXPECTED_WEB_VERSION := "0.5.4.4"
-const EXPECTED_WEB_BUILD_NUMBER := "544"
+const EXPECTED_APP_VERSION := "0.5.6"
+const EXPECTED_BUILD_NUMBER := "56"
+const EXPECTED_WEB_VERSION := "0.5.6.0"
+const EXPECTED_WEB_BUILD_NUMBER := "560"
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 

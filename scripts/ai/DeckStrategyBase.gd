@@ -46,7 +46,7 @@ func build_matchup_context(game_state: GameState, player_index: int) -> Dictiona
 	return {
 		"status": str(resolved.get("status", "unknown")),
 		"is_unique": is_unique,
-		"scope": str(resolved.get("scope", "v18_builtin_24")),
+		"scope": str(resolved.get("scope", "v18_builtin_25")),
 		"opponent_deck_id": int(resolved.get("deck_id", 0)) if is_unique else 0,
 		"opponent_strategy_id": str(resolved.get("strategy_id", "")) if is_unique else "",
 		"opponent_archetype": str(resolved.get("archetype", "")) if is_unique else "",

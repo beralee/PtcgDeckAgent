@@ -1,0 +1,58 @@
+{
+  "name": "够赞狗",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 亢奋力量\n如果这只宝可梦身上附着了【恶】能量的话，则这只宝可梦的最大HP「+100」，这只宝可梦所使用的招式，给对手的战斗宝可梦造成的伤害「+100」。\n\n【斗】【斗】 够赞拳 70\n\n\n",
+  "yoren_code": "P1014",
+  "set_code": "CSV9.5C",
+  "card_index": "101",
+  "set_code_en": "PRE",
+  "card_index_en": "57",
+  "name_en": "Okidogi",
+  "name_zh": "",
+  "artist": "Souichirou Gunjima",
+  "rarity": "R",
+  "release_date": "",
+  "regulation_mark": "H",
+  "effect_id": "cc0285c411d9f2c4d7c3f0c486cd2667",
+  "image_url": "https://tcg.mik.moe/static/img/CSV9.5C/101.png",
+  "image_local_path": "user://cards/images/CSV9.5C/101.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV9.5C/101",
+  "source_set_code": "CSV9.5C",
+  "source_card_index": "101",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "F",
+  "stage": "Basic",
+  "hp": 130,
+  "weakness_energy": "P",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "evolves_from": "",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "够赞拳",
+      "text": "",
+      "cost": "FF",
+      "damage": "70",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "亢奋力量",
+      "text": "如果这只宝可梦身上附着了【恶】能量的话，则这只宝可梦的最大HP「+100」，这只宝可梦所使用的招式，给对手的战斗宝可梦造成的伤害「+100」。"
+    }
+  ],
+  "energy_provides": ""
+}

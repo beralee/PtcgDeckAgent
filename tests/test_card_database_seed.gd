@@ -477,7 +477,7 @@ func test_academy_gardevoir_seed_and_existing_install_migrate_to_refinement_kirl
 	user_copy["cards"] = user_cards
 	var migrated: bool = db._merge_bundled_deck_migrations(bundled, user_copy)
 	var migrated_cards: Array = user_copy.get("cards", [])
-	return run_checks([
+	var result := run_checks([
 		assert_eq(_raw_deck_entry_count(bundled, "CSV2C", "054"), 0, "Fresh installs must not seed the old Academy Kirlia"),
 		assert_eq(_raw_deck_entry_count(bundled, "CS6.5C", "030"), 2, "Fresh installs must seed two Refinement Kirlia"),
 		assert_true(migrated, "Existing Academy installs with the exact legacy Kirlia entry should migrate"),
@@ -486,6 +486,41 @@ func test_academy_gardevoir_seed_and_existing_install_migrate_to_refinement_kirl
 		assert_eq(int(((migrated_cards[0] as Dictionary).get("count", 0))), int(unrelated_entry.get("count", 0)), "Migration must preserve unrelated user card-count edits"),
 		assert_false(db._merge_bundled_deck_migrations(bundled, user_copy), "The targeted migration should be idempotent"),
 	])
+	db.free()
+	return result
+
+
+func test_academy_gardevoir_migration_preserves_newer_player_selected_g_mark_kirlia() -> String:
+	var db := CardDatabaseScript.new()
+	var bundled_raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/decks/800018498.json"))
+	if not bundled_raw is Dictionary:
+		return "18.0 Academy Gardevoir bundled deck should parse"
+	var bundled := bundled_raw as Dictionary
+	var player_copy := bundled.duplicate(true)
+	var player_cards: Array = player_copy.get("cards", [])
+	for index: int in player_cards.size():
+		if not (player_cards[index] is Dictionary):
+			continue
+		var entry := (player_cards[index] as Dictionary).duplicate(true)
+		if str(entry.get("set_code", "")) == "CS6.5C" and str(entry.get("card_index", "")) == "030":
+			entry["set_code"] = "CSV2C"
+			entry["card_index"] = "054"
+			entry["effect_id"] = "773a7c5bc165bd5d75321bc7c29fdd25"
+			entry["resolved_via"] = "exact_print"
+			player_cards[index] = entry
+			break
+	player_copy["cards"] = player_cards
+	player_copy["deck_name"] = "30-沙奈朵"
+	player_copy["updated_at"] = int(bundled.get("updated_at", 0)) + 1
+
+	var migrated := db._merge_bundled_deck_migrations(bundled, player_copy)
+	var result := run_checks([
+		assert_false(migrated, "A newer player-edited deck must not be rewritten by an old bundled print migration"),
+		assert_eq(_raw_deck_entry_count(player_copy, "CSV2C", "054"), 2, "The player-selected G-mark Kirlia should remain in the saved deck"),
+		assert_eq(_raw_deck_entry_count(player_copy, "CS6.5C", "030"), 0, "The migration must not restore the F-mark Refinement Kirlia over a newer edit"),
+	])
+	db.free()
+	return result
 
 
 func test_copy_missing_files_recursive_copies_nested_files_without_overwriting() -> String:
@@ -737,6 +772,67 @@ func test_supported_ai_deck_ignores_user_override_and_reads_bundled_source() -> 
 		assert_eq(str(resolved.deck_name if resolved != null else ""), str(bundled_ai.deck_name), "Supported AI decks should resolve from bundled source, not user overrides"),
 		assert_str_contains(str(resolved.strategy if resolved != null else ""), "【玩家打法要求】", "Supported AI decks should expose the bundled player-requirement strategy text"),
 	])
+
+
+func test_30th_anniversary_dragapult_and_gardevoir_are_bundled_as_new_decks() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var specs := {
+		800030001: {
+			"name": "30周年多龙巴鲁托",
+			"required_counts": {"LEN_POR_81": 4, "CSV8C_159": 3},
+		},
+		800030002: {
+			"name": "30周年沙奈朵",
+			"required_counts": {"LEN_POR_81": 2, "CSV2C_054": 2, "M6A_060": 1, "30THC_057": 1},
+		},
+	}
+	var checks: Array[String] = []
+	for deck_id: int in specs:
+		var spec: Dictionary = specs[deck_id]
+		var deck_path := "res://data/bundled_user/decks/%d.json" % deck_id
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(deck_path))
+		checks.append(assert_true(deck_path in manifest, "%d should be listed in the bundled seed manifest" % deck_id))
+		checks.append(assert_true(parsed is Dictionary, "%d bundled deck JSON should parse" % deck_id))
+		if not (parsed is Dictionary):
+			continue
+		var payload := parsed as Dictionary
+		var deck := DeckData.from_dict(payload)
+		var total := 0
+		var counts: Dictionary = {}
+		for card_raw: Variant in payload.get("cards", []):
+			if not (card_raw is Dictionary):
+				continue
+			var card := card_raw as Dictionary
+			var count := int(card.get("count", 0))
+			var set_code := str(card.get("set_code", ""))
+			var card_index := str(card.get("card_index", ""))
+			total += count
+			counts["%s_%s" % [set_code, card_index]] = count
+			checks.append(assert_not_null(db.get_card(set_code, card_index), "%d should resolve bundled card %s_%s" % [deck_id, set_code, card_index]))
+		checks.append(assert_eq(int(payload.get("id", 0)), deck_id, "%d should keep its independent bundled deck id" % deck_id))
+		checks.append(assert_eq(str(payload.get("deck_name", "")), str(spec.get("name", "")), "%d should use its 30th-anniversary display name" % deck_id))
+		checks.append(assert_eq(str(payload.get("variant_name", "")), str(spec.get("name", "")), "%d should use the same variant name" % deck_id))
+		checks.append(assert_eq(total, 60, "%d should contain exactly 60 cards" % deck_id))
+		checks.append(assert_eq(int(payload.get("total_cards", 0)), 60, "%d should declare exactly 60 cards" % deck_id))
+		checks.append(assert_true(deck.validate().is_empty(), "%d should pass DeckData legality validation" % deck_id))
+		if deck_id == 800030002:
+			var g_mark_kirlia := db.get_card("CSV2C", "054")
+			checks.append(assert_not_null(g_mark_kirlia, "The 30th-anniversary deck should resolve its exact Kirlia print"))
+			if g_mark_kirlia != null:
+				checks.append(assert_eq(g_mark_kirlia.regulation_mark, "G", "The selected CSV2C_054 Kirlia should remain regulation mark G"))
+				checks.append(assert_eq(g_mark_kirlia.effect_id, "773a7c5bc165bd5d75321bc7c29fdd25", "The G-mark Kirlia should keep its own attack effect identity"))
+			var battle_instances := db.build_deck_instances(deck, 0)
+			var battle_uids: Dictionary = {}
+			for instance: CardInstance in battle_instances:
+				var uid := instance.card_data.get_uid() if instance != null and instance.card_data != null else ""
+				battle_uids[uid] = int(battle_uids.get(uid, 0)) + 1
+			checks.append(assert_eq(int(battle_uids.get("CSV2C_054", 0)), 2, "Battle construction should keep both G-mark Kirlia copies"))
+			checks.append(assert_eq(int(battle_uids.get("CS6.5C_030", 0)), 0, "Battle construction must not substitute the F-mark Kirlia"))
+		for uid: String in spec.get("required_counts", {}):
+			checks.append(assert_eq(int(counts.get(uid, 0)), int((spec.get("required_counts", {}) as Dictionary)[uid]), "%d should preserve adjusted count for %s" % [deck_id, uid]))
+	db.free()
+	return run_checks(checks)
 
 
 func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
@@ -1036,6 +1132,33 @@ func test_version_175_configured_decks_are_bundled() -> String:
 			checks.append(assert_true(str(generated_deck.deck_name).begins_with("17.5"), "Generated deck %d should be the 17.5 copy" % generated_id))
 		if legacy_deck != null:
 			checks.append(assert_false(str(legacy_deck.deck_name).begins_with("17.5"), "Legacy deck %d should not be overwritten as the 17.5 copy" % legacy_id))
+	return run_checks(checks)
+
+
+func test_every_bundled_deck_has_explicit_updated_at_for_stable_fresh_install_order() -> String:
+	var directory := DirAccess.open("res://data/bundled_user/decks")
+	if directory == null:
+		return "Bundled deck directory should be readable"
+	var checks: Array[String] = []
+	var deck_count := 0
+	directory.list_dir_begin()
+	var file_name := directory.get_next()
+	while file_name != "":
+		if not directory.current_is_dir() and file_name.ends_with(".json"):
+			deck_count += 1
+			var deck_path := "res://data/bundled_user/decks/%s" % file_name
+			var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(deck_path))
+			checks.append(assert_true(parsed is Dictionary, "%s should contain valid deck JSON" % file_name))
+			if parsed is Dictionary:
+				var payload := parsed as Dictionary
+				checks.append(assert_gt(
+					int(payload.get("updated_at", 0)),
+					0,
+					"%s must pin updated_at instead of falling back to installation-time file metadata" % file_name,
+				))
+		file_name = directory.get_next()
+	directory.list_dir_end()
+	checks.append(assert_gt(deck_count, 0, "Bundled deck ordering coverage should inspect at least one deck"))
 	return run_checks(checks)
 
 
@@ -2293,6 +2416,35 @@ func test_2026_06_28_imported_pokemon_batch_is_bundled_with_images_and_effects()
 	return run_checks(checks)
 
 
+func test_recommendation_snapshot_specific_prints_are_bundled_with_existing_effects() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var specs := [
+		{"uid": "CSV7C_057", "set": "CSV7C", "index": "057", "name": "雪童子", "card_type": "Pokemon", "effect_id": "f6baf0c4c60ff47c7f836c1271f40cb3"},
+		{"uid": "CSVH4eC_044", "set": "CSVH4eC", "index": "044", "name": "空手道王的修炼", "card_type": "Supporter", "effect_id": "a444b83881df9e2a0225aee95bbc853a"},
+	]
+	var checks: Array[String] = []
+	for spec: Dictionary in specs:
+		var uid := str(spec["uid"])
+		var set_code := str(spec["set"])
+		var card_index := str(spec["index"])
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % uid))
+		if card != null:
+			checks.append(assert_eq(card.get_uid(), uid, "%s should preserve its exact print id" % uid))
+			checks.append(assert_eq(str(card.name), str(spec["name"]), "%s should preserve the expected Chinese name" % uid))
+			checks.append(assert_eq(str(card.card_type), str(spec["card_type"]), "%s should preserve its card type" % uid))
+			checks.append(assert_eq(str(card.effect_id), str(spec["effect_id"]), "%s should reuse the already implemented effect" % uid))
+	return run_checks(checks)
+
+
 func test_cs5bc_040_slowbro_is_bundled_for_deck_editor_visibility() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest := db._load_bundled_manifest()
@@ -2550,6 +2702,63 @@ func test_video18_missing_cards_batch3_is_bundled_and_visible() -> String:
 		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the DeckEditor card pool" % uid))
 		if card != null:
 			checks.append(assert_false(card.effect_id.is_empty(), "%s should preserve its API effect id" % uid))
+	return run_checks(checks)
+
+
+func test_tcg_mik_requested_cards_20260829_are_complete_bundled_seed_assets() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var specs := [
+		{"set": "CSV4C", "index": "032", "name_en": "Tapu Koko ex", "card_type": "Pokemon", "effect_id": "b7337b94bb9779b843cf7c00f703119a", "stage": "Basic", "attack_count": 2},
+		{"set": "CSV9.5C", "index": "166", "name_en": "Treasure Tracker", "card_type": "Item", "effect_id": "c0ea20d42e8e30a99c2a2430843a7b26"},
+		{"set": "CSV1C", "index": "009", "name_en": "Sprigatito", "card_type": "Pokemon", "effect_id": "26846bd3499b028fb85156f64111e916", "stage": "Basic", "attack_count": 2},
+		{"set": "CSV1C", "index": "010", "name_en": "Floragato", "card_type": "Pokemon", "effect_id": "32a4f9af2d7891a833bccf80b40411b7", "stage": "Stage 1", "evolves_from": "新叶喵", "attack_count": 2},
+		{"set": "CSV2C", "index": "012", "name_en": "Meowscarada ex", "card_type": "Pokemon", "effect_id": "0779cd043d2977d004c2cfff5503c939", "stage": "Stage 2", "evolves_from": "蒂蕾喵", "attack_count": 1, "ability_count": 1},
+		{"set": "CSV4C", "index": "043", "name_en": "Slowking ex", "card_type": "Pokemon", "effect_id": "a7eb3d36fe16b1c33fbc3b6badaf3553", "stage": "Stage 1", "evolves_from": "呆呆兽", "attack_count": 2, "ancient_trait": "Tera"},
+		{"set": "CSV6C", "index": "009", "name_en": "Bounsweet", "card_type": "Pokemon", "effect_id": "46d964eb8e1fb610ea78db5873f4e019", "stage": "Basic", "attack_count": 1},
+		{"set": "CSV6C", "index": "038", "name_en": "Tsareena ex", "card_type": "Pokemon", "effect_id": "a8f9a49f3d894665f5851f51fda77855", "stage": "Stage 2", "evolves_from": "甜舞妮", "attack_count": 2, "ancient_trait": "Tera"},
+		{"set": "CSV6C", "index": "010", "name_en": "Steenee", "card_type": "Pokemon", "effect_id": "74e486ef3049c0ce097db1e3f6153d02", "stage": "Stage 1", "evolves_from": "甜竹竹", "attack_count": 2},
+		{"set": "CSV8C", "index": "115", "name_en": "Crabrawler", "card_type": "Pokemon", "effect_id": "309c53f62310a22661ec15d7b6327dea", "stage": "Basic", "attack_count": 2},
+		{"set": "CSV8C", "index": "059", "name_en": "Crabominable", "card_type": "Pokemon", "effect_id": "13f57c90c23bf4118291353727093eff", "stage": "Stage 1", "evolves_from": "好胜蟹", "attack_count": 1, "ability_count": 1},
+		{"set": "CSV9C", "index": "051", "name_en": "Veluza", "card_type": "Pokemon", "effect_id": "5a7b30386f52c19ae6ceb2c9ae905f84", "stage": "Basic", "attack_count": 1, "ability_count": 1},
+		{"set": "CSV8C", "index": "200", "name_en": "Kofu", "card_type": "Supporter", "effect_id": "2d43eb3b21ee954281030e8da5c7eb94"},
+		{"set": "SVP", "index": "175", "name_en": "Litten", "card_type": "Pokemon", "effect_id": "28875f87f42e55f4606bf4494568705a", "stage": "Basic", "attack_count": 1},
+		{"set": "SVP", "index": "176", "name_en": "Torracat", "card_type": "Pokemon", "effect_id": "68d5729d1856e519334cecfd49a276ce", "stage": "Stage 1", "evolves_from": "火斑喵", "attack_count": 2},
+	]
+	var checks: Array[String] = []
+	for spec: Dictionary in specs:
+		var set_code := str(spec["set"])
+		var card_index := str(spec["index"])
+		var uid := "%s_%s" % [set_code, card_index]
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase.get_card" % uid))
+		checks.append(assert_true(db.has_card(set_code, card_index), "%s should load through CardDatabase.has_card" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the complete selectable card pool" % uid))
+		if card != null:
+			checks.append(assert_eq(card.name_en, str(spec["name_en"]), "%s should preserve its API English name" % uid))
+			checks.append(assert_eq(card.card_type, str(spec["card_type"]), "%s should preserve its API card type" % uid))
+			checks.append(assert_eq(card.effect_id, str(spec["effect_id"]), "%s should preserve its API effect id" % uid))
+			if spec.has("stage"):
+				checks.append(assert_eq(card.stage, str(spec["stage"]), "%s should preserve its API evolution stage" % uid))
+			if spec.has("evolves_from"):
+				checks.append(assert_eq(card.evolves_from, str(spec["evolves_from"]), "%s should preserve its API evolves-from field" % uid))
+			if spec.has("attack_count"):
+				checks.append(assert_eq(card.attacks.size(), int(spec["attack_count"]), "%s should preserve every printed attack" % uid))
+			if spec.has("ability_count"):
+				checks.append(assert_eq(card.abilities.size(), int(spec["ability_count"]), "%s should preserve every printed Ability" % uid))
+			if spec.has("ancient_trait"):
+				checks.append(assert_eq(card.ancient_trait, str(spec["ancient_trait"]), "%s should preserve its special rule trait" % uid))
+	db.free()
 	return run_checks(checks)
 
 

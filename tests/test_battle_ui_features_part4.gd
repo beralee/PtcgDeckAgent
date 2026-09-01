@@ -2,6 +2,148 @@
 
 extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 
+
+func test_meowscarada_bouquet_magic_accepts_real_basic_grass_energy_through_battle_ui() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	var meowscarada_data: CardData = CardDatabase.get_card("CSV2C", "012")
+	var grass_energy_data: CardData = CardDatabase.get_card("CSVE1C", "GRA")
+	if meowscarada_data == null or grass_energy_data == null:
+		GameManager.current_mode = previous_mode
+		battle_scene.free()
+		return "CSV2C_012 Meowscarada ex and the bundled Basic Grass Energy should load"
+	gsm.effect_processor.register_pokemon_card(meowscarada_data)
+	var meowscarada := PokemonSlot.new()
+	meowscarada.pokemon_stack.append(CardInstance.create(meowscarada_data, 0))
+	var own_active := PokemonSlot.new()
+	own_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Own Active", 120, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = own_active
+	gsm.game_state.players[0].bench = [meowscarada]
+	var grass_energy := CardInstance.create(grass_energy_data, 0)
+	gsm.game_state.players[0].hand = [grass_energy]
+
+	var opponent_active := PokemonSlot.new()
+	opponent_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opponent Active", 300, "C"), 1))
+	var bench_target := PokemonSlot.new()
+	bench_target.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opponent Bench", 120, "C"), 1))
+	gsm.game_state.players[1].active_pokemon = opponent_active
+	gsm.game_state.players[1].bench = [bench_target]
+
+	battle_scene.call("_show_pokemon_action_dialog", 0, meowscarada, false)
+	var action_data: Dictionary = battle_scene.get("_dialog_data")
+	var actions: Array = action_data.get("actions", [])
+	var bouquet_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	var ability_option := _first_action_hud_option(battle_scene)
+	_emit_action_hud_mouse_click(ability_option)
+	var pending_steps: Array = battle_scene.get("_pending_effect_steps")
+	var energy_step: Dictionary = pending_steps[0] if not pending_steps.is_empty() else {}
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0]))
+	var target_field_mode := str(battle_scene.get("_field_interaction_mode"))
+	var target_field_data: Dictionary = battle_scene.get("_field_interaction_data")
+	if target_field_mode == "slot_select":
+		battle_scene.call("_handle_field_slot_select_index", 0)
+
+	var result := run_checks([
+		assert_eq(str(bouquet_action.get("type", "")), "ability", "Meowscarada's first action should be Bouquet Magic"),
+		assert_true(bool(bouquet_action.get("enabled", false)), "Benched Meowscarada should enable Bouquet Magic with a production Basic Grass Energy in hand"),
+		assert_not_null(ability_option, "The enabled Bouquet Magic action should be clickable in the battle HUD"),
+		assert_eq(str(energy_step.get("id", "")), "bouquet_magic_grass_energy", "The UI should open Bouquet Magic's Grass Energy cost step"),
+		assert_eq(energy_step.get("items", []), [grass_energy], "The production Basic Grass Energy should be selectable as Bouquet Magic's cost"),
+		assert_eq(target_field_mode, "slot_select", "After choosing the Energy, Bouquet Magic should open opponent-Bench field selection"),
+		assert_eq(target_field_data.get("items", []), [bench_target], "Only the opponent's Benched Pokemon should be selectable"),
+		assert_true(grass_energy in gsm.game_state.players[0].discard_pile, "The selected Basic Grass Energy should be discarded"),
+		assert_eq(bench_target.damage_counters, 30, "Bouquet Magic should place exactly 3 damage counters through the battle UI"),
+	])
+	GameManager.current_mode = previous_mode
+	battle_scene.free()
+	return result
+
+
+func test_slowking_inspiration_challenge_copies_kyurem_into_real_field_target_selection() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	var slowking_data: CardData = CardDatabase.get_card("CSV9C", "072")
+	var kyurem_data: CardData = CardDatabase.get_card("CSV9C", "147")
+	if slowking_data == null or kyurem_data == null:
+		GameManager.current_mode = previous_mode
+		battle_scene.free()
+		return "CSV9C_072 Slowking and CSV9C_147 Kyurem should load"
+	gsm.effect_processor.register_pokemon_card(slowking_data)
+	gsm.effect_processor.register_pokemon_card(kyurem_data)
+
+	var slowking := PokemonSlot.new()
+	slowking.pokemon_stack.append(CardInstance.create(slowking_data, 0))
+	slowking.attached_energy = [
+		CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0),
+		CardInstance.create(_make_energy_cd("Colorless Energy", "C"), 0),
+	]
+	gsm.game_state.players[0].active_pokemon = slowking
+	gsm.game_state.players[0].deck = [
+		CardInstance.create(kyurem_data, 0),
+		CardInstance.create(_make_pokemon_cd("Own deck filler", 60, "C"), 0),
+	]
+
+	var target_active := PokemonSlot.new()
+	target_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target Active", 300, "C"), 1))
+	var target_bench_a := PokemonSlot.new()
+	target_bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target Bench A", 300, "C"), 1))
+	var target_bench_b := PokemonSlot.new()
+	target_bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target Bench B", 300, "C"), 1))
+	gsm.game_state.players[1].active_pokemon = target_active
+	gsm.game_state.players[1].bench = [target_bench_a, target_bench_b]
+	gsm.game_state.players[1].deck = [CardInstance.create(_make_pokemon_cd("Opponent deck filler", 60, "C"), 1)]
+
+	battle_scene.call("_try_use_attack_with_interaction", 0, slowking, 0)
+	var copied_attack_option := _first_action_hud_option(battle_scene)
+	_emit_action_hud_mouse_click(copied_attack_option)
+	var field_mode := str(battle_scene.get("_field_interaction_mode"))
+	var field_data: Dictionary = battle_scene.get("_field_interaction_data")
+	var target_items: Array = field_data.get("items", [])
+	if field_mode == "slot_select" and target_items.size() == 3:
+		battle_scene.call("_handle_field_slot_select_index", 0)
+	var selected_indices: Array = battle_scene.get("_field_interaction_selected_indices")
+
+	var result := run_checks([
+		assert_not_null(copied_attack_option, "Slowking should show Kyurem's copied attack in the action HUD"),
+		assert_eq(field_mode, "slot_select", "Choosing Trifrost should switch the real battle UI to field target selection"),
+		assert_eq(str(field_data.get("id", "")), "csv9c_tri_frost_targets", "The field selector should be Kyurem Trifrost's native target step"),
+		assert_eq(target_items, [target_active, target_bench_a, target_bench_b], "Slowking should expose all three opposing Pokemon as Trifrost targets"),
+		assert_eq(int(field_data.get("min_select", -1)), 3, "Copied Trifrost should require exactly three targets"),
+		assert_eq(int(field_data.get("max_select", -1)), 3, "Copied Trifrost should keep the selector open until three targets are chosen"),
+		assert_eq(selected_indices, [0], "The real field selector should accept an opponent Pokemon click"),
+	])
+	GameManager.current_mode = previous_mode
+	battle_scene.free()
+	return result
+
 func test_battle_scene_iron_hands_ui_prize_and_turn_flow() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
@@ -2599,6 +2741,54 @@ func test_battle_scene_double_turbo_energy_icon_codes_show_two_energy_units() ->
 		assert_eq(str(icons[0]) if icons.size() > 0 else "", "C", "The first Double Turbo marker should be Colorless"),
 		assert_eq(str(icons[1]) if icons.size() > 1 else "", "C", "The second Double Turbo marker should be Colorless"),
 	])
+
+
+func test_battle_card_view_any_energy_uses_luminous_icon_at_normal_energy_size() -> String:
+	var normal_card := BattleCardViewScript.new()
+	normal_card.custom_minimum_size = Vector2(137, 192)
+	normal_card.size = Vector2(137, 192)
+	normal_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	normal_card.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["R"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+
+	var luminous_card := BattleCardViewScript.new()
+	luminous_card.custom_minimum_size = Vector2(137, 192)
+	luminous_card.size = Vector2(137, 192)
+	luminous_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	luminous_card.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["ANY"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+
+	var normal_row := normal_card.get("_status_energy_row") as HBoxContainer
+	var luminous_row := luminous_card.get("_status_energy_row") as HBoxContainer
+	var normal_icon := normal_row.get_child(0) as Control if normal_row != null and normal_row.get_child_count() > 0 else null
+	var luminous_icon := luminous_row.get_child(0) as Control if luminous_row != null and luminous_row.get_child_count() > 0 else null
+	var luminous_texture: Texture2D = luminous_icon.get("texture") as Texture2D if luminous_icon != null else null
+
+	var result := run_checks([
+		assert_true(luminous_icon != null, "ANY Energy should render a field HUD marker"),
+		assert_false(luminous_icon.has_meta("energy_label_chip") if luminous_icon != null else true, "ANY Energy should use the luminous texture instead of an ANY text chip"),
+		assert_true(luminous_texture != null, "The luminous Energy marker should have a texture"),
+		assert_eq(luminous_texture.get_size() if luminous_texture != null else Vector2.ZERO, Vector2(256, 256), "The luminous icon should use the same 256x256 source format as other Energy icons"),
+		assert_eq(luminous_icon.custom_minimum_size if luminous_icon != null else Vector2.ZERO, normal_icon.custom_minimum_size if normal_icon != null else Vector2(-1, -1), "The luminous marker should render at exactly the same HUD size as a normal Energy icon"),
+	])
+
+	normal_card.queue_free()
+	luminous_card.queue_free()
+	return result
 
 
 func test_battle_card_view_landscape_status_slots_match_hp_height() -> String:

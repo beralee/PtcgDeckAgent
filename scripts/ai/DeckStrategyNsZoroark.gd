@@ -6,15 +6,19 @@ const STRATEGY_ID := "ns_zoroark"
 
 const NS_ZORUA := "N的索罗亚"
 const NS_ZOROARK_EX := "N的索罗亚克ex"
+const NS_DARUMAKA := "N的火红不倒翁"
 const NS_RESHIRAM := "N的莱希拉姆"
 const NS_DARMANITAN := "N的达摩狒狒"
 const NS_PP_UP := "N的PP提升剂"
+const NS_CASTLE := "N的城堡"
 const NS_NAME_ALIASES := {
 	NS_ZORUA: ["N's Zorua"],
 	NS_ZOROARK_EX: ["N's Zoroark ex"],
+	NS_DARUMAKA: ["N's Darumaka"],
 	NS_RESHIRAM: ["N's Reshiram"],
 	NS_DARMANITAN: ["N's Darmanitan"],
 	NS_PP_UP: ["N's PP Up", "N的PP提升"],
+	NS_CASTLE: ["N's Castle"],
 }
 const MUNKIDORI := "Munkidori"
 const FEZANDIPITI_EX := "Fezandipiti ex"
@@ -299,6 +303,8 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return get_discard_priority(card)
 	var player: PlayerState = game_state.players[player_index]
+	if _card_matches(card, [NS_DARMANITAN]) and _sole_darmanitan_bridge_is_live(player):
+		return 1
 	if _is_reversal_energy(card):
 		if _reversal_darmanitan_route_can_complete(card, game_state, player_index, null):
 			return 1 if _count_reversal_energy_in_hand(player) <= 1 else 42
@@ -318,6 +324,18 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 	if _card_matches(card, [NS_PP_UP]):
 		return 2 if _count_basic_energy_in_discard(player) > 0 and _has_benched_ns_target(player) else 58
 	return get_discard_priority(card)
+
+
+func _sole_darmanitan_bridge_is_live(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_name_on_field(player, NS_DARUMAKA) <= 0 or _count_name_on_field(player, NS_DARMANITAN) > 0:
+		return false
+	var in_hand := 0
+	for card: CardInstance in player.hand:
+		if _card_matches(card, [NS_DARMANITAN]):
+			in_hand += 1
+	return in_hand == 1
 
 
 func get_search_priority(card: CardInstance) -> int:
@@ -341,6 +359,10 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		return _score_dictionary_interaction(item as Dictionary, step_id, context)
 	if item is CardInstance:
 		var card := item as CardInstance
+		if step_id == "search_stadium" \
+				and _card_matches(card, [NS_CASTLE]) \
+				and _n_castle_handoff_live(context.get("game_state", null), int(context.get("player_index", -1))):
+			return 1400.0
 		if "discard" in step_id:
 			return float(get_discard_priority_contextual(card, context.get("game_state", null), int(context.get("player_index", -1))))
 		if "search" in step_id or "deck" in step_id:
@@ -524,17 +546,45 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 
 
 func _active_attack_window_live(player: PlayerState, game_state: GameState, player_index: int) -> bool:
-	return player != null and player.active_pokemon != null \
-		and _can_attack(player.active_pokemon, game_state, player_index)
+	if player == null or player.active_pokemon == null:
+		return false
+	var prediction := predict_attacker_damage(player.active_pokemon)
+	return bool(prediction.get("can_attack", false)) and int(prediction.get("damage", 0)) > 0
 
 
 func _score_stadium(action: Dictionary, game_state: GameState) -> float:
 	var card: CardInstance = action.get("card")
 	if card == null:
 		return 0.0
+	if _card_matches(card, [NS_CASTLE]) \
+			and _n_castle_handoff_live(game_state, card.owner_index):
+		return 1300.0
 	if game_state != null and game_state.stadium_card != null and _card_matches(game_state.stadium_card, [ARTAZON]):
 		return 0.0
 	return 190.0 if _card_matches(card, [ARTAZON]) else 25.0
+
+
+func _n_castle_handoff_live(game_state: GameState, player_index: int) -> bool:
+	var player := _player(game_state, player_index)
+	if player == null or player.active_pokemon == null \
+			or not _slot_matches(player.active_pokemon, [NS_ZOROARK_EX, NS_ZORUA, NS_RESHIRAM, NS_DARMANITAN]):
+		return false
+	if _ns_attacker_is_ready(player.active_pokemon, game_state, player_index):
+		return false
+	for slot: PokemonSlot in player.bench:
+		if _ns_attacker_is_ready(slot, game_state, player_index):
+			return true
+	return false
+
+
+func _ns_attacker_is_ready(slot: PokemonSlot, game_state: GameState, player_index: int) -> bool:
+	if _slot_matches(slot, [NS_ZOROARK_EX]):
+		return _darkness_units(slot) >= 2 and _has_benched_ns_attack_option(_player(game_state, player_index))
+	if _slot_matches(slot, [NS_RESHIRAM]):
+		return slot.attached_energy.size() >= 2
+	if _slot_matches(slot, [NS_DARMANITAN]):
+		return bool(_predict_darmanitan(slot, game_state, player_index).get("can_attack", false))
+	return false
 
 
 func _score_ability(action: Dictionary) -> float:

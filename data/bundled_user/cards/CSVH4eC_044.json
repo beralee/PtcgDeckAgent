@@ -1,0 +1,53 @@
+{
+    "name":  "空手道王的修炼",
+    "card_type":  "Supporter",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "在这个回合，自己宝可梦所使用的招式，给对手战斗场上的「宝可梦【ex】」造成的伤害「+40」。",
+    "yoren_code":  "Y1496",
+    "set_code":  "CSVH4eC",
+    "card_index":  "044",
+    "set_code_en":  "PRE",
+    "card_index_en":  "96",
+    "name_en":  "Black Belt\u0027s Training",
+    "name_zh":  "",
+    "artist":  "GOSSAN",
+    "rarity":  "无标记",
+    "release_date":  "2026-04-10T00:00:00Z",
+    "regulation_mark":  "H",
+    "effect_id":  "a444b83881df9e2a0225aee95bbc853a",
+    "image_url":  "https://tcg.mik.moe/static/img/CSVH4eC/044.png",
+    "image_local_path":  "user://cards/images/CSVH4eC/044.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSVH4eC/044",
+    "source_set_code":  "CSVH4eC",
+    "source_card_index":  "044",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

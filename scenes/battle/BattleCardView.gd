@@ -37,6 +37,7 @@ const ENERGY_ICON_TEXTURES := {
 	"M": preload("res://assets/ui/e-gang.png"),
 	"N": preload("res://assets/ui/e-long.png"),
 	"C": preload("res://assets/ui/e-wu.png"),
+	"ANY": preload("res://assets/ui/e-cai.png"),
 }
 const STATUS_ICON_TEXTURES := {
 	"confused": preload("res://assets/ui/status_confusion.png"),

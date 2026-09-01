@@ -4,6 +4,7 @@ extends BaseEffect
 const STAGE1_STEP_ID := "csv9c205_stage1_assignment"
 const STAGE2_STEP_ID := "csv9c205_stage2_assignment"
 const H = preload("res://scripts/effects/CSV9CHelpers.gd")
+const EvolutionEntryRestriction := preload("res://scripts/engine/PokemonEvolutionEntryRestriction.gd")
 
 
 func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
@@ -149,6 +150,8 @@ func _build_stage1_pairs(player: PlayerState, state: GameState) -> Array[Diction
 	for source: CardInstance in player.deck:
 		if source.card_data == null or source.card_data.stage != "Stage 1":
 			continue
+		if not EvolutionEntryRestriction.allows(source.card_data, "grand_tree"):
+			continue
 		for target: PokemonSlot in _eligible_basic_targets(player, state):
 			if _stage_evolves_from_slot(source.card_data, target):
 				pairs.append({"source": source, "target": target})
@@ -193,7 +196,12 @@ func _build_source_exclude_targets(source_items: Array, target_items: Array) -> 
 
 
 func _is_valid_stage1_pair(player: PlayerState, state: GameState, source: CardInstance, target: PokemonSlot) -> bool:
-	return source in player.deck and source.card_data != null and source.card_data.stage == "Stage 1" and target in _eligible_basic_targets(player, state) and _stage_evolves_from_slot(source.card_data, target)
+	return source in player.deck \
+		and source.card_data != null \
+		and source.card_data.stage == "Stage 1" \
+		and EvolutionEntryRestriction.allows(source.card_data, "grand_tree") \
+		and target in _eligible_basic_targets(player, state) \
+		and _stage_evolves_from_slot(source.card_data, target)
 
 
 func _get_stage2_for_stage1(player: PlayerState, stage1_card: CardInstance) -> Array:

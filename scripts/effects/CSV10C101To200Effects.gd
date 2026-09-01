@@ -3,6 +3,7 @@ extends RefCounted
 
 const H = preload("res://scripts/effects/CSV9CHelpers.gd")
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+const EvolutionEntryRestriction := preload("res://scripts/engine/PokemonEvolutionEntryRestriction.gd")
 
 
 class AttackCoinFlipCopyOpponentAttack extends AttackCopyAttack:
@@ -678,6 +679,8 @@ class AttackEvolveOwnPokemonFromDeck extends BaseEffect:
 		for deck_card: CardInstance in player.deck:
 			if deck_card == null or deck_card.card_data == null or not deck_card.card_data.is_pokemon():
 				continue
+			if not EvolutionEntryRestriction.allows(deck_card.card_data, "attack_evolve_from_deck"):
+				continue
 			for slot: PokemonSlot in slots:
 				if slot != null and slot.get_top_card() != null and deck_card.card_data.evolves_from_matches(slot.get_top_card().card_data):
 					result.append(deck_card)
@@ -688,7 +691,12 @@ class AttackEvolveOwnPokemonFromDeck extends BaseEffect:
 		var result: Array[CardInstance] = []
 		for slot: PokemonSlot in slots:
 			for deck_card: CardInstance in player.deck:
-				if deck_card not in result and deck_card.card_data != null and deck_card.card_data.evolves_from_matches(slot.get_card_data()):
+				if (
+					deck_card not in result
+					and deck_card.card_data != null
+					and EvolutionEntryRestriction.allows(deck_card.card_data, "attack_evolve_from_deck")
+					and deck_card.card_data.evolves_from_matches(slot.get_card_data())
+				):
 					result.append(deck_card)
 					break
 		return result
@@ -1638,17 +1646,82 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 		state: GameState,
 		resolved_context: Dictionary
 	) -> Array[Dictionary]:
-		if processor == null or _has_followup_context(resolved_context):
+		if processor == null:
 			return []
 		var option := _selected_option(resolved_context)
 		if option.is_empty():
 			return []
-		return processor.get_attack_interaction_steps_by_id(
+		if not _has_followup_context(resolved_context):
+			return processor.get_attack_interaction_steps_by_id(
+				str(option.get("source_effect_id", "")),
+				int(option.get("attack_index", -1)),
+				card,
+				option.get("attack", {}),
+				state,
+				get_script()
+			)
+		return processor.get_attack_followup_interaction_steps_by_id(
 			str(option.get("source_effect_id", "")),
 			int(option.get("attack_index", -1)),
 			card,
 			option.get("attack", {}),
 			state,
+			resolved_context,
+			get_script()
+		)
+
+	func validate_attack_interaction(attacker: PokemonSlot, attack_index: int, targets: Array, state: GameState) -> Dictionary:
+		if processor == null or attacker == null or state == null or not applies_to_attack_index(attack_index):
+			return interaction_validation_ok()
+		var option := _selected_option(get_interaction_context(targets))
+		if option.is_empty():
+			return interaction_validation_ok()
+		var source_effect_id := str(option.get("source_effect_id", ""))
+		var copied_attack_index := int(option.get("attack_index", -1))
+		if not _is_legal_selected_option(option, attacker, state):
+			return interaction_validation_error("copied attack source is invalid")
+		var defender := _opponent_active(attacker, state)
+		if processor.validate_attack_effect_context_by_id(
+			source_effect_id,
+			copied_attack_index,
+			attacker,
+			defender,
+			state,
+			targets,
+			get_script()
+		):
+			return interaction_validation_ok()
+		return interaction_validation_error(processor.get_last_interaction_validation_error(state))
+
+	func before_attack_damage(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
+		if processor == null or not applies_to_attack_index(attack_index):
+			return
+		var option := _selected_option(get_attack_interaction_context())
+		if option.is_empty():
+			return
+		processor.execute_before_attack_damage_effects_by_id(
+			str(option.get("source_effect_id", "")),
+			int(option.get("attack_index", -1)),
+			attacker,
+			defender,
+			state,
+			[get_attack_interaction_context()],
+			get_script()
+		)
+
+	func cancels_attack_damage(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> bool:
+		if processor == null or not applies_to_attack_index(attack_index):
+			return false
+		var option := _selected_option(get_attack_interaction_context())
+		if option.is_empty():
+			return false
+		return processor.attack_damage_cancelled_by_id(
+			str(option.get("source_effect_id", "")),
+			int(option.get("attack_index", -1)),
+			attacker,
+			defender,
+			state,
+			[get_attack_interaction_context()],
 			get_script()
 		)
 
@@ -1668,6 +1741,18 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 			)
 		return total
 
+	func ignores_weakness_and_resistance(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+		return _copied_attack_has_flag("attack_effect_id_ignores_weakness_and_resistance", attacker, state)
+
+	func ignores_weakness(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+		return _copied_attack_has_flag("attack_effect_id_ignores_weakness", attacker, state)
+
+	func ignores_resistance(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+		return _copied_attack_has_flag("attack_effect_id_ignores_resistance", attacker, state)
+
+	func ignores_defender_effects(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+		return _copied_attack_has_flag("attack_effect_id_ignores_defender_effects", attacker, state)
+
 	func execute_attack(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
 		if attacker == null or attacker.get_top_card() == null or state == null or not applies_to_attack_index(attack_index):
 			return
@@ -1681,7 +1766,8 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 				defender,
 				state,
 				[get_attack_interaction_context()],
-				get_script()
+				get_script(),
+				{"mode": "copy", "name": str((option.get("attack", {}) as Dictionary).get("name", ""))}
 			)
 		opponent.shuffle_deck()
 
@@ -1691,6 +1777,56 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 
 	func _has_followup_context(context: Dictionary) -> bool:
 		return has_resolved_non_internal_interaction_step(context, [STEP_ID])
+
+	func _copied_attack_has_flag(method_name: String, attacker: PokemonSlot, state: GameState) -> bool:
+		if processor == null or not processor.has_method(method_name):
+			return false
+		var option := _selected_option(get_attack_interaction_context())
+		if option.is_empty():
+			return false
+		return bool(processor.call(
+			method_name,
+			str(option.get("source_effect_id", "")),
+			int(option.get("attack_index", -1)),
+			attacker,
+			state,
+			[get_attack_interaction_context()],
+			get_script()
+		))
+
+	func _opponent_active(attacker: PokemonSlot, state: GameState) -> PokemonSlot:
+		if attacker == null or attacker.get_top_card() == null or state == null:
+			return null
+		var owner := int(attacker.get_top_card().owner_index)
+		if owner < 0 or owner >= state.players.size():
+			return null
+		return state.players[1 - owner].active_pokemon
+
+	func _is_legal_selected_option(option: Dictionary, attacker: PokemonSlot, state: GameState) -> bool:
+		if attacker == null or attacker.get_top_card() == null or state == null:
+			return false
+		var owner := int(attacker.get_top_card().owner_index)
+		if owner < 0 or owner >= state.players.size():
+			return false
+		var source_raw: Variant = option.get("source_card", null)
+		if not (source_raw is CardInstance):
+			return false
+		var source := source_raw as CardInstance
+		var revealed := state.players[1 - owner].deck.slice(0, mini(reveal_count, state.players[1 - owner].deck.size()))
+		if source not in revealed or source.card_data == null or not source.card_data.is_pokemon():
+			return false
+		if str(option.get("source_effect_id", "")) != str(source.card_data.effect_id):
+			return false
+		var copied_index := int(option.get("attack_index", -1))
+		if copied_index < 0 or copied_index >= source.card_data.attacks.size():
+			return false
+		var copied_attack: Dictionary = source.card_data.attacks[copied_index]
+		var attack_name := str(copied_attack.get("name", ""))
+		return (
+			not bool(copied_attack.get("is_vstar_power", false))
+			and attack_name not in ["高傲指令", "Haughty Orders"]
+			and option.get("attack", {}) == copied_attack
+		)
 
 	func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 		if attack.has("_override_attack_index"):

@@ -1,0 +1,58 @@
+{
+  "name": "裙儿小姐",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 大晴天\n只要这只宝可梦在场上，自己的【草】或【火】宝可梦所使用的招式，给对手战斗宝可梦造成的伤害「+20」。\n\n【草】【无】【无】 回转攻击 60\n\n\n",
+  "yoren_code": "P549",
+  "set_code": "CSVH4eC",
+  "card_index": "002",
+  "set_code_en": "JTG",
+  "card_index_en": "7",
+  "name_en": "Lilligant",
+  "name_zh": "",
+  "artist": "Jiro Sasumo",
+  "rarity": "无标记",
+  "release_date": "",
+  "regulation_mark": "H",
+  "effect_id": "29caf0a046110a6cc450e04e493bdfa2",
+  "image_url": "https://tcg.mik.moe/static/img/CSVH4eC/002.png",
+  "image_local_path": "user://cards/images/CSVH4eC/002.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSVH4eC/002",
+  "source_set_code": "CSVH4eC",
+  "source_card_index": "002",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "G",
+  "stage": "Stage 1",
+  "hp": 110,
+  "weakness_energy": "R",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "evolves_from": "百合根娃娃",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "回转攻击",
+      "text": "",
+      "cost": "GCC",
+      "damage": "60",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "大晴天",
+      "text": "只要这只宝可梦在场上，自己的【草】或【火】宝可梦所使用的招式，给对手战斗宝可梦造成的伤害「+20」。"
+    }
+  ],
+  "energy_provides": ""
+}

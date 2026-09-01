@@ -138,8 +138,9 @@ func test_csv5c_054_xatu_rejects_invalid_explicit_assignment_without_side_effect
 
 
 func test_csv9c_072_slowking_source_effect_id_alias_copies_top_deck_attack() -> String:
-	var state := _make_state()
-	var processor := EffectProcessor.new()
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var processor := gsm.effect_processor
 	var slowking_cd := _pokemon(
 		"CSV9C_072 Slowking",
 		"59d3af627f14b4a65ab4d589f6cb52db",
@@ -154,11 +155,16 @@ func test_csv9c_072_slowking_source_effect_id_alias_copies_top_deck_attack() -> 
 	state.players[0].active_pokemon = slowking
 	var copied_cd := _pokemon("Copied Basic", "copy_target", [_attack("Copied Hit", "C", "50")], [], "C", 80)
 	var top_card := CardInstance.create(copied_cd, 0)
-	state.players[0].deck.append(top_card)
+	state.players[0].deck.append_array([top_card, CardInstance.create(_trainer("Own draw", "Item", ""), 0)])
+	state.players[1].deck.append(CardInstance.create(_trainer("Opponent draw", "Item", ""), 1))
+	_add_dummy_prizes(state)
+	_attach_energy(slowking, 0, "P", 1)
+	_attach_energy(slowking, 0, "C", 1)
 
-	processor.execute_attack_effect(slowking, 0, state.players[1].active_pokemon, state)
+	var used := gsm.use_attack(0, 0)
 
 	return run_checks([
+		assert_true(used, "CSV9C_072 should resolve through the authoritative attack lifecycle"),
 		assert_true(processor.has_attack_effect("59d3af627f14b4a65ab4d589f6cb52db"), "CSV9C_072 source effect id should register an attack effect"),
 		assert_true(top_card in state.players[0].discard_pile, "CSV9C_072 should discard the top deck Pokemon before copying"),
 		assert_eq(state.players[1].active_pokemon.damage_counters, 50, "CSV9C_072 should copy and deal the top Pokemon attack damage"),
@@ -376,8 +382,9 @@ func test_csv9c_072_slowking_copied_kyurem_uses_selected_targets() -> String:
 
 
 func test_csv9c_072_slowking_copied_attack_preserves_weakness_resistance_flags() -> String:
-	var state := _make_state()
-	var processor := EffectProcessor.new()
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var processor := gsm.effect_processor
 	var slowking_cd := _pokemon(
 		"CSV9C_072 Slowking",
 		"59d3af627f14b4a65ab4d589f6cb52db",
@@ -398,11 +405,16 @@ func test_csv9c_072_slowking_copied_attack_preserves_weakness_resistance_flags()
 	processor.register_attack_effect(copied_effect_id, AttackIgnoreWeaknessResistanceAndEffects.new(0))
 	var copied_cd := _pokemon("Ignore WR Basic", copied_effect_id, [_attack("Piercing Hit", "C", "50")], [], "C", 80)
 	var top_card := CardInstance.create(copied_cd, 0)
-	state.players[0].deck.append(top_card)
+	state.players[0].deck.append_array([top_card, CardInstance.create(_trainer("Own draw", "Item", ""), 0)])
+	state.players[1].deck.append(CardInstance.create(_trainer("Opponent draw", "Item", ""), 1))
+	_add_dummy_prizes(state)
+	_attach_energy(slowking, 0, "P", 1)
+	_attach_energy(slowking, 0, "C", 1)
 
-	processor.execute_attack_effect(slowking, 0, state.players[1].active_pokemon, state)
+	var used := gsm.use_attack(0, 0)
 
 	return run_checks([
+		assert_true(used, "CSV9C_072 should resolve copied damage through the full attack lifecycle"),
 		assert_eq(state.players[1].active_pokemon.damage_counters, 50, "CSV9C_072 copied attack should preserve copied attack Weakness/Resistance ignore flags"),
 	])
 

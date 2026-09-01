@@ -2697,6 +2697,18 @@ func use_granted_attack(
 		return false
 
 	var attack_name: String = str(granted_attack.get("name", ""))
+	var original_effect_id := str(granted_attack.get("original_effect_id", ""))
+	var original_attack_index := int(granted_attack.get("original_attack_index", -1))
+	if original_effect_id != "" and original_attack_index >= 0:
+		if not effect_processor.validate_attack_effect_context_by_id(
+			original_effect_id,
+			original_attack_index,
+			attacker,
+			defender,
+			game_state,
+			targets
+		):
+			return false
 	if attacker.status_conditions.get("confused", false):
 		var flip_result: bool = coin_flipper.flip()
 		_log_action(
@@ -2718,8 +2730,6 @@ func use_granted_attack(
 			return true
 
 	var damage_before_attack := _snapshot_damage_counters()
-	var original_effect_id := str(granted_attack.get("original_effect_id", ""))
-	var original_attack_index := int(granted_attack.get("original_attack_index", -1))
 	if original_effect_id != "" and original_attack_index >= 0:
 		effect_processor.execute_before_attack_damage_effects_by_id(
 			original_effect_id,
@@ -2729,7 +2739,17 @@ func use_granted_attack(
 			game_state,
 			targets
 		)
-	var granted_damage: int = _calculate_attack_damage(attacker, defender, granted_attack, -1, targets)
+	var damage_cancelled := false
+	if original_effect_id != "" and original_attack_index >= 0:
+		damage_cancelled = effect_processor.attack_damage_cancelled_by_id(
+			original_effect_id,
+			original_attack_index,
+			attacker,
+			defender,
+			game_state,
+			targets
+		)
+	var granted_damage: int = 0 if damage_cancelled else _calculate_attack_damage(attacker, defender, granted_attack, -1, targets)
 
 	if granted_damage > 0:
 		var defender_damage_before: int = defender.damage_counters

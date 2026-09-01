@@ -1,0 +1,58 @@
+{
+  "name": "海豚侠",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 全能变身\n在自己的回合，当这只宝可梦从战斗场被放回备战区时，可使用1次。选择自己牌库中的1张「海豚侠【ex】」，与这张卡牌互换（继承放于其身上的所有卡牌、伤害指示物、特殊状态、效果等）。如果互换了的话，则将这张卡牌放回牌库。并重洗牌库。\n\n【水】【无】 飞溅 30\n\n\n",
+  "yoren_code": "P0964",
+  "set_code": "CSV9.5C",
+  "card_index": "051",
+  "set_code_en": "TWM",
+  "card_index_en": "60",
+  "name_en": "Palafin",
+  "name_zh": "",
+  "artist": "Ligton",
+  "rarity": "C",
+  "release_date": "",
+  "regulation_mark": "H",
+  "effect_id": "3c38a9d3798223dfe455c2bc898f78b6",
+  "image_url": "https://tcg.mik.moe/static/img/CSV9.5C/051.png",
+  "image_local_path": "user://cards/images/CSV9.5C/051.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV9.5C/051",
+  "source_set_code": "CSV9.5C",
+  "source_card_index": "051",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "W",
+  "stage": "Stage 1",
+  "hp": 100,
+  "weakness_energy": "L",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "波普海豚",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "飞溅",
+      "text": "",
+      "cost": "WC",
+      "damage": "30",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "全能变身",
+      "text": "在自己的回合，当这只宝可梦从战斗场被放回备战区时，可使用1次。选择自己牌库中的1张「海豚侠【ex】」，与这张卡牌互换（继承放于其身上的所有卡牌、伤害指示物、特殊状态、效果等）。如果互换了的话，则将这张卡牌放回牌库。并重洗牌库。"
+    }
+  ],
+  "energy_provides": ""
+}

@@ -1,0 +1,59 @@
+{
+    "name":  "雪童子",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【水】【无】 惊吓 20\n在不看正面的前提下选择对手1张手牌，查看该卡牌的正面后，放回对手牌库并重洗牌库。\n\n",
+    "yoren_code":  "P361",
+    "set_code":  "CSV7C",
+    "card_index":  "057",
+    "set_code_en":  "TWM",
+    "card_index_en":  "51",
+    "name_en":  "Snorunt",
+    "name_zh":  "",
+    "artist":  "Mékayu",
+    "rarity":  "C",
+    "release_date":  "2026-01-16T00:00:00Z",
+    "regulation_mark":  "H",
+    "effect_id":  "f6baf0c4c60ff47c7f836c1271f40cb3",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV7C/057.png",
+    "image_local_path":  "user://cards/images/CSV7C/057.png",
+    "source_provider":  "tcg_mik",
+    "source_url":  "https://tcg.mik.moe/cards/CSV7C/057",
+    "source_set_code":  "CSV7C",
+    "source_card_index":  "057",
+    "source_language":  "zh-CN",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  1,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "惊吓",
+                        "text":  "在不看正面的前提下选择对手1张手牌，查看该卡牌的正面后，放回对手牌库并重洗牌库。",
+                        "cost":  "WC",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

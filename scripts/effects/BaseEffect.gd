@@ -18,6 +18,7 @@ const INTERACTION_INTENTS_KEY := "__interaction_intents"
 const INTERACTION_SOURCE_BATTLE_UI := "battle_ui"
 const INTERACTION_INTENT_SELECT := "select"
 const INTERACTION_INTENT_DECLINE := "decline"
+const DELEGATED_ATTACK_CONTEXT_KEY := "__delegated_attack"
 
 
 enum TargetType {

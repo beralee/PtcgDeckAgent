@@ -17,6 +17,7 @@ const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
 const PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY := "_pending_attack_effect_energy_returns"
 const ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY := "_attack_effect_energy_return_depth"
 const LAST_INTERACTION_VALIDATION_ERROR_KEY := "_last_interaction_validation_error"
+const ATTACK_REACTIVE_EFFECT_ID_KEY := "attack_reactive_effect_id"
 
 static var _live_refs: Array[WeakRef] = []
 
@@ -327,22 +328,62 @@ func validate_attack_effect_context(
 	var card_data: CardData = attacker.get_card_data()
 	if card_data == null or attack_index < 0 or attack_index >= card_data.attacks.size():
 		return _record_interaction_validation_result(state, {"valid": false, "reason": "attack index is invalid"})
-	var effect_id: String = _resolve_effect_id(card_data.effect_id)
-	var candidates: Array[BaseEffect] = []
-	if _effect_registry.has(effect_id):
-		candidates.append(_effect_registry[effect_id])
-	if _attack_effect_registry.has(effect_id):
-		for attack_effect: BaseEffect in _attack_effect_registry[effect_id]:
-			if attack_effect not in candidates:
-				candidates.append(attack_effect)
+	return validate_attack_effect_context_by_id(
+		card_data.effect_id,
+		attack_index,
+		attacker,
+		_defender,
+		state,
+		targets
+	)
+
+
+## Validate an attack through the effect identity that owns the copied/borrowed
+## attack. The attacker may be a different Pokemon, so only the source attack
+## index itself is required to be non-negative here.
+func validate_attack_effect_context_by_id(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	_defender: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	if attacker == null or attacker.get_top_card() == null or state == null:
+		return _record_interaction_validation_result(state, {"valid": false, "reason": "attacker is missing"})
+	if attack_index < 0:
+		return _record_interaction_validation_result(state, {"valid": false, "reason": "attack index is invalid"})
 	state.shared_turn_flags["_draw_effect_processor"] = self
-	for effect: BaseEffect in candidates:
-		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
-			continue
+	for effect: BaseEffect in _get_attack_effect_candidates_by_id(effect_id, attack_index, exclude_effect_type):
 		var result := effect.validate_attack_interaction(attacker, attack_index, targets, state)
 		if not bool(result.get("valid", false)):
 			return _record_interaction_validation_result(state, result)
 	return _record_interaction_validation_result(state, {"valid": true})
+
+
+func _get_attack_effect_candidates_by_id(
+	effect_id: String,
+	attack_index: int,
+	exclude_effect_type: Variant = null
+) -> Array[BaseEffect]:
+	var candidates: Array[BaseEffect] = []
+	effect_id = _resolve_effect_id(effect_id)
+	if _effect_registry.has(effect_id):
+		var card_effect: BaseEffect = _effect_registry[effect_id]
+		if exclude_effect_type == null or not is_instance_of(card_effect, exclude_effect_type):
+			if not card_effect.has_method("applies_to_attack_index") or bool(card_effect.call("applies_to_attack_index", attack_index)):
+				candidates.append(card_effect)
+	if _attack_effect_registry.has(effect_id):
+		for attack_effect: BaseEffect in _attack_effect_registry[effect_id]:
+			if attack_effect in candidates:
+				continue
+			if exclude_effect_type != null and is_instance_of(attack_effect, exclude_effect_type):
+				continue
+			if attack_effect.has_method("applies_to_attack_index") and not bool(attack_effect.call("applies_to_attack_index", attack_index)):
+				continue
+			candidates.append(attack_effect)
+	return candidates
 
 
 func execute_card_effect(card: CardInstance, targets: Array, state: GameState) -> bool:
@@ -429,20 +470,11 @@ func execute_before_attack_damage_effects_by_id(
 	attacker: PokemonSlot,
 	defender: PokemonSlot,
 	state: GameState,
-	targets: Array = []
+	targets: Array = [],
+	exclude_effect_type: Variant = null
 ) -> void:
-	effect_id = _resolve_effect_id(effect_id)
-	var candidates: Array[BaseEffect] = []
-	if _effect_registry.has(effect_id):
-		candidates.append(_effect_registry[effect_id])
-	if _attack_effect_registry.has(effect_id):
-		for attack_effect: BaseEffect in _attack_effect_registry[effect_id]:
-			if attack_effect not in candidates:
-				candidates.append(attack_effect)
-	for effect: BaseEffect in candidates:
+	for effect: BaseEffect in _get_attack_effect_candidates_by_id(effect_id, attack_index, exclude_effect_type):
 		if not effect.has_method("before_attack_damage"):
-			continue
-		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 			continue
 		if state != null:
 			state.shared_turn_flags["_draw_effect_processor"] = self
@@ -551,20 +583,23 @@ func attack_damage_cancelled(
 	var card_data: CardData = attacker.get_card_data()
 	if card_data == null or attack_index < 0 or attack_index >= card_data.attacks.size():
 		return false
-	var effect_id: String = _resolve_effect_id(card_data.effect_id)
-	if _effect_registry.has(effect_id):
-		var card_effect: BaseEffect = _effect_registry[effect_id]
-		if _attack_damage_cancelled_by_effect(card_effect, attacker, attack_index, defender, state, targets):
+	return attack_damage_cancelled_by_id(card_data.effect_id, attack_index, attacker, defender, state, targets)
+
+
+func attack_damage_cancelled_by_id(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	defender: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	if attacker == null or attacker.get_top_card() == null or attack_index < 0:
+		return false
+	for effect: BaseEffect in _get_attack_effect_candidates_by_id(effect_id, attack_index, exclude_effect_type):
+		if _attack_damage_cancelled_by_effect(effect, attacker, attack_index, defender, state, targets):
 			return true
-	if _attack_effect_registry.has(effect_id):
-		var already_executed_effect: BaseEffect = _effect_registry.get(effect_id, null)
-		for effect: BaseEffect in _attack_effect_registry[effect_id]:
-			if effect == already_executed_effect:
-				continue
-			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
-				continue
-			if _attack_damage_cancelled_by_effect(effect, attacker, attack_index, defender, state, targets):
-				return true
 	return false
 
 
@@ -591,15 +626,26 @@ func execute_attack_effect_by_id(
 	defender: PokemonSlot,
 	state: GameState,
 	targets: Array = [],
-	exclude_effect_type: Variant = null
+	exclude_effect_type: Variant = null,
+	delegated_attack: Dictionary = {}
 ) -> void:
 	effect_id = _resolve_effect_id(effect_id)
+	var routed_targets := targets
+	if not delegated_attack.is_empty():
+		var delegated_context: Dictionary = {}
+		if not targets.is_empty() and targets[0] is Dictionary:
+			delegated_context = (targets[0] as Dictionary).duplicate(false)
+		var normalized_delegation := delegated_attack.duplicate(false)
+		normalized_delegation["effect_id"] = effect_id
+		normalized_delegation["attack_index"] = attack_index
+		delegated_context[BaseEffect.DELEGATED_ATTACK_CONTEXT_KEY] = normalized_delegation
+		routed_targets = [delegated_context]
 	_begin_attack_effect_energy_return_window(state)
 	if _effect_registry.has(effect_id):
 		var card_effect: BaseEffect = _effect_registry[effect_id]
 		if exclude_effect_type == null or not is_instance_of(card_effect, exclude_effect_type):
 			state.shared_turn_flags["_draw_effect_processor"] = self
-			card_effect.set_attack_interaction_context(targets)
+			card_effect.set_attack_interaction_context(routed_targets)
 			card_effect.execute_attack(attacker, defender, attack_index, state)
 			card_effect.clear_attack_interaction_context()
 			if state != null and state.is_game_over():
@@ -616,7 +662,7 @@ func execute_attack_effect_by_id(
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
 			state.shared_turn_flags["_draw_effect_processor"] = self
-			effect.set_attack_interaction_context(targets)
+			effect.set_attack_interaction_context(routed_targets)
 			effect.execute_attack(attacker, defender, attack_index, state)
 			effect.clear_attack_interaction_context()
 			if state != null and state.is_game_over():
@@ -1389,6 +1435,12 @@ func get_effective_retreat_cost(slot: PokemonSlot, state: GameState) -> int:
 
 func get_hp_modifier(slot: PokemonSlot, state: GameState = null) -> int:
 	var total: int = 0
+	if state != null:
+		state.shared_turn_flags["_draw_effect_processor"] = self
+		if slot != null and slot.get_card_data() != null and not is_ability_disabled(slot, state):
+			var pokemon_effect := _get_registered_pokemon_effect(slot)
+			if pokemon_effect != null and pokemon_effect.has_method("get_hp_modifier_for_source"):
+				total += int(pokemon_effect.call("get_hp_modifier_for_source", slot, state))
 	if slot.attached_tool != null and not is_tool_effect_suppressed(slot, state):
 		var tool_effect: BaseEffect = get_effect(slot.attached_tool.card_data.effect_id)
 		if tool_effect != null and tool_effect.has_method("get_hp_modifier"):
@@ -1436,9 +1488,10 @@ func apply_attack_damage_survival_tool(
 func process_after_attack_damage(defender: PokemonSlot, attacker: PokemonSlot, damage: int, state: GameState, targets: Array = []) -> void:
 	if defender == null or defender.get_card_data() == null or attacker == null or damage <= 0 or state == null:
 		return
-	var effect := get_effect(defender.get_card_data().effect_id)
-	var attack_reactive := effect != null and effect.has_method("is_attack_damage_reactive_effect") and bool(effect.call("is_attack_damage_reactive_effect"))
-	if effect != null and effect.has_method("on_damaged_by_attack") and (attack_reactive or not is_ability_disabled(defender, state)):
+	for entry: Dictionary in _get_attack_damage_reactive_effects(defender, state):
+		var effect: BaseEffect = entry.get("effect", null)
+		if effect == null:
+			continue
 		effect.set_attack_interaction_context(targets)
 		effect.call("on_damaged_by_attack", defender, attacker, damage, state)
 		effect.clear_attack_interaction_context()
@@ -1449,6 +1502,34 @@ func process_after_attack_damage(defender: PokemonSlot, attacker: PokemonSlot, d
 			tool_effect.call("on_damaged_by_attack", defender, attacker, damage, state)
 			tool_effect.clear_attack_interaction_context()
 	apply_attack_damage_energy_reactive_effects(attacker, defender, damage, state)
+
+
+func _get_attack_damage_reactive_effects(defender: PokemonSlot, state: GameState) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if defender == null or defender.get_card_data() == null or state == null:
+		return result
+	var seen_effect_ids: Dictionary = {}
+	var native_effect_id := _resolve_effect_id(defender.get_card_data().effect_id)
+	var native_effect := get_effect(native_effect_id)
+	if native_effect != null and native_effect.has_method("on_damaged_by_attack"):
+		var attack_reactive := native_effect.has_method("is_attack_damage_reactive_effect") \
+			and bool(native_effect.call("is_attack_damage_reactive_effect"))
+		if attack_reactive or not is_ability_disabled(defender, state):
+			result.append({"effect_id": native_effect_id, "effect": native_effect})
+			seen_effect_ids[native_effect_id] = true
+	for marker: Dictionary in defender.effects:
+		var source_effect_id := _resolve_effect_id(str(marker.get(ATTACK_REACTIVE_EFFECT_ID_KEY, "")))
+		if source_effect_id == "" or seen_effect_ids.has(source_effect_id):
+			continue
+		var source_effect := get_effect(source_effect_id)
+		if source_effect == null or not source_effect.has_method("on_damaged_by_attack"):
+			continue
+		if not source_effect.has_method("is_attack_damage_reactive_effect") \
+			or not bool(source_effect.call("is_attack_damage_reactive_effect")):
+			continue
+		result.append({"effect_id": source_effect_id, "effect": source_effect})
+		seen_effect_ids[source_effect_id] = true
+	return result
 
 
 func process_after_energy_attached_from_hand(player_index: int, target: PokemonSlot, state: GameState) -> void:
@@ -1794,6 +1875,11 @@ func is_damage_prevented_by_defender_ability(attacker: PokemonSlot, defender: Po
 		return true
 	if CSV9CEffects.prevents_damage_from_attack_effect(attacker, defender, state):
 		return true
+	# Hidden Flight is an attack effect attached to the Pokemon that actually
+	# used the attack. It must remain effective when the attack was copied by a
+	# different card such as Regidrago VSTAR.
+	if NoivernExEffectsScript.prevents_hidden_flight_damage(attacker, defender, state):
+		return true
 	if state != null and state.stadium_card != null and state.stadium_card.card_data != null:
 		var stadium_effect := get_effect(state.stadium_card.card_data.effect_id)
 		if stadium_effect != null and stadium_effect.has_method("prevents_attack_damage"):
@@ -2085,13 +2171,8 @@ func has_attack_damage_survival_hook(defender: PokemonSlot, state: GameState) ->
 func has_attack_damage_reactive_hook(defender: PokemonSlot, state: GameState) -> bool:
 	if defender == null or state == null:
 		return true
-	if defender.get_card_data() != null:
-		var native_effect := get_effect(defender.get_card_data().effect_id)
-		if native_effect != null and native_effect.has_method("on_damaged_by_attack"):
-			var remains_live_when_disabled := native_effect.has_method("is_attack_damage_reactive_effect") \
-				and bool(native_effect.call("is_attack_damage_reactive_effect"))
-			if remains_live_when_disabled or not is_ability_disabled(defender, state):
-				return true
+	if not _get_attack_damage_reactive_effects(defender, state).is_empty():
+		return true
 	if defender.attached_tool != null and not is_tool_effect_suppressed(defender, state):
 		var tool_effect := get_effect(defender.attached_tool.card_data.effect_id)
 		if tool_effect != null and tool_effect.has_method("on_damaged_by_attack"):

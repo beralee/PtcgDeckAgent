@@ -16,6 +16,7 @@ const ENERGY_ICON_TEXTURES := {
 	"M": preload("res://assets/ui/e-gang.png"),
 	"N": preload("res://assets/ui/e-long.png"),
 	"C": preload("res://assets/ui/e-wu.png"),
+	"ANY": preload("res://assets/ui/e-cai.png"),
 }
 const TEXT_HUD_OPTION_SIZE := Vector2(760, 74)
 const PORTRAIT_TEXT_HUD_OPTION_HEIGHT := 128.0

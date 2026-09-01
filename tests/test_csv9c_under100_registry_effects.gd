@@ -208,19 +208,25 @@ func test_csv9c_064_galvantula_registered_attacks_apply_bonus_discard_and_item_l
 
 
 func test_csv9c_072_slowking_registered_inspiration_copies_top_deck_attack() -> String:
-	var state := _make_state()
-	var processor := EffectProcessor.new()
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var processor := gsm.effect_processor
 	var slowking_cd := _pokemon("呆呆王", "Stage 1", "呆呆兽", "P", 120, [_attack("灵感挑战", "PC", ""), _attack("超念力", "PPC", "120")], [], "", "79cbb7699c0e663c135524afe4e1cb14")
 	processor.register_pokemon_card(slowking_cd)
 	var slowking := _slot(slowking_cd, 0)
 	state.players[0].active_pokemon = slowking
+	_attach_energy(slowking, 0, "P", 1)
+	_attach_energy(slowking, 0, "C", 1)
 	var copied_cd := _pokemon("复制目标", "Basic", "", "C", 80, [_attack("复制伤害", "C", "50")], [], "", "copy_target")
 	var top_card := CardInstance.create(copied_cd, 0)
 	state.players[0].deck.append(top_card)
+	state.players[1].deck.append(CardInstance.create(_energy("对手牌库", "C"), 1))
+	processor.register_pokemon_card(copied_cd)
 
-	processor.execute_attack_effect(slowking, 0, state.players[1].active_pokemon, state)
+	var used := gsm.use_attack(0, 0)
 
 	return run_checks([
+		assert_true(used, "Slowking should use Inspiration Challenge through the authoritative attack path"),
 		assert_true(top_card in state.players[0].discard_pile, "Slowking should discard the top deck Pokemon before copying"),
 		assert_eq(state.players[1].active_pokemon.damage_counters, 50, "Slowking should copy and deal the top Pokemon attack damage"),
 	])

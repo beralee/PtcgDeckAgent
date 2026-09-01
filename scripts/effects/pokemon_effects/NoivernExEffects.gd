@@ -42,9 +42,21 @@ func execute_attack(
 
 
 func prevents_damage_from(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> bool:
+	return prevents_hidden_flight_damage(attacker, defender, state)
+
+
+static func prevents_hidden_flight_damage(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> bool:
 	if attacker == null or defender == null or state == null:
 		return false
-	if not _has_slot_effect(defender, HIDDEN_FLIGHT_PROTECTION, state.turn_number - 1):
+	var protected_by_hidden_flight := false
+	for effect: Dictionary in defender.effects:
+		if (
+			str(effect.get("type", "")) == HIDDEN_FLIGHT_PROTECTION
+			and int(effect.get("turn", -999)) == state.turn_number - 1
+		):
+			protected_by_hidden_flight = true
+			break
+	if not protected_by_hidden_flight:
 		return false
 	var attacker_data := attacker.get_card_data()
 	return attacker_data != null and attacker_data.is_basic_pokemon()
