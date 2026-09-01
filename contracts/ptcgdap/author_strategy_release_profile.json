@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-release-as-wp6-v1",
+  "execution_location": "device_local",
+  "supported_targets": [
+    {
+      "platform": "windows",
+      "architecture": "x86_64"
+    }
+  ],
+  "deferred_targets": [
+    {
+      "platform": "android",
+      "architecture": "arm64-v8a",
+      "reason": "D041: Android requires a later independent adapter and A5 evidence package"
+    }
+  ],
+  "trust_store": {
+    "path": "data/ptcgdap/author_strategy_release_trust_store.json",
+    "caller_overrides": false,
+    "required_algorithm": "ed25519",
+    "required_scope": "production_release",
+    "test_fixture_execution_allowed": false
+  },
+  "device_acceptance": {
+    "profile_path": "data/ptcgdap/author_strategy_device_acceptance_profile.json",
+    "formal_evidence_requires_approved_profile": true,
+    "candidate_thresholds_are_claims": true
+  },
+  "release_approvals": {
+    "path": "data/ptcgdap/author_strategy_release_approvals.json",
+    "caller_overrides": false,
+    "exact_package_identity_required": true,
+    "full_prompt_and_evidence_hashes_required": true
+  },
+  "device_canary_approvals": {
+    "path": "data/ptcgdap/author_strategy_device_canary_approvals.json",
+    "caller_overrides": false,
+    "activation_arg": "--ptcgdap-production-device-canary",
+    "exact_package_identity_required": true,
+    "ordinary_player_start": false,
+    "future_device_evidence_hashes_required": false
+  },
+  "prompt_conformance_approvals": {
+    "path": "data/ptcgdap/author_strategy_prompt_conformance_approvals.json",
+    "caller_overrides": false,
+    "exact_package_identity_required": true,
+    "official_source_lock_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+    "required_evidence_class": "official_cabt_w0_w7_package_conformance"
+  },
+  "required_export_paths": [
+    "contracts/ptcgdap/author_strategy_package_profile.json",
+    "contracts/ptcgdap/author_strategy_match_host_profile.json",
+    "contracts/ptcgdap/author_strategy_live_seam_profile.json",
+    "contracts/ptcgdap/author_strategy_release_profile.json",
+    "contracts/ptcgdap/local_uid_public_context.schema.json",
+    "contracts/ptcgdap/local_uid_public_context_profile.json",
+    "contracts/ptcgdap/local_uid_public_context_conformance_vectors.json",
+    "contracts/ptcgdap/local_uid_public_context_bundle.json",
+    "data/ptcgdap/author_strategy_release_trust_store.json",
+    "data/ptcgdap/author_strategy_release_approvals.json",
+    "data/ptcgdap/author_strategy_device_canary_approvals.json",
+    "data/ptcgdap/author_strategy_prompt_conformance_approvals.json",
+    "data/ptcgdap/author_strategy_device_acceptance_profile.json",
+    "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
+    "scripts/ai/ptcgdap/packages/AuthorStrategyPackageLoader.gd",
+    "scripts/ai/ptcgdap/packages/AuthorStrategyReleaseGate.gd",
+    "scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDeviceCanaryGate.gd",
+    "scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd",
+    "scripts/ai/ptcgdap/public/PublicDeckAdapter.gd",
+    "scripts/ai/ptcgdap/host/godot/AuthorStrategyShadowPrompt.gd",
+    "scripts/ai/ptcgdap/host/godot/AuthorStrategyLivePromptSource.gd",
+    "scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorMatchHost.gd",
+    "scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorLiveSeam.gd"
+  ],
+  "runtime_prohibitions": {
+    "system_python": true,
+    "sidecar": true,
+    "remote_inference": true,
+    "dynamic_model_download": true,
+    "external_compute": true,
+    "classic_raw_state_fallback": true
+  },
+  "release_prerequisites": {
+    "production_trust_approved": true,
+    "package_execution_trusted": true,
+    "exact_deck_mapping": true,
+    "prompt_coverage": [
+      "W0",
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "W7"
+    ],
+    "prompt_conformance_report_hash_required": true,
+    "required_platforms": [
+      "windows"
+    ],
+    "offline_full_match_by_platform": {
+      "windows": false
+    },
+    "device_profile_approved": true,
+    "rollback_verified": true,
+    "a5_evidence_approved": true
+  },
+  "stable_error_codes": [
+    "",
+    "release_contract_invalid",
+    "release_trust_unprovisioned",
+    "release_trust_revoked",
+    "release_package_not_execution_trusted",
+    "release_package_scope_invalid",
+    "release_package_not_approved",
+    "device_canary_not_approved",
+    "device_canary_platform_invalid",
+    "device_canary_activation_invalid",
+    "release_prompt_coverage_incomplete",
+    "release_prompt_conformance_unapproved",
+    "release_device_evidence_incomplete",
+    "release_rollback_invalid",
+    "release_a5_unapproved",
+    "device_profile_not_approved",
+    "device_report_invalid",
+    "device_report_profile_mismatch",
+    "device_sample_count_insufficient",
+    "device_measurement_mismatch",
+    "device_evidence_invalid",
+    "device_network_not_blocked",
+    "device_external_runtime_detected",
+    "device_full_match_incomplete",
+    "device_resource_limit_exceeded",
+    "device_rollback_invalid",
+    "export_inventory_archive_invalid",
+    "export_inventory_missing"
+  ],
+  "current_release_state": {
+    "production_ready": false,
+    "player_start_gate": "BattleSetup remains disabled",
+    "reason": "the product release trust root and Windows device profile are approved; exact package signing, W0-W7 conformance, device-canary, rollback, release approval, and A5 remain incomplete"
+  },
+  "parent_contracts": {
+    "author_package_bundle_canonical_sha256": "B416F2CBA2795B62126B6EF7B5F07A9000E84D5FA1DF62C1753CADC9E82E106B",
+    "author_match_host_bundle_canonical_sha256": "4BD207E9F9200E5AF9E2206A13EAF506382B6BA42BDEE3F0FEB5CA872885DBB9",
+    "author_live_seam_bundle_canonical_sha256": "5CDC360999A23A2CADCAC6E7FA8D81549566DFABE37B2DB4F813C0C5189C3E16",
+    "as_wp5_manifest_canonical_sha256": "4E2693E9143C3326C131DE9C64917632129408870C1AF897199DBA8841FA4428",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  }
+}

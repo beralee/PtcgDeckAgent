@@ -22,7 +22,7 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_matching_cards(player).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var visible_cards: Array[CardInstance] = _get_looked_cards(player)
 	var items: Array = _get_matching_cards(player)
@@ -49,7 +49,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	)]
 
 
-func get_followup_interaction_steps(_card: CardInstance, _state: GameState, _resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(_card: CardInstance, _state: GameState, _resolved_context: Dictionary) -> Array[Dictionary]:
 	return []
 
 

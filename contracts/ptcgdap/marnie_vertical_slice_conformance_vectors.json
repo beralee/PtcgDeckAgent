@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-marnie-vertical-slice-conformance-v1",
+  "cases": [
+    {
+      "id": "official-summary",
+      "operation": "official_summary",
+      "input": {},
+      "expected": {
+        "card_count": 60,
+        "unique_card_id_count": 19,
+        "cabt_exportable": true
+      }
+    },
+    {
+      "id": "local-summary",
+      "operation": "local_summary",
+      "input": {},
+      "expected": {
+        "card_count": 60,
+        "unique_printing_count": 28,
+        "cabt_exportable": false
+      }
+    },
+    {
+      "id": "identity-summary",
+      "operation": "identity_summary",
+      "input": {},
+      "expected": {
+        "same_deck": false,
+        "official_bridged": 34,
+        "official_unmapped": 26,
+        "local_bridged": 15,
+        "local_unbridged": 45
+      }
+    },
+    {
+      "id": "w2-firewall",
+      "operation": "frame_summary",
+      "input": {
+        "frame_id": "w2_setup_bench"
+      },
+      "expected": {
+        "family": "W2",
+        "firewall_status": "rejected",
+        "issue_code": "own_active_concealed",
+        "window_state": "policy_allowed"
+      }
+    },
+    {
+      "id": "w4-deck",
+      "operation": "frame_summary",
+      "input": {
+        "frame_id": "w4_spikemuth_deck"
+      },
+      "expected": {
+        "family": "W4",
+        "firewall_status": "accepted",
+        "issue_code": null,
+        "window_state": "policy_allowed"
+      }
+    },
+    {
+      "id": "terminal",
+      "operation": "frame_summary",
+      "input": {
+        "frame_id": "w7_terminal"
+      },
+      "expected": {
+        "family": "W7",
+        "firewall_status": "not_invoked_after_terminal",
+        "issue_code": null,
+        "window_state": null
+      }
+    },
+    {
+      "id": "unknown-frame",
+      "operation": "frame_summary",
+      "input": {
+        "frame_id": "PRIVATE_UNKNOWN"
+      },
+      "expected_error": "frame_unknown"
+    },
+    {
+      "id": "wrong-frame-type",
+      "operation": "frame_summary",
+      "input": {
+        "frame_id": {
+          "host_type": "string_name",
+          "value": "w3_main"
+        }
+      },
+      "expected_error": "input_type_invalid"
+    },
+    {
+      "id": "capability-punk-up",
+      "operation": "capability",
+      "input": {
+        "capability_id": "punk_up"
+      },
+      "expected": {
+        "window_family": "W5",
+        "portable_ready": false
+      }
+    },
+    {
+      "id": "unknown-capability",
+      "operation": "capability",
+      "input": {
+        "capability_id": "PRIVATE_UNKNOWN"
+      },
+      "expected_error": "capability_unknown"
+    }
+  ]
+}

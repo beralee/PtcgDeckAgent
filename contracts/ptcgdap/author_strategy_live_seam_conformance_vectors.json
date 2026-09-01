@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-live-seam-as-wp5-v1",
+  "cases": [
+    {
+      "id": "w1-policy-success",
+      "fault": "none",
+      "expected": "accepted"
+    },
+    {
+      "id": "w1-policy-exception-fallback",
+      "fault": "policy_exception",
+      "expected": "accepted_fallback"
+    },
+    {
+      "id": "w1-illegal-output-fallback",
+      "fault": "illegal_output",
+      "expected": "accepted_fallback"
+    },
+    {
+      "id": "w1-prompt-reordered",
+      "fault": "candidate_reorder",
+      "expected": "prompt_changed"
+    },
+    {
+      "id": "w1-prompt-card-removed",
+      "fault": "candidate_removed",
+      "expected": "prompt_changed"
+    },
+    {
+      "id": "w1-replay",
+      "fault": "replay",
+      "expected": "replay_rejected"
+    },
+    {
+      "id": "w1-engine-precondition",
+      "fault": "active_already_present",
+      "expected": "engine_apply_rejected"
+    },
+    {
+      "id": "w2-not-enabled",
+      "fault": "unsupported_family",
+      "expected": "unsupported_prompt_family"
+    }
+  ]
+}

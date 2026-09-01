@@ -333,6 +333,8 @@ func _make_headless_mulligan_bootstrap_gsm() -> MulliganBootstrapSpyGameStateMac
 	var attack := {"name": "Bench Breaker", "cost": "", "damage": "120", "text": "", "is_vstar_power": false}
 	gsm.action_log.clear()
 	gsm.action_log.append(GameAction.create(GameAction.ActionType.MULLIGAN, 0, {}, 0, "Seeded missed mulligan prompt"))
+	gsm._mulligan_counts[0] = 1
+	gsm._pending_mulligan_beneficiary_index = 1
 	gsm.game_state.players[0].hand = [
 		_make_benchmark_basic("P0 Basic", 60, [attack]),
 	]

@@ -4,6 +4,7 @@ extends RefCounted
 const PYTHON_FALLBACK_RESOURCE_PATH := "res://scripts/tools/zenmux_request.py"
 const PYTHON_FALLBACK_USER_DIR := "user://tmp/zenmux"
 const PYTHON_FALLBACK_USER_SCRIPT := PYTHON_FALLBACK_USER_DIR + "/zenmux_request.py"
+const PYTHON_FALLBACK_API_KEY_ENV_PREFIX := "PTCG_ZENMUX_KEY_"
 const TLS_MODE_DEFAULT := "default"
 const TLS_MODE_UNSAFE := "unsafe"
 
@@ -822,19 +823,25 @@ func _request_json_payload_via_python_fallback_async(
 	var input_path := str(request_paths.get("input_path", ""))
 	var output_path := str(request_paths.get("output_path", ""))
 	var script_path := str(request_paths.get("script_path", ""))
+	var api_key_environment_name := str(request_paths.get("api_key_environment_name", ""))
 	var python_executable := _python_executable()
 	if python_executable == "":
 		DirAccess.remove_absolute(input_path)
 		DirAccess.remove_absolute(output_path)
 		return ERR_UNAVAILABLE
-	var process_id := OS.create_process(python_executable, [script_path, input_path, output_path], false)
+	var process_id := _create_python_fallback_process(
+		python_executable,
+		[script_path, input_path, output_path, api_key_environment_name],
+		api_key_environment_name,
+		api_key
+	)
 	if process_id <= 0:
 		DirAccess.remove_absolute(input_path)
 		DirAccess.remove_absolute(output_path)
 		return ERR_CANT_CREATE
 	var poller := PythonFallbackRequest.new()
 	poller.configure(self, process_id, python_executable, input_path, output_path, callback, _timeout_seconds)
-	parent.add_child(poller)
+	_python_fallback_poller_parent(parent).add_child(poller)
 	return OK
 
 
@@ -845,12 +852,13 @@ func _write_python_fallback_request(request_url: String, api_key: String, reques
 	var temp_dir := ProjectSettings.globalize_path(PYTHON_FALLBACK_USER_DIR)
 	if DirAccess.make_dir_recursive_absolute(temp_dir) != OK:
 		return {}
+	_cleanup_stale_python_fallback_files(temp_dir)
 	var token := "%d_%d" % [Time.get_ticks_msec(), randi()]
 	var input_path := "%s/request_%s.json" % [temp_dir, token]
 	var output_path := "%s/response_%s.json" % [temp_dir, token]
+	var api_key_environment_name := "%s%s" % [PYTHON_FALLBACK_API_KEY_ENV_PREFIX, token]
 	var input := {
 		"url": request_url,
-		"api_key": api_key,
 		"payload": request_payload,
 		"timeout_seconds": _timeout_seconds,
 		"allow_unsafe_tls": _allow_unsafe_tls,
@@ -864,7 +872,56 @@ func _write_python_fallback_request(request_url: String, api_key: String, reques
 		"script_path": script_path,
 		"input_path": input_path,
 		"output_path": output_path,
+		"api_key_environment_name": api_key_environment_name,
 	}
+
+
+func _create_python_fallback_process(
+	python_executable: String,
+	arguments: PackedStringArray,
+	api_key_environment_name: String,
+	api_key: String
+) -> int:
+	if python_executable.is_empty() or api_key_environment_name.is_empty():
+		return -1
+	var had_previous_value := OS.has_environment(api_key_environment_name)
+	var previous_value := OS.get_environment(api_key_environment_name) if had_previous_value else ""
+	OS.set_environment(api_key_environment_name, api_key)
+	var process_id := OS.create_process(python_executable, arguments, false)
+	if had_previous_value:
+		OS.set_environment(api_key_environment_name, previous_value)
+	else:
+		OS.unset_environment(api_key_environment_name)
+	return process_id
+
+
+func _python_fallback_poller_parent(request_parent: Node) -> Node:
+	var main_loop := Engine.get_main_loop()
+	if main_loop is SceneTree and (main_loop as SceneTree).root != null:
+		return (main_loop as SceneTree).root
+	return request_parent
+
+
+func _cleanup_stale_python_fallback_files(temp_dir: String) -> void:
+	var directory := DirAccess.open(temp_dir)
+	if directory == null:
+		return
+	var now_unix := int(Time.get_unix_time_from_system())
+	var stale_after_seconds := maxi(60, int(ceil(_timeout_seconds)) + 10)
+	directory.list_dir_begin()
+	var filename := directory.get_next()
+	while not filename.is_empty():
+		if (
+			not directory.current_is_dir()
+			and filename.ends_with(".json")
+			and (filename.begins_with("request_") or filename.begins_with("response_"))
+		):
+			var path := temp_dir.path_join(filename)
+			var modified_unix := int(FileAccess.get_modified_time(path))
+			if modified_unix <= 0 or now_unix - modified_unix >= stale_after_seconds:
+				DirAccess.remove_absolute(path)
+		filename = directory.get_next()
+	directory.list_dir_end()
 
 
 func _ensure_python_fallback_script() -> String:

@@ -11,7 +11,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_dark_energy(player).is_empty() and not _get_dark_targets(player).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var source_items: Array = _get_dark_energy(player)
 	var source_labels: Array[String] = []

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-policy-package-v1",
+  "manifest_path": "data/ptcgdap/marnie_windows_policy_package_v1.json",
+  "supported_targets": [
+    {
+      "host": "godot",
+      "platform": "windows",
+      "architecture": "x86_64",
+      "execution_location": "device_local"
+    }
+  ],
+  "deferred_targets": [
+    {
+      "platform": "android",
+      "reason": "independent adapter and A5 evidence are deferred"
+    }
+  ],
+  "model_contract": {
+    "undeclared_model_forbidden": true,
+    "no_model_literal": "none",
+    "unused_author_weights_status": "unused_non_model_payload",
+    "declared_backend_requires_witness": true
+  },
+  "runtime_prohibitions": {
+    "system_python": true,
+    "external_process": true,
+    "remote_inference": true,
+    "dynamic_model_download": true,
+    "classic_raw_state_fallback": true
+  },
+  "hash_domains": {
+    "archive_and_source": "raw bytes SHA-256 uppercase",
+    "json_contract_and_parent": "canonical_json_v1 SHA-256 uppercase",
+    "archive_members": "raw member bytes SHA-256 uppercase"
+  },
+  "stable_error_codes": [
+    "",
+    "policy_package_document_missing",
+    "policy_package_schema_invalid",
+    "policy_package_identity_mismatch",
+    "policy_package_archive_mismatch",
+    "policy_package_member_mismatch",
+    "policy_package_contract_mismatch",
+    "policy_package_executor_mismatch",
+    "policy_package_model_mismatch",
+    "policy_package_parent_mismatch",
+    "policy_package_rollback_mismatch",
+    "policy_package_integrity_invalid"
+  ],
+  "current_state": {
+    "production_ready": false,
+    "authority_scope": "development_and_device_canary_only",
+    "reason": "exact author archive is test-fixture signed and product/device approvals remain unprovisioned"
+  }
+}

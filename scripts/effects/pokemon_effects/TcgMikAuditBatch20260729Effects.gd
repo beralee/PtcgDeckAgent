@@ -177,7 +177,7 @@ class AbilityReturnOpponentDiscardSupporter extends BaseEffect:
 			and not _opponent_supporters(owner_index, state).is_empty()
 		)
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var items := _opponent_supporters(card.owner_index, state)
@@ -306,7 +306,7 @@ class AttackOpponentHandTrainerCountDamageReveal extends AttackOpponentHandCount
 		super(per_trainer, true, printed_damage)
 		attack_index_to_match = match_attack_index
 
-	func get_attack_interaction_steps(
+	func build_ucis_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		attack: Dictionary,
 		state: GameState

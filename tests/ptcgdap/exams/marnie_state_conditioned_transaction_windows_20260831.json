@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "document_type": "ptcgdap_directed_strategy_exam_corpus_v1",
+  "corpus_id": "marnie-state-conditioned-transaction-windows-20260831",
+  "status": "state_conditioned_value_v2_candidate_gate",
+  "repetitions_per_exam": 1,
+  "source_match": {
+    "seed": 2919001,
+    "candidate_seat": 0,
+    "decision_id": "author-vs-author-2919001-s0.window.18",
+    "public_observation_hash": "68606EBA58DB170D9A9F0B400A268182BFAE31B4EECE1C9047E698E3C885A02C",
+    "provenance": "clean_developer_decision_trace"
+  },
+  "strategy_package": {
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "5.34.0",
+    "archive_sha256": "32D20501F9AB036B9DA245557753EE1245CA6085F5CC982C4768CCBFB7A3FCD6",
+    "install_source": "built_in"
+  },
+  "exams": [
+    {
+      "exam_id": "t5_spent_attachment_energy_search_does_not_preempt_budew_attack",
+      "issue_number": 6,
+      "turn_number": 5,
+      "provenance": "exact_bench_seed2919001_seat0_sequence18",
+      "replay_evidence": "Energy Search is in hand, but manual attachment and supporter windows are already spent; the bench is full, Munkidori already has Darkness Energy, and the current Budew attack must not be preempted by a resource that cannot be converted this turn.",
+      "root_owner": "state_conditioned_transaction_value_v2",
+      "prompt_kind": "main",
+      "select_semantics": {
+        "min_count": 1,
+        "max_count": 1,
+        "select_type_raw": 1,
+        "select_context_raw": 0
+      },
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV6C_114", "CSV3C_123", "CSV1C_123", "CSV8C_183", "CSVH1C_035"],
+          "active": [
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0, "prize_value": 1}
+          ],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 2, "prize_value": 1},
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 2, "prize_value": 1},
+            {"uid": "CSV10C_147", "hp": 100, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2, "prize_value": 1},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1, "prize_value": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 2, "prize_value": 1}
+          ],
+          "discard": ["CSV1C_123", "CSV7C_177", "CSV3C_123"],
+          "deck_count": 36,
+          "prizes_remaining": 6,
+          "turn": {
+            "supporter_available": false,
+            "manual_attachment_available": false,
+            "retreat_available": true
+          }
+        },
+        "opponent": {
+          "hand_count": 6,
+          "active": [
+            {"uid": "CSV10C_010", "hp": 150, "remaining_hp": 140, "energy_uids": ["CSVE1C_GRA"], "minimum_attack_energy_count": 3, "prize_value": 1}
+          ],
+          "bench": [
+            {"uid": "CSV8C_028", "hp": 210, "energy_uids": ["CSVE1C_GRA", "CSVE1C_GRA"], "minimum_attack_energy_count": 3, "prize_value": 2},
+            {"uid": "CSV8C_028", "hp": 210, "energy_uids": ["CSVE1C_GRA"], "minimum_attack_energy_count": 3, "prize_value": 2}
+          ],
+          "discard": ["CSV10C_206"],
+          "deck_count": 39,
+          "prizes_remaining": 6
+        }
+      },
+      "options": [
+        {"kind": "play_trainer", "card_uid": "CSVH1C_035", "option_type_raw": 7, "requires_interaction": true},
+        {"kind": "attack", "source_uid": "CSV9.5C_004", "attack_index": 0, "projected_damage": 10, "option_type_raw": 13},
+        {"kind": "retreat", "target_uid": "CSV9.5C_043", "option_type_raw": 12},
+        {"kind": "retreat", "target_uid": "CSV8C_094", "option_type_raw": 12},
+        {"kind": "retreat", "target_uid": "CSV10C_147", "option_type_raw": 12},
+        {"kind": "retreat", "target_uid": "CSV10C_146", "option_type_raw": 12},
+        {"kind": "retreat", "target_uid": "CSV9.5C_043", "option_type_raw": 12},
+        {"kind": "end_turn", "option_type_raw": 14}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [1]
+    },
+    {
+      "exam_id": "t13_boss_exact_two_prize_before_grimmsnarl_attack",
+      "issue_number": 7,
+      "turn_number": 13,
+      "provenance": "exact_bench_seed2919001_seat0_sequence56",
+      "replay_evidence": "Crustle prevents damage to the active from Pokemon ex, while Grimmsnarl still has a productive fixed-split attack and Boss can first promote a 60 HP two-prize Ogerpon. The transaction must spend the supporter on the exact knockout route before committing the attack in the reobserved window.",
+      "root_owner": "public_transaction_pre_attack_supporter_route",
+      "prompt_kind": "main",
+      "select_semantics": {
+        "min_count": 1,
+        "max_count": 1,
+        "select_type_raw": 0,
+        "select_context_raw": 0
+      },
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV7C_185", "CSV2C_127", "CSVH1aC_023"],
+          "active": [
+            {
+              "uid": "CSV10C_148",
+              "hp": 230,
+              "max_hp": 320,
+              "damage_counters": 90,
+              "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"],
+              "attached_tool_uid": "CSV1C_117",
+              "minimum_attack_energy_count": 2,
+              "prize_value": 2
+            }
+          ],
+          "bench": [
+            {"uid": "CSV7C_059", "hp": 90, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 2, "prize_value": 1},
+            {"uid": "CSV10C_148", "hp": 240, "max_hp": 320, "damage_counters": 80, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2, "prize_value": 2},
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2, "prize_value": 1}
+          ],
+          "discard": ["CSV1C_123", "CSV7C_177", "CSV3C_123", "CSV1C_123", "CSV6C_114", "CSV3C_123", "CSV1C_112", "CSVH1C_035", "CSV5C_119", "CSV9.5C_004", "CSV8C_183", "CSV3C_123", "CSVH1C_045", "CSV8C_094", "CSVE1C_DAR", "CSVE1C_DAR", "CSV8C_094"],
+          "deck_count": 18,
+          "prizes_remaining": 6,
+          "turn": {
+            "supporter_available": true,
+            "manual_attachment_available": false,
+            "retreat_available": true
+          }
+        },
+        "opponent": {
+          "hand_count": 10,
+          "active": [
+            {"uid": "CSV10C_010", "hp": 10, "max_hp": 150, "damage_counters": 140, "energy_uids": ["CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA"], "minimum_attack_energy_count": 3, "prize_value": 1}
+          ],
+          "bench": [
+            {"uid": "CSV8C_028", "hp": 60, "max_hp": 210, "damage_counters": 150, "energy_uids": ["CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA"], "minimum_attack_energy_count": 3, "prize_value": 2},
+            {"uid": "CSV8C_028", "hp": 90, "max_hp": 210, "damage_counters": 120, "energy_uids": ["CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA", "CSVE1C_GRA"], "minimum_attack_energy_count": 3, "prize_value": 2},
+            {"uid": "CSV10C_009", "hp": 70, "minimum_attack_energy_count": 1, "prize_value": 1}
+          ],
+          "discard": ["CSV10C_206", "CSV9C_181", "CSV8C_182", "CSVH1aC_008", "CSV9C_181", "CSV8C_182"],
+          "deck_count": 23,
+          "prizes_remaining": 3
+        }
+      },
+      "options": [
+        {"kind": "attach_tool", "card_uid": "CSV7C_185", "target_uid": "CSV7C_059", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 2, "option_type_raw": 8},
+        {"kind": "attach_tool", "card_uid": "CSV7C_185", "target_uid": "CSV10C_148", "target_energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "target_minimum_attack_energy_count": 2, "option_type_raw": 8},
+        {"kind": "attach_tool", "card_uid": "CSV7C_185", "target_uid": "CSV7C_059", "target_energy_uids": [], "target_minimum_attack_energy_count": 2, "option_type_raw": 8},
+        {"kind": "play_trainer", "card_uid": "CSVH1aC_023", "option_type_raw": 7, "requires_interaction": true},
+        {"kind": "play_stadium", "card_uid": "CSV2C_127", "option_type_raw": 7},
+        {"kind": "use_stadium_effect", "card_uid": "CSV10C_216", "source_uid": "CSV10C_216", "option_type_raw": 10, "requires_interaction": true},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 0, "option_type_raw": 13, "requires_interaction": true, "tags": ["attack"]},
+        {"kind": "retreat", "target_uid": "CSV7C_059", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 2, "option_type_raw": 12},
+        {"kind": "retreat", "target_uid": "CSV10C_148", "target_energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "target_minimum_attack_energy_count": 2, "option_type_raw": 12},
+        {"kind": "retreat", "target_uid": "CSV7C_059", "target_energy_uids": [], "target_minimum_attack_energy_count": 2, "option_type_raw": 12},
+        {"kind": "end_turn", "option_type_raw": 14}
+      ],
+      "observed_baseline_selected_indexes": [10],
+      "target_selected_indexes": [3]
+    }
+  ]
+}

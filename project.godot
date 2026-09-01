@@ -22,8 +22,11 @@ config/features=PackedStringArray("4.6")
 
 [autoload]
 
+AuthorStrategyPackageCatalog="*res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageCatalog.gd"
 BattleMusicManager="*res://scripts/autoload/BattleMusicManager.gd"
 CardDatabase="*res://scripts/autoload/CardDatabase.gd"
+PtcgDAPWindowsExportMatchEntrypoint="*res://scripts/tools/run_ptcgdap_windows_export_match.gd"
+PtcgDAPWindowsUiMatchEntrypoint="*res://scripts/tools/run_ptcgdap_windows_ui_match.gd"
 FontBootstrap="*res://scripts/autoload/FontBootstrap.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
 
@@ -48,6 +51,12 @@ locale/default="zh_CN"
 [network]
 
 tls/certificate_bundle_override="res://data/certs/cacert.pem"
+
+[ptcgdap]
+
+author_strategy/enabled=true
+strategy_platform/base_url="https://api.ptcg.skillserver.cn"
+strategy_platform/ranking_profile_id="godot_v18_ladder_v1"
 
 [rendering]
 

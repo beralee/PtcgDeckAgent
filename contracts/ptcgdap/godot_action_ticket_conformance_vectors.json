@@ -1,0 +1,459 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+  "fixture": {
+    "binding_fixture_id": "valid-mixed-order",
+    "binding_vectors_canonical_sha256": "8B13EABF6039F20346D4F52326E4B20CDD6FE000E7F685B7527DB6163F06B40F",
+    "binding_fixture_patch": {
+      "window_option_0_area": 2
+    },
+    "session_id": "session:alpha",
+    "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "callback_binding_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "snapshot_id": "25D783E4820BC7308E595696989E3E5389ADC0D344B35EF8185CA59F915EA84A",
+    "window_id": "D4221233D3121B612F4CBD662BF6D4FD3A2E5F8FD7EBC5C3436C192020D8A5E6",
+    "binding_version": 1,
+    "option_fingerprints": [
+      "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681",
+      "7CF6EFC834A4CAD8C1D3768D63394D9786974FB84992AFCB4968E91858571372",
+      "15FD0829763DE99A182F035A751DC4B9C78DFB35B2BA6F9084299D48FE7CB0EB",
+      "820D65AAADAE60F224368CDEB8925499CC2ED3EC570E90D87CE9753D7C0A01AA",
+      "D711D861F6EC65807F7BF98D9F728CB22960B5F5D0662733C37EB8E3E73F2EA6"
+    ],
+    "selection_variants": {
+      "policy_ordered": {
+        "owner": "policy",
+        "attempt_kind": "exact_indexes",
+        "attempt_indexes": [
+          1,
+          0
+        ],
+        "selected_indexes": [
+          1,
+          0
+        ]
+      },
+      "fallback_single": {
+        "owner": "deterministic_fallback",
+        "attempt_kind": "invalid_policy_output",
+        "attempt_indexes": [],
+        "selected_indexes": [
+          0
+        ]
+      }
+    },
+    "expected_ticket_audits": {
+      "policy_ordered": {
+        "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+        "ticket_id": "3583801F75ED7A1C658B78692620BD61A2631422EFFF75C97541F1887F7E3125",
+        "ticket_generation": 1,
+        "binding_version": 1,
+        "snapshot_id": "25D783E4820BC7308E595696989E3E5389ADC0D344B35EF8185CA59F915EA84A",
+        "window_id": "D4221233D3121B612F4CBD662BF6D4FD3A2E5F8FD7EBC5C3436C192020D8A5E6",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "selected_indexes": [
+          1,
+          0
+        ],
+        "selected_fingerprint_hashes": [
+          "7CF6EFC834A4CAD8C1D3768D63394D9786974FB84992AFCB4968E91858571372",
+          "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+        ],
+        "authority": "godot_action_ticket_shadow",
+        "authoritative": false
+      },
+      "fallback_single": {
+        "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+        "ticket_id": "5B5598E7664E123EEDB541768D023C7F0FE3EBB791CCC9510C2A3730B95D7769",
+        "ticket_generation": 1,
+        "binding_version": 1,
+        "snapshot_id": "25D783E4820BC7308E595696989E3E5389ADC0D344B35EF8185CA59F915EA84A",
+        "window_id": "D4221233D3121B612F4CBD662BF6D4FD3A2E5F8FD7EBC5C3436C192020D8A5E6",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "selected_indexes": [
+          0
+        ],
+        "selected_fingerprint_hashes": [
+          "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+        ],
+        "authority": "godot_action_ticket_shadow",
+        "authoritative": false
+      }
+    },
+    "expected_claim_audits": {
+      "policy_ordered": {
+        "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+        "ticket_id": "3583801F75ED7A1C658B78692620BD61A2631422EFFF75C97541F1887F7E3125",
+        "ticket_generation": 1,
+        "selected_indexes": [
+          1,
+          0
+        ],
+        "selected_fingerprint_hashes": [
+          "7CF6EFC834A4CAD8C1D3768D63394D9786974FB84992AFCB4968E91858571372",
+          "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+        ],
+        "state": "claimed",
+        "authority": "godot_action_claim_shadow",
+        "authoritative": false
+      },
+      "fallback_single": {
+        "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+        "ticket_id": "5B5598E7664E123EEDB541768D023C7F0FE3EBB791CCC9510C2A3730B95D7769",
+        "ticket_generation": 1,
+        "selected_indexes": [
+          0
+        ],
+        "selected_fingerprint_hashes": [
+          "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+        ],
+        "state": "claimed",
+        "authority": "godot_action_claim_shadow",
+        "authoritative": false
+      }
+    }
+  },
+  "issue_cases": [
+    {
+      "id": "issue-policy-ordered",
+      "selection_variant": "policy_ordered",
+      "fault": "none",
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": {
+          "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+          "ticket_id": "3583801F75ED7A1C658B78692620BD61A2631422EFFF75C97541F1887F7E3125",
+          "ticket_generation": 1,
+          "binding_version": 1,
+          "snapshot_id": "25D783E4820BC7308E595696989E3E5389ADC0D344B35EF8185CA59F915EA84A",
+          "window_id": "D4221233D3121B612F4CBD662BF6D4FD3A2E5F8FD7EBC5C3436C192020D8A5E6",
+          "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+          "selected_indexes": [
+            1,
+            0
+          ],
+          "selected_fingerprint_hashes": [
+            "7CF6EFC834A4CAD8C1D3768D63394D9786974FB84992AFCB4968E91858571372",
+            "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+          ],
+          "authority": "godot_action_ticket_shadow",
+          "authoritative": false
+        }
+      }
+    },
+    {
+      "id": "issue-fallback-single",
+      "selection_variant": "fallback_single",
+      "fault": "none",
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": {
+          "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+          "ticket_id": "5B5598E7664E123EEDB541768D023C7F0FE3EBB791CCC9510C2A3730B95D7769",
+          "ticket_generation": 1,
+          "binding_version": 1,
+          "snapshot_id": "25D783E4820BC7308E595696989E3E5389ADC0D344B35EF8185CA59F915EA84A",
+          "window_id": "D4221233D3121B612F4CBD662BF6D4FD3A2E5F8FD7EBC5C3436C192020D8A5E6",
+          "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+          "selected_indexes": [
+            0
+          ],
+          "selected_fingerprint_hashes": [
+            "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+          ],
+          "authority": "godot_action_ticket_shadow",
+          "authoritative": false
+        }
+      }
+    },
+    {
+      "id": "issue-session-type",
+      "selection_variant": "policy_ordered",
+      "fault": "session_type",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_session_id",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-session-format",
+      "selection_variant": "policy_ordered",
+      "fault": "session_format",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_session_id",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-public-hash-type",
+      "selection_variant": "policy_ordered",
+      "fault": "public_hash_type",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_public_observation_hash",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-public-hash-mismatch",
+      "selection_variant": "policy_ordered",
+      "fault": "public_hash_mismatch",
+      "expected": {
+        "accepted": false,
+        "error_code": "public_hash_mismatch",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-binding-copy",
+      "selection_variant": "policy_ordered",
+      "fault": "binding_copy",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_binding",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-stale-snapshot",
+      "selection_variant": "policy_ordered",
+      "fault": "stale_snapshot",
+      "expected": {
+        "accepted": false,
+        "error_code": "binding_not_current",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-window-copy",
+      "selection_variant": "policy_ordered",
+      "fault": "window_copy",
+      "expected": {
+        "accepted": false,
+        "error_code": "binding_not_current",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-resolution-copy",
+      "selection_variant": "policy_ordered",
+      "fault": "resolution_copy",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_selection_resolution",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-callback-drift",
+      "selection_variant": "policy_ordered",
+      "fault": "callback_drift",
+      "expected": {
+        "accepted": false,
+        "error_code": "binding_not_current",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-active-conflict",
+      "selection_variant": "fallback_single",
+      "fault": "active_ticket_conflict",
+      "expected": {
+        "accepted": false,
+        "error_code": "active_ticket_exists",
+        "audit": null
+      }
+    },
+    {
+      "id": "issue-claimed-reissue",
+      "selection_variant": "policy_ordered",
+      "fault": "claimed_binding_reissue",
+      "expected": {
+        "accepted": false,
+        "error_code": "binding_already_claimed",
+        "audit": null
+      }
+    }
+  ],
+  "claim_cases": [
+    {
+      "id": "claim-policy-ordered",
+      "selection_variant": "policy_ordered",
+      "fault": "none",
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": {
+          "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+          "ticket_id": "3583801F75ED7A1C658B78692620BD61A2631422EFFF75C97541F1887F7E3125",
+          "ticket_generation": 1,
+          "selected_indexes": [
+            1,
+            0
+          ],
+          "selected_fingerprint_hashes": [
+            "7CF6EFC834A4CAD8C1D3768D63394D9786974FB84992AFCB4968E91858571372",
+            "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+          ],
+          "state": "claimed",
+          "authority": "godot_action_claim_shadow",
+          "authoritative": false
+        }
+      }
+    },
+    {
+      "id": "claim-fallback-single",
+      "selection_variant": "fallback_single",
+      "fault": "none",
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": {
+          "ticket_profile": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+          "ticket_id": "5B5598E7664E123EEDB541768D023C7F0FE3EBB791CCC9510C2A3730B95D7769",
+          "ticket_generation": 1,
+          "selected_indexes": [
+            0
+          ],
+          "selected_fingerprint_hashes": [
+            "C656C027772C9C95E75C7D7338E762A0E238BED7899E444563C9603EE1585681"
+          ],
+          "state": "claimed",
+          "authority": "godot_action_claim_shadow",
+          "authoritative": false
+        }
+      }
+    },
+    {
+      "id": "claim-session-drift",
+      "selection_variant": "policy_ordered",
+      "fault": "session_drift",
+      "expected": {
+        "accepted": false,
+        "error_code": "session_mismatch",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-callback-drift",
+      "selection_variant": "policy_ordered",
+      "fault": "callback_drift",
+      "expected": {
+        "accepted": false,
+        "error_code": "callback_mismatch",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-public-hash-drift",
+      "selection_variant": "policy_ordered",
+      "fault": "public_hash_drift",
+      "expected": {
+        "accepted": false,
+        "error_code": "public_hash_mismatch",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-ticket-copy",
+      "selection_variant": "policy_ordered",
+      "fault": "ticket_copy",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_ticket",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-cross-owner",
+      "selection_variant": "policy_ordered",
+      "fault": "cross_owner",
+      "expected": {
+        "accepted": false,
+        "error_code": "owner_mismatch",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-stale-binding",
+      "selection_variant": "policy_ordered",
+      "fault": "stale_binding",
+      "expected": {
+        "accepted": false,
+        "error_code": "binding_not_current",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-dead-command",
+      "selection_variant": "policy_ordered",
+      "fault": "dead_command",
+      "expected": {
+        "accepted": false,
+        "error_code": "private_reference_unavailable",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-dead-private-ref",
+      "selection_variant": "policy_ordered",
+      "fault": "dead_private_ref",
+      "expected": {
+        "accepted": false,
+        "error_code": "private_reference_unavailable",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-double",
+      "selection_variant": "policy_ordered",
+      "fault": "double_claim",
+      "expected": {
+        "accepted": false,
+        "error_code": "ticket_already_claimed",
+        "audit": null
+      }
+    },
+    {
+      "id": "claim-ticket-mutation",
+      "selection_variant": "policy_ordered",
+      "fault": "ticket_mutation",
+      "expected": {
+        "accepted": false,
+        "error_code": "ticket_integrity_invalid",
+        "audit": null
+      }
+    }
+  ],
+  "transition_cases": [
+    {
+      "id": "issue-idempotent",
+      "scenario": "idempotent_issue",
+      "expected_error": ""
+    },
+    {
+      "id": "active-conflict-atomic",
+      "scenario": "active_conflict",
+      "expected_error": "active_ticket_exists"
+    },
+    {
+      "id": "new-binding-revokes",
+      "scenario": "new_binding_revokes",
+      "expected_error": "ticket_revoked"
+    },
+    {
+      "id": "claim-closes-binding",
+      "scenario": "successful_claim_closes_binding",
+      "expected_error": "binding_already_claimed"
+    },
+    {
+      "id": "wrong-context-does-not-consume",
+      "scenario": "failed_context_attempt_atomic",
+      "expected_error": "session_mismatch"
+    }
+  ]
+}

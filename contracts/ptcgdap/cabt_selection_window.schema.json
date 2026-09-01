@@ -1,0 +1,1576 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/cabt_selection_window.schema.json",
+  "title": "PtcgDAP immutable CABT selection window",
+  "description": "Public, immutable, current-callback selection authority. A rejected build has no window and therefore is not representable by this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "window_version",
+    "window_id",
+    "hash_profile",
+    "option_fingerprint_profile",
+    "public_observation_hash",
+    "public_hash_authority",
+    "chooser_player_index",
+    "decision_state",
+    "fallback_reasons",
+    "select_type_raw",
+    "select_context_raw",
+    "min_count",
+    "max_count",
+    "remain_damage_counter",
+    "remain_energy_cost",
+    "context_card",
+    "effect",
+    "public_deck_candidates",
+    "options",
+    "option_fingerprints"
+  ],
+  "properties": {
+    "window_version": {
+      "const": 1
+    },
+    "window_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "hash_profile": {
+      "const": "cabt_selection_window_v1"
+    },
+    "option_fingerprint_profile": {
+      "const": "cabt_option_fingerprint_v1"
+    },
+    "public_observation_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "public_hash_authority": {
+      "enum": [
+        "firewall_accepted",
+        "conformance_fixture"
+      ]
+    },
+    "chooser_player_index": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "decision_state": {
+      "enum": [
+        "policy_allowed",
+        "fallback_only"
+      ]
+    },
+    "fallback_reasons": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "unknown_select_type",
+          "unknown_select_context",
+          "unknown_option_type",
+          "unknown_option_enum",
+          "sparse_shape_mismatch"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "select_type_raw": {
+      "$ref": "#/$defs/safeInteger"
+    },
+    "select_context_raw": {
+      "$ref": "#/$defs/safeInteger"
+    },
+    "min_count": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 0
+        }
+      ]
+    },
+    "max_count": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 0
+        }
+      ]
+    },
+    "remain_damage_counter": {
+      "$ref": "#/$defs/safeInteger"
+    },
+    "remain_energy_cost": {
+      "$ref": "#/$defs/safeInteger"
+    },
+    "context_card": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/card"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "effect": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/card"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "public_deck_candidates": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/card"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "options": {
+      "description": "Exact official order. Present official fields, including explicit null, are retained; absent fields remain absent.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/option"
+      }
+    },
+    "option_fingerprints": {
+      "description": "One cabt_option_fingerprint_v1 digest for each option in the same order.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sha256"
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "decision_state": {
+          "const": "policy_allowed"
+        },
+        "fallback_reasons": {
+          "maxItems": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "decision_state": {
+          "const": "fallback_only"
+        },
+        "fallback_reasons": {
+          "minItems": 1
+        }
+      }
+    }
+  ],
+  "x-ptcgdap-runtime-invariants": [
+    "0 <= min_count <= max_count <= len(options)",
+    "len(option_fingerprints) == len(options)",
+    "every fingerprint and window_id recomputes from this exact window payload",
+    "schema validation alone never grants current-window authority"
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "buildIssue": {
+      "description": "Closed owner diagnostic. The pointer never includes an unknown child key name or value.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/buildFallbackIssue"
+        },
+        {
+          "$ref": "#/$defs/buildRejectIssue"
+        }
+      ]
+    },
+    "buildFallbackIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "pointer",
+        "severity"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "unknown_select_type",
+            "unknown_select_context",
+            "unknown_option_type",
+            "unknown_option_enum",
+            "sparse_shape_mismatch"
+          ]
+        },
+        "pointer": {
+          "$ref": "#/$defs/publicDiagnosticPointer"
+        },
+        "severity": {
+          "const": "error"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "unknown_select_type"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "const": "/select/type"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "unknown_select_context"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "const": "/select/context"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "unknown_option_type"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^/select/option/(?:0|[1-9][0-9]*)/type$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "unknown_option_enum"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^/select/option/(?:0|[1-9][0-9]*)/(?:area|inPlayArea|specialConditionType)$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "sparse_shape_mismatch"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^/select/option/(?:0|[1-9][0-9]*)$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "buildRejectIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "pointer",
+        "severity"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "public_hash_authority_required",
+            "invalid_public_observation_hash",
+            "invalid_chooser_player_index",
+            "select_not_object",
+            "unknown_public_key",
+            "missing_select_field",
+            "invalid_select_field_type",
+            "invalid_cardinality",
+            "invalid_option",
+            "invalid_card"
+          ]
+        },
+        "pointer": {
+          "$ref": "#/$defs/publicDiagnosticPointer"
+        },
+        "severity": {
+          "const": "error"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "enum": [
+                  "public_hash_authority_required",
+                  "invalid_public_observation_hash",
+                  "invalid_chooser_player_index"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "const": ""
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "enum": [
+                  "select_not_object",
+                  "missing_select_field"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "enum": [
+                  "",
+                  "/select"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "invalid_cardinality"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "const": "/select"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "unknown_public_key"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^(?:|/select(?:/(?:contextCard|effect)|/(?:option|deck)/(?:0|[1-9][0-9]*))?)$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "invalid_select_field_type"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^/select/(?:type|context|minCount|maxCount|remainDamageCounter|remainEnergyCost|option|deck|contextCard|effect)$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "invalid_option"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^/select/option/(?:0|[1-9][0-9]*)$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "invalid_card"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pointer": {
+                "pattern": "^/select/(?:contextCard|effect|deck/(?:0|[1-9][0-9]*))$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "publicDiagnosticPointer": {
+      "type": "string",
+      "pattern": "^(?:|/select(?:/(?:type|context|minCount|maxCount|remainDamageCounter|remainEnergyCost|option|deck|contextCard|effect))?|/select/(?:option|deck)/(?:0|[1-9][0-9]*)(?:/(?:type|area|inPlayArea|specialConditionType))?)$"
+    },
+    "windowBuildResult": {
+      "description": "Audit DTO only. Runtime integrity can detect ordinary mutation and stale relationships, but neither this object nor a successful integrity check is execution authority.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_state",
+        "window",
+        "issues"
+      ],
+      "properties": {
+        "decision_state": {
+          "enum": [
+            "policy_allowed",
+            "fallback_only",
+            "reject"
+          ]
+        },
+        "window": {
+          "oneOf": [
+            {
+              "$ref": "#"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/buildIssue"
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "decision_state": {
+              "const": "policy_allowed"
+            },
+            "window": {
+              "allOf": [
+                {
+                  "$ref": "#"
+                },
+                {
+                  "properties": {
+                    "decision_state": {
+                      "const": "policy_allowed"
+                    }
+                  }
+                }
+              ]
+            },
+            "issues": {
+              "maxItems": 0
+            }
+          }
+        },
+        {
+          "properties": {
+            "decision_state": {
+              "const": "fallback_only"
+            },
+            "window": {
+              "allOf": [
+                {
+                  "$ref": "#"
+                },
+                {
+                  "properties": {
+                    "decision_state": {
+                      "const": "fallback_only"
+                    }
+                  }
+                }
+              ]
+            },
+            "issues": {
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/buildFallbackIssue"
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "decision_state": {
+              "const": "reject"
+            },
+            "window": {
+              "type": "null"
+            },
+            "issues": {
+              "minItems": 1,
+              "maxItems": 1,
+              "items": {
+                "$ref": "#/$defs/buildRejectIssue"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "selectionValidation": {
+      "description": "Audit DTO only. It is never accepted as execution input; a trusted owner must recompute from the same current window and raw proposal.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "selected_indexes",
+        "reason_code"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "selected_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 0
+              }
+            ]
+          }
+        },
+        "reason_code": {
+          "enum": [
+            "policy_selection_accepted",
+            "window_fallback_only",
+            "proposal_not_list",
+            "proposal_index_not_exact_int",
+            "proposal_cardinality",
+            "proposal_index_out_of_range",
+            "proposal_duplicate_index"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "reason_code": {
+              "const": "policy_selection_accepted"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "selected_indexes": {
+              "maxItems": 0
+            },
+            "reason_code": {
+              "enum": [
+                "window_fallback_only",
+                "proposal_not_list",
+                "proposal_index_not_exact_int",
+                "proposal_cardinality",
+                "proposal_index_out_of_range",
+                "proposal_duplicate_index"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "selectionResolution": {
+      "description": "Audit DTO only. It is never accepted as execution input; a trusted owner must recompute from the exact current window and raw policy outcome.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "window_id",
+        "selected_indexes",
+        "owner",
+        "reason_code",
+        "fallback_branch"
+      ],
+      "properties": {
+        "accepted": {
+          "const": true
+        },
+        "window_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "selected_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 0
+              }
+            ]
+          }
+        },
+        "owner": {
+          "enum": [
+            "policy",
+            "deterministic_fallback"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "policy_selection_accepted",
+            "window_fallback_only",
+            "invalid_policy_output",
+            "policy_exception",
+            "policy_timeout",
+            "policy_unavailable"
+          ]
+        },
+        "fallback_branch": {
+          "oneOf": [
+            {
+              "enum": [
+                "optional_zero",
+                "forced_all",
+                "first_minimum"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "owner": {
+              "const": "policy"
+            },
+            "reason_code": {
+              "const": "policy_selection_accepted"
+            },
+            "fallback_branch": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "owner": {
+              "const": "deterministic_fallback"
+            },
+            "reason_code": {
+              "enum": [
+                "window_fallback_only",
+                "invalid_policy_output",
+                "policy_exception",
+                "policy_timeout",
+                "policy_unavailable"
+              ]
+            },
+            "fallback_branch": {
+              "enum": [
+                "optional_zero",
+                "forced_all",
+                "first_minimum"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "pinnedDeckAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "card_ids",
+        "deck_hash",
+        "source_artifact_id",
+        "source_sha256",
+        "authority_scope"
+      ],
+      "properties": {
+        "profile": {
+          "const": "cabt_initial_deck_v1"
+        },
+        "card_ids": {
+          "type": "array",
+          "minItems": 60,
+          "maxItems": 60,
+          "const": [
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            104,
+            104,
+            112,
+            112,
+            112,
+            112,
+            646,
+            646,
+            646,
+            646,
+            647,
+            647,
+            647,
+            648,
+            648,
+            648,
+            860,
+            860,
+            1079,
+            1079,
+            1079,
+            1080,
+            1086,
+            1086,
+            1086,
+            1086,
+            1097,
+            1097,
+            1097,
+            1122,
+            1137,
+            1152,
+            1152,
+            1152,
+            1152,
+            1182,
+            1182,
+            1219,
+            1219,
+            1219,
+            1219,
+            1227,
+            1227,
+            1227,
+            1227,
+            1231,
+            1259,
+            1259,
+            1259,
+            1259
+          ],
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "deck_hash": {
+          "const": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+        },
+        "source_artifact_id": {
+          "const": "candidate_official_marnie_deck"
+        },
+        "source_sha256": {
+          "const": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF"
+        },
+        "authority_scope": {
+          "const": "source_locked_conformance_fixture_only"
+        }
+      }
+    },
+    "pinnedDeckBuildResult": {
+      "description": "Audit DTO only. It never grants pinned-deck authority; the trusted deck owner must build and revalidate the authority from the verified contract set.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "reason_code",
+        "pinned_deck"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "reason_code": {
+          "enum": [
+            "pinned_deck_accepted",
+            "invalid_pinned_deck"
+          ]
+        },
+        "pinned_deck": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/pinnedDeckAuthority"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "reason_code": {
+              "const": "pinned_deck_accepted"
+            },
+            "pinned_deck": {
+              "$ref": "#/$defs/pinnedDeckAuthority"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "reason_code": {
+              "const": "invalid_pinned_deck"
+            },
+            "pinned_deck": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "initialDeckResolution": {
+      "description": "Audit DTO only. It is never accepted as deck-selection authority; the trusted deck owner must recompute from the exact verified pinned authority and raw candidate outcome.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "selected_card_ids",
+        "owner",
+        "reason_code",
+        "candidate_reason_code",
+        "fallback_branch",
+        "deck_hash"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "selected_card_ids": {
+          "type": "array",
+          "maxItems": 60,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "owner": {
+          "enum": [
+            "initial_candidate",
+            "pinned_deck_fallback",
+            "none"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "pinned_deck_accepted",
+            "pinned_deck_fallback",
+            "invalid_pinned_deck"
+          ]
+        },
+        "candidate_reason_code": {
+          "enum": [
+            "pinned_deck_accepted",
+            "invalid_pinned_deck",
+            "deck_not_list",
+            "deck_cardinality",
+            "deck_card_not_exact_int",
+            "deck_card_not_positive",
+            "deck_mismatch",
+            "deck_exception",
+            "deck_timeout",
+            "deck_unavailable"
+          ]
+        },
+        "fallback_branch": {
+          "oneOf": [
+            {
+              "const": "pinned_verified_deck"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deck_hash": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "selected_card_ids": {
+              "maxItems": 0
+            },
+            "owner": {
+              "const": "none"
+            },
+            "reason_code": {
+              "const": "invalid_pinned_deck"
+            },
+            "candidate_reason_code": {
+              "const": "invalid_pinned_deck"
+            },
+            "fallback_branch": {
+              "type": "null"
+            },
+            "deck_hash": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "selected_card_ids": {
+              "minItems": 60,
+              "maxItems": 60
+            },
+            "owner": {
+              "const": "initial_candidate"
+            },
+            "reason_code": {
+              "const": "pinned_deck_accepted"
+            },
+            "candidate_reason_code": {
+              "const": "pinned_deck_accepted"
+            },
+            "fallback_branch": {
+              "type": "null"
+            },
+            "deck_hash": {
+              "const": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "selected_card_ids": {
+              "minItems": 60,
+              "maxItems": 60
+            },
+            "owner": {
+              "const": "pinned_deck_fallback"
+            },
+            "reason_code": {
+              "const": "pinned_deck_fallback"
+            },
+            "candidate_reason_code": {
+              "enum": [
+                "deck_not_list",
+                "deck_cardinality",
+                "deck_card_not_exact_int",
+                "deck_card_not_positive",
+                "deck_mismatch",
+                "deck_exception",
+                "deck_timeout",
+                "deck_unavailable"
+              ]
+            },
+            "fallback_branch": {
+              "const": "pinned_verified_deck"
+            },
+            "deck_hash": {
+              "const": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+            }
+          }
+        }
+      ]
+    },
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "nullableSafeInteger": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "positiveSafeInteger": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 1
+        }
+      ]
+    },
+    "nullablePositiveSafeInteger": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "serial",
+        "playerIndex"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "serial": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "playerIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "numberOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 0
+        },
+        "number": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "yesOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 1
+        }
+      }
+    },
+    "noOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 2
+        }
+      }
+    },
+    "cardOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 3
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "playerIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "toolCardOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 4
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "playerIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "toolIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "energyCardOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 5
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "playerIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "energyIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "energyOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 6
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "playerIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "energyIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "count": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "playOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 7
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "attachOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 8
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayArea": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "evolveOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 9
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayArea": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "abilityOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 10
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "discardOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 11
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "retreatOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 12
+        }
+      }
+    },
+    "attackOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 13
+        },
+        "attackId": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "endOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 14
+        }
+      }
+    },
+    "skillOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 15
+        },
+        "cardId": {
+          "$ref": "#/$defs/nullablePositiveSafeInteger"
+        },
+        "serial": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "specialConditionOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": 16
+        },
+        "specialConditionType": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "unknownTypeOption": {
+      "description": "An unknown future integer OptionType is structurally retained only with already-known official Option field names and forces fallback_only.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "not": {
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16
+                ]
+              }
+            }
+          ]
+        },
+        "number": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "playerIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "toolIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "energyIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "count": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayArea": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "attackId": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "cardId": {
+          "$ref": "#/$defs/nullablePositiveSafeInteger"
+        },
+        "serial": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "specialConditionType": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    },
+    "option": {
+      "description": "The exact official-field universe. Runtime profile checks the locked sparse key set: exact matches may be policy_allowed, while known key-set/null drift or unknown integer type is retained as fallback_only. A key outside this universe rejects before a window exists.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "number": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "area": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "index": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "playerIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "toolIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "energyIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "count": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayArea": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "inPlayIndex": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "attackId": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "cardId": {
+          "$ref": "#/$defs/nullablePositiveSafeInteger"
+        },
+        "serial": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        },
+        "specialConditionType": {
+          "$ref": "#/$defs/nullableSafeInteger"
+        }
+      }
+    }
+  }
+}

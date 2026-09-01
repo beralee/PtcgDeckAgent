@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-author-strategy-windows-local-deck-as-wp6-v1",
+  "profile_id": "ptcgdap-author-strategy-windows-local-deck-v1",
+  "parent_author_package_bundle_canonical_sha256": "B416F2CBA2795B62126B6EF7B5F07A9000E84D5FA1DF62C1753CADC9E82E106B",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/author_strategy_windows_local_deck.schema.json",
+      "canonical_sha256": "3E953F9289634BDD4D35C5DB4FC35BDA7BE0DABCAEDF25EA4B8190016B186F72"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/author_strategy_windows_local_deck_profile.json",
+      "canonical_sha256": "917834D3F018CBC52B037E19FCECFF9A6B1967E4CA9206B9AE68FA70C557921C"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/author_strategy_windows_local_deck_conformance_vectors.json",
+      "canonical_sha256": "8158B85B8F97E2B9539006810AA7D46C8B5752BC3A6DF968A8484DAA6DD7019A"
+    }
+  ]
+}

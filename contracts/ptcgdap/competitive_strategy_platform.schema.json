@@ -1,0 +1,657 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/competitive_strategy_platform.schema.json",
+  "title": "PtcgDAP Competitive Strategy Platform CSP-WP0 Contracts",
+  "oneOf": [
+    {"$ref": "#/$defs/strategyReleaseRef"},
+    {"$ref": "#/$defs/evaluationProfile"},
+    {"$ref": "#/$defs/matchEnvelope"},
+    {"$ref": "#/$defs/replayFrame"},
+    {"$ref": "#/$defs/replayManifest"},
+    {"$ref": "#/$defs/verifiedMatchResult"},
+    {"$ref": "#/$defs/evaluationSummary"}
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "nullableSha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\x00-\\x20].*[^\\x00-\\x20]$|^[^\\x00-\\x20]$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deckIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "deck_id", "deck_sha256"],
+      "properties": {
+        "domain": {
+          "enum": ["official_card_id_v1", "godot_local_card_uid_v1"]
+        },
+        "deck_id": {"$ref": "#/$defs/identifier"},
+        "deck_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "baselineParticipant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_kind",
+        "baseline_id",
+        "baseline_version",
+        "baseline_sha256"
+      ],
+      "properties": {
+        "participant_kind": {"const": "platform_baseline"},
+        "baseline_id": {"$ref": "#/$defs/identifier"},
+        "baseline_version": {"$ref": "#/$defs/version"},
+        "baseline_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "releaseParticipant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_kind",
+        "strategy_id",
+        "release_version",
+        "package_id",
+        "archive_sha256",
+        "manifest_canonical_sha256",
+        "deck_identity",
+        "policy_package_sha256"
+      ],
+      "properties": {
+        "participant_kind": {"const": "strategy_release"},
+        "strategy_id": {"$ref": "#/$defs/identifier"},
+        "release_version": {"$ref": "#/$defs/version"},
+        "package_id": {"$ref": "#/$defs/identifier"},
+        "archive_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "deck_identity": {"$ref": "#/$defs/deckIdentity"},
+        "policy_package_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "participant": {
+      "oneOf": [
+        {"$ref": "#/$defs/baselineParticipant"},
+        {"$ref": "#/$defs/releaseParticipant"}
+      ]
+    },
+    "strategyReleaseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "strategy_id",
+        "release_version",
+        "author_id",
+        "package_id",
+        "archive_sha256",
+        "manifest_canonical_sha256",
+        "deck_identity",
+        "policy_package_sha256",
+        "contract_bundle_sha256",
+        "catalog_bundle_sha256",
+        "runtime_manifest_sha256",
+        "platforms",
+        "signature_key_id",
+        "release_state",
+        "revocation_state"
+      ],
+      "properties": {
+        "document_type": {"const": "strategy_release_ref_v1"},
+        "schema_version": {"const": 1},
+        "strategy_id": {"$ref": "#/$defs/identifier"},
+        "release_version": {"$ref": "#/$defs/version"},
+        "author_id": {"$ref": "#/$defs/identifier"},
+        "package_id": {"$ref": "#/$defs/identifier"},
+        "archive_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "deck_identity": {"$ref": "#/$defs/deckIdentity"},
+        "policy_package_sha256": {"$ref": "#/$defs/sha256"},
+        "contract_bundle_sha256": {"$ref": "#/$defs/sha256"},
+        "catalog_bundle_sha256": {"$ref": "#/$defs/sha256"},
+        "runtime_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "platforms": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"enum": ["windows-x86_64"]}
+        },
+        "signature_key_id": {"$ref": "#/$defs/identifier"},
+        "release_state": {
+          "enum": [
+            "draft",
+            "locally_validated",
+            "submitted",
+            "verified",
+            "curated",
+            "deprecated",
+            "revoked"
+          ]
+        },
+        "revocation_state": {
+          "enum": ["active", "deprecated", "revoked"]
+        }
+      }
+    },
+    "evaluationProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "profile_id",
+        "profile_version",
+        "visibility",
+        "evaluator_id",
+        "evaluator_build_sha256",
+        "engine_sha256",
+        "rules_sha256",
+        "card_catalog_sha256",
+        "host_contract_sha256",
+        "opponents",
+        "seat_policy",
+        "seed_policy",
+        "games_per_pair",
+        "limits",
+        "outcome_policy",
+        "aggregation",
+        "replay_policy"
+      ],
+      "properties": {
+        "document_type": {"const": "evaluation_profile_v1"},
+        "schema_version": {"const": 1},
+        "profile_id": {"$ref": "#/$defs/identifier"},
+        "profile_version": {"$ref": "#/$defs/version"},
+        "visibility": {
+          "enum": ["public_qualification", "platform_holdout"]
+        },
+        "evaluator_id": {"$ref": "#/$defs/identifier"},
+        "evaluator_build_sha256": {"$ref": "#/$defs/sha256"},
+        "engine_sha256": {"$ref": "#/$defs/sha256"},
+        "rules_sha256": {"$ref": "#/$defs/sha256"},
+        "card_catalog_sha256": {"$ref": "#/$defs/sha256"},
+        "host_contract_sha256": {"$ref": "#/$defs/sha256"},
+        "opponents": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {"$ref": "#/$defs/participant"}
+        },
+        "seat_policy": {"const": "paired_swap"},
+        "seed_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["capability", "disclosure"],
+          "properties": {
+            "capability": {
+              "enum": ["none", "deterministic_seed_v1", "paired_seed_commitment_v1"]
+            },
+            "disclosure": {"enum": ["public_exact", "commitment_only"]}
+          }
+        },
+        "games_per_pair": {"$ref": "#/$defs/positiveInteger"},
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["match_time_ms", "decision_time_ms", "memory_mib"],
+          "properties": {
+            "match_time_ms": {"$ref": "#/$defs/positiveInteger"},
+            "decision_time_ms": {"$ref": "#/$defs/positiveInteger"},
+            "memory_mib": {"$ref": "#/$defs/positiveInteger"}
+          }
+        },
+        "outcome_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["draws_allowed", "invalid_output", "policy_error", "timeout", "dirty"],
+          "properties": {
+            "draws_allowed": {"type": "boolean"},
+            "invalid_output": {"const": "verified_loss_and_fault"},
+            "policy_error": {"const": "verified_loss_and_fault"},
+            "timeout": {"const": "verified_loss_and_fault"},
+            "dirty": {"const": "exclude_from_rank_show_separately"}
+          }
+        },
+        "aggregation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "minimum_publish_games", "confidence_level_basis_points"],
+          "properties": {
+            "version": {"$ref": "#/$defs/identifier"},
+            "minimum_publish_games": {"$ref": "#/$defs/positiveInteger"},
+            "confidence_level_basis_points": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          }
+        },
+        "replay_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["visibility_profile", "sampling"],
+          "properties": {
+            "visibility_profile": {"const": "public_at_event_time_v1"},
+            "sampling": {"$ref": "#/$defs/identifier"}
+          }
+        }
+      }
+    },
+    "matchEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "match_id",
+        "lane",
+        "evaluator_id",
+        "participants",
+        "engine_sha256",
+        "rules_sha256",
+        "card_catalog_sha256",
+        "host_contract_sha256",
+        "runtime_manifest_sha256",
+        "evaluation_profile_id",
+        "evaluation_profile_sha256",
+        "seat_assignment",
+        "seed_commitment",
+        "replay_visibility_profile",
+        "started_at_utc"
+      ],
+      "properties": {
+        "document_type": {"const": "match_envelope_v1"},
+        "schema_version": {"const": 1},
+        "match_id": {"$ref": "#/$defs/identifier"},
+        "lane": {
+          "enum": ["developer_local", "community_challenge", "official_evaluation"]
+        },
+        "evaluator_id": {"$ref": "#/$defs/identifier"},
+        "participants": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/participant"}
+        },
+        "engine_sha256": {"$ref": "#/$defs/sha256"},
+        "rules_sha256": {"$ref": "#/$defs/sha256"},
+        "card_catalog_sha256": {"$ref": "#/$defs/sha256"},
+        "host_contract_sha256": {"$ref": "#/$defs/sha256"},
+        "runtime_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "evaluation_profile_id": {"$ref": "#/$defs/identifier"},
+        "evaluation_profile_sha256": {"$ref": "#/$defs/sha256"},
+        "seat_assignment": {
+          "oneOf": [
+            {"const": [0, 1]},
+            {"const": [1, 0]}
+          ]
+        },
+        "seed_commitment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["capability", "commitment_sha256", "disclosure"],
+          "properties": {
+            "capability": {
+              "enum": ["none", "deterministic_seed_v1", "paired_seed_commitment_v1"]
+            },
+            "commitment_sha256": {"$ref": "#/$defs/sha256"},
+            "disclosure": {"enum": ["public", "withheld"]}
+          }
+        },
+        "replay_visibility_profile": {"const": "public_at_event_time_v1"},
+        "started_at_utc": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        }
+      }
+    },
+    "zoneCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seat", "hand_count", "deck_count", "prize_count"],
+      "properties": {
+        "seat": {"enum": [0, 1]},
+        "hand_count": {"$ref": "#/$defs/nonNegativeInteger"},
+        "deck_count": {"$ref": "#/$defs/nonNegativeInteger"},
+        "prize_count": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "boardEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seat", "zone", "slot", "card_uid", "card_serial", "damage", "status"],
+      "properties": {
+        "seat": {"enum": [0, 1]},
+        "zone": {"enum": ["active", "bench", "stadium", "discard", "lost_zone"]},
+        "slot": {"$ref": "#/$defs/nonNegativeInteger"},
+        "card_uid": {
+          "oneOf": [
+            {"$ref": "#/$defs/identifier"},
+            {"type": "null"}
+          ]
+        },
+        "card_serial": {
+          "oneOf": [
+            {"$ref": "#/$defs/positiveInteger"},
+            {"type": "null"}
+          ]
+        },
+        "damage": {"$ref": "#/$defs/nonNegativeInteger"},
+        "status": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "publicCardEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seat", "zone", "card_uid", "card_serial"],
+      "properties": {
+        "seat": {"enum": [0, 1]},
+        "zone": {"enum": ["active", "bench", "stadium", "discard", "lost_zone", "revealed"]},
+        "card_uid": {"$ref": "#/$defs/identifier"},
+        "card_serial": {
+          "oneOf": [
+            {"$ref": "#/$defs/positiveInteger"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "publicState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["zone_counts", "board", "public_cards"],
+      "properties": {
+        "zone_counts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/zoneCount"}
+        },
+        "board": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {"$ref": "#/$defs/boardEntry"}
+        },
+        "public_cards": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {"$ref": "#/$defs/publicCardEntry"}
+        }
+      }
+    },
+    "replayFrame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "match_id",
+        "ordinal",
+        "turn_number",
+        "phase",
+        "acting_seat",
+        "event_kind",
+        "public_state",
+        "decision_trace_sha256",
+        "previous_frame_sha256"
+      ],
+      "properties": {
+        "document_type": {"const": "replay_frame_v1"},
+        "schema_version": {"const": 1},
+        "match_id": {"$ref": "#/$defs/identifier"},
+        "ordinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "turn_number": {"$ref": "#/$defs/nonNegativeInteger"},
+        "phase": {"$ref": "#/$defs/identifier"},
+        "acting_seat": {"enum": [-1, 0, 1]},
+        "event_kind": {"$ref": "#/$defs/identifier"},
+        "public_state": {"$ref": "#/$defs/publicState"},
+        "decision_trace_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "previous_frame_sha256": {"$ref": "#/$defs/nullableSha256"}
+      }
+    },
+    "replayManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "replay_id",
+        "match_id",
+        "match_envelope_sha256",
+        "visibility_profile",
+        "frame_count",
+        "first_frame_sha256",
+        "frame_chain_root_sha256",
+        "card_asset_catalog_sha256",
+        "event_dictionary_sha256",
+        "complete"
+      ],
+      "properties": {
+        "document_type": {"const": "replay_manifest_v1"},
+        "schema_version": {"const": 1},
+        "replay_id": {"$ref": "#/$defs/identifier"},
+        "match_id": {"$ref": "#/$defs/identifier"},
+        "match_envelope_sha256": {"$ref": "#/$defs/sha256"},
+        "visibility_profile": {"const": "public_at_event_time_v1"},
+        "frame_count": {"$ref": "#/$defs/positiveInteger"},
+        "first_frame_sha256": {"$ref": "#/$defs/sha256"},
+        "frame_chain_root_sha256": {"$ref": "#/$defs/sha256"},
+        "card_asset_catalog_sha256": {"$ref": "#/$defs/sha256"},
+        "event_dictionary_sha256": {"$ref": "#/$defs/sha256"},
+        "complete": {"type": "boolean"}
+      }
+    },
+    "faultCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invalid_output", "policy_error", "timeout", "engine_rejection", "fallback"],
+      "properties": {
+        "invalid_output": {"$ref": "#/$defs/nonNegativeInteger"},
+        "policy_error": {"$ref": "#/$defs/nonNegativeInteger"},
+        "timeout": {"$ref": "#/$defs/nonNegativeInteger"},
+        "engine_rejection": {"$ref": "#/$defs/nonNegativeInteger"},
+        "fallback": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluator_id", "key_id", "signature"],
+      "properties": {
+        "evaluator_id": {"$ref": "#/$defs/identifier"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "signature": {"type": "string", "minLength": 1, "maxLength": 1024}
+      }
+    },
+    "verifiedMatchResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "match_id",
+        "match_envelope_sha256",
+        "trust_lane",
+        "outcome",
+        "winner_seat",
+        "turn_count",
+        "decision_count",
+        "fault_counts",
+        "dirty",
+        "dirty_reasons",
+        "replay_manifest_sha256",
+        "evidence_sha256",
+        "verification"
+      ],
+      "properties": {
+        "document_type": {"const": "verified_match_result_v1"},
+        "schema_version": {"const": 1},
+        "match_id": {"$ref": "#/$defs/identifier"},
+        "match_envelope_sha256": {"$ref": "#/$defs/sha256"},
+        "trust_lane": {
+          "enum": ["developer_local", "community_challenge", "official_verified", "rejected_or_dirty"]
+        },
+        "outcome": {"enum": ["seat_0_win", "seat_1_win", "draw", "aborted"]},
+        "winner_seat": {
+          "oneOf": [
+            {"enum": [0, 1]},
+            {"type": "null"}
+          ]
+        },
+        "turn_count": {"$ref": "#/$defs/nonNegativeInteger"},
+        "decision_count": {"$ref": "#/$defs/nonNegativeInteger"},
+        "fault_counts": {"$ref": "#/$defs/faultCounts"},
+        "dirty": {"type": "boolean"},
+        "dirty_reasons": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "replay_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "verification": {
+          "oneOf": [
+            {"$ref": "#/$defs/verification"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "summaryRelease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy_id", "release_version", "archive_sha256"],
+      "properties": {
+        "strategy_id": {"$ref": "#/$defs/identifier"},
+        "release_version": {"$ref": "#/$defs/version"},
+        "archive_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "summaryCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wins", "losses", "draws", "valid", "dirty"],
+      "properties": {
+        "wins": {"$ref": "#/$defs/nonNegativeInteger"},
+        "losses": {"$ref": "#/$defs/nonNegativeInteger"},
+        "draws": {"$ref": "#/$defs/nonNegativeInteger"},
+        "valid": {"$ref": "#/$defs/nonNegativeInteger"},
+        "dirty": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "seatBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seat", "wins", "losses", "draws"],
+      "properties": {
+        "seat": {"enum": [0, 1]},
+        "wins": {"$ref": "#/$defs/nonNegativeInteger"},
+        "losses": {"$ref": "#/$defs/nonNegativeInteger"},
+        "draws": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "evaluationSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "strategy_release",
+        "evaluation_profile_id",
+        "evaluation_profile_sha256",
+        "aggregation_version",
+        "input_match_ids",
+        "counts",
+        "fault_counts",
+        "win_rate_basis_points",
+        "confidence_interval_basis_points",
+        "seat_breakdown",
+        "matchup_breakdown",
+        "materializer_build_sha256"
+      ],
+      "properties": {
+        "document_type": {"const": "evaluation_summary_v1"},
+        "schema_version": {"const": 1},
+        "strategy_release": {"$ref": "#/$defs/summaryRelease"},
+        "evaluation_profile_id": {"$ref": "#/$defs/identifier"},
+        "evaluation_profile_sha256": {"$ref": "#/$defs/sha256"},
+        "aggregation_version": {"$ref": "#/$defs/identifier"},
+        "input_match_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100000,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "counts": {"$ref": "#/$defs/summaryCounts"},
+        "fault_counts": {"$ref": "#/$defs/faultCounts"},
+        "win_rate_basis_points": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "confidence_interval_basis_points": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["low", "high"],
+          "properties": {
+            "low": {"type": "integer", "minimum": 0, "maximum": 10000},
+            "high": {"type": "integer", "minimum": 0, "maximum": 10000}
+          }
+        },
+        "seat_breakdown": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/seatBreakdown"}
+        },
+        "matchup_breakdown": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["opponent_id", "wins", "losses", "draws"],
+            "properties": {
+              "opponent_id": {"$ref": "#/$defs/identifier"},
+              "wins": {"$ref": "#/$defs/nonNegativeInteger"},
+              "losses": {"$ref": "#/$defs/nonNegativeInteger"},
+              "draws": {"$ref": "#/$defs/nonNegativeInteger"}
+            }
+          }
+        },
+        "materializer_build_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

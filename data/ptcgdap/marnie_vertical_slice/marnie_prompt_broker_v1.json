@@ -1,0 +1,2234 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "marnie_prompt_broker_audit",
+  "audit_id": "ptcgdap-marnie-prompt-broker-audit-p5-wp5-v1",
+  "profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+  "parent_contracts": {
+    "vertical_slice_bundle": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425",
+    "capability_policy_bundle": "F4E88E5DB4E480BA8441BE7B3A7C81CE3DB40ED1917EB37BCDCAC1C32B1ABD6C",
+    "identity_projection_bundle": "1EB530AB7DFACBE6AB098A6C67D6AAE0BC1871FF3E2F48C9284E8539EE6ACDC4",
+    "shadow_prompt_broker_bundle": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+    "engine_decision_port_bundle": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "godot_option_binding_bundle": "4FFFEC48E4E1FE0774BB6E343D4D4B0384A9210057DEE06415C2A20F2899B1C1"
+  },
+  "match_generation": 1,
+  "session_id": "session:marnie-p5-wp5-offline",
+  "frames": [
+    {
+      "ordinal": 0,
+      "frame_id": "w0_initial",
+      "window_family": "W0",
+      "callback_role": "initial_deck",
+      "terminal": false,
+      "public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+      "window": null,
+      "policy_selected_indexes": null,
+      "source": null,
+      "callback_binding_hash": null,
+      "option_types": [],
+      "expected_public_result": {
+        "ordinal": 0,
+        "frame_id": "w0_initial",
+        "window_family": "W0",
+        "callback_role": "initial_deck",
+        "status": "initial_deck_fixture",
+        "decision_generation": null,
+        "broker_generation": null,
+        "snapshot_id": null,
+        "source_digest": null,
+        "window_id": null,
+        "binding_version": null,
+        "option_count": 0,
+        "option_types": [],
+        "selected_indexes": null,
+        "committed_resolution_count": 0,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "not_applicable",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": null,
+        "lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2"
+      }
+    },
+    {
+      "ordinal": 1,
+      "frame_id": "w1_setup_active",
+      "window_family": "W1",
+      "callback_role": "setup_active",
+      "terminal": false,
+      "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+      "window": {
+        "window_version": 1,
+        "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 1,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 2,
+            "index": 5,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54",
+          "999D88E29A10063AB95B9524B235E3FBDB3567F31DE2243E6EE23DDEBDCBE8D8"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 1,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null
+        ],
+        "turn_action_count": 1
+      },
+      "callback_binding_hash": "FFB2E63B72AC1AB85CCDFCD87C24C293BC45C46966D1959917073CDA2314AD72",
+      "option_types": [
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 1,
+        "frame_id": "w1_setup_active",
+        "window_family": "W1",
+        "callback_role": "setup_active",
+        "status": "committed_shadow",
+        "decision_generation": 1,
+        "broker_generation": 1,
+        "snapshot_id": "4BEB4518DEFD72D0D18C39294A3E4C1BF4E60965983B02BC69CB99B3E60E2C3C",
+        "source_digest": "65E37419231388DB46F8465A5A4A64255B294184C365F406DBFC5F810A798CF4",
+        "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+        "binding_version": 1,
+        "option_count": 2,
+        "option_types": [
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2",
+        "lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F"
+      }
+    },
+    {
+      "ordinal": 2,
+      "frame_id": "w2_setup_bench",
+      "window_family": "W2",
+      "callback_role": "setup_bench",
+      "terminal": false,
+      "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+      "window": {
+        "window_version": 1,
+        "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 2,
+        "min_count": 0,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 4,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "01F7E2802E89C3E6060C3A6142F80243A6A2829C528CF57B4EE9E612798DC998"
+        ]
+      },
+      "policy_selected_indexes": [],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 2,
+          "minCount": 0,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null
+        ],
+        "turn_action_count": 2
+      },
+      "callback_binding_hash": "7797D82C84FF85110D8B877647FF87EF5AC9274540EE4233CBFF3E16374D7979",
+      "option_types": [
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 2,
+        "frame_id": "w2_setup_bench",
+        "window_family": "W2",
+        "callback_role": "setup_bench",
+        "status": "committed_shadow",
+        "decision_generation": 2,
+        "broker_generation": 2,
+        "snapshot_id": "9961D12F422CA55138E2E9E691D220EAAC0FF0A615728D8A321314174D95930E",
+        "source_digest": "70FED76EE6D22FA9E9E0838CD118813C1B331978847DB25C29873DC60356B3AB",
+        "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+        "binding_version": 2,
+        "option_count": 1,
+        "option_types": [
+          3
+        ],
+        "selected_indexes": [],
+        "committed_resolution_count": 0,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F",
+        "lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953"
+      }
+    },
+    {
+      "ordinal": 3,
+      "frame_id": "w3_main",
+      "window_family": "W3",
+      "callback_role": "main",
+      "terminal": false,
+      "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+      "window": {
+        "window_version": 1,
+        "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 8,
+            "area": 2,
+            "index": 0,
+            "inPlayArea": 4,
+            "inPlayIndex": 0
+          },
+          {
+            "type": 8,
+            "area": 2,
+            "index": 0,
+            "inPlayArea": 5,
+            "inPlayIndex": 0
+          },
+          {
+            "type": 7,
+            "index": 3
+          },
+          {
+            "type": 14
+          }
+        ],
+        "option_fingerprints": [
+          "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+          "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+          "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+          "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 8,
+              "area": 2,
+              "index": 0,
+              "inPlayArea": 4,
+              "inPlayIndex": 0
+            },
+            {
+              "type": 8,
+              "area": 2,
+              "index": 0,
+              "inPlayArea": 5,
+              "inPlayIndex": 0
+            },
+            {
+              "type": 7,
+              "index": 3
+            },
+            {
+              "type": 14
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 3
+      },
+      "callback_binding_hash": "F93995F4216661AF749913F9FDF76504444A8E01B02B8824D35FF49238624F05",
+      "option_types": [
+        8,
+        8,
+        7,
+        14
+      ],
+      "expected_public_result": {
+        "ordinal": 3,
+        "frame_id": "w3_main",
+        "window_family": "W3",
+        "callback_role": "main",
+        "status": "committed_shadow",
+        "decision_generation": 3,
+        "broker_generation": 3,
+        "snapshot_id": "DA5BBCAA60BF7B8F77E3BF18369FFE523BBFC48A9A6577475B35CF42FCB74DB7",
+        "source_digest": "44172F2C96C731A9CD2E0D8B059ACEFD1DF342329BD99FE9FB0FF0A2C8877D7B",
+        "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+        "binding_version": 3,
+        "option_count": 4,
+        "option_types": [
+          8,
+          8,
+          7,
+          14
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953",
+        "lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95"
+      }
+    },
+    {
+      "ordinal": 4,
+      "frame_id": "w4_spikemuth_deck",
+      "window_family": "W4",
+      "callback_role": "spikemuth_deck",
+      "terminal": false,
+      "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+      "window": {
+        "window_version": 1,
+        "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 7,
+        "min_count": 0,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": {
+          "id": 1259,
+          "serial": 60,
+          "playerIndex": 0
+        },
+        "public_deck_candidates": [
+          {
+            "id": 1259,
+            "serial": 61,
+            "playerIndex": 0
+          },
+          {
+            "id": 1086,
+            "serial": 37,
+            "playerIndex": 0
+          },
+          {
+            "id": 104,
+            "serial": 13,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 6,
+            "playerIndex": 0
+          },
+          {
+            "id": 1182,
+            "serial": 49,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 8,
+            "playerIndex": 0
+          },
+          {
+            "id": 1086,
+            "serial": 38,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 53,
+            "playerIndex": 0
+          },
+          {
+            "id": 1231,
+            "serial": 58,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 51,
+            "playerIndex": 0
+          },
+          {
+            "id": 1097,
+            "serial": 41,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 50,
+            "playerIndex": 0
+          },
+          {
+            "id": 860,
+            "serial": 30,
+            "playerIndex": 0
+          },
+          {
+            "id": 1227,
+            "serial": 55,
+            "playerIndex": 0
+          },
+          {
+            "id": 647,
+            "serial": 23,
+            "playerIndex": 0
+          },
+          {
+            "id": 648,
+            "serial": 26,
+            "playerIndex": 0
+          },
+          {
+            "id": 1152,
+            "serial": 45,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 5,
+            "playerIndex": 0
+          },
+          {
+            "id": 112,
+            "serial": 17,
+            "playerIndex": 0
+          },
+          {
+            "id": 112,
+            "serial": 18,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 52,
+            "playerIndex": 0
+          },
+          {
+            "id": 1182,
+            "serial": 48,
+            "playerIndex": 0
+          },
+          {
+            "id": 104,
+            "serial": 14,
+            "playerIndex": 0
+          },
+          {
+            "id": 1097,
+            "serial": 40,
+            "playerIndex": 0
+          },
+          {
+            "id": 1079,
+            "serial": 31,
+            "playerIndex": 0
+          },
+          {
+            "id": 1152,
+            "serial": 46,
+            "playerIndex": 0
+          }
+        ],
+        "options": [
+          {
+            "type": 3,
+            "area": 1,
+            "index": 14,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 1,
+            "index": 15,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "D3B647EB593D95803C13B7E6D5EEE491F3FA95ACC7E177FB40E260ECAA7694FF",
+          "1F361F00EC8782D154516FDF5E612A5044CC79643E9AE6E6E3DCC0FD7F849366"
+        ]
+      },
+      "policy_selected_indexes": [
+        1
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 7,
+          "minCount": 0,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null
+        ],
+        "turn_action_count": 4
+      },
+      "callback_binding_hash": "5F4799D0D7EA94E3F05FD2D388AA6F56CF7F1BF401DD0C04C355327D00035FF9",
+      "option_types": [
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 4,
+        "frame_id": "w4_spikemuth_deck",
+        "window_family": "W4",
+        "callback_role": "spikemuth_deck",
+        "status": "committed_shadow",
+        "decision_generation": 4,
+        "broker_generation": 4,
+        "snapshot_id": "C521F01155F1CE9808540148007EDA49BD3E8F63862067B640EB76A28CD52121",
+        "source_digest": "45923A28738EEBDA0E29FE109DB0877CFE4D52551954BB262BA52808F0EB4D57",
+        "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+        "binding_version": 4,
+        "option_count": 2,
+        "option_types": [
+          3,
+          3
+        ],
+        "selected_indexes": [
+          1
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95",
+        "lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F"
+      }
+    },
+    {
+      "ordinal": 5,
+      "frame_id": "w5_punk_up_sources",
+      "window_family": "W5",
+      "callback_role": "punk_up_sources",
+      "terminal": false,
+      "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+      "window": {
+        "window_version": 1,
+        "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 22,
+        "min_count": 0,
+        "max_count": 5,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": {
+          "id": 648,
+          "serial": 28,
+          "playerIndex": 0
+        },
+        "public_deck_candidates": [
+          {
+            "id": 1097,
+            "serial": 40,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 11,
+            "playerIndex": 0
+          },
+          {
+            "id": 647,
+            "serial": 24,
+            "playerIndex": 0
+          },
+          {
+            "id": 1259,
+            "serial": 61,
+            "playerIndex": 0
+          },
+          {
+            "id": 1152,
+            "serial": 46,
+            "playerIndex": 0
+          },
+          {
+            "id": 1182,
+            "serial": 49,
+            "playerIndex": 0
+          },
+          {
+            "id": 1097,
+            "serial": 41,
+            "playerIndex": 0
+          },
+          {
+            "id": 647,
+            "serial": 23,
+            "playerIndex": 0
+          },
+          {
+            "id": 1079,
+            "serial": 32,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 52,
+            "playerIndex": 0
+          },
+          {
+            "id": 1182,
+            "serial": 48,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 6,
+            "playerIndex": 0
+          },
+          {
+            "id": 1079,
+            "serial": 31,
+            "playerIndex": 0
+          },
+          {
+            "id": 1086,
+            "serial": 35,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 50,
+            "playerIndex": 0
+          },
+          {
+            "id": 1086,
+            "serial": 37,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 8,
+            "playerIndex": 0
+          },
+          {
+            "id": 1080,
+            "serial": 34,
+            "playerIndex": 0
+          },
+          {
+            "id": 860,
+            "serial": 29,
+            "playerIndex": 0
+          },
+          {
+            "id": 112,
+            "serial": 17,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 5,
+            "playerIndex": 0
+          },
+          {
+            "id": 112,
+            "serial": 18,
+            "playerIndex": 0
+          },
+          {
+            "id": 648,
+            "serial": 26,
+            "playerIndex": 0
+          },
+          {
+            "id": 1259,
+            "serial": 60,
+            "playerIndex": 0
+          },
+          {
+            "id": 1122,
+            "serial": 42,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 53,
+            "playerIndex": 0
+          },
+          {
+            "id": 7,
+            "serial": 9,
+            "playerIndex": 0
+          },
+          {
+            "id": 1231,
+            "serial": 58,
+            "playerIndex": 0
+          },
+          {
+            "id": 1227,
+            "serial": 55,
+            "playerIndex": 0
+          },
+          {
+            "id": 1219,
+            "serial": 51,
+            "playerIndex": 0
+          },
+          {
+            "id": 1152,
+            "serial": 45,
+            "playerIndex": 0
+          }
+        ],
+        "options": [
+          {
+            "type": 3,
+            "area": 1,
+            "index": 1,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 1,
+            "index": 11,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 1,
+            "index": 16,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 1,
+            "index": 20,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 1,
+            "index": 26,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "5763F49B6896C9C3BE96B628211350EED7490AAFEBF384763A960A45616B4C1A",
+          "A2E7D6B5C4AFF2D6DE7A2851F89EA340BFAC763C9EE1D8649E2E1636B2D5E7C9",
+          "2771CA0AB9D2D6E06186AC52DE325670D220F42228C89F28DD26DDA6DE4193EC",
+          "37D3A377ACE760ACB1499D3FFC8B6B45D0A7AA54B8992D502B520BCE6FD8B065",
+          "DDFA73690E275FDCB0AFAF28C5C150CA50CE40769EA6E702A5A06F544C6B3C3B"
+        ]
+      },
+      "policy_selected_indexes": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 22,
+          "minCount": 0,
+          "maxCount": 5,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 5
+      },
+      "callback_binding_hash": "DC0B6A4175260CF51E0C5D8E453B248F3F2D1B3E093A458185878602E57B38F2",
+      "option_types": [
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 5,
+        "frame_id": "w5_punk_up_sources",
+        "window_family": "W5",
+        "callback_role": "punk_up_sources",
+        "status": "committed_shadow",
+        "decision_generation": 5,
+        "broker_generation": 5,
+        "snapshot_id": "6F48CA0B1BE59485998BD30D5BC0419D2D41A4F49537D5EF8B841247475438F3",
+        "source_digest": "DE0AB40560164DCE8C9C198F9E568FCFA79EDC13CE23DEE160EC6F80E6EFDB24",
+        "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+        "binding_version": 5,
+        "option_count": 5,
+        "option_types": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "committed_resolution_count": 5,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F",
+        "lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA"
+      }
+    },
+    {
+      "ordinal": 6,
+      "frame_id": "w5_punk_up_target_1",
+      "window_family": "W5",
+      "callback_role": "punk_up_target",
+      "terminal": false,
+      "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+      "window": {
+        "window_version": 1,
+        "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 21,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": {
+          "id": 7,
+          "serial": 11,
+          "playerIndex": 0
+        },
+        "effect": {
+          "id": 648,
+          "serial": 28,
+          "playerIndex": 0
+        },
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 4,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 1,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 3,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A",
+          "DD690BEDAB21BEC8C0F09DBAC5FE2F8362F3AFE86055091DEA4F41D24132FF41",
+          "47B6367EF1F5D62D31BE7C2F328892BB9195101BB11B574A58C71CA81EE00B2A"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 21,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 6
+      },
+      "callback_binding_hash": "6FD3FB88A04E7CC6BD3E521D7D4F0989FE803125178BE9F5BDBF9594B41A4F6C",
+      "option_types": [
+        3,
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 6,
+        "frame_id": "w5_punk_up_target_1",
+        "window_family": "W5",
+        "callback_role": "punk_up_target",
+        "status": "committed_shadow",
+        "decision_generation": 6,
+        "broker_generation": 6,
+        "snapshot_id": "71B97BAB50EFB18BF0AE1399E3B6F685D5EC6577FC8B8F8559306740C50D246F",
+        "source_digest": "9B329089F7204194088920771E381A5728D37B82B5A9531C6F9CF945C55173FD",
+        "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+        "binding_version": 6,
+        "option_count": 3,
+        "option_types": [
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA",
+        "lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136"
+      }
+    },
+    {
+      "ordinal": 7,
+      "frame_id": "w5_punk_up_target_2",
+      "window_family": "W5",
+      "callback_role": "punk_up_target",
+      "terminal": false,
+      "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+      "window": {
+        "window_version": 1,
+        "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 21,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": {
+          "id": 7,
+          "serial": 9,
+          "playerIndex": 0
+        },
+        "effect": {
+          "id": 648,
+          "serial": 28,
+          "playerIndex": 0
+        },
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 4,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 1,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 3,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA",
+          "49283B1DA263B058FB56392BF0BF8321CC1C8699280C6FE093DEE4562C2C93AD",
+          "066873DACD68DAF418147FD8B09C49C18A5F05D9CE438736BC273BE7A4BE96BB"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 21,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 7
+      },
+      "callback_binding_hash": "32F8276B2B5E98D02AFD52B98C94151969BCCA8AECDC8E0B9B106EDD59EC1B39",
+      "option_types": [
+        3,
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 7,
+        "frame_id": "w5_punk_up_target_2",
+        "window_family": "W5",
+        "callback_role": "punk_up_target",
+        "status": "committed_shadow",
+        "decision_generation": 7,
+        "broker_generation": 7,
+        "snapshot_id": "9D3FA2161D16CCA598F35679415364ACCAF2386C8D0615CD37E8E57663FA358A",
+        "source_digest": "E9F771E8332974B6EF1684C6FE36FA82747CA3BA966ED496EC8E872AEA403ADF",
+        "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+        "binding_version": 7,
+        "option_count": 3,
+        "option_types": [
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136",
+        "lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2"
+      }
+    },
+    {
+      "ordinal": 8,
+      "frame_id": "w6_shadow_bullet_attack",
+      "window_family": "W6",
+      "callback_role": "shadow_bullet_attack",
+      "terminal": false,
+      "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+      "window": {
+        "window_version": 1,
+        "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 7,
+            "index": 1
+          },
+          {
+            "type": 13,
+            "attackId": 937
+          },
+          {
+            "type": 12
+          },
+          {
+            "type": 14
+          }
+        ],
+        "option_fingerprints": [
+          "E980669EACACAA379DEA4094E1221A8B375FE1619F136F84CE2AA7F99A09DF3F",
+          "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481",
+          "E95ED4DB748E1793A24F76327E4534BDEA497664ECE75B38F8331C213C666B56",
+          "F3FA5EEF2FC8C21B83A340B4B2C3E200C0FB85EF25923FDEF843817D38F57C7A"
+        ]
+      },
+      "policy_selected_indexes": [
+        1
+      ],
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 7,
+              "index": 1
+            },
+            {
+              "type": 13,
+              "local_attack_index": 0,
+              "official_attack_id": 937
+            },
+            {
+              "type": 12
+            },
+            {
+              "type": 14
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 8
+      },
+      "callback_binding_hash": "57D12E627F62508EADD1368DF049B0FEBCEF162BD6065162C1810E7CECF3E75A",
+      "option_types": [
+        7,
+        13,
+        12,
+        14
+      ],
+      "expected_public_result": {
+        "ordinal": 8,
+        "frame_id": "w6_shadow_bullet_attack",
+        "window_family": "W6",
+        "callback_role": "shadow_bullet_attack",
+        "status": "committed_shadow",
+        "decision_generation": 8,
+        "broker_generation": 8,
+        "snapshot_id": "339F5342B55F930375A5F3B1E5496AAD36B5FF28539B44B9B1C470C265DBD252",
+        "source_digest": "FA6D70F2BCAE9669B76E77263D21BBDB723EAC8B155023718EB68E0D79E0E14D",
+        "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+        "binding_version": 8,
+        "option_count": 4,
+        "option_types": [
+          7,
+          13,
+          12,
+          14
+        ],
+        "selected_indexes": [
+          1
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2",
+        "lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810"
+      }
+    },
+    {
+      "ordinal": 9,
+      "frame_id": "w6_shadow_bullet_target",
+      "window_family": "W6",
+      "callback_role": "shadow_bullet_target",
+      "terminal": false,
+      "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+      "window": {
+        "window_version": 1,
+        "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 15,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": {
+          "id": 648,
+          "serial": 26,
+          "playerIndex": 0
+        },
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 5,
+            "index": 0,
+            "playerIndex": 1
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 1,
+            "playerIndex": 1
+          }
+        ],
+        "option_fingerprints": [
+          "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86",
+          "8EEEE8456F36E0F2463E37CC8FB948018B4F35EB114C2AE057ADCF0CA68A1514"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 15,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null
+        ],
+        "turn_action_count": 9
+      },
+      "callback_binding_hash": "7521EC559B7F4172F6ED884F8EE44CD92E39464CFD5E26BEBEA3203DAF6591CB",
+      "option_types": [
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 9,
+        "frame_id": "w6_shadow_bullet_target",
+        "window_family": "W6",
+        "callback_role": "shadow_bullet_target",
+        "status": "committed_shadow",
+        "decision_generation": 9,
+        "broker_generation": 9,
+        "snapshot_id": "42C7F3044CEB019104AEFCAC78BA31F29561718CD3191842BC3B1CFDE87B689E",
+        "source_digest": "1973FA9A843D1A9EA5B190F2052474B9AAF953D2E1990BE7DDEE690E5B9F0F6B",
+        "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+        "binding_version": 9,
+        "option_count": 2,
+        "option_types": [
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810",
+        "lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9"
+      }
+    },
+    {
+      "ordinal": 10,
+      "frame_id": "w7_take_prize",
+      "window_family": "W7",
+      "callback_role": "take_prize",
+      "terminal": false,
+      "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+      "window": {
+        "window_version": 1,
+        "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 7,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 6,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 6,
+            "index": 1,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 6,
+            "index": 2,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 6,
+            "index": 3,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 6,
+            "index": 4,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 6,
+            "index": 5,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D",
+          "3EED37CA3938D5630382BB6E879899F94BD738B2ECCD430F0750DDE18E568E31",
+          "6F18273B1989E3C93DFCC307FCA9A15BB12619FC7B98529C83F9914AE557450B",
+          "069D894CB831AA7E8C408C0CFEB5F0A389C1572481C0EAD110D52E2CA9A78A62",
+          "FDC5C27718D22788B0676848AA54D921F706CB8D5E5A0B84643F41A28743A88C",
+          "7B3B2FFEDE10C13AF404742E80C2B772625B54312FE178185FFE1697517079EA"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 7,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 10
+      },
+      "callback_binding_hash": "5EAC5A92323A3A212F048452B817B5DEF4FCD52A33A28D68AF15AEE21ECAA4C1",
+      "option_types": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 10,
+        "frame_id": "w7_take_prize",
+        "window_family": "W7",
+        "callback_role": "take_prize",
+        "status": "committed_shadow",
+        "decision_generation": 10,
+        "broker_generation": 10,
+        "snapshot_id": "F1ED335E563EDC761ADB0AC5EE9F0379AB94F6176FF8FEB4B5506462685F378B",
+        "source_digest": "C82DFF78B95A55309D102112B83D13696063557F511574C95D3F36DF7EBA9A6D",
+        "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+        "binding_version": 10,
+        "option_count": 6,
+        "option_types": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9",
+        "lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18"
+      }
+    },
+    {
+      "ordinal": 11,
+      "frame_id": "w7_forced_send_out",
+      "window_family": "W7",
+      "callback_role": "forced_send_out",
+      "terminal": false,
+      "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+      "window": {
+        "window_version": 1,
+        "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+        "hash_profile": "cabt_selection_window_v1",
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+        "public_hash_authority": "conformance_fixture",
+        "chooser_player_index": 0,
+        "decision_state": "policy_allowed",
+        "fallback_reasons": [],
+        "select_type_raw": 1,
+        "select_context_raw": 4,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "public_deck_candidates": null,
+        "options": [
+          {
+            "type": 3,
+            "area": 5,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 1,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 2,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 5,
+            "index": 3,
+            "playerIndex": 0
+          }
+        ],
+        "option_fingerprints": [
+          "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D",
+          "A648808C2AADFA4B10CED883DB2E8CA7630C78A391B52D2F3B949EB0563388A8",
+          "804D5598A6A6E0BE883BCB0521EFC11C7CC32FDDB2E6C752CB1D7DB70E1E7041",
+          "545E00EAFCA19D321F0713C5179FD920E764708B4EB36E065AEB39A05FAC0A3D"
+        ]
+      },
+      "policy_selected_indexes": [
+        0
+      ],
+      "source": {
+        "select": {
+          "type": 1,
+          "context": 4,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 11
+      },
+      "callback_binding_hash": "3A40C523393ADA11E89314A7E0A489DA20DEADCBE8BB0793E6F090F1D4BCE26D",
+      "option_types": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "expected_public_result": {
+        "ordinal": 11,
+        "frame_id": "w7_forced_send_out",
+        "window_family": "W7",
+        "callback_role": "forced_send_out",
+        "status": "committed_shadow",
+        "decision_generation": 11,
+        "broker_generation": 11,
+        "snapshot_id": "0DD7EF1365F0034275E37177915F644A688B39EF50B211A71327F80451AD073A",
+        "source_digest": "5E4ADF6772098287478E4392AA324FFEFFCFFF7B8E5B41C5E86A1280630A843A",
+        "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+        "binding_version": 11,
+        "option_count": 4,
+        "option_types": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18",
+        "lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B"
+      }
+    },
+    {
+      "ordinal": 12,
+      "frame_id": "w7_terminal",
+      "window_family": "W7",
+      "callback_role": "terminal_no_new_callback",
+      "terminal": true,
+      "public_observation_hash": null,
+      "window": null,
+      "policy_selected_indexes": null,
+      "source": null,
+      "callback_binding_hash": null,
+      "option_types": [],
+      "expected_public_result": {
+        "ordinal": 12,
+        "frame_id": "w7_terminal",
+        "window_family": "W7",
+        "callback_role": "terminal_no_new_callback",
+        "status": "terminal_no_callback",
+        "decision_generation": null,
+        "broker_generation": null,
+        "snapshot_id": null,
+        "source_digest": null,
+        "window_id": null,
+        "binding_version": null,
+        "option_count": 0,
+        "option_types": [],
+        "selected_indexes": null,
+        "committed_resolution_count": 0,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "not_applicable",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B",
+        "lifecycle_hash": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D"
+      }
+    }
+  ],
+  "summary": {
+    "frame_count": 13,
+    "brokered_frame_count": 11,
+    "initial_deck_frame_count": 1,
+    "terminal_frame_count": 1,
+    "option_type_8_count": 2,
+    "option_type_12_count": 1,
+    "option_type_13_count": 1,
+    "lifecycle_chain_head": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D"
+  },
+  "expected_public_result": {
+    "accepted": true,
+    "error_code": "",
+    "frame_count": 13,
+    "brokered_frame_count": 11,
+    "initial_deck_frame_count": 1,
+    "terminal_frame_count": 1,
+    "serialized_private_resolution_count": 0,
+    "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+    "lifecycle_chain_head": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D",
+    "frames": [
+      {
+        "ordinal": 0,
+        "frame_id": "w0_initial",
+        "window_family": "W0",
+        "callback_role": "initial_deck",
+        "status": "initial_deck_fixture",
+        "decision_generation": null,
+        "broker_generation": null,
+        "snapshot_id": null,
+        "source_digest": null,
+        "window_id": null,
+        "binding_version": null,
+        "option_count": 0,
+        "option_types": [],
+        "selected_indexes": null,
+        "committed_resolution_count": 0,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "not_applicable",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": null,
+        "lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2"
+      },
+      {
+        "ordinal": 1,
+        "frame_id": "w1_setup_active",
+        "window_family": "W1",
+        "callback_role": "setup_active",
+        "status": "committed_shadow",
+        "decision_generation": 1,
+        "broker_generation": 1,
+        "snapshot_id": "4BEB4518DEFD72D0D18C39294A3E4C1BF4E60965983B02BC69CB99B3E60E2C3C",
+        "source_digest": "65E37419231388DB46F8465A5A4A64255B294184C365F406DBFC5F810A798CF4",
+        "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+        "binding_version": 1,
+        "option_count": 2,
+        "option_types": [
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2",
+        "lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F"
+      },
+      {
+        "ordinal": 2,
+        "frame_id": "w2_setup_bench",
+        "window_family": "W2",
+        "callback_role": "setup_bench",
+        "status": "committed_shadow",
+        "decision_generation": 2,
+        "broker_generation": 2,
+        "snapshot_id": "9961D12F422CA55138E2E9E691D220EAAC0FF0A615728D8A321314174D95930E",
+        "source_digest": "70FED76EE6D22FA9E9E0838CD118813C1B331978847DB25C29873DC60356B3AB",
+        "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+        "binding_version": 2,
+        "option_count": 1,
+        "option_types": [
+          3
+        ],
+        "selected_indexes": [],
+        "committed_resolution_count": 0,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F",
+        "lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953"
+      },
+      {
+        "ordinal": 3,
+        "frame_id": "w3_main",
+        "window_family": "W3",
+        "callback_role": "main",
+        "status": "committed_shadow",
+        "decision_generation": 3,
+        "broker_generation": 3,
+        "snapshot_id": "DA5BBCAA60BF7B8F77E3BF18369FFE523BBFC48A9A6577475B35CF42FCB74DB7",
+        "source_digest": "44172F2C96C731A9CD2E0D8B059ACEFD1DF342329BD99FE9FB0FF0A2C8877D7B",
+        "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+        "binding_version": 3,
+        "option_count": 4,
+        "option_types": [
+          8,
+          8,
+          7,
+          14
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953",
+        "lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95"
+      },
+      {
+        "ordinal": 4,
+        "frame_id": "w4_spikemuth_deck",
+        "window_family": "W4",
+        "callback_role": "spikemuth_deck",
+        "status": "committed_shadow",
+        "decision_generation": 4,
+        "broker_generation": 4,
+        "snapshot_id": "C521F01155F1CE9808540148007EDA49BD3E8F63862067B640EB76A28CD52121",
+        "source_digest": "45923A28738EEBDA0E29FE109DB0877CFE4D52551954BB262BA52808F0EB4D57",
+        "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+        "binding_version": 4,
+        "option_count": 2,
+        "option_types": [
+          3,
+          3
+        ],
+        "selected_indexes": [
+          1
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95",
+        "lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F"
+      },
+      {
+        "ordinal": 5,
+        "frame_id": "w5_punk_up_sources",
+        "window_family": "W5",
+        "callback_role": "punk_up_sources",
+        "status": "committed_shadow",
+        "decision_generation": 5,
+        "broker_generation": 5,
+        "snapshot_id": "6F48CA0B1BE59485998BD30D5BC0419D2D41A4F49537D5EF8B841247475438F3",
+        "source_digest": "DE0AB40560164DCE8C9C198F9E568FCFA79EDC13CE23DEE160EC6F80E6EFDB24",
+        "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+        "binding_version": 5,
+        "option_count": 5,
+        "option_types": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "committed_resolution_count": 5,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F",
+        "lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA"
+      },
+      {
+        "ordinal": 6,
+        "frame_id": "w5_punk_up_target_1",
+        "window_family": "W5",
+        "callback_role": "punk_up_target",
+        "status": "committed_shadow",
+        "decision_generation": 6,
+        "broker_generation": 6,
+        "snapshot_id": "71B97BAB50EFB18BF0AE1399E3B6F685D5EC6577FC8B8F8559306740C50D246F",
+        "source_digest": "9B329089F7204194088920771E381A5728D37B82B5A9531C6F9CF945C55173FD",
+        "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+        "binding_version": 6,
+        "option_count": 3,
+        "option_types": [
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA",
+        "lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136"
+      },
+      {
+        "ordinal": 7,
+        "frame_id": "w5_punk_up_target_2",
+        "window_family": "W5",
+        "callback_role": "punk_up_target",
+        "status": "committed_shadow",
+        "decision_generation": 7,
+        "broker_generation": 7,
+        "snapshot_id": "9D3FA2161D16CCA598F35679415364ACCAF2386C8D0615CD37E8E57663FA358A",
+        "source_digest": "E9F771E8332974B6EF1684C6FE36FA82747CA3BA966ED496EC8E872AEA403ADF",
+        "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+        "binding_version": 7,
+        "option_count": 3,
+        "option_types": [
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136",
+        "lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2"
+      },
+      {
+        "ordinal": 8,
+        "frame_id": "w6_shadow_bullet_attack",
+        "window_family": "W6",
+        "callback_role": "shadow_bullet_attack",
+        "status": "committed_shadow",
+        "decision_generation": 8,
+        "broker_generation": 8,
+        "snapshot_id": "339F5342B55F930375A5F3B1E5496AAD36B5FF28539B44B9B1C470C265DBD252",
+        "source_digest": "FA6D70F2BCAE9669B76E77263D21BBDB723EAC8B155023718EB68E0D79E0E14D",
+        "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+        "binding_version": 8,
+        "option_count": 4,
+        "option_types": [
+          7,
+          13,
+          12,
+          14
+        ],
+        "selected_indexes": [
+          1
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2",
+        "lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810"
+      },
+      {
+        "ordinal": 9,
+        "frame_id": "w6_shadow_bullet_target",
+        "window_family": "W6",
+        "callback_role": "shadow_bullet_target",
+        "status": "committed_shadow",
+        "decision_generation": 9,
+        "broker_generation": 9,
+        "snapshot_id": "42C7F3044CEB019104AEFCAC78BA31F29561718CD3191842BC3B1CFDE87B689E",
+        "source_digest": "1973FA9A843D1A9EA5B190F2052474B9AAF953D2E1990BE7DDEE690E5B9F0F6B",
+        "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+        "binding_version": 9,
+        "option_count": 2,
+        "option_types": [
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810",
+        "lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9"
+      },
+      {
+        "ordinal": 10,
+        "frame_id": "w7_take_prize",
+        "window_family": "W7",
+        "callback_role": "take_prize",
+        "status": "committed_shadow",
+        "decision_generation": 10,
+        "broker_generation": 10,
+        "snapshot_id": "F1ED335E563EDC761ADB0AC5EE9F0379AB94F6176FF8FEB4B5506462685F378B",
+        "source_digest": "C82DFF78B95A55309D102112B83D13696063557F511574C95D3F36DF7EBA9A6D",
+        "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+        "binding_version": 10,
+        "option_count": 6,
+        "option_types": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9",
+        "lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18"
+      },
+      {
+        "ordinal": 11,
+        "frame_id": "w7_forced_send_out",
+        "window_family": "W7",
+        "callback_role": "forced_send_out",
+        "status": "committed_shadow",
+        "decision_generation": 11,
+        "broker_generation": 11,
+        "snapshot_id": "0DD7EF1365F0034275E37177915F644A688B39EF50B211A71327F80451AD073A",
+        "source_digest": "5E4ADF6772098287478E4392AA324FFEFFCFFF7B8E5B41C5E86A1280630A843A",
+        "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+        "binding_version": 11,
+        "option_count": 4,
+        "option_types": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "selected_indexes": [
+          0
+        ],
+        "committed_resolution_count": 1,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "awaiting_reobserve",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18",
+        "lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B"
+      },
+      {
+        "ordinal": 12,
+        "frame_id": "w7_terminal",
+        "window_family": "W7",
+        "callback_role": "terminal_no_new_callback",
+        "status": "terminal_no_callback",
+        "decision_generation": null,
+        "broker_generation": null,
+        "snapshot_id": null,
+        "source_digest": null,
+        "window_id": null,
+        "binding_version": null,
+        "option_count": 0,
+        "option_types": [],
+        "selected_indexes": null,
+        "committed_resolution_count": 0,
+        "serialized_private_resolution_count": 0,
+        "broker_state": "not_applicable",
+        "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+        "production_action_used": false,
+        "execution_authority": false,
+        "previous_lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B",
+        "lifecycle_hash": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D"
+      }
+    ],
+    "production_actions_used": false,
+    "execution_authority": false
+  },
+  "production_actions_used": false,
+  "execution_authority": false
+}

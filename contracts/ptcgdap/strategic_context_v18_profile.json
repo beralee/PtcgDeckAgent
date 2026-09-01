@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-strategic-context-v18-p4-wp1-v1",
+  "decision_profile_id": "ptcgdap-policy-decision-p4-wp1-v1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "official_base_graph_v1_8": {
+    "python_raw_sha256": "5D3035312390936D86DE4E2BAF520CE38AB0A79137E1D93199B909D79FBCA3D2",
+    "architecture_contract_raw_sha256": "E8A010E5B6458D2B43811DE683EA2147044D06624502B7314907747E8B0EB5B9",
+    "relationship": "source_locked_semantic_oracle_only_no_runtime_import"
+  },
+  "parents": {
+    "public_firewall_bundle_canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+    "selection_contract_bundle_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294"
+  },
+  "hash_profiles": {
+    "strategic_context_v18": {
+      "algorithm": "SHA-256",
+      "canonicalization": "RFC8785-JCS",
+      "prefix_utf8_hex": "50544347444150005354524154454749435F434F4E544558545F56313800",
+      "payload_rule": "the complete serialized StrategicContextV18 object with context_hash omitted"
+    },
+    "policy_decision_audit_v1": {
+      "algorithm": "SHA-256",
+      "canonicalization": "RFC8785-JCS",
+      "prefix_utf8_hex": "5054434744415000504F4C4943595F4445434953494F4E5F41554449545F563100",
+      "payload_rule": "the complete serialized PolicyDecision object with audit_id omitted"
+    }
+  },
+  "context_contract": {
+    "input_authority": "exact accepted PublicFirewallResult plus exact valid matching CabtSelectionWindow",
+    "acting_visibility": "copy only firewall accepted public tree; acting hand remains visible and opponent hand remains null",
+    "option_semantics": "preserve current official option order and bind every item to its existing option fingerprint",
+    "opponent_belief": "unknown empty public placeholder until a later public-only belief owner exists",
+    "initial_select_null": "unsupported_initial_window",
+    "no_private_retention": true
+  },
+  "decision_contract": {
+    "input_authority": "exact StrategicContextV18, exact same window and exact owner-produced CabtSelectionResolution",
+    "policy_owner_mapping": {
+      "policy": "base_graph",
+      "deterministic_fallback": "base_fallback"
+    },
+    "fallback_mapping": {
+      "policy": "none",
+      "deterministic_fallback": "same_public_window_deterministic"
+    },
+    "selected_semantic_intent": "exact ordered selected indexes and current option fingerprints",
+    "serialized_result_is_execution_authority": false,
+    "consumer_rule": "a dict, schema pass, context hash, audit id or selected_indexes copy never authorizes binding, ticket creation or execution"
+  },
+  "stable_error_codes": [
+    "contract_error",
+    "invalid_firewall_result",
+    "firewall_not_accepted",
+    "unsupported_initial_window",
+    "invalid_window",
+    "source_hash_mismatch",
+    "chooser_mismatch",
+    "select_mismatch",
+    "invalid_context",
+    "invalid_resolution",
+    "invalid_policy_hash",
+    "invalid_decision_identity",
+    "context_integrity_invalid",
+    "decision_integrity_invalid"
+  ],
+  "private_forbidden_keys": [
+    "raw_private_hash",
+    "token_free_callback_hash",
+    "search_begin_input",
+    "session",
+    "callback",
+    "binding",
+    "ticket",
+    "command",
+    "object_ref",
+    "pokemon_entity_serial"
+  ],
+  "limits": {
+    "max_context_bytes": 1048576,
+    "max_identifier_bytes": 128,
+    "safe_integer_minimum": -9007199254740991,
+    "safe_integer_maximum": 9007199254740991
+  },
+  "scope": "offline public contract core only; no Base Graph executor, adapter, policy, trace-v2 pipeline, live owner or engine execution"
+}

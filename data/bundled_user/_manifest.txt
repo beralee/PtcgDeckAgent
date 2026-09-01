@@ -14,6 +14,7 @@ res://data/bundled_user/ai_fixed_deck_orders/575723.json
 res://data/bundled_user/ai_fixed_deck_orders/578647.json
 res://data/bundled_user/ai_fixed_deck_orders/579502.json
 res://data/bundled_user/ai_fixed_deck_orders/609431.json
+res://data/bundled_user/ai_fixed_deck_orders/800017280.json
 res://data/bundled_user/cards/151C_004.json
 res://data/bundled_user/cards/151C_005.json
 res://data/bundled_user/cards/151C_016.json
@@ -1735,6 +1736,7 @@ res://data/bundled_user/decks/620753.json
 res://data/bundled_user/decks/620761.json
 res://data/bundled_user/decks/620880.json
 res://data/bundled_user/decks/620909.json
+res://data/bundled_user/decks/646600.json
 res://data/bundled_user/decks/800015734.json
 res://data/bundled_user/decks/800015927.json
 res://data/bundled_user/decks/800015934.json
@@ -1772,3 +1774,4 @@ res://data/bundled_user/decks/800026575.json
 res://data/bundled_user/decks/800030001.json
 res://data/bundled_user/decks/800030002.json
 res://data/bundled_user/decks/800033475.json
+res://data/bundled_user/decks/800052301.json

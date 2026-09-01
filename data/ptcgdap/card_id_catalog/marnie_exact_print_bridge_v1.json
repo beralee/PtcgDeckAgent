@@ -1,0 +1,157 @@
+{
+  "artifact_id": "ptcgdap-marnie-exact-print-bridge-v1",
+  "bridge_scope": {
+    "entry_count": 9,
+    "inference_policy": "denied_exact_entries_only",
+    "local_800018501_bridge_card_count": 15,
+    "local_800018501_bridge_unique_printing_count": 4,
+    "local_800018501_cabt_exportable": false,
+    "official_marnie_bridge_card_count": 34,
+    "official_marnie_bridge_unique_card_id_count": 9,
+    "official_marnie_unique_card_id_count": 19,
+    "official_marnie_unmapped_card_ids": [
+      860,
+      1079,
+      1086,
+      1122,
+      1137,
+      1152,
+      1182,
+      1219,
+      1227,
+      1231
+    ]
+  },
+  "entries": [
+    {
+      "local_attack_index_to_official_attack_id": {},
+      "local_printing": {
+        "card_index": "DAR",
+        "set_code": "CSVE1C"
+      },
+      "official_card_id": 7,
+      "source_bytes": 912,
+      "source_canonical_json_v1_sha256": "B29AF1051D130851567F72BA2759A71B9BF51405DDF15305645B3C0BFF218084",
+      "source_file": "data/bundled_user/cards/CSVE1C_DAR.json",
+      "source_raw_sha256": "B86CF49A7890C45951CDB80C87BC75F0392812C5370DA66866FCC979DC79CAB2",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {
+        "0": 131
+      },
+      "local_printing": {
+        "card_index": "059",
+        "set_code": "CSV7C"
+      },
+      "official_card_id": 104,
+      "source_bytes": 1496,
+      "source_canonical_json_v1_sha256": "6342EEAB3468FF43718D841C9DD55E750F0FFA27ECB8622FD5478AA820AFDD95",
+      "source_file": "data/bundled_user/cards/CSV7C_059.json",
+      "source_raw_sha256": "042936F1770BD8B9B9A06EDFA28DE212CA04A0D5022E1EB8B915F705323B2499",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {
+        "0": 141
+      },
+      "local_printing": {
+        "card_index": "094",
+        "set_code": "CSV8C"
+      },
+      "official_card_id": 112,
+      "source_bytes": 1686,
+      "source_canonical_json_v1_sha256": "8540B67BA8C3F5D45AC0F9E372A7C3B7BDCA7F3F050D4159D704C08E18526A8F",
+      "source_file": "data/bundled_user/cards/CSV8C_094.json",
+      "source_raw_sha256": "9EEDD84B0FDA69DFBED0A32C0321C2E4B9A8A4B6C905D22F3EB8FEBBAB56C2A1",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {
+        "0": 934,
+        "1": 935
+      },
+      "local_printing": {
+        "card_index": "134",
+        "set_code": "LEN_DRI"
+      },
+      "official_card_id": 646,
+      "source_bytes": 1700,
+      "source_canonical_json_v1_sha256": "D7259EED7B9B583DFF95AC92D7CF1E258B84B1F678F21C1743563AC03929C733",
+      "source_file": "data/bundled_user/cards/LEN_DRI_134.json",
+      "source_raw_sha256": "7A09714B9835766BF5BAC71C0D2FEC1735E908D97980E3E06FBDBCE39B1D27E2",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {
+        "0": 936
+      },
+      "local_printing": {
+        "card_index": "135",
+        "set_code": "LEN_DRI"
+      },
+      "official_card_id": 647,
+      "source_bytes": 1497,
+      "source_canonical_json_v1_sha256": "651B012760D24BBC2E09BCC2A4A1F5010AEB595B4C98046246CC669C2362E824",
+      "source_file": "data/bundled_user/cards/LEN_DRI_135.json",
+      "source_raw_sha256": "1BD94CB5EAC1EA0021F423A07A23508059E4BCEAB288B90620D71B51F63706C4",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {
+        "0": 937
+      },
+      "local_printing": {
+        "card_index": "136",
+        "set_code": "LEN_DRI"
+      },
+      "official_card_id": 648,
+      "source_bytes": 2788,
+      "source_canonical_json_v1_sha256": "A041E7168A5CA50C82E76DDBA0CEC6F2C7F66C34593B4D6A9A8C68690664021A",
+      "source_file": "data/bundled_user/cards/LEN_DRI_136.json",
+      "source_raw_sha256": "5EFA9B7F30F3ADA7DF097D68A6D7851553E9C3E5490406239DA2434406716D3C",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {},
+      "local_printing": {
+        "card_index": "173",
+        "set_code": "CSV8C"
+      },
+      "official_card_id": 1080,
+      "source_bytes": 1167,
+      "source_canonical_json_v1_sha256": "DE4487B0030DEBAFE37303E51E978E3FA5C0C09BCADDD8245B365F2ED988ED94",
+      "source_file": "data/bundled_user/cards/CSV8C_173.json",
+      "source_raw_sha256": "4FF6B61A942B6D7023AC4FEB149E701ACCC70F556F0F53B8CBD69227E26FE3EE",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {},
+      "local_printing": {
+        "card_index": "183",
+        "set_code": "CSV8C"
+      },
+      "official_card_id": 1097,
+      "source_bytes": 1008,
+      "source_canonical_json_v1_sha256": "FB05919614D31D6362E7CBCDDCB7137EC1EC2AB160B4D20FA8E0634F3E2A0AB2",
+      "source_file": "data/bundled_user/cards/CSV8C_183.json",
+      "source_raw_sha256": "713F2B15DED2F144E562667A5B7AC853E6770DDA3616934882664BF67D9AA457",
+      "source_root_id": "ptcgdap"
+    },
+    {
+      "local_attack_index_to_official_attack_id": {},
+      "local_printing": {
+        "card_index": "169",
+        "set_code": "LEN_DRI"
+      },
+      "official_card_id": 1259,
+      "source_bytes": 1427,
+      "source_canonical_json_v1_sha256": "28079978B465F21F50CE9FDDA8B7EB9B6406C409F29BDCDC9D67E747FEAF3E1B",
+      "source_file": "data/bundled_user/cards/LEN_DRI_169.json",
+      "source_raw_sha256": "486CEC705A0DAB6D855C938CF43291ECBCFD36C646F105D129F5E549B8BD3642",
+      "source_root_id": "ptcgdap"
+    }
+  ],
+  "schema_version": 1,
+  "source_manifest_id": "ptcgdap-card-id-catalog-source-manifest-p2-wp2-v1"
+}

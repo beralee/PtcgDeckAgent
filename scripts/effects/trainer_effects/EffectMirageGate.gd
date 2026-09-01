@@ -14,7 +14,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not player.get_all_pokemon().is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var energy_items: Array[CardInstance] = _get_unique_basic_energy_cards(player.deck)
 	if energy_items.is_empty():

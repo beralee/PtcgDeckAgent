@@ -12,7 +12,11 @@ func set_battle_recording_output_root(scene: Object, root_path: String) -> void:
 
 
 func should_record_local_battle(_scene: Object) -> bool:
-	return GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
+	return GameManager.current_mode in [
+		GameManager.GameMode.TWO_PLAYER,
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]
 
 
 func can_capture_battle_recording_context(scene: Object) -> bool:
@@ -37,7 +41,7 @@ func capture_battle_recording_context_if_ready(scene: Object) -> void:
 		"player_index": -1,
 		"turn_number": gsm.game_state.turn_number,
 		"phase": recording_phase_name(scene),
-		"mode": "two_player",
+		"mode": battle_record_mode_name(),
 		"view_player": int(scene.get("_view_player")),
 	})
 	record_battle_state_snapshot(scene, "match_start")
@@ -56,6 +60,14 @@ func ensure_battle_recording_started(scene: Object) -> void:
 	var output_root := str(scene.get("_battle_recording_output_root"))
 	if output_root != "":
 		battle_recorder.call("set_output_root", output_root)
+	var recording_profile_value: Variant = scene.get("_author_recording_profile")
+	if (
+		GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+		and recording_profile_value is Dictionary
+		and str((recording_profile_value as Dictionary).get("profile_id", "")) == "player_compact_v1"
+		and battle_recorder.has_method("set_write_profile")
+	):
+		battle_recorder.call("set_write_profile", "decision_batch_v1")
 	battle_recorder.call("start_match", build_battle_record_meta(scene), build_battle_initial_state(scene))
 	scene.set("_battle_recording_started", true)
 	scene.set("_battle_advice_initial_snapshot", scene.call("_build_battle_advice_initial_snapshot"))
@@ -80,11 +92,28 @@ func finalize_battle_recording(scene: Object, result_data: Dictionary) -> void:
 	var battle_recorder: RefCounted = scene.get("_battle_recorder")
 	if battle_recorder == null:
 		return
-	battle_recorder.call("finalize_match", result_data)
+	battle_recorder.call("finalize_match", build_terminal_result(result_data))
 	if battle_recorder.has_method("get_match_dir"):
 		scene.set("_battle_review_match_dir", str(battle_recorder.call("get_match_dir")))
 	scene.set("_battle_recording_started", false)
 	scene.set("_battle_recording_context_captured", false)
+
+
+func build_terminal_result(result_data: Dictionary) -> Dictionary:
+	var result := result_data.duplicate(true)
+	var winner_index := int(result.get("winner_index", -1))
+	# These values are emitted while handling the authoritative local game-over
+	# signal. They are not reconstructed later from replay snapshots.
+	if winner_index in [0, 1]:
+		if not result.has("seat_statuses"):
+			result["seat_statuses"] = ["DONE", "DONE"]
+		if not result.has("rewards"):
+			result["rewards"] = [1, -1] if winner_index == 0 else [-1, 1]
+		if not result.has("faults"):
+			result["faults"] = [null, null]
+		if not result.has("terminal_source"):
+			result["terminal_source"] = "local_game_over_signal_v1"
+	return result
 
 
 func build_battle_record_meta(scene: Object) -> Dictionary:
@@ -97,13 +126,39 @@ func build_battle_record_meta(scene: Object) -> Dictionary:
 		else:
 			player_labels.append("player_%d" % player_labels.size())
 	var gsm: Variant = scene.get("_gsm")
+	var pacing_profile_value: Variant = scene.get("_author_live_pacing_profile")
+	var recording_profile_value: Variant = scene.get("_author_recording_profile")
 	return {
-		"mode": "two_player",
-		"player_types": ["human", "human"],
+		"mode": battle_record_mode_name(),
+		"player_types": battle_record_player_types(),
+		"view_player_index": int(scene.get("_view_player")),
 		"selected_deck_ids": GameManager.selected_deck_ids.duplicate(),
 		"player_labels": player_labels,
 		"first_player_index": gsm.game_state.first_player_index if gsm != null and gsm.game_state != null else GameManager.first_player_choice,
+		"live_pacing_profile_id": str((pacing_profile_value as Dictionary).get("profile_id", "")) \
+			if pacing_profile_value is Dictionary else "",
+		"author_recording_profile_id": str((recording_profile_value as Dictionary).get("profile_id", "")) \
+			if recording_profile_value is Dictionary else "",
 	}
+
+
+func battle_record_mode_name() -> String:
+	match GameManager.current_mode:
+		GameManager.GameMode.VS_AI:
+			return "vs_ai"
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+			return "vs_author_strategy_ai"
+		_:
+			return "two_player"
+
+
+func battle_record_player_types() -> Array[String]:
+	if GameManager.current_mode in [
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]:
+		return ["human", "ai"]
+	return ["human", "human"]
 
 
 func build_battle_initial_state(scene: Object) -> Dictionary:

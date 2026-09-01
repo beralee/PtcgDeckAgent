@@ -155,8 +155,9 @@ const GARDEVOIR_FAMILY := "res://scripts/ai/DeckStrategyV18GardevoirFamily.gd"
 const GARDEVOIR_VARIANTS_FAMILY := "res://scripts/ai/DeckStrategyV18GardevoirVariants.gd"
 const HOP_FROSLASS_FAMILY := "res://scripts/ai/DeckStrategyV18HopFroslass.gd"
 const MARNIE_CYNTHIA_FAMILY := "res://scripts/ai/DeckStrategyV18MarnieCynthia.gd"
-## The resource path is retained for compatibility with existing imports; the
-## deck and delegate now implement the pure-Metal Archaludon route.
+const CYNTHIA_AUTHOR_V1 := "res://scripts/ai/DeckStrategyV18CynthiaAuthorV1.gd"
+## Historical resource suffix retained to avoid breaking existing references;
+## the delegate itself implements the pure-Metal Archaludon route.
 const ARCHALUDON_METAL := "res://scripts/ai/DeckStrategyV18ArchaludonPoison.gd"
 const PARTNER_FAMILIES := "res://scripts/ai/DeckStrategyV18PartnerFamilies.gd"
 const PIDGEOT_ACADEMY_FAMILY := "res://scripts/ai/DeckStrategyV18PidgeotAcademy.gd"
@@ -176,7 +177,7 @@ const FAMILY_DELEGATE_OVERRIDES := {
 	800018498: PIDGEOT_ACADEMY_FAMILY,
 	800018500: CONTROL_GRASS_FAMILY,
 	800018501: MARNIE_CYNTHIA_FAMILY,
-	800018543: MARNIE_CYNTHIA_FAMILY,
+	800018543: CYNTHIA_AUTHOR_V1,
 	800018880: PARTNER_FAMILIES,
 	800019125: DRAGAPULT_FAMILY,
 }

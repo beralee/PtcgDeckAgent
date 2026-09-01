@@ -1,0 +1,1898 @@
+{
+  "$defs": {
+    "bridge_entry": {
+      "additionalProperties": false,
+      "properties": {
+        "local_attack_index_to_official_attack_id": {
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)$": {
+              "$ref": "#/$defs/positive_integer"
+            }
+          },
+          "type": "object"
+        },
+        "local_printing": {
+          "$ref": "#/$defs/local_printing"
+        },
+        "official_card_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "source_bytes": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "source_canonical_json_v1_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_file": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_raw_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_root_id": {
+          "const": "ptcgdap"
+        }
+      },
+      "required": [
+        "official_card_id",
+        "local_printing",
+        "source_root_id",
+        "source_file",
+        "source_bytes",
+        "source_raw_sha256",
+        "source_canonical_json_v1_sha256",
+        "local_attack_index_to_official_attack_id"
+      ],
+      "type": "object"
+    },
+    "bridge_scope": {
+      "additionalProperties": false,
+      "properties": {
+        "entry_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "inference_policy": {
+          "const": "denied_exact_entries_only"
+        },
+        "local_800018501_bridge_card_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "local_800018501_bridge_unique_printing_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "local_800018501_cabt_exportable": {
+          "const": false
+        },
+        "official_marnie_bridge_card_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_marnie_bridge_unique_card_id_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_marnie_unique_card_id_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_marnie_unmapped_card_ids": {
+          "items": {
+            "$ref": "#/$defs/positive_integer"
+          },
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "entry_count",
+        "official_marnie_unique_card_id_count",
+        "official_marnie_bridge_unique_card_id_count",
+        "official_marnie_bridge_card_count",
+        "official_marnie_unmapped_card_ids",
+        "local_800018501_bridge_unique_printing_count",
+        "local_800018501_bridge_card_count",
+        "local_800018501_cabt_exportable",
+        "inference_policy"
+      ],
+      "type": "object"
+    },
+    "bundle_artifact": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "id": {
+              "const": "schema"
+            },
+            "path": {
+              "const": "contracts/ptcgdap/card_id_catalog.schema.json"
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "id": {
+              "const": "source_manifest"
+            },
+            "path": {
+              "const": "contracts/ptcgdap/card_id_catalog_source_manifest.json"
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "id": {
+              "const": "official_master"
+            },
+            "path": {
+              "const": "data/ptcgdap/card_id_catalog/official_card_attack_master_v1.json"
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "id": {
+              "const": "exact_bridge"
+            },
+            "path": {
+              "const": "data/ptcgdap/card_id_catalog/marnie_exact_print_bridge_v1.json"
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "id": {
+              "const": "conformance_vectors"
+            },
+            "path": {
+              "const": "contracts/ptcgdap/card_id_catalog_conformance_vectors.json"
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "catalog_bundle": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "const": "ptcgdap-card-id-catalog-bundle-p2-wp2-v1"
+        },
+        "artifact_set_policy": {
+          "const": "exact_ids_and_paths_no_duplicates"
+        },
+        "artifacts": {
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "schema"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "maxContains": 1,
+              "minContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "source_manifest"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "maxContains": 1,
+              "minContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "official_master"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "maxContains": 1,
+              "minContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "exact_bridge"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "maxContains": 1,
+              "minContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "conformance_vectors"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "maxContains": 1,
+              "minContains": 1
+            }
+          ],
+          "items": {
+            "$ref": "#/$defs/bundle_artifact"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "digest_mode": {
+          "const": "canonical_json_v1"
+        },
+        "parent_p1_contract": {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "contract_id": {
+              "const": "ptcgdap-cabt-contract-p1-wp3-v1"
+            }
+          },
+          "required": [
+            "contract_id",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        },
+        "parent_p2_wp1": {
+          "additionalProperties": false,
+          "properties": {
+            "manifest_canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "manifest_path": {
+              "const": "artifacts/ptcgdap/p2_wp1/manifest.json"
+            },
+            "manifest_raw_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "work_package": {
+              "const": "P2-WP1"
+            }
+          },
+          "required": [
+            "work_package",
+            "manifest_path",
+            "manifest_raw_sha256",
+            "manifest_canonical_sha256"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "source_lock_canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "digest_mode",
+        "artifact_set_policy",
+        "source_lock_canonical_sha256",
+        "parent_p1_contract",
+        "parent_p2_wp1",
+        "artifacts"
+      ],
+      "type": "object"
+    },
+    "conformance_vectors": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "const": "ptcgdap-card-id-catalog-conformance-vectors-v1"
+        },
+        "result_contract": {
+          "additionalProperties": false,
+          "properties": {
+            "copy_only": {
+              "const": true
+            },
+            "failure": {
+              "const": {
+                "ok": false,
+                "value": null
+              }
+            },
+            "fields_in_order": {
+              "const": [
+                "ok",
+                "error_code",
+                "value"
+              ]
+            },
+            "rejected_value_echo": {
+              "const": "forbidden"
+            },
+            "success": {
+              "const": {
+                "error_code": null,
+                "ok": true
+              }
+            }
+          },
+          "required": [
+            "fields_in_order",
+            "success",
+            "failure",
+            "copy_only",
+            "rejected_value_echo"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "stable_error_codes": {
+          "const": [
+            "catalog_not_loaded",
+            "catalog_bundle_trust_anchor_mismatch",
+            "catalog_artifact_set_invalid",
+            "catalog_artifact_hash_mismatch",
+            "catalog_integrity_invalid",
+            "source_anchor_mismatch",
+            "source_file_missing",
+            "source_hash_mismatch",
+            "schema_unsupported",
+            "input_type_invalid",
+            "official_card_unknown",
+            "official_card_unmapped",
+            "official_printing_unavailable",
+            "official_attack_unknown",
+            "local_printing_unmapped",
+            "local_source_missing",
+            "local_source_hash_mismatch",
+            "mapping_conflict",
+            "attack_unmapped",
+            "attack_owner_mismatch",
+            "attack_map_incomplete"
+          ]
+        },
+        "vectors": {
+          "items": {
+            "$ref": "#/$defs/vector_case"
+          },
+          "maxItems": 104,
+          "minItems": 104,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "result_contract",
+        "stable_error_codes",
+        "vectors"
+      ],
+      "type": "object"
+    },
+    "exact_bridge": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "const": "ptcgdap-marnie-exact-print-bridge-v1"
+        },
+        "bridge_scope": {
+          "$ref": "#/$defs/bridge_scope"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/bridge_entry"
+          },
+          "maxItems": 9,
+          "minItems": 9,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "source_manifest_id": {
+          "const": "ptcgdap-card-id-catalog-source-manifest-p2-wp2-v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "source_manifest_id",
+        "bridge_scope",
+        "entries"
+      ],
+      "type": "object"
+    },
+    "failure_result": {
+      "additionalProperties": false,
+      "properties": {
+        "error_code": {
+          "enum": [
+            "catalog_not_loaded",
+            "catalog_bundle_trust_anchor_mismatch",
+            "catalog_artifact_set_invalid",
+            "catalog_artifact_hash_mismatch",
+            "catalog_integrity_invalid",
+            "source_anchor_mismatch",
+            "source_file_missing",
+            "source_hash_mismatch",
+            "schema_unsupported",
+            "input_type_invalid",
+            "official_card_unknown",
+            "official_card_unmapped",
+            "official_printing_unavailable",
+            "official_attack_unknown",
+            "local_printing_unmapped",
+            "local_source_missing",
+            "local_source_hash_mismatch",
+            "mapping_conflict",
+            "attack_unmapped",
+            "attack_owner_mismatch",
+            "attack_map_incomplete"
+          ]
+        },
+        "ok": {
+          "const": false
+        },
+        "value": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "ok",
+        "error_code",
+        "value"
+      ],
+      "type": "object"
+    },
+    "local_attack_lookup_value": {
+      "additionalProperties": false,
+      "properties": {
+        "official_attack_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "official_card_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "owner_attack_ordinal": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        }
+      },
+      "required": [
+        "official_card_id",
+        "official_attack_id",
+        "owner_attack_ordinal"
+      ],
+      "type": "object"
+    },
+    "local_lookup_value": {
+      "additionalProperties": false,
+      "properties": {
+        "local_attack_index_to_official_attack_id": {
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)$": {
+              "$ref": "#/$defs/positive_integer"
+            }
+          },
+          "type": "object"
+        },
+        "local_printing": {
+          "$ref": "#/$defs/local_printing"
+        },
+        "official_card_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "source_canonical_json_v1_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "official_card_id",
+        "local_printing",
+        "source_canonical_json_v1_sha256",
+        "local_attack_index_to_official_attack_id"
+      ],
+      "type": "object"
+    },
+    "local_printing": {
+      "additionalProperties": false,
+      "properties": {
+        "card_index": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "set_code": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "set_code",
+        "card_index"
+      ],
+      "type": "object"
+    },
+    "master_source_evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "current_official_attack_count": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "current_official_card_count": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "english_csv_data_row_count": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "id_range_semantics": {
+          "const": "observed_current_source_evidence_only_not_a_future_dense_id_contract"
+        },
+        "printing_null_official_card_ids": {
+          "items": {
+            "$ref": "#/$defs/positive_integer"
+          },
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "current_official_card_count",
+        "current_official_attack_count",
+        "english_csv_data_row_count",
+        "printing_null_official_card_ids",
+        "id_range_semantics"
+      ],
+      "type": "object"
+    },
+    "native_snapshot_fact": {
+      "additionalProperties": false,
+      "properties": {
+        "api_symbol": {
+          "enum": [
+            "AllCard",
+            "AllAttack"
+          ]
+        },
+        "bytes": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "producer_input_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "raw_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "record_count": {
+          "$ref": "#/$defs/positive_integer"
+        }
+      },
+      "required": [
+        "producer_input_ids",
+        "api_symbol",
+        "bytes",
+        "raw_sha256",
+        "record_count"
+      ],
+      "type": "object"
+    },
+    "official_attack_record": {
+      "additionalProperties": false,
+      "properties": {
+        "official_attack_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "owner_attack_ordinal": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "owner_official_card_id": {
+          "$ref": "#/$defs/positive_integer"
+        }
+      },
+      "required": [
+        "official_attack_id",
+        "owner_official_card_id",
+        "owner_attack_ordinal"
+      ],
+      "type": "object"
+    },
+    "official_card_record": {
+      "additionalProperties": false,
+      "properties": {
+        "exact_english_printing_or_null": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/printing"
+            }
+          ]
+        },
+        "official_card_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "ordered_official_attack_ids": {
+          "items": {
+            "$ref": "#/$defs/positive_integer"
+          },
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "official_card_id",
+        "exact_english_printing_or_null",
+        "ordered_official_attack_ids"
+      ],
+      "type": "object"
+    },
+    "official_master": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "const": "ptcgdap-official-card-attack-master-v1"
+        },
+        "attacks": {
+          "items": {
+            "$ref": "#/$defs/official_attack_record"
+          },
+          "maxItems": 1556,
+          "minItems": 1556,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "cards": {
+          "items": {
+            "$ref": "#/$defs/official_card_record"
+          },
+          "maxItems": 1267,
+          "minItems": 1267,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "source_evidence": {
+          "$ref": "#/$defs/master_source_evidence"
+        },
+        "source_manifest_id": {
+          "const": "ptcgdap-card-id-catalog-source-manifest-p2-wp2-v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "source_manifest_id",
+        "cards",
+        "attacks",
+        "source_evidence"
+      ],
+      "type": "object"
+    },
+    "positive_integer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safe_integer"
+        },
+        {
+          "minimum": 1
+        }
+      ]
+    },
+    "printing": {
+      "additionalProperties": false,
+      "properties": {
+        "collection_no": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "expansion": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "expansion",
+        "collection_no"
+      ],
+      "type": "object"
+    },
+    "result": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error_code": {
+              "type": "null"
+            },
+            "ok": {
+              "const": true
+            },
+            "value": {}
+          },
+          "required": [
+            "ok",
+            "error_code",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/failure_result"
+        }
+      ]
+    },
+    "reverse_local_lookup_value": {
+      "additionalProperties": false,
+      "properties": {
+        "local_printing": {
+          "$ref": "#/$defs/local_printing"
+        },
+        "official_card_id": {
+          "$ref": "#/$defs/positive_integer"
+        },
+        "source_canonical_json_v1_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "official_card_id",
+        "local_printing",
+        "source_canonical_json_v1_sha256"
+      ],
+      "type": "object"
+    },
+    "safe_integer": {
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991,
+      "type": "integer"
+    },
+    "sha256": {
+      "pattern": "^[0-9A-F]{64}$",
+      "type": "string"
+    },
+    "source_input": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "root_id": {
+                "const": "ptcgdap"
+              }
+            },
+            "required": [
+              "root_id"
+            ]
+          },
+          "then": {
+            "required": [
+              "canonical_json_v1_sha256"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "bytes": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safe_integer"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "canonical_json_v1_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+          "type": "string"
+        },
+        "raw_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "role": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "root_id": {
+          "enum": [
+            "official_bundle",
+            "ptcgabc",
+            "ptcgdap"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "root_id",
+        "path",
+        "role",
+        "bytes",
+        "raw_sha256"
+      ],
+      "type": "object"
+    },
+    "source_manifest": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "const": "ptcgdap-card-id-catalog-source-manifest-p2-wp2-v1"
+        },
+        "derived_artifacts": {
+          "additionalProperties": false,
+          "properties": {
+            "exact_bridge": {
+              "additionalProperties": false,
+              "properties": {
+                "canonical_sha256": {
+                  "$ref": "#/$defs/sha256"
+                },
+                "path": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "canonical_sha256"
+              ],
+              "type": "object"
+            },
+            "official_master": {
+              "additionalProperties": false,
+              "properties": {
+                "canonical_sha256": {
+                  "$ref": "#/$defs/sha256"
+                },
+                "path": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "canonical_sha256"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "official_master",
+            "exact_bridge"
+          ],
+          "type": "object"
+        },
+        "derived_source_facts": {
+          "additionalProperties": false,
+          "properties": {
+            "ability_numeric_identity": {
+              "const": "not_available_no_id_in_official_skill_payload"
+            },
+            "all_attack_json": {
+              "$ref": "#/$defs/native_snapshot_fact"
+            },
+            "all_card_json": {
+              "$ref": "#/$defs/native_snapshot_fact"
+            },
+            "attack_owner_derivation": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "native_snapshot_platform": {
+              "const": "Windows x86_64 development oracle only"
+            }
+          },
+          "required": [
+            "all_card_json",
+            "all_attack_json",
+            "attack_owner_derivation",
+            "ability_numeric_identity",
+            "native_snapshot_platform"
+          ],
+          "type": "object"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/source_input"
+          },
+          "maxItems": 17,
+          "minItems": 17,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "official_bundle": {
+          "additionalProperties": false,
+          "properties": {
+            "file_count": {
+              "$ref": "#/$defs/positive_integer"
+            },
+            "manifest_path": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "manifest_raw_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "role": {
+              "const": "read_only_development_oracle_not_runtime_payload"
+            },
+            "total_bytes": {
+              "$ref": "#/$defs/positive_integer"
+            }
+          },
+          "required": [
+            "manifest_path",
+            "manifest_raw_sha256",
+            "file_count",
+            "total_bytes",
+            "role"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "source_lock": {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "lock_id": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "lock_id",
+            "canonical_sha256"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "source_lock",
+        "official_bundle",
+        "inputs",
+        "derived_source_facts",
+        "derived_artifacts"
+      ],
+      "type": "object"
+    },
+    "vector_case": {
+      "allOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "expected": {
+              "$ref": "#/$defs/result"
+            },
+            "id": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "input": {
+              "type": "object"
+            },
+            "operation": {
+              "enum": [
+                "lookup_official_card",
+                "lookup_official_attack",
+                "lookup_official_printing",
+                "lookup_local_printing",
+                "lookup_local_printing_for_official_card",
+                "lookup_local_attack",
+                "validate_local_source",
+                "artifact_canonical_sha256"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "operation",
+            "input",
+            "expected"
+          ],
+          "type": "object"
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/official_card_record"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "official_card_id": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/safe_integer"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "host_type": {
+                              "const": "bool"
+                            },
+                            "value": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "decimal": {
+                              "pattern": "^-?(0|[1-9][0-9]*)$",
+                              "type": "string"
+                            },
+                            "host_type": {
+                              "const": "unsafe_integer"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "decimal"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "official_card_id"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "lookup_official_card"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/printing"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "official_card_id": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/safe_integer"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "host_type": {
+                              "const": "bool"
+                            },
+                            "value": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "decimal": {
+                              "pattern": "^-?(0|[1-9][0-9]*)$",
+                              "type": "string"
+                            },
+                            "host_type": {
+                              "const": "unsafe_integer"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "decimal"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "official_card_id"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "lookup_official_printing"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/reverse_local_lookup_value"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "official_card_id": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/safe_integer"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "host_type": {
+                              "const": "bool"
+                            },
+                            "value": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "decimal": {
+                              "pattern": "^-?(0|[1-9][0-9]*)$",
+                              "type": "string"
+                            },
+                            "host_type": {
+                              "const": "unsafe_integer"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "decimal"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "official_card_id"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "lookup_local_printing_for_official_card"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/official_attack_record"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "official_attack_id": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/safe_integer"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "host_type": {
+                              "const": "bool"
+                            },
+                            "value": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "decimal": {
+                              "pattern": "^-?(0|[1-9][0-9]*)$",
+                              "type": "string"
+                            },
+                            "host_type": {
+                              "const": "unsafe_integer"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "decimal"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "official_attack_id"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "lookup_official_attack"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/local_lookup_value"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "local_printing": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "card_index": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "host_type": {
+                                  "const": "integer"
+                                },
+                                "value": {
+                                  "$ref": "#/$defs/safe_integer"
+                                }
+                              },
+                              "required": [
+                                "host_type",
+                                "value"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "set_code": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "host_type": {
+                                  "const": "integer"
+                                },
+                                "value": {
+                                  "$ref": "#/$defs/safe_integer"
+                                }
+                              },
+                              "required": [
+                                "host_type",
+                                "value"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "set_code",
+                        "card_index"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "local_printing"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "lookup_local_printing"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/local_attack_lookup_value"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "local_attack_index": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/safe_integer"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "host_type": {
+                              "const": "bool"
+                            },
+                            "value": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "decimal": {
+                              "pattern": "^-?(0|[1-9][0-9]*)$",
+                              "type": "string"
+                            },
+                            "host_type": {
+                              "const": "unsafe_integer"
+                            }
+                          },
+                          "required": [
+                            "host_type",
+                            "decimal"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "local_printing": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "card_index": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "host_type": {
+                                  "const": "integer"
+                                },
+                                "value": {
+                                  "$ref": "#/$defs/safe_integer"
+                                }
+                              },
+                              "required": [
+                                "host_type",
+                                "value"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "set_code": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "host_type": {
+                                  "const": "integer"
+                                },
+                                "value": {
+                                  "$ref": "#/$defs/safe_integer"
+                                }
+                              },
+                              "required": [
+                                "host_type",
+                                "value"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "set_code",
+                        "card_index"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "local_printing",
+                    "local_attack_index"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "lookup_local_attack"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "local_printing": {
+                          "$ref": "#/$defs/local_printing"
+                        },
+                        "materialization": {
+                          "const": "bytes"
+                        },
+                        "source_file": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "local_printing",
+                        "source_file",
+                        "materialization"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "local_printing": {
+                          "$ref": "#/$defs/local_printing"
+                        },
+                        "materialization": {
+                          "const": "mutated_tree"
+                        },
+                        "mutation": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "field": {
+                              "const": "card_index"
+                            },
+                            "value": {
+                              "const": "__PTCGDAP_DRIFT__"
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "source_file": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "local_printing",
+                        "source_file",
+                        "materialization",
+                        "mutation"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                "operation": {
+                  "const": "validate_local_source"
+                }
+              }
+            },
+            {
+              "properties": {
+                "expected": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error_code": {
+                          "type": "null"
+                        },
+                        "ok": {
+                          "const": true
+                        },
+                        "value": {
+                          "$ref": "#/$defs/sha256"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "error_code",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/failure_result"
+                    }
+                  ]
+                },
+                "input": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "artifact_id": {
+                      "enum": [
+                        "schema",
+                        "source_manifest",
+                        "official_master",
+                        "exact_bridge"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "artifact_id"
+                  ],
+                  "type": "object"
+                },
+                "operation": {
+                  "const": "artifact_canonical_sha256"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "$id": "https://ptcgdap.local/contracts/card_id_catalog.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/official_master"
+    },
+    {
+      "$ref": "#/$defs/exact_bridge"
+    },
+    {
+      "$ref": "#/$defs/source_manifest"
+    },
+    {
+      "$ref": "#/$defs/catalog_bundle"
+    },
+    {
+      "$ref": "#/$defs/conformance_vectors"
+    }
+  ],
+  "schema_version": 1,
+  "title": "PtcgDAP source-locked Card/Attack identity catalog artifacts",
+  "unevaluatedProperties": false
+}

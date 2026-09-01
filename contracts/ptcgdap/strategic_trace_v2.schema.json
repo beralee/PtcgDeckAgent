@@ -1,0 +1,1428 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ptcgdap://strategic-trace-v2-p4-wp2-v1",
+  "title": "PtcgDAP Strategic Trace v2 and restricted Base Graph IR",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/irDocument"
+    },
+    {
+      "$ref": "#/$defs/restrictedIr"
+    },
+    {
+      "$ref": "#/$defs/strategicTraceV2"
+    }
+  ],
+  "$defs": {
+    "irDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1"
+        },
+        "graph_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+        },
+        "entry_node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "public_context",
+              "current_window",
+              "deterministic_fallback",
+              "strategic_trace_v2"
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "legality_guard"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "frontier": {
+                        "const": "current_window"
+                      }
+                    },
+                    "required": [
+                      "frontier"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "mandatory_terminal_guard"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "mandatory_precedence": {
+                        "const": true
+                      },
+                      "terminal_precedence": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "mandatory_precedence",
+                      "terminal_precedence"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "hard_tier_filter"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "same_tier_only": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "same_tier_only"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "base_veto"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "deterministic_fallback"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "strategy": {
+                        "const": "same_window_first_min"
+                      }
+                    },
+                    "required": [
+                      "strategy"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "emit_decision"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {}
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "goal_proposal"
+                  },
+                  "owner": {
+                    "const": "adapter"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "goal_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "uniqueItems": true
+                      }
+                    },
+                    "required": [
+                      "goal_ids"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "macro_proposal"
+                  },
+                  "owner": {
+                    "const": "adapter"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "macro_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "uniqueItems": true
+                      }
+                    },
+                    "required": [
+                      "macro_ids"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "tiebreak_score"
+                  },
+                  "owner": {
+                    "const": "adapter"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "feature_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "uniqueItems": true
+                      },
+                      "weight_scale": {
+                        "const": 1000000
+                      }
+                    },
+                    "required": [
+                      "feature_ids",
+                      "weight_scale"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 6,
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile_id",
+        "graph_id",
+        "entry_node_id",
+        "required_capabilities",
+        "nodes"
+      ]
+    },
+    "restrictedIr": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1"
+        },
+        "graph_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+        },
+        "entry_node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "public_context",
+              "current_window",
+              "deterministic_fallback",
+              "strategic_trace_v2"
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "legality_guard"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "frontier": {
+                        "const": "current_window"
+                      }
+                    },
+                    "required": [
+                      "frontier"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "mandatory_terminal_guard"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "mandatory_precedence": {
+                        "const": true
+                      },
+                      "terminal_precedence": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "mandatory_precedence",
+                      "terminal_precedence"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "hard_tier_filter"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "same_tier_only": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "same_tier_only"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "base_veto"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "deterministic_fallback"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "strategy": {
+                        "const": "same_window_first_min"
+                      }
+                    },
+                    "required": [
+                      "strategy"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "emit_decision"
+                  },
+                  "owner": {
+                    "const": "base"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {}
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "goal_proposal"
+                  },
+                  "owner": {
+                    "const": "adapter"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "goal_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "uniqueItems": true
+                      }
+                    },
+                    "required": [
+                      "goal_ids"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "macro_proposal"
+                  },
+                  "owner": {
+                    "const": "adapter"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "macro_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "uniqueItems": true
+                      }
+                    },
+                    "required": [
+                      "macro_ids"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "operator",
+                  "owner",
+                  "config",
+                  "next_node_ids"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                  },
+                  "operator": {
+                    "const": "tiebreak_score"
+                  },
+                  "owner": {
+                    "const": "adapter"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "feature_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128,
+                          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "uniqueItems": true
+                      },
+                      "weight_scale": {
+                        "const": 1000000
+                      }
+                    },
+                    "required": [
+                      "feature_ids",
+                      "weight_scale"
+                    ]
+                  },
+                  "next_node_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+                    },
+                    "maxItems": 1,
+                    "uniqueItems": true
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 6,
+          "maxItems": 64
+        },
+        "authority": {
+          "const": "restricted_base_graph_ir_audit"
+        },
+        "authoritative": {
+          "const": false
+        },
+        "ir_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile_id",
+        "graph_id",
+        "entry_node_id",
+        "required_capabilities",
+        "nodes",
+        "authority",
+        "authoritative",
+        "ir_hash"
+      ]
+    },
+    "strategicTraceV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 2
+        },
+        "profile_id": {
+          "const": "ptcgdap-strategic-trace-v2-p4-wp2-v1"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+        },
+        "identities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "scene_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+            },
+            "decision_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+            },
+            "determinism_key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+            }
+          },
+          "required": [
+            "scene_id",
+            "decision_id",
+            "determinism_key"
+          ]
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "context_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "decision_audit_id": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "policy_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "window_id": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "public_observation_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          },
+          "required": [
+            "context_hash",
+            "decision_audit_id",
+            "policy_hash",
+            "window_id",
+            "public_observation_hash"
+          ]
+        },
+        "ir": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "graph_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+            },
+            "ir_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "required_capabilities": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "public_context",
+                  "current_window",
+                  "deterministic_fallback",
+                  "strategic_trace_v2"
+                ]
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "graph_id",
+            "ir_hash",
+            "required_capabilities"
+          ]
+        },
+        "frontier": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "option_fingerprints": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9A-F]{64}$"
+              },
+              "maxItems": 1024
+            },
+            "legal_indexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true,
+              "maxItems": 1024
+            },
+            "strategic_indexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true,
+              "maxItems": 1024
+            },
+            "mandatory_indexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true,
+              "maxItems": 1024
+            },
+            "terminal_indexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true,
+              "maxItems": 1024
+            },
+            "base_hard_tiers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "tier": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "minItems": 1,
+                    "maxItems": 8
+                  }
+                },
+                "required": [
+                  "index",
+                  "tier"
+                ]
+              }
+            },
+            "base_vetoed_indexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true,
+              "maxItems": 1024
+            }
+          },
+          "required": [
+            "option_fingerprints",
+            "legal_indexes",
+            "strategic_indexes",
+            "mandatory_indexes",
+            "terminal_indexes",
+            "base_hard_tiers",
+            "base_vetoed_indexes"
+          ]
+        },
+        "adapter_proposals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "operator": {
+                "enum": [
+                  "goal_proposal",
+                  "macro_proposal",
+                  "tiebreak_score"
+                ]
+              },
+              "indexes": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "uniqueItems": true,
+                "maxItems": 1024
+              },
+              "reason_code": {
+                "enum": [
+                  "public_goal_proposal",
+                  "public_macro_proposal",
+                  "public_tiebreak_proposal"
+                ]
+              }
+            },
+            "required": [
+              "operator",
+              "indexes",
+              "reason_code"
+            ]
+          },
+          "maxItems": 64
+        },
+        "owner_audit": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "node_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+              },
+              "operator": {
+                "enum": [
+                  "legality_guard",
+                  "mandatory_terminal_guard",
+                  "hard_tier_filter",
+                  "base_veto",
+                  "deterministic_fallback",
+                  "emit_decision",
+                  "goal_proposal",
+                  "macro_proposal",
+                  "tiebreak_score"
+                ]
+              },
+              "owner": {
+                "enum": [
+                  "base",
+                  "adapter"
+                ]
+              }
+            },
+            "required": [
+              "node_id",
+              "operator",
+              "owner"
+            ]
+          },
+          "minItems": 6,
+          "maxItems": 64
+        },
+        "decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "selected_indexes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true,
+              "maxItems": 1024
+            },
+            "owner_layer": {
+              "const": "base_graph"
+            },
+            "reason_code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+            },
+            "fallback_tier": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^(?!.*PRIVATE)[A-Za-z0-9._:-]+$"
+            }
+          },
+          "required": [
+            "selected_indexes",
+            "owner_layer",
+            "reason_code",
+            "fallback_tier"
+          ]
+        },
+        "fallback_reason": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "public_only": {
+          "const": true
+        },
+        "authority": {
+          "const": "strategic_trace_v2_public_audit"
+        },
+        "authoritative": {
+          "const": false
+        },
+        "trace_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile_id",
+        "trace_id",
+        "identities",
+        "source",
+        "ir",
+        "frontier",
+        "adapter_proposals",
+        "owner_audit",
+        "decision",
+        "fallback_reason",
+        "public_only",
+        "authority",
+        "authoritative",
+        "trace_hash"
+      ]
+    }
+  }
+}

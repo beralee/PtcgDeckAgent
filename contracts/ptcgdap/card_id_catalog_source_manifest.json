@@ -1,0 +1,200 @@
+{
+  "artifact_id": "ptcgdap-card-id-catalog-source-manifest-p2-wp2-v1",
+  "derived_artifacts": {
+    "exact_bridge": {
+      "canonical_sha256": "15BDE946C5C5B0102D13C04AE5B7676CB7FB071C32BC35507C24556E1D9FBEC5",
+      "path": "data/ptcgdap/card_id_catalog/marnie_exact_print_bridge_v1.json"
+    },
+    "official_master": {
+      "canonical_sha256": "3ED86C598ECD0BB5367FB575E94113BFE488E0B98FC64D6FABC50A1B0EAA8ED3",
+      "path": "data/ptcgdap/card_id_catalog/official_card_attack_master_v1.json"
+    }
+  },
+  "derived_source_facts": {
+    "ability_numeric_identity": "not_available_no_id_in_official_skill_payload",
+    "all_attack_json": {
+      "api_symbol": "AllAttack",
+      "bytes": 206848,
+      "producer_input_ids": [
+        "official_cg_api_py",
+        "official_cg_sim_py",
+        "official_cg_dll"
+      ],
+      "raw_sha256": "EA1E10F6F031FC973E16F4B5DAFCD9CF116AAD2FAB7A82723E693E8DD9EA00E5",
+      "record_count": 1556
+    },
+    "all_card_json": {
+      "api_symbol": "AllCard",
+      "bytes": 461443,
+      "producer_input_ids": [
+        "official_cg_api_py",
+        "official_cg_sim_py",
+        "official_cg_dll"
+      ],
+      "raw_sha256": "D7E29C6284BDB4D3A1EAABC38C247A1522F6E924AD3F81B569AA6D97FD49C80C",
+      "record_count": 1267
+    },
+    "attack_owner_derivation": "unique ordered membership in AllCard.attacks, cross-checked against the complete AllAttack attackId set",
+    "native_snapshot_platform": "Windows x86_64 development oracle only"
+  },
+  "inputs": [
+    {
+      "bytes": 359151,
+      "id": "official_en_card_data_csv",
+      "path": "EN_Card_Data.csv",
+      "raw_sha256": "A0EA63CF7ADCB65D35436CE0EB390DE6E2E35654A7C67C065A45F4ABAA00F373",
+      "role": "official_english_printing_source",
+      "root_id": "official_bundle"
+    },
+    {
+      "bytes": 26933,
+      "id": "official_cg_api_py",
+      "path": "sample_submission/sample_submission/cg/api.py",
+      "raw_sha256": "593F1298E52A635F90F8F505A52113E9AF114F444C293404E37906F18EE06CED",
+      "role": "official_native_api_definition",
+      "root_id": "official_bundle"
+    },
+    {
+      "bytes": 2273,
+      "id": "official_cg_sim_py",
+      "path": "sample_submission/sample_submission/cg/sim.py",
+      "raw_sha256": "1555F57F5D22BF4C09D70E0E667A916E575E68C9DD1DE9EAD34BA5E7E4968655",
+      "role": "official_native_loader_and_GameInitialize_definition",
+      "root_id": "official_bundle"
+    },
+    {
+      "bytes": 1525248,
+      "id": "official_cg_dll",
+      "path": "sample_submission/sample_submission/cg/cg.dll",
+      "raw_sha256": "A3A401D0F5CCC3474B9C8A7A2431920C4B728D28105A510AA6927AD6283E5CF7",
+      "role": "official_native_identity_snapshot_producer",
+      "root_id": "official_bundle"
+    },
+    {
+      "bytes": 8427,
+      "id": "official_api_h",
+      "path": "ptcg_engine/ptcgProgram 22/Api.h",
+      "raw_sha256": "786ACAE884631BDCBAB0311471316BC75D62ACB465B8011BF09DAD05628BCAFD",
+      "role": "official_card_attack_master_semantics",
+      "root_id": "official_bundle"
+    },
+    {
+      "bytes": 9993,
+      "id": "official_to_json_h",
+      "path": "ptcg_engine/ptcgProgram 22/ToJson.h",
+      "raw_sha256": "84EE63939863493520EBE29E8CA717217EBF90191829EA80D1349942AA867602",
+      "role": "official_wire_identity_semantics",
+      "root_id": "official_bundle"
+    },
+    {
+      "bytes": 312,
+      "id": "official_marnie_deck",
+      "path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/deck.csv",
+      "raw_sha256": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF",
+      "role": "source_locked_candidate_official_deck",
+      "root_id": "ptcgabc"
+    },
+    {
+      "bytes": 13723,
+      "canonical_json_v1_sha256": "CB2FD50F40D75BDD9E38B826580A516BDCE7C51B17A43C63CE58E0CC19127CAB",
+      "id": "local_800018501_deck",
+      "path": "data/bundled_user/decks/800018501.json",
+      "raw_sha256": "8E28C31BE70AB2971EAED9AAB8C6A2D7A3412A95E0E335A702C1F13D547B805F",
+      "role": "source_locked_candidate_local_deck_non_exportable",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 912,
+      "canonical_json_v1_sha256": "B29AF1051D130851567F72BA2759A71B9BF51405DDF15305645B3C0BFF218084",
+      "id": "local_exact_printing_CSVE1C_DAR",
+      "path": "data/bundled_user/cards/CSVE1C_DAR.json",
+      "raw_sha256": "B86CF49A7890C45951CDB80C87BC75F0392812C5370DA66866FCC979DC79CAB2",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1496,
+      "canonical_json_v1_sha256": "6342EEAB3468FF43718D841C9DD55E750F0FFA27ECB8622FD5478AA820AFDD95",
+      "id": "local_exact_printing_CSV7C_059",
+      "path": "data/bundled_user/cards/CSV7C_059.json",
+      "raw_sha256": "042936F1770BD8B9B9A06EDFA28DE212CA04A0D5022E1EB8B915F705323B2499",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1686,
+      "canonical_json_v1_sha256": "8540B67BA8C3F5D45AC0F9E372A7C3B7BDCA7F3F050D4159D704C08E18526A8F",
+      "id": "local_exact_printing_CSV8C_094",
+      "path": "data/bundled_user/cards/CSV8C_094.json",
+      "raw_sha256": "9EEDD84B0FDA69DFBED0A32C0321C2E4B9A8A4B6C905D22F3EB8FEBBAB56C2A1",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1700,
+      "canonical_json_v1_sha256": "D7259EED7B9B583DFF95AC92D7CF1E258B84B1F678F21C1743563AC03929C733",
+      "id": "local_exact_printing_LEN_DRI_134",
+      "path": "data/bundled_user/cards/LEN_DRI_134.json",
+      "raw_sha256": "7A09714B9835766BF5BAC71C0D2FEC1735E908D97980E3E06FBDBCE39B1D27E2",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1497,
+      "canonical_json_v1_sha256": "651B012760D24BBC2E09BCC2A4A1F5010AEB595B4C98046246CC669C2362E824",
+      "id": "local_exact_printing_LEN_DRI_135",
+      "path": "data/bundled_user/cards/LEN_DRI_135.json",
+      "raw_sha256": "1BD94CB5EAC1EA0021F423A07A23508059E4BCEAB288B90620D71B51F63706C4",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 2788,
+      "canonical_json_v1_sha256": "A041E7168A5CA50C82E76DDBA0CEC6F2C7F66C34593B4D6A9A8C68690664021A",
+      "id": "local_exact_printing_LEN_DRI_136",
+      "path": "data/bundled_user/cards/LEN_DRI_136.json",
+      "raw_sha256": "5EFA9B7F30F3ADA7DF097D68A6D7851553E9C3E5490406239DA2434406716D3C",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1167,
+      "canonical_json_v1_sha256": "DE4487B0030DEBAFE37303E51E978E3FA5C0C09BCADDD8245B365F2ED988ED94",
+      "id": "local_exact_printing_CSV8C_173",
+      "path": "data/bundled_user/cards/CSV8C_173.json",
+      "raw_sha256": "4FF6B61A942B6D7023AC4FEB149E701ACCC70F556F0F53B8CBD69227E26FE3EE",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1008,
+      "canonical_json_v1_sha256": "FB05919614D31D6362E7CBCDDCB7137EC1EC2AB160B4D20FA8E0634F3E2A0AB2",
+      "id": "local_exact_printing_CSV8C_183",
+      "path": "data/bundled_user/cards/CSV8C_183.json",
+      "raw_sha256": "713F2B15DED2F144E562667A5B7AC853E6770DDA3616934882664BF67D9AA457",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    },
+    {
+      "bytes": 1427,
+      "canonical_json_v1_sha256": "28079978B465F21F50CE9FDDA8B7EB9B6406C409F29BDCDC9D67E747FEAF3E1B",
+      "id": "local_exact_printing_LEN_DRI_169",
+      "path": "data/bundled_user/cards/LEN_DRI_169.json",
+      "raw_sha256": "486CEC705A0DAB6D855C938CF43291ECBCFD36C646F105D129F5E549B8BD3642",
+      "role": "reviewed_exact_local_printing_source",
+      "root_id": "ptcgdap"
+    }
+  ],
+  "official_bundle": {
+    "file_count": 60,
+    "manifest_path": "official_data/kaggle_bundle/competition_files.sha256.json",
+    "manifest_raw_sha256": "9728A4409F2D8378F161E6BF33A871186C583CEAD3222372A5C4E092C5CB356C",
+    "role": "read_only_development_oracle_not_runtime_payload",
+    "total_bytes": 327589562
+  },
+  "schema_version": 1,
+  "source_lock": {
+    "canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+    "lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1"
+  }
+}

@@ -5,7 +5,7 @@ extends BaseEffect
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	if BenchLimit.is_bench_full(state, player):
 		return []
@@ -23,7 +23,10 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		1,
 		1,
-		{"allow_cancel": true}
+		{
+			"allow_cancel": true,
+			"ucis_context_name": "TO_BENCH",
+		}
 	)]
 
 
@@ -48,7 +51,7 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_basic_targets(player).is_empty()
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if not should_preview_empty_search_deck(resolved_context):
 		return []
 	var player: PlayerState = state.players[card.owner_index]

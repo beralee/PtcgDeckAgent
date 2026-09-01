@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-engine-decision-port-p3-wp1-v1",
+  "mode": "shadow_snapshot_only",
+  "supported_engine_option_types": [
+    3,
+    7,
+    13,
+    14,
+    15
+  ],
+  "option_shapes": {
+    "3": [
+      "type"
+    ],
+    "7": [
+      "type",
+      "index"
+    ],
+    "13": [
+      "type",
+      "local_attack_index"
+    ],
+    "14": [
+      "type"
+    ],
+    "15": [
+      "type"
+    ]
+  },
+  "reference_rules": {
+    "15": "exact CardInstance reference required",
+    "3": "reference forbidden",
+    "7": "reference forbidden",
+    "13": "reference forbidden",
+    "14": "reference forbidden",
+    "deck_context_effect": "exact CardInstance references when present",
+    "storage": "weak exact-object binding; never serialized"
+  },
+  "generation_rules": {
+    "match_generation": "positive exact safe integer fixed for port lifetime",
+    "decision_generation": "positive exact safe integer and strictly increasing",
+    "replacement": "a newer accepted publish invalidates every older snapshot"
+  },
+  "hash_profile": {
+    "algorithm": "SHA-256",
+    "canonicalization": "canonical_json_v1",
+    "source_prefix_utf8_hex": "5054434744415000454E47494E455F4445434953494F4E5F534F555243455F563100",
+    "snapshot_prefix_utf8_hex": "5054434744415000454E47494E455F4445434953494F4E5F534E415053484F545F563100",
+    "authority": "audit_only_not_binding_or_execution_authority"
+  },
+  "limits": {
+    "max_options": 256,
+    "max_deck_references": 120,
+    "max_total_references": 384
+  },
+  "error_codes": [
+    "",
+    "decision_contract_error",
+    "invalid_match_generation",
+    "invalid_decision_generation",
+    "invalid_chooser_player_index",
+    "invalid_decision_source",
+    "invalid_select",
+    "invalid_option_source",
+    "invalid_reference",
+    "reference_released",
+    "stale_decision_generation",
+    "stale_match_generation",
+    "source_mutated",
+    "snapshot_not_current",
+    "snapshot_owner_mismatch",
+    "snapshot_integrity_invalid"
+  ],
+  "serialization_contract": {
+    "dto_only": true,
+    "forbidden_fields": [
+      "engine_object",
+      "object_id",
+      "instance_id",
+      "name",
+      "private_command",
+      "callback_binding",
+      "ticket",
+      "_pending_choice",
+      "_dialog_data"
+    ],
+    "consumer_rule": "serialized or schema-valid data never grants decision, window, binding or execution authority"
+  }
+}

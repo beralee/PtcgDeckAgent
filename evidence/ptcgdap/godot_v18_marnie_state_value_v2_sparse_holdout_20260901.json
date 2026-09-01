@@ -1,0 +1,99 @@
+{
+  "document_type": "ptcgdap_marnie_state_value_v2_sparse_holdout_receipt_v1",
+  "schema_version": 1,
+  "created_date": "2026-09-01",
+  "public_only": true,
+  "development_only": true,
+  "production_ready": false,
+  "official_cabt_engine_parity": false,
+  "implementation": {
+    "paired_branch_split": "whole opponent-package + seed + candidate-seat groups are assigned exclusively to fit or model selection",
+    "interaction_distillation": "fit-only normalized orthogonal residual selection over fixed 16, 32, and 64 feature budgets",
+    "held_out_branch_or_benchmark_leakage": false,
+    "deck_number_feature_present": false,
+    "stale_option_index_authority": false,
+    "remote_inference_dependency": false,
+    "python_player_runtime_dependency": false
+  },
+  "training_run": {
+    "run_id": "marnie_state_value_v2_20260901_r18_sparse_holdout",
+    "dataset_sha256": "EA34917845DA281BF6D4E39618C12DCB522AD7E8EBADD3220DD600506E91966D",
+    "manifest_sha256": "C57A80D9E127801FA32198F4F0E431BA4425742F75F9851FA80382F080804077",
+    "model_file_sha256": "5D2D44201F1DCD1E1CB441402823A6839229EEEC18D9BF5349EE17CC50C7CFD9",
+    "selected_candidate": "sparse_16",
+    "authored_exam_accuracy": 1.0,
+    "authored_exam_count": 13,
+    "training_paired_branch_accuracy": 1.0,
+    "training_paired_branch_count": 1,
+    "validation_paired_branch_accuracy": 1.0,
+    "validation_paired_branch_count": 1,
+    "validation_preference_accuracy": 0.9824561403508771,
+    "validation_state_sign_accuracy": 0.746031746031746,
+    "interaction_feature_count": 16,
+    "prior_interaction_feature_count": 460,
+    "minimum_override_margin_utility": 200000
+  },
+  "package": {
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "5.37.0",
+    "archive_sha256": "20C669C87A07A00589654FD559DCB1704696F38E1E1398243B9A138E21B2CC8B",
+    "embedded_model_sha256": "D0D9DBCF348FE70A6ACDBD62CDF6AA10AC86831748FBECC11FB39B51D19B29D5",
+    "execution_trusted": false
+  },
+  "validation": {
+    "python_related": "14/14 passed",
+    "godot_package_suites": "4/4 passed",
+    "godot_package_suite_contents": "package-local hash/load; 103 replay decisions; 2 preservation windows; 2 exact state-conditioned transaction windows",
+    "godot_log_sha256": "472E5C504E0941F768F6ED84F432678B9214793D13A90B82A4057CBA433E982B"
+  },
+  "same_seed_screen": {
+    "opponent_package_version": "1.4.0",
+    "opponent_archive_sha256": "3B4E78A16EB2C238CD9CFB29CA29B8CF44E0D7D99822CA9C1ECD90A2651DFFB8",
+    "seed_range": "4710000-4710009 paired seats",
+    "candidate": {
+      "package_version": "5.37.0",
+      "wins": 9,
+      "games": 20,
+      "win_rate_percent": 45.0,
+      "seat_0": "5/10",
+      "seat_1": "4/10",
+      "clean": true,
+      "report_sha256": "282CFBC1EC59B8AA7576C6E31730A820BB0A823CC62558DA914B09104DC174C8"
+    },
+    "current_champion": {
+      "package_version": "5.21.0",
+      "archive_sha256": "18E7BC3D053B6064771AA9BB2D232FBE87B8D200B2571D54F32248AAC74183E3",
+      "wins": 8,
+      "games": 20,
+      "win_rate_percent": 40.0,
+      "seat_0": "4/10",
+      "seat_1": "4/10",
+      "clean": true,
+      "report_sha256": "93E638DECD888E5A593C854F16DECB46BD5E03A34A396A067BC9A89C7838A368"
+    },
+    "paired_delta_percentage_points": 5.0,
+    "same_outcome_count": 19,
+    "candidate_only_win": {"seed": 4710007, "candidate_seat": 0},
+    "champion_only_win": null,
+    "policy_errors": 0,
+    "invalid_outputs": 0,
+    "fallbacks": 0,
+    "engine_rejections": 0,
+    "predeclared_continue_gate": "candidate at least 12/20",
+    "continue_gate_passed": false
+  },
+  "benchmark_isolation": {
+    "reason": "the shared worktree card JSON files were rewritten from CRLF to LF during the first attempted screen, invalidating signed raw source hashes for both decks",
+    "rejected_attempt": "stopped after game 8 when both packages failed package_deck_unmapped before any policy call",
+    "clean_worktree_head": "225F0076238DBAF4980654751815F926E3BAB547",
+    "candidate_card_raw_hash_mismatches": 0,
+    "opponent_card_raw_hash_mismatches": 0,
+    "unrelated_shared_worktree_changes_reverted": false
+  },
+  "promotion": {
+    "eligible": false,
+    "decision": "retain_5_21_as_current_benchmark_champion; keep_5_37_as_development_candidate",
+    "reason": "5.37 led the champion by one game on the same 20-game screen but failed the predeclared 12/20 continuation gate; no 100-game promotion confirmation was started",
+    "claimed_stable_win_rate_lift_percentage_points": null
+  }
+}

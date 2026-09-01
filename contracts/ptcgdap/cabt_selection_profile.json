@@ -1,0 +1,395 @@
+{
+  "schema_version": 1,
+  "profile_id": "cabt_selection_profile_v1",
+  "status": "offline_shadow",
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "parent_contract": {
+    "contract_id": "ptcgdap-cabt-contract-p1-wp2-v1",
+    "canonical_sha256": "A9BD1BBB725FF002DCE5BF60043AD62AC078EC07E2FDB772ED394AC5FA3EE6F3"
+  },
+  "artifact_serialization": {
+    "profile": "canonical_json_v1",
+    "allowed_values": "object, list, string, integer, boolean, null",
+    "floats": "forbidden; non-JSON runtime values and float fault cases use typed descriptors",
+    "digest_ownership": "this artifact embeds neither its own digest nor a future contract-bundle digest; an external exact artifact set owns both bindings"
+  },
+  "dependencies": {
+    "window_schema": "contracts/ptcgdap/cabt_selection_window.schema.json",
+    "enum_snapshot": "contracts/ptcgdap/cabt_enum_snapshot.json",
+    "option_sparse_shapes": "contracts/ptcgdap/cabt_option_sparse_shapes.json",
+    "typed_view_profile": "contracts/ptcgdap/cabt_typed_view_profile.json",
+    "tree_hash_profile": "contracts/ptcgdap/cabt_tree_hash_profile.json",
+    "conformance_vectors": "contracts/ptcgdap/cabt_selection_conformance_vectors.json"
+  },
+  "input_authority": {
+    "accepted_public_hash_authorities": [
+      "firewall_accepted",
+      "conformance_fixture"
+    ],
+    "firewall_accepted": "production authority supplied only after the allow-list public firewall accepted the projection",
+    "conformance_fixture": "offline test authority; forbidden as a production substitute for firewall acceptance",
+    "all_other_authorities": "reject",
+    "public_observation_hash": "exact uppercase 64-character SHA-256 hex string",
+    "private_hashes": "raw_private_hash, token_free_callback_hash, callback_binding_hash, Search tokens, and private object identities are forbidden from builder input, window payload, fingerprints, policy input, and public output",
+    "chooser_player_index": "exact JSON/runtime integer 0 or 1; booleans and implicit numeric coercions are rejected"
+  },
+  "decision_states": {
+    "policy_allowed": "a window exists, structural/cardinality checks passed, all interpreted enums are official-known, and policy output may be validated",
+    "fallback_only": "a window exists and deterministic fallback is legal, but at least one current selection enum has unknown semantics; policy output is ignored",
+    "reject": "no window exists and no index output may be fabricated because public authority, structure, types, additive-key isolation, or cardinality is invalid"
+  },
+  "exact_runtime_types": {
+    "integer": "exact runtime integer; bool, float, numeric string, and implicit coercions are rejected. Language-specific integer subtypes are tested by that binding and are not encoded as shared JSON values",
+    "list": "Python type(value) is list and Godot typeof(value) is TYPE_ARRAY; tuple and other iterables are rejected",
+    "object": "exact JSON object/Dictionary with exact JSON string keys",
+    "hash_string": "exact runtime string matching uppercase SHA-256; StringName and implicit conversion are rejected",
+    "safe_integer_range": {
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "select_contract": {
+    "required_keys": [
+      "type",
+      "context",
+      "minCount",
+      "maxCount",
+      "remainDamageCounter",
+      "remainEnergyCost",
+      "option",
+      "deck",
+      "contextCard",
+      "effect"
+    ],
+    "additional_keys": "reject",
+    "raw_integer_keys": [
+      "type",
+      "context",
+      "minCount",
+      "maxCount",
+      "remainDamageCounter",
+      "remainEnergyCost"
+    ],
+    "option": "exact list preserving official order",
+    "deck": "null or exact ordered list of public Card objects authorized by this selection",
+    "contextCard": "null or exact public Card object",
+    "effect": "null or exact public Card object",
+    "card_shape": {
+      "required_keys": [
+        "id",
+        "serial",
+        "playerIndex"
+      ],
+      "additional_keys": "reject",
+      "integer_keys": [
+        "id",
+        "serial",
+        "playerIndex"
+      ],
+      "positive_integer_keys": [
+        "id"
+      ],
+      "player_index_values": [
+        0,
+        1
+      ]
+    },
+    "cardinality": "require exact integers and 0 <= minCount <= maxCount <= len(option); any violation is reject",
+    "immutability": "deep-copy caller input; getters and serialized views must not expose mutable aliases",
+    "unknown_additive_public_key": "reject at select, Option, Card, and every nested public object boundary; do not copy the unknown key or value into the window, any hash input, or diagnostics",
+    "unknown_additive_diagnostic": "emit only the stable parent JSON pointer and reason code unknown_public_key; never echo the unknown child key name or value"
+  },
+  "option_contract": {
+    "type_key": "required exact safe integer",
+    "official_field_order": [
+      "type",
+      "number",
+      "area",
+      "index",
+      "playerIndex",
+      "toolIndex",
+      "energyIndex",
+      "count",
+      "inPlayArea",
+      "inPlayIndex",
+      "attackId",
+      "cardId",
+      "serial",
+      "specialConditionType"
+    ],
+    "known_type_rule": "compare the exact present key set with that raw OptionType's locked sparse shape; exact match is policy-eligible, while missing expected keys, explicit null, or additional already-known official-universe keys preserve the raw option and force fallback_only",
+    "unknown_type_rule": "retain only already-known official field names and mark fallback_only; any new field name is an additive public key and rejects the build",
+    "field_presence": "retain every present official field including explicit null; do not synthesize absent fields",
+    "field_values": "all present non-type official fields are exact safe integers or null; a present non-null cardId is additionally required to be positive",
+    "known_sparse_fields_other_than_type": "absence remains part of the raw authority and is never filled with null; any key-set drift from the locked official writer shape forces fallback_only but retains enough option-count authority for deterministic legal indexes",
+    "known_enum_locations": {
+      "type": "OptionType",
+      "area": "AreaType",
+      "inPlayArea": "AreaType",
+      "specialConditionType": "SpecialConditionType"
+    },
+    "unknown_enum_semantics": "preserve the raw integer and mark fallback_only; do not map it to an existing name",
+    "locked_engine_only_enum_semantics": "preserve the raw integer and mark fallback_only because it is not official SDK-known selection semantics",
+    "reorder_rule": "any option reorder creates a distinct window ID and requires fresh indexes/fingerprints"
+  },
+  "hash_contract": {
+    "canonical_json": "RFC 8785 JCS using the bounded I-JSON rules and exact runtime string requirements from cabt_tree_hash_v1",
+    "digest": "SHA-256 over prefix bytes followed immediately by canonical JSON bytes; output uppercase hexadecimal",
+    "profiles": {
+      "cabt_selection_window_v1": {
+        "prefix_utf8_hex": "5054434744415000434142545F53454C454354494F4E5F57494E444F575F563100",
+        "payload": {
+          "chooser_player_index": "exact raw integer",
+          "public_observation_hash": "accepted public hash",
+          "select": "exact validated raw SelectData tree with official option order and missing/null distinction"
+        },
+        "excluded": [
+          "public_hash_authority label",
+          "known enum names",
+          "decision_state",
+          "fallback reasons",
+          "option fingerprints",
+          "source paths",
+          "private callback binding hash",
+          "Search token or presence marker",
+          "private object identity"
+        ]
+      },
+      "cabt_option_fingerprint_v1": {
+        "prefix_utf8_hex": "5054434744415000434142545F4F5054494F4E5F46494E4745525052494E545F563100",
+        "payload": {
+          "window_id": "cabt_selection_window_v1 digest",
+          "public_observation_hash": "accepted public hash",
+          "option_index": "raw zero-based official position",
+          "select_type_raw": "raw SelectType integer",
+          "select_context_raw": "raw SelectContext integer",
+          "option": "exact raw sparse Option object, including every present null and excluding every missing field",
+          "context_card": "exact raw public Card object or null",
+          "effect": "exact raw public Card object or null"
+        },
+        "excluded": [
+          "known enum names",
+          "semantic equivalence labels",
+          "fingerprint hash itself",
+          "private callback binding hash",
+          "private object identity"
+        ]
+      },
+      "cabt_initial_deck_v1": {
+        "prefix_utf8_hex": "5054434744415000434142545F494E495449414C5F4445434B5F563100",
+        "payload": {
+          "card_ids": "exact ordered 60-element positive integer sequence"
+        },
+        "excluded": [
+          "display names",
+          "local deck IDs",
+          "local printing guesses",
+          "source path",
+          "hash itself"
+        ]
+      }
+    }
+  },
+  "fingerprint_contract": {
+    "count": "exactly one fingerprint per option",
+    "order": "fingerprint array order equals official option order",
+    "identity": "option position and exact cardId/serial values remain distinct even if display semantics appear equal",
+    "purpose": "window-scoped audit and binding identity only; policy still returns the official index"
+  },
+  "sanitizer_contract": {
+    "input": "a policy proposal against one policy_allowed immutable window",
+    "container": "exact list only",
+    "elements": "exact integers only",
+    "cardinality": "min_count <= len(proposal) <= max_count",
+    "range": "0 <= each index < option_count",
+    "uniqueness": "no repeated index",
+    "order": "preserve accepted policy order exactly; never sort or deduplicate",
+    "atomic_failure": "on any invalid element or property discard the entire proposal; do not retain a legal prefix or subset",
+    "fallback_only_window": "policy is not called or its result is ignored; resolve through deterministic fallback",
+    "reject_window": "cannot be sanitized because no window exists"
+  },
+  "policy_outcomes": [
+    "returned",
+    "exception",
+    "timeout",
+    "unavailable"
+  ],
+  "fallback_contract": {
+    "input_authority": "the same immutable current public window only",
+    "forbidden_inputs": "hidden state, raw GameState, private replay, private callback hash, legacy strategy, stale indexes, prior scores, RNG, network, external compute",
+    "branch_order": [
+      {
+        "branch": "optional_zero",
+        "condition": "min_count == 0",
+        "indexes": []
+      },
+      {
+        "branch": "forced_all",
+        "condition": "min_count == max_count == option_count",
+        "indexes": "all indexes 0 through option_count-1 in official order"
+      },
+      {
+        "branch": "first_minimum",
+        "condition": "all other structurally valid windows",
+        "indexes": "first min_count indexes in official order"
+      }
+    ],
+    "invalid_policy_output": "discard the whole proposal and execute the branch result",
+    "fault_outcome": "exception, timeout, and unavailable execute the branch result",
+    "postcondition": "the result is a fresh legal list[int] for this exact window"
+  },
+  "result_serialization_contract": {
+    "scope": "SelectionIssue, WindowBuildResult, SelectionValidation, SelectionResolution, PinnedDeckBuildResult, and InitialDeckResolution public dictionaries are audit and cross-runtime conformance DTOs only.",
+    "not_authority": "A serialized dictionary, a JSON Schema pass, or a caller-constructed result object never authorizes an action, window, pinned deck, or engine execution.",
+    "owner_provenance": "Factory seals, owner registries, sealed public snapshots, and context validation detect ordinary construction mistakes, stale bindings, and mutation; they are implementation-integrity checks, not a cryptographic or hostile in-process reflection boundary.",
+    "consumer_rule": "No execution layer may accept a caller-supplied result DTO as authority, even when its integrity validator returns true. A trusted owner call must receive the exact current CabtSelectionWindow or verified pinned authority plus the raw proposal or fault, compute the result in that same call path, and any later engine executor must independently validate its own current-window ticket.",
+    "mutation_rule": "Mutation that diverges from the sealed public snapshot fails integrity; copying fields, a seal, a snapshot, JSON, or a schema-valid dictionary never grants authority, and consumer-context revalidation prevents indexes or Card IDs outside the supplied current authority.",
+    "candidate_reason_code": "A closed diagnostic that explains candidate acceptance or fallback only; it is not deck authority and cannot replace pinned authority validation.",
+    "schema_limit": "JSON Schema closes representable shapes, codes, and branch relationships but cannot prove index bounds against a separate current window or exact Card IDs against a separate pinned authority."
+  },
+  "initial_deck_contract": {
+    "separate_domain": "deck Card IDs are never validated as regular option indexes",
+    "candidate": "when returned, it must be an exact list of exactly 60 exact positive integers matching pinned_card_ids",
+    "pinned_card_ids": "independently validate the exact same shape before comparison",
+    "pinned_deck_hash": "must equal cabt_initial_deck_v1 over pinned_card_ids",
+    "comparison": "candidate must equal pinned_card_ids element-for-element and in order",
+    "duplicates": "allowed because physical deck counts repeat official Card IDs",
+    "candidate_failure": "candidate length/type/value/mismatch, exception, timeout, or unavailable discards the candidate and returns the already verified pinned 60-card list",
+    "pinned_authority_failure": "invalid pinned shape/value/hash rejects explicitly because no independently verified fixed deck exists; never synthesize or guess a deck",
+    "successful_resolution": {
+      "returned_valid_candidate": "return the exact candidate list with owner initial_candidate and reason pinned_deck_accepted",
+      "candidate_or_policy_fault": "return a fresh copy of pinned_card_ids with owner pinned_deck_fallback, reason pinned_deck_fallback, and fallback_branch pinned_verified_deck",
+      "invalid_pinned_authority": "return no deck, owner none, reason invalid_pinned_deck, and explicit reject"
+    },
+    "conformance_authority": {
+      "artifact_id": "candidate_official_marnie_deck",
+      "source_sha256": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF",
+      "scope": "source_locked_conformance_fixture_only",
+      "card_ids": [
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        104,
+        104,
+        112,
+        112,
+        112,
+        112,
+        646,
+        646,
+        646,
+        646,
+        647,
+        647,
+        647,
+        648,
+        648,
+        648,
+        860,
+        860,
+        1079,
+        1079,
+        1079,
+        1080,
+        1086,
+        1086,
+        1086,
+        1086,
+        1097,
+        1097,
+        1097,
+        1122,
+        1137,
+        1152,
+        1152,
+        1152,
+        1152,
+        1182,
+        1182,
+        1219,
+        1219,
+        1219,
+        1219,
+        1227,
+        1227,
+        1227,
+        1227,
+        1231,
+        1259,
+        1259,
+        1259,
+        1259
+      ],
+      "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8",
+      "local_mapping_claim": false,
+      "cabt_exportable_claim": false
+    },
+    "only_accepted_p1_wp3_authority": "the runtime must match artifact_id, source_sha256, scope, exact card_ids sequence, and deck_hash from this normative profile; conformance vectors test the profile but are never production runtime configuration. An arbitrary self-consistent 60-card list or caller-supplied source label is rejected"
+  },
+  "reason_codes": {
+    "build_fallback": [
+      "unknown_select_type",
+      "unknown_select_context",
+      "unknown_option_type",
+      "unknown_option_enum",
+      "sparse_shape_mismatch"
+    ],
+    "build_reject": [
+      "public_hash_authority_required",
+      "invalid_public_observation_hash",
+      "invalid_chooser_player_index",
+      "select_not_object",
+      "unknown_public_key",
+      "missing_select_field",
+      "invalid_select_field_type",
+      "invalid_cardinality",
+      "invalid_option",
+      "invalid_card"
+    ],
+    "sanitize": [
+      "policy_selection_accepted",
+      "window_fallback_only",
+      "proposal_not_list",
+      "proposal_index_not_exact_int",
+      "proposal_cardinality",
+      "proposal_index_out_of_range",
+      "proposal_duplicate_index"
+    ],
+    "resolution": [
+      "policy_selection_accepted",
+      "window_fallback_only",
+      "invalid_policy_output",
+      "policy_exception",
+      "policy_timeout",
+      "policy_unavailable"
+    ],
+    "pinned_deck_build": [
+      "pinned_deck_accepted",
+      "invalid_pinned_deck"
+    ],
+    "initial_deck_resolution": [
+      "pinned_deck_accepted",
+      "pinned_deck_fallback",
+      "invalid_pinned_deck"
+    ],
+    "initial_deck_candidate": [
+      "pinned_deck_accepted",
+      "invalid_pinned_deck",
+      "deck_not_list",
+      "deck_cardinality",
+      "deck_card_not_exact_int",
+      "deck_card_not_positive",
+      "deck_mismatch",
+      "deck_exception",
+      "deck_timeout",
+      "deck_unavailable"
+    ]
+  }
+}

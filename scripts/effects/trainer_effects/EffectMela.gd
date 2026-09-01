@@ -10,7 +10,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return _get_fire_energy(player).size() >= 1 and not player.get_all_pokemon().is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var pokemon_items: Array = player.get_all_pokemon()
 	var pokemon_labels: Array[String] = []

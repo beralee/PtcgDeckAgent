@@ -6,6 +6,12 @@ const AIOpponentScript := preload("res://scripts/ai/AIOpponent.gd")
 const GameStateClonerScript := preload("res://scripts/ai/GameStateCloner.gd")
 const GoalEvaluatorScript := preload("res://scripts/training/DeckTrainingGoalEvaluator.gd")
 const HeadlessMatchBridgeScript := preload("res://scripts/ai/HeadlessMatchBridge.gd")
+
+
+class ProofPromptStrategy extends RefCounted:
+	pass
+
+
 const ProofCertificateScript := preload("res://scripts/training/proof/DeckTrainingProofCertificate.gd")
 const ScenarioStateSnapshotScript := preload("res://scripts/engine/scenario/ScenarioStateSnapshot.gd")
 
@@ -292,7 +298,7 @@ func _execute_munkidori(gsm: GameStateMachine, step: Dictionary) -> Dictionary:
 		bridge.bind(null)
 		bridge.free()
 		return _action_result(false, "munkidori")
-	var resolved := _resolve_bound_bridge_prompts(bridge)
+	var resolved := _resolve_bound_bridge_prompts(bridge, gsm)
 	bridge.bind(null)
 	bridge.free()
 	return resolved
@@ -309,7 +315,7 @@ func _execute_self_ko(gsm: GameStateMachine, step: Dictionary) -> Dictionary:
 		bridge.bind(null)
 		bridge.free()
 		return _action_result(false, "self_ko")
-	var resolved := _resolve_bound_bridge_prompts(bridge)
+	var resolved := _resolve_bound_bridge_prompts(bridge, gsm)
 	bridge.bind(null)
 	bridge.free()
 	return resolved
@@ -387,7 +393,7 @@ func _execute_attack(gsm: GameStateMachine, step: Dictionary, player_index: int 
 		bridge.bind(null)
 		bridge.free()
 		return _action_result(false, "attack")
-	var resolved := _resolve_bound_bridge_prompts(bridge)
+	var resolved := _resolve_bound_bridge_prompts(bridge, gsm)
 	bridge.bind(null)
 	bridge.free()
 	return resolved
@@ -420,7 +426,7 @@ func _execute_granted_attack(gsm: GameStateMachine, step: Dictionary) -> Diction
 		bridge.bind(null)
 		bridge.free()
 		return _action_result(false, "granted_attack")
-	var resolved := _resolve_bound_bridge_prompts(bridge)
+	var resolved := _resolve_bound_bridge_prompts(bridge, gsm)
 	bridge.bind(null)
 	bridge.free()
 	return resolved
@@ -435,20 +441,31 @@ func _run_fixed_rules_ai_turn(gsm: GameStateMachine, step: Dictionary) -> Dictio
 	var ai := AIOpponentScript.new()
 	ai.configure(1, 3)
 	ai.decision_runtime_mode = "rules_only"
-	bridge.set_ai_controllers(null, ai)
+	var player_prompt_ai := _make_proof_prompt_ai(0)
+	var opponent_prompt_ai := _make_proof_prompt_ai(1)
+	bridge.set_ai_controllers(player_prompt_ai, opponent_prompt_ai)
 	for _step_index: int in 80:
 		if gsm.game_state.current_player_index != 1 or gsm.game_state.is_game_over():
 			break
-		if bridge.has_pending_prompt() and bridge.can_auto_resolve_pending_prompt():
-			if not bridge.resolve_pending_prompt():
+		if bridge.has_pending_prompt():
+			var prompt_handled := false
+			if bridge.can_auto_resolve_pending_prompt():
+				prompt_handled = bridge.resolve_pending_prompt()
+			else:
+				var prompt_owner := bridge.get_pending_prompt_owner()
+				var prompt_ai: AIOpponent = player_prompt_ai if prompt_owner == 0 else opponent_prompt_ai if prompt_owner == 1 else null
+				prompt_handled = prompt_ai != null and prompt_ai.run_single_step(bridge, gsm)
+			if not prompt_handled:
+				var prompt_type := bridge.get_pending_prompt_type()
 				bridge.bind(null)
 				bridge.free()
-				return _action_result(false, "fixed_rules_ai_prompt_rejected")
+				return _action_result(false, "fixed_rules_ai_prompt_rejected:%s" % prompt_type)
 			continue
 		if not ai.run_single_step(bridge, gsm):
+			var stalled_prompt := bridge.get_pending_prompt_type()
 			bridge.bind(null)
 			bridge.free()
-			return _action_result(false, "fixed_rules_ai_stalled:%s" % bridge.get_pending_prompt_type())
+			return _action_result(false, "fixed_rules_ai_stalled:%s" % stalled_prompt)
 	var returned_to_player := gsm.game_state.current_player_index == 0
 	var opponent_attacked := false
 	for action_index: int in range(action_log_start, gsm.action_log.size()):
@@ -465,14 +482,34 @@ func _run_fixed_rules_ai_turn(gsm: GameStateMachine, step: Dictionary) -> Dictio
 	return _action_result(returned_to_player, "fixed_rules_ai_turn")
 
 
-func _resolve_bound_bridge_prompts(bridge: HeadlessMatchBridge) -> Dictionary:
+func _resolve_bound_bridge_prompts(bridge: HeadlessMatchBridge, gsm: GameStateMachine) -> Dictionary:
+	var player_ai := _make_proof_prompt_ai(0)
+	var opponent_ai := _make_proof_prompt_ai(1)
+	bridge.set_ai_controllers(player_ai, opponent_ai)
 	for _index: int in 16:
 		if not bridge.has_pending_prompt():
 			return _action_result(true, "resolve_prompts")
-		if not bridge.can_auto_resolve_pending_prompt() or not bridge.resolve_pending_prompt():
+		var resolved := false
+		if bridge.can_auto_resolve_pending_prompt():
+			resolved = bridge.resolve_pending_prompt()
+		else:
+			var prompt_owner := bridge.get_pending_prompt_owner()
+			var prompt_ai: AIOpponent = player_ai if prompt_owner == 0 else opponent_ai if prompt_owner == 1 else null
+			resolved = prompt_ai != null and prompt_ai.run_single_step(bridge, gsm)
+		if not resolved:
 			var prompt := bridge.get_pending_prompt_type()
 			return _action_result(false, "unresolved_production_prompt:%s" % prompt)
 	return _action_result(false, "production_prompt_loop_exhausted")
+
+
+func _make_proof_prompt_ai(owner_index: int) -> AIOpponent:
+	var ai := AIOpponentScript.new()
+	ai.configure(owner_index, 3)
+	ai.decision_runtime_mode = "rules_only"
+	# Proof prompts historically used the bridge's public, generic handoff order.
+	# Keep that deterministic order while preserving the owning-AI boundary.
+	ai.set_deck_strategy(ProofPromptStrategy.new())
+	return ai
 
 
 func _resolve_slot(player: PlayerState, selector_variant: Variant) -> PokemonSlot:

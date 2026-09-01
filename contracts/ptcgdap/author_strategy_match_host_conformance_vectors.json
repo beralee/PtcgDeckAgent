@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-match-host-as-wp4-v1",
+  "fixture": {
+    "package_path": "tests/ptcgdap/fixtures/author_strategy_packages/as_wp4/00-exact-mapped-shadow.ptcgai",
+    "archive_sha256": "F675B92A05A0B4AE839FC0AC0594613E63C34BAF22DB3C662B3AE467CADD43DE",
+    "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+    "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+    "option_count": 2
+  },
+  "shadow_cases": [
+    {
+      "id": "adapter-prefers-type-two-within-same-tier",
+      "match_id": "as-wp4-adapter",
+      "prompt_id": "main-action",
+      "prompt_generation": 1,
+      "mandatory_indexes": [],
+      "terminal_indexes": [],
+      "base_hard_tiers": [
+        {
+          "index": 0,
+          "tier": [
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "tier": [
+            0
+          ]
+        }
+      ],
+      "base_vetoed_indexes": [],
+      "expected_selected_indexes": [
+        1
+      ],
+      "expected_audit": {
+        "audit_hash": "3E5FE6BD9C1F4BB1CF325368AC3706E90F1B9308C87129263537635193DA7AE2",
+        "authoritative": false,
+        "classic_fallback_used": false,
+        "development_shadow": true,
+        "diagnostic_code": "",
+        "execution_trusted": false,
+        "match_id": "as-wp4-adapter",
+        "package": {
+          "archive_sha256": "F675B92A05A0B4AE839FC0AC0594613E63C34BAF22DB3C662B3AE467CADD43DE",
+          "package_id": "test.fixture.mapped-shadow",
+          "package_version": "1.0.0"
+        },
+        "pins": {
+          "adapter_sha256": "164CC9883B880FC37BDE8A75AA41363A7A84B8BCD39C1206AD96E13EC35636B0",
+          "backend_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+          "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+          "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "config_sha256": "A1808DFDDB064F626EBE40EB051BE89745CD9FDA754737353E78A4A07C123E26",
+          "deck_csv_sha256": "2E4E30D6899CC76A24EB668EA84021EC657BB18C85A1DEF0831E3ED91DDD288F",
+          "deck_manifest_sha256": "FF6D248A351AC7150C3C9CAB42583FFE99F23DFAC992C32E0917D0589A0CD91E",
+          "files_manifest_sha256": "DAF9C02E2E95AFAC60CCEC5D3DBA5BC0DD0B5742D6CF67593360761B33D313F7",
+          "local_deck_mapping_sha256": "B96ACEE7C1E1A202F07CA19792DB73267E85FD90877D30025C6F13F9D64C261C",
+          "manifest_sha256": "8B01CFBB89BF63C33AF0B13BA55297BC00742CD9BAF5E0DB3F05403CC6F4D1F4",
+          "policy_ir_sha256": "D32658D2C7E421D7534AEAAC090D9F2D3DC627DEF59B2CF3454968180C836201",
+          "weights_sha256": null
+        },
+        "profile_id": "ptcgdap-author-strategy-match-host-as-wp4-v1",
+        "prompt_generation": 1,
+        "prompt_id": "main-action",
+        "public_only": true,
+        "schema_version": 1,
+        "selected_indexes": [
+          1
+        ],
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "decision_audit_id": "E598BB876E1E5D21DDB3CC213D31B05504672E8D020A609BA675807F091BF7BB",
+          "orchestration_hash": "D4BBC48FE819B6E348EFE19C497C50B30A01C8B28462D92DBACF53102C1EDAE5",
+          "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+          "trace_hash": "5447C3E1157E4E7ABC6B166F8E514469621796263585E84438FEA3FB37E76330",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "status": "shadow_selected"
+      }
+    },
+    {
+      "id": "base-hard-tier-precedes-adapter",
+      "match_id": "as-wp4-hard-tier",
+      "prompt_id": "main-action",
+      "prompt_generation": 1,
+      "mandatory_indexes": [],
+      "terminal_indexes": [],
+      "base_hard_tiers": [
+        {
+          "index": 0,
+          "tier": [
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "tier": [
+            1
+          ]
+        }
+      ],
+      "base_vetoed_indexes": [],
+      "expected_selected_indexes": [
+        0
+      ],
+      "expected_audit": {
+        "audit_hash": "3E2415B298B494C4FC699A29DFBD2B8DE08C6E21246E970331AEDE11E9BC503D",
+        "authoritative": false,
+        "classic_fallback_used": false,
+        "development_shadow": true,
+        "diagnostic_code": "",
+        "execution_trusted": false,
+        "match_id": "as-wp4-hard-tier",
+        "package": {
+          "archive_sha256": "F675B92A05A0B4AE839FC0AC0594613E63C34BAF22DB3C662B3AE467CADD43DE",
+          "package_id": "test.fixture.mapped-shadow",
+          "package_version": "1.0.0"
+        },
+        "pins": {
+          "adapter_sha256": "164CC9883B880FC37BDE8A75AA41363A7A84B8BCD39C1206AD96E13EC35636B0",
+          "backend_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+          "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+          "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "config_sha256": "A1808DFDDB064F626EBE40EB051BE89745CD9FDA754737353E78A4A07C123E26",
+          "deck_csv_sha256": "2E4E30D6899CC76A24EB668EA84021EC657BB18C85A1DEF0831E3ED91DDD288F",
+          "deck_manifest_sha256": "FF6D248A351AC7150C3C9CAB42583FFE99F23DFAC992C32E0917D0589A0CD91E",
+          "files_manifest_sha256": "DAF9C02E2E95AFAC60CCEC5D3DBA5BC0DD0B5742D6CF67593360761B33D313F7",
+          "local_deck_mapping_sha256": "B96ACEE7C1E1A202F07CA19792DB73267E85FD90877D30025C6F13F9D64C261C",
+          "manifest_sha256": "8B01CFBB89BF63C33AF0B13BA55297BC00742CD9BAF5E0DB3F05403CC6F4D1F4",
+          "policy_ir_sha256": "D32658D2C7E421D7534AEAAC090D9F2D3DC627DEF59B2CF3454968180C836201",
+          "weights_sha256": null
+        },
+        "profile_id": "ptcgdap-author-strategy-match-host-as-wp4-v1",
+        "prompt_generation": 1,
+        "prompt_id": "main-action",
+        "public_only": true,
+        "schema_version": 1,
+        "selected_indexes": [
+          0
+        ],
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "decision_audit_id": "60420C91EDD86DCC875580CD6C0DFC401BA662080DD4F06D51D0FF860796F797",
+          "orchestration_hash": "49E408FB0CED4BE3AE2002A15B2DBD95CEFD1E2D71205DF8EDE547D523178618",
+          "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+          "trace_hash": "C4FB6A1BAF8B58504066E55DBBE4368F9321412C5CD1D1224EAF157B24CE045D",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "status": "shadow_selected"
+      }
+    },
+    {
+      "id": "mandatory-index-precedes-adapter",
+      "match_id": "as-wp4-mandatory",
+      "prompt_id": "mandatory-choice",
+      "prompt_generation": 1,
+      "mandatory_indexes": [
+        0
+      ],
+      "terminal_indexes": [],
+      "base_hard_tiers": [
+        {
+          "index": 0,
+          "tier": [
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "tier": [
+            0
+          ]
+        }
+      ],
+      "base_vetoed_indexes": [],
+      "expected_selected_indexes": [
+        0
+      ],
+      "expected_audit": {
+        "audit_hash": "A7B0938EE13BA3EF0E9A72E3243E54F63444456F7AF3E83077C22F20DA7C2884",
+        "authoritative": false,
+        "classic_fallback_used": false,
+        "development_shadow": true,
+        "diagnostic_code": "",
+        "execution_trusted": false,
+        "match_id": "as-wp4-mandatory",
+        "package": {
+          "archive_sha256": "F675B92A05A0B4AE839FC0AC0594613E63C34BAF22DB3C662B3AE467CADD43DE",
+          "package_id": "test.fixture.mapped-shadow",
+          "package_version": "1.0.0"
+        },
+        "pins": {
+          "adapter_sha256": "164CC9883B880FC37BDE8A75AA41363A7A84B8BCD39C1206AD96E13EC35636B0",
+          "backend_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+          "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+          "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "config_sha256": "A1808DFDDB064F626EBE40EB051BE89745CD9FDA754737353E78A4A07C123E26",
+          "deck_csv_sha256": "2E4E30D6899CC76A24EB668EA84021EC657BB18C85A1DEF0831E3ED91DDD288F",
+          "deck_manifest_sha256": "FF6D248A351AC7150C3C9CAB42583FFE99F23DFAC992C32E0917D0589A0CD91E",
+          "files_manifest_sha256": "DAF9C02E2E95AFAC60CCEC5D3DBA5BC0DD0B5742D6CF67593360761B33D313F7",
+          "local_deck_mapping_sha256": "B96ACEE7C1E1A202F07CA19792DB73267E85FD90877D30025C6F13F9D64C261C",
+          "manifest_sha256": "8B01CFBB89BF63C33AF0B13BA55297BC00742CD9BAF5E0DB3F05403CC6F4D1F4",
+          "policy_ir_sha256": "D32658D2C7E421D7534AEAAC090D9F2D3DC627DEF59B2CF3454968180C836201",
+          "weights_sha256": null
+        },
+        "profile_id": "ptcgdap-author-strategy-match-host-as-wp4-v1",
+        "prompt_generation": 1,
+        "prompt_id": "mandatory-choice",
+        "public_only": true,
+        "schema_version": 1,
+        "selected_indexes": [
+          0
+        ],
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "decision_audit_id": "A213961611BF9B340A088EA5519EC294A99E34B24120EA544CC24FB8AF6EA446",
+          "orchestration_hash": "65CB3F3641A2F346E773F62DB30E7A84465D221C601ADBFA95EBDB8FC2F3F247",
+          "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+          "trace_hash": "2797112A0D1BAD10B0C41D573C45D42421B95F3B52C4B8D5F70E89A2C1CD8DA5",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "status": "shadow_selected"
+      }
+    }
+  ]
+}

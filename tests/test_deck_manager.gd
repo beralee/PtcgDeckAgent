@@ -48,6 +48,17 @@ class FakeDeckShareAdapter:
 		saved_names.append(suggested_name)
 
 
+func test_large_deck_list_render_is_batched_after_the_first_interactive_slice() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var constants: Dictionary = (scene.get_script() as Script).get_script_constant_map()
+	var result := run_checks([
+		assert_true(scene.has_method("_append_deck_list_render_batch"), "DeckManager should render large local libraries over multiple frames"),
+		assert_true(int(constants.get("DECK_LIST_RENDER_BATCH_SIZE", 999)) <= 24, "One frame should not construct every deck row in a large library"),
+	])
+	scene.free()
+	return result
+
+
 func test_deck_manager_uses_hud_visual_theme() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene.call("_apply_hud_theme")

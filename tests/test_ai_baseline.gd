@@ -200,6 +200,13 @@ class EmptyBenchOpeningStrategy extends RefCounted:
 		}
 
 
+class MCTSMultiStepEvaluator extends RefCounted:
+	func evaluate_board(game_state: GameState, player_index: int) -> float:
+		if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+			return 0.0
+		return float(game_state.players[player_index].bench.size()) * 100.0
+
+
 class FakeSendOutInteractionScorer extends RefCounted:
 	func score_delta(_state_features: Array, interaction_vector: Array) -> float:
 		if interaction_vector.size() <= 25:
@@ -3399,6 +3406,7 @@ func test_ai_opponent_mcts_mode_disabled_by_default() -> String:
 func test_ai_opponent_mcts_mode_executes_multi_step_sequence() -> String:
 	var ai := AIOpponentScript.new()
 	ai.configure(1, 1)
+	ai.set_deck_strategy(MCTSMultiStepEvaluator.new())
 	ai.use_mcts = true
 	ai.mcts_config = {
 		"branch_factor": 2,

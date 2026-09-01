@@ -3,10 +3,51 @@ extends TestBase
 
 
 const REGISTRY_SCRIPT = preload("res://scripts/ai/DeckStrategyRegistry.gd")
+const CARD_DATABASE_SCRIPT = preload("res://scripts/autoload/CardDatabase.gd")
 const DECK_ID := 800017280
 const MARNIE_DECK_ID := 800018501
 const DECK_DIR := "res://data/bundled_user/decks"
 const EXPECTED_DELEGATE_PATH := "res://scripts/ai/DeckStrategyV18ArchaludonPoison.gd"
+const LEGACY_POISON_COUNTS := {
+	"CSV9C_136": 4, "CSV9C_138": 3, "CSV6C_095": 2, "CSV9C_127": 2,
+	"CSV2C_105": 2, "CSV9C_078": 1, "CSV8C_135": 1, "151C_151": 1,
+	"CSV8C_199": 4, "CSV3C_123": 2, "CSV1C_121": 2, "CSVH1aC_023": 2,
+	"CSV6C_125": 1, "CSVH1C_043": 4, "CSV1C_112": 4, "CSV2C_113": 3,
+	"CSV8C_183": 3, "CSV6C_115": 2, "CSV8C_176": 1, "CSV1C_111": 1,
+	"CSV6C_118": 3, "CSV8C_187": 2, "CSV7C_200": 3, "CSVE1C_MET": 7,
+}
+
+
+func test_legacy_poison_seed_migrates_but_a_user_edited_variant_does_not() -> String:
+	var bundled: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("%s/%d.json" % [DECK_DIR, DECK_ID]))
+	var legacy := {
+		"id": DECK_ID,
+		"source_provider": "limitless",
+		"source_id": "17280",
+		"deck_name": "18.0 毒桥龙",
+		"variant_name": "18.0 毒桥龙",
+		"total_cards": 60,
+		"strategy": "keep-user-strategy",
+		"cards": _entries_from_counts(LEGACY_POISON_COUNTS),
+	}
+	var edited: Dictionary = legacy.duplicate(true)
+	(edited["cards"][0] as Dictionary)["count"] = int((edited["cards"][0] as Dictionary)["count"]) + 1
+	var migration_db: Node = CARD_DATABASE_SCRIPT.new()
+	var edited_db: Node = CARD_DATABASE_SCRIPT.new()
+	var migrated: bool = bool(migration_db.call("_merge_bundled_deck_migrations", bundled, legacy))
+	var edited_migrated: bool = bool(edited_db.call("_merge_bundled_deck_migrations", bundled, edited))
+	var result: String = run_checks([
+		assert_true(bool(migrated), "The exact previously seeded poison list should migrate on restart"),
+		assert_eq(str(legacy.get("deck_name", "")), "18.0 铝钢龙钢铁防线", "The migrated seed should expose the new deck name"),
+		assert_eq(_dictionary_card_count(legacy, "CSV9C_138"), 4, "The migrated seed should contain four Archaludon ex"),
+		assert_eq(_dictionary_card_count(legacy, "CSV6C_095"), 0, "The migrated seed should remove the symmetric poison package"),
+		assert_eq(str(legacy.get("strategy", "")), "keep-user-strategy", "Migration should preserve unrelated user strategy text"),
+		assert_false(bool(edited_migrated), "A one-count user edit must make the exact seed migration fail closed"),
+		assert_eq(str(edited.get("deck_name", "")), "18.0 毒桥龙", "A user-edited variant must remain untouched"),
+	])
+	migration_db.free()
+	edited_db.free()
+	return result
 
 
 func test_real_deck_anchors_the_complete_archaludon_metal_engine() -> String:
@@ -339,6 +380,27 @@ func _deck_count(deck: DeckData, set_code: String, card_index: String) -> int:
 	for entry: Dictionary in deck.cards:
 		if str(entry.get("set_code", "")) == set_code and str(entry.get("card_index", "")) == card_index:
 			return int(entry.get("count", 0))
+	return 0
+
+func _entries_from_counts(counts: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for raw_uid: Variant in counts:
+		var uid := str(raw_uid)
+		var split := uid.split("_", false, 1)
+		result.append({
+			"set_code": split[0],
+			"card_index": split[1],
+			"count": int(counts[raw_uid]),
+		})
+	return result
+
+
+func _dictionary_card_count(deck: Dictionary, uid: String) -> int:
+	for raw_entry: Variant in deck.get("cards", []):
+		if raw_entry is Dictionary:
+			var entry := raw_entry as Dictionary
+			if "%s_%s" % [entry.get("set_code", ""), entry.get("card_index", "")] == uid:
+				return int(entry.get("count", 0))
 	return 0
 
 

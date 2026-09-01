@@ -1,0 +1,786 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-cabt-tree-hash-conformance-v1",
+  "profile_id": "cabt_tree_hash_v1",
+  "authority": {
+    "canonicalization": "RFC 8785 JSON Canonicalization Scheme (JCS) byte-generation rules on the constrained CABT input profile described by profile_scope",
+    "number_vectors": "RFC 8785 Appendix B, complete Table 1",
+    "domain_contract": "contracts/ptcgdap/cabt_tree_hash_profile.json",
+    "profile_scope": "RFC 8785 canonical output over the CABT profile's I-JSON character subset. Strict JSON bytes never accept a leading UTF-8 BOM. Python integer nodes are additionally restricted to -(2^53-1)..(2^53-1) and are never coerced to binary64."
+  },
+  "search_token_policy": "All non-null Search values in this artifact are synthetic labels; no real search_begin_input token is persisted.",
+  "limits": {
+    "max_input_bytes": 67108864,
+    "max_depth": 128,
+    "max_nodes": 1000000,
+    "max_output_bytes": 67108864,
+    "safe_integer_min": -9007199254740991,
+    "safe_integer_max": 9007199254740991
+  },
+  "domain_prefixes": {
+    "raw_private": "5054434744415000434142545F545245455F484153485F5631007261775F7072697661746500",
+    "token_free_callback": "5054434744415000434142545F545245455F484153485F563100746F6B656E5F667265655F63616C6C6261636B00",
+    "public_observation": "5054434744415000434142545F545245455F484153485F5631007075626C69635F6F62736572766174696F6E00"
+  },
+  "canonicalization_vectors": [
+    {
+      "id": "rfc8785-b-0000000000000000",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "0000000000000000",
+      "expected_canonical_utf8": "0",
+      "comment": "Zero"
+    },
+    {
+      "id": "rfc8785-b-8000000000000000",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "8000000000000000",
+      "expected_canonical_utf8": "0",
+      "comment": "Minus zero"
+    },
+    {
+      "id": "rfc8785-b-0000000000000001",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "0000000000000001",
+      "expected_canonical_utf8": "5e-324",
+      "comment": "Minimum positive number"
+    },
+    {
+      "id": "rfc8785-b-8000000000000001",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "8000000000000001",
+      "expected_canonical_utf8": "-5e-324",
+      "comment": "Minimum negative number"
+    },
+    {
+      "id": "rfc8785-b-7fefffffffffffff",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "7fefffffffffffff",
+      "expected_canonical_utf8": "1.7976931348623157e+308",
+      "comment": "Maximum positive number"
+    },
+    {
+      "id": "rfc8785-b-ffefffffffffffff",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "ffefffffffffffff",
+      "expected_canonical_utf8": "-1.7976931348623157e+308",
+      "comment": "Maximum negative number"
+    },
+    {
+      "id": "rfc8785-b-4340000000000000",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "4340000000000000",
+      "expected_canonical_utf8": "9007199254740992",
+      "comment": "Maximum positive integer-valued binary64 sample"
+    },
+    {
+      "id": "rfc8785-b-c340000000000000",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "c340000000000000",
+      "expected_canonical_utf8": "-9007199254740992",
+      "comment": "Maximum negative integer-valued binary64 sample"
+    },
+    {
+      "id": "rfc8785-b-4430000000000000",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "4430000000000000",
+      "expected_canonical_utf8": "295147905179352830000",
+      "comment": "Approximately 2**68 after binary64 rounding"
+    },
+    {
+      "id": "rfc8785-b-7fffffffffffffff",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "7fffffffffffffff",
+      "expected_error_code": "non_finite_number",
+      "comment": "NaN is forbidden"
+    },
+    {
+      "id": "rfc8785-b-7ff0000000000000",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "7ff0000000000000",
+      "expected_error_code": "non_finite_number",
+      "comment": "Infinity is forbidden"
+    },
+    {
+      "id": "rfc8785-b-44b52d02c7e14af5",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "44b52d02c7e14af5",
+      "expected_canonical_utf8": "9.999999999999997e+22"
+    },
+    {
+      "id": "rfc8785-b-44b52d02c7e14af6",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "44b52d02c7e14af6",
+      "expected_canonical_utf8": "1e+23"
+    },
+    {
+      "id": "rfc8785-b-44b52d02c7e14af7",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "44b52d02c7e14af7",
+      "expected_canonical_utf8": "1.0000000000000001e+23"
+    },
+    {
+      "id": "rfc8785-b-444b1ae4d6e2ef4e",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "444b1ae4d6e2ef4e",
+      "expected_canonical_utf8": "999999999999999700000"
+    },
+    {
+      "id": "rfc8785-b-444b1ae4d6e2ef4f",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "444b1ae4d6e2ef4f",
+      "expected_canonical_utf8": "999999999999999900000"
+    },
+    {
+      "id": "rfc8785-b-444b1ae4d6e2ef50",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "444b1ae4d6e2ef50",
+      "expected_canonical_utf8": "1e+21"
+    },
+    {
+      "id": "rfc8785-b-3eb0c6f7a0b5ed8c",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "3eb0c6f7a0b5ed8c",
+      "expected_canonical_utf8": "9.999999999999997e-7"
+    },
+    {
+      "id": "rfc8785-b-3eb0c6f7a0b5ed8d",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "3eb0c6f7a0b5ed8d",
+      "expected_canonical_utf8": "0.000001"
+    },
+    {
+      "id": "rfc8785-b-41b3de4355555553",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "41b3de4355555553",
+      "expected_canonical_utf8": "333333333.3333332"
+    },
+    {
+      "id": "rfc8785-b-41b3de4355555554",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "41b3de4355555554",
+      "expected_canonical_utf8": "333333333.33333325"
+    },
+    {
+      "id": "rfc8785-b-41b3de4355555555",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "41b3de4355555555",
+      "expected_canonical_utf8": "333333333.3333333"
+    },
+    {
+      "id": "rfc8785-b-41b3de4355555556",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "41b3de4355555556",
+      "expected_canonical_utf8": "333333333.3333334"
+    },
+    {
+      "id": "rfc8785-b-41b3de4355555557",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "41b3de4355555557",
+      "expected_canonical_utf8": "333333333.33333343"
+    },
+    {
+      "id": "rfc8785-b-becbf647612f3696",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "becbf647612f3696",
+      "expected_canonical_utf8": "-0.0000033333333333333333"
+    },
+    {
+      "id": "rfc8785-b-43143ff3c1cb0959",
+      "kind": "ieee754_binary64",
+      "ieee754_hex": "43143ff3c1cb0959",
+      "expected_canonical_utf8": "1424953923781206.2",
+      "comment": "ECMAScript Note 2 round-to-even sample"
+    },
+    {
+      "id": "rfc8785-section-3-2",
+      "kind": "json_tree",
+      "input": {
+        "numbers": [null, null, null, null, null],
+        "string": "€$\u000f\nA'B\"\\\\\"/",
+        "literals": [null, true, false]
+      },
+      "ieee754_patches": [
+        {"pointer": "/numbers/0", "ieee754_hex": "41b3de4355555555"},
+        {"pointer": "/numbers/1", "ieee754_hex": "46293e5939a08cea"},
+        {"pointer": "/numbers/2", "ieee754_hex": "4012000000000000"},
+        {"pointer": "/numbers/3", "ieee754_hex": "3f60624dd2f1a9fc"},
+        {"pointer": "/numbers/4", "ieee754_hex": "3a53ce9a36f23c10"}
+      ],
+      "expected_canonical_utf8": "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"€$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}"
+    },
+    {
+      "id": "rfc8785-utf16-property-order",
+      "kind": "json_tree",
+      "input": {
+        "€": "Euro Sign",
+        "\r": "Carriage Return",
+        "דּ": "Hebrew Letter Dalet With Dagesh",
+        "1": "One",
+        "😀": "Emoji: Grinning Face",
+        "": "Control",
+        "ö": "Latin Small Letter O With Diaeresis"
+      },
+      "expected_canonical_utf8": "{\"\\r\":\"Carriage Return\",\"1\":\"One\",\"\":\"Control\",\"ö\":\"Latin Small Letter O With Diaeresis\",\"€\":\"Euro Sign\",\"😀\":\"Emoji: Grinning Face\",\"דּ\":\"Hebrew Letter Dalet With Dagesh\"}"
+    },
+    {
+      "id": "jcs-string-escaping",
+      "kind": "unicode_codepoints",
+      "input_unicode_codepoints": [0, 8, 9, 10, 12, 13, 15, 31, 34, 92, 47],
+      "expected_canonical_utf8": "\"\\u0000\\b\\t\\n\\f\\r\\u000f\\u001f\\\"\\\\/\""
+    },
+    {
+      "id": "jcs-no-unicode-normalization",
+      "kind": "json_tree",
+      "input": {
+        "é": "NFC",
+        "é": "NFD"
+      },
+      "expected_canonical_utf8": "{\"é\":\"NFD\",\"é\":\"NFC\"}"
+    },
+    {
+      "id": "jcs-recursive-object-sort-array-order",
+      "kind": "json_tree",
+      "input": [
+        {"z": 1, "a": 2},
+        {"b": {"y": 3, "x": 4}, "a": 5}
+      ],
+      "expected_canonical_utf8": "[{\"a\":2,\"z\":1},{\"a\":5,\"b\":{\"x\":4,\"y\":3}}]"
+    },
+    {
+      "id": "jcs-safe-integer-max",
+      "kind": "json_tree",
+      "input": 9007199254740991,
+      "expected_canonical_utf8": "9007199254740991"
+    },
+    {
+      "id": "jcs-safe-integer-min",
+      "kind": "json_tree",
+      "input": -9007199254740991,
+      "expected_canonical_utf8": "-9007199254740991"
+    }
+  ],
+  "domain_hash_vectors": [
+    {
+      "id": "raw-private-search-alpha",
+      "domain": "raw_private",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": "opaque-alpha",
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":1,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":\"opaque-alpha\",\"select\":null,\"step\":1}",
+      "expected_sha256": "2C5261D663C9BD2011DBADFC31166AE4DBB0C4065F6359D875E7ECD9BCA3B037"
+    },
+    {
+      "id": "raw-private-search-beta",
+      "domain": "raw_private",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": "opaque-beta",
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":1,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":\"opaque-beta\",\"select\":null,\"step\":1}",
+      "expected_sha256": "00D46D1A3880248871A8D6554FCDDDA6136F48341D8BECC3BB1E80E66BCD1F18"
+    },
+    {
+      "id": "token-free-search-alpha",
+      "domain": "token_free_callback",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": "opaque-alpha",
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_normalized_input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": {"$ptcgdap_opaque_search_capability_present": true},
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":1,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":{\"$ptcgdap_opaque_search_capability_present\":true},\"select\":null,\"step\":1}",
+      "expected_sha256": "78ACF376F38CF700C7A39C17F680533BD59EDA60F2EF7EEE10B60764F9B1D120"
+    },
+    {
+      "id": "token-free-search-beta",
+      "domain": "token_free_callback",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": "opaque-beta",
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_normalized_input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": {"$ptcgdap_opaque_search_capability_present": true},
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":1,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":{\"$ptcgdap_opaque_search_capability_present\":true},\"select\":null,\"step\":1}",
+      "expected_sha256": "78ACF376F38CF700C7A39C17F680533BD59EDA60F2EF7EEE10B60764F9B1D120"
+    },
+    {
+      "id": "token-free-search-empty-string",
+      "domain": "token_free_callback",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": "",
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_normalized_input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": {"$ptcgdap_opaque_search_capability_present": true},
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":1,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":{\"$ptcgdap_opaque_search_capability_present\":true},\"select\":null,\"step\":1}",
+      "expected_sha256": "78ACF376F38CF700C7A39C17F680533BD59EDA60F2EF7EEE10B60764F9B1D120"
+    },
+    {
+      "id": "token-free-unknown-root-changed",
+      "domain": "token_free_callback",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": "opaque-alpha",
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 2, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_normalized_input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": {"$ptcgdap_opaque_search_capability_present": true},
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 2, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":2,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":{\"$ptcgdap_opaque_search_capability_present\":true},\"select\":null,\"step\":1}",
+      "expected_sha256": "E0340F5BD87A9E70386E6991FC9DB327DDED893FAB2F0AB88EE6146B9D4B8614"
+    },
+    {
+      "id": "token-free-search-null",
+      "domain": "token_free_callback",
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": null,
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_normalized_input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": {"$ptcgdap_opaque_search_capability_present": false},
+        "step": 1,
+        "remainingOverageTime": 600,
+        "futureRoot": {"mode": 1, "nested": {"search_begin_input": "preserve-me"}}
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"futureRoot\":{\"mode\":1,\"nested\":{\"search_begin_input\":\"preserve-me\"}},\"logs\":[],\"remainingOverageTime\":600,\"search_begin_input\":{\"$ptcgdap_opaque_search_capability_present\":false},\"select\":null,\"step\":1}",
+      "expected_sha256": "77D6C08EF6C01806EEE895AE0BD9317292935585C5EBF1176F668BF93B424722"
+    },
+    {
+      "id": "public-projection-from-unknown-mode-1",
+      "domain": "public_observation",
+      "declared_private_source_context": {"futureRoot": {"mode": 1}},
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "step": 1,
+        "remainingOverageTime": 600
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"logs\":[],\"remainingOverageTime\":600,\"select\":null,\"step\":1}",
+      "expected_sha256": "D7618760B722DCC31FEB14B0B1D7469144FE851B7947ECEE66F57ABA2D7A7AA5"
+    },
+    {
+      "id": "public-projection-from-unknown-mode-2",
+      "domain": "public_observation",
+      "declared_private_source_context": {"futureRoot": {"mode": 2}},
+      "input": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "step": 1,
+        "remainingOverageTime": 600
+      },
+      "expected_canonical_utf8": "{\"current\":null,\"logs\":[],\"remainingOverageTime\":600,\"select\":null,\"step\":1}",
+      "expected_sha256": "D7618760B722DCC31FEB14B0B1D7469144FE851B7947ECEE66F57ABA2D7A7AA5"
+    },
+    {
+      "id": "public-key-order-za",
+      "domain": "public_observation",
+      "input": {"z": 1, "a": 2},
+      "expected_canonical_utf8": "{\"a\":2,\"z\":1}",
+      "expected_sha256": "CC2AC5F494D445907C80E36F0FF22D01F101890B873F296B72E98B8D85CDAB3C"
+    },
+    {
+      "id": "public-key-order-az",
+      "domain": "public_observation",
+      "input": {"a": 2, "z": 1},
+      "expected_canonical_utf8": "{\"a\":2,\"z\":1}",
+      "expected_sha256": "CC2AC5F494D445907C80E36F0FF22D01F101890B873F296B72E98B8D85CDAB3C"
+    },
+    {
+      "id": "public-array-order-12",
+      "domain": "public_observation",
+      "input": {"values": [1, 2]},
+      "expected_canonical_utf8": "{\"values\":[1,2]}",
+      "expected_sha256": "E421928FB0101917711EFF4B68008EDB9850BDA0C616952676973A6EAA2AE39A"
+    },
+    {
+      "id": "public-array-order-21",
+      "domain": "public_observation",
+      "input": {"values": [2, 1]},
+      "expected_canonical_utf8": "{\"values\":[2,1]}",
+      "expected_sha256": "F82A4585A0F093FD35523B04B66F0D295728A88B53F539AF9331B03D6E7AE5EF"
+    },
+    {
+      "id": "public-field-missing",
+      "domain": "public_observation",
+      "input": {"a": 1},
+      "expected_canonical_utf8": "{\"a\":1}",
+      "expected_sha256": "43519A3197C7BDA888CC79A8409574071CBD4A9B379E889491940DF8F8CD21FC"
+    },
+    {
+      "id": "public-field-null",
+      "domain": "public_observation",
+      "input": {"a": 1, "b": null},
+      "expected_canonical_utf8": "{\"a\":1,\"b\":null}",
+      "expected_sha256": "8A8499760C75663A7E74732E6B826A2C2903A19F220C743C8FFED4F5DD025147"
+    }
+  ],
+  "relations": [
+    {
+      "kind": "equal_hash",
+      "left": "token-free-search-alpha",
+      "right": "token-free-search-beta",
+      "reason": "Search token content is opaque"
+    },
+    {
+      "kind": "equal_hash",
+      "left": "token-free-search-alpha",
+      "right": "token-free-search-empty-string",
+      "reason": "An empty string still means capability present"
+    },
+    {
+      "kind": "different_hash",
+      "left": "raw-private-search-alpha",
+      "right": "raw-private-search-beta",
+      "reason": "The raw-private domain binds the real token"
+    },
+    {
+      "kind": "different_hash",
+      "left": "token-free-search-alpha",
+      "right": "token-free-unknown-root-changed",
+      "reason": "Additive unknown values remain in the Host-private binding"
+    },
+    {
+      "kind": "different_hash",
+      "left": "token-free-search-alpha",
+      "right": "token-free-search-null",
+      "reason": "Search capability presence is binding data"
+    },
+    {
+      "kind": "equal_hash",
+      "left": "public-projection-from-unknown-mode-1",
+      "right": "public-projection-from-unknown-mode-2",
+      "reason": "The two declared private sources have one identical supplied public projection. This pins only projection-hash identity; projector isolation is separate evidence."
+    },
+    {
+      "kind": "different_hash",
+      "left": "raw-private-search-alpha",
+      "right": "token-free-search-alpha",
+      "reason": "Raw and token-free domains remain separated"
+    },
+    {
+      "kind": "different_hash",
+      "left": "token-free-search-alpha",
+      "right": "public-projection-from-unknown-mode-1",
+      "reason": "Host-private binding and accepted public projection remain separated"
+    },
+    {
+      "kind": "equal_hash",
+      "left": "public-key-order-za",
+      "right": "public-key-order-az",
+      "reason": "Object insertion order is not hash-significant"
+    },
+    {
+      "kind": "different_hash",
+      "left": "public-array-order-12",
+      "right": "public-array-order-21",
+      "reason": "Array order is hash-significant"
+    },
+    {
+      "kind": "different_hash",
+      "left": "public-field-missing",
+      "right": "public-field-null",
+      "reason": "A missing object member differs from an explicit null"
+    }
+  ],
+  "accepted_boundary_vectors": [
+    {
+      "id": "decimal-to-binary64-rounding-below-2e68",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "295147905179352800000.0",
+      "expected_canonical_utf8": "295147905179352800000"
+    },
+    {
+      "id": "valid-escaped-surrogate-pair",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "\"\\ud83d\\ude00\"",
+      "expected_canonical_utf8": "\"😀\""
+    },
+    {
+      "id": "depth-exact-limit",
+      "operation": "canonicalize_tree",
+      "factory": "nested_list_depth_3",
+      "limits": {"max_depth": 3},
+      "expected_canonical_utf8": "[[[0]]]"
+    },
+    {
+      "id": "node-exact-limit",
+      "operation": "canonicalize_tree",
+      "factory": "four_node_tree",
+      "limits": {"max_nodes": 4},
+      "expected_canonical_utf8": "[0,1,2]"
+    },
+    {
+      "id": "object-key-is-not-a-node",
+      "operation": "canonicalize_tree",
+      "factory": "one_member_object",
+      "limits": {"max_nodes": 2},
+      "expected_canonical_utf8": "{\"a\":0}"
+    },
+    {
+      "id": "output-byte-exact-limit",
+      "operation": "canonicalize_tree",
+      "factory": "six_output_bytes",
+      "limits": {"max_output_bytes": 6},
+      "expected_canonical_utf8": "\"abcd\""
+    },
+    {
+      "id": "input-byte-exact-limit",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "{\"a\":1}",
+      "limits": {"max_input_bytes": 7},
+      "expected_canonical_utf8": "{\"a\":1}"
+    }
+  ],
+  "invalid_vectors": [
+    {
+      "id": "duplicate-object-key",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "{\"a\":1,\"a\":2}",
+      "expected_error_code": "duplicate_key"
+    },
+    {
+      "id": "escaped-equivalent-duplicate-object-key",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "{\"a\":1,\"\\u0061\":2}",
+      "expected_error_code": "duplicate_key"
+    },
+    {
+      "id": "utf8-bom-prefix",
+      "operation": "parse_and_canonicalize",
+      "input_utf8_hex": "EFBBBF7B7D",
+      "expected_error_code": "invalid_json"
+    },
+    {
+      "id": "nonstandard-nan-json",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "{\"a\":NaN}",
+      "expected_error_code": "invalid_json"
+    },
+    {
+      "id": "non-finite-nan",
+      "operation": "canonicalize_tree",
+      "factory": "nan",
+      "expected_error_code": "non_finite_number"
+    },
+    {
+      "id": "non-finite-positive-infinity",
+      "operation": "canonicalize_tree",
+      "factory": "positive_infinity",
+      "expected_error_code": "non_finite_number"
+    },
+    {
+      "id": "non-finite-negative-infinity",
+      "operation": "canonicalize_tree",
+      "factory": "negative_infinity",
+      "expected_error_code": "non_finite_number"
+    },
+    {
+      "id": "unsafe-python-integer-positive",
+      "operation": "canonicalize_tree",
+      "factory": "safe_integer_max_plus_one",
+      "expected_error_code": "unsafe_integer"
+    },
+    {
+      "id": "unsafe-python-integer-negative",
+      "operation": "canonicalize_tree",
+      "factory": "safe_integer_min_minus_one",
+      "expected_error_code": "unsafe_integer"
+    },
+    {
+      "id": "lone-high-surrogate-value",
+      "operation": "canonicalize_tree",
+      "factory": "lone_high_surrogate_value",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "escaped-lone-surrogate-json",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "\"\\ud800\"",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "lone-low-surrogate-key",
+      "operation": "canonicalize_tree",
+      "factory": "lone_low_surrogate_key",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "noncharacter-value-fdd0",
+      "operation": "canonicalize_tree",
+      "factory": "noncharacter_value_fdd0",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "noncharacter-key-plane-1",
+      "operation": "canonicalize_tree",
+      "factory": "noncharacter_key_plane_1",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "escaped-noncharacter-json-fffe",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "\"\\ufffe\"",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "escaped-noncharacter-json-10ffff",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "\"\\udbff\\udfff\"",
+      "expected_error_code": "invalid_unicode"
+    },
+    {
+      "id": "list-cycle",
+      "operation": "canonicalize_tree",
+      "factory": "list_cycle",
+      "expected_error_code": "cycle_detected"
+    },
+    {
+      "id": "object-cycle",
+      "operation": "canonicalize_tree",
+      "factory": "object_cycle",
+      "expected_error_code": "cycle_detected"
+    },
+    {
+      "id": "non-string-object-key",
+      "operation": "canonicalize_tree",
+      "factory": "non_string_key",
+      "expected_error_code": "non_string_key"
+    },
+    {
+      "id": "unsupported-sequence-type",
+      "operation": "canonicalize_tree",
+      "factory": "tuple_value",
+      "expected_error_code": "unsupported_type"
+    },
+    {
+      "id": "depth-bound",
+      "operation": "canonicalize_tree",
+      "factory": "nested_list_depth_3",
+      "limits": {"max_depth": 2},
+      "expected_error_code": "depth_limit"
+    },
+    {
+      "id": "node-bound",
+      "operation": "canonicalize_tree",
+      "factory": "four_node_tree",
+      "limits": {"max_nodes": 3},
+      "expected_error_code": "node_limit"
+    },
+    {
+      "id": "output-byte-bound",
+      "operation": "canonicalize_tree",
+      "factory": "six_output_bytes",
+      "limits": {"max_output_bytes": 5},
+      "expected_error_code": "output_size_limit"
+    },
+    {
+      "id": "input-byte-bound",
+      "operation": "parse_and_canonicalize",
+      "input_json_utf8": "{\"a\":1}",
+      "limits": {"max_input_bytes": 6},
+      "expected_error_code": "input_size_limit"
+    },
+    {
+      "id": "unsupported-domain",
+      "operation": "hash_domain",
+      "domain": "not_a_domain",
+      "input": {},
+      "expected_error_code": "unsupported_domain"
+    },
+    {
+      "id": "raw-callback-missing-search",
+      "operation": "hash_domain",
+      "domain": "raw_private",
+      "input": {"select": null, "logs": [], "current": null},
+      "expected_error_code": "invalid_callback"
+    },
+    {
+      "id": "token-free-callback-wrong-search-type",
+      "operation": "hash_domain",
+      "domain": "token_free_callback",
+      "input": {"select": null, "logs": [], "current": null, "search_begin_input": false},
+      "expected_error_code": "invalid_callback"
+    },
+    {
+      "id": "public-projection-search-key",
+      "operation": "hash_domain",
+      "domain": "public_observation",
+      "input": {"safe": {"search_begin_input": null}},
+      "expected_error_code": "public_projection_forbidden_field"
+    },
+    {
+      "id": "public-projection-presence-marker",
+      "operation": "hash_domain",
+      "domain": "public_observation",
+      "input": {"safe": {"$ptcgdap_opaque_search_capability_present": true}},
+      "expected_error_code": "public_projection_forbidden_field"
+    }
+  ]
+}

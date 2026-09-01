@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/public_base_policy.schema.json",
+  "title": "PTCGDAP P4-WP5 public Base policy orchestration request and audit result",
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+      "not": {
+        "pattern": "(?i:private)"
+      }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "index": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 0
+        }
+      ]
+    },
+    "indexArray": {
+      "type": "array",
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/index"
+      }
+    },
+    "tierEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "tier"
+      ],
+      "properties": {
+        "index": {
+          "$ref": "#/$defs/index"
+        },
+        "tier": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/safeInteger"
+          }
+        }
+      }
+    },
+    "orchestrationRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orchestration_id",
+        "proposal_id",
+        "execution_id",
+        "scene_id",
+        "decision_id",
+        "determinism_key",
+        "trace_id",
+        "policy_hash",
+        "mandatory_indexes",
+        "terminal_indexes",
+        "base_hard_tiers",
+        "base_vetoed_indexes"
+      ],
+      "properties": {
+        "orchestration_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "proposal_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "scene_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "decision_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "determinism_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "trace_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "policy_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "mandatory_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "terminal_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "base_hard_tiers": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "$ref": "#/$defs/tierEntry"
+          }
+        },
+        "base_vetoed_indexes": {
+          "$ref": "#/$defs/indexArray"
+        }
+      }
+    },
+    "orchestrationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "orchestration_id",
+        "source",
+        "selected_indexes",
+        "owner_layer",
+        "reason_code",
+        "fallback_tier",
+        "completed_stages",
+        "public_only",
+        "authority",
+        "authoritative",
+        "orchestration_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-public-base-policy-p4-wp5-v1"
+        },
+        "orchestration_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "context_hash",
+            "window_id",
+            "ir_hash",
+            "adapter_hash",
+            "proposal_hash",
+            "execution_hash",
+            "decision_audit_id",
+            "trace_hash",
+            "policy_hash"
+          ],
+          "properties": {
+            "context_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "window_id": {
+              "$ref": "#/$defs/hash"
+            },
+            "ir_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "adapter_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "proposal_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "execution_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "decision_audit_id": {
+              "$ref": "#/$defs/hash"
+            },
+            "trace_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "policy_hash": {
+              "$ref": "#/$defs/hash"
+            }
+          }
+        },
+        "selected_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "owner_layer": {
+          "enum": [
+            "base_graph",
+            "base_fallback"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "policy_selection_accepted",
+            "window_fallback_only",
+            "invalid_policy_output",
+            "policy_exception",
+            "policy_timeout",
+            "policy_unavailable"
+          ]
+        },
+        "fallback_tier": {
+          "enum": [
+            "none",
+            "same_public_window_deterministic"
+          ]
+        },
+        "completed_stages": {
+          "const": [
+            "validate_exact_owners",
+            "propose_public_adapter_hints",
+            "execute_restricted_base_graph",
+            "sanitize_against_exact_current_window",
+            "issue_policy_decision",
+            "issue_strategic_trace",
+            "seal_public_audit_result"
+          ]
+        },
+        "public_only": {
+          "const": true
+        },
+        "authority": {
+          "const": "public_base_policy_orchestration_audit"
+        },
+        "authoritative": {
+          "const": false
+        },
+        "orchestration_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "owner_layer": {
+                "const": "base_graph"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "policy_selection_accepted"
+              },
+              "fallback_tier": {
+                "const": "none"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "owner_layer": {
+                "const": "base_fallback"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fallback_tier": {
+                "const": "same_public_window_deterministic"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/orchestrationRequest"
+    },
+    {
+      "$ref": "#/$defs/orchestrationResult"
+    }
+  ]
+}

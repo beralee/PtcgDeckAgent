@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://scripts/tools/run_ogerpon_author_vs_rule_matrix.gd" type="Script" id="1"]
+
+[node name="OgerponAuthorVsRuleMatrix" type="Control"]
+script = ExtResource("1")

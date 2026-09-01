@@ -2,6 +2,8 @@
 
 extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 
+const UcisCompilerScript = preload("res://scripts/engine/ucis/UcisInteractionCompiler.gd")
+
 func test_battle_scene_earthen_vessel_empty_search_touch_continue_consumes_card() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_active_battle_layout_mode", "portrait")
@@ -1414,10 +1416,13 @@ func test_battle_scene_carmine_click_allows_first_turn_supporter_exception() -> 
 	])
 
 
-func test_battle_scene_rare_candy_switches_from_dialog_to_field_target() -> String:
+func test_battle_scene_rare_candy_uses_one_canonical_evolution_frontier() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
 	gsm.game_state.turn_number = 2
 	battle_scene.set("_gsm", gsm)
 	battle_scene.set("_view_player", 0)
@@ -1454,16 +1459,23 @@ func test_battle_scene_rare_candy_switches_from_dialog_to_field_target() -> Stri
 
 	var effect := EffectRareCandyScript.new()
 	var card := CardInstance.create(_make_trainer_cd("Rare Candy", "Item", ""), 0)
+	card.card_data.effect_id = "ui_test_rare_candy_ucis"
+	gsm.effect_processor.register_effect(card.card_data.effect_id, effect)
+	gsm.game_state.players[0].hand.append(card)
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, gsm.game_state)
 	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, card)
 	var first_field_mode: String = str(battle_scene.get("_field_interaction_mode"))
+	var metadata := UcisCompilerScript.metadata_for_step(steps[0])
 
 	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0]))
 
 	return run_checks([
-		assert_eq(first_field_mode, "", "Rare Candy stage-2 card selection should still use the dialog UI"),
-		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "Rare Candy target Pokemon selection should switch to field slot UI"),
-		assert_eq(str(battle_scene.get("_field_interaction_position")), "top", "Rare Candy should move the field panel upward for own Pokemon targets"),
+		assert_eq(first_field_mode, "", "Rare Candy's compound evolution options should use the dialog UI"),
+		assert_eq(int(metadata.get("context_raw", -1)), 37, "Rare Candy must expose the official EVOLVE context"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "One accepted EVOLVE option should complete the interaction"),
+		assert_eq(basic.pokemon_stack.size(), 2, "The selected EVOLVE option should bind both the Stage 2 card and legal target"),
+		assert_true(basic.get_top_card() == stage2_card, "Rare Candy should evolve the selected Basic with the selected Stage 2 card"),
+		assert_false(stage2_card in gsm.game_state.players[0].hand, "The evolved Stage 2 card should leave the hand"),
 	])
 
 

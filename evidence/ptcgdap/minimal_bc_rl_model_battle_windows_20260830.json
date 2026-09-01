@@ -1,0 +1,551 @@
+{
+	"audit": {
+		"android_ready": false,
+		"archive_sha256": "D4A7BAD9A6C7ECD6837026E090F2FF7CC592D90F1E0DB578968311BAA27BCBA0",
+		"authority_mode": "development_exact_fixture",
+		"cabt_exportable": false,
+		"card_id_domain": "godot_local_card_uid_v1",
+		"classic_fallbacks": 0,
+		"competition_conflict_group": null,
+		"decision_elapsed_usec": [
+			4218,
+			4844,
+			4216,
+			7754,
+			10442,
+			4816,
+			7396,
+			6791,
+			7181,
+			5575,
+			9623,
+			7507,
+			9787,
+			7397,
+			11120,
+			7193,
+			10670,
+			10155,
+			11257,
+			7021,
+			11119,
+			6216,
+			11574,
+			10505,
+			4997,
+			14246,
+			9870,
+			10952,
+			8418,
+			14785,
+			10059,
+			7984,
+			7726,
+			7393,
+			7872,
+			13054,
+			6067,
+			11716,
+			11909,
+			7963,
+			16093,
+			6693,
+			14688,
+			7913,
+			14295,
+			6235,
+			8079,
+			7657,
+			7760,
+			13416,
+			16295,
+			11017,
+			7750,
+			8664,
+			6733
+		],
+		"developer_trace_dropped_records": 0,
+		"developer_trace_enabled": true,
+		"developer_trace_pending_records": 55,
+		"development_execution_only": true,
+		"development_player_authority": true,
+		"device_canary_authority": false,
+		"engine_commits": 42,
+		"engine_rejections": 0,
+		"execution_location": "device_local",
+		"execution_trusted": false,
+		"external_decision_port": false,
+		"external_process_attempts": 0,
+		"invalid_outputs": 0,
+		"last_error_code": "",
+		"learned_model": "none",
+		"learned_model_invoked": false,
+		"legacy_deck_strategy_preferences": false,
+		"macro_preferred_selections": 28,
+		"match_id": "minimal-bc-rl-model-88630",
+		"matched_rule_counts": {
+			"marnie.poffin.play": 14,
+			"marnie.spikemuth.play": 28
+		},
+		"model_artifact_sha256": "0BAF0E2C1E3F92CE65794928419AF321CD75A3BB8400FED11BB99E9C09DCF136",
+		"model_backend": "none",
+		"model_changed_selections": 30,
+		"model_decision_windows": 55,
+		"model_diagnostic_counts": {
+			"model_bypassed_empty_rule_result": 11,
+			"model_bypassed_mandatory": 6
+		},
+		"model_elapsed_usec": [
+			176,
+			90,
+			82,
+			82,
+			84,
+			91,
+			85,
+			81,
+			85,
+			84,
+			86,
+			126,
+			86,
+			82,
+			87,
+			88,
+			86,
+			82,
+			90,
+			82,
+			85,
+			142,
+			84,
+			83,
+			85,
+			89,
+			161,
+			85,
+			83,
+			87,
+			89,
+			81,
+			86,
+			122,
+			90,
+			83,
+			128,
+			83
+		],
+		"model_execution_provider": "CPUExecutionProvider",
+		"model_fallbacks": 0,
+		"model_inference_successes": 38,
+		"model_manifest_sha256": "ABC22B9D43C9B19B47DC64EE264A5FADA2CB737C82B9DA7544039CD5B6C09405",
+		"model_policy_mode": "rules_with_model",
+		"owner_id": null,
+		"owner_kind": null,
+		"package_id": "dev.codex.minimal-bc-rl-marnie",
+		"package_version": "0.1.1",
+		"platform_npc_public_owner": false,
+		"policy_calls": 55,
+		"policy_errors": 0,
+		"policy_executor_kind": "reviewed_restricted_ir_v1",
+		"policy_package_id": "dev.codex.minimal-bc-rl-marnie.restricted-inline-v1",
+		"policy_package_manifest_canonical_sha256": "DA85DCB4EC75ACE46B39809127330BF9D34F770BD7D8579E266048431DD6163D",
+		"policy_package_version": "0.1.1",
+		"policy_successes": 55,
+		"production_ready": false,
+		"profile_id": "ptcgdap-minimal-bc-rl-public-frame-v1",
+		"prompt_counts": {
+			"effect_target": 1,
+			"energy_payment": 1,
+			"main": 32,
+			"mulligan_draw_count": 1,
+			"search": 11,
+			"self_switch": 3,
+			"send_out": 4,
+			"setup_active": 1,
+			"setup_bench": 1
+		},
+		"release_id": null,
+		"remote_inference": false,
+		"research_private_oracle_only": false,
+		"same_window_fallbacks": 0,
+		"schema_version": 1,
+		"seat": 1,
+		"sequence": 55,
+		"signature_key_id": null,
+		"signature_scope": "test_fixture_only",
+		"strategy_id": "codex.minimal-bc-rl-marnie.0.1.1"
+	},
+	"battle": {
+		"failure": "",
+		"model_seat": 1,
+		"rules_seat": 0,
+		"seed": 88630,
+		"steps": 111,
+		"terminal": true,
+		"win_reason": "拿完奖赏卡",
+		"winner_index": 0
+	},
+	"claims": {
+		"android_validated": false,
+		"development_only": true,
+		"external_process_dependency": false,
+		"hidden_state_input": false,
+		"macos_validated": false,
+		"production_ready": false
+	},
+	"decision_trace": {
+		"first_record": {
+			"decision_id": "minimal-bc-rl-model-88630.window.1",
+			"document_type": "decision_window_record_v1",
+			"frame": {
+				"card_id_domain": "godot_local_card_uid_v1",
+				"options": [
+					{
+						"attached_energy_count": null,
+						"attack_index": null,
+						"card_serial": null,
+						"card_uid": null,
+						"energy_count": null,
+						"energy_type_raw": null,
+						"index": 0,
+						"kind": "mulligan_draw_count",
+						"option_card_uid": null,
+						"option_fingerprint": "90119F64667E009397174C3E6734EF8B595A73BF73A1AB787973953EED588150",
+						"option_number": 0,
+						"option_player_index": 1,
+						"option_type_raw": 0,
+						"source_uid": null,
+						"special_condition_type": null,
+						"tags": [],
+						"target_prize_value": null,
+						"target_remaining_hp": null,
+						"target_uid": null
+					},
+					{
+						"attached_energy_count": null,
+						"attack_index": null,
+						"card_serial": null,
+						"card_uid": null,
+						"energy_count": null,
+						"energy_type_raw": null,
+						"index": 1,
+						"kind": "mulligan_draw_count",
+						"option_card_uid": null,
+						"option_fingerprint": "292D8E797E39E3D69BD48423A7CEA8B50B739BC8B40A337BFC36D9BE620F1258",
+						"option_number": 1,
+						"option_player_index": 1,
+						"option_type_raw": 0,
+						"source_uid": null,
+						"special_condition_type": null,
+						"tags": [],
+						"target_prize_value": null,
+						"target_remaining_hp": null,
+						"target_uid": null
+					}
+				],
+				"profile_id": "ptcgdap-minimal-bc-rl-public-frame-v1",
+				"prompt_kind": "mulligan_draw_count",
+				"public_state": {
+					"opponent": {
+						"active": [],
+						"bench": [],
+						"deck_count": 53,
+						"discard": [],
+						"hand_count": 7,
+						"prizes_remaining": 0
+					},
+					"phase": "SETUP",
+					"self": {
+						"active": [],
+						"bench": [],
+						"bench_capacity": 5,
+						"deck_count": 53,
+						"discard": [],
+						"hand": [
+							{
+								"local_card_uid": "CSV10C_216",
+								"serial": 114
+							},
+							{
+								"local_card_uid": "CSV9.5C_043",
+								"serial": 115
+							},
+							{
+								"local_card_uid": "CSV7C_059",
+								"serial": 116
+							},
+							{
+								"local_card_uid": "CSV10C_216",
+								"serial": 117
+							},
+							{
+								"local_card_uid": "CSV1C_123",
+								"serial": 118
+							},
+							{
+								"local_card_uid": "CSV10C_146",
+								"serial": 119
+							},
+							{
+								"local_card_uid": "CSV10C_146",
+								"serial": 120
+							}
+						],
+						"prizes_remaining": 0,
+						"turn": {
+							"manual_attachment_available": true,
+							"retreat_available": true,
+							"supporter_available": true
+						}
+					},
+					"turn_number": 0
+				},
+				"schema_version": 1,
+				"seat": 1,
+				"select_semantics": {
+					"max_count": 1,
+					"min_count": 1,
+					"select_context_raw": 38,
+					"select_type_raw": 8
+				},
+				"sequence": 1,
+				"source": {
+					"public_observation_hash": "7574BC2D69BC8F56AEA838D2DFFB1B5E010FC06206B874204852A893D394CE82",
+					"window_id": "5DE58701273160830B447DBD28D9A14B52A1F40514ADBF4F2DDAA47755AE2428"
+				},
+				"strategy_id": "codex.minimal-bc-rl-marnie.0.1.1"
+			},
+			"host": {
+				"accepted_indexes": [
+					0
+				],
+				"accepted_option_fingerprints": [
+					"90119F64667E009397174C3E6734EF8B595A73BF73A1AB787973953EED588150"
+				],
+				"error_code": "",
+				"fallback_used": false,
+				"latency_usec": 7759,
+				"status": "accepted"
+			},
+			"policy": {
+				"base_result": {
+					"adapter_audit": [],
+					"authoritative": false,
+					"execution_hash": "0B12AD9C0D49B01FD2BA45D15979BB7F48B8F42FB573B1D29B1DD38A6EA5F32C",
+					"execution_id": "minimal-bc-rl-model-88630.window.1",
+					"fallback_branch": "same_window_first_min",
+					"node_audit": [
+						{
+							"input_indexes": [
+								0,
+								1
+							],
+							"node_id": "n00",
+							"operator": "legality_guard",
+							"output_indexes": [
+								0,
+								1
+							],
+							"owner": "base"
+						},
+						{
+							"input_indexes": [
+								0,
+								1
+							],
+							"node_id": "n10",
+							"operator": "mandatory_terminal_guard",
+							"output_indexes": [
+								0,
+								1
+							],
+							"owner": "base"
+						},
+						{
+							"input_indexes": [
+								0,
+								1
+							],
+							"node_id": "n20",
+							"operator": "macro_proposal",
+							"output_indexes": [
+								0,
+								1
+							],
+							"owner": "adapter"
+						},
+						{
+							"input_indexes": [
+								0,
+								1
+							],
+							"node_id": "n30",
+							"operator": "hard_tier_filter",
+							"output_indexes": [
+								0,
+								1
+							],
+							"owner": "base"
+						},
+						{
+							"input_indexes": [
+								0,
+								1
+							],
+							"node_id": "n40",
+							"operator": "base_veto",
+							"output_indexes": [
+								0,
+								1
+							],
+							"owner": "base"
+						},
+						{
+							"input_indexes": [
+								0,
+								1
+							],
+							"node_id": "n50",
+							"operator": "deterministic_fallback",
+							"output_indexes": [
+								0
+							],
+							"owner": "base"
+						},
+						{
+							"input_indexes": [
+								0
+							],
+							"node_id": "n60",
+							"operator": "emit_decision",
+							"output_indexes": [
+								0
+							],
+							"owner": "base"
+						}
+					],
+					"profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+					"reason_code": "deterministic_fallback",
+					"schema_version": 1,
+					"selected_indexes": [
+						0
+					],
+					"source": {
+						"context_hash": null,
+						"ir_hash": "05CB8DE5D97860670615CE16F6AE948FE6BF68BBD4CFF73D48A0C449B424C79D",
+						"window_id": "5DE58701273160830B447DBD28D9A14B52A1F40514ADBF4F2DDAA47755AE2428"
+					}
+				},
+				"error_code": "",
+				"macro_proposal_indexes": [],
+				"matched_rule_ids": [],
+				"ok": true,
+				"reported_indexes": [
+					0
+				],
+				"reported_output_type": "Array",
+				"reported_public_observation_hash": "7574BC2D69BC8F56AEA838D2DFFB1B5E010FC06206B874204852A893D394CE82",
+				"reported_window_id": "5DE58701273160830B447DBD28D9A14B52A1F40514ADBF4F2DDAA47755AE2428",
+				"selection_source": "restricted_ir_same_window"
+			},
+			"policy_match_id": "minimal-bc-rl-model-88630",
+			"schema_version": 1
+		},
+		"public_sha256": "65FCA0A7CE44FFD8DE6B3CDB66D93AB40D34C3097E954EEF359779F485378C05",
+		"record_count": 55,
+		"semantic_sha256": "C381EC50FA1F4BD9E54D7B823973079808DA19FFEDBA530D15C5B128E9F22CF1"
+	},
+	"dirty_reasons": [],
+	"document_type": "minimal_ptcgai_bc_rl_real_battle_evidence_v1",
+	"evidence_kind": "windows_godot_native_ort_real_rules_battle",
+	"is_clean": true,
+	"model": {
+		"artifact_sha256": "0BAF0E2C1E3F92CE65794928419AF321CD75A3BB8400FED11BB99E9C09DCF136",
+		"changed_selections": 30,
+		"cpu_only": true,
+		"decision_windows": 55,
+		"diagnostic_counts": {
+			"model_bypassed_empty_rule_result": 11,
+			"model_bypassed_mandatory": 6
+		},
+		"elapsed_usec": [
+			176,
+			90,
+			82,
+			82,
+			84,
+			91,
+			85,
+			81,
+			85,
+			84,
+			86,
+			126,
+			86,
+			82,
+			87,
+			88,
+			86,
+			82,
+			90,
+			82,
+			85,
+			142,
+			84,
+			83,
+			85,
+			89,
+			161,
+			85,
+			83,
+			87,
+			89,
+			81,
+			86,
+			122,
+			90,
+			83,
+			128,
+			83
+		],
+		"execution_provider": "CPUExecutionProvider",
+		"fallbacks": 0,
+		"inference_successes": 38,
+		"manifest_sha256": "ABC22B9D43C9B19B47DC64EE264A5FADA2CB737C82B9DA7544039CD5B6C09405",
+		"remote_inference": false,
+		"rl_scope": "offline_contextual_bandit",
+		"training_method": "bc_rl"
+	},
+	"package": {
+		"archive_sha256": "D4A7BAD9A6C7ECD6837026E090F2FF7CC592D90F1E0DB578968311BAA27BCBA0",
+		"install_source": "user",
+		"package_id": "dev.codex.minimal-bc-rl-marnie",
+		"package_version": "0.1.1"
+	},
+	"replay": {
+		"identity": {
+			"card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+			"error_code": "",
+			"match_id": "minimal-bc-rl-model-88630",
+			"ok": true,
+			"source_authority": "ptcgdap_author_public_owner_v1",
+			"strategy_participant": {
+				"archive_sha256": "D4A7BAD9A6C7ECD6837026E090F2FF7CC592D90F1E0DB578968311BAA27BCBA0",
+				"deck_identity": {
+					"deck_id": "dev.codex.minimal-bc-rl-marnie@0.1.1",
+					"deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD",
+					"domain": "godot_local_card_uid_v1"
+				},
+				"manifest_canonical_sha256": "DA85DCB4EC75ACE46B39809127330BF9D34F770BD7D8579E266048431DD6163D",
+				"package_id": "dev.codex.minimal-bc-rl-marnie",
+				"participant_kind": "strategy_release",
+				"policy_package_sha256": "DA85DCB4EC75ACE46B39809127330BF9D34F770BD7D8579E266048431DD6163D",
+				"release_version": "0.1.1",
+				"strategy_id": "codex.minimal-bc-rl-marnie.0.1.1"
+			}
+		},
+		"public_snapshot_sha256": "EE2B5E6C389003C9948544B795591577999FA4C1F752BF9D84A6EC58C4E5684E"
+	},
+	"schema_version": 1
+}

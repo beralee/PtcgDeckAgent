@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-turn-program-generation-conformance-v1",
+  "cases": [
+    {
+      "case_id": "generated-board-completion-before-nonlethal-attack",
+      "frame": {
+        "schema_version": 2,
+        "profile_id": "ptcgdap-competitive-public-frame-v2",
+        "sequence": 5,
+        "seat": 0,
+        "prompt_kind": "main",
+        "source": {
+          "public_observation_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "window_id": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        },
+        "public_state": {
+          "turn_number": 5,
+          "self": {"prizes_remaining": 4},
+          "opponent": {"prizes_remaining": 4}
+        },
+        "options": []
+      },
+      "max_programs": 8,
+      "candidates": [
+        {
+          "program_id": "base.attack-now",
+          "goal_id": "complete-board",
+          "route_id": "base.attack-now",
+          "deadline_turns": 0,
+          "priority": 1000,
+          "source_kind": "base_terminal",
+          "semantic_steps": [
+            {
+              "step_id": "attack-now",
+              "transaction_id": "base-terminal",
+              "method_id": "current-attack",
+              "depends_on": [],
+              "terminal_kind": "attack",
+              "effect_kind": "attack"
+            }
+          ],
+          "current_step_id": "attack-now",
+          "current_option_facts": [
+            {
+              "kind": "attack",
+              "projected_damage": 180,
+              "projected_knockout": false,
+              "target_remaining_hp": 100,
+              "target_prize_value": 1
+            }
+          ],
+          "terminal_option_facts": [
+            {
+              "kind": "attack",
+              "projected_damage": 180,
+              "projected_knockout": false,
+              "target_remaining_hp": 100,
+              "target_prize_value": 1
+            }
+          ],
+          "base_proof": {
+            "admissible": true,
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          }
+        },
+        {
+          "program_id": "route.optional-draw",
+          "goal_id": "complete-board",
+          "route_id": "route.optional-draw",
+          "deadline_turns": 0,
+          "priority": 500,
+          "source_kind": "turn_route",
+          "semantic_steps": [
+            {
+              "step_id": "draw-more",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": [],
+              "terminal_kind": "none",
+              "effect_kind": "draw"
+            },
+            {
+              "step_id": "attack-after-draw",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": ["draw-more"],
+              "terminal_kind": "attack",
+              "effect_kind": "attack"
+            }
+          ],
+          "current_step_id": "draw-more",
+          "current_option_facts": [
+            {
+              "kind": "play_trainer",
+              "projected_damage": null,
+              "projected_knockout": false,
+              "target_remaining_hp": null,
+              "target_prize_value": null
+            }
+          ],
+          "terminal_option_facts": [
+            {
+              "kind": "attack",
+              "projected_damage": 180,
+              "projected_knockout": false,
+              "target_remaining_hp": 100,
+              "target_prize_value": 1
+            }
+          ],
+          "base_proof": {
+            "admissible": true,
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          }
+        },
+        {
+          "program_id": "tx.complete-board-then-attack",
+          "goal_id": "complete-board",
+          "route_id": "tx.complete-board-then-attack",
+          "deadline_turns": 0,
+          "priority": 7300,
+          "source_kind": "turn_transaction",
+          "semantic_steps": [
+            {
+              "step_id": "evolve-two",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": [],
+              "terminal_kind": "none",
+              "effect_kind": "evolution"
+            },
+            {
+              "step_id": "fill-board-energy",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": ["evolve-two"],
+              "terminal_kind": "none",
+              "effect_kind": "energy"
+            },
+            {
+              "step_id": "move-damage",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": ["fill-board-energy"],
+              "terminal_kind": "none",
+              "effect_kind": "damage_transfer"
+            },
+            {
+              "step_id": "disrupt-hand",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": ["move-damage"],
+              "terminal_kind": "none",
+              "effect_kind": "disruption"
+            },
+            {
+              "step_id": "attack-after-debt",
+              "transaction_id": "develop-before-attack",
+              "method_id": "complete-board",
+              "depends_on": ["disrupt-hand"],
+              "terminal_kind": "attack",
+              "effect_kind": "attack"
+            }
+          ],
+          "current_step_id": "evolve-two",
+          "current_option_facts": [
+            {
+              "kind": "evolve",
+              "projected_damage": null,
+              "projected_knockout": false,
+              "target_remaining_hp": null,
+              "target_prize_value": null
+            }
+          ],
+          "terminal_option_facts": [
+            {
+              "kind": "attack",
+              "projected_damage": 180,
+              "projected_knockout": false,
+              "target_remaining_hp": 100,
+              "target_prize_value": 1
+            }
+          ],
+          "base_proof": {
+            "admissible": true,
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          }
+        }
+      ],
+      "expected": {
+      "audit_hash": "AEBC9B4ECC0BCE5389B1237E782FDA540DFD9E893273E62679BD3D362A0F0CB5",
+        "candidate_count": 3,
+        "emitted_count": 3,
+        "program_ids": [
+          "tx.complete-board-then-attack",
+          "route.optional-draw",
+          "base.attack-now"
+        ],
+        "selected_program_id": "tx.complete-board-then-attack",
+        "selected_current_step_id": "evolve-two",
+        "ranked_program_ids": [
+          "tx.complete-board-then-attack",
+          "route.optional-draw",
+          "base.attack-now"
+        ]
+      }
+    }
+  ]
+}

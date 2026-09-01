@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-author-strategy-windows-local-deck-v1",
+  "profile_id": "ptcgdap-author-strategy-windows-local-deck-v1",
+  "cases": [
+    {
+      "id": "valid_marnie_800018501",
+      "expected_accepted": true,
+      "expected_error_code": null
+    },
+    {
+      "id": "android_scope",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "cabt_exportable",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "uid_path_traversal",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "uid_duplicate_or_unsorted",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "manifest_csv_mismatch",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "source_deck_drift",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "source_card_drift",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    }
+  ]
+}

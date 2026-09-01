@@ -12,7 +12,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return cd != null and cd.stage == "Basic"
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var pi: int = card.owner_index
 	var player: PlayerState = state.players[pi]
 	var items: Array = []

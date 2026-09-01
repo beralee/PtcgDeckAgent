@@ -9,7 +9,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return BenchLimit.get_available_bench_space(state, opponent) > 0 and not _get_basic_pokemon_in_hand(opponent).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var basics: Array = _get_basic_pokemon_in_hand(opponent)
 	if basics.is_empty():

@@ -1,0 +1,66 @@
+{
+  "document_type": "ptcgdap_author_package_metadata_release_receipt_v1",
+  "schema_version": 1,
+  "created_date": "2026-09-01",
+  "public_only": true,
+  "development_only": true,
+  "production_ready": false,
+  "package": {
+    "path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-state-value-v2-5.37.1.ptcgai",
+    "size_bytes": 291408,
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "5.37.1",
+    "archive_sha256": "83F9E82671927B5E37A895CCB6B5A46D1C294D88BE343B0B7EF81C5EACB98079",
+    "manifest_sha256": "BC8119C9E6376868FBC8B091874750906A0E80B7172A94349FD8FAF4131F851B",
+    "files_manifest_sha256": "2E78206196FDA1905E242A8FFEC5C8B704B16D57F1ED830406EF8AA43DA1A9C2",
+    "author_id": "bodao.yongzhe",
+    "author_display_name": "波导的勇者",
+    "strategy_display_name": "玛俐的礼盒 v5.37.1"
+  },
+  "parent": {
+    "package_version": "5.37.0",
+    "archive_sha256": "20C669C87A07A00589654FD559DCB1704696F38E1E1398243B9A138E21B2CC8B"
+  },
+  "packaging_delta": {
+    "changed_members": [
+      "files.sha256.json",
+      "signature.json",
+      "strategy_package.json"
+    ],
+    "decision_payloads_identical": true,
+    "policy_ir_sha256": "B9ECCA5A75AAF3F0C87D242709F85D2F3E753060B03591B8927472958596D37D",
+    "deck_manifest_sha256": "CF234928FE2D0E9378CBCE2BBA240C17FFAA57776D265B3B07220DAA162FEF8C",
+    "embedded_weights_sha256": "D0D9DBCF348FE70A6ACDBD62CDF6AA10AC86831748FBECC11FB39B51D19B29D5",
+    "new_benchmark_required": false,
+    "reason": "5.37.1 changes signed release metadata only; policy, adapter, config, weights, deck and exams are byte-identical to 5.37.0."
+  },
+  "learning_classification": {
+    "pure_behavior_cloning": false,
+    "family": "hybrid_state_conditioned_transaction_value_and_supervised_preference_ranking",
+    "bc_like_inputs": "authored exams and exact executed winning trajectories provide supervised action-preference examples",
+    "non_bc_inputs": "terminal outcome value labels, paired first-divergence branch credit and sparse state-by-transaction interaction fitting",
+    "runtime_authority": "Base Graph retains legality, transaction safety, terminal protection, veto and deterministic fallback"
+  },
+  "signature": {
+    "status": "test_fixture_trusted",
+    "key_id": "ptcgdap-as-wp1-test-fixture-ed25519-v1",
+    "scope": "test_fixture_only",
+    "execution_trusted": false
+  },
+  "validation": {
+    "deterministic_rebuilds": 2,
+    "python_related": "14/14 passed",
+    "godot_package_suites": "4/4 passed",
+    "godot_package_suite_contents": "catalog and development-gate load with author/strategy presentation assertions; 103 replay decisions; 2 preservation windows; 2 exact state-conditioned transaction windows",
+    "godot_log": ".godot_test_user/logs/focused-20260901-131526.log",
+    "godot_log_sha256": "472E5C504E0941F768F6ED84F432678B9214793D13A90B82A4057CBA433E982B"
+  },
+  "rollback": {
+    "package_version": "5.37.0",
+    "archive_sha256": "20C669C87A07A00589654FD559DCB1704696F38E1E1398243B9A138E21B2CC8B"
+  },
+  "nonclaims": [
+    "This receipt does not promote 5.37.1 over the 5.21.0 benchmark champion.",
+    "This development package is not production-account signed or production approved."
+  ]
+}

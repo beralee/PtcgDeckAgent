@@ -2,7 +2,12 @@ class_name BattleMatchEndQuickReviewBuilder
 extends RefCounted
 
 
-func build_payload(match_end_stats: Dictionary, view_player: int, review_match_dir: String) -> Dictionary:
+func build_payload(
+	match_end_stats: Dictionary,
+	view_player: int,
+	review_match_dir: String,
+	public_context: Dictionary = {}
+) -> Dictionary:
 	var stats := match_end_stats.duplicate(true)
 	normalize_stats(stats, view_player)
 	stats["deck_names"] = [
@@ -11,6 +16,8 @@ func build_payload(match_end_stats: Dictionary, view_player: int, review_match_d
 	]
 	stats["review_subject"] = subject(stats, view_player)
 	var digest := digest_context(review_match_dir)
+	if digest.is_empty() and not public_context.is_empty():
+		digest = public_context.duplicate(true)
 	if not digest.is_empty():
 		stats["quick_review_context"] = digest
 	var strategies := deck_strategies()
@@ -36,7 +43,8 @@ func normalize_stats(stats: Dictionary, view_player: int) -> void:
 
 
 func subject_player_index(stats: Dictionary = {}, view_player: int = 0) -> int:
-	if GameManager.current_mode == GameManager.GameMode.VS_AI or GameManager.is_tournament_battle_active():
+	if GameManager.current_mode in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI] \
+		or GameManager.is_tournament_battle_active():
 		return 0
 	return clampi(int(stats.get("view_player_index", view_player)), 0, 1)
 

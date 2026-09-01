@@ -1,0 +1,29 @@
+{
+  "document_type": "device_manifest_profile_v1",
+  "schema_version": 1,
+  "profile_id": "ptcgdap-windows-no-model-device-manifest-v1",
+  "manifest_id": "ptcgdap-marnie-windows-device-v1",
+  "manifest_path": "data/ptcgdap/marnie_windows_device_manifest_v1.json",
+  "declared_target": {
+    "os": "windows",
+    "architecture": "x86_64",
+    "abi": "windows-x86_64",
+    "host": "godot",
+    "minimum_runtime_version": "4.6.1"
+  },
+  "deferred_target": {
+    "os": "android",
+    "architecture": "arm64-v8a"
+  },
+  "parent_contracts": {
+    "local_policy_executor_canonical_sha256": "0B8FB2A551429CBAFFF7DD0B9DFACEC3FFF76AA867A8B1BC666F540875489BA7",
+    "rollback_policy_package_canonical_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+  },
+  "approval_boundary": {
+    "device_profile_approved": true,
+    "production_ready": false,
+    "a5_claimed": false,
+    "development_key_required": false,
+    "production_signature_gate": "P6-06"
+  }
+}

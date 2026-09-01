@@ -1,0 +1,399 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/public_policy_budget.schema.json",
+  "title": "PTCGDAP P4-WP6 public policy budget ledger and degradation audit",
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "nonnegativeSafeInteger": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 0
+        }
+      ]
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+      "not": {
+        "pattern": "(?i:private)"
+      }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "index": {
+      "$ref": "#/$defs/nonnegativeSafeInteger"
+    },
+    "indexArray": {
+      "type": "array",
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/index"
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "ledger_id",
+        "decision_ordinal",
+        "total_budget_ms",
+        "remaining_ms",
+        "cumulative_elapsed_ms",
+        "previous_telemetry_hash",
+        "ledger_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-public-policy-budget-p4-wp6-v1"
+        },
+        "ledger_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "decision_ordinal": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        },
+        "total_budget_ms": {
+          "const": 600000
+        },
+        "remaining_ms": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/nonnegativeSafeInteger"
+            },
+            {
+              "maximum": 600000
+            }
+          ]
+        },
+        "cumulative_elapsed_ms": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/nonnegativeSafeInteger"
+            },
+            {
+              "maximum": 600000
+            }
+          ]
+        },
+        "previous_telemetry_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hash"
+            }
+          ]
+        },
+        "ledger_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision_ordinal": {
+                "const": 0
+              }
+            },
+            "required": [
+              "decision_ordinal"
+            ]
+          },
+          "then": {
+            "properties": {
+              "remaining_ms": {
+                "const": 600000
+              },
+              "cumulative_elapsed_ms": {
+                "const": 0
+              },
+              "previous_telemetry_hash": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "previous_telemetry_hash": {
+                "$ref": "#/$defs/hash"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "ledger_id",
+        "window_id",
+        "ledger_before_hash",
+        "decision_ordinal",
+        "remaining_before_ms",
+        "elapsed_ms",
+        "remaining_after_ms",
+        "mode",
+        "reason_code",
+        "known_unavailable_capabilities",
+        "unknown_capability_count",
+        "selected_indexes",
+        "fallback_used",
+        "telemetry_hash",
+        "next_ledger",
+        "authority",
+        "authoritative",
+        "result_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-public-policy-budget-p4-wp6-v1"
+        },
+        "ledger_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "window_id": {
+          "$ref": "#/$defs/hash"
+        },
+        "ledger_before_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "decision_ordinal": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        },
+        "remaining_before_ms": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/nonnegativeSafeInteger"
+            },
+            {
+              "maximum": 600000
+            }
+          ]
+        },
+        "elapsed_ms": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        },
+        "remaining_after_ms": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/nonnegativeSafeInteger"
+            },
+            {
+              "maximum": 600000
+            }
+          ]
+        },
+        "mode": {
+          "enum": [
+            "full",
+            "base_only",
+            "deterministic_fallback"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "full_budget_available",
+            "budget_constrained",
+            "optional_capability_unavailable",
+            "budget_reserve",
+            "budget_exhausted",
+            "required_capability_unavailable",
+            "unknown_capability"
+          ]
+        },
+        "known_unavailable_capabilities": {
+          "type": "array",
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "public_base_policy_v1",
+              "current_window_sanitizer_v1",
+              "deterministic_base_fallback_v1",
+              "public_deck_adapter_v1",
+              "learned_policy_head_v1",
+              "search_v1"
+            ]
+          }
+        },
+        "unknown_capability_count": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        },
+        "selected_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "fallback_used": {
+          "type": "boolean"
+        },
+        "telemetry_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "next_ledger": {
+          "$ref": "#/$defs/ledger"
+        },
+        "authority": {
+          "const": "public_policy_budget_audit"
+        },
+        "authoritative": {
+          "const": false
+        },
+        "result_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "deterministic_fallback"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fallback_used": {
+                "const": true
+              },
+              "selected_indexes": {
+                "minItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "full",
+                  "base_only"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fallback_used": {
+                "const": false
+              },
+              "selected_indexes": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "full"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "full_budget_available"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "base_only"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "enum": [
+                  "budget_constrained",
+                  "optional_capability_unavailable"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "deterministic_fallback"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "enum": [
+                  "budget_reserve",
+                  "budget_exhausted",
+                  "required_capability_unavailable",
+                  "unknown_capability"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "reason_code": {
+                "const": "unknown_capability"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "unknown_capability_count": {
+                "minimum": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "unknown_capability_count": {
+                "const": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/ledger"
+    },
+    {
+      "$ref": "#/$defs/result"
+    }
+  ]
+}

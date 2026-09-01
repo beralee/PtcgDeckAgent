@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-marnie-vertical-slice-p5-wp1-v1",
+  "status": "offline_shadow_fixture",
+  "parent": {
+    "manifest_path": "artifacts/ptcgdap/p4_wp6/manifest.json",
+    "manifest_canonical_sha256": "93B0F8170124AE5DD184FBD1BD17BBEC60C805A6EFC9D348C1B5ADAF5AD3369E"
+  },
+  "artifacts": [
+    {
+      "id": "marnie_vertical_slice.schema",
+      "path": "contracts/ptcgdap/marnie_vertical_slice.schema.json",
+      "canonical_sha256": "6A526008C0CC521E6B5C4101E53BAF836CC932F8E920A0720DFCF7F5EA38B603"
+    },
+    {
+      "id": "marnie_vertical_slice_profile",
+      "path": "contracts/ptcgdap/marnie_vertical_slice_profile.json",
+      "canonical_sha256": "F2950A01BA5E509DFFF106C83D5FC523CE69EBB780C32C35EA3DF139EAECD46F"
+    },
+    {
+      "id": "marnie_vertical_slice_source_manifest",
+      "path": "contracts/ptcgdap/marnie_vertical_slice_source_manifest.json",
+      "canonical_sha256": "89FC7F719CC085976B9F56655228A71F7E3AB30E6DFBF85700AE946D7BC82502"
+    },
+    {
+      "id": "marnie_vertical_slice_conformance_vectors",
+      "path": "contracts/ptcgdap/marnie_vertical_slice_conformance_vectors.json",
+      "canonical_sha256": "28646944F79C7093B37E238D3C00701904EDD2490B005ACC4E16CA9284D06AC9"
+    },
+    {
+      "id": "official_deck_manifest_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/official_deck_manifest_v1.json",
+      "canonical_sha256": "00D334DD55B2AA740D92C2ABF8364CD823272DC32705C3970C319C649A336A07"
+    },
+    {
+      "id": "local_deck_manifest_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/local_deck_manifest_v1.json",
+      "canonical_sha256": "13B9AF49B30EE722297CBD32267B8504159B1CDB5E222C71B5CAA25522F1FB68"
+    },
+    {
+      "id": "deck_identity_diff_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/deck_identity_diff_v1.json",
+      "canonical_sha256": "7A2EEB06FF783DF971D5B1E148BB51BE1153DFC9EDD7FFCBF0D1C2DC07D31B8E"
+    },
+    {
+      "id": "capability_inventory_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/capability_inventory_v1.json",
+      "canonical_sha256": "E59041A9F0A359DED65843DD1DBA887A2E49ADB766B9F2BF9028E3CB2494738A"
+    },
+    {
+      "id": "w0_w7_public_trajectory_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/w0_w7_public_trajectory_v1.json",
+      "canonical_sha256": "F2D3B37E20FFF20DA3A6AAB16AB5CA3160437093E66F1173C410A85B756CC67A"
+    }
+  ],
+  "self_hash_policy": "bundle and bound artifacts do not contain the final bundle hash"
+}

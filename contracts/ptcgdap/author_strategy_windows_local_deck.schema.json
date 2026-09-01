@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/author_strategy_windows_local_deck.schema.json",
+  "title": "PTCGDAP author strategy Windows local deck manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_type",
+    "schema_version",
+    "deck_id",
+    "card_id_domain",
+    "card_count",
+    "unique_card_count",
+    "deck_csv_sha256",
+    "cabt_exportable",
+    "platform_scope",
+    "source_deck_id",
+    "source_deck_raw_sha256",
+    "source_deck_canonical_sha256",
+    "cards"
+  ],
+  "properties": {
+    "document_type": {
+      "const": "deck_manifest_windows_local_v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "deck_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{1,126}[a-z0-9]$"
+    },
+    "card_id_domain": {
+      "const": "godot_local_card_uid_v1"
+    },
+    "card_count": {
+      "const": 60
+    },
+    "unique_card_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60
+    },
+    "deck_csv_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "cabt_exportable": {
+      "const": false
+    },
+    "platform_scope": {
+      "const": [
+        "windows"
+      ]
+    },
+    "source_deck_id": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "source_deck_raw_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "source_deck_canonical_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "local_card_uid",
+          "set_code",
+          "card_index",
+          "count",
+          "card_type",
+          "stage",
+          "effect_id",
+          "source_raw_sha256",
+          "source_canonical_sha256"
+        ],
+        "properties": {
+          "local_card_uid": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.]+_[A-Za-z0-9]+$",
+            "maxLength": 64
+          },
+          "set_code": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.]+$",
+            "maxLength": 32
+          },
+          "card_index": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9]+$",
+            "maxLength": 32
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60
+          },
+          "card_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "stage": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "effect_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "source_raw_sha256": {
+            "type": "string",
+            "pattern": "^[0-9A-F]{64}$"
+          },
+          "source_canonical_sha256": {
+            "type": "string",
+            "pattern": "^[0-9A-F]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

@@ -19,7 +19,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return false
 
 
-func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_preview_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
 		"title": "投掷1枚硬币",
@@ -28,7 +28,7 @@ func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Ar
 	}]
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	_pending_flip_heads = coin_flipper.flip()
 	_has_pending_flip = true
@@ -49,12 +49,14 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		return [{
 			"id": "flip_result",
 			"title": "捕获香氛投币结果：%s\n牌库中没有符合条件的宝可梦" % result_label,
-			"items": ["继续"],
+			"items": [true],
 			"labels": ["继续"],
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
 			"wait_for_coin_animation": true,
+			"ucis_context_name": "ACTIVATE",
+			"ucis_option_type_name": "YES",
 		}]
 
 	var step := build_full_library_search_step(

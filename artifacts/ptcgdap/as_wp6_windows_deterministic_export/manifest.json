@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "work_package": "D050/P6-29",
+  "candidate_id": "ptcgdap-d050-windows-deterministic-export-20260814",
+  "status": "raw_windows_export_container_reproducibility_closed",
+  "generated_at": "2026-08-14T18:45:00+08:00",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2227,
+      "sha256": "6B07F9F7B337E38A997DD10F09FEE8F1C4F19162EC611C6CCF5D7C6FD08AE919"
+    },
+    {
+      "path": "known_gaps.md",
+      "bytes": 1287,
+      "sha256": "39CCEB8607F54F1059837636A03DF0DBDB31DDC66BFFF2A0F874578E7EE3E900"
+    },
+    {
+      "path": "reproducibility_report.json",
+      "bytes": 3711,
+      "sha256": "9B4B0BF7D3311CAA1F55F52C534D473924F64CC8E11FCEFD676AB6E800D74E19"
+    },
+    {
+      "path": "test_results.json",
+      "bytes": 2430,
+      "sha256": "6379F8C876FC7E58D47F4A51DF8C159C6D0310802C087386C4FF1F4246056E25"
+    },
+    {
+      "path": "tools/ptcgdap/canonicalize_godot_export.py",
+      "bytes": 12731,
+      "sha256": "6BEC4BE34E5E4C267D56C34BAFCA627B44034B7E23EAF2FF4261406BEC3D086F"
+    },
+    {
+      "path": "tests/ptcgdap/test_godot_export_canonicalizer.py",
+      "bytes": 6186,
+      "sha256": "EA429C7C6C595BAF9B04FF4840B1BF57C7FA2B427CD29E288CF49332642700F4"
+    },
+    {
+      "path": "tests/ptcgdap/test_as_wp6_deterministic_export_evidence.py",
+      "bytes": 4780,
+      "sha256": "14D78735CE7B06AEBB5D6826F17D670BAD76DAB511EDFE6C5732CEEE3DB6BA33"
+    },
+    {
+      "path": "tests/ptcgdap/test_author_strategy_release_boundaries.py",
+      "bytes": 5099,
+      "sha256": "9E67196085FABE3707445FA351168438EB18145D281F31EE286A15CE70EEFA2B"
+    },
+    {
+      "path": "scripts/tools/export_ptcgdap_device_release.ps1",
+      "bytes": 9358,
+      "sha256": "E73A4F0EB4C9EC78A9505898BC69FD7732DAA0F5EB603536CD8544F475296724"
+    },
+    {
+      "path": "docs/ptcgdap/07-decisions-risks-and-open-questions.md",
+      "bytes": 112755,
+      "sha256": "2723CB85B267234C658FEDDE80B03DF4B8DEAB5695BA69569FB7016956E8DA14"
+    },
+    {
+      "path": "docs/ptcgdap/08-author-strategy-package-mode.md",
+      "bytes": 33373,
+      "sha256": "87D44245E1F6D551889A8A01B483979D45857B8A047DF59B3CD25866438F43B3"
+    },
+    {
+      "path": "docs/ptcgdap/09-author-strategy-package-engineering-handoff.md",
+      "bytes": 54179,
+      "sha256": "4D1A8C2EA06338BD3DA6B374228E101D5DD515BBDDEEE28D44A360CD28A0A96E"
+    },
+    {
+      "path": "docs/ptcgdap/STATUS.md",
+      "bytes": 136114,
+      "sha256": "98171DF9A4A195F817F3A7C916C18A176848745859683D84BB9833AE8F3935A4"
+    },
+    {
+      "path": "docs/ptcgdap/IMPLEMENTATION_CHECKLIST.md",
+      "bytes": 59673,
+      "sha256": "B21A387A4897C70DB90389A6DC51339046827CA50B9761B0023D38F5E3A09CDA"
+    }
+  ],
+  "claim_boundary": {
+    "deterministic_windows_export_containers": true,
+    "canonicalized_pck_runtime_loaded": true,
+    "canonicalized_executable_rules_match": true,
+    "production_key_provisioned": false,
+    "production_package_approved": false,
+    "os_network_isolation_proven": false,
+    "approved_device_profile": false,
+    "formal_a5": false,
+    "android_claimed": false
+  }
+}

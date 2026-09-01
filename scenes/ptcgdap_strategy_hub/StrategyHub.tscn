@@ -1,0 +1,732 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ptcgdap_strategy_hub/StrategyHub.gd" id="1_hub"]
+
+[node name="StrategyHub" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hub")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.008, 0.024, 0.04, 1)
+
+[node name="BackgroundShade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.055, 0.08, 0.42)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Root" type="VBoxContainer" parent="SafeArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TopBarPanel" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TopBarMargin" type="MarginContainer" parent="SafeArea/Root/TopBarPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="TopBar" type="HBoxContainer" parent="SafeArea/Root/TopBarPanel/TopBarMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="BackButton" type="Button" parent="SafeArea/Root/TopBarPanel/TopBarMargin/TopBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 48)
+layout_mode = 2
+text = "返回"
+
+[node name="Heading" type="VBoxContainer" parent="SafeArea/Root/TopBarPanel/TopBarMargin/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="Title" type="Label" parent="SafeArea/Root/TopBarPanel/TopBarMargin/TopBar/Heading"]
+layout_mode = 2
+text = "AI 策略中心"
+
+[node name="HeaderSubtitle" type="Label" parent="SafeArea/Root/TopBarPanel/TopBarMargin/TopBar/Heading"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "管理策略 · 回看实战 · 发现公开版本"
+
+[node name="RefreshButton" type="Button" parent="SafeArea/Root/TopBarPanel/TopBarMargin/TopBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 48)
+layout_mode = 2
+text = "刷新"
+
+[node name="TabBarPanel" type="PanelContainer" parent="SafeArea/Root"]
+layout_mode = 2
+
+[node name="TabBarMargin" type="MarginContainer" parent="SafeArea/Root/TabBarPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="WorkspaceTabs" type="HBoxContainer" parent="SafeArea/Root/TabBarPanel/TabBarMargin"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CatalogTab" type="Button" parent="SafeArea/Root/TabBarPanel/TabBarMargin/WorkspaceTabs"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "策略广场"
+
+[node name="LocalStrategyTab" type="Button" parent="SafeArea/Root/TabBarPanel/TabBarMargin/WorkspaceTabs"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "本地策略"
+
+[node name="ReplayTab" type="Button" parent="SafeArea/Root/TabBarPanel/TabBarMargin/WorkspaceTabs"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "对战录像"
+
+[node name="AISettingsTab" type="Button" parent="SafeArea/Root/TabBarPanel/TabBarMargin/WorkspaceTabs"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "AI 设置"
+
+[node name="StatusStrip" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/Root/StatusStrip"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 7
+
+[node name="StatusRow" type="HBoxContainer" parent="SafeArea/Root/StatusStrip/StatusMargin"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="StatusDot" type="Label" parent="SafeArea/Root/StatusStrip/StatusMargin/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "●"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/Root/StatusStrip/StatusMargin/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "正在准备策略中心…"
+text_overrun_behavior = 3
+
+[node name="WorkspaceViewport" type="Control" parent="SafeArea/Root"]
+layout_mode = 2
+size_flags_vertical = 3
+clip_contents = true
+
+[node name="LocalStrategyWorkspace" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="LocalStrategyColumns" type="GridContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+columns = 2
+
+[node name="PackageLibraryPanel" type="PanelContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns"]
+custom_minimum_size = Vector2(0, 450)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LibraryMargin" type="MarginContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="LibraryRoot" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LibraryKickerRow" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot"]
+layout_mode = 2
+
+[node name="LibraryKicker" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot/LibraryKickerRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "设备策略库"
+
+[node name="LocalPackageCountLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot/LibraryKickerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0 个"
+
+[node name="LocalPackageTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot"]
+layout_mode = 2
+text = "本地策略包"
+
+[node name="LocalPackageHint" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot"]
+layout_mode = 2
+text = "验证通过后，会自动出现在 AI 对战的对手列表中。"
+autowrap_mode = 2
+
+[node name="LocalPackageScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="LocalPackageList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageLibraryPanel/LibraryMargin/LibraryRoot/LocalPackageScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="PackageActionPanel" type="PanelContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns"]
+custom_minimum_size = Vector2(0, 450)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ActionMargin" type="MarginContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 22
+
+[node name="ActionRoot" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ImportKicker" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "添加到本机"
+
+[node name="ImportTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "加载新的 AI 策略"
+
+[node name="ImportSummary" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "选择一个 .ptcgai 文件，校验通过后安全安装到游戏用户目录。"
+autowrap_mode = 2
+
+[node name="ImportLocalPackageButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "导入策略包"
+
+[node name="ValidationHint" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "自动检查卡牌、格式、签名与兼容性"
+autowrap_mode = 2
+
+[node name="LocalPackageFolderRow" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LocalPackageFolderLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot/LocalPackageFolderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "策略包文件夹：正在读取…"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="CopyLocalPackageFolderButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot/LocalPackageFolderRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 40)
+layout_mode = 2
+text = "复制路径"
+
+[node name="ActionDivider" type="HSeparator" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+
+[node name="BattleKicker" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "下一步"
+
+[node name="BattleTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "带上策略开始对战"
+
+[node name="BattleSummary" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "在 AI 卡组中选择已加载的策略对手。"
+autowrap_mode = 2
+
+[node name="OpenBattleSetupButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "进入 AI 对战设置"
+
+[node name="ActionSpacer" type="Control" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LocalSafetyNote" type="Label" parent="SafeArea/Root/WorkspaceViewport/LocalStrategyWorkspace/LocalStrategyColumns/PackageActionPanel/ActionMargin/ActionRoot"]
+layout_mode = 2
+text = "策略在本机运行；无效包不会覆盖现有内容。"
+autowrap_mode = 2
+
+[node name="ReplayWorkspace" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="ReplayPanel" type="PanelContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace"]
+custom_minimum_size = Vector2(0, 560)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ReplayMargin" type="MarginContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="ReplayRoot" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ReplayHeaderRow" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot"]
+layout_mode = 2
+
+[node name="LocalReplayTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayHeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "对战录像"
+
+[node name="LocalReplayCountLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayHeaderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0 场"
+
+[node name="LocalReplayHint" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot"]
+layout_mode = 2
+text = "完整录像使用正式战斗场景播放；旧公开记录会明确标注信息缺失。"
+autowrap_mode = 2
+
+[node name="ReplayFolderRows" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NativeReplayFolderRow" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayFolderRows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NativeReplayFolderLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayFolderRows/NativeReplayFolderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "完整录像文件夹：正在读取…"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="CopyNativeReplayFolderButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayFolderRows/NativeReplayFolderRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 40)
+layout_mode = 2
+text = "复制路径"
+
+[node name="PublicReplayFolderRow" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayFolderRows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PublicReplayFolderLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayFolderRows/PublicReplayFolderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "公开记录文件夹：正在读取…"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="CopyPublicReplayFolderButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/ReplayFolderRows/PublicReplayFolderRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 40)
+layout_mode = 2
+text = "复制路径"
+
+[node name="ReplayDivider" type="HSeparator" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot"]
+layout_mode = 2
+
+[node name="LocalReplayScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="LocalReplayList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/LocalReplayScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="CatalogWorkspace" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="CatalogColumns" type="GridContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+columns = 2
+
+[node name="CatalogPanel" type="PanelContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns"]
+custom_minimum_size = Vector2(0, 540)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CatalogMargin" type="MarginContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="CatalogRoot" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CatalogKicker" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+layout_mode = 2
+text = "公开目录"
+
+[node name="CatalogTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+layout_mode = 2
+text = "策略广场"
+
+[node name="CatalogHint" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+layout_mode = 2
+text = "最新发布、策略排行、作者贡献三块数据彼此独立；可安装项会严格校验后保存到本机。"
+autowrap_mode = 2
+
+[node name="MarketplaceBoardTabs" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LatestBoardTab" type="Button" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/MarketplaceBoardTabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "最新策略"
+
+[node name="StrategyRankingBoardTab" type="Button" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/MarketplaceBoardTabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "策略排行"
+
+[node name="AuthorRankingBoardTab" type="Button" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/MarketplaceBoardTabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "作者贡献"
+
+[node name="CatalogScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StrategyList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/CatalogScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="StrategyRankingScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StrategyRankingList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/StrategyRankingScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="AuthorRankingScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="AuthorRankingList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/AuthorRankingScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="MarketplaceBoardFooter" type="HBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MarketplaceBoardStateLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/MarketplaceBoardFooter"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "等待加载"
+autowrap_mode = 2
+
+[node name="MarketplaceNextButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot/MarketplaceBoardFooter"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(104, 40)
+layout_mode = 2
+text = "下一页"
+
+[node name="DetailPanel" type="PanelContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns"]
+custom_minimum_size = Vector2(0, 540)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DetailMargin" type="MarginContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="DetailScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="DetailRoot" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="DetailKicker" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "策略档案"
+
+[node name="StrategyTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "选择一个策略"
+
+[node name="AuthorLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "从左侧目录选择后查看详情"
+
+[node name="SummaryLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="ReleaseLabel" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="SelectedDownloadButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "下载并安装到本机"
+
+[node name="MatchHistoryDivider" type="HSeparator" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="MatchHistoryTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "最近对战（最多 20 场）"
+
+[node name="MatchHistoryList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AuthorWorksDivider" type="HSeparator" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="AuthorWorksTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "作者作品"
+
+[node name="AuthorWorksList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StatsDivider" type="HSeparator" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+layout_mode = 2
+
+[node name="StatsTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+layout_mode = 2
+text = "对战表现"
+
+[node name="OfficialStats" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "官方验证：暂无数据"
+autowrap_mode = 2
+
+[node name="ShadowStats" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "影子测试（非官方）：暂无数据"
+autowrap_mode = 2
+
+[node name="CommunityStats" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "社区公开录像：0 场（不计入官方胜率）"
+autowrap_mode = 2
+
+[node name="ReplayDivider" type="HSeparator" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ReplayTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "代表录像"
+
+[node name="ReplayList" type="VBoxContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/DetailPanel/DetailMargin/DetailScroll/DetailRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AISettingsWorkspace" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="ReplayOverlay" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+z_index = 20
+
+[node name="ReplayViewer" type="Control" parent="ReplayOverlay"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LocalPackageFileDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "选择本地 AI 策略包"
+size = Vector2i(960, 640)
+ok_button_text = "验证并导入"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.ptcgai ; PTCG AI 策略包")
+use_native_dialog = true
+
+[node name="LocalPackageDeleteDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "删除本地策略"
+size = Vector2i(560, 240)
+ok_button_text = "确认删除"
+dialog_text = "确认从游戏中删除这个本地策略吗？"
+
+[node name="LocalReplayDeleteDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "删除本地录像"
+size = Vector2i(600, 260)
+ok_button_text = "确认删除"
+dialog_text = "确认从这台设备删除这场录像吗？"

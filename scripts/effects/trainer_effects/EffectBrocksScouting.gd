@@ -19,7 +19,7 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_basic_pokemon(player).is_empty() or not _get_evolution_pokemon(player).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var has_basic := not _get_basic_pokemon(player).is_empty()
 	var has_evolution := not _get_evolution_pokemon(player).is_empty()
@@ -28,10 +28,10 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var items: Array = []
 	var labels: Array[String] = []
 	if has_basic:
-		items.append(MODE_BASIC)
+		items.append(true)
 		labels.append("Basic Pokemon")
 	if has_evolution:
-		items.append(MODE_EVOLUTION)
+		items.append(false)
 		labels.append("Evolution Pokemon")
 	return [{
 		"id": MODE_STEP_ID,
@@ -45,7 +45,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	}]
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if should_preview_empty_search_deck(resolved_context):
 		return [build_readonly_deck_preview_step("Brock's Scouting: view deck", state.players[card.owner_index].deck)]
 	var mode := _resolve_mode(resolved_context)
@@ -121,6 +121,8 @@ func _resolve_mode(context: Dictionary) -> String:
 	var selected_raw: Array = context.get(MODE_STEP_ID, [])
 	if selected_raw.is_empty():
 		return ""
+	if typeof(selected_raw[0]) == TYPE_BOOL:
+		return MODE_BASIC if bool(selected_raw[0]) else MODE_EVOLUTION
 	var raw := str(selected_raw[0]).strip_edges().to_lower()
 	if raw == MODE_BASIC or raw.contains("basic"):
 		return MODE_BASIC

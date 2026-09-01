@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "catalog_id": "ptcgdap-p1-wp1-golden-corpus-v1",
+  "created_date": "2026-08-09",
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "source_lock_locator_hint": "../../../docs/ptcgdap/SOURCE_LOCK.json",
+  "search_token_persistence_policy": "Real search_begin_input values are never persisted. Persisted payloads always use null; provenance records only whether the source value was null or non-null.",
+  "fixtures": [
+    {
+      "id": "initial_callback",
+      "path": "public/initial_callback.json",
+      "classification": "public_agent_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "531E69CA45B0E2FE3A53BDBF01C2D76EEC28E0806357AA0195758842FEB946C1",
+      "canonical_sha256": "F735F8B0A43A60D311A9F3EBE56852D34E1F3F74BF11772B06531D6C2B6589D9",
+      "covers": [
+        "initial_callback"
+      ],
+      "provenance": {
+        "source_kind": "production_kaggle_replay",
+        "derivation": "replay_observation_extract",
+        "source_artifact_id": "production_replay_89996333",
+        "source_sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+        "source_selector": "/steps/0/0/observation",
+        "source_search_capability_presence": "null",
+        "sanitization": "none",
+        "module_version": "1.32.3"
+      },
+      "expected": {
+        "select": null,
+        "logs": [],
+        "current": null,
+        "search_begin_input": null,
+        "framework_step": 0,
+        "agent_output_contract": "contract_requires_exactly_60_card_ids_and_episode_reset",
+        "implementation_status": "not_implemented_until_p1_wp2"
+      }
+    },
+    {
+      "id": "normal_single_select",
+      "path": "public/normal_single_select.json",
+      "classification": "public_agent_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "6B24860357E12F0A6F11B4ECA86F5D652295549D94681858DDEA3F8F1E62D1FA",
+      "canonical_sha256": "BD36D3D655624A351F7007F5211F2A69E8BFC1D0A2A87DFC399C2CAB8C0A7F0C",
+      "covers": [
+        "single_select",
+        "hidden_regions"
+      ],
+      "provenance": {
+        "source_kind": "production_kaggle_replay",
+        "derivation": "replay_observation_extract",
+        "source_artifact_id": "production_replay_89996333",
+        "source_sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+        "source_selector": "/steps/1/0/observation",
+        "source_search_capability_presence": "non_null",
+        "sanitization": "redact_search_begin_input_to_null_v1",
+        "module_version": "1.32.3"
+      },
+      "expected": {
+        "select_type": 9,
+        "select_context": 41,
+        "min_count": 1,
+        "max_count": 1,
+        "option_type_order": [
+          1,
+          2
+        ],
+        "opponent_hand": null,
+        "search_capability": "redacted_presence_only"
+      }
+    },
+    {
+      "id": "optional_zero_deck_search",
+      "path": "public/optional_zero_deck_search.json",
+      "classification": "public_agent_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "32FD2BDB54512466839D95956587ADAA2B823A4A94DAA647AD6CD817A575028E",
+      "canonical_sha256": "942B840C4931E3D08878EEDA3C18DDE9D2EC343E6381072F961D6B019AA1D16E",
+      "covers": [
+        "optional_zero",
+        "deck_selection",
+        "hidden_regions"
+      ],
+      "provenance": {
+        "source_kind": "production_kaggle_replay",
+        "derivation": "replay_observation_extract",
+        "source_artifact_id": "production_replay_89996333",
+        "source_sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+        "source_selector": "/steps/7/0/observation",
+        "source_search_capability_presence": "non_null",
+        "sanitization": "redact_search_begin_input_to_null_v1",
+        "module_version": "1.32.3"
+      },
+      "expected": {
+        "select_type": 1,
+        "select_context": 7,
+        "min_count": 0,
+        "max_count": 1,
+        "deterministic_zero_selection": [],
+        "authorized_select_deck_count": 46,
+        "current_player_deck_order_present": false,
+        "opponent_hand": null,
+        "face_down_prizes": "null_only"
+      }
+    },
+    {
+      "id": "normal_multi_select",
+      "path": "public/normal_multi_select.json",
+      "classification": "public_agent_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "70F96EBEBD004B7EFF8695FDDC11855504B9620818EAA1116701A62EE5214522",
+      "canonical_sha256": "6F28F00CCCD409CDFA72F2C6F305DB60B3170ED5F42FE76DB53F861DC82E26CA",
+      "covers": [
+        "multi_select",
+        "hidden_regions",
+        "missing_vs_null"
+      ],
+      "provenance": {
+        "source_kind": "production_kaggle_replay",
+        "derivation": "replay_observation_extract",
+        "source_artifact_id": "production_replay_89996333",
+        "source_sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+        "source_selector": "/steps/25/1/observation",
+        "source_search_capability_presence": "non_null",
+        "sanitization": "redact_search_begin_input_to_null_v1",
+        "module_version": "1.32.3"
+      },
+      "expected": {
+        "select_type": 1,
+        "select_context": 8,
+        "min_count": 2,
+        "max_count": 2,
+        "option_count": 6,
+        "step_presence": "missing",
+        "remaining_overage_time_presence": "value"
+      }
+    },
+    {
+      "id": "ordered_skill_multi_select",
+      "path": "public/ordered_skill_multi_select.json",
+      "classification": "public_agent_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "158B41B3DE55126A714D215D1882482B37C8D226E95F16240CDE52023A4BEA10",
+      "canonical_sha256": "EDAAE7B96FCA2DAE9129ED2ACE39BA9E6685603B88247A92CD2D875714A7C2FD",
+      "covers": [
+        "multi_select",
+        "ordered_multi_select",
+        "hidden_regions"
+      ],
+      "provenance": {
+        "source_kind": "local_official_engine_replay",
+        "derivation": "replay_observation_extract",
+        "source_artifact_id": "local_official_engine_skill_order_replay",
+        "source_sha256": "AC09718C3FF9D791716790C2091931AE70E9C37FC2AC970FE47E64CD5B0A5EB6",
+        "source_selector": "/steps/84/1/observation",
+        "source_search_capability_presence": "non_null",
+        "sanitization": "redact_search_begin_input_to_null_v1",
+        "module_version": "1.32.2",
+        "authority_note": "Official-engine development oracle; not production replay evidence."
+      },
+      "expected": {
+        "select_type": 5,
+        "select_context": 34,
+        "min_count": 2,
+        "max_count": 2,
+        "option_serial_order": [
+          115,
+          116
+        ],
+        "policy_output_order": "preserve_exactly_never_sort"
+      }
+    },
+    {
+      "id": "engine_only_area_log",
+      "path": "public/engine_only_area_log.json",
+      "classification": "public_agent_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "14FF3890CB1932D4C8ECD55B364871485608D59A7542FFFB9281FFB62BBFE4FB",
+      "canonical_sha256": "9A0D06A0F9651F864CE96CF25271640E66226CA8C0E670EB5D4D9A13184DF300",
+      "covers": [
+        "nonempty_log_batch",
+        "engine_only_enum"
+      ],
+      "provenance": {
+        "source_kind": "production_kaggle_replay",
+        "derivation": "replay_observation_extract",
+        "source_artifact_id": "production_replay_89996333",
+        "source_sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+        "source_selector": "/steps/59/1/observation",
+        "source_search_capability_presence": "non_null",
+        "sanitization": "redact_search_begin_input_to_null_v1",
+        "module_version": "1.32.3"
+      },
+      "expected": {
+        "log_type": 6,
+        "to_area_raw": 14,
+        "to_area_authority": "locked_engine_only",
+        "known_sdk_area_name": null,
+        "behavior": "preserve_raw_integer_without_closed_enum_crash"
+      }
+    },
+    {
+      "id": "unknown_additive_and_enum",
+      "path": "public/unknown_additive_and_enum.json",
+      "classification": "synthetic_forward_compat_observation",
+      "runtime_agent_callback_input": true,
+      "runtime_policy_input": false,
+      "byte_sha256": "0209ECF25982A8DCFAD238A5C2E413964402688CA73786F254ABCF6D4389FBEE",
+      "canonical_sha256": "3D908AD292C12EB73B9E4423BC53D9AA8A73255BE47923FBD23782C86A7B5226",
+      "covers": [
+        "unknown_field",
+        "unknown_enum",
+        "raw_round_trip",
+        "fail_closed_contract_only"
+      ],
+      "provenance": {
+        "source_kind": "synthetic_forward_compat",
+        "derivation": "declared_mutation",
+        "base_fixture_id": "normal_single_select",
+        "base_canonical_sha256": "BD36D3D655624A351F7007F5211F2A69E8BFC1D0A2A87DFC399C2CAB8C0A7F0C",
+        "sanitization": "inherits_base_redaction",
+        "mutations": [
+          {
+            "op": "add",
+            "path": "/futureHostField",
+            "value": {
+              "nested": [
+                1,
+                null,
+                {
+                  "keep": "exact"
+                }
+              ]
+            }
+          },
+          {
+            "op": "replace",
+            "path": "/select/type",
+            "value": 99
+          },
+          {
+            "op": "replace",
+            "path": "/select/context",
+            "value": 777
+          },
+          {
+            "op": "add",
+            "path": "/select/futureSelectField",
+            "value": {
+              "mode": "append-only"
+            }
+          },
+          {
+            "op": "replace",
+            "path": "/select/option/0/type",
+            "value": 901
+          },
+          {
+            "op": "add",
+            "path": "/select/option/0/futureOptionPayload",
+            "value": {
+              "raw": "keep"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/logs/0",
+            "value": {
+              "futureLogPayload": {
+                "opaque": true
+              },
+              "type": 999
+            }
+          }
+        ]
+      },
+      "expected": {
+        "raw_tree": "canonical_round_trip_without_field_loss",
+        "select_type": {
+          "raw": 99,
+          "known_name": null,
+          "authority": "unknown_future"
+        },
+        "select_context": {
+          "raw": 777,
+          "known_name": null,
+          "authority": "unknown_future"
+        },
+        "option_type": {
+          "raw": 901,
+          "known_name": null,
+          "authority": "unknown_future"
+        },
+        "log_type": {
+          "raw": 999,
+          "known_name": null,
+          "authority": "unknown_future"
+        },
+        "decision_behavior": "contract_requires_fail_closed_with_audited_current_window_fallback",
+        "implementation_status": "not_implemented_until_p1_wp2_wp3"
+      }
+    },
+    {
+      "id": "private_replay_negative_control",
+      "path": "private/private_replay_negative_control.json",
+      "classification": "private_replay_negative_control",
+      "runtime_agent_callback_input": false,
+      "runtime_policy_input": false,
+      "byte_sha256": "0D1A2CE1BD8A417F4FA180BD917E914572B61537E3E2C6DBAD0CC0BAF0F2C034",
+      "canonical_sha256": "EAD1E47E0CB66A1C09252FA59457C009B5BA9E56C93D8BAD94BB7A1E51CEB02F",
+      "covers": [
+        "private_replay_rejection"
+      ],
+      "provenance": {
+        "source_kind": "synthetic_private_shape_negative_control",
+        "derivation": "synthetic_negative_control",
+        "sanitization": "not_source_derived",
+        "non_authoritative_reference_artifact_id": "production_replay_89996333",
+        "non_authoritative_reference_sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+        "authority_note": "Reduced private sentinels are synthetic and are not claimed as an exact replay reduction."
+      },
+      "expected": {
+        "public_loader": "reject",
+        "runtime_policy_input": false,
+        "forbidden_evidence": [
+          "deck_order",
+          "hidden_hand_identity",
+          "face_down_prize_identity",
+          "private_rng_state",
+          "visualizer_action_and_selected"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-marnie-public-base-p5-wp6-v1",
+  "status": "offline_shadow",
+  "parent_contract": {
+    "contract_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+    "canonical_sha256": "E2EFDDE373EFBA0FDC929BE817595C8B3F0A5653956DB56418ADED57AFF960A1"
+  },
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/marnie_public_base.schema.json",
+      "canonical_sha256": "54F3B35CE104ECFCB4879CB37C2548EE3589C4E9CD7028D4DF6C270C99356AB0"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/marnie_public_base_profile.json",
+      "canonical_sha256": "4F6A0544443EFB04EAE09DDA54CECADC422F613B56F79D881AC2402473C121B9"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/marnie_public_base_conformance_vectors.json",
+      "canonical_sha256": "18B9E5C3F744A086B8142BA63992BC1913C36840E4F2E848451D9012280E9552"
+    },
+    {
+      "id": "audit",
+      "path": "data/ptcgdap/marnie_vertical_slice/marnie_public_base_v1.json",
+      "canonical_sha256": "56D4E01370D0FDE971588A9A0E5ECF2556476560ABCC7A0FFD374470704B33F3"
+    }
+  ],
+  "runtime_authority": "offline_public_audit_only"
+}

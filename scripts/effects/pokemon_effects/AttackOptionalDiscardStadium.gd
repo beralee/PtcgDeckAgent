@@ -12,7 +12,7 @@ func _init(do_discard: bool = true) -> void:
 	discard_stadium = do_discard
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	_card: CardInstance,
 	attack: Dictionary,
 	state: GameState
@@ -25,7 +25,7 @@ func get_attack_interaction_steps(
 	return [{
 		"id": STEP_ID,
 		"title": "是否弃置场上的竞技场？",
-		"items": ["keep", "discard"],
+		"items": [false, true],
 		"labels": ["保留竞技场", "弃置竞技场"],
 		"min_select": 1,
 		"max_select": 1,
@@ -47,7 +47,14 @@ func execute_attack(
 	var ctx: Dictionary = get_attack_interaction_context()
 	if ctx.has(STEP_ID):
 		var selected_raw: Array = ctx.get(STEP_ID, [])
-		if selected_raw.is_empty() or str(selected_raw[0]) != "discard":
+		if selected_raw.is_empty():
+			return
+		var selected: Variant = selected_raw[0]
+		var should_discard := (
+			(typeof(selected) == TYPE_BOOL and bool(selected))
+			or (typeof(selected) == TYPE_STRING and str(selected) == "discard")
+		)
+		if not should_discard:
 			return
 
 	var owner_idx: int = state.stadium_owner_index

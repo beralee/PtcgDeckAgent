@@ -183,7 +183,7 @@ func test_supported_battle_review_models_match_current_no_reasoning_batch() -> S
 	])
 
 
-func test_main_menu_navigation_prewarm_excludes_heavy_battle_scene() -> String:
+func test_main_menu_navigation_prewarm_is_single_stage_and_excludes_heavy_scenes() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var checks: Array[String] = [
 		assert_true(manager.has_method("navigation_prewarm_scene_paths"), "GameManager should expose the main menu prewarm policy for regression coverage"),
@@ -191,8 +191,9 @@ func test_main_menu_navigation_prewarm_excludes_heavy_battle_scene() -> String:
 	]
 	if manager.has_method("navigation_prewarm_scene_paths"):
 		var paths: Array = manager.call("navigation_prewarm_scene_paths")
-		checks.append(assert_true(paths.has("res://scenes/battle_setup/BattleSetup.tscn"), "Main menu prewarm should still cover BattleSetup"))
-		checks.append(assert_true(paths.has("res://scenes/deck_manager/DeckManager.tscn"), "Main menu prewarm should still cover DeckManager"))
+		checks.append(assert_eq(paths, ["res://scenes/battle_setup/BattleSetup.tscn"], "Main menu idle prewarm should load only the most likely next scene so heavy destinations do not compete"))
+		checks.append(assert_false(paths.has("res://scenes/deck_manager/DeckManager.tscn"), "DeckManager should load on demand instead of competing with the first interactive menu frame"))
+		checks.append(assert_false(paths.has("res://scenes/deck_training/DeckTrainingBrowser.tscn"), "DeckTraining should load on demand instead of competing with the first interactive menu frame"))
 		checks.append(assert_false(paths.has("res://scenes/battle/BattleScene.tscn"), "Main menu prewarm should not compete with navigation by loading the heavy BattleScene"))
 	if manager.has_method("battle_setup_prewarm_scene_path"):
 		checks.append(assert_eq(str(manager.call("battle_setup_prewarm_scene_path")), "res://scenes/battle/BattleScene.tscn", "BattleScene should be warmed only after BattleSetup is visible"))
@@ -215,8 +216,8 @@ func test_scene_navigation_waits_for_in_progress_threaded_prewarm() -> String:
 func test_scene_navigation_stops_waiting_for_stalled_prewarm() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	return run_checks([
-		assert_true(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 1000)), "A healthy in-progress preload should still be awaited"),
-		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 5000)), "A stalled preload must fall back so the match-end return cannot hang forever"),
+		assert_true(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 50)), "A nearly complete preload may be awaited briefly"),
+		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 250)), "Navigation must not silently wait hundreds of milliseconds for a background preload"),
 		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_FAILED, 1000)), "A failed preload should never keep navigation waiting"),
 	])
 

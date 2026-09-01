@@ -7,6 +7,9 @@ const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBatt
 const UiRuntimeProfileResolverScript := preload("res://scripts/ui/runtime/UiRuntimeProfileResolver.gd")
 const BrowserLifecycleBridgeScript := preload("res://scripts/ui/web/BrowserLifecycleBridge.gd")
 const WebUiFeatureGateScript := preload("res://scripts/ui/web/WebUiFeatureGate.gd")
+const AuthorStrategyWindowsExecutionGateScript := preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
+const AuthorStrategyFeatureGateScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
+const AuthorStrategyDeckMaterializerScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckMaterializer.gd")
 
 signal non_battle_layout_mode_changed(mode: String)
 
@@ -14,6 +17,7 @@ signal non_battle_layout_mode_changed(mode: String)
 enum GameMode {
 	TWO_PLAYER,  ## 双人操控
 	VS_AI,       ## 对战AI
+	VS_AUTHOR_STRATEGY_AI,  ## 作者策略包（AS-WP3 仅设置元数据）
 }
 
 ## 当前选择的游戏模式
@@ -33,6 +37,7 @@ var ai_selection: Dictionary = {
 	"opening_mode": "default",
 	"fixed_deck_order_path": "",
 }
+var _author_strategy_selection: Dictionary = {}
 ## AI 卡组策略 ("generic" | "gardevoir_greedy" | "gardevoir_mcts" | "miraidon_greedy" | "miraidon_mcts")
 var ai_deck_strategy: String = "generic"
 ## 先攻选择 (-1=随机, 0=玩家1, 1=玩家2)
@@ -66,6 +71,7 @@ const SCENE_BATTLE := "res://scenes/battle/BattleScene.tscn"
 const SCENE_DECK_EDITOR := "res://scenes/deck_editor/DeckEditor.tscn"
 const SCENE_REPLAY_BROWSER := "res://scenes/replay_browser/ReplayBrowser.tscn"
 const SCENE_DECK_TRAINING := "res://scenes/deck_training/DeckTrainingBrowser.tscn"
+const SCENE_STRATEGY_HUB := "res://scenes/ptcgdap_strategy_hub/StrategyHub.tscn"
 const SCENE_SETTINGS := "res://scenes/settings/Settings.tscn"
 const SCENE_TOURNAMENT_DECK_SELECT := "res://scenes/tournament/TournamentDeckSelect.tscn"
 const SCENE_TOURNAMENT_SETUP := "res://scenes/tournament/TournamentSetup.tscn"
@@ -73,8 +79,6 @@ const SCENE_TOURNAMENT_OVERVIEW := "res://scenes/tournament/TournamentOverview.t
 const SCENE_TOURNAMENT_STANDINGS := "res://scenes/tournament/TournamentStandings.tscn"
 const NAVIGATION_PREWARM_SCENES: Array[String] = [
 	SCENE_BATTLE_SETUP,
-	SCENE_DECK_MANAGER,
-	SCENE_DECK_TRAINING,
 ]
 const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
 const CANONICAL_BATTLE_REVIEW_USER_DIR_NAME := "PTCG Train"
@@ -84,7 +88,7 @@ const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DESKTOP_RENDER_CAP_SIZE := Vector2i(1920, 1080)
-const NAVIGATION_PREWARM_AWAIT_TIMEOUT_MSEC := 4000
+const NAVIGATION_PREWARM_AWAIT_TIMEOUT_MSEC := 100
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
 const BATTLE_BGM_VOLUME_USER_SET_KEY := "battle_bgm_volume_user_set"
 const BATTLE_LAYOUT_AUTO := "auto"
@@ -145,6 +149,7 @@ const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 
 var _battle_replay_launch: Dictionary = {}
 var _deck_training_launch: Dictionary = {}
+var _strategy_hub_initial_workspace := "catalog"
 var _deck_training_selected_deck_key := "dragapult"
 var _deck_editor_deck_id: int = -1
 var _deck_editor_return_context: Dictionary = {}
@@ -934,6 +939,11 @@ func _clear_battle_setup_startup_input_shield_request() -> void:
 func _deferred_goto_scene(path: String, request_token: int = 0) -> void:
 	if not _is_current_scene_change_request(path, request_token):
 		return
+	# Always render one source-scene frame before any synchronous destination
+	# load so a button can provide immediate navigation feedback.
+	await get_tree().process_frame
+	if not _is_current_scene_change_request(path, request_token):
+		return
 	set_touch_mouse_emulation_for_runtime(_touch_mouse_emulation_enabled_for_scene(path))
 	if _should_apply_deck_editor_orientation_before_scene_change(path):
 		apply_deck_editor_orientation()
@@ -1112,12 +1122,29 @@ func goto_battle() -> void:
 func resolve_selected_battle_deck(player_index: int) -> DeckData:
 	if player_index < 0 or player_index >= selected_deck_ids.size():
 		return null
+	if current_mode == GameMode.VS_AUTHOR_STRATEGY_AI and player_index == 1:
+		if not AuthorStrategyFeatureGateScript.is_enabled():
+			return null
+		var requested: Dictionary = AuthorStrategyWindowsExecutionGateScript.request_match_handle(
+			AuthorStrategyPackageCatalog,
+			_author_strategy_selection
+		)
+		if not bool(requested.get("ok", false)):
+			return null
+		var materialized: Dictionary = materialize_author_strategy_battle_deck(
+			requested.get("handle")
+		)
+		return materialized.get("deck") as DeckData if bool(materialized.get("ok", false)) else null
 	var deck_id := int(selected_deck_ids[player_index])
 	if current_mode == GameMode.VS_AI and player_index == 1:
 		var ai_deck: DeckData = CardDatabase.get_ai_deck(deck_id)
 		if ai_deck != null:
 			return ai_deck
 	return CardDatabase.get_deck(deck_id)
+
+
+func materialize_author_strategy_battle_deck(handle: Variant) -> Dictionary:
+	return AuthorStrategyDeckMaterializerScript.build(handle)
 
 
 func goto_deck_editor(deck_id: int, return_context: Dictionary = {}) -> void:
@@ -1148,6 +1175,22 @@ func goto_replay_browser() -> void:
 
 func goto_deck_training() -> void:
 	goto_scene(SCENE_DECK_TRAINING)
+
+
+func goto_strategy_hub(initial_workspace: String = "catalog") -> void:
+	_strategy_hub_initial_workspace = _normalize_strategy_hub_workspace(initial_workspace)
+	goto_scene(SCENE_STRATEGY_HUB)
+
+
+func consume_strategy_hub_initial_workspace() -> String:
+	var workspace := _normalize_strategy_hub_workspace(_strategy_hub_initial_workspace)
+	_strategy_hub_initial_workspace = "catalog"
+	return workspace
+
+
+func _normalize_strategy_hub_workspace(workspace: String) -> String:
+	var normalized := workspace.strip_edges().to_lower()
+	return normalized if normalized in ["catalog", "local", "replays", "settings"] else "catalog"
 
 
 func set_deck_training_selected_deck_key(deck_key: String) -> void:
@@ -1203,7 +1246,7 @@ func clear_deck_training_launch() -> void:
 
 
 func goto_settings() -> void:
-	goto_scene(SCENE_SETTINGS)
+	goto_strategy_hub("settings")
 
 
 func goto_tournament_deck_select() -> void:
@@ -1294,6 +1337,26 @@ func save_non_battle_layout_preferences() -> void:
 
 func set_battle_replay_launch(launch: Dictionary) -> void:
 	_battle_replay_launch = launch.duplicate(true)
+	# BattleScene setup legitimately resets transient live identity. Carry the
+	# caller's context inside this one-shot launch so replay teardown can restore
+	# it without relying on scene-instantiation timing.
+	_battle_replay_launch["_return_selected_deck_ids"] = selected_deck_ids.duplicate()
+	_battle_replay_launch["_return_player_display_names"] = battle_player_display_names.duplicate()
+
+
+func goto_battle_replay(launch: Dictionary) -> bool:
+	# Replays reuse the battle presentation scene, but never start a live rules
+	# session. BattleScene consumes this one-shot launch and enters the
+	# fail-closed `review_readonly` mode before any live setup can run.
+	var match_dir := str(launch.get("match_dir", "")).strip_edges()
+	var view_player_index := int(launch.get("view_player_index", -1))
+	if match_dir.is_empty() or view_player_index not in [0, 1]:
+		return false
+	var readonly_launch := launch.duplicate(true)
+	readonly_launch["presentation_mode"] = "replay_readonly"
+	set_battle_replay_launch(readonly_launch)
+	goto_battle()
+	return true
 
 
 func consume_battle_replay_launch() -> Dictionary:
@@ -1609,6 +1672,78 @@ func reset_ai_selection() -> void:
 		"opening_mode": "default",
 		"fixed_deck_order_path": "",
 	}
+
+
+func set_author_strategy_selection(record: Dictionary) -> bool:
+	var package_id := str(record.get("package_id", ""))
+	var package_version := str(record.get("package_version", ""))
+	var archive_sha256 := str(record.get("archive_sha256", "")).to_upper()
+	var install_source := str(record.get("install_source", ""))
+	if (
+		package_id.is_empty()
+		or package_id.length() > 128
+		or _author_strategy_text_has_control(package_id)
+		or package_version.is_empty()
+		or package_version.length() > 64
+		or _author_strategy_text_has_control(package_version)
+		or not _author_strategy_sha256_is_valid(archive_sha256)
+		or install_source not in ["built_in", "user"]
+	):
+		reset_author_strategy_selection()
+		return false
+	var display_name := _author_strategy_clean_display_text(record.get("display_name_snapshot", ""))
+	_author_strategy_selection = {
+		"package_id": package_id,
+		"package_version": package_version,
+		"archive_sha256": archive_sha256,
+		"display_name_snapshot": display_name if display_name != "" else "未命名策略",
+		"install_source": install_source,
+	}
+	return true
+
+
+func get_author_strategy_selection() -> Dictionary:
+	return _author_strategy_selection.duplicate(true)
+
+
+func reset_author_strategy_selection() -> void:
+	_author_strategy_selection = {}
+
+
+func _author_strategy_sha256_is_valid(value: String) -> bool:
+	if value.length() != 64:
+		return false
+	for index: int in value.length():
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 65 and code <= 70):
+			return false
+	return true
+
+
+func _author_strategy_text_has_control(value: String) -> bool:
+	for index: int in value.length():
+		var code := value.unicode_at(index)
+		if code < 32 or code == 127:
+			return true
+	return false
+
+
+func _author_strategy_clean_display_text(value: Variant) -> String:
+	var raw := str(value)
+	var result := ""
+	var previous_space := false
+	for index: int in raw.length():
+		var code := raw.unicode_at(index)
+		if code < 32 or code == 127:
+			if not previous_space and not result.is_empty():
+				result += " "
+			previous_space = true
+			continue
+		result += String.chr(code)
+		previous_space = code == 32
+		if result.length() >= 160:
+			break
+	return result.strip_edges()
 
 
 func set_battle_player_display_names(names: Array[String]) -> void:

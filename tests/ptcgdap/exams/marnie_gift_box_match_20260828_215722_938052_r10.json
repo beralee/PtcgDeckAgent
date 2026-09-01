@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "document_type": "ptcgdap_directed_strategy_exam_corpus_v1",
+  "corpus_id": "marnie-gift-box-match-20260828-215722-938052",
+  "status": "r10_candidate_gate",
+  "repetitions_per_exam": 5,
+  "source_match": {
+    "match_id": "match_20260828_215722_938052",
+    "native_replay_contract_id": "ptcgdap-native-replay-diagnostic-v2",
+    "record_count": 411,
+    "detail_file_sha256": "7EEBADA7BC5A42F532B42D504BE46DB8161C31CA2ED97409F3EB8048A8AD6347",
+    "chain_root_sha256": "76E360C91BC01578C6F10A5A16C0CD854051DC35E75CC69E2568032E8666A416",
+    "decision_frame_provenance": "reconstructed_from_verified_public_state_and_choice_context",
+    "decision_frame_gap": "player_compact_v1_disabled_developer_decision_trace"
+  },
+  "strategy_package": {
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "2.0.0",
+    "archive_sha256": "EFCE59B1D80F65B2BDA90EEF4784AF6676664B8109755BB9AAA6E6A669690875",
+    "strategy_id": "bodao-yongzhe.marnies-gift-box.competitive-v2-rule-marnie-r10",
+    "install_source": "built_in"
+  },
+  "exams": [
+    {
+      "exam_id": "t6_tm_evolution_choose_two_bench_targets",
+      "issue_number": 1,
+      "turn_number": 6,
+      "provenance": "direct_replay_window",
+      "replay_evidence": "choice_context event 258; max_select=2; candidates=[Snorunt, Marnie's Impidimp]; runtime selected=[0]",
+      "root_owner": "adapter_interaction_cardinality",
+      "prompt_kind": "evolve",
+      "select_semantics": {"min_count": 1, "max_count": 2, "select_type_raw": 7, "select_context_raw": 37},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV1C_121", "CSV10C_216", "CSV8C_183"],
+          "active": [{"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attached_tool_uid": "CSV5C_119"}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attack_ready": false},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 27,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "deck_count": 32, "prizes_remaining": 4}
+      },
+      "options": [
+        {"label": "Snorunt bench target", "kind": "evolve", "card_uid": "CSV9.5C_043", "target_uid": "CSV9.5C_043", "option_type_raw": 9},
+        {"label": "Marnie's Impidimp bench target", "kind": "evolve", "card_uid": "CSV10C_146", "target_uid": "CSV10C_146", "option_type_raw": 9}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [0, 1]
+    },
+    {
+      "exam_id": "t6_tm_evolution_choose_one_evolution_for_each_target",
+      "issue_number": 1,
+      "turn_number": 6,
+      "provenance": "linked_counterfactual_after_direct_window",
+      "replay_evidence": "actual follow-up offered two Froslass only because the preceding direct window selected only Snorunt; this exam freezes the legal follow-up after selecting both targets",
+      "root_owner": "adapter_interaction_cardinality",
+      "prompt_kind": "search",
+      "select_semantics": {"min_count": 1, "max_count": 2, "select_type_raw": 1, "select_context_raw": 24},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV1C_121", "CSV10C_216", "CSV8C_183"],
+          "active": [{"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attached_tool_uid": "CSV5C_119"}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attack_ready": false},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 27,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "deck_count": 32, "prizes_remaining": 4}
+      },
+      "options": [
+        {"label": "Froslass for Snorunt", "kind": "search", "card_uid": "CSV7C_059", "source_uid": "CSV5C_119", "option_type_raw": 3},
+        {"label": "second Froslass duplicate", "kind": "search", "card_uid": "CSV7C_059", "source_uid": "CSV5C_119", "option_type_raw": 3},
+        {"label": "Marnie's Morgrem for Impidimp", "kind": "search", "card_uid": "CSV10C_147", "source_uid": "CSV5C_119", "option_type_raw": 3},
+        {"label": "second Marnie's Morgrem duplicate", "kind": "search", "card_uid": "CSV10C_147", "source_uid": "CSV5C_119", "option_type_raw": 3}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [0, 2]
+    },
+    {
+      "exam_id": "t8_punk_up_take_all_two_available_dark_energy",
+      "issue_number": 2,
+      "turn_number": 8,
+      "provenance": "direct_replay_window",
+      "replay_evidence": "choice_context event 320; max_select=2 because only two Basic Darkness Energy remained in deck; runtime assignments=1",
+      "root_owner": "adapter_count_rule",
+      "prompt_kind": "assignment_source",
+      "select_semantics": {"min_count": 0, "max_count": 2, "select_type_raw": 1, "select_context_raw": 22},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV10C_216", "CSV1C_109"],
+          "active": [{"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attack_ready": false},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV10C_148", "hp": 320, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 2}
+          ],
+          "deck_count": 18,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 6, "deck_count": 26, "prizes_remaining": 3}
+      },
+      "options": [
+        {"label": "first remaining Basic Darkness Energy", "kind": "assignment_source", "card_uid": "CSVE1C_DAR", "source_uid": "CSV10C_148", "option_type_raw": 3},
+        {"label": "second remaining Basic Darkness Energy", "kind": "assignment_source", "card_uid": "CSVE1C_DAR", "source_uid": "CSV10C_148", "option_type_raw": 3}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [0, 1]
+    },
+    {
+      "exam_id": "t4_play_spikemuth_before_spending_the_development_window",
+      "issue_number": 3,
+      "turn_number": 4,
+      "provenance": "direct_replay_state_reduced_to_competing_actions",
+      "replay_evidence": "turn start hand contained Spikemuth and Iono with Marnie's Impidimp already benched; runtime chose Iono and shuffled Spikemuth away",
+      "root_owner": "adapter_main_action_scoring",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV10C_216", "CSV1C_109", "CSVE1C_DAR", "CSV3C_123", "CSVE1C_DAR"],
+          "active": [{"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 37,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "deck_count": 36, "prizes_remaining": 5}
+      },
+      "options": [
+        {"label": "play Spikemuth", "kind": "play_stadium", "card_uid": "CSV10C_216", "option_type_raw": 7},
+        {"label": "play Iono", "kind": "play_trainer", "card_uid": "CSV3C_123", "option_type_raw": 7}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "t4_spikemuth_search_morgrem_for_benched_impidimp",
+      "issue_number": 3,
+      "turn_number": 4,
+      "provenance": "reachable_window_blocked_by_prior_direct_choice",
+      "replay_evidence": "the package contains search.spikemuth-morgrem-from-impidimp, but the live match never reached this window because Spikemuth was shuffled away",
+      "root_owner": "adapter_reachable_interaction",
+      "prompt_kind": "search",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 1, "select_context_raw": 24},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV1C_109", "CSVE1C_DAR", "CSV3C_123", "CSVE1C_DAR"],
+          "active": [{"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 37,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "deck_count": 36, "prizes_remaining": 5}
+      },
+      "options": [
+        {"label": "Marnie's Impidimp", "kind": "search", "card_uid": "CSV10C_146", "source_uid": "CSV10C_216", "option_type_raw": 3},
+        {"label": "Marnie's Grimmsnarl ex", "kind": "search", "card_uid": "CSV10C_148", "source_uid": "CSV10C_216", "option_type_raw": 3},
+        {"label": "Marnie's Morgrem", "kind": "search", "card_uid": "CSV10C_147", "source_uid": "CSV10C_216", "option_type_raw": 3}
+      ],
+      "observed_baseline_selected_indexes": [2],
+      "target_selected_indexes": [2]
+    },
+    {
+      "exam_id": "t4_secret_box_keep_iono_for_next_turn_disruption",
+      "issue_number": 4,
+      "turn_number": 4,
+      "provenance": "direct_replay_window",
+      "replay_evidence": "Secret Box supporter candidates were [Research, Arven, Iono, Arven, Arven, Arven]; runtime selected index 0 Research",
+      "root_owner": "adapter_search_preference",
+      "prompt_kind": "search",
+      "select_semantics": {"min_count": 0, "max_count": 1, "select_type_raw": 1, "select_context_raw": 24},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV5C_119", "CSV10C_216"],
+          "active": [{"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 31,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "deck_count": 36, "prizes_remaining": 5}
+      },
+      "options": [
+        {"label": "Professor's Research", "kind": "search", "card_uid": "CSV1C_121", "source_uid": "CSV8C_176", "option_type_raw": 3},
+        {"label": "Arven copy 1", "kind": "search", "card_uid": "CSV1C_123", "source_uid": "CSV8C_176", "option_type_raw": 3},
+        {"label": "Iono", "kind": "search", "card_uid": "CSV3C_123", "source_uid": "CSV8C_176", "option_type_raw": 3},
+        {"label": "Arven copy 2", "kind": "search", "card_uid": "CSV1C_123", "source_uid": "CSV8C_176", "option_type_raw": 3},
+        {"label": "Arven copy 3", "kind": "search", "card_uid": "CSV1C_123", "source_uid": "CSV8C_176", "option_type_raw": 3},
+        {"label": "Arven copy 4", "kind": "search", "card_uid": "CSV1C_123", "source_uid": "CSV8C_176", "option_type_raw": 3}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [2]
+    },
+    {
+      "exam_id": "t6_use_actual_research_before_turn_ending_tm_attack",
+      "issue_number": 4,
+      "turn_number": 6,
+      "provenance": "direct_replay_state_reduced_to_competing_actions",
+      "replay_evidence": "Research remained in hand immediately before the turn-ending TM Evolution attack",
+      "root_owner": "adapter_terminal_action_ordering",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV1C_121", "CSV10C_216", "CSV8C_183"],
+          "active": [{"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attached_tool_uid": "CSV5C_119"}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attack_ready": false},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 27,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 7, "deck_count": 32, "prizes_remaining": 4}
+      },
+      "options": [
+        {"label": "play Professor's Research", "kind": "play_trainer", "card_uid": "CSV1C_121", "option_type_raw": 7},
+        {"label": "use TM Evolution attack", "kind": "granted_attack", "source_uid": "CSV5C_119", "attack_index": 0, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "t6_linked_iono_disrupt_before_turn_ending_tm_attack",
+      "issue_number": 4,
+      "turn_number": 6,
+      "provenance": "linked_counterfactual_from_secret_box_exam",
+      "replay_evidence": "if the turn-4 Secret Box window keeps Iono, this is the public turn-6 choice that both refills the AI hand and disrupts the opponent before attacking",
+      "root_owner": "adapter_terminal_action_ordering",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV3C_123", "CSV10C_216", "CSV8C_183"],
+          "active": [{"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attached_tool_uid": "CSV5C_119"}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1, "attack_ready": false},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 27,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 7, "deck_count": 32, "prizes_remaining": 4}
+      },
+      "options": [
+        {"label": "play Iono", "kind": "play_trainer", "card_uid": "CSV3C_123", "option_type_raw": 7},
+        {"label": "use TM Evolution attack", "kind": "granted_attack", "source_uid": "CSV5C_119", "attack_index": 0, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "t5_send_out_zero_retreat_budew_pivot",
+      "issue_number": 5,
+      "turn_number": 5,
+      "provenance": "direct_replay_window",
+      "replay_evidence": "after Munkidori was knocked out, bench order was [Impidimp, Snorunt, Munkidori, Budew, Impidimp]; runtime sent index 0 Impidimp",
+      "root_owner": "adapter_send_out_preference_and_public_retreat_capability",
+      "prompt_kind": "send_out",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 1, "select_context_raw": 4},
+      "state": {
+        "phase": "BETWEEN_TURNS",
+        "self": {
+          "hand": ["CSVE1C_DAR", "CSV5C_119", "CSV1C_121", "CSV10C_216"],
+          "active": [],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 29,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": true, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 6, "deck_count": 34, "prizes_remaining": 4}
+      },
+      "options": [
+        {"label": "Marnie's Impidimp with one Darkness Energy", "kind": "send_out", "card_uid": "CSV10C_146", "target_uid": "CSV10C_146", "option_type_raw": 3, "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 1},
+        {"label": "Snorunt", "kind": "send_out", "card_uid": "CSV9.5C_043", "target_uid": "CSV9.5C_043", "option_type_raw": 3, "target_minimum_attack_energy_count": 1},
+        {"label": "Munkidori", "kind": "send_out", "card_uid": "CSV8C_094", "target_uid": "CSV8C_094", "option_type_raw": 3, "target_minimum_attack_energy_count": 1},
+        {"label": "Budew zero-retreat pivot", "kind": "send_out", "card_uid": "CSV9.5C_004", "target_uid": "CSV9.5C_004", "option_type_raw": 3, "target_minimum_attack_energy_count": 0},
+        {"label": "second Marnie's Impidimp", "kind": "send_out", "card_uid": "CSV10C_146", "target_uid": "CSV10C_146", "option_type_raw": 3, "target_minimum_attack_energy_count": 1}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [3]
+    }
+  ]
+}

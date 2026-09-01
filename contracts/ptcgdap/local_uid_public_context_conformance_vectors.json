@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-local-uid-public-context-as-wp6-v1",
+  "profile_id": "ptcgdap-local-uid-public-context-as-wp6-v1",
+  "strategic_context_fixture": {
+    "contract_path": "contracts/ptcgdap/strategic_context_v18_conformance_vectors.json",
+    "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+    "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+  },
+  "deck_binding": {
+    "allowed_card_uids": [
+      "CSV10C_146",
+      "CSV10C_148",
+      "CSV7C_177",
+      "SVP_105"
+    ],
+    "deck_manifest_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "expected_allowed_uid_set_hash": "0B2BD4929DA26E6FAC5564B6499328B2F8196C144D1B1A94241A53CB43D388D5"
+  },
+  "accepted_case": {
+    "id": "exact_current_public_bind",
+    "value": {
+      "schema_version": 1,
+      "card_id_domain": "godot_local_card_uid_v1",
+      "source": {
+        "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+      },
+      "options": [
+        {
+          "index": 0,
+          "local_card_uid": "CSV10C_146"
+        },
+        {
+          "index": 1,
+          "local_card_uid": null
+        }
+      ],
+      "acting_hand": [
+        {
+          "serial": 30,
+          "local_card_uid": "CSV7C_177"
+        }
+      ],
+      "acting_active": [
+        {
+          "serial": 10,
+          "local_card_uid": "CSV10C_148"
+        }
+      ]
+    },
+    "expected_local_context_hash": "80CB7059099DDF5ED4EA4A33B2537F51180845BBED6D0E58FF233852DA0201B7"
+  },
+  "rejected_cases": [
+    {
+      "id": "unknown_uid",
+      "value": {
+        "schema_version": 1,
+        "card_id_domain": "godot_local_card_uid_v1",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "options": [
+          {
+            "index": 0,
+            "local_card_uid": "CSV999C_999"
+          },
+          {
+            "index": 1,
+            "local_card_uid": null
+          }
+        ],
+        "acting_hand": [
+          {
+            "serial": 30,
+            "local_card_uid": "CSV7C_177"
+          }
+        ],
+        "acting_active": [
+          {
+            "serial": 10,
+            "local_card_uid": "CSV10C_148"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_local_uid_public_context"
+    },
+    {
+      "id": "serial_drift",
+      "value": {
+        "schema_version": 1,
+        "card_id_domain": "godot_local_card_uid_v1",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "options": [
+          {
+            "index": 0,
+            "local_card_uid": "CSV10C_146"
+          },
+          {
+            "index": 1,
+            "local_card_uid": null
+          }
+        ],
+        "acting_hand": [
+          {
+            "serial": 31,
+            "local_card_uid": "CSV7C_177"
+          }
+        ],
+        "acting_active": [
+          {
+            "serial": 10,
+            "local_card_uid": "CSV10C_148"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_local_uid_public_context"
+    },
+    {
+      "id": "window_drift",
+      "value": {
+        "schema_version": 1,
+        "card_id_domain": "godot_local_card_uid_v1",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        },
+        "options": [
+          {
+            "index": 0,
+            "local_card_uid": "CSV10C_146"
+          },
+          {
+            "index": 1,
+            "local_card_uid": null
+          }
+        ],
+        "acting_hand": [
+          {
+            "serial": 30,
+            "local_card_uid": "CSV7C_177"
+          }
+        ],
+        "acting_active": [
+          {
+            "serial": 10,
+            "local_card_uid": "CSV10C_148"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_local_uid_public_context"
+    },
+    {
+      "id": "option_index_drift",
+      "value": {
+        "schema_version": 1,
+        "card_id_domain": "godot_local_card_uid_v1",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "options": [
+          {
+            "index": 1,
+            "local_card_uid": "CSV10C_146"
+          },
+          {
+            "index": 1,
+            "local_card_uid": null
+          }
+        ],
+        "acting_hand": [
+          {
+            "serial": 30,
+            "local_card_uid": "CSV7C_177"
+          }
+        ],
+        "acting_active": [
+          {
+            "serial": 10,
+            "local_card_uid": "CSV10C_148"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_local_uid_public_context"
+    },
+    {
+      "id": "extra_opponent_hidden_field",
+      "value": {
+        "schema_version": 1,
+        "card_id_domain": "godot_local_card_uid_v1",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "options": [
+          {
+            "index": 0,
+            "local_card_uid": "CSV10C_146"
+          },
+          {
+            "index": 1,
+            "local_card_uid": null
+          }
+        ],
+        "acting_hand": [
+          {
+            "serial": 30,
+            "local_card_uid": "CSV7C_177"
+          }
+        ],
+        "acting_active": [
+          {
+            "serial": 10,
+            "local_card_uid": "CSV10C_148"
+          }
+        ],
+        "opponent_hidden_cards": []
+      },
+      "expected_error_code": "invalid_local_uid_public_context"
+    },
+    {
+      "id": "private_sentinel",
+      "value": {
+        "schema_version": 1,
+        "card_id_domain": "godot_local_card_uid_v1",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6"
+        },
+        "options": [
+          {
+            "index": 0,
+            "local_card_uid": "CSV10C_146"
+          },
+          {
+            "index": 1,
+            "local_card_uid": null
+          }
+        ],
+        "acting_hand": [
+          {
+            "serial": 30,
+            "local_card_uid": "PRIVATE_SENTINEL"
+          }
+        ],
+        "acting_active": [
+          {
+            "serial": 10,
+            "local_card_uid": "CSV10C_148"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_local_uid_public_context"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SENTINEL",
+    "PRIVATE_OPPONENT_HAND",
+    "PRIVATE_CALLBACK"
+  ]
+}

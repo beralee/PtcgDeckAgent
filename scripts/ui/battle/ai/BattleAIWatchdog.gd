@@ -208,7 +208,7 @@ func _force_rules_after_llm_timeout(scene: Object, stalled_msec: int) -> void:
 func _should_monitor(scene: Object) -> bool:
 	if scene == null or not is_instance_valid(scene):
 		return false
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+	if GameManager.current_mode not in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI]:
 		return false
 	if str(scene.get("_battle_mode")) != "live":
 		return false
@@ -317,6 +317,8 @@ func _scene_matches_authoritative_decision(scene: Object, decision: Dictionary) 
 func _can_force_end_main_phase(scene: Object) -> bool:
 	var gsm: Variant = scene.get("_gsm")
 	return (
+		GameManager.current_mode == GameManager.GameMode.VS_AI
+		and
 		gsm != null
 		and gsm.game_state != null
 		and gsm.game_state.phase == GameState.GamePhase.MAIN
@@ -325,6 +327,8 @@ func _can_force_end_main_phase(scene: Object) -> bool:
 
 
 func _ai_player_index(scene: Object) -> int:
+	if scene.has_method("_runtime_ai_player_index"):
+		return int(scene.call("_runtime_ai_player_index"))
 	var ai_opponent: Variant = scene.get("_ai_opponent")
 	return int(ai_opponent.get("player_index")) if ai_opponent != null else -1
 

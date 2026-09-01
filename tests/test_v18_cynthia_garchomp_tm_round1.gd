@@ -7,7 +7,7 @@ const REGISTRY_SCRIPT = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 const DECK_ID := 800018543
 const DECK_PATH := "res://data/bundled_user/decks/800018543.json"
 const FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/800018543.json"
-const DELEGATE_PATH := "res://scripts/ai/DeckStrategyV18MarnieCynthia.gd"
+const DELEGATE_PATH := "res://scripts/ai/DeckStrategyV18CynthiaAuthorV1.gd"
 
 const EXPECTED_OPENING: Array[String] = [
 	"CSV9.5C_004", "CSV10C_111", "CSV7C_177", "CSV5C_119",

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+  "parent": {
+    "work_package": "P3-WP2",
+    "manifest_canonical_sha256": "F1ABB0D82469174C321DA42D54AC24F045908183898F16F1A80E97BE4277BA0E",
+    "option_binding_bundle_canonical_sha256": "4FFFEC48E4E1FE0774BB6E343D4D4B0384A9210057DEE06415C2A20F2899B1C1",
+    "decision_port_bundle_canonical_sha256": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "selection_bundle_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/godot_action_ticket.schema.json",
+      "canonical_sha256": "04ADF5B9B63A7AE935F14D81F24B0231AB0D97943EEF0EB910ADE488024578AC"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/godot_action_ticket_profile.json",
+      "canonical_sha256": "EECE547147155932FF4DCB0E73DF1FF026CF91966D413C39EF1AFA3062FC9ADA"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/godot_action_ticket_conformance_vectors.json",
+      "canonical_sha256": "3AC3F5DC55B0B451662A1DDDFEE3CF39EC0B38341F9FD7FA8A7DE92BF171E440"
+    }
+  ]
+}

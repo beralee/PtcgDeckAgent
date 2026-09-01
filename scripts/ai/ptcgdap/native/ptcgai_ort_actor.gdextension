@@ -1,0 +1,14 @@
+[configuration]
+
+entry_symbol = "ptcgai_ort_actor_init"
+compatibility_minimum = "4.3"
+reloadable = false
+
+[libraries]
+
+windows.release.x86_64 = "res://bin/ptcgai_ort/ptcgai_ort.windows.template_release.x86_64.dll"
+windows.debug.x86_64 = "res://bin/ptcgai_ort/ptcgai_ort.windows.template_release.x86_64.dll"
+macos.release.arm64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.arm64.dylib"
+macos.release.x86_64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.x86_64.dylib"
+macos.debug.arm64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.arm64.dylib"
+macos.debug.x86_64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.x86_64.dylib"

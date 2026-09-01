@@ -1,0 +1,71 @@
+{
+  "document_type": "ptcgdap_a3_private_semantic_parity_profile_v1",
+  "schema_version": 1,
+  "profile_id": "ptcgdap-open-research-private-id-correspondence-v1",
+  "project_scope_decision": {
+    "project_kind": "independent_open_source_research",
+    "decision_owner": "project_owner",
+    "local_private_oracle_research_allowed": true,
+    "official_certification_claimed": false
+  },
+  "identity_domains": {
+    "strategy_and_godot": "ptcgdap_private_card_uid_v1",
+    "oracle": "official_card_and_attack_ids_private_adapter_only",
+    "official_numeric_identity_equality_required": false,
+    "public_identity": "opaque_semantic_card_and_attack_ids"
+  },
+  "correspondence_contract": {
+    "accepted_card_evidence": [
+      "exact_corresponding_printing",
+      "reviewed_equivalent_print"
+    ],
+    "accepted_attack_evidence": "owner_semantic_card_plus_attack_ordinal_plus_source_hash",
+    "forbidden_evidence": [
+      "display_name_only",
+      "translated_name_only",
+      "current_zone_only",
+      "slot_name_only"
+    ],
+    "missing_or_ambiguous_mapping": "fail_closed",
+    "comparison_surface": [
+      "engine_specific_raw_actor_observation_retained_separately",
+      "corresponding_card_operation_select_header",
+      "corresponding_card_ordered_semantic_options",
+      "accepted_index_result",
+      "incremental_public_logs",
+      "applicable_stable_public_state_delta"
+    ],
+    "raw_callback_rule": "official_raw_and_godot_private_frames_are_not_claimed_byte_equal; only the declared operation projection is cross-domain comparable",
+    "operation_projection_profile": "ptcgdap_corresponding_card_operation_input_v1",
+    "synthetic_projection_type_coverage": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    "live_operation_type_coverage": [3],
+    "live_operation_claim": "setup-active current-window input, ordered semantic option and returned current-window index only",
+    "bootstrap_prefix_comparison": "not_claimed",
+    "stable_public_transition_comparison": "not_claimed",
+    "post_transition_next_selection_comparison": "not_claimed",
+    "trusted_source_lane": "adapter-bound official_native or godot_private; never selected by self-reported observation fields",
+    "official_state_card_identity_field": "id",
+    "official_option_card_identity_field": "cardId",
+    "godot_private_card_identity_field": "card_uid",
+    "starting_player_checkpoint": "YES_NO/IS_FIRST before setup in the event-driven research adapter"
+  },
+  "oracle_boundary": {
+    "read_user_supplied_private_bundle": true,
+    "copy_to_public_artifact": false,
+    "upload_private_bundle": false,
+    "cache_private_bundle": false,
+    "host_public_official_runtime_service": false,
+    "publish_official_card_or_attack_ids": false
+  },
+  "certification": {
+    "maximum_claim": "research_private_id_corresponding_card_a3",
+    "operation_only_claim": "setup_active_corresponding_card_input_index_contract",
+    "scope_rule": "only registered corresponding-card capabilities with zero unexplained difference",
+    "excluded_claims": [
+      "official_certification",
+      "official_deck_identity",
+      "all_cards_in_official_catalog",
+      "universal_engine_equivalence"
+    ]
+  }
+}

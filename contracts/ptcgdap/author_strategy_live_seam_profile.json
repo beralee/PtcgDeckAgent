@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-live-seam-as-wp5-v1",
+  "enabled_prompt_families": [
+    "W1"
+  ],
+  "enabled_callback_roles": [
+    "setup_active"
+  ],
+  "parent_contracts": {
+    "author_match_host_bundle_canonical_sha256": "4BD207E9F9200E5AF9E2206A13EAF506382B6BA42BDEE3F0FEB5CA872885DBB9",
+    "engine_decision_port_bundle_canonical_sha256": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "godot_option_binding_bundle_canonical_sha256": "4FFFEC48E4E1FE0774BB6E343D4D4B0384A9210057DEE06415C2A20F2899B1C1",
+    "godot_action_ticket_bundle_canonical_sha256": "41F3E84C6DC5C9BC6C162B848B097211E617B5558ECB59554757E82CE58817ED",
+    "godot_action_executor_bundle_canonical_sha256": "45952BE629AE98EB6070C77188FD6A2C2A644C4B6A36876193BB745B7CDA4E92",
+    "shadow_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+    "godot_observation_projector_bundle_canonical_sha256": "C51EA4CF1AEFCBB5B9C6D83825FF3A717CCDCC4105B804210BF6169372619041",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "lifecycle": {
+    "exact_engine_prompt_required": true,
+    "projector_firewall_required": true,
+    "fresh_immutable_window_required": true,
+    "same_window_sanitize_required": true,
+    "one_use_ticket_required": true,
+    "preflight_commit_required": true,
+    "immediate_reobserve_required": true,
+    "old_window_ticket_reuse_allowed": false
+  },
+  "trust_scope": {
+    "development_canary": true,
+    "test_fixture_may_drive_canary": true,
+    "player_package_execution": false,
+    "catalog_ready_record": false,
+    "exportable": false,
+    "device_acceptance_claim": false
+  },
+  "fallback": {
+    "same_window_deterministic_only": true,
+    "classic_ai_allowed": false,
+    "fallback_after_engine_mutation": false
+  },
+  "stable_error_codes": [
+    "",
+    "live_seam_contract_error",
+    "unsupported_prompt_family",
+    "invalid_live_owner",
+    "invalid_engine_prompt",
+    "projector_rejected",
+    "window_rejected",
+    "host_rejected",
+    "binding_rejected",
+    "broker_rejected",
+    "preflight_rejected",
+    "commit_rejected",
+    "prompt_changed",
+    "engine_apply_rejected",
+    "reobserve_rejected",
+    "replay_rejected",
+    "resource_limit_exceeded"
+  ],
+  "resource_limits": {
+    "max_options": 32,
+    "max_source_documents": 128,
+    "max_public_events": 512
+  },
+  "device_budget_handoff": {
+    "gate_owner": "AS-WP6",
+    "enforced_in_as_wp5": false,
+    "candidate_max_decision_msec": 250
+  }
+}

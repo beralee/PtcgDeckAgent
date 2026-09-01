@@ -2,12 +2,40 @@ class_name BattlePromptRouter
 extends RefCounted
 
 const SETUP_PREFIXES := ["setup_active_", "setup_bench_"]
+const AuthorLiveSeamScript = preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorLiveSeam.gd")
 
 var context: RefCounted = null
+var _author_live_seam: Variant = null
 
 
 func setup(next_context: RefCounted) -> void:
 	context = next_context
+
+
+func configure_author_live_canary(seam: Variant) -> bool:
+	if seam == null:
+		_author_live_seam = null
+		return true
+	if (
+		seam.get_script() != AuthorLiveSeamScript
+		or not seam.validate_integrity()
+		or not seam.has_method("is_bound_owner_ready")
+		or not seam.is_bound_owner_ready()
+	):
+		return false
+	_author_live_seam = seam
+	return true
+
+
+func can_route_author_setup_active(mode: int, player_index: int) -> bool:
+	return (
+		mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+		and player_index == 1
+		and _author_live_seam != null
+		and _author_live_seam.get_script() == AuthorLiveSeamScript
+		and _author_live_seam.validate_integrity()
+		and _author_live_seam.is_bound_owner_ready()
+	)
 
 
 func pending_choice() -> String:

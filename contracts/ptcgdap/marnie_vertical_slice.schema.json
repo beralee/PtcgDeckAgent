@@ -1,0 +1,1688 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/marnie_vertical_slice.schema.json",
+  "title": "PtcgDAP Marnie vertical-slice fixture artifacts",
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "localPrinting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "set_code",
+        "card_index"
+      ],
+      "properties": {
+        "set_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "card_index": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "encodedNode": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "null"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "boolean"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "integer"
+            },
+            "value": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ieee754_hex"
+          ],
+          "properties": {
+            "kind": {
+              "const": "binary64"
+            },
+            "ieee754_hex": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{16}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "items"
+          ],
+          "properties": {
+            "kind": {
+              "const": "array"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/encodedNode"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "entries"
+          ],
+          "properties": {
+            "kind": {
+              "const": "object"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key",
+                  "value"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "$ref": "#/$defs/encodedNode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "status",
+        "parent",
+        "artifact_serialization",
+        "deck_identity_rule",
+        "trajectory_rule",
+        "w2_firewall_rule",
+        "serialized_authority",
+        "live_authority",
+        "client_confidentiality"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "marnie_vertical_slice_profile_v1"
+        },
+        "status": {
+          "const": "offline_shadow_fixture"
+        },
+        "parent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "p4_wp6_manifest_canonical_sha256",
+            "p4_budget_bundle_canonical_sha256",
+            "source_lock_canonical_sha256"
+          ],
+          "properties": {
+            "p4_wp6_manifest_canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "p4_budget_bundle_canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "source_lock_canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "artifact_serialization": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deck_identity_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trajectory_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "w2_firewall_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "serialized_authority": {
+          "const": "audit_and_conformance_only"
+        },
+        "live_authority": {
+          "const": false
+        },
+        "client_confidentiality": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "source_policy",
+        "inputs"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-vertical-slice-source-manifest-p5-wp1-v1"
+        },
+        "source_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "official_oracle",
+            "runtime_dependency",
+            "private_replay_copy_allowed",
+            "public_seat_step_extraction_only",
+            "name_text_art_inference"
+          ],
+          "properties": {
+            "official_oracle": {
+              "const": "read_only_development_source_compiler_input_only"
+            },
+            "runtime_dependency": {
+              "const": false
+            },
+            "private_replay_copy_allowed": {
+              "const": false
+            },
+            "public_seat_step_extraction_only": {
+              "const": true
+            },
+            "name_text_art_inference": {
+              "const": "forbidden"
+            }
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "root_id",
+              "path",
+              "bytes",
+              "raw_sha256",
+              "canonical_json_v1_sha256"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "root_id": {
+                "enum": [
+                  "ptcgdap",
+                  "ptcgabc_read_only_oracle"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\0]+$"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[0-9A-F]{64}$"
+              },
+              "canonical_json_v1_sha256": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9A-F]{64}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "cases"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-vertical-slice-conformance-v1"
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "operation",
+                  "input",
+                  "expected"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "operation": {
+                    "enum": [
+                      "official_summary",
+                      "local_summary",
+                      "identity_summary",
+                      "frame_summary",
+                      "capability"
+                    ]
+                  },
+                  "input": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {
+                      "frame_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "host_type",
+                              "value"
+                            ],
+                            "properties": {
+                              "host_type": {
+                                "const": "string_name"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "capability_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "expected": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {
+                      "card_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "unique_card_id_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "unique_printing_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "cabt_exportable": {
+                        "type": "boolean"
+                      },
+                      "same_deck": {
+                        "type": "boolean"
+                      },
+                      "official_bridged": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "official_unmapped": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "local_bridged": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "local_unbridged": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "family": {
+                        "pattern": "^W[0-7]$"
+                      },
+                      "firewall_status": {
+                        "enum": [
+                          "accepted",
+                          "rejected",
+                          "not_invoked_after_terminal"
+                        ]
+                      },
+                      "issue_code": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "window_state": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "policy_allowed",
+                              "fallback_only"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "window_family": {
+                        "pattern": "^W[0-7]$"
+                      },
+                      "portable_ready": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "operation",
+                  "input",
+                  "expected_error"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "operation": {
+                    "enum": [
+                      "frame_summary",
+                      "capability"
+                    ]
+                  },
+                  "input": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {
+                      "frame_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "host_type",
+                              "value"
+                            ],
+                            "properties": {
+                              "host_type": {
+                                "const": "string_name"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "capability_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "expected_error": {
+                    "enum": [
+                      "frame_unknown",
+                      "capability_unknown",
+                      "input_type_invalid"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "deck_identity",
+        "source_deck_raw_sha256",
+        "ordered_card_ids_canonical_sha256",
+        "card_count",
+        "unique_card_id_count",
+        "ordered_card_ids",
+        "cards",
+        "native_deck_legality",
+        "cabt_exportable"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-official-deck-manifest-v1"
+        },
+        "deck_identity": {
+          "const": "cabt:marnie_grimmsnarl_froslass:48f1a03e8ab8162f"
+        },
+        "source_deck_raw_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "ordered_card_ids_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "card_count": {
+          "const": 60
+        },
+        "unique_card_id_count": {
+          "const": 19
+        },
+        "ordered_card_ids": {
+          "type": "array",
+          "minItems": 60,
+          "maxItems": 60,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "cards": {
+          "type": "array",
+          "minItems": 19,
+          "maxItems": 19,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "official_card_id",
+              "count",
+              "exact_english_printing",
+              "ordered_official_attack_ids",
+              "exact_local_bridge"
+            ],
+            "properties": {
+              "official_card_id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "exact_english_printing": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "expansion",
+                      "collection_no"
+                    ],
+                    "properties": {
+                      "expansion": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "collection_no": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ordered_official_attack_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "uniqueItems": true
+              },
+              "exact_local_bridge": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "local_printing",
+                      "source_file",
+                      "local_attack_index_to_official_attack_id"
+                    ],
+                    "properties": {
+                      "local_printing": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "set_code",
+                          "card_index"
+                        ],
+                        "properties": {
+                          "set_code": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "card_index": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      "source_file": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "local_attack_index_to_official_attack_id": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                          "^(?:0|[1-9][0-9]*)$": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "native_deck_legality": {
+          "const": "official_production_replay_accepted_source_deck"
+        },
+        "cabt_exportable": {
+          "const": true
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "deck_id",
+        "deck_identity",
+        "source_deck_raw_sha256",
+        "source_deck_canonical_sha256",
+        "card_count",
+        "unique_printing_count",
+        "cards",
+        "cabt_exportable",
+        "support_claim"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-local-deck-manifest-v1"
+        },
+        "deck_id": {
+          "const": 800018501
+        },
+        "deck_identity": {
+          "type": "string",
+          "pattern": "^godot:800018501:[0-9a-f]{16}$"
+        },
+        "source_deck_raw_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "source_deck_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "card_count": {
+          "const": 60
+        },
+        "unique_printing_count": {
+          "const": 28
+        },
+        "cards": {
+          "type": "array",
+          "minItems": 28,
+          "maxItems": 28,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "local_printing",
+              "count",
+              "card_type",
+              "effect_id",
+              "godot_card_implementation_status_expected",
+              "official_equivalence",
+              "official_card_id"
+            ],
+            "properties": {
+              "local_printing": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "set_code",
+                  "card_index"
+                ],
+                "properties": {
+                  "set_code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "card_index": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "card_type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effect_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "godot_card_implementation_status_expected": {
+                "const": "implemented"
+              },
+              "official_equivalence": {
+                "enum": [
+                  "not_evaluated",
+                  "exact_print_bridge_only_not_engine_parity"
+                ]
+              },
+              "official_card_id": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "cabt_exportable": {
+          "const": false
+        },
+        "support_claim": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "same_deck",
+        "comparison_authority",
+        "name_text_art_inference",
+        "official",
+        "local",
+        "cabt_exportable",
+        "reason_codes"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-deck-identity-diff-v1"
+        },
+        "same_deck": {
+          "const": false
+        },
+        "comparison_authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name_text_art_inference": {
+          "const": "forbidden"
+        },
+        "official": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "card_count",
+            "unique_card_id_count",
+            "bridged_card_count",
+            "bridged_unique_card_id_count",
+            "unmapped_card_count",
+            "unmapped_official_card_ids"
+          ],
+          "properties": {
+            "card_count": {
+              "const": 60
+            },
+            "unique_card_id_count": {
+              "const": 19
+            },
+            "bridged_card_count": {
+              "const": 34
+            },
+            "bridged_unique_card_id_count": {
+              "const": 9
+            },
+            "unmapped_card_count": {
+              "const": 26
+            },
+            "unmapped_official_card_ids": {
+              "type": "array",
+              "minItems": 10,
+              "maxItems": 10,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "card_count",
+            "unique_printing_count",
+            "bridged_card_count",
+            "bridged_unique_printing_count",
+            "unbridged_card_count"
+          ],
+          "properties": {
+            "card_count": {
+              "const": 60
+            },
+            "unique_printing_count": {
+              "const": 28
+            },
+            "bridged_card_count": {
+              "const": 15
+            },
+            "bridged_unique_printing_count": {
+              "const": 4
+            },
+            "unbridged_card_count": {
+              "const": 45
+            }
+          }
+        },
+        "cabt_exportable": {
+          "const": false
+        },
+        "reason_codes": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "enum": [
+              "deck_lists_not_equal",
+              "official_ids_local_unmapped",
+              "local_printings_unbridged",
+              "engine_parity_not_evaluated"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "ability_numeric_identity",
+        "capabilities"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-capability-inventory-v1"
+        },
+        "ability_numeric_identity": {
+          "const": "unsupported_by_official_payload_no_synthesis"
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "capability_id",
+              "window_family",
+              "required",
+              "official_evidence",
+              "official_card_ids",
+              "local_engine_support",
+              "portable_ready",
+              "portable_blockers"
+            ],
+            "properties": {
+              "capability_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "window_family": {
+                "pattern": "^W[0-7]$"
+              },
+              "required": {
+                "const": true
+              },
+              "official_evidence": {
+                "type": "string",
+                "minLength": 1
+              },
+              "official_card_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "uniqueItems": true
+              },
+              "local_engine_support": {
+                "enum": [
+                  "implemented_current_godot_card_implementation_status",
+                  "interface_fixture_only"
+                ]
+              },
+              "portable_ready": {
+                "const": false
+              },
+              "portable_blockers": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "status",
+        "source_container_policy",
+        "initial_deck_action",
+        "frames"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_id": {
+          "const": "ptcgdap-marnie-w0-w7-public-trajectory-v1"
+        },
+        "status": {
+          "const": "offline_source_locked_fixture"
+        },
+        "source_container_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "initial_deck_action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_replay_id",
+            "observation_step",
+            "action_step",
+            "official_deck_manifest_id",
+            "card_count",
+            "exact_ordered_card_ids"
+          ],
+          "properties": {
+            "source_replay_id": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "observation_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "action_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "official_deck_manifest_id": {
+              "const": "ptcgdap-marnie-official-deck-manifest-v1"
+            },
+            "card_count": {
+              "const": 60
+            },
+            "exact_ordered_card_ids": {
+              "type": "array",
+              "minItems": 60,
+              "maxItems": 60,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        },
+        "frames": {
+          "type": "array",
+          "minItems": 13,
+          "maxItems": 13,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "frame_id",
+              "window_family",
+              "callback_role",
+              "source_replay_id",
+              "source_step",
+              "source_seat",
+              "source_status",
+              "source_action_authority",
+              "public_tree",
+              "public_observation_hash",
+              "current_firewall",
+              "window",
+              "visibility",
+              "terminal"
+            ],
+            "properties": {
+              "frame_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "window_family": {
+                "pattern": "^W[0-7]$"
+              },
+              "callback_role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_replay_id": {
+                "type": "string",
+                "pattern": "^[0-9]+$"
+              },
+              "source_step": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "source_seat": {
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              "source_status": {
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE",
+                  "DONE"
+                ]
+              },
+              "source_action_authority": {
+                "const": "not_policy_golden"
+              },
+              "public_tree": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/encodedNode"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "public_observation_hash": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9A-F]{64}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "current_firewall": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "issue_code"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "accepted",
+                      "rejected",
+                      "not_invoked_after_terminal"
+                    ]
+                  },
+                  "issue_code": {
+                    "anyOf": [
+                      {
+                        "const": "own_active_concealed"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              "window": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "window_version",
+                      "window_id",
+                      "hash_profile",
+                      "option_fingerprint_profile",
+                      "public_observation_hash",
+                      "public_hash_authority",
+                      "chooser_player_index",
+                      "decision_state",
+                      "fallback_reasons",
+                      "select_type_raw",
+                      "select_context_raw",
+                      "min_count",
+                      "max_count",
+                      "remain_damage_counter",
+                      "remain_energy_cost",
+                      "context_card",
+                      "effect",
+                      "public_deck_candidates",
+                      "options",
+                      "option_fingerprints"
+                    ],
+                    "properties": {
+                      "window_version": {
+                        "const": 1
+                      },
+                      "window_id": {
+                        "type": "string",
+                        "pattern": "^[0-9A-F]{64}$"
+                      },
+                      "hash_profile": {
+                        "const": "cabt_selection_window_v1"
+                      },
+                      "option_fingerprint_profile": {
+                        "const": "cabt_option_fingerprint_v1"
+                      },
+                      "public_observation_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9A-F]{64}$"
+                      },
+                      "public_hash_authority": {
+                        "const": "conformance_fixture"
+                      },
+                      "chooser_player_index": {
+                        "enum": [
+                          0,
+                          1
+                        ]
+                      },
+                      "decision_state": {
+                        "enum": [
+                          "policy_allowed",
+                          "fallback_only"
+                        ]
+                      },
+                      "fallback_reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "uniqueItems": true
+                      },
+                      "select_type_raw": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "select_context_raw": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "min_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "max_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "remain_damage_counter": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "remain_energy_cost": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "context_card": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "id",
+                              "serial",
+                              "playerIndex"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "serial": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "playerIndex": {
+                                "enum": [
+                                  0,
+                                  1
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "effect": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "id",
+                              "serial",
+                              "playerIndex"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "serial": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "playerIndex": {
+                                "enum": [
+                                  0,
+                                  1
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "public_deck_candidates": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "id",
+                                "serial",
+                                "playerIndex"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                "serial": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "playerIndex": {
+                                  "enum": [
+                                    0,
+                                    1
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "type"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "area": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "index": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "playerIndex": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    0,
+                                    1
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "inPlayArea": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "inPlayIndex": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "specialConditionType": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "attackId": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "toolIndex": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "count": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "cardId": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "option_fingerprints": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[0-9A-F]{64}$"
+                        },
+                        "uniqueItems": true
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "visibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "acting_hand_visible",
+                      "opponent_hand_hidden",
+                      "prizes_concealed",
+                      "own_active_concealed",
+                      "authorized_select_deck",
+                      "opponent_draw_identity_absent"
+                    ],
+                    "properties": {
+                      "acting_hand_visible": {
+                        "type": "boolean"
+                      },
+                      "opponent_hand_hidden": {
+                        "type": "boolean"
+                      },
+                      "prizes_concealed": {
+                        "type": "boolean"
+                      },
+                      "own_active_concealed": {
+                        "type": "boolean"
+                      },
+                      "authorized_select_deck": {
+                        "type": "boolean"
+                      },
+                      "opponent_draw_identity_absent": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "terminal": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "new_callback_expected",
+                      "final_step",
+                      "both_seats_done"
+                    ],
+                    "properties": {
+                      "new_callback_expected": {
+                        "const": false
+                      },
+                      "final_step": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "both_seats_done": {
+                        "const": true
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

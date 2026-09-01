@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "profile",
+  "profile_id": "marnie_public_base_profile_v1",
+  "status": "offline_shadow",
+  "parent_bundle_hashes": {
+    "marnie_prompt_broker": "E2EFDDE373EFBA0FDC929BE817595C8B3F0A5653956DB56418ADED57AFF960A1",
+    "marnie_trajectory_replay": "E203A688BEC1AFFFABAAF06098361B3FAE04B84431F99AE75A19F891BFA9599F",
+    "public_base_policy": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+    "public_deck_adapter": "C80F4C4FDAEA5AC29BD3C5617BFAC72BE38709696F7EA1995D3D153113DD3CA1",
+    "restricted_base_graph": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+    "strategic_context": "AACFA7E2E7F914180A2B7A5C4D92D6514ACC5F4622FC95B57DC225673893F98F",
+    "strategic_trace": "ADDD4CB48BD10FA0478854124D8E63AEE42B898C0EB81692BA35F8D7F90414C4",
+    "public_firewall": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947"
+  },
+  "policy_hash": "175D22526B556233DA74BC554E97ED051BC21229874B022AB1E66D3297E5E058",
+  "macro_catalog": [
+    {
+      "macro_id": "marnie.engine.poffin_primary",
+      "goal_stage": "acquire",
+      "official_card_ids": [
+        1086
+      ],
+      "official_attack_ids": [],
+      "public_constraints": [
+        "bench_space",
+        "hand_card_1086",
+        "current_play_option"
+      ]
+    },
+    {
+      "macro_id": "marnie.engine.spikemuth_tutor",
+      "goal_stage": "acquire",
+      "official_card_ids": [
+        1259,
+        646,
+        647,
+        648
+      ],
+      "official_attack_ids": [],
+      "public_constraints": [
+        "stadium_or_hand_1259",
+        "authorized_deck_window",
+        "marnie_evolution_line"
+      ]
+    },
+    {
+      "macro_id": "marnie.engine.evolve_grimmsnarl",
+      "goal_stage": "deploy",
+      "official_card_ids": [
+        647,
+        648
+      ],
+      "official_attack_ids": [],
+      "public_constraints": [
+        "hand_card_648",
+        "public_stage_647",
+        "current_play_option"
+      ]
+    },
+    {
+      "macro_id": "marnie.energy.punk_up",
+      "goal_stage": "fund",
+      "official_card_ids": [
+        7,
+        646,
+        647,
+        648
+      ],
+      "official_attack_ids": [],
+      "public_constraints": [
+        "public_grimmsnarl_648",
+        "authorized_dark_energy_options",
+        "public_marnie_target"
+      ]
+    },
+    {
+      "macro_id": "marnie.prize.shadow_bullet",
+      "goal_stage": "execute",
+      "official_card_ids": [
+        648
+      ],
+      "official_attack_ids": [
+        937
+      ],
+      "public_constraints": [
+        "public_attacker_648",
+        "official_attack_937",
+        "current_opponent_bench_options"
+      ]
+    },
+    {
+      "macro_id": "marnie.recover.night_stretcher",
+      "goal_stage": "recover",
+      "official_card_ids": [
+        1097,
+        7,
+        646,
+        647,
+        648
+      ],
+      "official_attack_ids": [],
+      "public_constraints": [
+        "hand_card_1097",
+        "public_discard_recovery_target",
+        "current_play_option"
+      ]
+    }
+  ],
+  "case_catalog": [
+    {
+      "case_id": "source-w0-initial",
+      "source_frame_id": "w0_initial",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": null,
+      "macro_phase": null,
+      "patches": []
+    },
+    {
+      "case_id": "source-w1-setup-active",
+      "source_frame_id": "w1_setup_active",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": null,
+      "macro_phase": null,
+      "patches": []
+    },
+    {
+      "case_id": "source-w2-setup-bench",
+      "source_frame_id": "w2_setup_bench",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": null,
+      "macro_phase": null,
+      "patches": []
+    },
+    {
+      "case_id": "source-w3-main",
+      "source_frame_id": "w3_main",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.engine.spikemuth_tutor",
+      "macro_phase": "play_stadium",
+      "patches": []
+    },
+    {
+      "case_id": "source-w4-spikemuth-deck",
+      "source_frame_id": "w4_spikemuth_deck",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.engine.spikemuth_tutor",
+      "macro_phase": "authorized_deck_search",
+      "patches": []
+    },
+    {
+      "case_id": "source-w5-punk-up-sources",
+      "source_frame_id": "w5_punk_up_sources",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.energy.punk_up",
+      "macro_phase": "choose_energy_sources",
+      "patches": []
+    },
+    {
+      "case_id": "source-w5-punk-up-target-1",
+      "source_frame_id": "w5_punk_up_target_1",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.energy.punk_up",
+      "macro_phase": "choose_target",
+      "patches": []
+    },
+    {
+      "case_id": "source-w5-punk-up-target-2",
+      "source_frame_id": "w5_punk_up_target_2",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.energy.punk_up",
+      "macro_phase": "choose_target",
+      "patches": []
+    },
+    {
+      "case_id": "source-w6-shadow-bullet-attack",
+      "source_frame_id": "w6_shadow_bullet_attack",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.prize.shadow_bullet",
+      "macro_phase": "choose_attack",
+      "patches": []
+    },
+    {
+      "case_id": "source-w6-shadow-bullet-target",
+      "source_frame_id": "w6_shadow_bullet_target",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": "marnie.prize.shadow_bullet",
+      "macro_phase": "choose_bench_target",
+      "patches": []
+    },
+    {
+      "case_id": "source-w7-take-prize",
+      "source_frame_id": "w7_take_prize",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": null,
+      "macro_phase": null,
+      "patches": []
+    },
+    {
+      "case_id": "source-w7-forced-send-out",
+      "source_frame_id": "w7_forced_send_out",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": null,
+      "macro_phase": null,
+      "patches": []
+    },
+    {
+      "case_id": "source-w7-terminal",
+      "source_frame_id": "w7_terminal",
+      "evidence_class": "source_locked_production_frame",
+      "offline_seeded_extension": false,
+      "macro_id": null,
+      "macro_phase": null,
+      "patches": []
+    },
+    {
+      "case_id": "seeded-poffin-primary",
+      "source_frame_id": "w3_main",
+      "evidence_class": "offline_seeded_extension",
+      "offline_seeded_extension": true,
+      "macro_id": "marnie.engine.poffin_primary",
+      "macro_phase": "play_item",
+      "patches": [
+        {
+          "op": "set",
+          "path": [
+            "current",
+            "players",
+            0,
+            "hand",
+            0,
+            "id"
+          ],
+          "value": 1086
+        },
+        {
+          "op": "set",
+          "path": [
+            "select",
+            "option"
+          ],
+          "value": [
+            {
+              "type": 7,
+              "index": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seeded-evolve-grimmsnarl",
+      "source_frame_id": "w3_main",
+      "evidence_class": "offline_seeded_extension",
+      "offline_seeded_extension": true,
+      "macro_id": "marnie.engine.evolve_grimmsnarl",
+      "macro_phase": "play_evolution",
+      "patches": [
+        {
+          "op": "set",
+          "path": [
+            "current",
+            "players",
+            0,
+            "bench",
+            0,
+            "id"
+          ],
+          "value": 647
+        },
+        {
+          "op": "set",
+          "path": [
+            "select",
+            "option"
+          ],
+          "value": [
+            {
+              "type": 7,
+              "index": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seeded-night-stretcher",
+      "source_frame_id": "w3_main",
+      "evidence_class": "offline_seeded_extension",
+      "offline_seeded_extension": true,
+      "macro_id": "marnie.recover.night_stretcher",
+      "macro_phase": "play_item",
+      "patches": [
+        {
+          "op": "append",
+          "path": [
+            "current",
+            "players",
+            0,
+            "discard"
+          ],
+          "value": {
+            "id": 7,
+            "serial": 9,
+            "playerIndex": 0
+          }
+        },
+        {
+          "op": "set",
+          "path": [
+            "select",
+            "option"
+          ],
+          "value": [
+            {
+              "type": 7,
+              "index": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "restricted_ir_document": {
+    "schema_version": 1,
+    "profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+    "graph_id": "marnie-public-base-v1",
+    "entry_node_id": "n00",
+    "required_capabilities": [
+      "public_context",
+      "current_window",
+      "deterministic_fallback",
+      "strategic_trace_v2"
+    ],
+    "nodes": [
+      {
+        "node_id": "n00",
+        "operator": "legality_guard",
+        "owner": "base",
+        "config": {
+          "frontier": "current_window"
+        },
+        "next_node_ids": [
+          "n10"
+        ]
+      },
+      {
+        "node_id": "n10",
+        "operator": "mandatory_terminal_guard",
+        "owner": "base",
+        "config": {
+          "mandatory_precedence": true,
+          "terminal_precedence": true
+        },
+        "next_node_ids": [
+          "n14"
+        ]
+      },
+      {
+        "node_id": "n14",
+        "operator": "macro_proposal",
+        "owner": "adapter",
+        "config": {
+          "macro_ids": [
+            "marnie.engine.poffin_primary",
+            "marnie.engine.spikemuth_tutor",
+            "marnie.engine.evolve_grimmsnarl",
+            "marnie.energy.punk_up",
+            "marnie.prize.shadow_bullet",
+            "marnie.recover.night_stretcher"
+          ]
+        },
+        "next_node_ids": [
+          "n20"
+        ]
+      },
+      {
+        "node_id": "n20",
+        "operator": "hard_tier_filter",
+        "owner": "base",
+        "config": {
+          "same_tier_only": true
+        },
+        "next_node_ids": [
+          "n30"
+        ]
+      },
+      {
+        "node_id": "n30",
+        "operator": "base_veto",
+        "owner": "base",
+        "config": {
+          "enabled": true
+        },
+        "next_node_ids": [
+          "n40"
+        ]
+      },
+      {
+        "node_id": "n40",
+        "operator": "deterministic_fallback",
+        "owner": "base",
+        "config": {
+          "strategy": "same_window_first_min"
+        },
+        "next_node_ids": [
+          "n50"
+        ]
+      },
+      {
+        "node_id": "n50",
+        "operator": "emit_decision",
+        "owner": "base",
+        "config": {},
+        "next_node_ids": []
+      }
+    ]
+  },
+  "hash_profiles": {
+    "macro_proof": {
+      "prefix_utf8_hex": "50544347444150004D41524E49455F5055424C49435F4D4143524F5F50524F4F465F563100"
+    },
+    "case_result": {
+      "prefix_utf8_hex": "50544347444150004D41524E49455F5055424C49435F424153455F524553554C545F563100"
+    }
+  },
+  "authority_contract": {
+    "source_window_authority": "conformance_fixture_is_never_consumed_as_policy_authority",
+    "rebuilt_window_authority": "firewall_accepted",
+    "serialized_results_are_authority": false,
+    "adapter_proposals_are_authority": false,
+    "base_owns_legality_mandatory_terminal_tiers_veto_sanitizer_fallback": true,
+    "offline_seeded_extensions_are_official_replay_evidence": false,
+    "execution_authority": false,
+    "live_owner": false
+  },
+  "private_exclusions": [
+    "search_begin_input",
+    "raw_private_hash",
+    "token_free_callback_hash",
+    "callback_binding_hash",
+    "private_engine_command",
+    "private_object_refs",
+    "GameState",
+    "CardInstance",
+    "PokemonSlot"
+  ]
+}

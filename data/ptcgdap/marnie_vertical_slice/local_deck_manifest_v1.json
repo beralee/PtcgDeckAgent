@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-marnie-local-deck-manifest-v1",
+  "deck_id": 800018501,
+  "deck_identity": "godot:800018501:a436bbf31b50c634",
+  "source_deck_raw_sha256": "8E28C31BE70AB2971EAED9AAB8C6A2D7A3412A95E0E335A702C1F13D547B805F",
+  "source_deck_canonical_sha256": "CB2FD50F40D75BDD9E38B826580A516BDCE7C51B17A43C63CE58E0CC19127CAB",
+  "card_count": 60,
+  "unique_printing_count": 28,
+  "cards": [
+    {
+      "local_printing": {
+        "set_code": "CSV10C",
+        "card_index": "146"
+      },
+      "count": 3,
+      "card_type": "Pokemon",
+      "effect_id": "cd9d3ec383aa409ff7930840c21d43b0",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV10C",
+        "card_index": "147"
+      },
+      "count": 2,
+      "card_type": "Pokemon",
+      "effect_id": "945c3caf74096499c2140de9f71d815e",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV10C",
+        "card_index": "148"
+      },
+      "count": 2,
+      "card_type": "Pokemon",
+      "effect_id": "863479acd128e1e5e2643a3a1e77ce26",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV8C",
+        "card_index": "094"
+      },
+      "count": 3,
+      "card_type": "Pokemon",
+      "effect_id": "66fee12502043db7d92b97b0d62b0f59",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "exact_print_bridge_only_not_engine_parity",
+      "official_card_id": 112
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV9.5C",
+        "card_index": "043"
+      },
+      "count": 2,
+      "card_type": "Pokemon",
+      "effect_id": "f6baf0c4c60ff47c7f836c1271f40cb3",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV7C",
+        "card_index": "059"
+      },
+      "count": 2,
+      "card_type": "Pokemon",
+      "effect_id": "f27a2982c03f5b49a68ec0a77a2d6e48",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "exact_print_bridge_only_not_engine_parity",
+      "official_card_id": 104
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV9.5C",
+        "card_index": "004"
+      },
+      "count": 1,
+      "card_type": "Pokemon",
+      "effect_id": "28505a8ad6e07e74382c1b5e09737932",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV10C",
+        "card_index": "007"
+      },
+      "count": 1,
+      "card_type": "Pokemon",
+      "effect_id": "fd1e9b0379f79156fbb304162cbe21ba",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV1C",
+        "card_index": "123"
+      },
+      "count": 4,
+      "card_type": "Supporter",
+      "effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV3C",
+        "card_index": "123"
+      },
+      "count": 4,
+      "card_type": "Supporter",
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV1C",
+        "card_index": "121"
+      },
+      "count": 3,
+      "card_type": "Supporter",
+      "effect_id": "aecd80ca2722885c3d062a2255346f3e",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSVH1aC",
+        "card_index": "023"
+      },
+      "count": 2,
+      "card_type": "Supporter",
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV7C",
+        "card_index": "177"
+      },
+      "count": 2,
+      "card_type": "Item",
+      "effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSVH1C",
+        "card_index": "043"
+      },
+      "count": 2,
+      "card_type": "Item",
+      "effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSVH1C",
+        "card_index": "045"
+      },
+      "count": 2,
+      "card_type": "Item",
+      "effect_id": "d3891abcfe3277c8811cde06741d3236",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV6C",
+        "card_index": "114"
+      },
+      "count": 2,
+      "card_type": "Item",
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV8C",
+        "card_index": "183"
+      },
+      "count": 2,
+      "card_type": "Item",
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "exact_print_bridge_only_not_engine_parity",
+      "official_card_id": 1097
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV1C",
+        "card_index": "109"
+      },
+      "count": 1,
+      "card_type": "Item",
+      "effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSVH1C",
+        "card_index": "035"
+      },
+      "count": 1,
+      "card_type": "Item",
+      "effect_id": "e508908b9311c0ef5e70e9de44892e26",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV1C",
+        "card_index": "112"
+      },
+      "count": 1,
+      "card_type": "Item",
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV2C",
+        "card_index": "113"
+      },
+      "count": 1,
+      "card_type": "Item",
+      "effect_id": "768b545a38fccd5e265093b5adce10af",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV8C",
+        "card_index": "176"
+      },
+      "count": 1,
+      "card_type": "Item",
+      "effect_id": "e92a86246f44351d023bd4fa271089aa",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV5C",
+        "card_index": "119"
+      },
+      "count": 2,
+      "card_type": "Tool",
+      "effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV5C",
+        "card_index": "120"
+      },
+      "count": 1,
+      "card_type": "Tool",
+      "effect_id": "e228e825c541ce80e2507c557cb506c3",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV7C",
+        "card_index": "185"
+      },
+      "count": 1,
+      "card_type": "Tool",
+      "effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV10C",
+        "card_index": "216"
+      },
+      "count": 3,
+      "card_type": "Stadium",
+      "effect_id": "dc1d73740f5d6e98ad1491ca9067aac3",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSV2C",
+        "card_index": "127"
+      },
+      "count": 1,
+      "card_type": "Stadium",
+      "effect_id": "c117bea3cc758d46430d6bef11062a56",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "not_evaluated",
+      "official_card_id": null
+    },
+    {
+      "local_printing": {
+        "set_code": "CSVE1C",
+        "card_index": "DAR"
+      },
+      "count": 8,
+      "card_type": "Basic Energy",
+      "effect_id": "46c769fc57a6c250c560df648bb779f8",
+      "godot_card_implementation_status_expected": "implemented",
+      "official_equivalence": "exact_print_bridge_only_not_engine_parity",
+      "official_card_id": 7
+    }
+  ],
+  "cabt_exportable": false,
+  "support_claim": "Godot CardImplementationStatus only; not official semantic or engine parity"
+}

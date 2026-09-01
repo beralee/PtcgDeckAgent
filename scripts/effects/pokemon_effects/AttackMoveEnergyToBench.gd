@@ -3,7 +3,7 @@ class_name AttackMoveEnergyToBench
 extends BaseEffect
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	_card: CardInstance,
 	_attack: Dictionary,
 	state: GameState

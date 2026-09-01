@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-shadow-match-owner-gate-p3-wp6-v1",
+  "parent_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/shadow_match_owner_gate.schema.json",
+      "canonical_sha256": "868A042D5FF31C732F121A7783883A2A88A8412A84D8587C3812F6C8D3114B49"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/shadow_match_owner_gate_profile.json",
+      "canonical_sha256": "79FE87CC4FE0414CD1EC784293EC788B1D41DCA063A480D5C408FDAFBB643E7F"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/shadow_match_owner_gate_conformance_vectors.json",
+      "canonical_sha256": "C45D001BDFDB73C3BD404A9FB33EF346B6D6253E6750DE5A81F12741BD830E4A"
+    }
+  ]
+}

@@ -38,15 +38,20 @@ def _build_opener(allow_unsafe_tls: bool) -> urllib.request.OpenerDirector:
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
-        print("usage: zenmux_request.py <input.json> <output.json>", file=sys.stderr)
+    if len(sys.argv) != 4:
+        print(
+            "usage: zenmux_request.py <input.json> <output.json> <api-key-env>",
+            file=sys.stderr,
+        )
         return 2
 
-    input_path, output_path = sys.argv[1], sys.argv[2]
+    input_path, output_path, api_key_env = sys.argv[1], sys.argv[2], sys.argv[3]
     try:
         config = _load_json(input_path)
         url = str(config.get("url", "")).strip()
-        api_key = str(config.get("api_key", ""))
+        api_key = os.environ.pop(api_key_env, "")
+        if not api_key:
+            raise RuntimeError("missing ephemeral API key")
         payload = config.get("payload", {})
         timeout_seconds = max(float(config.get("timeout_seconds", 60.0)), 1.0)
         allow_unsafe_tls = bool(config.get("allow_unsafe_tls", True))

@@ -22,22 +22,20 @@ func execute_attack(
 	_attacker: PokemonSlot,
 	defender: PokemonSlot,
 	_attack_index: int,
-	_state: GameState
+	state: GameState
 ) -> void:
 	var heads: int = 0
+	var draw_processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+	var flipper: CoinFlipper = draw_processor.coin_flipper if draw_processor is EffectProcessor else CoinFlipper.new()
 
 	if flip_until_tails:
 		# 投币直到反面
-		var rng := RandomNumberGenerator.new()
-		rng.randomize()
-		while rng.randi_range(0, 1) == 1:
+		while flipper.flip():
 			heads += 1
 	else:
 		# 投固定次数
-		var rng := RandomNumberGenerator.new()
-		rng.randomize()
 		for _i: int in coin_count:
-			if rng.randi_range(0, 1) == 1:
+			if flipper.flip():
 				heads += 1
 
 	var extra_damage: int = heads * damage_per_heads

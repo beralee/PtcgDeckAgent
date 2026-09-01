@@ -30,7 +30,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not state.players[owner_index].deck.is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player := state.players[card.owner_index]
 	var matches := _matching_cards(player)
 	if matches.is_empty():
@@ -47,7 +47,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	)]
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if not should_preview_empty_search_deck(resolved_context):
 		return []
 	return [build_readonly_deck_preview_step(

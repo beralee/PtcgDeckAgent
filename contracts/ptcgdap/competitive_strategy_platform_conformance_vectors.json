@@ -1,0 +1,606 @@
+{
+  "document_type": "competitive_strategy_platform_conformance_vectors_v1",
+  "schema_version": 1,
+  "profile_id": "competitive_strategy_platform_contract_v1",
+  "fixtures": {
+    "strategy_release": {
+      "document_type": "strategy_release_ref_v1",
+      "schema_version": 1,
+      "strategy_id": "org.ptcgdap.marnie",
+      "release_version": "0.1.0",
+      "author_id": "ptcgdap",
+      "package_id": "org.ptcgdap.marnie.package",
+      "archive_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "manifest_canonical_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "deck_identity": {
+        "domain": "godot_local_card_uid_v1",
+        "deck_id": "800018501",
+        "deck_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+      },
+      "policy_package_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+      "contract_bundle_sha256": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+      "catalog_bundle_sha256": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+      "runtime_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "platforms": ["windows-x86_64"],
+      "signature_key_id": "development-fixture-key",
+      "release_state": "verified",
+      "revocation_state": "active"
+    },
+    "evaluation_profile": {
+      "document_type": "evaluation_profile_v1",
+      "schema_version": 1,
+      "profile_id": "csp-dev-marnie-v1",
+      "profile_version": "1.0.0",
+      "visibility": "public_qualification",
+      "evaluator_id": "ptcgdap-internal-shadow-evaluator",
+      "evaluator_build_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "engine_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "rules_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "card_catalog_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "host_contract_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "opponents": [
+        {
+          "participant_kind": "platform_baseline",
+          "baseline_id": "rules-only-575720",
+          "baseline_version": "1.0.0",
+          "baseline_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        }
+      ],
+      "seat_policy": "paired_swap",
+      "seed_policy": {
+        "capability": "deterministic_seed_v1",
+        "disclosure": "commitment_only"
+      },
+      "games_per_pair": 2,
+      "limits": {
+        "match_time_ms": 600000,
+        "decision_time_ms": 5000,
+        "memory_mib": 1024
+      },
+      "outcome_policy": {
+        "draws_allowed": true,
+        "invalid_output": "verified_loss_and_fault",
+        "policy_error": "verified_loss_and_fault",
+        "timeout": "verified_loss_and_fault",
+        "dirty": "exclude_from_rank_show_separately"
+      },
+      "aggregation": {
+        "version": "win_rate_ci_v1",
+        "minimum_publish_games": 20,
+        "confidence_level_basis_points": 9500
+      },
+      "replay_policy": {
+        "visibility_profile": "public_at_event_time_v1",
+        "sampling": "all_shadow_matches"
+      }
+    },
+    "match_envelope": {
+      "document_type": "match_envelope_v1",
+      "schema_version": 1,
+      "match_id": "csp-match-000001",
+      "lane": "official_evaluation",
+      "evaluator_id": "ptcgdap-internal-shadow-evaluator",
+      "participants": [
+        {
+          "participant_kind": "strategy_release",
+          "strategy_id": "org.ptcgdap.marnie",
+          "release_version": "0.1.0",
+          "package_id": "org.ptcgdap.marnie.package",
+          "archive_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "manifest_canonical_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "deck_identity": {
+            "domain": "godot_local_card_uid_v1",
+            "deck_id": "800018501",
+            "deck_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          "policy_package_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+        },
+        {
+          "participant_kind": "platform_baseline",
+          "baseline_id": "rules-only-575720",
+          "baseline_version": "1.0.0",
+          "baseline_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        }
+      ],
+      "engine_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "rules_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "card_catalog_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "host_contract_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "runtime_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "evaluation_profile_id": "csp-dev-marnie-v1",
+      "evaluation_profile_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+      "seat_assignment": [0, 1],
+      "seed_commitment": {
+        "capability": "deterministic_seed_v1",
+        "commitment_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+        "disclosure": "withheld"
+      },
+      "replay_visibility_profile": "public_at_event_time_v1",
+      "started_at_utc": "2026-08-18T00:00:00Z"
+    },
+    "replay_frame": {
+      "document_type": "replay_frame_v1",
+      "schema_version": 1,
+      "match_id": "csp-match-000001",
+      "ordinal": 0,
+      "turn_number": 0,
+      "phase": "setup",
+      "acting_seat": 0,
+      "event_kind": "match_started",
+      "public_state": {
+        "zone_counts": [
+          {"seat": 0, "hand_count": 7, "deck_count": 46, "prize_count": 6},
+          {"seat": 1, "hand_count": 7, "deck_count": 46, "prize_count": 6}
+        ],
+        "board": [],
+        "public_cards": []
+      },
+      "decision_trace_sha256": null,
+      "previous_frame_sha256": null
+    },
+    "replay_manifest": {
+      "document_type": "replay_manifest_v1",
+      "schema_version": 1,
+      "replay_id": "csp-replay-000001",
+      "match_id": "csp-match-000001",
+      "match_envelope_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "visibility_profile": "public_at_event_time_v1",
+      "frame_count": 2,
+      "first_frame_sha256": "CF6DACF9177663014FC26CFBE1290708BE438A988218AFF74341F0E445166263",
+      "frame_chain_root_sha256": "864E5EB289143003BBDB168D373D68DF7CC4ED5F6E009693D557E70C3918D19B",
+      "card_asset_catalog_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "event_dictionary_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+      "complete": true
+    },
+    "replay": {
+      "manifest": {
+        "document_type": "replay_manifest_v1",
+        "schema_version": 1,
+        "replay_id": "csp-replay-000001",
+        "match_id": "csp-match-000001",
+        "match_envelope_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "visibility_profile": "public_at_event_time_v1",
+        "frame_count": 2,
+        "first_frame_sha256": "CF6DACF9177663014FC26CFBE1290708BE438A988218AFF74341F0E445166263",
+        "frame_chain_root_sha256": "864E5EB289143003BBDB168D373D68DF7CC4ED5F6E009693D557E70C3918D19B",
+        "card_asset_catalog_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "event_dictionary_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "complete": true
+      },
+      "frames": [
+        {
+          "document_type": "replay_frame_v1",
+          "schema_version": 1,
+          "match_id": "csp-match-000001",
+          "ordinal": 0,
+          "turn_number": 0,
+          "phase": "setup",
+          "acting_seat": 0,
+          "event_kind": "match_started",
+          "public_state": {
+            "zone_counts": [
+              {"seat": 0, "hand_count": 7, "deck_count": 46, "prize_count": 6},
+              {"seat": 1, "hand_count": 7, "deck_count": 46, "prize_count": 6}
+            ],
+            "board": [],
+            "public_cards": []
+          },
+          "decision_trace_sha256": null,
+          "previous_frame_sha256": null
+        },
+        {
+          "document_type": "replay_frame_v1",
+          "schema_version": 1,
+          "match_id": "csp-match-000001",
+          "ordinal": 1,
+          "turn_number": 1,
+          "phase": "main",
+          "acting_seat": 0,
+          "event_kind": "turn_started",
+          "public_state": {
+            "zone_counts": [
+              {"seat": 0, "hand_count": 8, "deck_count": 45, "prize_count": 6},
+              {"seat": 1, "hand_count": 7, "deck_count": 46, "prize_count": 6}
+            ],
+            "board": [],
+            "public_cards": []
+          },
+          "decision_trace_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "previous_frame_sha256": "CF6DACF9177663014FC26CFBE1290708BE438A988218AFF74341F0E445166263"
+        }
+      ]
+    },
+    "verified_result": {
+      "document_type": "verified_match_result_v1",
+      "schema_version": 1,
+      "match_id": "csp-match-000001",
+      "match_envelope_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "trust_lane": "official_verified",
+      "outcome": "seat_0_win",
+      "winner_seat": 0,
+      "turn_count": 12,
+      "decision_count": 42,
+      "fault_counts": {
+        "invalid_output": 0,
+        "policy_error": 0,
+        "timeout": 0,
+        "engine_rejection": 0,
+        "fallback": 0
+      },
+      "dirty": false,
+      "dirty_reasons": [],
+      "replay_manifest_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+      "evidence_sha256": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+      "verification": {
+        "evaluator_id": "ptcgdap-internal-shadow-evaluator",
+        "key_id": "shadow-evaluator-fixture-key",
+        "signature": "fixture-signature-not-production"
+      }
+    },
+    "dirty_official_result": {
+      "document_type": "verified_match_result_v1",
+      "schema_version": 1,
+      "match_id": "csp-match-000001",
+      "match_envelope_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "trust_lane": "official_verified",
+      "outcome": "aborted",
+      "winner_seat": null,
+      "turn_count": 12,
+      "decision_count": 42,
+      "fault_counts": {
+        "invalid_output": 0,
+        "policy_error": 0,
+        "timeout": 0,
+        "engine_rejection": 0,
+        "fallback": 0
+      },
+      "dirty": true,
+      "dirty_reasons": ["engine_identity_drift"],
+      "replay_manifest_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+      "evidence_sha256": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+      "verification": {
+        "evaluator_id": "ptcgdap-internal-shadow-evaluator",
+        "key_id": "shadow-evaluator-fixture-key",
+        "signature": "fixture-signature-not-production"
+      }
+    },
+    "evaluation_summary": {
+      "document_type": "evaluation_summary_v1",
+      "schema_version": 1,
+      "strategy_release": {
+        "strategy_id": "org.ptcgdap.marnie",
+        "release_version": "0.1.0",
+        "archive_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "evaluation_profile_id": "csp-dev-marnie-v1",
+      "evaluation_profile_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+      "aggregation_version": "win_rate_ci_v1",
+      "input_match_ids": ["csp-match-000001"],
+      "counts": {"wins": 1, "losses": 0, "draws": 0, "valid": 1, "dirty": 0},
+      "fault_counts": {
+        "invalid_output": 0,
+        "policy_error": 0,
+        "timeout": 0,
+        "engine_rejection": 0,
+        "fallback": 0
+      },
+      "win_rate_basis_points": 10000,
+      "confidence_interval_basis_points": {"low": 0, "high": 10000},
+      "seat_breakdown": [
+        {"seat": 0, "wins": 1, "losses": 0, "draws": 0},
+        {"seat": 1, "wins": 0, "losses": 0, "draws": 0}
+      ],
+      "matchup_breakdown": [],
+      "materializer_build_sha256": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+    },
+    "match_profile_binding": {
+      "envelope": {
+        "document_type": "match_envelope_v1",
+        "schema_version": 1,
+        "match_id": "csp-match-000001",
+        "lane": "official_evaluation",
+        "evaluator_id": "ptcgdap-internal-shadow-evaluator",
+        "participants": [
+          {
+            "participant_kind": "strategy_release",
+            "strategy_id": "org.ptcgdap.marnie",
+            "release_version": "0.1.0",
+            "package_id": "org.ptcgdap.marnie.package",
+            "archive_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "manifest_canonical_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            "deck_identity": {
+              "domain": "godot_local_card_uid_v1",
+              "deck_id": "800018501",
+              "deck_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+            },
+            "policy_package_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+          },
+          {
+            "participant_kind": "platform_baseline",
+            "baseline_id": "rules-only-575720",
+            "baseline_version": "1.0.0",
+            "baseline_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ],
+        "engine_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "rules_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "card_catalog_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "host_contract_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+        "runtime_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "evaluation_profile_id": "csp-dev-marnie-v1",
+        "evaluation_profile_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+        "seat_assignment": [0, 1],
+        "seed_commitment": {
+          "capability": "deterministic_seed_v1",
+          "commitment_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "disclosure": "withheld"
+        },
+        "replay_visibility_profile": "public_at_event_time_v1",
+        "started_at_utc": "2026-08-18T00:00:00Z"
+      },
+      "profile": {
+        "document_type": "evaluation_profile_v1",
+        "schema_version": 1,
+        "profile_id": "csp-dev-marnie-v1",
+        "profile_version": "1.0.0",
+        "visibility": "public_qualification",
+        "evaluator_id": "ptcgdap-internal-shadow-evaluator",
+        "evaluator_build_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "engine_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "rules_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "card_catalog_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "host_contract_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+        "opponents": [
+          {
+            "participant_kind": "platform_baseline",
+            "baseline_id": "rules-only-575720",
+            "baseline_version": "1.0.0",
+            "baseline_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ],
+        "seat_policy": "paired_swap",
+        "seed_policy": {"capability": "deterministic_seed_v1", "disclosure": "commitment_only"},
+        "games_per_pair": 2,
+        "limits": {"match_time_ms": 600000, "decision_time_ms": 5000, "memory_mib": 1024},
+        "outcome_policy": {
+          "draws_allowed": true,
+          "invalid_output": "verified_loss_and_fault",
+          "policy_error": "verified_loss_and_fault",
+          "timeout": "verified_loss_and_fault",
+          "dirty": "exclude_from_rank_show_separately"
+        },
+        "aggregation": {"version": "win_rate_ci_v1", "minimum_publish_games": 20, "confidence_level_basis_points": 9500},
+        "replay_policy": {"visibility_profile": "public_at_event_time_v1", "sampling": "all_shadow_matches"}
+      }
+    }
+  },
+  "success_cases": [
+    {
+      "id": "strategy_release_accept",
+      "operation": "validate_document",
+      "fixture": "strategy_release",
+      "expected": {"status": "accepted", "document_type": "strategy_release_ref_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "evaluation_profile_accept",
+      "operation": "validate_document",
+      "fixture": "evaluation_profile",
+      "expected": {"status": "accepted", "document_type": "evaluation_profile_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "match_envelope_accept",
+      "operation": "validate_document",
+      "fixture": "match_envelope",
+      "expected": {"status": "accepted", "document_type": "match_envelope_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "replay_frame_accept",
+      "operation": "validate_document",
+      "fixture": "replay_frame",
+      "expected": {"status": "accepted", "document_type": "replay_frame_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "replay_manifest_accept",
+      "operation": "validate_document",
+      "fixture": "replay_manifest",
+      "expected": {"status": "accepted", "document_type": "replay_manifest_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "verified_result_accept",
+      "operation": "validate_document",
+      "fixture": "verified_result",
+      "expected": {"status": "accepted", "document_type": "verified_match_result_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "evaluation_summary_accept",
+      "operation": "validate_document",
+      "fixture": "evaluation_summary",
+      "expected": {"status": "accepted", "document_type": "evaluation_summary_v1", "authoritative": false, "grants": []}
+    },
+    {
+      "id": "replay_chain_accept",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "expected": {"status": "accepted", "document_type": "replay_validation_v1", "frame_count": 2, "authoritative": false, "grants": []}
+    },
+    {
+      "id": "match_profile_binding_accept",
+      "operation": "validate_match_against_profile",
+      "fixture": "match_profile_binding",
+      "expected": {"document_type": "match_profile_binding_v1", "status": "accepted", "authoritative": false, "grants": []}
+    }
+  ],
+  "rejection_cases": [
+    {
+      "id": "release_unknown_field",
+      "operation": "validate_document",
+      "fixture": "strategy_release",
+      "mutation": {"op": "set", "path": ["display_name"], "value": "not-authority"},
+      "error_code": "unknown_field"
+    },
+    {
+      "id": "release_hash_lowercase",
+      "operation": "validate_document",
+      "fixture": "strategy_release",
+      "mutation": {"op": "set", "path": ["archive_sha256"], "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+      "error_code": "hash_invalid"
+    },
+    {
+      "id": "release_bad_version",
+      "operation": "validate_document",
+      "fixture": "strategy_release",
+      "mutation": {"op": "set", "path": ["release_version"], "value": "latest"},
+      "error_code": "version_invalid"
+    },
+    {
+      "id": "match_one_participant",
+      "operation": "validate_document",
+      "fixture": "match_envelope",
+      "mutation": {"op": "delete", "path": ["participants", 1]},
+      "error_code": "match_participants_invalid"
+    },
+    {
+      "id": "match_unknown_field",
+      "operation": "validate_document",
+      "fixture": "match_envelope",
+      "mutation": {"op": "set", "path": ["winner_hint"], "value": 0},
+      "error_code": "unknown_field"
+    },
+    {
+      "id": "match_profile_engine_drift",
+      "operation": "validate_match_against_profile",
+      "fixture": "match_profile_binding",
+      "mutation": {"op": "set", "path": ["envelope", "engine_sha256"], "value": "9999999999999999999999999999999999999999999999999999999999999999"},
+      "error_code": "evaluation_profile_mismatch"
+    },
+    {
+      "id": "official_missing_verification",
+      "operation": "validate_document",
+      "fixture": "verified_result",
+      "mutation": {"op": "delete", "path": ["verification"]},
+      "error_code": "official_verification_required"
+    },
+    {
+      "id": "community_carries_official_verification",
+      "operation": "validate_document",
+      "fixture": "verified_result",
+      "mutation": {"op": "set", "path": ["trust_lane"], "value": "community_challenge"},
+      "error_code": "lane_authority_mismatch"
+    },
+    {
+      "id": "dirty_cannot_be_official",
+      "operation": "validate_document",
+      "fixture": "dirty_official_result",
+      "mutation": {"op": "set", "path": ["turn_count"], "value": 13},
+      "error_code": "lane_authority_mismatch"
+    },
+    {
+      "id": "replay_private_hand",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "mutation": {"op": "set", "path": ["frames", 0, "public_state", "hand"], "value": ["PRIVATE_SENTINEL"]},
+      "error_code": "private_field_forbidden"
+    },
+    {
+      "id": "replay_private_search_capability",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "mutation": {"op": "set", "path": ["frames", 0, "public_state", "search_begin_input"], "value": "PRIVATE_SENTINEL"},
+      "error_code": "private_field_forbidden"
+    },
+    {
+      "id": "replay_reordered",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "mutation": {"op": "reverse", "path": ["frames"]},
+      "error_code": "replay_chain_invalid"
+    },
+    {
+      "id": "replay_tampered_turn",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "mutation": {"op": "set", "path": ["frames", 1, "turn_number"], "value": 99},
+      "error_code": "replay_chain_invalid"
+    },
+    {
+      "id": "replay_wrong_count",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "mutation": {"op": "set", "path": ["manifest", "frame_count"], "value": 3},
+      "error_code": "replay_chain_invalid"
+    },
+    {
+      "id": "summary_duplicate_input",
+      "operation": "validate_document",
+      "fixture": "evaluation_summary",
+      "mutation": {"op": "append", "path": ["input_match_ids"], "value": "csp-match-000001"},
+      "error_code": "summary_inputs_invalid"
+    },
+    {
+      "id": "summary_unbalanced_counts",
+      "operation": "validate_document",
+      "fixture": "evaluation_summary",
+      "mutation": {"op": "set", "path": ["counts", "wins"], "value": 2},
+      "error_code": "summary_counts_invalid"
+    },
+    {
+      "id": "unknown_document_type",
+      "operation": "validate_document",
+      "fixture": "strategy_release",
+      "mutation": {"op": "set", "path": ["document_type"], "value": "future_document_v2"},
+      "error_code": "document_type_unsupported"
+    },
+    {
+      "id": "frame_wrong_previous_hash",
+      "operation": "validate_replay",
+      "fixture": "replay",
+      "mutation": {"op": "set", "path": ["frames", 1, "previous_frame_sha256"], "value": "0000000000000000000000000000000000000000000000000000000000000000"},
+      "error_code": "replay_chain_invalid"
+    },
+    {
+      "id": "frame_acting_seat_wrong_type",
+      "operation": "validate_document",
+      "fixture": "replay_frame",
+      "mutation": {"op": "set", "path": ["acting_seat"], "value": "0"},
+      "error_code": "replay_frame_invalid"
+    },
+    {
+      "id": "match_boolean_seat_assignment",
+      "operation": "validate_document",
+      "fixture": "match_envelope",
+      "mutation": {"op": "set", "path": ["seat_assignment"], "value": [false, true]},
+      "error_code": "match_participants_invalid"
+    },
+    {
+      "id": "summary_matchup_unknown_field",
+      "operation": "validate_document",
+      "fixture": "evaluation_summary",
+      "mutation": {
+        "op": "append",
+        "path": ["matchup_breakdown"],
+        "value": {
+          "opponent_id": "rules-only-575720",
+          "wins": 1,
+          "losses": 0,
+          "draws": 0,
+          "display_name": "not-authority"
+        }
+      },
+      "error_code": "summary_counts_invalid"
+    },
+    {
+      "id": "match_timestamp_non_digits",
+      "operation": "validate_document",
+      "fixture": "match_envelope",
+      "mutation": {"op": "set", "path": ["started_at_utc"], "value": "xxxx-xx-xxTxx:xx:xxZ"},
+      "error_code": "timestamp_invalid"
+    },
+    {
+      "id": "result_boolean_winner",
+      "operation": "validate_document",
+      "fixture": "verified_result",
+      "mutation": {"op": "set", "path": ["winner_seat"], "value": false},
+      "error_code": "result_outcome_invalid"
+    }
+  ]
+}

@@ -1,0 +1,2855 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/strategic_context_v18.schema.json",
+  "title": "PTCGDAP P4-WP1 StrategicContextV18 and PolicyDecision public audit values",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/StrategicContextV18"
+    },
+    {
+      "$ref": "#/$defs/PolicyDecision"
+    }
+  ],
+  "$defs": {
+    "Card": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "serial": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "playerIndex": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "id",
+        "serial",
+        "playerIndex"
+      ]
+    },
+    "Pokemon": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "serial": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "playerIndex": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maxHp": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "appearThisTurn": {
+          "type": "boolean"
+        },
+        "energies": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "energyCards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "preEvolution": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "serial",
+        "playerIndex",
+        "hp",
+        "maxHp",
+        "appearThisTurn",
+        "energies",
+        "energyCards",
+        "tools",
+        "preEvolution"
+      ]
+    },
+    "PlayerState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Pokemon"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "bench": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pokemon"
+          }
+        },
+        "benchMax": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "deckCount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "discard": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "prize": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Card"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "handCount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "hand": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Card"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "poisoned": {
+          "type": "boolean"
+        },
+        "burned": {
+          "type": "boolean"
+        },
+        "asleep": {
+          "type": "boolean"
+        },
+        "paralyzed": {
+          "type": "boolean"
+        },
+        "confused": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "active",
+        "bench",
+        "benchMax",
+        "deckCount",
+        "discard",
+        "prize",
+        "handCount",
+        "hand",
+        "poisoned",
+        "burned",
+        "asleep",
+        "paralyzed",
+        "confused"
+      ]
+    },
+    "Option": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 0
+            },
+            "number": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 1
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 2
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 3
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 4
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "toolIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 5
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "energyIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 6
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "energyIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "count": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 7
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 8
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "inPlayArea": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "inPlayIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 9
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "inPlayArea": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "inPlayIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 10
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 11
+            },
+            "area": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "index": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 12
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 13
+            },
+            "attackId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 14
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 15
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 16
+            },
+            "specialConditionType": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "Log": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 0
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 1
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "hasBasicPokemon": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 2
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 3
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 4
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 5
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 6
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fromArea": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "toArea": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 7
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fromArea": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "toArea": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 8
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdActive": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialActive": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdBench": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialBench": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 9
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdBefore": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialBefore": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdAfter": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialAfter": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 10
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 11
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdTarget": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialTarget": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 12
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdTarget": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialTarget": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 13
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdTarget": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialTarget": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 14
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdBefore": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialBefore": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardIdAfter": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serialAfter": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 15
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "attackId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 16
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "putDamageCounter": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 17
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isRecover": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 18
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isRecover": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 19
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isRecover": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 20
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isRecover": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 21
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "isRecover": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cardId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 22
+            },
+            "playerIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "head": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": 23
+            },
+            "result": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "ProvenanceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "output_pointer": {
+          "type": "string",
+          "pattern": "^(?:$|/(?:hp|id|area|deck|hand|head|logs|step|turn|type|bench|count|index|maxHp|prize|tools|value|active|asleep|burned|cardId|effect|number|option|reason|result|select|serial|toArea|context|current|discard|looking|players|stadium|attackId|benchMax|confused|energies|fromArea|maxCount|minCount|poisoned|deckCount|handCount|isRecover|paralyzed|retreated|toolIndex|yourIndex|inPlayArea|cardIdAfter|cardIdBench|contextCard|energyCards|energyIndex|firstPlayer|inPlayIndex|playerIndex|serialAfter|serialBench|cardIdActive|cardIdBefore|cardIdTarget|preEvolution|serialActive|serialBefore|serialTarget|stadiumPlayed|appearThisTurn|energyAttached|hasBasicPokemon|supporterPlayed|turnActionCount|putDamageCounter|remainEnergyCost|remainDamageCounter|remainingOverageTime|specialConditionType)(?:/(?:0|[1-9][0-9]*|hp|id|area|deck|hand|head|logs|step|turn|type|bench|count|index|maxHp|prize|tools|value|active|asleep|burned|cardId|effect|number|option|reason|result|select|serial|toArea|context|current|discard|looking|players|stadium|attackId|benchMax|confused|energies|fromArea|maxCount|minCount|poisoned|deckCount|handCount|isRecover|paralyzed|retreated|toolIndex|yourIndex|inPlayArea|cardIdAfter|cardIdBench|contextCard|energyCards|energyIndex|firstPlayer|inPlayIndex|playerIndex|serialAfter|serialBench|cardIdActive|cardIdBefore|cardIdTarget|preEvolution|serialActive|serialBefore|serialTarget|stadiumPlayed|appearThisTurn|energyAttached|hasBasicPokemon|supporterPlayed|turnActionCount|putDamageCounter|remainEnergyCost|remainDamageCounter|remainingOverageTime|specialConditionType))*)$"
+        },
+        "source_pointer": {
+          "type": "string",
+          "pattern": "^(?:$|/(?:hp|id|area|deck|hand|head|logs|step|turn|type|bench|count|index|maxHp|prize|tools|value|active|asleep|burned|cardId|effect|number|option|reason|result|select|serial|toArea|context|current|discard|looking|players|stadium|attackId|benchMax|confused|energies|fromArea|maxCount|minCount|poisoned|deckCount|handCount|isRecover|paralyzed|retreated|toolIndex|yourIndex|inPlayArea|cardIdAfter|cardIdBench|contextCard|energyCards|energyIndex|firstPlayer|inPlayIndex|playerIndex|serialAfter|serialBench|cardIdActive|cardIdBefore|cardIdTarget|preEvolution|serialActive|serialBefore|serialTarget|stadiumPlayed|appearThisTurn|energyAttached|hasBasicPokemon|supporterPlayed|turnActionCount|putDamageCounter|remainEnergyCost|remainDamageCounter|remainingOverageTime|specialConditionType)(?:/(?:0|[1-9][0-9]*|hp|id|area|deck|hand|head|logs|step|turn|type|bench|count|index|maxHp|prize|tools|value|active|asleep|burned|cardId|effect|number|option|reason|result|select|serial|toArea|context|current|discard|looking|players|stadium|attackId|benchMax|confused|energies|fromArea|maxCount|minCount|poisoned|deckCount|handCount|isRecover|paralyzed|retreated|toolIndex|yourIndex|inPlayArea|cardIdAfter|cardIdBench|contextCard|energyCards|energyIndex|firstPlayer|inPlayIndex|playerIndex|serialAfter|serialBench|cardIdActive|cardIdBefore|cardIdTarget|preEvolution|serialActive|serialBefore|serialTarget|stadiumPlayed|appearThisTurn|energyAttached|hasBasicPokemon|supporterPlayed|turnActionCount|putDamageCounter|remainEnergyCost|remainDamageCounter|remainingOverageTime|specialConditionType))*)$"
+        },
+        "visibility": {
+          "enum": [
+            "official_public",
+            "acting_player_visible",
+            "authorized_window_visible",
+            "concealed_placeholder",
+            "framework_public"
+          ]
+        },
+        "authority": {
+          "const": "official_cabt_wire"
+        },
+        "transform": {
+          "enum": [
+            "exact_copy",
+            "framework_name_restore"
+          ]
+        }
+      },
+      "required": [
+        "output_pointer",
+        "source_pointer",
+        "visibility",
+        "authority",
+        "transform"
+      ]
+    },
+    "ActingPlayerState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Pokemon"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "bench": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pokemon"
+          }
+        },
+        "benchMax": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "deckCount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "discard": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "prize": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Card"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "handCount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "hand": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "poisoned": {
+          "type": "boolean"
+        },
+        "burned": {
+          "type": "boolean"
+        },
+        "asleep": {
+          "type": "boolean"
+        },
+        "paralyzed": {
+          "type": "boolean"
+        },
+        "confused": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "active",
+        "bench",
+        "benchMax",
+        "deckCount",
+        "discard",
+        "prize",
+        "handCount",
+        "hand",
+        "poisoned",
+        "burned",
+        "asleep",
+        "paralyzed",
+        "confused"
+      ]
+    },
+    "OpponentPlayerState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Pokemon"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "bench": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pokemon"
+          }
+        },
+        "benchMax": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "deckCount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "discard": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "prize": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Card"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "handCount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "hand": {
+          "type": "null"
+        },
+        "poisoned": {
+          "type": "boolean"
+        },
+        "burned": {
+          "type": "boolean"
+        },
+        "asleep": {
+          "type": "boolean"
+        },
+        "paralyzed": {
+          "type": "boolean"
+        },
+        "confused": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "active",
+        "bench",
+        "benchMax",
+        "deckCount",
+        "discard",
+        "prize",
+        "handCount",
+        "hand",
+        "poisoned",
+        "burned",
+        "asleep",
+        "paralyzed",
+        "confused"
+      ]
+    },
+    "SourceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "public_observation_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "window_id": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "chooser_player_index": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "option_fingerprint_profile": {
+          "const": "cabt_option_fingerprint_v1"
+        },
+        "option_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "public_observation_hash",
+        "window_id",
+        "chooser_player_index",
+        "option_fingerprint_profile",
+        "option_count"
+      ]
+    },
+    "Clocks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "turn": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "turn_action_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remaining_overage_time": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "acting_prizes_remaining": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "opponent_prizes_remaining": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "acting_deck_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "opponent_deck_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "acting_hand_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "opponent_hand_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "turn",
+        "turn_action_count",
+        "remaining_overage_time",
+        "acting_prizes_remaining",
+        "opponent_prizes_remaining",
+        "acting_deck_count",
+        "opponent_deck_count",
+        "acting_hand_count",
+        "opponent_hand_count"
+      ]
+    },
+    "TurnFlags": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "first_player": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "result": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "supporter_played": {
+          "type": "boolean"
+        },
+        "stadium_played": {
+          "type": "boolean"
+        },
+        "energy_attached": {
+          "type": "boolean"
+        },
+        "retreated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "first_player",
+        "result",
+        "supporter_played",
+        "stadium_played",
+        "energy_attached",
+        "retreated"
+      ]
+    },
+    "PublicState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "turn_flags": {
+          "$ref": "#/$defs/TurnFlags"
+        },
+        "stadium": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Card"
+          }
+        },
+        "acting_player": {
+          "$ref": "#/$defs/ActingPlayerState"
+        },
+        "opponent_player": {
+          "$ref": "#/$defs/OpponentPlayerState"
+        }
+      },
+      "required": [
+        "turn_flags",
+        "stadium",
+        "acting_player",
+        "opponent_player"
+      ]
+    },
+    "OptionSemantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "raw": {
+          "$ref": "#/$defs/Option"
+        }
+      },
+      "required": [
+        "index",
+        "fingerprint",
+        "raw"
+      ]
+    },
+    "SelectSemantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "select_type_raw": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "select_context_raw": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "min_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "max_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remain_damage_counter": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "remain_energy_cost": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "context_card": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Card"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Card"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OptionSemantic"
+          }
+        }
+      },
+      "required": [
+        "select_type_raw",
+        "select_context_raw",
+        "min_count",
+        "max_count",
+        "remain_damage_counter",
+        "remain_energy_cost",
+        "context_card",
+        "effect",
+        "options"
+      ]
+    },
+    "OpponentPublicBelief": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "unknown"
+        },
+        "candidates": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "public_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 0
+        }
+      },
+      "required": [
+        "status",
+        "candidates",
+        "public_evidence_ids"
+      ]
+    },
+    "ContextProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "firewall_contract_hash": {
+          "const": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947"
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ProvenanceRecord"
+          }
+        }
+      },
+      "required": [
+        "firewall_contract_hash",
+        "records"
+      ]
+    },
+    "StrategicContextV18": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-strategic-context-v18-p4-wp1-v1"
+        },
+        "context_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceBinding"
+        },
+        "clocks": {
+          "$ref": "#/$defs/Clocks"
+        },
+        "public_state": {
+          "$ref": "#/$defs/PublicState"
+        },
+        "select_semantics": {
+          "$ref": "#/$defs/SelectSemantics"
+        },
+        "opponent_public_belief": {
+          "$ref": "#/$defs/OpponentPublicBelief"
+        },
+        "public_event_delta": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Log"
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/ContextProvenance"
+        },
+        "authority": {
+          "const": "strategic_context_public_audit"
+        },
+        "authoritative": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile_id",
+        "context_hash",
+        "source",
+        "clocks",
+        "public_state",
+        "select_semantics",
+        "opponent_public_belief",
+        "public_event_delta",
+        "provenance",
+        "authority",
+        "authoritative"
+      ]
+    },
+    "SelectedSemanticIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "current_option_fingerprints"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "fingerprint": {
+                "type": "string",
+                "pattern": "^[0-9A-F]{64}$"
+              }
+            },
+            "required": [
+              "index",
+              "fingerprint"
+            ]
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "options"
+      ]
+    },
+    "PolicyDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-policy-decision-p4-wp1-v1"
+        },
+        "selected_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "selected_semantic_intent": {
+          "$ref": "#/$defs/SelectedSemanticIntent"
+        },
+        "owner_layer": {
+          "enum": [
+            "base_graph",
+            "base_fallback"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "policy_selection_accepted",
+            "window_fallback_only",
+            "invalid_policy_output",
+            "policy_exception",
+            "policy_timeout",
+            "policy_unavailable"
+          ]
+        },
+        "fallback_tier": {
+          "enum": [
+            "none",
+            "same_public_window_deterministic"
+          ]
+        },
+        "context_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "policy_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "audit_id": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "window_id": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "public_observation_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "scene_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "determinism_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "authority": {
+          "const": "policy_decision_public_audit"
+        },
+        "authoritative": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile_id",
+        "selected_indexes",
+        "selected_semantic_intent",
+        "owner_layer",
+        "reason_code",
+        "fallback_tier",
+        "context_hash",
+        "policy_hash",
+        "audit_id",
+        "window_id",
+        "public_observation_hash",
+        "scene_id",
+        "decision_id",
+        "determinism_key",
+        "authority",
+        "authoritative"
+      ]
+    }
+  }
+}

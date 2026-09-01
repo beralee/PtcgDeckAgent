@@ -17,7 +17,7 @@ func can_trigger(attacker: PokemonSlot, defender: PokemonSlot, state: GameState)
 	return not attacker.attached_energy.is_empty() and not state.players[attacker_owner].bench.is_empty()
 
 
-func get_trigger_interaction_steps(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> Array[Dictionary]:
+func build_ucis_trigger_interaction_steps_spec_steps(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> Array[Dictionary]:
 	if not can_trigger(attacker, defender, state):
 		return []
 	var attacker_owner: int = _get_owner_index(attacker, state)

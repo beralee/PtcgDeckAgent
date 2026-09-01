@@ -40,7 +40,7 @@ func execute_ability(
 	hand_copy.append_array(player.hand)
 	player.hand.clear()
 
-	PlayerState.shuffle_card_array(hand_copy)
+	player.shuffle_cards(hand_copy, "ability_shuffle_hand_draw")
 	for card: CardInstance in hand_copy:
 		card.face_up = false
 		player.deck.append(card)

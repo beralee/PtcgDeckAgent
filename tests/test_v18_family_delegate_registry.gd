@@ -107,7 +107,7 @@ const PLANNED_REGISTRY_CONTRACT := [
 	{"deck_id": 800018498, "path": "res://scripts/ai/DeckStrategyV18PidgeotAcademy.gd", "delegate_id": "v18_pidgeot_academy_800018498_delegate"},
 	{"deck_id": 800018500, "path": "res://scripts/ai/DeckStrategyV18ControlGrass.gd", "delegate_id": "v18_control_grass_delegate_800018500"},
 	{"deck_id": 800018501, "path": "res://scripts/ai/DeckStrategyV18MarnieCynthia.gd", "delegate_id": "v18_marnie_cynthia_800018501"},
-	{"deck_id": 800018543, "path": "res://scripts/ai/DeckStrategyV18MarnieCynthia.gd", "delegate_id": "v18_marnie_cynthia_800018543"},
+	{"deck_id": 800018543, "path": "res://scripts/ai/DeckStrategyV18CynthiaAuthorV1.gd", "delegate_id": "v18_cynthia_garchomp_author_v1"},
 	{"deck_id": 800018880, "path": "res://scripts/ai/DeckStrategyV18PartnerFamilies.gd", "delegate_id": "v18_stage2_core_800018880"},
 	{"deck_id": 800019125, "path": "res://scripts/ai/DeckStrategyV18DragapultFamily.gd", "delegate_id": "v18_dragapult_family_800019125"},
 ]

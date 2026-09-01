@@ -1,0 +1,102 @@
+{
+  "document_type": "author_strategy_windows_deterministic_export_test_results_v1",
+  "schema_version": 1,
+  "generated_at": "2026-08-14T18:45:00+08:00",
+  "canonicalizer_tdd_red": {
+    "passed": 0,
+    "errors": 5,
+    "reason": "canonicalizer module absent"
+  },
+  "canonicalizer_unit_tests": {
+    "passed": 5,
+    "failed": 0,
+    "duration_seconds": 0.016
+  },
+  "pipeline_contract_red": {
+    "passed": 0,
+    "failed": 1,
+    "reason": "formal export script did not invoke canonicalizer"
+  },
+  "focused_python_tests": {
+    "passed": 13,
+    "failed": 0,
+    "duration_seconds": 0.019
+  },
+  "evidence_contract_tests": {
+    "passed": 5,
+    "failed": 0
+  },
+  "powershell_parse": {
+    "passed": 1,
+    "failed": 0
+  },
+  "legacy_real_export_canonicalization": {
+    "pairs_exact": 3,
+    "pairs_failed": 0
+  },
+  "canonical_pck_runtime_probe": {
+    "passed": 1,
+    "failed": 0,
+    "required_paths": 22,
+    "present_required_paths": 22
+  },
+  "fresh_complete_export_reproducibility": {
+    "builds": 2,
+    "bound_outputs_exact": 5,
+    "bound_outputs_different": 0
+  },
+  "canonicalized_executable_rules_match": {
+    "games_terminal": 3,
+    "games_failed": 0,
+    "policy_successes": 182,
+    "policy_calls": 182,
+    "engine_commits": 179,
+    "invalid_or_fallback_or_rejection": 0
+  },
+  "full_ptcgdap_python": {
+    "status": "expected_evidence_hash_drift_only",
+    "passed": 900,
+    "failed": 4,
+    "duration_msec": 802166,
+    "failure_scope": [
+      "as_wp6_root_manifest_hashes_pending_refresh",
+      "d044_player_owner_document_hashes_pending_refresh",
+      "dragapult_derived_manifest_pending_refresh"
+    ],
+    "contract_or_runtime_failures": 0
+  },
+  "final_full_ptcgdap_python": {
+    "status": "passed",
+    "passed": 904,
+    "failed": 0,
+    "duration_msec": 807181
+  },
+  "parent_snapshot_tests": {
+    "passed": 106,
+    "failed": 0,
+    "duration_seconds": 91.687
+  },
+  "static_boundary_tests": {
+    "passed": 171,
+    "failed": 0,
+    "duration_seconds": 5.133
+  },
+  "source_lock": {
+    "status": "passed",
+    "passed": 24,
+    "failed": 0
+  },
+  "static_checks": {
+    "dragapult_evidence_builder_check": "passed",
+    "python_compileall": "passed",
+    "powershell_parse": "passed"
+  },
+  "alignment": {
+    "A0": "partial / not claimed",
+    "A1": "not evaluated",
+    "A2": "not evaluated",
+    "A3": "not evaluated",
+    "A4": "not evaluated",
+    "A5": "not evaluated"
+  }
+}

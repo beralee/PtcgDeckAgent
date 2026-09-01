@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-dragapult-python-public-strategy-v1",
+  "strategy_id": "ptcgdap.dragapult.18.0.python-public-v1",
+  "public_boundary": "agent(public_frame) -> list[int]",
+  "card_id_domain": "godot_local_card_uid_v1",
+  "deck_identity_merge_with_official_cabt": false,
+  "cabt_exportable": false,
+  "development_python_only": true,
+  "player_runtime_python_dependency": false,
+  "engine_reference_allowed": false,
+  "raw_private_state_allowed": false,
+  "old_option_index_reuse_allowed": false,
+  "unknown_field_policy": "fail_closed",
+  "unknown_uid_policy": "fail_closed",
+  "fallback": "deterministic_same_current_window",
+  "prompt_families": [
+    "setup_active",
+    "setup_bench",
+    "main",
+    "search",
+    "evolve",
+    "attach",
+    "effect_target",
+    "attack",
+    "attack_target",
+    "take_prize",
+    "send_out",
+    "terminal"
+  ],
+  "claims": {
+    "isolated_python_policy": true,
+    "godot_player_live": false,
+    "production_signing": false,
+    "android": false,
+    "engine_parity": false
+  }
+}

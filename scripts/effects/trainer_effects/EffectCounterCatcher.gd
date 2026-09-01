@@ -3,7 +3,7 @@ class_name EffectCounterCatcher
 extends BaseEffect
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opp: PlayerState = state.players[1 - card.owner_index]
 	var labels: Array[String] = []
 	for slot: PokemonSlot in opp.bench:

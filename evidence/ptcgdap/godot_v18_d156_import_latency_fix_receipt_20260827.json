@@ -1,0 +1,66 @@
+{
+  "document_type": "godot_v18_d156_import_latency_fix_receipt_v1",
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-27T15:31:08Z",
+  "incident": {
+    "release_id": "windows-trial-ogerpon-3b4e78a16eb2c238cd9c",
+    "package_id": "dev.beralee.v18.ogerpon-crustle-v523a",
+    "package_version": "1.4.0",
+    "archive_bytes": 85056,
+    "archive_sha256": "3B4E78A16EB2C238CD9CFB29CA29B8CF44E0D7D99822CA9C1ECD90A2651DFFB8",
+    "player_archive_exact": true,
+    "player_write_local_time": "2026-08-27T23:15:07+08:00"
+  },
+  "root_cause": {
+    "built_in_archive_count": 34,
+    "player_user_archive_count_at_incident": 4,
+    "old_identity_owner": "installer_full_archive_reinspection",
+    "new_identity_owner": "catalog_verified_metadata_and_conflict_diagnostics",
+    "red_resolve_calls": 0,
+    "red_observed_install_segment_seconds": 90
+  },
+  "latency_gate": {
+    "max_interactive_import_msec": 5000,
+    "first_install": {
+      "accepted": true,
+      "install_usec": 1158234,
+      "identity_resolution_usec": 34,
+      "catalog_refresh_usec": 10262,
+      "catalog_discoverable": true
+    },
+    "repeat_install": {
+      "accepted": true,
+      "already_installed": true,
+      "install_usec": 587529,
+      "identity_resolution_usec": 35,
+      "catalog_refresh_usec": 9994,
+      "catalog_discoverable": true
+    },
+    "real_ui_http_install": {
+      "accepted": true,
+      "click_elapsed_usec": 1324678,
+      "install_elapsed_usec": 1224910,
+      "identity_resolution_usec": 36,
+      "catalog_refresh_usec": 60998,
+      "catalog_discoverable": true,
+      "user_install_source": true
+    }
+  },
+  "security_invariants": {
+    "target_prewrite_full_validation": true,
+    "target_postwrite_full_validation": true,
+    "deck_gate": true,
+    "atomic_rename": true,
+    "post_install_catalog_scan": true,
+    "identity_conflict_fail_closed": true,
+    "rollback_preserved": true,
+    "ui_path_authority": false
+  },
+  "tests": {
+    "godot_catalog": "20/20",
+    "godot_strategy_hub": "18/18",
+    "latency_verifier": "accepted",
+    "known_unrelated_failure": "export preset include line count expected 6, actual 7"
+  },
+  "authority": "windows_local_import_latency_and_catalog_identity_integration_only"
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-match-owner-gate-p3-wp6-v1",
+  "parent_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+  "owner_modes": [
+    "legacy",
+    "aligned_shadow"
+  ],
+  "states": [
+    "idle",
+    "active",
+    "between_matches"
+  ],
+  "error_codes": [
+    "invalid_gate",
+    "invalid_mode",
+    "invalid_match_generation",
+    "active_match_exists",
+    "no_active_match",
+    "stale_match_generation",
+    "broker_required",
+    "broker_forbidden",
+    "broker_invalid",
+    "broker_match_generation_mismatch",
+    "rollback_already_pending",
+    "generation_exhausted"
+  ],
+  "limits": {
+    "max_match_generation": 9007199254740991,
+    "max_gate_generation": 9007199254740991
+  },
+  "semantics": {
+    "owner_mode_immutable_during_active_match": true,
+    "rollback_applies_to_next_strictly_newer_match_only": true,
+    "pending_rollback_forces_legacy": true,
+    "aligned_shadow_requires_same_generation_broker": true,
+    "legacy_forbids_broker": true,
+    "rollback_request_is_idempotent": false,
+    "engine_method_invocation": false,
+    "serialized_audit_is_authority": false,
+    "live_owner_switch": false
+  },
+  "lifecycle": {
+    "begin_match": "select exactly one owner mode for a strictly newer match generation",
+    "active_match": "mode remains immutable; rollback request cannot change current owner",
+    "end_match": "release active broker reference and retain any next-match rollback request",
+    "next_match": "a pending rollback forces legacy and is consumed exactly once"
+  },
+  "private_fields_forbidden_from_audit": [
+    "broker",
+    "session_id",
+    "current_prompt",
+    "private_engine_state",
+    "private_object_refs"
+  ]
+}

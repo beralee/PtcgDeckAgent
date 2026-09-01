@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "cabt_public_log_cursor_conformance_v1",
+  "profile_id": "cabt_public_log_cursor_profile_v1",
+  "parent_firewall_bundle_hash": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+  "sources": {
+    "initial_empty": {
+      "firewall_base": "initial",
+      "logs_override": [],
+      "source_public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+      "logs": []
+    },
+    "regular_empty": {
+      "firewall_base": "regular",
+      "logs_override": [],
+      "source_public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+      "logs": []
+    },
+    "turn_draw_ordered": {
+      "firewall_base": "regular",
+      "logs_override": [
+        {
+          "type": 2,
+          "playerIndex": 0
+        },
+        {
+          "type": 4,
+          "playerIndex": 0,
+          "cardId": 104,
+          "serial": 31
+        },
+        {
+          "type": 5,
+          "playerIndex": 1
+        }
+      ],
+      "source_public_observation_hash": "F4476CFD8CE07212DF3BD70507F29400E1BE804CA8CB1DCEAB387D94C35CBE0D",
+      "logs": [
+        {
+          "type": 2,
+          "playerIndex": 0
+        },
+        {
+          "type": 4,
+          "playerIndex": 0,
+          "cardId": 104,
+          "serial": 31
+        },
+        {
+          "type": 5,
+          "playerIndex": 1
+        }
+      ]
+    },
+    "move_attack_ordered": {
+      "firewall_base": "regular",
+      "logs_override": [
+        {
+          "type": 6,
+          "playerIndex": 0,
+          "cardId": 104,
+          "serial": 31,
+          "fromArea": 1,
+          "toArea": 2
+        },
+        {
+          "type": 15,
+          "playerIndex": 0,
+          "cardId": 104,
+          "serial": 31,
+          "attackId": 7
+        }
+      ],
+      "source_public_observation_hash": "50DE384627448FC9F9F2E0C7FCA2D9A312F80A4EBFEA06561D18D26258796046",
+      "logs": [
+        {
+          "type": 6,
+          "playerIndex": 0,
+          "cardId": 104,
+          "serial": 31,
+          "fromArea": 1,
+          "toArea": 2
+        },
+        {
+          "type": 15,
+          "playerIndex": 0,
+          "cardId": 104,
+          "serial": 31,
+          "attackId": 7
+        }
+      ]
+    }
+  },
+  "hash_vectors": [
+    {
+      "id": "hash-0-initial_empty",
+      "payload": {
+        "ordinal": 0,
+        "previous_witness": null,
+        "source_public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+        "logs": []
+      },
+      "canonical_json_utf8": "{\"logs\":[],\"ordinal\":0,\"previous_witness\":null,\"source_public_observation_hash\":\"8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669\"}",
+      "witness_hash": "CD9EAEF5F0CA6A4E7FF63884503BECB345DAF1095C43E8B69F2C470104B5F7D2"
+    },
+    {
+      "id": "hash-1-turn_draw_ordered",
+      "payload": {
+        "ordinal": 1,
+        "previous_witness": "CD9EAEF5F0CA6A4E7FF63884503BECB345DAF1095C43E8B69F2C470104B5F7D2",
+        "source_public_observation_hash": "F4476CFD8CE07212DF3BD70507F29400E1BE804CA8CB1DCEAB387D94C35CBE0D",
+        "logs": [
+          {
+            "type": 2,
+            "playerIndex": 0
+          },
+          {
+            "type": 4,
+            "playerIndex": 0,
+            "cardId": 104,
+            "serial": 31
+          },
+          {
+            "type": 5,
+            "playerIndex": 1
+          }
+        ]
+      },
+      "canonical_json_utf8": "{\"logs\":[{\"playerIndex\":0,\"type\":2},{\"cardId\":104,\"playerIndex\":0,\"serial\":31,\"type\":4},{\"playerIndex\":1,\"type\":5}],\"ordinal\":1,\"previous_witness\":\"CD9EAEF5F0CA6A4E7FF63884503BECB345DAF1095C43E8B69F2C470104B5F7D2\",\"source_public_observation_hash\":\"F4476CFD8CE07212DF3BD70507F29400E1BE804CA8CB1DCEAB387D94C35CBE0D\"}",
+      "witness_hash": "EC368BB940F33DCDCA5507FB7C3285206B8F89FB5C5C3850182E8A6583973AD0"
+    },
+    {
+      "id": "hash-2-regular_empty",
+      "payload": {
+        "ordinal": 2,
+        "previous_witness": "EC368BB940F33DCDCA5507FB7C3285206B8F89FB5C5C3850182E8A6583973AD0",
+        "source_public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+        "logs": []
+      },
+      "canonical_json_utf8": "{\"logs\":[],\"ordinal\":2,\"previous_witness\":\"EC368BB940F33DCDCA5507FB7C3285206B8F89FB5C5C3850182E8A6583973AD0\",\"source_public_observation_hash\":\"AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20\"}",
+      "witness_hash": "FC47EE8BF315F64A04F620E335BD67A748BF59C5300B7A0FA896C59FEC3BCC58"
+    },
+    {
+      "id": "hash-3-move_attack_ordered",
+      "payload": {
+        "ordinal": 3,
+        "previous_witness": "FC47EE8BF315F64A04F620E335BD67A748BF59C5300B7A0FA896C59FEC3BCC58",
+        "source_public_observation_hash": "50DE384627448FC9F9F2E0C7FCA2D9A312F80A4EBFEA06561D18D26258796046",
+        "logs": [
+          {
+            "type": 6,
+            "playerIndex": 0,
+            "cardId": 104,
+            "serial": 31,
+            "fromArea": 1,
+            "toArea": 2
+          },
+          {
+            "type": 15,
+            "playerIndex": 0,
+            "cardId": 104,
+            "serial": 31,
+            "attackId": 7
+          }
+        ]
+      },
+      "canonical_json_utf8": "{\"logs\":[{\"cardId\":104,\"fromArea\":1,\"playerIndex\":0,\"serial\":31,\"toArea\":2,\"type\":6},{\"attackId\":7,\"cardId\":104,\"playerIndex\":0,\"serial\":31,\"type\":15}],\"ordinal\":3,\"previous_witness\":\"FC47EE8BF315F64A04F620E335BD67A748BF59C5300B7A0FA896C59FEC3BCC58\",\"source_public_observation_hash\":\"50DE384627448FC9F9F2E0C7FCA2D9A312F80A4EBFEA06561D18D26258796046\"}",
+      "witness_hash": "5EC2C1271EC244948258E2DCAB1671B2AECCDC4AB2EC8020FFEF2CFAD1E6A16C"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "initial-empty-commit",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "initial_empty",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "commit_pending",
+          "status": "committed",
+          "committed_ordinal": 0
+        }
+      ]
+    },
+    {
+      "id": "ordered-multi-log-commit",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "turn_draw_ordered",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "repeat_peek",
+          "source": "turn_draw_ordered",
+          "status": "slice_ready",
+          "same_owner_result": true
+        },
+        {
+          "op": "commit_pending",
+          "status": "committed",
+          "committed_ordinal": 0
+        }
+      ]
+    },
+    {
+      "id": "witness-chain-three-boundaries",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "initial_empty",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "commit_pending",
+          "status": "committed",
+          "committed_ordinal": 0
+        },
+        {
+          "op": "peek",
+          "source": "turn_draw_ordered",
+          "status": "slice_ready",
+          "ordinal": 1
+        },
+        {
+          "op": "commit_pending",
+          "status": "committed",
+          "committed_ordinal": 1
+        },
+        {
+          "op": "peek",
+          "source": "regular_empty",
+          "status": "slice_ready",
+          "ordinal": 2
+        }
+      ]
+    },
+    {
+      "id": "different-source-before-commit",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "regular_empty",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "peek",
+          "source": "move_attack_ordered",
+          "status": "rejected",
+          "error_code": "pending_selection_uncommitted"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-commit-and-replay",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "regular_empty",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "commit_pending",
+          "status": "committed",
+          "committed_ordinal": 0
+        },
+        {
+          "op": "commit_previous",
+          "status": "rejected",
+          "error_code": "slice_not_pending"
+        },
+        {
+          "op": "peek",
+          "source": "regular_empty",
+          "status": "rejected",
+          "error_code": "source_result_replayed"
+        }
+      ]
+    },
+    {
+      "id": "reset-revokes-old-slice",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "turn_draw_ordered",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "reset"
+        },
+        {
+          "op": "commit_previous",
+          "status": "rejected",
+          "error_code": "slice_generation_stale"
+        },
+        {
+          "op": "peek_new_source_instance",
+          "source": "turn_draw_ordered",
+          "status": "slice_ready",
+          "ordinal": 0
+        }
+      ]
+    },
+    {
+      "id": "cross-cursor-commit",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "move_attack_ordered",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "commit_on_other_cursor",
+          "status": "rejected",
+          "error_code": "slice_cursor_mismatch"
+        }
+      ]
+    },
+    {
+      "id": "copied-dto-rejected",
+      "operations": [
+        {
+          "op": "peek",
+          "source": "regular_empty",
+          "status": "slice_ready",
+          "ordinal": 0
+        },
+        {
+          "op": "commit_public_dict",
+          "status": "rejected",
+          "error_code": "invalid_slice_result"
+        }
+      ]
+    },
+    {
+      "id": "rejected-firewall-result",
+      "operations": [
+        {
+          "op": "peek_rejected_firewall",
+          "firewall_case": "opponent-hand-exposed",
+          "status": "rejected",
+          "error_code": "firewall_result_not_accepted"
+        }
+      ]
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SEARCH_SENTINEL",
+    "PRIVATE_KEY_SENTINEL",
+    "PRIVATE_VALUE_SENTINEL",
+    "RAW_PRIVATE_HASH_SENTINEL",
+    "TOKEN_FREE_HASH_SENTINEL"
+  ],
+  "consumer_rule": "shared vectors test offline cursor semantics only; no DTO or witness authorizes live selection or execution"
+}

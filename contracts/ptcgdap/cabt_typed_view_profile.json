@@ -1,0 +1,1181 @@
+{
+  "schema_version": 1,
+  "profile_id": "cabt_typed_view_profile_v1",
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "sources": {
+    "python_api": {
+      "artifact_id": "official_cg_api_py",
+      "sha256": "593F1298E52A635F90F8F505A52113E9AF114F444C293404E37906F18EE06CED"
+    },
+    "observation_writer": {
+      "artifact_id": "official_to_json_h",
+      "sha256": "84EE63939863493520EBE29E8CA717217EBF90191829EA80D1349942AA867602"
+    },
+    "option_log_writer": {
+      "artifact_id": "official_api_json_h",
+      "sha256": "FA405A0421AD09FBAE6E3922BD73A0A07333B17790DEA7E8FD90C1B97F326851"
+    }
+  },
+  "policies": {
+    "field_presence": "preserve_missing_null_value",
+    "known_view_search_capability": "exclude_search_begin_input",
+    "integer_wire_type": "exact_integer_node_only; integral binary64 values are not coerced",
+    "unknown_enum": "preserve_raw_integer_fail_closed",
+    "safe_metadata_unknown_pointer": "forbidden; the Host-private quarantine index may retain pointers but safe/public metadata omits them",
+    "unknown_subtree": {
+      "action": "quarantine_entire_subtree",
+      "descend_into_unknown_object": false,
+      "metadata_fields": [
+        "pointer",
+        "presence",
+        "json_type"
+      ],
+      "raw_value_location": "raw_payload_only"
+    }
+  },
+  "callback_root": {
+    "name": "Callback",
+    "fields": [
+      {
+        "name": "select",
+        "kind": "shape",
+        "shape": "SelectData",
+        "nullable": true,
+        "required": true,
+        "authority": "sdk_and_native_wire"
+      },
+      {
+        "name": "logs",
+        "kind": "array",
+        "items": {
+          "kind": "shape",
+          "shape": "Log",
+          "nullable": false
+        },
+        "nullable": false,
+        "required": true,
+        "authority": "sdk_and_native_wire"
+      },
+      {
+        "name": "current",
+        "kind": "shape",
+        "shape": "State",
+        "nullable": true,
+        "required": true,
+        "authority": "sdk_and_native_wire"
+      },
+      {
+        "name": "search_begin_input",
+        "kind": "string",
+        "nullable": true,
+        "required": false,
+        "authority": "sdk_host_overlay"
+      }
+    ],
+    "known_view_fields": [
+      "select",
+      "logs",
+      "current"
+    ],
+    "native_writer_fields": [
+      "select",
+      "logs",
+      "current"
+    ],
+    "host_overlay_fields": [
+      "search_begin_input"
+    ],
+    "sdk_fields_missing_from_native_writer": [],
+    "unclassified_native_writer_fields": []
+  },
+  "framework_fields": [
+    {
+      "name": "step",
+      "view_name": "step",
+      "kind": "integer",
+      "nullable": true,
+      "required": false,
+      "authority": "kaggle_framework_overlay"
+    },
+    {
+      "name": "remainingOverageTime",
+      "view_name": "remaining_overage_time",
+      "kind": "number",
+      "nullable": true,
+      "required": false,
+      "authority": "kaggle_framework_overlay"
+    }
+  ],
+  "shapes": {
+    "Card": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serial",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "playerIndex",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {
+        "name": "non_agent_add_name_mode"
+      },
+      "sdk_fields_missing_from_writer": []
+    },
+    "Pokemon": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serial",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "playerIndex",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "wire_only_sdk_gap"
+        },
+        {
+          "name": "hp",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "maxHp",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "appearThisTurn",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "energies",
+          "kind": "array",
+          "items": {
+            "kind": "integer",
+            "enum": "EnergyType",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "energyCards",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "tools",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "preEvolution",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {
+        "name": "non_agent_add_name_mode"
+      },
+      "sdk_fields_missing_from_writer": []
+    },
+    "PlayerState": {
+      "fields": [
+        {
+          "name": "active",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Pokemon",
+            "nullable": true
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "bench",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Pokemon",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "benchMax",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "deckCount",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "discard",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "prize",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": true
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "handCount",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "hand",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": true,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "poisoned",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "burned",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "asleep",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "paralyzed",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "confused",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {
+        "deck": "non_contract_send_deck_or_visualizer"
+      },
+      "sdk_fields_missing_from_writer": []
+    },
+    "State": {
+      "fields": [
+        {
+          "name": "turn",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "turnActionCount",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "yourIndex",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "firstPlayer",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "supporterPlayed",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "stadiumPlayed",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "energyAttached",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "retreated",
+          "kind": "boolean",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "result",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "stadium",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "looking",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": true
+          },
+          "nullable": true,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "players",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "PlayerState",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {
+        "lookingCount": "web_only"
+      },
+      "sdk_fields_missing_from_writer": []
+    },
+    "Option": {
+      "fields": [
+        {
+          "name": "type",
+          "kind": "integer",
+          "enum": "OptionType",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "number",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "area",
+          "kind": "integer",
+          "enum": "AreaType",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "index",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "playerIndex",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "toolIndex",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "energyIndex",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "count",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "inPlayArea",
+          "kind": "integer",
+          "enum": "AreaType",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "inPlayIndex",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "attackId",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardId",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serial",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "specialConditionType",
+          "kind": "integer",
+          "enum": "SpecialConditionType",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {},
+      "sdk_fields_missing_from_writer": []
+    },
+    "SelectData": {
+      "fields": [
+        {
+          "name": "type",
+          "kind": "integer",
+          "enum": "SelectType",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "context",
+          "kind": "integer",
+          "enum": "SelectContext",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "minCount",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "maxCount",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "remainDamageCounter",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "remainEnergyCost",
+          "kind": "integer",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "option",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Option",
+            "nullable": false
+          },
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "deck",
+          "kind": "array",
+          "items": {
+            "kind": "shape",
+            "shape": "Card",
+            "nullable": false
+          },
+          "nullable": true,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "contextCard",
+          "kind": "shape",
+          "shape": "Card",
+          "nullable": true,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "effect",
+          "kind": "shape",
+          "shape": "Card",
+          "nullable": true,
+          "required": true,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {},
+      "sdk_fields_missing_from_writer": []
+    },
+    "Log": {
+      "fields": [
+        {
+          "name": "type",
+          "kind": "integer",
+          "enum": "LogType",
+          "nullable": false,
+          "required": true,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "playerIndex",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "hasBasicPokemon",
+          "kind": "boolean",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardId",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serial",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "fromArea",
+          "kind": "integer",
+          "enum": "AreaType",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "toArea",
+          "kind": "integer",
+          "enum": "AreaType",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardIdActive",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serialActive",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardIdBench",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serialBench",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardIdBefore",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serialBefore",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardIdAfter",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serialAfter",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "cardIdTarget",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "serialTarget",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "attackId",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "value",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "putDamageCounter",
+          "kind": "boolean",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "isRecover",
+          "kind": "boolean",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "head",
+          "kind": "boolean",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "result",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        },
+        {
+          "name": "reason",
+          "kind": "integer",
+          "nullable": true,
+          "required": false,
+          "authority": "sdk_and_wire"
+        }
+      ],
+      "quarantined_writer_fields": {},
+      "sdk_fields_missing_from_writer": []
+    }
+  },
+  "option_types": {
+    "NUMBER": 0,
+    "YES": 1,
+    "NO": 2,
+    "CARD": 3,
+    "TOOL_CARD": 4,
+    "ENERGY_CARD": 5,
+    "ENERGY": 6,
+    "PLAY": 7,
+    "ATTACH": 8,
+    "EVOLVE": 9,
+    "ABILITY": 10,
+    "DISCARD": 11,
+    "RETREAT": 12,
+    "ATTACK": 13,
+    "END": 14,
+    "SKILL": 15,
+    "SPECIAL_CONDITION": 16
+  },
+  "option_shapes": {
+    "0": [
+      "type",
+      "number"
+    ],
+    "1": [
+      "type"
+    ],
+    "2": [
+      "type"
+    ],
+    "3": [
+      "type",
+      "area",
+      "index",
+      "playerIndex"
+    ],
+    "4": [
+      "type",
+      "area",
+      "index",
+      "playerIndex",
+      "toolIndex"
+    ],
+    "5": [
+      "type",
+      "area",
+      "index",
+      "playerIndex",
+      "energyIndex"
+    ],
+    "6": [
+      "type",
+      "area",
+      "index",
+      "playerIndex",
+      "energyIndex",
+      "count"
+    ],
+    "7": [
+      "type",
+      "index"
+    ],
+    "8": [
+      "type",
+      "area",
+      "index",
+      "inPlayArea",
+      "inPlayIndex"
+    ],
+    "9": [
+      "type",
+      "area",
+      "index",
+      "inPlayArea",
+      "inPlayIndex"
+    ],
+    "10": [
+      "type",
+      "area",
+      "index"
+    ],
+    "11": [
+      "type",
+      "area",
+      "index"
+    ],
+    "12": [
+      "type"
+    ],
+    "13": [
+      "type",
+      "attackId"
+    ],
+    "14": [
+      "type"
+    ],
+    "15": [
+      "type",
+      "cardId",
+      "serial"
+    ],
+    "16": [
+      "type",
+      "specialConditionType"
+    ]
+  },
+  "log_types": {
+    "SHUFFLE": 0,
+    "HAS_BASIC_POKEMON": 1,
+    "TURN_START": 2,
+    "TURN_END": 3,
+    "DRAW": 4,
+    "DRAW_REVERSE": 5,
+    "MOVE_CARD": 6,
+    "MOVE_CARD_REVERSE": 7,
+    "SWITCH": 8,
+    "CHANGE": 9,
+    "PLAY": 10,
+    "ATTACH": 11,
+    "EVOLVE": 12,
+    "DEVOLVE": 13,
+    "MOVE_ATTACHED": 14,
+    "ATTACK": 15,
+    "HP_CHANGE": 16,
+    "POISONED": 17,
+    "BURNED": 18,
+    "ASLEEP": 19,
+    "PARALYZED": 20,
+    "CONFUSED": 21,
+    "COIN": 22,
+    "RESULT": 23
+  },
+  "log_shapes": {
+    "0": [
+      "type",
+      "playerIndex"
+    ],
+    "1": [
+      "type",
+      "playerIndex",
+      "hasBasicPokemon"
+    ],
+    "2": [
+      "type",
+      "playerIndex"
+    ],
+    "3": [
+      "type",
+      "playerIndex"
+    ],
+    "4": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial"
+    ],
+    "5": [
+      "type",
+      "playerIndex"
+    ],
+    "6": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "fromArea",
+      "toArea"
+    ],
+    "7": [
+      "type",
+      "playerIndex",
+      "fromArea",
+      "toArea"
+    ],
+    "8": [
+      "type",
+      "playerIndex",
+      "cardIdActive",
+      "serialActive",
+      "cardIdBench",
+      "serialBench"
+    ],
+    "9": [
+      "type",
+      "playerIndex",
+      "cardIdBefore",
+      "serialBefore",
+      "cardIdAfter",
+      "serialAfter"
+    ],
+    "10": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial"
+    ],
+    "11": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "cardIdTarget",
+      "serialTarget"
+    ],
+    "12": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "cardIdTarget",
+      "serialTarget"
+    ],
+    "13": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "cardIdTarget",
+      "serialTarget"
+    ],
+    "14": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "cardIdBefore",
+      "serialBefore",
+      "cardIdAfter",
+      "serialAfter"
+    ],
+    "15": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "attackId"
+    ],
+    "16": [
+      "type",
+      "playerIndex",
+      "cardId",
+      "serial",
+      "value",
+      "putDamageCounter"
+    ],
+    "17": [
+      "type",
+      "playerIndex",
+      "isRecover",
+      "cardId",
+      "serial"
+    ],
+    "18": [
+      "type",
+      "playerIndex",
+      "isRecover",
+      "cardId",
+      "serial"
+    ],
+    "19": [
+      "type",
+      "playerIndex",
+      "isRecover",
+      "cardId",
+      "serial"
+    ],
+    "20": [
+      "type",
+      "playerIndex",
+      "isRecover",
+      "cardId",
+      "serial"
+    ],
+    "21": [
+      "type",
+      "playerIndex",
+      "isRecover",
+      "cardId",
+      "serial"
+    ],
+    "22": [
+      "type",
+      "playerIndex",
+      "head"
+    ],
+    "23": [
+      "type",
+      "result",
+      "reason"
+    ]
+  },
+  "enum_locations": [
+    {
+      "enum": "SelectType",
+      "pattern": "/select/type"
+    },
+    {
+      "enum": "SelectContext",
+      "pattern": "/select/context"
+    },
+    {
+      "enum": "OptionType",
+      "pattern": "/select/option/*/type"
+    },
+    {
+      "enum": "AreaType",
+      "pattern": "/select/option/*/area"
+    },
+    {
+      "enum": "AreaType",
+      "pattern": "/select/option/*/inPlayArea"
+    },
+    {
+      "enum": "SpecialConditionType",
+      "pattern": "/select/option/*/specialConditionType"
+    },
+    {
+      "enum": "LogType",
+      "pattern": "/logs/*/type"
+    },
+    {
+      "enum": "AreaType",
+      "pattern": "/logs/*/fromArea"
+    },
+    {
+      "enum": "AreaType",
+      "pattern": "/logs/*/toArea"
+    },
+    {
+      "enum": "EnergyType",
+      "pattern": "/current/players/*/active/*/energies/*"
+    },
+    {
+      "enum": "EnergyType",
+      "pattern": "/current/players/*/bench/*/energies/*"
+    }
+  ]
+}

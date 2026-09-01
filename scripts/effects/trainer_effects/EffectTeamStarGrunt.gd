@@ -7,7 +7,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return active != null and not active.attached_energy.is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var active := _opponent_active(card, state)
 	if active == null or active.attached_energy.is_empty():
 		return []

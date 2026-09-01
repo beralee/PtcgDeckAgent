@@ -1,0 +1,60 @@
+{
+  "document_type": "competitive_strategy_platform_threat_model_v1",
+  "schema_version": 1,
+  "threat_model_id": "csp-wp0-threat-model-v1",
+  "protected_assets": [
+    "current_window_authority",
+    "engine_execution_authority",
+    "official_evaluator_authority",
+    "immutable_release_identity",
+    "hidden_game_information",
+    "private_diagnostic_records",
+    "verified_statistics_provenance"
+  ],
+  "forbidden_public_keys": [
+    "hand",
+    "deck",
+    "prizes",
+    "deck_order",
+    "search_begin_input",
+    "private_rng_state",
+    "private_replay_snapshot",
+    "instance_id",
+    "object_id",
+    "game_state",
+    "game_state_machine",
+    "action_ticket",
+    "callback",
+    "binding",
+    "engine_object"
+  ],
+  "trust_boundaries": [
+    "author_workspace_to_release",
+    "device_match_to_public_replay",
+    "community_receipt_to_official_result",
+    "evaluator_result_to_statistics",
+    "registry_metadata_to_device_match",
+    "private_record_to_public_artifact"
+  ],
+  "required_controls": [
+    "positive_public_projection",
+    "exact_release_and_profile_pinning",
+    "hash_chained_replay_frames",
+    "official_evaluator_signature",
+    "trust_lane_separation",
+    "bounded_artifact_sizes",
+    "unknown_field_fail_closed",
+    "feature_off_new_match_rollback"
+  ],
+  "explicit_non_authorities": [
+    "schema_validation",
+    "serialized_audit",
+    "replay_manifest",
+    "replay_frame",
+    "community_match_receipt",
+    "evaluation_summary",
+    "registry_metadata",
+    "display_name",
+    "share_link"
+  ]
+}

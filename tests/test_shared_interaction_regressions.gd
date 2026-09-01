@@ -15,7 +15,7 @@ class TwoStageCopiedAttackEffect extends BaseEffect:
 	func get_attack_interaction_steps(_card: CardInstance, _attack: Dictionary, _state: GameState) -> Array[Dictionary]:
 		return [{
 			"id": FIRST_STEP_ID,
-			"items": ["first"],
+			"items": [true],
 			"labels": ["First"],
 			"min_select": 1,
 			"max_select": 1,
@@ -32,7 +32,7 @@ class TwoStageCopiedAttackEffect extends BaseEffect:
 			return []
 		return [{
 			"id": SECOND_STEP_ID,
-			"items": ["second"],
+			"items": [true],
 			"labels": ["Second"],
 			"min_select": 1,
 			"max_select": 1,

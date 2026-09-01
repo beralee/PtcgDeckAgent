@@ -77,7 +77,7 @@ class ChienPaoIcicleLoop extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index == attack_index_to_match
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -138,7 +138,7 @@ class HydrappleExRipeningCharge extends BaseEffect:
 		var player: PlayerState = state.players[top.owner_index]
 		return not _grass_energy_from_hand(player).is_empty() and not player.get_all_pokemon().is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player: PlayerState = state.players[card.owner_index]
 		var source_items: Array = _grass_energy_from_hand(player)
 		var source_labels: Array[String] = []
@@ -303,7 +303,7 @@ class SylveonExAngelite extends BaseEffect:
 	func can_use_angelite(player_index: int, state: GameState) -> bool:
 		return int(state.shared_turn_flags.get("%s%d" % [USED_FLAG_PREFIX, player_index], -999)) != state.turn_number - 2
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		var opponent: PlayerState = state.players[1 - card.owner_index]
@@ -409,7 +409,7 @@ class ArchaludonExAlloyBuild extends BaseEffect:
 		var player := state.players[top.owner_index]
 		return not _metal_energy_from_discard(player).is_empty() and not _metal_targets(player).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var source_items := _metal_energy_from_discard(player)
 		var target_items := _metal_targets(player)
@@ -530,7 +530,7 @@ class GholdengoSurfingTurn extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index == attack_index_to_match
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, _state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, _state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		return [{
@@ -565,7 +565,7 @@ class AlolanExeggutorExTropicalFrenzy extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index == attack_index_to_match
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -634,7 +634,7 @@ class AlolanExeggutorExSwingingSphene extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index == attack_index_to_match
 
-	func get_attack_preview_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_preview_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -644,7 +644,7 @@ class AlolanExeggutorExSwingingSphene extends BaseEffect:
 			return [_build_coin_result_step("投掷1次硬币。若为反面，选择对手备战区的1只基础宝可梦【昏厥】。", "preview")]
 		return [_build_coin_result_step("投掷1次硬币。若为反面且对手备战区没有基础宝可梦，嗡嗡屑石会发动失败。", "preview")]
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		_pending_flip_heads = coin_flipper.flip()
@@ -772,7 +772,7 @@ class KyuremTrifrost extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index == attack_index_to_match
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -857,7 +857,7 @@ class NoctowlJewelSeeker extends BaseEffect:
 		var player := state.players[top.owner_index]
 		return _has_tera_pokemon(player) and not _trainer_cards(player.deck).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var items := _trainer_cards(player.deck)
 		if items.is_empty():
@@ -917,7 +917,7 @@ class RotomFanCall extends BaseEffect:
 			return false
 		return not _fan_call_targets(state.players[owner].deck).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var items := _fan_call_targets(player.deck)
 		if items.is_empty():

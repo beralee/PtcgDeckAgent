@@ -1,0 +1,79 @@
+{
+  "document_type": "competitive_strategy_platform_profile_v1",
+  "schema_version": 1,
+  "profile_id": "competitive_strategy_platform_contract_v1",
+  "hash_domains": {
+    "document": "canonical_json_v1_sha256",
+    "replay_frame_prefix_utf8_hex": "50544347444150004353505F5055424C49435F5245504C41595F4652414D455F563100"
+  },
+  "allowed_platforms": [
+    "windows-x86_64"
+  ],
+  "release_states": [
+    "draft",
+    "locally_validated",
+    "submitted",
+    "verified",
+    "curated",
+    "deprecated",
+    "revoked"
+  ],
+  "revocation_states": [
+    "active",
+    "deprecated",
+    "revoked"
+  ],
+  "evaluation_visibility": [
+    "public_qualification",
+    "platform_holdout"
+  ],
+  "match_lanes": [
+    "developer_local",
+    "community_challenge",
+    "official_evaluation"
+  ],
+  "result_lanes": [
+    "developer_local",
+    "community_challenge",
+    "official_verified",
+    "rejected_or_dirty"
+  ],
+  "seed_capabilities": [
+    "none",
+    "deterministic_seed_v1",
+    "paired_seed_commitment_v1"
+  ],
+  "replay_visibility_profiles": [
+    "public_at_event_time_v1"
+  ],
+  "limits": {
+    "max_document_bytes": 2097152,
+    "max_replay_frames": 8192,
+    "max_public_board_entries": 64,
+    "max_public_card_entries": 256,
+    "max_platforms": 4,
+    "max_opponents": 256
+  },
+  "retention": {
+    "developer_local": {
+      "platform_upload_allowed": false,
+      "public_replay_days": 0,
+      "metadata_policy": "local_owner_only"
+    },
+    "community_challenge": {
+      "platform_upload_allowed": true,
+      "public_replay_days": 90,
+      "metadata_policy": "hash_and_summary_after_expiry"
+    },
+    "official_verified": {
+      "platform_upload_allowed": true,
+      "public_replay_days": 365,
+      "metadata_policy": "immutable_verified_summary"
+    },
+    "rejected_or_dirty": {
+      "platform_upload_allowed": false,
+      "public_replay_days": 0,
+      "metadata_policy": "private_fault_evidence_30_days"
+    }
+  }
+}

@@ -164,6 +164,14 @@ func _with_vs_ai(callback: Callable) -> String:
 	return result
 
 
+func _with_author_ai(callback: Callable) -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+	var result: String = str(callback.call())
+	GameManager.current_mode = previous_mode
+	return result
+
+
 func test_watchdog_recovers_lost_ai_schedule_after_soft_timeout() -> String:
 	return _with_vs_ai(func() -> String:
 		var scene := WatchdogScene.new()
@@ -324,6 +332,35 @@ func test_watchdog_hard_fallback_aborts_ai_effect_and_ends_main_phase_turn() -> 
 			assert_eq(scene.end_turn_calls, 1, "Hard fallback should safely yield the AI main-phase turn"),
 		])
 		scene.free()
+		return checks
+	)
+
+
+func test_author_watchdog_never_manufactures_an_end_turn_outside_package_owner() -> String:
+	return _with_author_ai(func() -> String:
+		var main_scene := WatchdogScene.new()
+		var main_watchdog := BattleAIWatchdogScript.new()
+		main_watchdog.setup(main_scene)
+		main_watchdog.notify_activity("author_main", 1000)
+		var main_result: Dictionary = main_watchdog.tick(13500)
+
+		var effect_scene := WatchdogScene.new()
+		effect_scene._pending_choice = "effect_interaction"
+		effect_scene._pending_effect_player_index = 1
+		effect_scene._pending_effect_step_index = 0
+		effect_scene._pending_effect_steps = [{"id": "broken_author_step", "items": []}]
+		var effect_watchdog := BattleAIWatchdogScript.new()
+		effect_watchdog.setup(effect_scene)
+		effect_watchdog.notify_activity("author_effect", 1000)
+		var effect_result: Dictionary = effect_watchdog.tick(13500)
+		var checks := run_checks([
+			assert_eq(str(main_result.get("action", "")), "reschedule"),
+			assert_eq(main_scene.end_turn_calls, 0, "Watchdog cannot bypass the author package owner"),
+			assert_eq(str(effect_result.get("action", "")), "abort_effect"),
+			assert_eq(effect_scene.end_turn_calls, 0, "Malformed author prompts fail closed without classic end-turn fallback"),
+		])
+		main_scene.free()
+		effect_scene.free()
 		return checks
 	)
 

@@ -28,7 +28,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return _has_required_regis(player) and not _energy_cards(player.discard_pile).is_empty() and not player.get_all_pokemon().is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null:
 		return []
 	var player: PlayerState = state.players[card.owner_index]

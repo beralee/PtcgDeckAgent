@@ -1,0 +1,1836 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.invalid/contracts/godot_action_ticket.schema.json",
+  "title": "PtcgDAP P3-WP3 Godot action ticket contract",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/profileDocument"
+    },
+    {
+      "$ref": "#/$defs/vectorDocument"
+    },
+    {
+      "$ref": "#/$defs/bundleDocument"
+    },
+    {
+      "$ref": "#/$defs/ticketAudit"
+    },
+    {
+      "$ref": "#/$defs/claimAudit"
+    },
+    {
+      "$ref": "#/$defs/issueResult"
+    },
+    {
+      "$ref": "#/$defs/claimResult"
+    }
+  ],
+  "$defs": {
+    "ticketAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticket_profile",
+        "ticket_id",
+        "ticket_generation",
+        "binding_version",
+        "snapshot_id",
+        "window_id",
+        "public_observation_hash",
+        "selected_indexes",
+        "selected_fingerprint_hashes",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "ticket_profile": {
+          "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+        },
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "ticket_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "binding_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "window_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "public_observation_hash": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "selected_indexes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "selected_fingerprint_hashes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          }
+        },
+        "authority": {
+          "const": "godot_action_ticket_shadow"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "claimAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticket_profile",
+        "ticket_id",
+        "ticket_generation",
+        "selected_indexes",
+        "selected_fingerprint_hashes",
+        "state",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "ticket_profile": {
+          "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+        },
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "ticket_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "selected_indexes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "selected_fingerprint_hashes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          }
+        },
+        "state": {
+          "const": "claimed"
+        },
+        "authority": {
+          "const": "godot_action_claim_shadow"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "issueResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "enum": [
+            "",
+            "ticket_contract_error",
+            "invalid_session_id",
+            "invalid_public_observation_hash",
+            "invalid_binding_owner",
+            "invalid_binding",
+            "binding_not_current",
+            "invalid_selection_resolution",
+            "selection_not_current",
+            "public_hash_mismatch",
+            "invalid_callback_binding_hash",
+            "active_ticket_exists",
+            "binding_already_claimed",
+            "ticket_space_exhausted",
+            "invalid_ticket",
+            "ticket_not_current",
+            "ticket_already_claimed",
+            "ticket_revoked",
+            "session_mismatch",
+            "callback_mismatch",
+            "private_reference_unavailable",
+            "ticket_integrity_invalid",
+            "owner_mismatch"
+          ]
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ticket_profile",
+                "ticket_id",
+                "ticket_generation",
+                "binding_version",
+                "snapshot_id",
+                "window_id",
+                "public_observation_hash",
+                "selected_indexes",
+                "selected_fingerprint_hashes",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "ticket_profile": {
+                  "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                },
+                "ticket_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "ticket_generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "binding_version": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "snapshot_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "window_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "public_observation_hash": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "selected_indexes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "selected_fingerprint_hashes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-F0-9]{64}$"
+                  }
+                },
+                "authority": {
+                  "const": "godot_action_ticket_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "error_code": {
+              "const": ""
+            },
+            "audit": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ticket_profile",
+                "ticket_id",
+                "ticket_generation",
+                "binding_version",
+                "snapshot_id",
+                "window_id",
+                "public_observation_hash",
+                "selected_indexes",
+                "selected_fingerprint_hashes",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "ticket_profile": {
+                  "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                },
+                "ticket_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "ticket_generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "binding_version": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "snapshot_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "window_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "public_observation_hash": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "selected_indexes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "selected_fingerprint_hashes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-F0-9]{64}$"
+                  }
+                },
+                "authority": {
+                  "const": "godot_action_ticket_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "error_code": {
+              "enum": [
+                "ticket_contract_error",
+                "invalid_session_id",
+                "invalid_public_observation_hash",
+                "invalid_binding_owner",
+                "invalid_binding",
+                "binding_not_current",
+                "invalid_selection_resolution",
+                "selection_not_current",
+                "public_hash_mismatch",
+                "invalid_callback_binding_hash",
+                "active_ticket_exists",
+                "binding_already_claimed",
+                "ticket_space_exhausted",
+                "invalid_ticket",
+                "ticket_not_current",
+                "ticket_already_claimed",
+                "ticket_revoked",
+                "session_mismatch",
+                "callback_mismatch",
+                "private_reference_unavailable",
+                "ticket_integrity_invalid",
+                "owner_mismatch"
+              ]
+            },
+            "audit": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "claimResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "enum": [
+            "",
+            "ticket_contract_error",
+            "invalid_session_id",
+            "invalid_public_observation_hash",
+            "invalid_binding_owner",
+            "invalid_binding",
+            "binding_not_current",
+            "invalid_selection_resolution",
+            "selection_not_current",
+            "public_hash_mismatch",
+            "invalid_callback_binding_hash",
+            "active_ticket_exists",
+            "binding_already_claimed",
+            "ticket_space_exhausted",
+            "invalid_ticket",
+            "ticket_not_current",
+            "ticket_already_claimed",
+            "ticket_revoked",
+            "session_mismatch",
+            "callback_mismatch",
+            "private_reference_unavailable",
+            "ticket_integrity_invalid",
+            "owner_mismatch"
+          ]
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ticket_profile",
+                "ticket_id",
+                "ticket_generation",
+                "selected_indexes",
+                "selected_fingerprint_hashes",
+                "state",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "ticket_profile": {
+                  "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                },
+                "ticket_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "ticket_generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "selected_indexes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "selected_fingerprint_hashes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-F0-9]{64}$"
+                  }
+                },
+                "state": {
+                  "const": "claimed"
+                },
+                "authority": {
+                  "const": "godot_action_claim_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "error_code": {
+              "const": ""
+            },
+            "audit": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ticket_profile",
+                "ticket_id",
+                "ticket_generation",
+                "selected_indexes",
+                "selected_fingerprint_hashes",
+                "state",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "ticket_profile": {
+                  "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                },
+                "ticket_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "ticket_generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "selected_indexes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "selected_fingerprint_hashes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 256,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-F0-9]{64}$"
+                  }
+                },
+                "state": {
+                  "const": "claimed"
+                },
+                "authority": {
+                  "const": "godot_action_claim_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "error_code": {
+              "enum": [
+                "ticket_contract_error",
+                "invalid_session_id",
+                "invalid_public_observation_hash",
+                "invalid_binding_owner",
+                "invalid_binding",
+                "binding_not_current",
+                "invalid_selection_resolution",
+                "selection_not_current",
+                "public_hash_mismatch",
+                "invalid_callback_binding_hash",
+                "active_ticket_exists",
+                "binding_already_claimed",
+                "ticket_space_exhausted",
+                "invalid_ticket",
+                "ticket_not_current",
+                "ticket_already_claimed",
+                "ticket_revoked",
+                "session_mismatch",
+                "callback_mismatch",
+                "private_reference_unavailable",
+                "ticket_integrity_invalid",
+                "owner_mismatch"
+              ]
+            },
+            "audit": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "profileDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "parent",
+        "hash_profile",
+        "limits",
+        "session_contract",
+        "issue_contract",
+        "claim_contract",
+        "serialization_contract",
+        "error_codes",
+        "next_authority"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+        },
+        "parent": {
+          "type": "object"
+        },
+        "hash_profile": {
+          "type": "object"
+        },
+        "limits": {
+          "type": "object"
+        },
+        "session_contract": {
+          "type": "object"
+        },
+        "issue_contract": {
+          "type": "object"
+        },
+        "claim_contract": {
+          "type": "object"
+        },
+        "serialization_contract": {
+          "type": "object"
+        },
+        "error_codes": {
+          "type": "array",
+          "minItems": 23,
+          "maxItems": 23,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "",
+              "ticket_contract_error",
+              "invalid_session_id",
+              "invalid_public_observation_hash",
+              "invalid_binding_owner",
+              "invalid_binding",
+              "binding_not_current",
+              "invalid_selection_resolution",
+              "selection_not_current",
+              "public_hash_mismatch",
+              "invalid_callback_binding_hash",
+              "active_ticket_exists",
+              "binding_already_claimed",
+              "ticket_space_exhausted",
+              "invalid_ticket",
+              "ticket_not_current",
+              "ticket_already_claimed",
+              "ticket_revoked",
+              "session_mismatch",
+              "callback_mismatch",
+              "private_reference_unavailable",
+              "ticket_integrity_invalid",
+              "owner_mismatch"
+            ]
+          }
+        },
+        "next_authority": {
+          "type": "object"
+        }
+      }
+    },
+    "vectorDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "fixture",
+        "issue_cases",
+        "claim_cases",
+        "transition_cases"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+        },
+        "fixture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "binding_fixture_id",
+            "binding_vectors_canonical_sha256",
+            "binding_fixture_patch",
+            "session_id",
+            "public_observation_hash",
+            "callback_binding_hash",
+            "snapshot_id",
+            "window_id",
+            "binding_version",
+            "option_fingerprints",
+            "selection_variants",
+            "expected_ticket_audits",
+            "expected_claim_audits"
+          ],
+          "properties": {
+            "binding_fixture_id": {
+              "const": "valid-mixed-order"
+            },
+            "binding_vectors_canonical_sha256": {
+              "const": "8B13EABF6039F20346D4F52326E4B20CDD6FE000E7F685B7527DB6163F06B40F"
+            },
+            "binding_fixture_patch": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "window_option_0_area"
+              ],
+              "properties": {
+                "window_option_0_area": {
+                  "const": 2
+                }
+              }
+            },
+            "session_id": {
+              "type": "string",
+              "pattern": "^session:[a-z0-9_-]{1,64}$"
+            },
+            "public_observation_hash": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "callback_binding_hash": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "snapshot_id": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "window_id": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "binding_version": {
+              "const": 1
+            },
+            "option_fingerprints": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 256,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-F0-9]{64}$"
+              }
+            },
+            "selection_variants": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "policy_ordered",
+                "fallback_single"
+              ],
+              "properties": {
+                "policy_ordered": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "owner",
+                    "attempt_kind",
+                    "attempt_indexes",
+                    "selected_indexes"
+                  ],
+                  "properties": {
+                    "owner": {
+                      "type": "string",
+                      "enum": [
+                        "policy",
+                        "deterministic_fallback"
+                      ]
+                    },
+                    "attempt_kind": {
+                      "type": "string",
+                      "enum": [
+                        "exact_indexes",
+                        "invalid_policy_output"
+                      ]
+                    },
+                    "attempt_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "selected_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    }
+                  }
+                },
+                "fallback_single": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "owner",
+                    "attempt_kind",
+                    "attempt_indexes",
+                    "selected_indexes"
+                  ],
+                  "properties": {
+                    "owner": {
+                      "type": "string",
+                      "enum": [
+                        "policy",
+                        "deterministic_fallback"
+                      ]
+                    },
+                    "attempt_kind": {
+                      "type": "string",
+                      "enum": [
+                        "exact_indexes",
+                        "invalid_policy_output"
+                      ]
+                    },
+                    "attempt_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "selected_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "expected_ticket_audits": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "policy_ordered",
+                "fallback_single"
+              ],
+              "properties": {
+                "policy_ordered": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticket_profile",
+                    "ticket_id",
+                    "ticket_generation",
+                    "binding_version",
+                    "snapshot_id",
+                    "window_id",
+                    "public_observation_hash",
+                    "selected_indexes",
+                    "selected_fingerprint_hashes",
+                    "authority",
+                    "authoritative"
+                  ],
+                  "properties": {
+                    "ticket_profile": {
+                      "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                    },
+                    "ticket_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "ticket_generation": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "binding_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "snapshot_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "window_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "public_observation_hash": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "selected_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "selected_fingerprint_hashes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[A-F0-9]{64}$"
+                      }
+                    },
+                    "authority": {
+                      "const": "godot_action_ticket_shadow"
+                    },
+                    "authoritative": {
+                      "const": false
+                    }
+                  }
+                },
+                "fallback_single": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticket_profile",
+                    "ticket_id",
+                    "ticket_generation",
+                    "binding_version",
+                    "snapshot_id",
+                    "window_id",
+                    "public_observation_hash",
+                    "selected_indexes",
+                    "selected_fingerprint_hashes",
+                    "authority",
+                    "authoritative"
+                  ],
+                  "properties": {
+                    "ticket_profile": {
+                      "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                    },
+                    "ticket_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "ticket_generation": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "binding_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "snapshot_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "window_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "public_observation_hash": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "selected_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "selected_fingerprint_hashes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[A-F0-9]{64}$"
+                      }
+                    },
+                    "authority": {
+                      "const": "godot_action_ticket_shadow"
+                    },
+                    "authoritative": {
+                      "const": false
+                    }
+                  }
+                }
+              }
+            },
+            "expected_claim_audits": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "policy_ordered",
+                "fallback_single"
+              ],
+              "properties": {
+                "policy_ordered": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticket_profile",
+                    "ticket_id",
+                    "ticket_generation",
+                    "selected_indexes",
+                    "selected_fingerprint_hashes",
+                    "state",
+                    "authority",
+                    "authoritative"
+                  ],
+                  "properties": {
+                    "ticket_profile": {
+                      "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                    },
+                    "ticket_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "ticket_generation": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "selected_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "selected_fingerprint_hashes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[A-F0-9]{64}$"
+                      }
+                    },
+                    "state": {
+                      "const": "claimed"
+                    },
+                    "authority": {
+                      "const": "godot_action_claim_shadow"
+                    },
+                    "authoritative": {
+                      "const": false
+                    }
+                  }
+                },
+                "fallback_single": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticket_profile",
+                    "ticket_id",
+                    "ticket_generation",
+                    "selected_indexes",
+                    "selected_fingerprint_hashes",
+                    "state",
+                    "authority",
+                    "authoritative"
+                  ],
+                  "properties": {
+                    "ticket_profile": {
+                      "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                    },
+                    "ticket_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "ticket_generation": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "selected_indexes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "selected_fingerprint_hashes": {
+                      "type": "array",
+                      "minItems": 0,
+                      "maxItems": 256,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[A-F0-9]{64}$"
+                      }
+                    },
+                    "state": {
+                      "const": "claimed"
+                    },
+                    "authority": {
+                      "const": "godot_action_claim_shadow"
+                    },
+                    "authoritative": {
+                      "const": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "issue_cases": {
+          "type": "array",
+          "minItems": 12,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "selection_variant",
+              "fault",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$"
+              },
+              "selection_variant": {
+                "type": "string",
+                "enum": [
+                  "policy_ordered",
+                  "fallback_single"
+                ]
+              },
+              "fault": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "session_type",
+                  "session_format",
+                  "public_hash_type",
+                  "public_hash_mismatch",
+                  "binding_copy",
+                  "stale_snapshot",
+                  "window_copy",
+                  "resolution_copy",
+                  "callback_drift",
+                  "active_ticket_conflict",
+                  "claimed_binding_reissue"
+                ]
+              },
+              "expected": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "accepted",
+                  "error_code",
+                  "audit"
+                ],
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  },
+                  "error_code": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "ticket_contract_error",
+                      "invalid_session_id",
+                      "invalid_public_observation_hash",
+                      "invalid_binding_owner",
+                      "invalid_binding",
+                      "binding_not_current",
+                      "invalid_selection_resolution",
+                      "selection_not_current",
+                      "public_hash_mismatch",
+                      "invalid_callback_binding_hash",
+                      "active_ticket_exists",
+                      "binding_already_claimed",
+                      "ticket_space_exhausted",
+                      "invalid_ticket",
+                      "ticket_not_current",
+                      "ticket_already_claimed",
+                      "ticket_revoked",
+                      "session_mismatch",
+                      "callback_mismatch",
+                      "private_reference_unavailable",
+                      "ticket_integrity_invalid",
+                      "owner_mismatch"
+                    ]
+                  },
+                  "audit": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "ticket_profile",
+                          "ticket_id",
+                          "ticket_generation",
+                          "binding_version",
+                          "snapshot_id",
+                          "window_id",
+                          "public_observation_hash",
+                          "selected_indexes",
+                          "selected_fingerprint_hashes",
+                          "authority",
+                          "authoritative"
+                        ],
+                        "properties": {
+                          "ticket_profile": {
+                            "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                          },
+                          "ticket_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "ticket_generation": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "binding_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "snapshot_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "window_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "public_observation_hash": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "selected_indexes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "selected_fingerprint_hashes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "items": {
+                              "type": "string",
+                              "pattern": "^[A-F0-9]{64}$"
+                            }
+                          },
+                          "authority": {
+                            "const": "godot_action_ticket_shadow"
+                          },
+                          "authoritative": {
+                            "const": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "oneOf": [
+                  {
+                    "properties": {
+                      "accepted": {
+                        "const": true
+                      },
+                      "error_code": {
+                        "const": ""
+                      },
+                      "audit": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "ticket_profile",
+                          "ticket_id",
+                          "ticket_generation",
+                          "binding_version",
+                          "snapshot_id",
+                          "window_id",
+                          "public_observation_hash",
+                          "selected_indexes",
+                          "selected_fingerprint_hashes",
+                          "authority",
+                          "authoritative"
+                        ],
+                        "properties": {
+                          "ticket_profile": {
+                            "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                          },
+                          "ticket_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "ticket_generation": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "binding_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "snapshot_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "window_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "public_observation_hash": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "selected_indexes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "selected_fingerprint_hashes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "items": {
+                              "type": "string",
+                              "pattern": "^[A-F0-9]{64}$"
+                            }
+                          },
+                          "authority": {
+                            "const": "godot_action_ticket_shadow"
+                          },
+                          "authoritative": {
+                            "const": false
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "accepted": {
+                        "const": false
+                      },
+                      "error_code": {
+                        "enum": [
+                          "ticket_contract_error",
+                          "invalid_session_id",
+                          "invalid_public_observation_hash",
+                          "invalid_binding_owner",
+                          "invalid_binding",
+                          "binding_not_current",
+                          "invalid_selection_resolution",
+                          "selection_not_current",
+                          "public_hash_mismatch",
+                          "invalid_callback_binding_hash",
+                          "active_ticket_exists",
+                          "binding_already_claimed",
+                          "ticket_space_exhausted",
+                          "invalid_ticket",
+                          "ticket_not_current",
+                          "ticket_already_claimed",
+                          "ticket_revoked",
+                          "session_mismatch",
+                          "callback_mismatch",
+                          "private_reference_unavailable",
+                          "ticket_integrity_invalid",
+                          "owner_mismatch"
+                        ]
+                      },
+                      "audit": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "claim_cases": {
+          "type": "array",
+          "minItems": 11,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "selection_variant",
+              "fault",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$"
+              },
+              "selection_variant": {
+                "type": "string",
+                "enum": [
+                  "policy_ordered",
+                  "fallback_single"
+                ]
+              },
+              "fault": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "session_drift",
+                  "callback_drift",
+                  "public_hash_drift",
+                  "ticket_copy",
+                  "cross_owner",
+                  "stale_binding",
+                  "dead_command",
+                  "dead_private_ref",
+                  "double_claim",
+                  "ticket_mutation"
+                ]
+              },
+              "expected": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "accepted",
+                  "error_code",
+                  "audit"
+                ],
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  },
+                  "error_code": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "ticket_contract_error",
+                      "invalid_session_id",
+                      "invalid_public_observation_hash",
+                      "invalid_binding_owner",
+                      "invalid_binding",
+                      "binding_not_current",
+                      "invalid_selection_resolution",
+                      "selection_not_current",
+                      "public_hash_mismatch",
+                      "invalid_callback_binding_hash",
+                      "active_ticket_exists",
+                      "binding_already_claimed",
+                      "ticket_space_exhausted",
+                      "invalid_ticket",
+                      "ticket_not_current",
+                      "ticket_already_claimed",
+                      "ticket_revoked",
+                      "session_mismatch",
+                      "callback_mismatch",
+                      "private_reference_unavailable",
+                      "ticket_integrity_invalid",
+                      "owner_mismatch"
+                    ]
+                  },
+                  "audit": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "ticket_profile",
+                          "ticket_id",
+                          "ticket_generation",
+                          "selected_indexes",
+                          "selected_fingerprint_hashes",
+                          "state",
+                          "authority",
+                          "authoritative"
+                        ],
+                        "properties": {
+                          "ticket_profile": {
+                            "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                          },
+                          "ticket_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "ticket_generation": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "selected_indexes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "selected_fingerprint_hashes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "items": {
+                              "type": "string",
+                              "pattern": "^[A-F0-9]{64}$"
+                            }
+                          },
+                          "state": {
+                            "const": "claimed"
+                          },
+                          "authority": {
+                            "const": "godot_action_claim_shadow"
+                          },
+                          "authoritative": {
+                            "const": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "oneOf": [
+                  {
+                    "properties": {
+                      "accepted": {
+                        "const": true
+                      },
+                      "error_code": {
+                        "const": ""
+                      },
+                      "audit": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "ticket_profile",
+                          "ticket_id",
+                          "ticket_generation",
+                          "selected_indexes",
+                          "selected_fingerprint_hashes",
+                          "state",
+                          "authority",
+                          "authoritative"
+                        ],
+                        "properties": {
+                          "ticket_profile": {
+                            "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+                          },
+                          "ticket_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "ticket_generation": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "selected_indexes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "selected_fingerprint_hashes": {
+                            "type": "array",
+                            "minItems": 0,
+                            "maxItems": 256,
+                            "items": {
+                              "type": "string",
+                              "pattern": "^[A-F0-9]{64}$"
+                            }
+                          },
+                          "state": {
+                            "const": "claimed"
+                          },
+                          "authority": {
+                            "const": "godot_action_claim_shadow"
+                          },
+                          "authoritative": {
+                            "const": false
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "accepted": {
+                        "const": false
+                      },
+                      "error_code": {
+                        "enum": [
+                          "ticket_contract_error",
+                          "invalid_session_id",
+                          "invalid_public_observation_hash",
+                          "invalid_binding_owner",
+                          "invalid_binding",
+                          "binding_not_current",
+                          "invalid_selection_resolution",
+                          "selection_not_current",
+                          "public_hash_mismatch",
+                          "invalid_callback_binding_hash",
+                          "active_ticket_exists",
+                          "binding_already_claimed",
+                          "ticket_space_exhausted",
+                          "invalid_ticket",
+                          "ticket_not_current",
+                          "ticket_already_claimed",
+                          "ticket_revoked",
+                          "session_mismatch",
+                          "callback_mismatch",
+                          "private_reference_unavailable",
+                          "ticket_integrity_invalid",
+                          "owner_mismatch"
+                        ]
+                      },
+                      "audit": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "transition_cases": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "scenario",
+              "expected_error"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$"
+              },
+              "scenario": {
+                "type": "string",
+                "enum": [
+                  "idempotent_issue",
+                  "active_conflict",
+                  "new_binding_revokes",
+                  "successful_claim_closes_binding",
+                  "failed_context_attempt_atomic"
+                ]
+              },
+              "expected_error": {
+                "type": "string",
+                "enum": [
+                  "",
+                  "ticket_contract_error",
+                  "invalid_session_id",
+                  "invalid_public_observation_hash",
+                  "invalid_binding_owner",
+                  "invalid_binding",
+                  "binding_not_current",
+                  "invalid_selection_resolution",
+                  "selection_not_current",
+                  "public_hash_mismatch",
+                  "invalid_callback_binding_hash",
+                  "active_ticket_exists",
+                  "binding_already_claimed",
+                  "ticket_space_exhausted",
+                  "invalid_ticket",
+                  "ticket_not_current",
+                  "ticket_already_claimed",
+                  "ticket_revoked",
+                  "session_mismatch",
+                  "callback_mismatch",
+                  "private_reference_unavailable",
+                  "ticket_integrity_invalid",
+                  "owner_mismatch"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "bundleDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "contract_id",
+        "parent",
+        "artifacts"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "contract_id": {
+          "const": "ptcgdap-godot-action-ticket-p3-wp3-v1"
+        },
+        "parent": {
+          "type": "object"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "path",
+              "canonical_sha256"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "schema",
+                  "profile",
+                  "vectors"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "enum": [
+                  "contracts/ptcgdap/godot_action_ticket.schema.json",
+                  "contracts/ptcgdap/godot_action_ticket_profile.json",
+                  "contracts/ptcgdap/godot_action_ticket_conformance_vectors.json"
+                ]
+              },
+              "canonical_sha256": {
+                "type": "string",
+                "pattern": "^[A-F0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -32,6 +32,7 @@ if ([string]::IsNullOrWhiteSpace($UserDataRoot)) {
 $logRoot = Join-Path $projectRoot ".godot_test_user\logs"
 New-Item -ItemType Directory -Force -Path $UserDataRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
+$UserDataRoot = (Resolve-Path -LiteralPath $UserDataRoot).Path
 
 $runnerScript = switch ($Runner) {
 	"functional" { "res://tests/FunctionalTestRunner.gd" }

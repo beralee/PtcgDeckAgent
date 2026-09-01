@@ -21,13 +21,16 @@ func setup(scene: Node) -> void:
 func sync_stadium_backdrop(gs: GameState, immediate: bool = false) -> void:
 	if _scene == null or not is_instance_valid(_scene):
 		return
-	var base_path := _base_backdrop_path()
 	var stadium_card: CardInstance = gs.stadium_card if gs != null else null
-	var target_path := base_path
-	var stadium_key := "none"
-	if stadium_card != null:
-		stadium_key = _stadium_identity_key(stadium_card)
-		target_path = resolve_stadium_backdrop_path(stadium_card, base_path)
+	sync_stadium_card_data(stadium_card.card_data if stadium_card != null else null, immediate)
+
+
+func sync_stadium_card_data(card_data: CardData, immediate: bool = false) -> void:
+	if _scene == null or not is_instance_valid(_scene):
+		return
+	var base_path := _base_backdrop_path()
+	var target_path := resolve_stadium_backdrop_path_for_data(card_data, base_path)
+	var stadium_key := _stadium_identity_key_for_data(card_data)
 	var state_key := "%s|%s" % [stadium_key, target_path]
 	if state_key == _last_state_key:
 		return
@@ -38,9 +41,14 @@ func sync_stadium_backdrop(gs: GameState, immediate: bool = false) -> void:
 func resolve_stadium_backdrop_path(stadium_card: CardInstance, default_path: String) -> String:
 	if stadium_card == null or stadium_card.card_data == null:
 		return default_path
+	return resolve_stadium_backdrop_path_for_data(stadium_card.card_data, default_path)
+
+
+func resolve_stadium_backdrop_path_for_data(card_data: CardData, default_path: String) -> String:
+	if card_data == null:
+		return default_path
 	if _background_map.is_empty():
 		_background_map = _load_background_map()
-	var card_data: CardData = stadium_card.card_data
 	var candidate := _mapped_path("by_effect_id", str(card_data.effect_id))
 	if candidate == "":
 		candidate = _mapped_path("by_card_id", _card_id(card_data))
@@ -196,7 +204,12 @@ func _load_background_map() -> Dictionary:
 func _stadium_identity_key(stadium_card: CardInstance) -> String:
 	if stadium_card == null or stadium_card.card_data == null:
 		return "none"
-	var card_data: CardData = stadium_card.card_data
+	return _stadium_identity_key_for_data(stadium_card.card_data)
+
+
+func _stadium_identity_key_for_data(card_data: CardData) -> String:
+	if card_data == null:
+		return "none"
 	if str(card_data.effect_id) != "":
 		return "effect:%s" % str(card_data.effect_id)
 	var card_id := _card_id(card_data)

@@ -10,6 +10,7 @@ const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
 const AreaZeroUnderdepthsEffect = preload("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd")
+const RandomEventPortScript = preload("res://scripts/engine/RandomEventPort.gd")
 
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
 const EffectHandheldFan = preload("res://scripts/effects/tool_effects/EffectHandheldFan.gd")
@@ -36,6 +37,7 @@ var rule_validator: RuleValidator
 var damage_calculator: DamageCalculator
 var effect_processor: EffectProcessor
 var coin_flipper: CoinFlipper
+var random_event_port: RefCounted
 
 ## 操作日志
 var action_log: Array[GameAction] = []
@@ -45,6 +47,7 @@ var _knockout_return_to_main: bool = false
 
 ## Mulligan计数（用于对手额外抽牌）
 var _mulligan_counts: Array[int] = [0, 0]
+var _pending_mulligan_beneficiary_index: int = -1
 var _pending_heavy_baton_player_index: int = -1
 var _pending_heavy_baton_slot: PokemonSlot = null
 var _pending_heavy_baton_is_active: bool = false
@@ -68,6 +71,8 @@ var _pending_prize_resume_player_index: int = -1
 var _pending_bench_cleanup_knockout_player_index: int = -1
 var _pending_bench_cleanup_knockout_prize_count: int = 0
 var _pending_bench_cleanup_knockout_is_active: bool = false
+var _pending_starting_player_chooser_index: int = -1
+var _setup_start_deferred: bool = false
 var _deck_order_overrides: Dictionary = {}
 var _attack_damage_knockout_slot_ids: Dictionary = {}
 var _attack_resolution_knockout_slot_ids: Dictionary = {}
@@ -84,7 +89,8 @@ const DECK_OUT_REASON := "deck_out"
 
 func _init() -> void:
 	_live_refs.append(weakref(self))
-	coin_flipper = CoinFlipper.new()
+	random_event_port = RandomEventPortScript.new()
+	coin_flipper = CoinFlipper.new(random_event_port)
 	rule_validator = RuleValidator.new()
 	damage_calculator = DamageCalculator.new()
 	effect_processor = EffectProcessor.new(coin_flipper)
@@ -98,6 +104,21 @@ func _init() -> void:
 func get_pending_decision_snapshot() -> Dictionary:
 	if game_state == null:
 		return {}
+	if _pending_starting_player_chooser_index >= 0:
+		return {
+			"kind": "choose_starting_player",
+			"scene_choice": "starting_player_choice",
+			"owner_player_index": _pending_starting_player_chooser_index,
+		}
+	if _pending_mulligan_beneficiary_index in [0, 1]:
+		var mulligan_player := 1 - _pending_mulligan_beneficiary_index
+		return {
+			"kind": "mulligan_extra_draw",
+			"scene_choice": "mulligan_extra_draw",
+			"owner_player_index": _pending_mulligan_beneficiary_index,
+			"beneficiary": _pending_mulligan_beneficiary_index,
+			"mulligan_count": _mulligan_counts[mulligan_player],
+		}
 	if _pending_prize_player_index >= 0 and _pending_prize_remaining > 0:
 		return {
 			"kind": "take_prize",
@@ -236,6 +257,7 @@ func prepare_for_disposal() -> void:
 	_deck_order_overrides.clear()
 	_expected_card_totals = [0, 0]
 	_mulligan_counts = [0, 0]
+	_pending_mulligan_beneficiary_index = -1
 	_pending_heavy_baton_player_index = -1
 	_pending_heavy_baton_slot = null
 	_pending_heavy_baton_is_active = false
@@ -254,6 +276,8 @@ func prepare_for_disposal() -> void:
 	_pending_prize_knockout_is_active = false
 	_pending_prize_resume_mode = ""
 	_pending_prize_resume_player_index = -1
+	_pending_starting_player_chooser_index = -1
+	_setup_start_deferred = false
 	_clear_pending_knockout_bench_cleanup()
 	_attack_damage_knockout_slot_ids.clear()
 	_pending_trainer_vfx_data.clear()
@@ -266,6 +290,7 @@ func prepare_for_disposal() -> void:
 	damage_calculator = null
 	effect_processor = null
 	coin_flipper = null
+	random_event_port = null
 
 
 static func cleanup_live_instances_for_tests() -> void:
@@ -283,13 +308,22 @@ static func cleanup_live_instances_for_tests() -> void:
 # ===================== 游戏初始化 =====================
 
 ## 开始新游戏
-## deck_1/deck_2: 卡组数据；force_first: -1=随机, 0=玩家0先攻, 1=玩家1先攻
-func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> void:
+## deck_1/deck_2: 卡组数据；force_first: -1=随机, 0=玩家0, 1=玩家1。
+## 默认模式中它直接指定先攻玩家；defer_starting_player_choice=true 时它指定
+## 获得官方 IS_FIRST 选择权的玩家，最终先攻由一次性的公开 YES/NO 窗口决定。
+func start_game(
+	deck_1: DeckData,
+	deck_2: DeckData,
+	force_first: int = -1,
+	defer_starting_player_choice: bool = false,
+	defer_setup_until_owner_bound: bool = false
+) -> void:
 	PokemonSlot.reset_order_stamp_counter()
 	game_state = GameState.new()
 	action_log.clear()
 	_pending_trainer_vfx_data.clear()
 	_mulligan_counts = [0, 0]
+	_pending_mulligan_beneficiary_index = -1
 	_pending_heavy_baton_player_index = -1
 	_pending_heavy_baton_slot = null
 	_pending_heavy_baton_is_active = false
@@ -303,22 +337,31 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	_clear_pending_powerglass_choice()
 	_exp_share_resolved_knockout_slot_ids.clear()
 	_attack_damage_knockout_slot_ids.clear()
+	_pending_starting_player_chooser_index = -1
+	_setup_start_deferred = false
 	effect_processor = EffectProcessor.new(coin_flipper)
 	effect_processor.bind_game_state_machine(self)
 	_clear_pending_prize_choice()
 	_clear_pending_knockout_bench_cleanup()
 
-	# 决定先攻
+	# 决定直接先攻玩家，或在 CABT 对齐模式中决定谁获得 IS_FIRST 选择权。
+	var starting_player_chooser: int
 	if force_first == -1:
-		game_state.first_player_index = 0 if coin_flipper.flip() else 1
+		starting_player_chooser = 0 if _flip_with_random_context({
+			"acting_seat": -1,
+			"source_identity": "match_starting_player",
+			"effect_phase": "match_setup",
+		}) else 1
 	else:
-		game_state.first_player_index = force_first
+		starting_player_chooser = force_first
+	game_state.first_player_index = -1 if defer_starting_player_choice else starting_player_chooser
 	game_state.current_player_index = game_state.first_player_index
 
 	# 初始化两位玩家
 	for pi: int in 2:
 		var player := PlayerState.new()
 		player.player_index = pi
+		player.random_event_port = random_event_port
 		game_state.players.append(player)
 
 	# 构建牌库
@@ -328,6 +371,29 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	# 记录双方初始卡牌总数
 	for pi: int in 2:
 		_expected_card_totals[pi] = count_player_total_cards(pi)
+	if defer_starting_player_choice:
+		_pending_starting_player_chooser_index = starting_player_chooser
+	if defer_setup_until_owner_bound:
+		_setup_start_deferred = true
+		return
+	_begin_setup_after_deck_initialization()
+
+
+func begin_deferred_setup() -> bool:
+	if not _setup_start_deferred or game_state == null or game_state.players.size() != 2:
+		return false
+	_setup_start_deferred = false
+	_begin_setup_after_deck_initialization()
+	return true
+
+
+func _begin_setup_after_deck_initialization() -> void:
+	if _pending_starting_player_chooser_index >= 0:
+		_enter_phase(GameState.GamePhase.SETUP)
+		player_choice_required.emit("starting_player_choice", {
+			"chooser": _pending_starting_player_chooser_index,
+		})
+		return
 
 	_log_action(GameAction.ActionType.GAME_START, -1, {
 		"first_player": game_state.first_player_index
@@ -336,6 +402,30 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	# 进入准备阶段
 	_enter_phase(GameState.GamePhase.SETUP)
 	_run_setup_phase()
+
+
+## Resolve the official-style IS_FIRST window exactly once. The chooser may
+## elect to go first or give first turn to the opponent; no caller can assign
+## an arbitrary third result or replay the decision after setup has begun.
+func resolve_starting_player_choice(chooser: int, wants_first: bool) -> bool:
+	if (
+		game_state == null
+		or chooser not in [0, 1]
+		or chooser != _pending_starting_player_chooser_index
+		or game_state.first_player_index != -1
+		or game_state.current_player_index != -1
+	):
+		return false
+	_pending_starting_player_chooser_index = -1
+	game_state.first_player_index = chooser if wants_first else 1 - chooser
+	game_state.current_player_index = game_state.first_player_index
+	_log_action(GameAction.ActionType.GAME_START, -1, {
+		"first_player": game_state.first_player_index,
+		"starting_player_chooser": chooser,
+		"chooser_selected_first": wants_first,
+	}, "游戏开始，玩家%d先攻" % (game_state.first_player_index + 1))
+	_run_setup_phase()
+	return true
 
 
 ## 每位玩家初始卡牌总数（构建后记录，用于不变量检查）
@@ -469,6 +559,7 @@ func _check_mulligan() -> void:
 				needs_mulligan[pi] = true
 
 		if not needs_mulligan[0] and not needs_mulligan[1]:
+			_pending_mulligan_beneficiary_index = -1
 			player_choice_required.emit("setup_ready", {})
 			return
 
@@ -499,6 +590,7 @@ func _check_mulligan() -> void:
 			_do_mulligan(pi)
 			var opp_index: int = 1 - pi
 			_mulligan_counts[pi] += 1
+			_pending_mulligan_beneficiary_index = opp_index
 			player_choice_required.emit("mulligan_extra_draw", {
 				"beneficiary": opp_index,
 				"mulligan_count": _mulligan_counts[pi]
@@ -522,27 +614,43 @@ func _do_mulligan(player_index: int) -> void:
 
 ## 解决Mulligan后的选择（对手是否额外抽牌）
 func resolve_mulligan_choice(beneficiary: int, draw_extra: bool) -> void:
-	if draw_extra:
-		var drawn: Array[CardInstance] = game_state.players[beneficiary].draw_cards(1)
+	resolve_mulligan_draw_count(beneficiary, 1 if draw_extra else 0)
+
+
+## CABT DRAW_COUNT semantics: choose exactly one NUMBER in 0..mulliganCount.
+## The bool wrapper above remains for existing UI/AI callers.
+func resolve_mulligan_draw_count(beneficiary: int, draw_count: int) -> bool:
+	if beneficiary not in [0, 1] or draw_count < 0:
+		return false
+	if _pending_mulligan_beneficiary_index != beneficiary:
+		return false
+	var mulligan_player: int = 1 - beneficiary
+	if draw_count > _mulligan_counts[mulligan_player]:
+		return false
+	_pending_mulligan_beneficiary_index = -1
+	if draw_count > 0:
+		var drawn: Array[CardInstance] = game_state.players[beneficiary].draw_cards(draw_count)
 		if not drawn.is_empty():
 			_log_action(GameAction.ActionType.DRAW_CARD, beneficiary,
-				{"count": 1}, "玩家%d因对手重抽额外抽1张" % (beneficiary + 1))
+				{"count": drawn.size()}, "玩家%d因对手重抽额外抽%d张" % [beneficiary + 1, drawn.size()])
 
 	# 检查重抽后是否还需要Mulligan
-	var mulligan_player: int = 1 - beneficiary
 	if not rule_validator.has_basic_pokemon_in_hand(game_state.players[mulligan_player]):
 		if not _player_can_recover_from_mulligan(mulligan_player):
 			_abort_invalid_setup(beneficiary, "玩家%d的牌库与手牌中均无基础宝可梦" % (mulligan_player + 1))
-			return
+			return true
 		_do_mulligan(mulligan_player)
 		_mulligan_counts[mulligan_player] += 1
+		_pending_mulligan_beneficiary_index = beneficiary
 		player_choice_required.emit("mulligan_extra_draw", {
 			"beneficiary": beneficiary,
 			"mulligan_count": _mulligan_counts[mulligan_player]
 		})
-		return
+		return true
 
+	_pending_mulligan_beneficiary_index = -1
 	player_choice_required.emit("setup_ready", {})
+	return true
 
 
 ## 准备阶段：放置战斗宝可梦（由UI调用）
@@ -2605,7 +2713,15 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 	var damage_before_attack := _snapshot_damage_counters()
 
 	if attacker.status_conditions.get("confused", false):
-		var flip_result: bool = coin_flipper.flip()
+		var flip_result: bool = _flip_with_random_context({
+			"acting_seat": player_index,
+			"source_identity": "confused_attack:%s#%d" % [
+				attacker.get_card_data().get_uid(), attack_index
+			],
+			"source_card_uid": attacker.get_card_data().get_uid(),
+			"source_attack_ordinal": attack_index,
+			"effect_phase": "confusion_check",
+		})
 		_log_action(
 			GameAction.ActionType.COIN_FLIP,
 			player_index,
@@ -2710,7 +2826,16 @@ func use_granted_attack(
 		):
 			return false
 	if attacker.status_conditions.get("confused", false):
-		var flip_result: bool = coin_flipper.flip()
+		var flip_result: bool = _flip_with_random_context({
+			"acting_seat": player_index,
+			"source_identity": "confused_granted_attack:%s" % str(
+				granted_attack.get("name", "")
+			),
+			"source_card_uid": attacker.get_card_data().get_uid(),
+			"source_attack_ordinal": int(granted_attack.get("original_attack_index", -1)),
+			"effect_id": str(granted_attack.get("original_effect_id", "")),
+			"effect_phase": "confusion_check",
+		})
 		_log_action(
 			GameAction.ActionType.COIN_FLIP,
 			player_index,
@@ -2797,6 +2922,21 @@ func use_granted_attack(
 		granted_attack_action.data["damage"] = granted_damage
 	_after_attack(player_index)
 	return true
+
+
+func _flip_with_random_context(metadata: Dictionary) -> bool:
+	# Preserve the long-standing overridable flip() seam used by deterministic
+	# rule tests. Production CoinFlipper instances contribute the audited
+	# context through their shared RandomEventPort.
+	if coin_flipper == null:
+		return false
+	var port: Variant = coin_flipper.get("random_event_port")
+	if port == null:
+		return coin_flipper.flip()
+	var token := coin_flipper.push_context(metadata)
+	var result := coin_flipper.flip()
+	coin_flipper.pop_context(token)
+	return result
 
 func _attack_targets_define_resolved_target(targets: Array) -> bool:
 	for entry: Variant in targets:
@@ -3342,6 +3482,7 @@ func _trigger_game_over(winner_index: int, reason: String) -> void:
 
 
 func _abort_invalid_setup(winner_index: int, reason: String) -> void:
+	_pending_mulligan_beneficiary_index = -1
 	_enter_phase(GameState.GamePhase.GAME_OVER)
 	game_state.set_game_over(winner_index, reason)
 	if winner_index >= 0:

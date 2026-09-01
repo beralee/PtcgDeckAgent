@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "bundle",
+  "bundle_id": "ptcgdap-marnie-identity-projection-p5-wp4-v1",
+  "status": "offline_shadow_identity_projection_gate",
+  "parent_fixture_bundle": {
+    "path": "contracts/ptcgdap/marnie_vertical_slice_bundle.json",
+    "canonical_sha256": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425"
+  },
+  "parent_capability_policy_bundle": {
+    "path": "contracts/ptcgdap/marnie_capability_policy_bundle.json",
+    "canonical_sha256": "F4E88E5DB4E480BA8441BE7B3A7C81CE3DB40ED1917EB37BCDCAC1C32B1ABD6C"
+  },
+  "card_catalog_bundle": {
+    "path": "contracts/ptcgdap/card_id_catalog_bundle.json",
+    "canonical_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4"
+  },
+  "projector_bundle": {
+    "path": "contracts/ptcgdap/godot_observation_projector_bundle.json",
+    "canonical_sha256": "C51EA4CF1AEFCBB5B9C6D83825FF3A717CCDCC4105B804210BF6169372619041"
+  },
+  "artifacts": [
+    {
+      "id": "marnie_identity_projection_schema_v1",
+      "path": "contracts/ptcgdap/marnie_identity_projection.schema.json",
+      "canonical_sha256": "DBF8122A482018E2EF4B9B6958185293B65BE82137D717912DFDD1C90C1EB681"
+    },
+    {
+      "id": "marnie_identity_projection_profile_v1",
+      "path": "contracts/ptcgdap/marnie_identity_projection_profile.json",
+      "canonical_sha256": "89950AFA8306273CF572F18B0DDE13B434A190E668669F5848FA12F44D8F3434"
+    },
+    {
+      "id": "marnie_identity_projection_audit_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/marnie_identity_projection_v1.json",
+      "canonical_sha256": "A3FB53E1AC7C502B071D1B3E3E6AE453185074AD1EA5764B8967E90477FC1D11"
+    },
+    {
+      "id": "marnie_identity_projection_vectors_v1",
+      "path": "contracts/ptcgdap/marnie_identity_projection_conformance_vectors.json",
+      "canonical_sha256": "2A6879C53B984B2A524DF81AD9AE73B357B214293988404FC6C6C2A38675C339"
+    }
+  ],
+  "self_hash_policy": "bundle and bound artifacts do not contain the final bundle hash"
+}

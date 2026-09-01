@@ -15,7 +15,7 @@ func get_bench_limit() -> int:
 	return BENCH_LIMIT
 
 
-func get_on_play_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_on_play_interaction_steps_spec_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var steps: Array[Dictionary] = []
 	for pi: int in 2:
 		var player: PlayerState = state.players[pi]

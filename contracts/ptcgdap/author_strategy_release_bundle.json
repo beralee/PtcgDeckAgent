@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-author-strategy-release-as-wp6-v1",
+  "profile_id": "ptcgdap-author-strategy-release-as-wp6-v1",
+  "parent_author_live_seam_bundle_canonical_sha256": "5CDC360999A23A2CADCAC6E7FA8D81549566DFABE37B2DB4F813C0C5189C3E16",
+  "as_wp5_manifest_canonical_sha256": "4E2693E9143C3326C131DE9C64917632129408870C1AF897199DBA8841FA4428",
+  "artifacts": [
+    {
+      "id": "author_strategy_release.schema",
+      "path": "contracts/ptcgdap/author_strategy_release.schema.json",
+      "canonical_sha256": "A13F63F285542B5F069420E1E586D470ADA800FD4828AD1A1065AAFE04D90F8E"
+    },
+    {
+      "id": "author_strategy_release_profile",
+      "path": "contracts/ptcgdap/author_strategy_release_profile.json",
+      "canonical_sha256": "ACC805D8919E67F92460AA8FE388547D20C606C0051E5382A59E5CCAFC90E7F5"
+    },
+    {
+      "id": "author_strategy_release_conformance_vectors",
+      "path": "contracts/ptcgdap/author_strategy_release_conformance_vectors.json",
+      "canonical_sha256": "9F669B1D2D22CD28AF86C54D05B3B003153EC2CE16B98DE06EFABD057F9D49A5"
+    },
+    {
+      "id": "author_strategy_release_trust_store",
+      "path": "data/ptcgdap/author_strategy_release_trust_store.json",
+      "canonical_sha256": "C3260FA0FAFE9A393760C5557C631672DF8DB4A7C53E8190F60084034E7E8FDE"
+    },
+    {
+      "id": "author_strategy_release_approvals",
+      "path": "data/ptcgdap/author_strategy_release_approvals.json",
+      "canonical_sha256": "B879501E6C8E89B89B7728A1D33FCD6D3974741A1C70A8D71555703E90D57C87"
+    },
+    {
+      "id": "author_strategy_device_canary_approvals",
+      "path": "data/ptcgdap/author_strategy_device_canary_approvals.json",
+      "canonical_sha256": "F538431445A2737B2ED24A8B034E1A6CF3C98F3473BF758E6B375724DEE6F7CA"
+    },
+    {
+      "id": "author_strategy_prompt_conformance_approvals",
+      "path": "data/ptcgdap/author_strategy_prompt_conformance_approvals.json",
+      "canonical_sha256": "7FC1C3579B7A13C43BBEFA902348E949729AA1CAFD38D3B6EF0665741D469EE5"
+    },
+    {
+      "id": "author_strategy_device_acceptance_profile",
+      "path": "data/ptcgdap/author_strategy_device_acceptance_profile.json",
+      "canonical_sha256": "A8971FDEC09DE2B22DC131FEC35146A32013E6D7928BFDD46847B567B2B95169"
+    }
+  ]
+}

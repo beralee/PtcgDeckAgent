@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/restricted_base_graph_executor.schema.json",
+  "title": "PtcgDAP restricted Base Graph executor contract",
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "index": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 0
+        }
+      ]
+    },
+    "indexArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/index"
+      },
+      "uniqueItems": true,
+      "maxItems": 1024
+    },
+    "adapterProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator",
+        "indexes",
+        "reason_code"
+      ],
+      "properties": {
+        "operator": {
+          "enum": [
+            "goal_proposal",
+            "macro_proposal",
+            "tiebreak_score"
+          ]
+        },
+        "indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "reason_code": {
+          "enum": [
+            "public_goal_proposal",
+            "public_macro_proposal",
+            "public_tiebreak_proposal"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "goal_proposal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_goal_proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "macro_proposal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_macro_proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "tiebreak_score"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_tiebreak_proposal"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "executionInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_id",
+        "mandatory_indexes",
+        "terminal_indexes",
+        "base_hard_tiers",
+        "base_vetoed_indexes",
+        "adapter_proposals"
+      ],
+      "properties": {
+        "execution_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+          "not": {
+            "pattern": "PRIVATE"
+          }
+        },
+        "mandatory_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "terminal_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "base_hard_tiers": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "index",
+              "tier"
+            ],
+            "properties": {
+              "index": {
+                "$ref": "#/$defs/index"
+              },
+              "tier": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              }
+            }
+          }
+        },
+        "base_vetoed_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "adapter_proposals": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/adapterProposal"
+          }
+        }
+      }
+    },
+    "nodeAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "operator",
+        "owner",
+        "input_indexes",
+        "output_indexes"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "owner": {
+          "enum": [
+            "base",
+            "adapter"
+          ]
+        },
+        "input_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "output_indexes": {
+          "$ref": "#/$defs/indexArray"
+        }
+      }
+    },
+    "executionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "execution_id",
+        "source",
+        "selected_indexes",
+        "reason_code",
+        "fallback_branch",
+        "node_audit",
+        "adapter_audit",
+        "authoritative",
+        "execution_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1"
+        },
+        "execution_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "context_hash",
+            "window_id",
+            "ir_hash"
+          ],
+          "properties": {
+            "context_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "window_id": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "ir_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "selected_indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "reason_code": {
+          "enum": [
+            "terminal_selection",
+            "mandatory_selection",
+            "deterministic_fallback",
+            "empty_selection"
+          ]
+        },
+        "fallback_branch": {
+          "enum": [
+            "terminal",
+            "mandatory",
+            "same_window_first_min",
+            "optional_zero"
+          ]
+        },
+        "node_audit": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 9,
+          "items": {
+            "$ref": "#/$defs/nodeAudit"
+          }
+        },
+        "adapter_audit": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/adapterProposal"
+          }
+        },
+        "authoritative": {
+          "const": false
+        },
+        "execution_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/executionInput"
+    },
+    {
+      "$ref": "#/$defs/executionResult"
+    }
+  ]
+}

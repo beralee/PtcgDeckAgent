@@ -1,0 +1,2264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/marnie_identity_projection.schema.json",
+  "title": "PtcgDAP Marnie identity and projection shadow gate artifacts",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/profileArtifact"
+    },
+    {
+      "$ref": "#/$defs/auditArtifact"
+    },
+    {
+      "$ref": "#/$defs/vectorsArtifact"
+    },
+    {
+      "$ref": "#/$defs/bundleArtifact"
+    }
+  ],
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "attackOwnerPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "official_attack_id",
+        "owner_official_card_id"
+      ],
+      "properties": {
+        "official_attack_id": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 1
+            }
+          ]
+        },
+        "owner_official_card_id": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 1
+            }
+          ]
+        }
+      }
+    },
+    "frameRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "frame_id",
+        "status",
+        "public_observation_hash",
+        "identity_occurrence_count",
+        "unique_serial_count",
+        "distinct_official_card_ids",
+        "mapped_official_card_ids",
+        "known_unmapped_official_card_ids",
+        "official_attack_ids",
+        "attack_owner_pairs",
+        "evolved_pokemon_count",
+        "pre_evolution_card_count",
+        "serial_relation_consistent",
+        "top_serial_distinct_from_pre_evolution",
+        "hidden_identity_absent",
+        "host_entity_absent"
+      ],
+      "properties": {
+        "ordinal": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "frame_id": {
+          "type": "string",
+          "enum": [
+            "w0_initial",
+            "w1_setup_active",
+            "w2_setup_bench",
+            "w3_main",
+            "w4_spikemuth_deck",
+            "w5_punk_up_sources",
+            "w5_punk_up_target_1",
+            "w5_punk_up_target_2",
+            "w6_shadow_bullet_attack",
+            "w6_shadow_bullet_target",
+            "w7_take_prize",
+            "w7_forced_send_out",
+            "w7_terminal"
+          ]
+        },
+        "status": {
+          "enum": [
+            "verified_public_identity",
+            "terminal_no_observation"
+          ]
+        },
+        "public_observation_hash": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "identity_occurrence_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "unique_serial_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "distinct_official_card_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "mapped_official_card_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "known_unmapped_official_card_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "official_attack_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "attack_owner_pairs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "official_attack_id",
+              "owner_official_card_id"
+            ],
+            "properties": {
+              "official_attack_id": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/safeInteger"
+                  },
+                  {
+                    "minimum": 1
+                  }
+                ]
+              },
+              "owner_official_card_id": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/safeInteger"
+                  },
+                  {
+                    "minimum": 1
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "evolved_pokemon_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "pre_evolution_card_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "serial_relation_consistent": {
+          "const": true
+        },
+        "top_serial_distinct_from_pre_evolution": {
+          "const": true
+        },
+        "hidden_identity_absent": {
+          "const": true
+        },
+        "host_entity_absent": {
+          "const": true
+        }
+      }
+    },
+    "summaryRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_count",
+        "public_frame_count",
+        "terminal_frame_count",
+        "identity_occurrence_count",
+        "cross_frame_unique_serial_count",
+        "distinct_official_card_ids",
+        "mapped_official_card_ids",
+        "known_unmapped_official_card_ids",
+        "official_attack_ids",
+        "cross_frame_serial_relation_consistent",
+        "hidden_identity_absent",
+        "host_entity_absent",
+        "official_deck_card_count",
+        "official_deck_unique_card_id_count",
+        "official_deck_mapped_unique_card_id_count",
+        "official_deck_known_unmapped_unique_card_id_count",
+        "official_deck_mapped_card_count",
+        "official_deck_known_unmapped_card_count",
+        "local_800018501_cabt_exportable"
+      ],
+      "properties": {
+        "frame_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "public_frame_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "terminal_frame_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "identity_occurrence_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "cross_frame_unique_serial_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "distinct_official_card_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "mapped_official_card_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "known_unmapped_official_card_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "official_attack_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "cross_frame_serial_relation_consistent": {
+          "const": true
+        },
+        "hidden_identity_absent": {
+          "const": true
+        },
+        "host_entity_absent": {
+          "const": true
+        },
+        "official_deck_card_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_deck_unique_card_id_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_deck_mapped_unique_card_id_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_deck_known_unmapped_unique_card_id_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_deck_mapped_card_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "official_deck_known_unmapped_card_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "local_800018501_cabt_exportable": {
+          "const": false
+        }
+      }
+    },
+    "auditResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "operation",
+        "frame_count",
+        "frames",
+        "summary",
+        "production_actions_used",
+        "execution_authority"
+      ],
+      "properties": {
+        "accepted": {
+          "const": true
+        },
+        "operation": {
+          "enum": [
+            "audit_all",
+            "audit_frame"
+          ]
+        },
+        "frame_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/frameRecord"
+          }
+        },
+        "summary": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/summaryRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "production_actions_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        }
+      }
+    },
+    "dto": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ok",
+            "error_code",
+            "value"
+          ],
+          "properties": {
+            "ok": {
+              "const": true
+            },
+            "error_code": {
+              "const": ""
+            },
+            "value": {
+              "$ref": "#/$defs/auditResult"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ok",
+            "error_code",
+            "value"
+          ],
+          "properties": {
+            "ok": {
+              "const": false
+            },
+            "error_code": {
+              "type": "string",
+              "enum": [
+                "input_type_invalid",
+                "frame_unknown",
+                "frame_identity_invalid",
+                "official_card_unknown",
+                "official_attack_unknown",
+                "attack_owner_mismatch",
+                "serial_relation_conflict",
+                "hidden_identity_present",
+                "host_entity_present",
+                "operation_unknown",
+                "identity_integrity_invalid"
+              ]
+            },
+            "value": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "profileArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "profile_id",
+        "parent_fixture_bundle_canonical_sha256",
+        "parent_capability_policy_bundle_canonical_sha256",
+        "card_catalog_bundle_canonical_sha256",
+        "projector_bundle_canonical_sha256",
+        "source_lock_canonical_sha256",
+        "frame_ids",
+        "identity_authority",
+        "serial_relation",
+        "unknown_mapping_policy",
+        "engine_projection_gate",
+        "serialization_authority",
+        "production_actions_used",
+        "execution_authority",
+        "live_owner",
+        "portable_ready"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "profile"
+        },
+        "profile_id": {
+          "const": "marnie_identity_projection_profile_v1"
+        },
+        "parent_fixture_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "parent_capability_policy_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "card_catalog_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "projector_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "source_lock_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "frame_ids": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "w0_initial"
+            },
+            {
+              "const": "w1_setup_active"
+            },
+            {
+              "const": "w2_setup_bench"
+            },
+            {
+              "const": "w3_main"
+            },
+            {
+              "const": "w4_spikemuth_deck"
+            },
+            {
+              "const": "w5_punk_up_sources"
+            },
+            {
+              "const": "w5_punk_up_target_1"
+            },
+            {
+              "const": "w5_punk_up_target_2"
+            },
+            {
+              "const": "w6_shadow_bullet_attack"
+            },
+            {
+              "const": "w6_shadow_bullet_target"
+            },
+            {
+              "const": "w7_take_prize"
+            },
+            {
+              "const": "w7_forced_send_out"
+            },
+            {
+              "const": "w7_terminal"
+            }
+          ],
+          "items": false,
+          "minItems": 13,
+          "maxItems": 13
+        },
+        "identity_authority": {
+          "const": "official_master_plus_explicit_source_hashed_bridge_only"
+        },
+        "serial_relation": {
+          "const": "official_wire_serial_is_physical_card_identity_not_host_entity_identity"
+        },
+        "unknown_mapping_policy": {
+          "const": "known_official_unmapped_preserved_without_inference"
+        },
+        "engine_projection_gate": {
+          "const": "godot_owner_result_revalidated_against_exact_projector_and_public_tree"
+        },
+        "serialization_authority": {
+          "const": "audit_and_conformance_only_never_execution_authority"
+        },
+        "production_actions_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "live_owner": {
+          "const": false
+        },
+        "portable_ready": {
+          "const": false
+        }
+      }
+    },
+    "auditArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "audit_id",
+        "profile_id",
+        "source_trajectory_artifact_id",
+        "source_trajectory_canonical_sha256",
+        "official_deck_artifact_id",
+        "official_deck_canonical_sha256",
+        "frames",
+        "summary",
+        "production_actions_used",
+        "execution_authority"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "frame_audit"
+        },
+        "audit_id": {
+          "const": "ptcgdap-marnie-identity-projection-audit-v1"
+        },
+        "profile_id": {
+          "const": "marnie_identity_projection_profile_v1"
+        },
+        "source_trajectory_artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_trajectory_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "official_deck_artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "official_deck_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "frames": {
+          "type": "array",
+          "minItems": 13,
+          "maxItems": 13,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 0,
+                    "frame_id": "w0_initial",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+                    "identity_occurrence_count": 0,
+                    "unique_serial_count": 0,
+                    "distinct_official_card_ids": [],
+                    "mapped_official_card_ids": [],
+                    "known_unmapped_official_card_ids": [],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 0,
+                    "pre_evolution_card_count": 0,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 1,
+                    "frame_id": "w1_setup_active",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+                    "identity_occurrence_count": 14,
+                    "unique_serial_count": 7,
+                    "distinct_official_card_ids": [
+                      7,
+                      112,
+                      860,
+                      1079,
+                      1097,
+                      1137,
+                      1259
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      112,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      860,
+                      1079,
+                      1137
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 0,
+                    "pre_evolution_card_count": 0,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 2,
+                    "frame_id": "w2_setup_bench",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+                    "identity_occurrence_count": 7,
+                    "unique_serial_count": 7,
+                    "distinct_official_card_ids": [
+                      7,
+                      112,
+                      860,
+                      1079,
+                      1097,
+                      1137,
+                      1259
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      112,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      860,
+                      1079,
+                      1137
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 0,
+                    "pre_evolution_card_count": 0,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 3,
+                    "frame_id": "w3_main",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+                    "identity_occurrence_count": 11,
+                    "unique_serial_count": 9,
+                    "distinct_official_card_ids": [
+                      7,
+                      112,
+                      648,
+                      677,
+                      860,
+                      1079,
+                      1097,
+                      1137,
+                      1259
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      112,
+                      648,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      677,
+                      860,
+                      1079,
+                      1137
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 0,
+                    "pre_evolution_card_count": 0,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 4,
+                    "frame_id": "w4_spikemuth_deck",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+                    "identity_occurrence_count": 91,
+                    "unique_serial_count": 90,
+                    "distinct_official_card_ids": [
+                      3,
+                      7,
+                      11,
+                      13,
+                      104,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1080,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1231,
+                      1259,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      104,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1080,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      3,
+                      11,
+                      13,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1231,
+                      1264
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 4,
+                    "pre_evolution_card_count": 4,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 5,
+                    "frame_id": "w5_punk_up_sources",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+                    "identity_occurrence_count": 85,
+                    "unique_serial_count": 84,
+                    "distinct_official_card_ids": [
+                      7,
+                      11,
+                      13,
+                      104,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1080,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1231,
+                      1259,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      104,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1080,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      11,
+                      13,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1231,
+                      1264
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 4,
+                    "pre_evolution_card_count": 5,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 6,
+                    "frame_id": "w5_punk_up_target_1",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+                    "identity_occurrence_count": 55,
+                    "unique_serial_count": 54,
+                    "distinct_official_card_ids": [
+                      7,
+                      11,
+                      13,
+                      104,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      104,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1097
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      11,
+                      13,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 4,
+                    "pre_evolution_card_count": 5,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 7,
+                    "frame_id": "w5_punk_up_target_2",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+                    "identity_occurrence_count": 57,
+                    "unique_serial_count": 55,
+                    "distinct_official_card_ids": [
+                      7,
+                      11,
+                      13,
+                      104,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      104,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1097
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      11,
+                      13,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 4,
+                    "pre_evolution_card_count": 5,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 8,
+                    "frame_id": "w6_shadow_bullet_attack",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+                    "identity_occurrence_count": 67,
+                    "unique_serial_count": 67,
+                    "distinct_official_card_ids": [
+                      3,
+                      7,
+                      11,
+                      13,
+                      104,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1080,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1259,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      104,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1080,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      3,
+                      11,
+                      13,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "official_attack_ids": [
+                      937
+                    ],
+                    "attack_owner_pairs": [
+                      {
+                        "official_attack_id": 937,
+                        "owner_official_card_id": 648
+                      }
+                    ],
+                    "evolved_pokemon_count": 5,
+                    "pre_evolution_card_count": 5,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 9,
+                    "frame_id": "w6_shadow_bullet_target",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+                    "identity_occurrence_count": 70,
+                    "unique_serial_count": 67,
+                    "distinct_official_card_ids": [
+                      3,
+                      7,
+                      11,
+                      13,
+                      104,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1080,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1259,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      104,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1080,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      3,
+                      11,
+                      13,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1219,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "official_attack_ids": [
+                      937
+                    ],
+                    "attack_owner_pairs": [
+                      {
+                        "official_attack_id": 937,
+                        "owner_official_card_id": 648
+                      }
+                    ],
+                    "evolved_pokemon_count": 5,
+                    "pre_evolution_card_count": 5,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 10,
+                    "frame_id": "w7_take_prize",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+                    "identity_occurrence_count": 35,
+                    "unique_serial_count": 33,
+                    "distinct_official_card_ids": [
+                      7,
+                      13,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      860,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1219,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      112,
+                      646,
+                      647,
+                      648
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      13,
+                      174,
+                      305,
+                      848,
+                      860,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1219,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 2,
+                    "pre_evolution_card_count": 2,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 11,
+                    "frame_id": "w7_forced_send_out",
+                    "status": "verified_public_identity",
+                    "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+                    "identity_occurrence_count": 81,
+                    "unique_serial_count": 65,
+                    "distinct_official_card_ids": [
+                      3,
+                      7,
+                      11,
+                      13,
+                      66,
+                      112,
+                      174,
+                      305,
+                      646,
+                      647,
+                      648,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1080,
+                      1086,
+                      1087,
+                      1097,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1225,
+                      1227,
+                      1259,
+                      1264
+                    ],
+                    "mapped_official_card_ids": [
+                      7,
+                      112,
+                      646,
+                      647,
+                      648,
+                      1080,
+                      1097,
+                      1259
+                    ],
+                    "known_unmapped_official_card_ids": [
+                      3,
+                      11,
+                      13,
+                      66,
+                      174,
+                      305,
+                      848,
+                      849,
+                      860,
+                      861,
+                      1079,
+                      1086,
+                      1087,
+                      1121,
+                      1122,
+                      1137,
+                      1152,
+                      1174,
+                      1182,
+                      1225,
+                      1227,
+                      1264
+                    ],
+                    "official_attack_ids": [
+                      1240
+                    ],
+                    "attack_owner_pairs": [
+                      {
+                        "official_attack_id": 1240,
+                        "owner_official_card_id": 861
+                      }
+                    ],
+                    "evolved_pokemon_count": 4,
+                    "pre_evolution_card_count": 4,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/frameRecord"
+                },
+                {
+                  "const": {
+                    "ordinal": 12,
+                    "frame_id": "w7_terminal",
+                    "status": "terminal_no_observation",
+                    "public_observation_hash": null,
+                    "identity_occurrence_count": 0,
+                    "unique_serial_count": 0,
+                    "distinct_official_card_ids": [],
+                    "mapped_official_card_ids": [],
+                    "known_unmapped_official_card_ids": [],
+                    "official_attack_ids": [],
+                    "attack_owner_pairs": [],
+                    "evolved_pokemon_count": 0,
+                    "pre_evolution_card_count": 0,
+                    "serial_relation_consistent": true,
+                    "top_serial_distinct_from_pre_evolution": true,
+                    "hidden_identity_absent": true,
+                    "host_entity_absent": true
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "summary": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/summaryRecord"
+            },
+            {
+              "const": {
+                "frame_count": 13,
+                "public_frame_count": 12,
+                "terminal_frame_count": 1,
+                "identity_occurrence_count": 573,
+                "cross_frame_unique_serial_count": 94,
+                "distinct_official_card_ids": [
+                  3,
+                  7,
+                  11,
+                  13,
+                  66,
+                  104,
+                  112,
+                  174,
+                  305,
+                  646,
+                  647,
+                  648,
+                  677,
+                  848,
+                  849,
+                  860,
+                  861,
+                  1079,
+                  1080,
+                  1086,
+                  1087,
+                  1097,
+                  1121,
+                  1122,
+                  1137,
+                  1152,
+                  1174,
+                  1182,
+                  1219,
+                  1225,
+                  1227,
+                  1231,
+                  1259,
+                  1264
+                ],
+                "mapped_official_card_ids": [
+                  7,
+                  104,
+                  112,
+                  646,
+                  647,
+                  648,
+                  1080,
+                  1097,
+                  1259
+                ],
+                "known_unmapped_official_card_ids": [
+                  3,
+                  11,
+                  13,
+                  66,
+                  174,
+                  305,
+                  677,
+                  848,
+                  849,
+                  860,
+                  861,
+                  1079,
+                  1086,
+                  1087,
+                  1121,
+                  1122,
+                  1137,
+                  1152,
+                  1174,
+                  1182,
+                  1219,
+                  1225,
+                  1227,
+                  1231,
+                  1264
+                ],
+                "official_attack_ids": [
+                  937,
+                  1240
+                ],
+                "cross_frame_serial_relation_consistent": true,
+                "hidden_identity_absent": true,
+                "host_entity_absent": true,
+                "official_deck_card_count": 60,
+                "official_deck_unique_card_id_count": 19,
+                "official_deck_mapped_unique_card_id_count": 9,
+                "official_deck_known_unmapped_unique_card_id_count": 10,
+                "official_deck_mapped_card_count": 34,
+                "official_deck_known_unmapped_card_count": 26,
+                "local_800018501_cabt_exportable": false
+              }
+            }
+          ]
+        },
+        "production_actions_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        }
+      }
+    },
+    "vectorCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "operation",
+        "input",
+        "expected"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "enum": [
+            "audit_all",
+            "audit_frame",
+            "probe_frame_mutation"
+          ]
+        },
+        "input": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [],
+              "properties": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "frame_id"
+              ],
+              "properties": {
+                "frame_id": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "host_type",
+                        "value"
+                      ],
+                      "properties": {
+                        "host_type": {
+                          "const": "integer"
+                        },
+                        "value": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "frame_id",
+                "mutation"
+              ],
+              "properties": {
+                "frame_id": {
+                  "type": "string",
+                  "enum": [
+                    "w0_initial",
+                    "w1_setup_active",
+                    "w2_setup_bench",
+                    "w3_main",
+                    "w4_spikemuth_deck",
+                    "w5_punk_up_sources",
+                    "w5_punk_up_target_1",
+                    "w5_punk_up_target_2",
+                    "w6_shadow_bullet_attack",
+                    "w6_shadow_bullet_target",
+                    "w7_take_prize",
+                    "w7_forced_send_out",
+                    "w7_terminal"
+                  ]
+                },
+                "mutation": {
+                  "type": "string",
+                  "enum": [
+                    "card_unknown",
+                    "serial_relation_conflict",
+                    "player_index_invalid",
+                    "attack_unknown",
+                    "attack_owner_mismatch",
+                    "hidden_private_key",
+                    "host_entity_key"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expected": {
+          "$ref": "#/$defs/dto"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "audit_all"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [],
+                "properties": {}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "audit_frame"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "frame_id"
+                ],
+                "properties": {
+                  "frame_id": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "host_type",
+                          "value"
+                        ],
+                        "properties": {
+                          "host_type": {
+                            "const": "integer"
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "probe_frame_mutation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "frame_id",
+                  "mutation"
+                ],
+                "properties": {
+                  "frame_id": {
+                    "type": "string",
+                    "enum": [
+                      "w0_initial",
+                      "w1_setup_active",
+                      "w2_setup_bench",
+                      "w3_main",
+                      "w4_spikemuth_deck",
+                      "w5_punk_up_sources",
+                      "w5_punk_up_target_1",
+                      "w5_punk_up_target_2",
+                      "w6_shadow_bullet_attack",
+                      "w6_shadow_bullet_target",
+                      "w7_take_prize",
+                      "w7_forced_send_out",
+                      "w7_terminal"
+                    ]
+                  },
+                  "mutation": {
+                    "type": "string",
+                    "enum": [
+                      "card_unknown",
+                      "serial_relation_conflict",
+                      "player_index_invalid",
+                      "attack_unknown",
+                      "attack_owner_mismatch",
+                      "hidden_private_key",
+                      "host_entity_key"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "vectorsArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "vector_set_id",
+        "profile_id",
+        "cases"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "vectors"
+        },
+        "vector_set_id": {
+          "const": "ptcgdap-marnie-identity-projection-conformance-v1"
+        },
+        "profile_id": {
+          "const": "marnie_identity_projection_profile_v1"
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 23,
+          "maxItems": 23,
+          "items": {
+            "$ref": "#/$defs/vectorCase"
+          }
+        }
+      }
+    },
+    "bundleArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "bundle_id",
+        "status",
+        "parent_fixture_bundle",
+        "parent_capability_policy_bundle",
+        "card_catalog_bundle",
+        "projector_bundle",
+        "artifacts",
+        "self_hash_policy"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "bundle"
+        },
+        "bundle_id": {
+          "const": "ptcgdap-marnie-identity-projection-p5-wp4-v1"
+        },
+        "status": {
+          "const": "offline_shadow_identity_projection_gate"
+        },
+        "parent_fixture_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "contracts/ptcgdap/marnie_vertical_slice_bundle.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "parent_capability_policy_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "contracts/ptcgdap/marnie_capability_policy_bundle.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "card_catalog_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "contracts/ptcgdap/card_id_catalog_bundle.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "projector_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "contracts/ptcgdap/godot_observation_projector_bundle.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_identity_projection_schema_v1"
+                },
+                "path": {
+                  "const": "contracts/ptcgdap/marnie_identity_projection.schema.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_identity_projection_profile_v1"
+                },
+                "path": {
+                  "const": "contracts/ptcgdap/marnie_identity_projection_profile.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_identity_projection_audit_v1"
+                },
+                "path": {
+                  "const": "data/ptcgdap/marnie_vertical_slice/marnie_identity_projection_v1.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_identity_projection_vectors_v1"
+                },
+                "path": {
+                  "const": "contracts/ptcgdap/marnie_identity_projection_conformance_vectors.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            }
+          ],
+          "items": false
+        },
+        "self_hash_policy": {
+          "const": "bundle and bound artifacts do not contain the final bundle hash"
+        }
+      }
+    }
+  }
+}

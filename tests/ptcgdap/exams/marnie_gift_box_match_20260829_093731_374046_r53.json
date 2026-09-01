@@ -1,0 +1,599 @@
+{
+  "schema_version": 1,
+  "document_type": "ptcgdap_directed_strategy_exam_corpus_v1",
+  "corpus_id": "marnie-gift-box-match-20260829-093731-374046-r53",
+  "status": "r53_promoted_gate",
+  "repetitions_per_exam": 5,
+  "source_match": {
+    "match_id": "match_20260829_093731_374046",
+    "native_replay_contract_id": "ptcgdap-native-replay-diagnostic-v2",
+    "record_count": 370,
+    "detail_file_sha256": "52F48F3A8173CE009F5D1E8203C720FBC06A18589CE1E0FF6DAE26BF4EF6AA5D",
+    "chain_root_sha256": "9560525706F869D01490F8498D992B526FDE44D59E6CD19B0785E02912E276FC",
+    "decision_frame_provenance": "reconstructed_from_verified_public_state_and_choice_context",
+    "decision_frame_gap": "player_compact_v1_disabled_developer_decision_trace"
+  },
+  "strategy_package": {
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "5.13.0",
+    "archive_sha256": "E7539DB5639B236365A801476F685C22BD45B10F3E9C09A46960EBC60063EBED",
+    "strategy_id": "bodao-yongzhe.marnies-gift-box.competitive-v2-rule-marnie-r53",
+    "install_source": "built_in"
+  },
+  "exams": [
+    {
+      "exam_id": "t3_punk_up_take_only_total_marnie_deficit_to_two",
+      "issue_number": 1,
+      "turn_number": 3,
+      "provenance": "direct_replay_window_and_adjacent_state_snapshots",
+      "replay_evidence": "before Punk Up Grimmsnarl=1 Darkness, Impidimp=1 Darkness, deck offered four; after resolution the live strategy produced 2 and 4",
+      "root_owner": "competitive_policy_count_contract",
+      "prompt_kind": "assignment_source",
+      "select_semantics": {"min_count": 0, "max_count": 4, "select_type_raw": 1, "select_context_raw": 22},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV1C_123", "CSV8C_183"],
+          "active": [{"uid": "CSV10C_148", "hp": 320, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 39,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "deck_count": 37, "prizes_remaining": 6}
+      },
+      "options": [
+        {"kind": "assignment_source", "card_uid": "CSVE1C_DAR", "source_uid": "CSV10C_148"},
+        {"kind": "assignment_source", "card_uid": "CSVE1C_DAR", "source_uid": "CSV10C_148"},
+        {"kind": "assignment_source", "card_uid": "CSVE1C_DAR", "source_uid": "CSV10C_148"},
+        {"kind": "assignment_source", "card_uid": "CSVE1C_DAR", "source_uid": "CSV10C_148"}
+      ],
+      "observed_baseline_selected_indexes": [0, 1, 2, 3],
+      "target_selected_indexes": [0, 1]
+    },
+    {
+      "exam_id": "t3_punk_up_first_assignment_funds_active_to_two",
+      "issue_number": 1,
+      "turn_number": 3,
+      "provenance": "linked_reobserved_target_window",
+      "replay_evidence": "both Marnie Pokemon began at one Energy; the first binding must target a below-cap Pokemon and active Grimmsnarl is the deterministic first target",
+      "root_owner": "competitive_policy_assignment_contract",
+      "prompt_kind": "assignment_target",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 1, "select_context_raw": 21},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "active": [{"uid": "CSV10C_148", "hp": 320, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [{"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1}],
+          "deck_count": 38,
+          "prizes_remaining": 6
+        },
+        "opponent": {"hand_count": 5, "deck_count": 37, "prizes_remaining": 6}
+      },
+      "options": [
+        {"kind": "assignment_target", "card_uid": "CSV10C_148", "source_uid": "CSV10C_148", "target_uid": "CSV10C_148", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 2},
+        {"kind": "assignment_target", "card_uid": "CSV10C_146", "source_uid": "CSV10C_148", "target_uid": "CSV10C_146", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 1}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "t3_punk_up_second_assignment_funds_impidimp_to_two_not_active_overcap",
+      "issue_number": 1,
+      "turn_number": 3,
+      "provenance": "linked_reobserved_target_window",
+      "replay_evidence": "after active reaches two, the fresh window must bind the remaining Energy to the one-Energy Impidimp",
+      "root_owner": "competitive_policy_assignment_contract",
+      "prompt_kind": "assignment_target",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 1, "select_context_raw": 21},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "active": [{"uid": "CSV10C_148", "hp": 320, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [{"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1}],
+          "deck_count": 37,
+          "prizes_remaining": 6
+        },
+        "opponent": {"hand_count": 5, "deck_count": 37, "prizes_remaining": 6}
+      },
+      "options": [
+        {"kind": "assignment_target", "card_uid": "CSV10C_148", "source_uid": "CSV10C_148", "target_uid": "CSV10C_148", "target_energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "target_minimum_attack_energy_count": 2},
+        {"kind": "assignment_target", "card_uid": "CSV10C_146", "source_uid": "CSV10C_148", "target_uid": "CSV10C_146", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 1}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [1]
+    },
+    {
+      "exam_id": "t7_tm_evolution_selects_two_same_printing_snorunt_entities",
+      "issue_number": 2,
+      "turn_number": 7,
+      "provenance": "direct_replay_window",
+      "replay_evidence": "choice event 294 exposed two distinct Snorunt field entities while both shared CSV9.5C_043; only one was selected",
+      "root_owner": "competitive_policy_entity_cardinality",
+      "prompt_kind": "evolve",
+      "select_semantics": {"min_count": 1, "max_count": 2, "select_type_raw": 7, "select_context_raw": 37},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV10C_148", "CSV7C_185"],
+          "active": [{"uid": "CSV10C_147", "hp": 100, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR", "CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2, "attached_tool_uid": "CSV5C_119"}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0}
+          ],
+          "deck_count": 22,
+          "prizes_remaining": 5,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 6, "deck_count": 29, "prizes_remaining": 3}
+      },
+      "options": [
+        {"kind": "evolve", "card_uid": "CSV9.5C_043", "target_uid": "CSV9.5C_043", "option_type_raw": 9},
+        {"kind": "evolve", "card_uid": "CSV9.5C_043", "target_uid": "CSV9.5C_043", "option_type_raw": 9}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [0, 1]
+    },
+    {
+      "exam_id": "t5_ultra_ball_continues_froslass_setup_before_shadow_bullet",
+      "issue_number": 3,
+      "turn_number": 5,
+      "provenance": "direct_replay_state_after_arven",
+      "replay_evidence": "after Arven the hand held Ultra Ball and TM Evolution, two old Snorunt were benched, then Shadow Bullet ended the turn",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV6C_114", "CSV8C_183", "CSV1C_112", "CSV5C_119"],
+          "active": [{"uid": "CSV10C_148", "hp": 160, "max_hp": 320, "damage_counters": 160, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2, "attached_tool_uid": "CSV1C_117"}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR", "CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0}
+          ],
+          "deck_count": 30,
+          "prizes_remaining": 5,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {
+          "hand_count": 6,
+          "active": [{"uid": "CSV10C_113", "hp": 300, "prize_value": 2, "energy_uids": ["CSVE1C_FIG"], "minimum_attack_energy_count": 1}],
+          "deck_count": 31,
+          "prizes_remaining": 5
+        }
+      },
+      "options": [
+        {"kind": "play_trainer", "card_uid": "CSV1C_112", "option_type_raw": 7},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "requires_interaction": true, "option_type_raw": 13},
+        {"kind": "end_turn", "option_type_raw": 14}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "t5_ultra_ball_search_rebinds_to_froslass_after_information_checkpoint",
+      "issue_number": 3,
+      "turn_number": 5,
+      "provenance": "linked_fresh_search_window_after_ultra_ball",
+      "replay_evidence": "the pre-attack route can choose Ultra Ball, but the subsequent fresh search window must independently bind Froslass instead of falling back to another Pokemon",
+      "root_owner": "competitive_policy_typed_search_continuity",
+      "prompt_kind": "search",
+      "select_semantics": {"min_count": 0, "max_count": 1, "select_type_raw": 1, "select_context_raw": 24},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV5C_119"],
+          "active": [{"uid": "CSV10C_148", "hp": 160, "max_hp": 320, "damage_counters": 160, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 28,
+          "prizes_remaining": 5,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 6, "active": [{"uid": "CSV10C_113", "hp": 300, "prize_value": 2}], "deck_count": 31, "prizes_remaining": 5}
+      },
+      "options": [
+        {"kind": "search", "card_uid": "CSV10C_147", "source_uid": "CSV1C_112", "option_type_raw": 3},
+        {"kind": "search", "card_uid": "CSV10C_146", "source_uid": "CSV1C_112", "option_type_raw": 3},
+        {"kind": "search", "card_uid": "CSV7C_059", "source_uid": "CSV1C_112", "option_type_raw": 3},
+        {"kind": "search", "card_uid": "CSV8C_094", "source_uid": "CSV1C_112", "option_type_raw": 3}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [2]
+    },
+    {
+      "exam_id": "t5_manual_froslass_evolution_precedes_nonlethal_attack",
+      "issue_number": 3,
+      "turn_number": 5,
+      "provenance": "linked_window_after_ultra_ball",
+      "replay_evidence": "Ultra Ball can reveal Froslass from the live deck and an old Snorunt is legally evolvable before attacking",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV7C_059", "CSV5C_119"],
+          "active": [{"uid": "CSV10C_148", "hp": 160, "max_hp": 320, "damage_counters": 160, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 28,
+          "prizes_remaining": 5,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 6, "active": [{"uid": "CSV10C_113", "hp": 300, "prize_value": 2}], "deck_count": 31, "prizes_remaining": 5}
+      },
+      "options": [
+        {"kind": "evolve", "card_uid": "CSV7C_059", "target_uid": "CSV9.5C_043", "option_type_raw": 9},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "late_munkidori_adrena_brain_precedes_shadow_bullet",
+      "issue_number": 4,
+      "turn_number": 7,
+      "provenance": "linked_late_engine_window",
+      "replay_evidence": "Froslass damage creates transferable counters; Munkidori must move them before the terminal attack window",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "active": [{"uid": "CSV10C_148", "hp": 260, "max_hp": 320, "damage_counters": 60, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2},
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2},
+            {"uid": "CSV8C_094", "hp": 80, "max_hp": 110, "damage_counters": 30, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 22,
+          "prizes_remaining": 4,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "active": [{"uid": "CSV10C_113", "hp": 240, "prize_value": 2}], "bench": [{"uid": "CSV10C_111", "hp": 30, "prize_value": 1}], "deck_count": 27, "prizes_remaining": 4}
+      },
+      "options": [
+        {"kind": "use_ability", "source_uid": "CSV8C_094", "ability_index": 0, "option_type_raw": 12},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "late_manual_dark_funds_munkidori_before_shadow_bullet",
+      "issue_number": 4,
+      "turn_number": 7,
+      "provenance": "linked_late_engine_window",
+      "replay_evidence": "the replay's Munkidori remained unfunded after Punk Up exhausted the deck; when a manual Darkness is available it must be attached before attacking",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSVE1C_DAR"],
+          "active": [{"uid": "CSV10C_148", "hp": 260, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2},
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2},
+            {"uid": "CSV8C_094", "hp": 80, "max_hp": 110, "damage_counters": 30, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 22,
+          "prizes_remaining": 4,
+          "turn": {"supporter_available": false, "manual_attachment_available": true, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "active": [{"uid": "CSV10C_113", "hp": 240, "prize_value": 2}], "deck_count": 27, "prizes_remaining": 4}
+      },
+      "options": [
+        {"kind": "attach_energy", "card_uid": "CSVE1C_DAR", "target_uid": "CSV8C_094", "target_minimum_attack_energy_count": 1, "option_type_raw": 8},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "late_send_out_prefers_ready_munkidori_over_budew",
+      "issue_number": 4,
+      "turn_number": 8,
+      "provenance": "linked_knockout_replacement_window",
+      "replay_evidence": "Budew is a 30 HP opening tempo card; after the Froslass loop exists, a Darkness-funded Munkidori is the highest-value continuation",
+      "root_owner": "competitive_policy_stage_aware_send_out",
+      "prompt_kind": "send_out",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 1, "select_context_raw": 4},
+      "state": {
+        "phase": "BETWEEN_TURNS",
+        "self": {
+          "hand": [],
+          "active": [],
+          "bench": [
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV8C_094", "hp": 80, "max_hp": 110, "damage_counters": 30, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1},
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2}
+          ],
+          "deck_count": 20,
+          "prizes_remaining": 4
+        },
+        "opponent": {"hand_count": 5, "deck_count": 26, "prizes_remaining": 3}
+      },
+      "options": [
+        {"kind": "send_out", "card_uid": "CSV9.5C_004", "target_uid": "CSV9.5C_004", "target_minimum_attack_energy_count": 0},
+        {"kind": "send_out", "card_uid": "CSV8C_094", "target_uid": "CSV8C_094", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 1},
+        {"kind": "send_out", "card_uid": "CSV7C_059", "target_uid": "CSV7C_059", "target_minimum_attack_energy_count": 2}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [1]
+    },
+    {
+      "exam_id": "late_poffin_uses_last_slots_for_snorunt_and_impidimp_not_budew",
+      "issue_number": 4,
+      "turn_number": 5,
+      "provenance": "direct_replay_search_window",
+      "replay_evidence": "Buddy Poffin offered Budew, Snorunt, Impidimp, Budew; with one root of each already present the live strategy selected Snorunt plus Budew",
+      "root_owner": "competitive_policy_stage_aware_search",
+      "prompt_kind": "search",
+      "select_semantics": {"min_count": 0, "max_count": 2, "select_type_raw": 1, "select_context_raw": 24},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "active": [{"uid": "CSV10C_148", "hp": 160, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 30,
+          "prizes_remaining": 5
+        },
+        "opponent": {"hand_count": 6, "deck_count": 31, "prizes_remaining": 5}
+      },
+      "options": [
+        {"kind": "search", "card_uid": "CSV9.5C_004", "source_uid": "CSV7C_177"},
+        {"kind": "search", "card_uid": "CSV9.5C_043", "source_uid": "CSV7C_177"},
+        {"kind": "search", "card_uid": "CSV10C_146", "source_uid": "CSV7C_177"},
+        {"kind": "search", "card_uid": "CSV9.5C_004", "source_uid": "CSV7C_177"}
+      ],
+      "observed_baseline_selected_indexes": [1, 0],
+      "target_selected_indexes": [1, 2]
+    },
+    {
+      "exam_id": "late_poffin_whiffs_when_only_budew_remains_and_core_is_complete",
+      "issue_number": 4,
+      "turn_number": 7,
+      "provenance": "direct_replay_search_window",
+      "replay_evidence": "turn 7 Buddy Poffin had only Budew selectable and placed it despite both Snorunt plus both Marnie roots already occupying the board",
+      "root_owner": "competitive_policy_stage_aware_count",
+      "prompt_kind": "search",
+      "select_semantics": {"min_count": 0, "max_count": 1, "select_type_raw": 1, "select_context_raw": 24},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "active": [{"uid": "CSV10C_147", "hp": 100, "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1},
+            {"uid": "CSV9.5C_043", "hp": 60, "minimum_attack_energy_count": 1},
+            {"uid": "CSV10C_146", "hp": 70, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 24,
+          "prizes_remaining": 5
+        },
+        "opponent": {"hand_count": 6, "deck_count": 29, "prizes_remaining": 3}
+      },
+      "options": [{"kind": "search", "card_uid": "CSV9.5C_004", "source_uid": "CSV7C_177"}],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": []
+    },
+    {
+      "exam_id": "immediate_match_win_remains_terminal_over_setup",
+      "issue_number": 3,
+      "turn_number": 9,
+      "provenance": "continuity_negative_control",
+      "replay_evidence": "the setup contract must self-clear when Shadow Bullet immediately takes the final prize",
+      "root_owner": "base_terminal_and_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "active": [{"uid": "CSV10C_148", "hp": 260, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [{"uid": "CSV8C_094", "hp": 80, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1}],
+          "deck_count": 18,
+          "prizes_remaining": 1
+        },
+        "opponent": {"hand_count": 3, "active": [{"uid": "CSV10C_111", "hp": 180, "prize_value": 1}], "deck_count": 21, "prizes_remaining": 2}
+      },
+      "options": [
+        {"kind": "use_ability", "source_uid": "CSV8C_094", "ability_index": 0, "option_type_raw": 12},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "projected_knockout": true, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [1]
+    },
+    {
+      "exam_id": "late_active_budew_keeps_lock_instead_of_forced_retreat",
+      "issue_number": 5,
+      "turn_number": 7,
+      "provenance": "paired_seed_regression_2919042_seat_0",
+      "replay_evidence": "5.10 forced an active Budew to retreat into Grimmsnarl and flipped the paired old-version win to a loss; 5.13 preserves the live lock unless another public action has immediate value",
+      "root_owner": "competitive_policy_stage_aware_main_order",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV3C_123", "CSV8C_094"],
+          "discard": ["CSV1C_112"],
+          "active": [{"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0}],
+          "bench": [
+            {"uid": "CSV10C_148", "hp": 320, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2},
+            {"uid": "CSV10C_147", "hp": 100, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2},
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2},
+            {"uid": "CSV8C_094", "hp": 110, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 24,
+          "prizes_remaining": 6,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 7, "active": [{"uid": "CSV8C_028", "hp": 170, "max_hp": 210, "damage_counters": 40, "prize_value": 2}], "deck_count": 25, "prizes_remaining": 6}
+      },
+      "options": [
+        {"kind": "retreat", "target_uid": "CSV10C_148", "target_energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "target_minimum_attack_energy_count": 2, "option_type_raw": 12},
+        {"kind": "attack", "source_uid": "CSV9.5C_004", "attack_index": 1, "projected_damage": 10, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [1]
+    },
+    {
+      "exam_id": "late_handoff_near_ready_grimmsnarl_beats_ready_morgrem_and_budew",
+      "issue_number": 5,
+      "turn_number": 17,
+      "provenance": "paired_seed_regression_2919011_seat_0",
+      "replay_evidence": "5.11 sent ready Impidimp or Morgrem over the already-built one-energy-debt Grimmsnarl and lost; 5.13 reserves lower evolution stages for windows without a Grimmsnarl candidate",
+      "root_owner": "competitive_policy_stage_aware_send_out",
+      "prompt_kind": "send_out",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 1, "select_context_raw": 4},
+      "state": {
+        "phase": "BETWEEN_TURNS",
+        "self": {
+          "hand": [],
+          "discard": ["CSV7C_177", "CSV1C_112"],
+          "active": [],
+          "bench": [
+            {"uid": "CSV10C_148", "hp": 260, "max_hp": 320, "damage_counters": 60, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 2},
+            {"uid": "CSV10C_147", "hp": 100, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2},
+            {"uid": "CSV9.5C_004", "hp": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 2}
+          ],
+          "deck_count": 15,
+          "prizes_remaining": 4
+        },
+        "opponent": {"hand_count": 5, "deck_count": 17, "prizes_remaining": 5}
+      },
+      "options": [
+        {"kind": "send_out", "card_uid": "CSV10C_147", "target_uid": "CSV10C_147", "target_energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "target_minimum_attack_energy_count": 2},
+        {"kind": "send_out", "card_uid": "CSV10C_148", "target_uid": "CSV10C_148", "target_energy_uids": ["CSVE1C_DAR"], "target_minimum_attack_energy_count": 2},
+        {"kind": "send_out", "card_uid": "CSV9.5C_004", "target_uid": "CSV9.5C_004", "target_minimum_attack_energy_count": 0}
+      ],
+      "observed_baseline_selected_indexes": [0],
+      "target_selected_indexes": [1]
+    },
+    {
+      "exam_id": "final_prize_munkidori_transfer_precedes_nonterminal_attack",
+      "issue_number": 5,
+      "turn_number": 11,
+      "provenance": "late_engine_priority_boundary",
+      "replay_evidence": "Adrena Brain remains the first executable action at one remaining prize whenever public damage can still be transferred and the attack is not already a protected terminal selection",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": [],
+          "discard": ["CSV3C_123", "CSV1C_112"],
+          "active": [{"uid": "CSV10C_148", "hp": 260, "max_hp": 320, "damage_counters": 60, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV7C_059", "hp": 60, "max_hp": 90, "damage_counters": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV8C_094", "hp": 90, "max_hp": 110, "damage_counters": 20, "energy_uids": ["CSVE1C_DAR"], "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 14,
+          "prizes_remaining": 1,
+          "turn": {"supporter_available": false, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "active": [{"uid": "CSV8C_028", "hp": 210, "prize_value": 2}], "bench": [{"uid": "CSV10C_009", "hp": 40, "max_hp": 70, "damage_counters": 30, "prize_value": 1}], "deck_count": 18, "prizes_remaining": 3}
+      },
+      "options": [
+        {"kind": "use_ability", "source_uid": "CSV8C_094", "ability_index": 0, "option_type_raw": 12},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "projected_knockout": false, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "late_large_opponent_hand_iono_precedes_attack",
+      "issue_number": 5,
+      "turn_number": 9,
+      "provenance": "late_supporter_disruption_boundary",
+      "replay_evidence": "with a legal Grimmsnarl attack available, a live Iono, no final-prize terminal, and eight public opponent cards, disruption and hand refill must occur before attacking",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSV3C_123", "CSV8C_094", "CSV5C_120"],
+          "discard": ["CSV7C_177", "CSV1C_112"],
+          "active": [{"uid": "CSV10C_148", "hp": 260, "max_hp": 320, "damage_counters": 60, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [{"uid": "CSV7C_059", "hp": 90, "minimum_attack_energy_count": 0}],
+          "deck_count": 19,
+          "prizes_remaining": 3,
+          "turn": {"supporter_available": true, "manual_attachment_available": false, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 8, "active": [{"uid": "CSV8C_028", "hp": 210, "prize_value": 2}], "deck_count": 20, "prizes_remaining": 4}
+      },
+      "options": [
+        {"kind": "play_trainer", "card_uid": "CSV3C_123", "option_type_raw": 7},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "projected_knockout": false, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    },
+    {
+      "exam_id": "energy_search_funds_munkidori_before_attack",
+      "issue_number": 5,
+      "turn_number": 7,
+      "provenance": "late_engine_resource_boundary",
+      "replay_evidence": "when Froslass damage is online, Munkidori is unfunded, manual attachment remains, and Energy Search is legal, the strategy must create the transfer resource before the attack window",
+      "root_owner": "competitive_policy_turn_continuity",
+      "prompt_kind": "main",
+      "select_semantics": {"min_count": 1, "max_count": 1, "select_type_raw": 0, "select_context_raw": 0},
+      "state": {
+        "phase": "MAIN",
+        "self": {
+          "hand": ["CSVH1C_035"],
+          "discard": ["CSV7C_177"],
+          "active": [{"uid": "CSV10C_148", "hp": 260, "max_hp": 320, "damage_counters": 60, "energy_uids": ["CSVE1C_DAR", "CSVE1C_DAR"], "minimum_attack_energy_count": 2}],
+          "bench": [
+            {"uid": "CSV7C_059", "hp": 60, "max_hp": 90, "damage_counters": 30, "minimum_attack_energy_count": 0},
+            {"uid": "CSV8C_094", "hp": 110, "minimum_attack_energy_count": 1}
+          ],
+          "deck_count": 21,
+          "prizes_remaining": 4,
+          "turn": {"supporter_available": false, "manual_attachment_available": true, "retreat_available": true}
+        },
+        "opponent": {"hand_count": 5, "active": [{"uid": "CSV8C_028", "hp": 210, "prize_value": 2}], "deck_count": 23, "prizes_remaining": 4}
+      },
+      "options": [
+        {"kind": "play_trainer", "card_uid": "CSVH1C_035", "option_type_raw": 7},
+        {"kind": "attack", "source_uid": "CSV10C_148", "attack_index": 0, "projected_damage": 180, "projected_knockout": false, "requires_interaction": true, "option_type_raw": 13}
+      ],
+      "observed_baseline_selected_indexes": [1],
+      "target_selected_indexes": [0]
+    }
+  ]
+}

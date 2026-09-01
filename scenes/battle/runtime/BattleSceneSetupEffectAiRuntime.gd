@@ -62,6 +62,8 @@ func _setup_battle_scene_context() -> void:
 	if _battle_prompt_router == null:
 		_battle_prompt_router = BattlePromptRouterScript.new()
 		_battle_prompt_router.call("setup", _battle_scene_context)
+	if _battle_prompt_router.has_method("configure_author_live_canary"):
+		_battle_prompt_router.call("configure_author_live_canary", _author_live_seam)
 	if _battle_visual_sequence_controller == null:
 		_battle_visual_sequence_controller = BattleVisualSequenceControllerScript.new()
 	_battle_visual_sequence_controller.call("setup", self)
@@ -74,12 +76,42 @@ func _setup_battle_scene_context() -> void:
 
 func _start_battle() -> void:
 	_match_end_return_navigation_started = false
+	_author_strategy_author_name = ""
+	_author_strategy_deck_label = ""
 	var training_launch: Dictionary = GameManager.consume_deck_training_launch()
 	if not training_launch.is_empty():
 		_start_deck_training_battle(training_launch)
 		return
+	_configure_battle_runtime_profiles()
+	var author_handle: Variant = null
+	var author_presentation: Dictionary = {}
+	var author_authority_mode := AuthorStrategyWindowsExecutionGateScript.DEVELOPMENT_MODE
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		var requested: Dictionary = AuthorStrategyWindowsExecutionGateScript.request_match_handle(
+			AuthorStrategyPackageCatalog,
+			GameManager.get_author_strategy_selection()
+		)
+		if not bool(requested.get("ok", false)):
+			_author_runtime_start_error_code = str(requested.get("error_code", "package_integrity_invalid"))
+			_runtime_log("author_development_start_rejected", _author_runtime_start_error_code)
+			return
+		author_handle = requested.get("handle")
+		if author_handle != null and author_handle.has_method("presentation_snapshot"):
+			author_presentation = author_handle.call("presentation_snapshot")
+		author_authority_mode = str(requested.get("authority_mode", ""))
 	var deck1_data: DeckData = GameManager.resolve_selected_battle_deck(0)
-	var deck2_data: DeckData = GameManager.resolve_selected_battle_deck(1)
+	var deck2_data: DeckData = null
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		var materialized: Dictionary = GameManager.materialize_author_strategy_battle_deck(author_handle)
+		if not bool(materialized.get("ok", false)):
+			_author_runtime_start_error_code = str(materialized.get("error_code", "package_deck_materialization_failed"))
+			_runtime_log("author_package_deck_rejected", _author_runtime_start_error_code)
+			return
+		deck2_data = materialized.get("deck") as DeckData
+		_author_strategy_author_name = str(author_presentation.get("author_name", "")).strip_edges()
+		_author_strategy_deck_label = deck2_data.deck_name if deck2_data != null else ""
+	else:
+		deck2_data = GameManager.resolve_selected_battle_deck(1)
 	if deck1_data == null or deck2_data == null:
 		_log("未找到已选择的卡组数据。")
 		return
@@ -106,10 +138,102 @@ func _start_battle() -> void:
 	_turn_start_snapshot_recorded_keys.clear()
 	_ensure_battle_recording_started()
 	_opening_first_player_flip_pending = GameManager.first_player_choice == -1
-	_gsm.start_game(deck1_data, deck2_data, GameManager.first_player_choice)
+	var defer_author_setup := GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+	_gsm.start_game(
+		deck1_data,
+		deck2_data,
+		GameManager.first_player_choice,
+		false,
+		defer_author_setup
+	)
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		var match_prefix := "windows-device-canary" if author_authority_mode == AuthorStrategyWindowsExecutionGateScript.DEVICE_CANARY_MODE else "windows-player"
+		var match_id := "%s-%d-%d" % [
+			match_prefix,
+			int(Time.get_unix_time_from_system()),
+			Time.get_ticks_usec(),
+		]
+		var owner_result: Dictionary = BattleDecisionOwnerFactoryScript.build_windows_author_owner(
+			author_handle, _gsm, 1, match_id, author_authority_mode
+		)
+		if not bool(owner_result.get("ok", false)):
+			_author_runtime_start_error_code = str(owner_result.get("error_code", "invalid_bind"))
+			_runtime_log("author_development_owner_rejected", _author_runtime_start_error_code)
+			return
+		_author_player_owner = owner_result.get("owner")
+		var policy_execution_profile := OS.get_environment(
+			"PTCGDAP_AUTHOR_POLICY_EXECUTION_PROFILE"
+		).strip_edges().to_lower()
+		if policy_execution_profile.is_empty():
+			policy_execution_profile = "worker_v1"
+		var policy_profile_configured: bool = false
+		if _author_player_owner.has_method("configure_policy_execution_profile"):
+			policy_profile_configured = bool(_author_player_owner.call(
+				"configure_policy_execution_profile", policy_execution_profile
+			))
+		if not policy_profile_configured:
+			policy_execution_profile = "main_thread_v1"
+			if _author_player_owner.has_method("configure_policy_execution_profile"):
+				_author_player_owner.call(
+					"configure_policy_execution_profile", policy_execution_profile
+				)
+		_author_runtime_start_error_code = ""
+		_start_author_recording_channels(_author_player_owner)
+		_runtime_log(
+			"author_development_owner_ready",
+			"package=%s version=%s archive=%s policy_execution=%s" % [
+				GameManager.get_author_strategy_selection().get("package_id", ""),
+				GameManager.get_author_strategy_selection().get("package_version", ""),
+				GameManager.get_author_strategy_selection().get("archive_sha256", ""),
+				policy_execution_profile,
+			]
+		)
+		var ui_entrypoint := get_node_or_null("/root/PtcgDAPWindowsUiMatchEntrypoint")
+		if ui_entrypoint != null and ui_entrypoint.has_method("is_active") and bool(ui_entrypoint.call("is_active")):
+			var rules_owner_result: Dictionary = BattleDecisionOwnerFactoryScript.build_windows_development_rules_owner(
+				_deck_strategy_registry, deck1_data, 0
+			)
+			if not bool(rules_owner_result.get("ok", false)):
+				_author_runtime_start_error_code = str(rules_owner_result.get("error_code", "invalid_bind"))
+				_runtime_log("author_development_ui_rules_owner_rejected", _author_runtime_start_error_code)
+				return
+			_development_player_rules_owner = rules_owner_result.get("owner")
+			_author_development_ui_match_active = true
+			_ai_action_pause_seconds = 0.02
+			GameManager.battle_effects_enabled = false
+			_runtime_log("author_development_ui_dual_owner_ready", "rules_seat=0 author_seat=1")
+		if not _gsm.begin_deferred_setup():
+			_author_runtime_start_error_code = "author_setup_resume_rejected"
+			_runtime_log("author_development_setup_rejected", _author_runtime_start_error_code)
+			return
+		_maybe_run_ai()
 	_capture_battle_recording_context_if_ready()
 	# Setup flow continues through state change callbacks and mulligan prompts.
 	# The visible player may be switched later by setup and handover logic.
+
+
+func _configure_battle_runtime_profiles() -> void:
+	var pacing_request := "cinematic_v1"
+	var recording_request := "developer_full_v1"
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		pacing_request = OS.get_environment("PTCGDAP_LIVE_PACING_PROFILE")
+		recording_request = OS.get_environment("PTCGDAP_AUTHOR_RECORDING_PROFILE")
+	_author_live_pacing_profile = BattleLivePacingProfileScript.resolve_profile(pacing_request)
+	_author_recording_profile = AuthorStrategyRecordingProfileScript.resolve_profile(recording_request)
+	_ai_action_pause_seconds = float(_author_live_pacing_profile.get(
+		"action_pause_seconds", AI_ACTION_PAUSE_SECONDS
+	))
+	if (
+		_battle_visual_sequence_controller != null
+		and _battle_visual_sequence_controller.has_method("set_playback_speed")
+	):
+		_battle_visual_sequence_controller.call(
+			"set_playback_speed",
+			float(_author_live_pacing_profile.get("visual_playback_speed", 1.0))
+		)
+	_runtime_log("battle_live_pacing_profile", JSON.stringify(_author_live_pacing_profile))
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		_runtime_log("author_recording_profile", JSON.stringify(_author_recording_profile))
 
 
 func _start_deck_training_battle(launch: Dictionary) -> void:
@@ -323,20 +447,77 @@ func _setup_battle_advice_ui() -> void:
 
 func _apply_replay_launch(launch: Dictionary) -> void:
 	_battle_mode = "review_readonly"
+	_replay_is_playing = false
+	_replay_playback_accumulator = 0.0
+	if _btn_back != null:
+		_btn_back.visible = false
+		_btn_back.disabled = true
 	var prepared_variant: Variant = _battle_replay_controller.call("prepare_launch", launch)
 	if not (prepared_variant is Dictionary):
 		return
 	var prepared: Dictionary = prepared_variant
 	_replay_match_dir = str(prepared.get("match_dir", ""))
 	_replay_entry_source = str(prepared.get("entry_source", ""))
+	_view_player = int(prepared.get("view_player_index", 0))
+	_replay_player_labels.clear()
+	var replay_player_labels: Array = prepared.get("player_labels", [])
+	for label_variant: Variant in replay_player_labels:
+		_replay_player_labels.append(str(label_variant))
 	_replay_turn_numbers.clear()
 	for turn_variant: Variant in prepared.get("turn_numbers", []):
 		_replay_turn_numbers.append(int(turn_variant))
 	var entry_turn_number := int(prepared.get("entry_turn_number", 0))
 	_replay_current_turn_index = int(prepared.get("current_turn_index", -1))
+	_replay_timeline.clear()
+	var timeline_variant: Variant = _battle_replay_snapshot_loader.call("load_timeline", _replay_match_dir, _view_player)
+	if timeline_variant is Array:
+		for frame_variant: Variant in timeline_variant:
+			if frame_variant is Dictionary:
+				_replay_timeline.append((frame_variant as Dictionary).duplicate(true))
+	_replay_current_frame_index = _find_replay_entry_frame(entry_turn_number)
 	_refresh_replay_controls()
-	if _replay_match_dir.strip_edges() != "" and entry_turn_number > 0:
+	if not _replay_timeline.is_empty():
+		_load_replay_frame(_replay_current_frame_index, false)
+	elif _replay_match_dir.strip_edges() != "" and entry_turn_number > 0:
 		_load_replay_turn(entry_turn_number)
+func _configure_replay_player_controls() -> void:
+	if _opt_replay_speed == null:
+		return
+	_replay_playback_speed = float(_battle_replay_controller.call("default_playback_speed"))
+	_opt_replay_speed.clear()
+	var replay_speeds := [0.5, 1.0, 2.0, 4.0]
+	for label: String in ["0.5×", "1×", "2×", "4×"]:
+		_opt_replay_speed.add_item(label)
+	_opt_replay_speed.select(replay_speeds.find(_replay_playback_speed))
+	if _battle_visual_sequence_controller != null:
+		_battle_visual_sequence_controller.call("set_playback_speed", _replay_playback_speed)
+
+
+func _restore_replay_global_display_context() -> void:
+	if not _replay_global_display_context_captured:
+		return
+	GameManager.selected_deck_ids = _replay_previous_selected_deck_ids.duplicate()
+	GameManager.set_battle_player_display_names(_replay_previous_player_display_names)
+	_replay_previous_selected_deck_ids.clear()
+	_replay_previous_player_display_names.clear()
+	_replay_global_display_context_captured = false
+
+
+func _find_replay_entry_frame(entry_turn_number: int) -> int:
+	if _replay_timeline.is_empty():
+		return -1
+	if entry_turn_number <= 0:
+		return 0
+	var first_matching := -1
+	for index: int in _replay_timeline.size():
+		var frame: Dictionary = _replay_timeline[index]
+		if int(frame.get("turn_number", 0)) != entry_turn_number:
+			continue
+		if first_matching < 0:
+			first_matching = index
+		if str(frame.get("snapshot_reason", "")) == "turn_start":
+			return index
+	return first_matching if first_matching >= 0 else 0
 
 
 
@@ -766,10 +947,10 @@ func _portrait_direct_top_action_buttons() -> Array[Button]:
 	if _is_review_mode():
 		return [
 			_top_action_button_or_null(_btn_replay_prev_turn, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPrevTurn"),
+			_top_action_button_or_null(_btn_replay_play_pause, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPlayPause"),
 			_top_action_button_or_null(_btn_replay_next_turn, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayNextTurn"),
-			_top_action_button_or_null(_btn_replay_continue, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayContinue"),
+			_top_action_button_or_null(_opt_replay_speed, "TopBar/TopBarRow/TopBarRight/TopBarActions/OptReplaySpeed"),
 			_top_action_button_or_null(_btn_replay_back_to_list, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayBackToList"),
-			_top_action_button_or_null(_btn_back, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBack"),
 		]
 	return [
 		_top_action_button_or_null(_btn_opponent_hand, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnOpponentHand"),
@@ -908,8 +1089,7 @@ func _prompt_send_out_dialog(pi: int) -> void:
 		"min_select": 1,
 		"max_select": 1,
 	}
-	_ensure_ai_opponent()
-	var is_ai_prompt: bool = GameManager.current_mode == GameManager.GameMode.VS_AI and _ai_opponent != null and pi == _ai_opponent.player_index
+	var is_ai_prompt: bool = _is_runtime_ai_player(pi)
 	if is_ai_prompt:
 		_dialog_data = dialog_data
 		_dialog_items_data = available_bench.duplicate()
@@ -960,8 +1140,7 @@ func _prompt_heavy_baton_dialog(
 		"max_select": 1,
 		"allow_cancel": false,
 	}
-	_ensure_ai_opponent()
-	var is_ai_prompt: bool = GameManager.current_mode == GameManager.GameMode.VS_AI and _ai_opponent != null and pi == _ai_opponent.player_index
+	var is_ai_prompt: bool = _is_runtime_ai_player(pi)
 	if is_ai_prompt:
 		_dialog_data = dialog_data
 		_dialog_items_data = bench_targets.duplicate()
@@ -1007,8 +1186,7 @@ func _prompt_exp_share_dialog(
 		"max_select": 1,
 		"allow_cancel": false,
 	}
-	_ensure_ai_opponent()
-	var is_ai_prompt: bool = GameManager.current_mode == GameManager.GameMode.VS_AI and _ai_opponent != null and pi == _ai_opponent.player_index
+	var is_ai_prompt: bool = _is_runtime_ai_player(pi)
 	if is_ai_prompt:
 		_dialog_data = dialog_data
 		_dialog_items_data = bench_targets.duplicate()
@@ -1048,11 +1226,11 @@ func _ai_watchdog_reconcile_authoritative_decision() -> bool:
 	var snapshot: Dictionary = snapshot_variant
 	if snapshot.is_empty():
 		return false
-	_ensure_ai_opponent()
+	var runtime_owner: Variant = _runtime_ai_owner()
 	var owner := int(snapshot.get("owner_player_index", -1))
 	if (
-		GameManager.current_mode == GameManager.GameMode.VS_AI
-		and (_ai_opponent == null or owner != int(_ai_opponent.player_index))
+		GameManager.current_mode in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI]
+		and (runtime_owner == null or owner != int(runtime_owner.player_index))
 	):
 		return false
 	var kind := str(snapshot.get("kind", ""))
@@ -1128,7 +1306,7 @@ func _ai_effect_resolution_progress_token() -> String:
 	var action_log_size := _gsm.action_log.size() if _gsm != null else -1
 	var phase := int(_gsm.game_state.phase) if _gsm != null and _gsm.game_state != null else -1
 	var current_player := _gsm.game_state.current_player_index if _gsm != null and _gsm.game_state != null else -1
-	return "%s|%s|%d|%d|%d|%d|%d|%d" % [
+	return "%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d" % [
 		_pending_choice,
 		_pending_effect_kind,
 		_pending_effect_player_index,
@@ -1137,6 +1315,10 @@ func _ai_effect_resolution_progress_token() -> String:
 		hash(_pending_effect_context),
 		action_log_size,
 		hash([phase, current_player]),
+		hash(_field_interaction_assignment_entries),
+		_field_interaction_assignment_selected_source_index,
+		hash(_dialog_assignment_assignments),
+		_dialog_assignment_selected_source_index,
 	]
 
 func _record_battle_event(event_data: Dictionary) -> void:
@@ -1149,6 +1331,10 @@ func _finalize_battle_recording(result_data: Dictionary) -> void:
 	_ensure_battle_recording_coordinator()
 	_battle_recording_coordinator.call("finalize", result_data)
 	_sync_battle_recording_state_from_scene()
+	if _author_development_ui_match_active:
+		var ui_entrypoint := get_node_or_null("/root/PtcgDAPWindowsUiMatchEntrypoint")
+		if ui_entrypoint != null and ui_entrypoint.has_method("complete_match"):
+			ui_entrypoint.call("complete_match", self, int(result_data.get("winner_index", -1)), str(result_data.get("reason", "")))
 
 
 
@@ -1363,6 +1549,75 @@ func _after_setup_active(pi: int) -> void:
 	_maybe_run_ai()
 
 
+func _is_author_setup_active_canary_prompt(pi: int) -> bool:
+	if GameManager.current_mode != GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		return false
+	if _battle_prompt_router == null or not _battle_prompt_router.has_method("can_route_author_setup_active"):
+		return false
+	if _author_decision_owner == null or _author_serial_registry == null or _author_source_documents == null:
+		return false
+	if not _author_live_seam.has_method("owns_author_host") or not _author_live_seam.owns_author_host(_author_decision_owner):
+		return false
+	return bool(_battle_prompt_router.call(
+		"can_route_author_setup_active", GameManager.current_mode, pi
+	)) and pi == 1
+
+
+func _maybe_run_author_setup_active_canary(pi: int) -> void:
+	if _author_live_canary_running or _author_live_canary_scheduled:
+		return
+	if not _is_author_setup_active_canary_prompt(pi):
+		_author_live_last_error_code = "invalid_live_owner"
+		return
+	if _pending_choice != "setup_active_%d" % pi or _gsm == null or _gsm.game_state == null:
+		_author_live_last_error_code = "prompt_changed"
+		return
+	_author_live_canary_scheduled = true
+	call_deferred("_run_author_setup_active_canary", pi)
+
+
+func _run_author_setup_active_canary(pi: int) -> void:
+	_author_live_canary_scheduled = false
+	if _author_live_canary_running or not _is_author_setup_active_canary_prompt(pi):
+		_author_live_last_error_code = "invalid_live_owner"
+		return
+	if _pending_choice != "setup_active_%d" % pi:
+		_author_live_last_error_code = "prompt_changed"
+		return
+	_author_live_canary_running = true
+	var basics_value: Variant = _dialog_data.get("basics", [])
+	var basics: Array = basics_value.duplicate() if basics_value is Array else []
+	var source_result: Dictionary = AuthorStrategyLivePromptSourceScript.create_setup_active(
+		_gsm,
+		_author_serial_registry,
+		_author_source_documents,
+		pi,
+		basics,
+		_author_live_decision_generation,
+		[],
+		_author_live_seam.has_method("uses_local_uid_domain") and _author_live_seam.uses_local_uid_domain(),
+	)
+	if not bool(source_result.get("ok", false)):
+		_author_live_last_error_code = str(source_result.get("error_code", "invalid_engine_prompt"))
+		_author_live_canary_running = false
+		return
+	var run_result: Dictionary = _author_live_seam.run_setup_active(source_result.get("source"))
+	if not bool(run_result.get("ok", false)):
+		_author_live_last_error_code = str(run_result.get("error_code", "engine_apply_rejected"))
+		_author_live_canary_running = false
+		return
+	_author_live_decision_generation += 2
+	_author_live_last_witness = (run_result.get("witness") as Dictionary).duplicate(true)
+	_author_live_last_error_code = ""
+	_pending_choice = ""
+	_dialog_data = {}
+	_dialog_items_data = []
+	if _dialog_overlay != null:
+		_dialog_overlay.visible = false
+	_author_live_canary_running = false
+	_after_setup_active(pi)
+
+
 
 func _after_setup_bench(pi: int) -> void:
 	_setup_done[pi] = true
@@ -1375,12 +1630,12 @@ func _after_setup_bench(pi: int) -> void:
 			_view_player = _preferred_live_view_player(_gsm.game_state.current_player_index)
 			_refresh_ui()
 			_check_two_player_handover()
-	if _ai_running and GameManager.current_mode == GameManager.GameMode.VS_AI:
-		_ensure_ai_opponent()
-		if _ai_opponent != null and _gsm != null and _gsm.game_state != null:
+	if _ai_running and GameManager.current_mode in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI]:
+		var runtime_owner: Variant = _runtime_ai_owner()
+		if runtime_owner != null and _gsm != null and _gsm.game_state != null:
 			var next_setup_owner: int = _get_ai_prompt_player_index()
-			if (_pending_choice != "" and next_setup_owner == _ai_opponent.player_index) \
-				or _gsm.game_state.current_player_index == _ai_opponent.player_index:
+			if (_pending_choice != "" and next_setup_owner == int(runtime_owner.player_index)) \
+				or _gsm.game_state.current_player_index == int(runtime_owner.player_index):
 				_ai_followup_requested = true
 	_maybe_run_ai()
 
@@ -1828,6 +2083,11 @@ func _clear_replay_ui_state() -> void:
 		_replay_entry_source = str(empty_state.get("entry_source", ""))
 		_replay_loaded_raw_snapshot = (empty_state.get("loaded_raw_snapshot", {}) as Dictionary).duplicate(true)
 		_replay_loaded_view_snapshot = (empty_state.get("loaded_view_snapshot", {}) as Dictionary).duplicate(true)
+	_replay_timeline.clear()
+	_replay_current_frame_index = -1
+	_replay_is_playing = false
+	_replay_playback_accumulator = 0.0
+	_replay_player_labels.clear()
 	_pending_choice = ""
 	_set_pending_handover_action(Callable(), "replay_continue")
 	_set_handover_panel_visible(false, "replay_continue")
@@ -2216,6 +2476,60 @@ func _load_replay_turn(turn_number: int) -> void:
 	_refresh_ui()
 
 
+func _load_replay_frame(frame_index: int, animate_forward: bool) -> void:
+	if frame_index < 0 or frame_index >= _replay_timeline.size():
+		return
+	var frame: Dictionary = _replay_timeline[frame_index]
+	var raw_snapshot := (frame.get("raw_snapshot", {}) as Dictionary).duplicate(true)
+	var view_snapshot := (frame.get("view_snapshot", {}) as Dictionary).duplicate(true)
+	var restored_game_state: GameState = _battle_replay_state_restorer.call("restore", view_snapshot) as GameState
+	if restored_game_state == null:
+		return
+	_replay_current_frame_index = frame_index
+	_replay_loaded_raw_snapshot = raw_snapshot
+	_replay_loaded_view_snapshot = view_snapshot
+	_view_player = int(frame.get("view_player_index", _view_player))
+	_replay_current_turn_index = _replay_turn_numbers.find(int(frame.get("turn_number", 0)))
+	_ensure_game_state_machine()
+	_gsm.game_state = restored_game_state
+	_register_effects_from_game_state(_gsm.game_state)
+	var action := _replay_action_from_frame(frame)
+	if animate_forward and action != null and _battle_visual_sequence_controller != null:
+		_replay_preserve_visual_sequence_during_refresh = true
+		_battle_visual_sequence_controller.call("capture_action", action, _gsm.game_state, _view_player)
+	elif _battle_visual_sequence_controller != null:
+		_battle_visual_sequence_controller.call("clear", "replay_seek")
+	_refresh_replay_controls()
+	_refresh_ui()
+	_replay_preserve_visual_sequence_during_refresh = false
+	_rebuild_replay_action_log(frame_index)
+
+
+func _replay_action_from_frame(frame: Dictionary) -> GameAction:
+	var action_variant: Variant = frame.get("action", {})
+	if not (action_variant is Dictionary) or (action_variant as Dictionary).is_empty():
+		return null
+	var action_data: Dictionary = action_variant
+	return GameAction.create(
+		int(action_data.get("action_type", GameAction.ActionType.GAME_START)),
+		int(action_data.get("player_index", -1)),
+		(action_data.get("data", {}) as Dictionary).duplicate(true),
+		int(action_data.get("turn_number", frame.get("turn_number", 0))),
+		str(action_data.get("description", ""))
+	)
+
+
+func _rebuild_replay_action_log(frame_index: int) -> void:
+	if _log_list == null:
+		return
+	_log_list.clear()
+	for index: int in mini(frame_index + 1, _replay_timeline.size()):
+		var action := _replay_action_from_frame(_replay_timeline[index])
+		if action == null or action.description.strip_edges() == "":
+			continue
+		_log(_format_action_description_for_display(action.description), action)
+
+
 
 func _bind_discard_open_control(control: Control, visible_side: String, title: String) -> void:
 	if control == null:
@@ -2257,8 +2571,7 @@ func _portrait_action_descriptors() -> Array[Dictionary]:
 	_append_portrait_button_action(actions, _btn_ai_advice, "AI建议")
 	_append_portrait_button_action(actions, _btn_zeus_help, "宙斯帮我")
 	_append_portrait_button_action(actions, _btn_replay_prev_turn, "上一回合")
+	_append_portrait_button_action(actions, _btn_replay_play_pause, "播放")
 	_append_portrait_button_action(actions, _btn_replay_next_turn, "下一回合")
-	_append_portrait_button_action(actions, _btn_replay_continue, "从此处继续")
-	_append_portrait_button_action(actions, _btn_replay_back_to_list, "返回复盘列表")
-	_append_portrait_button_action(actions, _btn_back, "退出游戏")
+	_append_portrait_button_action(actions, _btn_replay_back_to_list, "退出录像")
 	return actions

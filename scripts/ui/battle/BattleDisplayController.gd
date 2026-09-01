@@ -168,12 +168,12 @@ func refresh_ui(scene: Object) -> void:
 	var phase_label: Label = _scene_label(scene, "_lbl_phase", "LblPhase")
 	var turn_label: Label = _scene_label(scene, "_lbl_turn", "LblTurn")
 	var full_phase_line := _bt(scene, "battle.top.phase_line", {
-		"deck": get_selected_deck_name(current_player),
+		"deck": get_selected_deck_name_for_scene(scene, current_player),
 		"count": opponent.hand.size(),
 	})
 	var full_turn_line := _bt(scene, "battle.top.turn_line", {
 		"turn": gs.turn_number,
-		"player": get_display_player_name(current_player),
+		"player": get_display_player_name_for_scene(scene, current_player),
 	})
 	var portrait_layout := _is_portrait_battle_layout(scene)
 	var portrait_phase_line := _bt(scene, "battle.top.portrait_phase_line", {
@@ -193,7 +193,11 @@ func refresh_ui(scene: Object) -> void:
 
 	var opponent_hand_button: Button = _scene_button(scene, "_btn_opponent_hand", "BtnOpponentHand")
 	if opponent_hand_button != null:
-		opponent_hand_button.visible = (not bool(scene.call("_is_review_mode"))) and GameManager.current_mode == GameManager.GameMode.VS_AI
+		var is_ai_battle := GameManager.current_mode in [
+			GameManager.GameMode.VS_AI,
+			GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+		]
+		opponent_hand_button.visible = (not bool(scene.call("_is_review_mode"))) and is_ai_battle
 	var attack_vfx_preview_button: Button = _scene_button(scene, "_btn_attack_vfx_preview", "BtnAttackVfxPreview")
 	if attack_vfx_preview_button != null:
 		attack_vfx_preview_button.visible = false
@@ -251,9 +255,12 @@ func refresh_ui(scene: Object) -> void:
 	var is_my_turn: bool = (not bool(scene.call("_is_review_mode"))) and current_player == view_player and gs.phase == GameState.GamePhase.MAIN
 	var end_turn_button: Button = _scene_button(scene, "_btn_end_turn", "BtnEndTurn")
 	var hud_end_turn_button: Button = _scene_button(scene, "_hud_end_turn_btn", "HudEndTurnBtn")
+	var in_replay := bool(scene.call("_is_review_mode"))
 	if end_turn_button != null:
+		end_turn_button.visible = not in_replay
 		end_turn_button.disabled = not is_my_turn
 	if hud_end_turn_button != null:
+		hud_end_turn_button.visible = not in_replay
 		hud_end_turn_button.disabled = not is_my_turn
 	refresh_stadium_area(scene, gs, current_player, is_my_turn)
 	refresh_info_hud(scene, gs, view_player, opponent_player)
@@ -274,8 +281,38 @@ func get_selected_deck_name(player_index: int) -> String:
 	return BattleI18n.t("battle.player.default", {"index": player_index + 1})
 
 
+func get_selected_deck_name_for_scene(scene: Object, player_index: int) -> String:
+	var replay_label := _replay_player_label(scene, player_index)
+	if replay_label != "":
+		return replay_label
+	if scene != null \
+			and GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI \
+			and player_index == 1:
+		var pinned_label := str(scene.get("_author_strategy_deck_label")).strip_edges()
+		if not pinned_label.is_empty():
+			return pinned_label
+	return get_selected_deck_name(player_index)
+
+
 func get_display_player_name(player_index: int) -> String:
 	return GameManager.resolve_battle_player_display_name(player_index)
+
+
+func get_display_player_name_for_scene(scene: Object, player_index: int) -> String:
+	var replay_label := _replay_player_label(scene, player_index)
+	return replay_label if replay_label != "" else get_display_player_name(player_index)
+
+
+func _replay_player_label(scene: Object, player_index: int) -> String:
+	if scene == null or not bool(scene.call("_is_review_mode")):
+		return ""
+	var labels_variant: Variant = scene.get("_replay_player_labels")
+	if not (labels_variant is Array):
+		return ""
+	var labels: Array = labels_variant
+	if player_index < 0 or player_index >= labels.size():
+		return ""
+	return str(labels[player_index]).strip_edges()
 
 
 func update_side_previews(scene: Object, opp: PlayerState, my_player: PlayerState) -> void:
@@ -796,7 +833,11 @@ func refresh_hand(scene: Object) -> void:
 	var view_player: int = int(scene.get("_view_player"))
 	var visible_hand: Array[CardInstance] = []
 	var hand_mode := "cards"
-	if current_player != view_player and gs.phase != GameState.GamePhase.SETUP:
+	if (
+		current_player != view_player
+		and gs.phase != GameState.GamePhase.SETUP
+		and not bool(scene.call("_is_review_mode"))
+	):
 		hand_mode = "waiting"
 	else:
 		var current_reveal: GameAction = scene.get("_draw_reveal_current_action") as GameAction

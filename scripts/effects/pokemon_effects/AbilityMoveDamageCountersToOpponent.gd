@@ -39,7 +39,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return false
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var source_items: Array = []
 	var source_labels: Array[String] = []
@@ -49,7 +49,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			source_labels.append("%s (%d伤害)" % [slot.get_pokemon_name(), slot.damage_counters])
 	if source_items.is_empty():
 		return []
-	return [{
+	var step := {
 		"id": "source_pokemon",
 		"title": "选择要移走伤害指示物的己方宝可梦",
 		"items": source_items,
@@ -58,10 +58,12 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"max_select": 1,
 		"requires_followup_interaction": true,
 		"allow_cancel": true,
-	}]
+		"ucis_context_name": "REMOVE_DAMAGE_COUNTER",
+	}
+	return [step]
 
 
-func get_followup_interaction_steps(
+func build_ucis_followup_interaction_steps_spec_steps(
 	card: CardInstance,
 	state: GameState,
 	resolved_context: Dictionary
@@ -95,6 +97,15 @@ func get_followup_interaction_steps(
 		"max_assignments_per_target": 1,
 		"allow_partial": true,
 		"allow_cancel": true,
+		# Godot keeps its original single counter-distribution interaction. Only
+		# the aligned external owner expands it into the two official CABT
+		# windows, preserving both player UX and the immutable-window contract.
+		"ucis_counter_count_window": {
+			"ucis_context_name": "REMOVE_DAMAGE_COUNTER_COUNT",
+		},
+		"ucis_counter_target_window": {
+			"ucis_context_name": "DAMAGE_COUNTER",
+		},
 	}]
 
 
@@ -157,7 +168,12 @@ func _resolve_transfer(pokemon: PokemonSlot, targets: Array, state: GameState) -
 			target = target_raw[0] as PokemonSlot
 		var count_raw: Array = ctx.get("counter_count", [])
 		if not count_raw.is_empty():
-			count = int(count_raw[0])
+			var count_value: Variant = count_raw[0]
+			count = (
+				int((count_value as Dictionary).get("number", 0))
+				if count_value is Dictionary
+				else int(count_value)
+			)
 	if target == null or target not in opponent.get_all_pokemon() or not _is_live_slot(target, state):
 		return {"valid": false, "reason": "damage target is missing or no longer legal"}
 

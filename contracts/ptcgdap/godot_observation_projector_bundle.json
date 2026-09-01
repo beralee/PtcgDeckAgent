@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-godot-observation-projector-p2-wp5-v1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "p1_contract_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+  "catalog_bundle_canonical_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+  "firewall_bundle_canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+  "parent_cursor_bundle_canonical_sha256": "ED246F029531AA8F21956A64D70F557F1BBC90450A6F9109C5286261E290319D",
+  "artifacts": [
+    {
+      "id": "godot_observation_projector_schema_v1",
+      "path": "contracts/ptcgdap/godot_observation_projector.schema.json",
+      "canonical_sha256": "6045AF6A55B10FF43A917D5ED85DB98204CFDFE78AAEABCD6B20051CEAF011DF"
+    },
+    {
+      "id": "godot_observation_projector_profile_v1",
+      "path": "contracts/ptcgdap/godot_observation_projector_profile.json",
+      "canonical_sha256": "175C4422EDB2DB5ECCF3BF04AC16AC8B9BF74F80E8B4C3F75E634C6772A4BFD1"
+    },
+    {
+      "id": "godot_observation_projector_conformance_v1",
+      "path": "contracts/ptcgdap/godot_observation_projector_conformance_vectors.json",
+      "canonical_sha256": "D3724188C8ED7569749E8733AF8666107922E83C632ABD0D7D14F977EBF3AF73"
+    }
+  ]
+}

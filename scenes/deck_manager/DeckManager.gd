@@ -14,6 +14,8 @@ const DeckShareImageScannerScript := preload("res://scripts/deck_share/DeckShare
 const DeckShareImporterScript := preload("res://scripts/deck_share/DeckShareImporter.gd")
 const DeckSharePlatformAdapterScript := preload("res://scripts/deck_share/DeckSharePlatformAdapter.gd")
 const StarterDeckGeneratorScript := preload("res://scripts/deck_builder/StarterDeckGenerator.gd")
+const DECK_LIST_RENDER_BATCH_SIZE := 16
+const REMOTE_RECOMMENDATION_IDLE_DELAY_SECONDS := 1.0
 
 const CARD_TILE_WIDTH := 100
 const CARD_TILE_HEIGHT := 140
@@ -166,6 +168,10 @@ var _pending_deck_upsert_ids: Dictionary = {}
 var _deck_upsert_flush_scheduled := false
 var _deck_full_refresh_scheduled := false
 var _local_deck_search_query := ""
+var _deck_list_render_generation := 0
+var _pending_deck_list_render: Array[DeckData] = []
+var _pending_deck_list_render_index := 0
+var _pending_deck_list_scroll := 0
 
 
 func _ready() -> void:
@@ -1006,9 +1012,20 @@ func _setup_deck_recommendations() -> void:
 	_ensure_recommendation_section()
 	if _should_fetch_remote_recommendations():
 		_ensure_recommendation_client()
-		_request_latest_remote_recommendation_on_open()
+		call_deferred("_schedule_latest_remote_recommendation_on_open")
 	else:
 		_refresh_recommendation_cards()
+
+
+func _schedule_latest_remote_recommendation_on_open() -> void:
+	if not is_inside_tree():
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	await tree.create_timer(REMOTE_RECOMMENDATION_IDLE_DELAY_SECONDS).timeout
+	if is_inside_tree():
+		_request_latest_remote_recommendation_on_open()
 
 
 func _should_fetch_remote_recommendations() -> bool:
@@ -2984,6 +3001,10 @@ func _deck_row_date_text(deck: DeckData) -> String:
 
 
 func _refresh_deck_list() -> void:
+	_deck_list_render_generation += 1
+	var render_generation := _deck_list_render_generation
+	_pending_deck_list_render.clear()
+	_pending_deck_list_render_index = 0
 	var deck_list_container: VBoxContainer = %DeckList
 	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
 	var previous_scroll := deck_scroll.scroll_vertical if deck_scroll != null else 0
@@ -2995,15 +3016,55 @@ func _refresh_deck_list() -> void:
 
 	var decks := CardDatabase.get_all_decks()
 	decks.sort_custom(_compare_decks_by_edit_time_desc)
-
-	for deck: DeckData in decks:
-		deck_list_container.add_child(_create_deck_item(deck))
-	_apply_local_deck_search_filter()
-	if deck_scroll != null and previous_scroll > 0:
-		deck_scroll.scroll_vertical = previous_scroll
-		deck_scroll.set_deferred("scroll_vertical", previous_scroll)
+	_pending_deck_list_render.assign(decks)
+	_pending_deck_list_scroll = previous_scroll
+	_append_deck_list_render_batch(render_generation, not is_inside_tree())
 	if _is_import_panel_visible():
 		_set_import_background_controls_blocked(true)
+
+
+func _append_deck_list_render_batch(generation: int, render_all: bool = false) -> void:
+	if generation != _deck_list_render_generation:
+		return
+	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	if deck_list_container == null:
+		return
+	var batch_end := _pending_deck_list_render.size() if render_all else mini(
+		_pending_deck_list_render.size(),
+		_pending_deck_list_render_index + DECK_LIST_RENDER_BATCH_SIZE
+	)
+	while _pending_deck_list_render_index < batch_end:
+		var deck := _pending_deck_list_render[_pending_deck_list_render_index]
+		_pending_deck_list_render_index += 1
+		if deck == null or _find_deck_row(deck_list_container, deck.id) != null:
+			continue
+		deck_list_container.add_child(_create_deck_item(deck))
+	_apply_local_deck_search_filter()
+	if _pending_deck_list_render_index < _pending_deck_list_render.size():
+		var tree := get_tree() if is_inside_tree() else null
+		if tree == null:
+			_append_deck_list_render_batch(generation, true)
+		else:
+			tree.create_timer(0.0).timeout.connect(
+				Callable(self, "_append_deck_list_render_batch").bind(generation, false),
+				CONNECT_ONE_SHOT
+			)
+		return
+	_pending_deck_list_render.clear()
+	_pending_deck_list_render_index = 0
+	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
+	if deck_scroll != null and _pending_deck_list_scroll > 0:
+		deck_scroll.scroll_vertical = _pending_deck_list_scroll
+		deck_scroll.set_deferred("scroll_vertical", _pending_deck_list_scroll)
+
+
+func _find_deck_row(container: Node, deck_id: int) -> Control:
+	if container == null:
+		return null
+	for child: Node in container.get_children():
+		if int(child.get_meta("deck_id", -1)) == deck_id and child is Control:
+			return child as Control
+	return null
 
 
 func _on_decks_changed() -> void:
@@ -3108,6 +3169,12 @@ func _reorder_deck_rows() -> void:
 
 
 func _remove_deck_row(deck_id: int) -> void:
+	for index: int in range(_pending_deck_list_render.size() - 1, -1, -1):
+		var pending := _pending_deck_list_render[index]
+		if pending != null and pending.id == deck_id:
+			_pending_deck_list_render.remove_at(index)
+			if index < _pending_deck_list_render_index:
+				_pending_deck_list_render_index = maxi(0, _pending_deck_list_render_index - 1)
 	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
 	if deck_list_container == null:
 		return

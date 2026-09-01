@@ -102,6 +102,7 @@ func _build_payload(model: String, match_summary: Dictionary) -> Dictionary:
 			"不要平均评价双方，也不要给对手单独写亮点或改进；提到对手时，只能用于解释当前玩家为什么赢/输、哪里该应对、哪里错过窗口。",
 			"如果 review_subject.result 是 win，不能把当前玩家写成输家；如果是 loss，不能把当前玩家写成赢家。",
 			"优先阅读 quick_review_context.key_moments、last_turn、recent_turns、critical_sequences；普通统计只能作为辅助。",
+			"如果 quick_review_context.evidence 存在，只能点名其中明确出现的卡名、招式、伤害和回合；缺失的信息必须省略，绝不能补猜。",
 			"评分衡量当前玩家的打牌质量，不是单纯输赢：奖赏计划、资源顺序、卡组主线执行、关键窗口处理和终结质量都要纳入判断。",
 			"评价要专业具体：尽量点出可见的回合、卡名、选择或资源窗口；避免“继续保持”“注意资源”这种空话。",
 			"当前玩家胜利时，指出最可复用的赢点和仍可优化的细节；当前玩家失败时，指出最优先复盘的关键窗口和下一盘可执行目标。",

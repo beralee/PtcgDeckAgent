@@ -61,6 +61,11 @@ const FEEDBACK_OVERLAY_NAME := "FeedbackOverlay"
 const HUD_MODAL_OVERLAY_NAME := "HudModalOverlay"
 const TEMP_FORCE_UPDATE_PREVIEW_ON_STARTUP := false
 const TEMP_UPDATE_PREVIEW_ARG := "--preview-update-available"
+const PTCGDAP_DEVELOPMENT_EXPORT_MATCH_ARG := "--ptcgdap-development-export-match"
+const PTCGDAP_DEVELOPMENT_UI_MATCH_ARG := "--ptcgdap-development-ui-match"
+const PTCGDAP_PRODUCTION_DEVICE_CANARY_ARG := "--ptcgdap-production-device-canary"
+const NAVIGATION_PREWARM_IDLE_DELAY_SECONDS := 0.75
+const STARTUP_NETWORK_IDLE_DELAY_SECONDS := 2.0
 const TEMP_UPDATE_PREVIEW_KEY := KEY_U
 
 var _update_checker: Node = null
@@ -115,21 +120,23 @@ var _main_menu_landscape_background_texture: Texture2D = null
 var _main_menu_portrait_background_texture: Texture2D = null
 var _portrait_home_title: Label = null
 var _portrait_home_subtitle: Label = null
+var _navigation_started := false
 
 
 func _ready() -> void:
-	_request_navigation_resource_prewarm()
+	if PTCGDAP_DEVELOPMENT_EXPORT_MATCH_ARG in OS.get_cmdline_user_args():
+		return
+	call_deferred("_schedule_navigation_resource_prewarm")
 	_apply_main_menu_hud()
 	_ensure_budew_mascot()
 	_setup_version_and_updates()
 	_connect_non_battle_layout_signal()
 	call_deferred("_apply_non_battle_layout")
-	%BtnSettings.text = "AI 设置"
 	%BtnStartBattle.pressed.connect(_on_start_battle)
 	%BtnTournament.pressed.connect(_on_tournament)
 	%BtnDeckManager.pressed.connect(_on_deck_manager)
 	%BtnBattleReplay.pressed.connect(_on_deck_training)
-	%BtnSettings.pressed.connect(_on_settings)
+	%BtnStrategyHub.pressed.connect(_on_strategy_hub)
 	%BtnQuit.pressed.connect(_on_quit)
 
 
@@ -152,6 +159,28 @@ func _request_navigation_resource_prewarm() -> void:
 		return
 	if GameManager != null and GameManager.has_method("prewarm_navigation_resources"):
 		GameManager.prewarm_navigation_resources()
+
+
+func _schedule_navigation_resource_prewarm() -> void:
+	if not is_inside_tree() or _navigation_started:
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	await tree.create_timer(NAVIGATION_PREWARM_IDLE_DELAY_SECONDS).timeout
+	if not is_inside_tree() or _navigation_started:
+		return
+	_request_navigation_resource_prewarm()
+
+
+func _begin_navigation_feedback(button: Button) -> bool:
+	if _navigation_started:
+		return false
+	_navigation_started = true
+	if button != null:
+		button.disabled = true
+		button.text = "正在载入…"
+	return true
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -328,7 +357,7 @@ func _apply_main_menu_hud() -> void:
 		var deck_button := get_node_or_null("%BtnDeckManager") as Button
 		if deck_button != null and deck_button.get_parent() == menu:
 			menu.move_child(deck_button, 1)
-	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnSettings", "BtnQuit"]:
+	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnStrategyHub", "BtnQuit"]:
 		var button := get_node_or_null("%" + button_name) as Button
 		if button == null:
 			continue
@@ -425,7 +454,7 @@ func _apply_main_menu_frame_metrics(context: Dictionary, portrait: bool) -> void
 		menu.offset_right = 170.0
 		menu.offset_top = -175.0 + MENU_VERTICAL_SHIFT
 		menu.offset_bottom = 175.0 + MENU_VERTICAL_SHIFT
-	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnSettings", "BtnQuit"]:
+	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnStrategyHub", "BtnQuit"]:
 		var button := get_node_or_null("%" + button_name) as Button
 		if button == null:
 			continue
@@ -905,6 +934,8 @@ func _main_menu_button_role(button_name: String) -> String:
 			return "featured"
 		"BtnBattleReplay":
 			return "training_feature"
+		"BtnStrategyHub":
+			return "featured"
 		"BtnQuit":
 			return "danger"
 		_:
@@ -1349,9 +1380,27 @@ func _setup_version_and_updates() -> void:
 
 	_ensure_update_button()
 	_ensure_corner_action_buttons()
-	call_deferred("_start_update_check")
-	call_deferred("_start_deck_center_meta_check")
-	call_deferred("_send_startup_visit_ping")
+	if (
+		PTCGDAP_DEVELOPMENT_UI_MATCH_ARG in OS.get_cmdline_user_args()
+		or PTCGDAP_PRODUCTION_DEVICE_CANARY_ARG in OS.get_cmdline_user_args()
+	):
+		print("PTCGDAP_WINDOWS_UI_NETWORK=application_disabled")
+		return
+	call_deferred("_schedule_startup_network_tasks")
+
+
+func _schedule_startup_network_tasks() -> void:
+	if not is_inside_tree() or _navigation_started:
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	await tree.create_timer(STARTUP_NETWORK_IDLE_DELAY_SECONDS).timeout
+	if not is_inside_tree() or _navigation_started:
+		return
+	_start_update_check()
+	_start_deck_center_meta_check()
+	_send_startup_visit_ping()
 
 
 func _send_startup_visit_ping() -> void:
@@ -2758,10 +2807,14 @@ func _ignore_current_update_version() -> void:
 
 
 func _on_start_battle() -> void:
+	if not _begin_navigation_feedback(%BtnStartBattle):
+		return
 	GameManager.goto_battle_setup()
 
 
 func _on_tournament() -> void:
+	if not _begin_navigation_feedback(%BtnTournament):
+		return
 	if GameManager.has_resumable_tournament_overview():
 		GameManager.goto_tournament_overview()
 		return
@@ -2772,17 +2825,23 @@ func _on_tournament() -> void:
 
 
 func _on_deck_manager() -> void:
+	if not _begin_navigation_feedback(%BtnDeckManager):
+		return
 	_mark_pending_deck_center_meta_seen()
 	GameManager.goto_deck_manager()
 
 
 func _on_deck_training() -> void:
+	if not _begin_navigation_feedback(%BtnBattleReplay):
+		return
 	_mark_deck_training_feature_seen()
 	GameManager.goto_deck_training()
 
 
-func _on_settings() -> void:
-	GameManager.goto_settings()
+func _on_strategy_hub() -> void:
+	if not _begin_navigation_feedback(%BtnStrategyHub):
+		return
+	GameManager.goto_strategy_hub()
 
 
 func _on_quit() -> void:

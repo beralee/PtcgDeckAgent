@@ -7,7 +7,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return _has_valid_source(player) and player.get_all_pokemon().size() >= 2
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var all_pokemon: Array = player.get_all_pokemon()
 
@@ -52,6 +52,14 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	)
 	step["source_groups"] = source_groups
 	step["source_exclude_targets"] = exclude_map
+	# The first window chooses an attached Energy card, not an ordinary field
+	# card.  The second fresh window chooses the Pokemon that receives it.
+	# Naming both UCIS contexts prevents the structural card-assignment default
+	# (CARD / EFFECT_TARGET) from changing the public candidate identity.
+	step["ucis_context_name"] = "SWITCH_ENERGY_CARD"
+	step["ucis_option_type_name"] = "ENERGY_CARD"
+	step["ucis_target_context_name"] = "ATTACH_TO"
+	step["ucis_target_option_type_raw"] = 3
 	step["compact_field_assignment_after_source"] = true
 	step["field_assignment_require_confirm"] = true
 	step["compact_field_assignment_title"] = "能量转移"

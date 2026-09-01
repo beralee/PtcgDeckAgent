@@ -23,7 +23,7 @@ func get_empty_interaction_message(card: CardInstance, state: GameState) -> Stri
 	return get_unusable_reason(card, state)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent := _opponent_for(card, state)
 	if opponent == null or opponent.hand.is_empty():
 		return []

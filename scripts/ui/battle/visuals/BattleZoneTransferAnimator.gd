@@ -10,6 +10,11 @@ const EVENT_HARD_LIMIT_SECONDS := 1.5
 
 var _active_tweens: Array[Tween] = []
 var _active_overlays: Array[Control] = []
+var _playback_speed: float = 1.0
+
+
+func set_playback_speed(speed: float) -> void:
+	_playback_speed = clampf(speed, 0.5, 4.0)
 
 
 func handles(event: Dictionary) -> bool:
@@ -130,6 +135,7 @@ func play_event(scene: Object, event: Dictionary, completed: Callable) -> void:
 		var lift := minf(120.0, maxf(44.0, local_start.distance_to(local_end) * 0.20))
 		var control := (local_start + local_end) * 0.5 + Vector2(0.0, -lift if local_end.y >= local_start.y else lift)
 		var tween := (scene as Node).create_tween()
+		tween.set_speed_scale(_playback_speed)
 		_active_tweens.append(tween)
 		if index > 0:
 			tween.tween_interval(float(index) * 0.035)
@@ -324,6 +330,7 @@ func _add_semantic_accent(scene: Object, overlay: Control, source_rect: Rect2, t
 		sweep.rotation_degrees = -12.0
 		overlay.add_child(sweep)
 		var sweep_tween := (scene as Node).create_tween()
+		sweep_tween.set_speed_scale(_playback_speed)
 		_active_tweens.append(sweep_tween)
 		sweep_tween.tween_property(sweep, "position:x", sweep.position.x + source_rect.size.x * 1.55, 0.24).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		sweep_tween.parallel().tween_property(sweep, "modulate:a", 0.0, 0.24)
@@ -350,6 +357,7 @@ func _add_semantic_accent(scene: Object, overlay: Control, source_rect: Rect2, t
 	pulse.scale = Vector2(0.82, 0.82)
 	pulse.pivot_offset = pulse.size * 0.5
 	var pulse_tween := (scene as Node).create_tween()
+	pulse_tween.set_speed_scale(_playback_speed)
 	_active_tweens.append(pulse_tween)
 	pulse_tween.tween_property(pulse, "scale", Vector2(1.12, 1.12), 0.34).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	pulse_tween.parallel().tween_property(pulse, "modulate:a", 0.0, 0.52).set_delay(0.12)

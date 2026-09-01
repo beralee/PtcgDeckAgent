@@ -391,6 +391,31 @@ func test_battle_setup_background_gallery_is_compact_drag_area() -> String:
 	return result
 
 
+func test_battle_setup_background_gallery_uses_cached_thumbnail_textures() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var first := scene.call("_load_background_preview_texture", "res://assets/ui/background.png") as Texture2D
+	var second := scene.call("_load_background_preview_texture", "res://assets/ui/background.png") as Texture2D
+	var result := run_checks([
+		assert_not_null(first, "The default background should produce a gallery preview"),
+		assert_true(first != null and first.get_width() <= 320 and first.get_height() <= 180, "Gallery previews should be thumbnails instead of full battle textures"),
+		assert_true(first == second, "Repeated gallery refreshes should reuse the same thumbnail texture"),
+	])
+	scene.free()
+	return result
+
+
+func test_battle_setup_defers_optional_dialog_network_and_import_resources() -> String:
+	var source := FileAccess.get_file_as_string("res://scenes/battle_setup/BattleSetup.gd")
+	return run_checks([
+		assert_false(source.contains('preload("res://scripts/ui/decks/DeckViewDialog.gd")'), "Deck preview code should load only when the player opens a deck"),
+		assert_false(source.contains('preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")'), "Strategy discussion UI should load only when the player opens it"),
+		assert_false(source.contains('preload("res://scripts/network/ZenMuxClient.gd")'), "The optional network client should not delay an ordinary setup screen"),
+		assert_false(source.contains('preload("res://scripts/audio/BattleMusicImportAdapter.gd")'), "The music picker adapter should load only when import is requested"),
+		assert_true(source.contains("func _ensure_llm_model_test_client() -> bool"), "The model test action should retain a guarded lazy loader"),
+		assert_true(source.contains("DECK_DISCUSSION_DIALOG_SCENE_PATH"), "The discussion action should retain its on-demand scene path"),
+	])
+
+
 func test_battle_setup_landscape_does_not_show_right_scrollbar() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree

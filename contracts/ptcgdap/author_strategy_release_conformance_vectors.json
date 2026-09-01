@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-release-as-wp6-v1",
+  "cases": [
+    {
+      "id": "approved-product-trust",
+      "operation": "load_fixed_documents",
+      "expected_error_code": "release_prompt_conformance_unapproved"
+    },
+    {
+      "id": "test-key-non-promotion",
+      "operation": "evaluate_test_fixture_package",
+      "expected_error_code": "release_package_not_execution_trusted"
+    },
+    {
+      "id": "unprovisioned-device-canary",
+      "operation": "evaluate_device_canary_package",
+      "expected_error_code": "release_trust_unprovisioned"
+    },
+    {
+      "id": "bare-prompt-coverage-claim",
+      "operation": "evaluate_production_package",
+      "fault": "missing_prompt_conformance_approval",
+      "expected_error_code": "release_prompt_conformance_unapproved"
+    },
+    {
+      "id": "a5-ineligible-device-profile",
+      "operation": "evaluate_good_device_report",
+      "expected_error_code": "release_a5_unapproved"
+    },
+    {
+      "id": "device-profile-mismatch",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "profile_hash_mismatch",
+      "expected_error_code": "device_report_profile_mismatch"
+    },
+    {
+      "id": "device-samples-short",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "decision_samples_short",
+      "expected_error_code": "device_sample_count_insufficient"
+    },
+    {
+      "id": "device-measurement-mismatch",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "decision_p95_mismatch",
+      "expected_error_code": "device_measurement_mismatch"
+    },
+    {
+      "id": "device-evidence-invalid",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "network_audit_hash_invalid",
+      "expected_error_code": "device_evidence_invalid"
+    },
+    {
+      "id": "network-not-blocked",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "network_open",
+      "expected_error_code": "device_network_not_blocked"
+    },
+    {
+      "id": "external-python",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "system_python_required",
+      "expected_error_code": "device_external_runtime_detected"
+    },
+    {
+      "id": "resource-limit",
+      "operation": "evaluate_approved_profile_report",
+      "fault": "decision_p95_exceeded",
+      "expected_error_code": "device_resource_limit_exceeded"
+    },
+    {
+      "id": "windows-only-release",
+      "operation": "evaluate_release_candidate",
+      "fault": "android_evidence_required_or_injected",
+      "expected_error_code": "release_device_evidence_incomplete"
+    },
+    {
+      "id": "inventory-missing",
+      "operation": "inspect_export",
+      "fault": "release_gate_missing",
+      "expected_error_code": "export_inventory_missing"
+    }
+  ]
+}

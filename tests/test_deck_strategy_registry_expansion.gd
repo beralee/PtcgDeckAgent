@@ -43,6 +43,8 @@ const V17_DECK_STRATEGIES := {
 	1700011: "v17_regidrago",
 }
 
+const GHOLDENGO_AUTHOR_CANDIDATE_ID := "palkia_gholdengo_author_v1"
+
 const V175_STRATEGIES := {
 	"v175_lugia_archeops": "res://scripts/ai/DeckStrategy175LugiaArcheops.gd",
 	"v175_lugia_archeops_llm": "res://scripts/ai/DeckStrategy175LugiaArcheopsLLM.gd",
@@ -251,6 +253,28 @@ func test_registry_resolves_v17_bundled_deck_ids_to_initial_rule_strategies() ->
 				"Deck %d strategy instance should report the v17 strategy id" % deck_id
 			))
 	return run_checks(checks)
+
+
+func test_registry_resolves_575479_to_author_strategy_candidate() -> String:
+	var registry_script := _load_script(STRATEGY_REGISTRY_SCRIPT_PATH)
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load before the 575479 author candidate can be tested"
+	var registry = registry_script.new()
+	var deck := DeckData.new()
+	deck.id = 575479
+	deck.deck_name = "Gholdengo Palkia author candidate"
+	deck.total_cards = 60
+	var resolved_id := str(registry.call("resolve_strategy_id_for_deck", deck))
+	var strategy = registry.call("resolve_strategy_for_deck", deck)
+	return run_checks([
+		assert_eq(resolved_id, GHOLDENGO_AUTHOR_CANDIDATE_ID, "Deck 575479 should resolve to the independently named author-strategy candidate"),
+		assert_not_null(strategy, "Deck 575479 should instantiate its author-strategy candidate"),
+		assert_eq(
+			str(strategy.call("get_strategy_id")) if strategy != null else "",
+			GHOLDENGO_AUTHOR_CANDIDATE_ID,
+			"The 575479 strategy instance should report the candidate strategy id"
+		),
+	])
 
 
 func test_registry_resolves_v175_lugia_bundled_deck_id_to_targeted_strategy() -> String:

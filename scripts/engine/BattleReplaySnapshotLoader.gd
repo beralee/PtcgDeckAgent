@@ -16,6 +16,31 @@ func load_turn(match_dir: String, turn_number: int) -> Dictionary:
 	}
 
 
+func load_timeline(match_dir: String, view_player_index: int) -> Array[Dictionary]:
+	var timeline: Array[Dictionary] = []
+	var pending_action: Dictionary = {}
+	for event: Dictionary in _read_json_lines(match_dir.path_join("detail.jsonl")):
+		var event_type := str(event.get("event_type", ""))
+		if event_type == "action_resolved":
+			pending_action = event.duplicate(true)
+			continue
+		if event_type != "state_snapshot":
+			continue
+		var raw_snapshot := event.duplicate(true)
+		timeline.append({
+			"frame_index": timeline.size(),
+			"event_index": int(event.get("event_index", timeline.size())),
+			"turn_number": int(event.get("turn_number", 0)),
+			"snapshot_reason": str(event.get("snapshot_reason", "")),
+			"raw_snapshot": raw_snapshot,
+			"view_snapshot": _filter_for_view_player(raw_snapshot, view_player_index),
+			"view_player_index": view_player_index,
+			"action": pending_action.duplicate(true),
+		})
+		pending_action = {}
+	return timeline
+
+
 func _find_turn_snapshot(match_dir: String, turn_number: int) -> Dictionary:
 	var first_in_turn: Dictionary = {}
 	for event: Dictionary in _read_json_lines(match_dir.path_join("detail.jsonl")):
@@ -45,12 +70,26 @@ func _filter_for_view_player(raw_event: Dictionary, view_player_index: int) -> D
 			continue
 		var player: Dictionary = (player_variant as Dictionary).duplicate(true)
 		if int(player.get("player_index", -1)) != view_player_index:
-			player["hand"] = []
-			player["deck"] = []
+			player["hand"] = _redact_hidden_cards(player.get("hand", []))
+			player["deck"] = _redact_hidden_cards(player.get("deck", []))
 		filtered_players.append(player)
 	state["players"] = filtered_players
 	filtered["state"] = state
 	return filtered
+
+
+func _redact_hidden_cards(cards_variant: Variant) -> Array[Dictionary]:
+	var redacted: Array[Dictionary] = []
+	if not (cards_variant is Array):
+		return redacted
+	for card_variant: Variant in cards_variant:
+		var card: Dictionary = card_variant if card_variant is Dictionary else {}
+		redacted.append({
+			"instance_id": int(card.get("instance_id", -1)),
+			"owner_index": int(card.get("owner_index", -1)),
+			"face_up": false,
+		})
+	return redacted
 
 
 func _read_json_lines(path: String) -> Array[Dictionary]:

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-marnie-portable-policy-p5-wp7-v1",
+  "status": "offline_shadow",
+  "parents": [
+    {
+      "id": "marnie_capability_policy",
+      "path": "contracts/ptcgdap/marnie_capability_policy_bundle.json",
+      "canonical_sha256": "F4E88E5DB4E480BA8441BE7B3A7C81CE3DB40ED1917EB37BCDCAC1C32B1ABD6C"
+    },
+    {
+      "id": "marnie_public_base",
+      "path": "contracts/ptcgdap/marnie_public_base_bundle.json",
+      "canonical_sha256": "67EBA6348277001692942FD58E8D1B9D50C54F0FFC783D8802BA3CCB45691105"
+    },
+    {
+      "id": "marnie_trajectory_replay",
+      "path": "contracts/ptcgdap/marnie_trajectory_replay_bundle.json",
+      "canonical_sha256": "E203A688BEC1AFFFABAAF06098361B3FAE04B84431F99AE75A19F891BFA9599F"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/marnie_portable_policy.schema.json",
+      "canonical_sha256": "31E041BC61625BB265C900A5E3E073A121FE92E4B5D954F7506472C2E4F2A398"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/marnie_portable_policy_profile.json",
+      "canonical_sha256": "963CDB706D6EAB7389ED6096DFBF61E69A2819A838D36837D9BC8FFE0E9A2626"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/marnie_portable_policy_conformance_vectors.json",
+      "canonical_sha256": "5BA16562A20331D99673756C46183055B17CC0CD47FB3EF1F1A1D2B0A8EB41A8"
+    },
+    {
+      "id": "audit",
+      "path": "data/ptcgdap/marnie_vertical_slice/marnie_portable_policy_v1.json",
+      "canonical_sha256": "B981C14562590E4FCFCF297148B6D317BFCA7FB5A5D6DB801A6C26CBC9802D8D"
+    }
+  ],
+  "runtime_authority": "offline_public_differential_only"
+}

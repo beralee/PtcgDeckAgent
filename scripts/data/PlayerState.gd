@@ -2,6 +2,8 @@
 class_name PlayerState
 extends RefCounted
 
+const RandomEventPortScript = preload("res://scripts/engine/RandomEventPort.gd")
+
 static var _forced_shuffle_seed: int = -1
 static var _forced_shuffle_counter: int = 0
 
@@ -25,6 +27,9 @@ var active_pokemon: PokemonSlot = null
 var bench: Array[PokemonSlot] = []
 ## 洗牌计数器（UI 动画检测用）
 var shuffle_count: int = 0
+## Match-scoped audited random owner. GameStateMachine binds both seats to the
+## same port before constructing and shuffling decks.
+var random_event_port: RefCounted = null
 
 
 ## 从牌库顶抽1张卡加入手牌，返回抽到的卡（牌库为空返回 null）
@@ -175,38 +180,40 @@ func clear_forced_shuffle_seed() -> void:
 	PlayerState._forced_shuffle_counter = 0
 
 
-static func _next_shuffle_rng() -> RandomNumberGenerator:
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	if PlayerState._forced_shuffle_seed >= 0:
-		rng.seed = PlayerState._forced_shuffle_seed + PlayerState._forced_shuffle_counter
-		PlayerState._forced_shuffle_counter += 1
-	else:
-		rng.randomize()
-	return rng
-
-
-static func shuffle_card_array(cards: Array) -> void:
+static func shuffle_card_array(cards: Array, port: RefCounted = null, metadata: Dictionary = {}) -> void:
 	if cards.size() < 2:
 		return
-	var rng := PlayerState._next_shuffle_rng()
-	for i in range(cards.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var temp: Variant = cards[i]
-		cards[i] = cards[j]
-		cards[j] = temp
+	var owner: RefCounted = port if port != null else RandomEventPortScript.new()
+	var population: Array = []
+	for value: Variant in cards:
+		if value is CardInstance:
+			var card: CardInstance = value
+			population.append({"owner":card.owner_index,"serial":card.instance_id,"uid":card.card_data.get_uid() if card.card_data != null else ""})
+		else:
+			population.append(str(value))
+	var seed_override := -1
+	if PlayerState._forced_shuffle_seed >= 0:
+		seed_override = PlayerState._forced_shuffle_seed + PlayerState._forced_shuffle_counter
+		PlayerState._forced_shuffle_counter += 1
+	var permutation: Array = owner.call("permutation", population, metadata, seed_override)
+	if permutation.size() != cards.size():
+		return
+	var original := cards.duplicate()
+	for index: int in permutation.size():
+		cards[index] = original[permutation[index]]
+
+
+func shuffle_cards(cards: Array, source_identity: String = "player_shuffle") -> void:
+	PlayerState.shuffle_card_array(cards, random_event_port, {
+		"acting_seat": player_index,
+		"source_identity": source_identity,
+	})
 
 
 func shuffle_deck() -> void:
-	PlayerState.shuffle_card_array(deck)
+	shuffle_cards(deck, "deck_shuffle")
 	shuffle_count += 1
 	return
-	var rng := RandomNumberGenerator.new()
-	if PlayerState._forced_shuffle_seed >= 0:
-		rng.seed = PlayerState._forced_shuffle_seed + PlayerState._forced_shuffle_counter
-		PlayerState._forced_shuffle_counter += 1
-	else:
-		rng.randomize()
-	# Fisher-Yates 洗牌
 
 
 ## 将指定卡牌从弃牌区移回牌库（不洗牌）

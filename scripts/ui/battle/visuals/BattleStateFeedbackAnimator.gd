@@ -8,6 +8,11 @@ const PORTRAIT_VISUAL_SCALE := 2.0
 
 var _active_tweens: Array[Tween] = []
 var _active_nodes: Array[Control] = []
+var _playback_speed: float = 1.0
+
+
+func set_playback_speed(speed: float) -> void:
+	_playback_speed = clampf(speed, 0.5, 4.0)
 
 
 func handles(event: Dictionary) -> bool:
@@ -126,6 +131,7 @@ func _play_floating_feedback(scene: Object, event: Dictionary, plan: Dictionary,
 	label.scale = Vector2(0.55, 0.55)
 	label.pivot_offset = label.size * 0.5
 	var tween := (scene as Node).create_tween()
+	tween.set_speed_scale(_playback_speed)
 	_active_tweens.append(tween)
 	tween.tween_property(label, "scale", Vector2(1.18, 1.18), 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "position:y", label.position.y - 46.0 * metric_scale, float(plan.get("duration", 0.58)) - 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -160,6 +166,7 @@ func _play_trigger_feedback(scene: Object, event: Dictionary, plan: Dictionary, 
 	pulse.scale = Vector2(0.84, 0.84)
 	pulse.pivot_offset = pulse.size * 0.5
 	var tween := (scene as Node).create_tween()
+	tween.set_speed_scale(_playback_speed)
 	_active_tweens.append(tween)
 	tween.set_parallel(true)
 	tween.tween_property(pulse, "scale", Vector2(1.08, 1.08), 0.30).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -180,6 +187,7 @@ func _play_shuffle_feedback(scene: Object, event: Dictionary, plan: Dictionary, 
 	var original_scale := control.scale
 	control.pivot_offset = control.size * 0.5
 	var tween := (scene as Node).create_tween()
+	tween.set_speed_scale(_playback_speed)
 	_active_tweens.append(tween)
 	for angle: float in [6.0, -6.0, 4.0, -4.0, 0.0]:
 		tween.tween_property(control, "rotation_degrees", angle, 0.09)
@@ -215,6 +223,7 @@ func _play_banner(scene: Object, event: Dictionary, plan: Dictionary, completed:
 	var target_x := scene_rect.position.x + scene_rect.size.x * 0.5 - label.size.x * 0.5
 	label.position.x = start_x
 	var tween := (scene as Node).create_tween()
+	tween.set_speed_scale(_playback_speed)
 	_active_tweens.append(tween)
 	if veil != null:
 		tween.parallel().tween_property(veil, "color:a", 0.58, 0.28)

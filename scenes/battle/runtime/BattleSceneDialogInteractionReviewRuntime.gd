@@ -662,8 +662,13 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 						_battle_attack_vfx_controller.call("play_preview_vfx", self, preview_profile)
 		"mulligan_extra_draw":
 			var beneficiary: int = _dialog_data.get("beneficiary", 0)
-			_gsm.resolve_mulligan_choice(beneficiary, true)
-			# resolve_mulligan_choice handles mulligan follow-up and may return to setup_ready
+			var maximum_draw_count: int = int(_dialog_data.get("maximum_draw_count", 1))
+			var draw_count := clampi(idx, 0, maximum_draw_count)
+			if _gsm.has_method("resolve_mulligan_draw_count"):
+				_gsm.call("resolve_mulligan_draw_count", beneficiary, draw_count)
+			else:
+				_gsm.resolve_mulligan_choice(beneficiary, draw_count > 0)
+			# The resolver handles Mulligan follow-up and may return to setup_ready.
 		"attack":
 			var cp: int = _dialog_data.get("player", 0)
 			if idx < _dialog_data.get("attack_count", 0):
@@ -921,8 +926,16 @@ func _setup_ai_for_tests() -> void:
 	_ai_followup_requested = false
 	_ai_action_pause_timer = null
 	_ai_action_pause_seconds = AI_ACTION_PAUSE_SECONDS
+	_author_policy_polling = false
+	_author_policy_wait_generation += 1
 	_coin_animation_resume_effect_step = false
 	_ai_opponent = null
+	_close_author_developer_trace("test_runtime_reset")
+	_close_author_match_evidence("test_runtime_reset")
+	if _author_player_owner != null and _author_player_owner.has_method("close_match"):
+		_author_player_owner.close_match()
+	_author_player_owner = null
+	_author_runtime_start_error_code = ""
 	_ai_turn_marker = ""
 	_ai_actions_this_turn = 0
 
@@ -1547,37 +1560,49 @@ func _run_ai_step() -> void:
 	_ai_step_scheduled = false
 	if not _is_ai_turn_ready():
 		return
-	if _should_wait_for_llm():
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
+		return
+	if GameManager.current_mode == GameManager.GameMode.VS_AI and _should_wait_for_llm():
 		return
 	_reset_ai_action_counter_if_needed()
 	if _ai_actions_this_turn >= AI_MAX_ACTIONS_PER_TURN:
 		if _pending_choice == "" and _gsm != null and _gsm.game_state != null and _gsm.game_state.phase == GameState.GamePhase.MAIN:
-			_on_end_turn(_ai_opponent.player_index)
+			_on_end_turn(int(owner.player_index))
 		return
 	var starting_pending_choice: String = _pending_choice
 	_ai_running = true
 	_ai_followup_requested = false
-	_ensure_ai_opponent()
-	var step_result: Dictionary = _ai_opponent.run_single_step_result(self, _gsm) \
-		if _ai_opponent.has_method("run_single_step_result") \
+	var step_result: Dictionary = owner.run_single_step_result(self, _gsm) \
+		if owner.has_method("run_single_step_result") \
 		else {
-			"status": "progressed" if _ai_opponent.run_single_step(self, _gsm) else "no_progress",
+			"status": "progressed" if owner.run_single_step(self, _gsm) else "no_progress",
 		}
 	var step_status := str(step_result.get("status", "no_progress"))
+	if step_status != "waiting_policy":
+		# The local policy mutates its audit counters on the worker thread. Record
+		# only after the completed result has been joined on the main thread.
+		_record_author_owner_step(owner, step_status)
 	var handled := step_status == "progressed"
 	_ai_running = false
 	if handled:
 		_ai_actions_this_turn += 1
 	elif step_status == "waiting_policy":
-		# A V18CPG request may start inside run_single_step, after the preflight
-		# wait check above. Treat it as an asynchronous continuation, never as a
-		# terminal lack of progress.
-		_should_wait_for_llm()
+		# Both V18CPG and a local author package reuse the existing policy-wait
+		# lifecycle. The author package also reuses the friendly thinking HUD while
+		# its immutable public frame is evaluated off the render thread.
+		if (
+			owner.has_method("has_pending_policy_decision")
+			and bool(owner.call("has_pending_policy_decision"))
+		):
+			_start_author_policy_wait(owner)
+		else:
+			_should_wait_for_llm()
 		_runtime_log(
 			"ai_step_waiting_for_policy",
 			"turn=%d player=%d actions=%d" % [
 				_gsm.game_state.turn_number,
-				_ai_opponent.player_index,
+				int(owner.player_index),
 				_ai_actions_this_turn,
 			]
 		)
@@ -1586,17 +1611,21 @@ func _run_ai_step() -> void:
 		and _gsm != null \
 		and _gsm.game_state != null \
 		and _gsm.game_state.phase == GameState.GamePhase.MAIN \
-		and _gsm.game_state.current_player_index == _ai_opponent.player_index:
+		and _gsm.game_state.current_player_index == int(owner.player_index):
 		_runtime_log(
 			"ai_step_no_progress_fallback",
 			"turn=%d player=%d actions=%d" % [
 				_gsm.game_state.turn_number,
-				_ai_opponent.player_index,
+				int(owner.player_index),
 				_ai_actions_this_turn,
 			]
 		)
 		_hide_invalid_action_hint()
-		_on_end_turn(_ai_opponent.player_index)
+		if GameManager.current_mode == GameManager.GameMode.VS_AI or owner == _development_player_rules_owner:
+			_on_end_turn(int(owner.player_index))
+		else:
+			_author_runtime_start_error_code = "author_owner_no_progress"
+			_runtime_log("author_development_no_progress", _state_snapshot())
 	var started_in_setup_prompt: bool = starting_pending_choice.begins_with("setup_active_") \
 		or starting_pending_choice.begins_with("setup_bench_")
 	if started_in_setup_prompt \
@@ -1605,14 +1634,61 @@ func _run_ai_step() -> void:
 		and _gsm != null \
 		and _gsm.game_state != null \
 		and _gsm.game_state.phase != GameState.GamePhase.SETUP \
-		and _ai_opponent != null \
-		and _gsm.game_state.current_player_index == _ai_opponent.player_index:
+		and owner != null \
+		and _gsm.game_state.current_player_index == int(owner.player_index):
 		_ai_step_scheduled = true
 		call_deferred("_run_ai_step")
 	if _ai_followup_requested and not _ai_step_scheduled and _is_ai_turn_ready():
 		_ai_step_scheduled = true
 		call_deferred("_run_ai_step")
 	_ai_followup_requested = false
+
+
+func _start_author_policy_wait(owner: Variant) -> void:
+	if _author_policy_polling or owner == null:
+		return
+	_author_policy_polling = true
+	_author_policy_wait_generation += 1
+	var generation := _author_policy_wait_generation
+	var turn_number := int(_gsm.game_state.turn_number) \
+		if _gsm != null and _gsm.game_state != null else 0
+	_ai_llm_waiting = true
+	_ai_llm_turn_requested = turn_number
+	_start_llm_wait_hud(turn_number)
+	_runtime_log(
+		"author_policy_thinking_started",
+		"turn=%d player=%d" % [turn_number, int(owner.player_index)]
+	)
+	_await_author_policy_completion(owner, generation, turn_number)
+
+
+func _await_author_policy_completion(
+	owner: Variant, generation: int, turn_number: int
+) -> void:
+	while (
+		generation == _author_policy_wait_generation
+		and _author_player_owner == owner
+		and owner.has_method("has_pending_policy_decision")
+		and bool(owner.call("has_pending_policy_decision"))
+		and owner.has_method("is_policy_decision_ready")
+		and not bool(owner.call("is_policy_decision_ready"))
+	):
+		await get_tree().process_frame
+	if generation != _author_policy_wait_generation:
+		return
+	_author_policy_polling = false
+	_ai_llm_waiting = false
+	_stop_llm_wait_hud()
+	if (
+		_author_player_owner == owner
+		and owner.has_method("is_policy_decision_ready")
+		and bool(owner.call("is_policy_decision_ready"))
+	):
+		_runtime_log(
+			"author_policy_thinking_finished",
+			"turn=%d player=%d" % [turn_number, int(owner.player_index)]
+		)
+		_maybe_run_ai()
 
 
 
@@ -1631,11 +1707,11 @@ func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -
 func _ai_watchdog_dismiss_stale_human_turn_prompt() -> bool:
 	if _gsm == null or _gsm.game_state == null:
 		return false
-	_ensure_ai_opponent()
-	if _ai_opponent == null or not BattleTurnActionPolicyScript.is_stale_human_prompt_on_ai_turn(
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null or not BattleTurnActionPolicyScript.is_stale_human_prompt_on_ai_turn(
 		_pending_choice,
 		_gsm.game_state,
-		_ai_opponent.player_index
+		int(owner.player_index)
 	):
 		return false
 	var stale_prompt := _pending_choice
@@ -1712,16 +1788,27 @@ func _get_trainer_followup_evolve_slot() -> PokemonSlot:
 	if not effect is EffectRareCandy:
 		return null
 	var target_raw: Array = _pending_effect_context.get("target_pokemon", [])
-	if target_raw.is_empty():
-		return null
-	var candidate: Variant = target_raw[0]
-	if candidate is PokemonSlot:
-		return candidate as PokemonSlot
+	if not target_raw.is_empty() and target_raw[0] is PokemonSlot:
+		return target_raw[0] as PokemonSlot
+	var pair_raw: Array = _pending_effect_context.get("rare_candy_evolve", [])
+	if not pair_raw.is_empty() and pair_raw[0] is Dictionary:
+		var candidate: Variant = (pair_raw[0] as Dictionary).get("target_slot")
+		if candidate is PokemonSlot:
+			return candidate as PokemonSlot
 	return null
 
 
 
 func _on_replay_prev_turn_pressed() -> void:
+	_replay_is_playing = false
+	_replay_playback_accumulator = 0.0
+	if not _replay_timeline.is_empty():
+		var frame_step_variant: Variant = _battle_replay_controller.call(
+			"step_previous_frame", _replay_current_frame_index, _replay_timeline.size()
+		)
+		if frame_step_variant is Dictionary and not (frame_step_variant as Dictionary).is_empty():
+			_load_replay_frame(int((frame_step_variant as Dictionary).get("frame_index", _replay_current_frame_index)), false)
+		return
 	var step_variant: Variant = _battle_replay_controller.call(
 		"step_previous_turn",
 		_replay_current_turn_index,
@@ -1736,6 +1823,15 @@ func _on_replay_prev_turn_pressed() -> void:
 
 
 func _on_replay_next_turn_pressed() -> void:
+	_replay_is_playing = false
+	_replay_playback_accumulator = 0.0
+	if not _replay_timeline.is_empty():
+		var frame_step_variant: Variant = _battle_replay_controller.call(
+			"step_next_frame", _replay_current_frame_index, _replay_timeline.size()
+		)
+		if frame_step_variant is Dictionary and not (frame_step_variant as Dictionary).is_empty():
+			_load_replay_frame(int((frame_step_variant as Dictionary).get("frame_index", _replay_current_frame_index)), true)
+		return
 	var step_variant: Variant = _battle_replay_controller.call(
 		"step_next_turn",
 		_replay_current_turn_index,
@@ -1750,36 +1846,68 @@ func _on_replay_next_turn_pressed() -> void:
 
 
 func _on_replay_continue_pressed() -> void:
-	var restored_game_state: Variant = _battle_replay_controller.call(
-		"restore_live_game_state",
-		_battle_replay_state_restorer,
-		_replay_loaded_raw_snapshot
-	)
-	if restored_game_state == null:
+	# Native replay is presentation-only. Recorded state can never regain rules authority.
+	return
+
+
+func _on_replay_play_pause_pressed() -> void:
+	if not _is_review_mode() or _replay_timeline.size() <= 1:
 		return
-	_ensure_game_state_machine()
-	_gsm.game_state = restored_game_state
-	_register_effects_from_game_state(_gsm.game_state)
-	_clear_replay_ui_state()
-	_battle_mode = "live"
-	# 将 phase 推进到 MAIN 让玩家可以操作
-	if _gsm.game_state.phase != GameState.GamePhase.MAIN and _gsm.game_state.phase != GameState.GamePhase.GAME_OVER:
-		_gsm.game_state.phase = GameState.GamePhase.MAIN
+	if not _replay_is_playing and _replay_current_frame_index >= _replay_timeline.size() - 1:
+		var first_turn_number := _replay_turn_numbers[0] if not _replay_turn_numbers.is_empty() else 0
+		var restart_frame_index := _find_replay_entry_frame(first_turn_number)
+		_load_replay_frame(maxi(restart_frame_index, 0), false)
+	_replay_is_playing = not _replay_is_playing
+	_replay_playback_accumulator = 0.0
+	set_process(_replay_is_playing or _responsive_layout_stabilization_frames_remaining > 0)
 	_refresh_replay_controls()
-	_refresh_ui()
-	_check_two_player_handover()
-	_maybe_run_ai()
+
+
+func _on_replay_speed_selected(index: int) -> void:
+	var speeds := [0.5, 1.0, 2.0, 4.0]
+	if index < 0 or index >= speeds.size():
+		return
+	var validation_variant: Variant = _battle_replay_controller.call("validate_playback_speed", float(speeds[index]))
+	if not (validation_variant is Dictionary) or not bool((validation_variant as Dictionary).get("accepted", false)):
+		return
+	_replay_playback_speed = float((validation_variant as Dictionary).get("speed", 1.0))
+	_replay_playback_accumulator = 0.0
+	if _battle_visual_sequence_controller != null:
+		_battle_visual_sequence_controller.call("set_playback_speed", _replay_playback_speed)
+
+
+func _advance_replay_playback(delta: float) -> void:
+	if not _replay_is_playing or _replay_timeline.is_empty():
+		return
+	if _battle_visual_sequence_controller != null and int(_battle_visual_sequence_controller.call("pending_count")) > 0:
+		return
+	_replay_playback_accumulator += maxf(0.0, delta)
+	if _replay_playback_accumulator < 0.72 / maxf(0.5, _replay_playback_speed):
+		return
+	_replay_playback_accumulator = 0.0
+	var step_variant: Variant = _battle_replay_controller.call(
+		"step_next_frame", _replay_current_frame_index, _replay_timeline.size()
+	)
+	if not (step_variant is Dictionary) or (step_variant as Dictionary).is_empty():
+		_replay_is_playing = false
+		_refresh_replay_controls()
+		return
+	_load_replay_frame(int((step_variant as Dictionary).get("frame_index", _replay_current_frame_index)), true)
+	if _replay_current_frame_index >= _replay_timeline.size() - 1:
+		_replay_is_playing = false
+		_replay_playback_accumulator = 0.0
+		_refresh_replay_controls()
 
 
 
 func _on_replay_back_to_list_pressed() -> void:
 	if _is_review_mode():
-		GameManager.goto_replay_browser()
+		GameManager.goto_strategy_hub()
 
 
 
 func _get_selected_deck_name(player_index: int) -> String:
-	return str(_battle_display_controller.call("get_selected_deck_name", player_index))
+	return str(_battle_display_controller.call("get_selected_deck_name_for_scene", self, player_index))
 
 
 

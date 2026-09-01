@@ -10,7 +10,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not opponent.deck.is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var looked_cards: Array[CardInstance] = _get_looked_cards(opponent)
 	if looked_cards.is_empty():
@@ -29,11 +29,13 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		return [{
 			"id": "accompanying_flute_continue",
 			"title": "%s\n没有可放置的基础宝可梦。" % title,
-			"items": ["continue"],
+			"items": [true],
 			"labels": ["继续"],
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
+			"ucis_context_name": "ACTIVATE",
+			"ucis_option_type_name": "YES",
 		}]
 	return [{
 		"id": "bench_basic_pokemon",

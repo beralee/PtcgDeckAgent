@@ -409,6 +409,10 @@ func refresh_match_end_screen(scene: Object) -> void:
 		subtitle.text = str(stats.get("subtitle", ""))
 	if reason_label != null:
 		reason_label.text = "结束原因：%s" % str(stats.get("reason_text", ""))
+		if scene.has_method("_author_public_replay_status_text"):
+			var replay_status := str(scene.call("_author_public_replay_status_text")).strip_edges()
+			if not replay_status.is_empty():
+				reason_label.text += "  ·  %s" % replay_status
 
 	var viewport_size := _match_end_viewport_size(scene)
 	var box: PanelContainer = match_end_overlay.get_node_or_null("MatchEndCenter/MatchEndBox") as PanelContainer

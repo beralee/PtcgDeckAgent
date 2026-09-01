@@ -1,0 +1,71 @@
+{
+  "document_type": "ptcgdap_author_live_performance_receipt_v1",
+  "schema_version": 1,
+  "decision_id": "D158",
+  "recorded_at_local_date": "2026-08-28",
+  "accepted": true,
+  "production_ready": false,
+  "process_cleanup": {
+    "bridge_group_count": 4,
+    "terminated_process_count": 8,
+    "pid_pairs": [[42972, 51552], [57840, 27312], [56916, 39564], [43140, 23124]],
+    "remaining_bridge_process_count": 0,
+    "unrelated_editor_pids_preserved": [59868, 89948]
+  },
+  "baseline_observation": {
+    "native_match_id": "match_20260827_234816_561101",
+    "detail_event_count": 514,
+    "detail_bytes": 24104029,
+    "state_snapshot_count": 253,
+    "state_snapshot_bytes": 17868467,
+    "state_snapshot_average_characters": 70624.35,
+    "decision_record_count": 79,
+    "owner_step_count": 87,
+    "developer_trace_record_count": 166,
+    "developer_trace_bytes": 1268343,
+    "policy_latency_ms": {
+      "total": 2593.971,
+      "average": 32.835,
+      "p50": 32.837,
+      "p95": 43.811,
+      "maximum": 47.729,
+      "over_16_7_ms": 77,
+      "over_33_3_ms": 37
+    }
+  },
+  "profiles": {
+    "default_pacing": {"profile_id": "author_realtime_v1", "action_pause_seconds": 0.12, "visual_playback_speed": 1.5},
+    "rollback_pacing": {"profile_id": "cinematic_v1", "action_pause_seconds": 2.0, "visual_playback_speed": 1.0},
+    "default_recording": {"profile_id": "player_compact_v1", "developer_trace_enabled": false, "public_replay_progress_mode": "decision_boundary", "native_write_profile": "decision_batch_v1"},
+    "rollback_recording": {"profile_id": "developer_full_v1", "developer_trace_enabled": true, "public_replay_progress_mode": "action", "native_write_profile": "immediate_v1"}
+  },
+  "batch_bounds": {"maximum_events": 8, "maximum_bytes": 524288, "decision_boundary_flush": true, "partial_integrity_manifest_updated": true},
+  "tests": [
+    {"suite": "AuthorLivePerformanceContract", "passed": 5, "failed": 0},
+    {"suite": "BattleRecorder", "passed": 12, "failed": 0},
+    {"suite": "AuthorMatchEvidence", "passed": 1, "failed": 0},
+    {"suite": "AuthorLivePublicReplay", "passed": 7, "failed": 0},
+    {"suite": "BattleVisualSequenceController", "passed": 14, "failed": 0},
+    {"suite": "AuthorStrategyDeveloperDecisionTrace", "passed": 3, "failed": 2, "blocked_before_target_path": true, "error_code": "package_integrity_invalid"}
+  ],
+  "source_sha256": {
+    "scripts/ui/battle/performance/BattleLivePacingProfile.gd": "3D92825928199575B1D920029DAC54B618CC1C19AAA434978D5B585924538E76",
+    "scripts/ui/battle/author_strategy/AuthorStrategyRecordingProfile.gd": "B444B837DA0183BE6F1FBE6475F23F8F3E1B5C3D1F099668C66CD345C47988CF",
+    "scripts/engine/BattleRecorder.gd": "19857190A795B3C662267E96CF8908A7E8F6F9674F19646DA4D6F127C7904017",
+    "scripts/engine/NativeReplayIntegrityWriter.gd": "446FABC0F5D46A87BB00FA0BFA435ED386C52839B910DC325E1B7869273B0DAD",
+    "scenes/battle/BattleSceneRuntime.gd": "01AFC14F0E6DC6D3DB3DA9056B69F71A31828C383C0B664E45E18CFA25DBDD8D",
+    "tests/ptcgdap/godot/test_author_live_performance_contract.gd": "7FA4C014F140AE7345142F9F54F382FB77CC6114FADDE8EBB2A2CA95BA45C825"
+  },
+  "rollback": {
+    "live_pacing_environment": "PTCGDAP_LIVE_PACING_PROFILE=cinematic_v1",
+    "recording_environment": "PTCGDAP_AUTHOR_RECORDING_PROFILE=developer_full_v1",
+    "applies_to_new_match_only": true,
+    "deletes_existing_data": false
+  },
+  "known_gaps": [
+    "No complete post-change visible author match because the exact author package baseline currently fails package integrity validation.",
+    "No new end-to-end frame-time or Android/A5 resource measurement.",
+    "No production, official CABT/Kaggle, full-engine parity, or strategy-strength promotion."
+  ],
+  "alignment": "local_godot_windows_author_player_hot_path_contract"
+}

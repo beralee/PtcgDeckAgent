@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-package-v1",
+  "artifact_id": "author_strategy_package_conformance_vectors_v1",
+  "cases": [
+    {
+      "id": "valid_minimal",
+      "operation": "build_valid_minimal",
+      "expected_accepted": true,
+      "expected_error_code": null
+    },
+    {
+      "id": "valid_manifest_whitespace_identity",
+      "operation": "rebuild_manifest_whitespace",
+      "expected_accepted": true,
+      "expected_error_code": null
+    },
+    {
+      "id": "archive_not_zip",
+      "operation": "replace_archive_non_zip",
+      "expected_accepted": false,
+      "expected_error_code": "package_archive_invalid"
+    },
+    {
+      "id": "archive_entry_order_drift",
+      "operation": "reverse_entry_order",
+      "expected_accepted": false,
+      "expected_error_code": "package_archive_invalid"
+    },
+    {
+      "id": "archive_timestamp_drift",
+      "operation": "change_entry_timestamp",
+      "expected_accepted": false,
+      "expected_error_code": "package_archive_invalid"
+    },
+    {
+      "id": "path_parent_traversal",
+      "operation": "add_parent_traversal",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid"
+    },
+    {
+      "id": "path_backslash",
+      "operation": "add_backslash_path",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid"
+    },
+    {
+      "id": "path_absolute",
+      "operation": "add_absolute_path",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid"
+    },
+    {
+      "id": "path_drive_letter",
+      "operation": "add_drive_path",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid"
+    },
+    {
+      "id": "duplicate_exact_path",
+      "operation": "add_duplicate_exact",
+      "expected_accepted": false,
+      "expected_error_code": "package_duplicate_path"
+    },
+    {
+      "id": "duplicate_casefold_path",
+      "operation": "add_duplicate_casefold",
+      "expected_accepted": false,
+      "expected_error_code": "package_duplicate_path"
+    },
+    {
+      "id": "resource_entry_count",
+      "operation": "exceed_entry_count",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded"
+    },
+    {
+      "id": "resource_single_file",
+      "operation": "exceed_single_file",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded"
+    },
+    {
+      "id": "resource_compression_ratio",
+      "operation": "exceed_compression_ratio",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded"
+    },
+    {
+      "id": "manifest_duplicate_key",
+      "operation": "duplicate_manifest_key",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid"
+    },
+    {
+      "id": "manifest_bom",
+      "operation": "prefix_manifest_bom",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid"
+    },
+    {
+      "id": "manifest_float",
+      "operation": "set_manifest_float",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid"
+    },
+    {
+      "id": "manifest_unsafe_integer",
+      "operation": "set_manifest_unsafe_integer",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid"
+    },
+    {
+      "id": "missing_required_file",
+      "operation": "drop_license",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_missing"
+    },
+    {
+      "id": "unlisted_extra_file",
+      "operation": "add_unlisted_text",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_unlisted"
+    },
+    {
+      "id": "payload_hash_mismatch",
+      "operation": "tamper_payload",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_hash_mismatch"
+    },
+    {
+      "id": "signature_unknown_key",
+      "operation": "sign_unknown_key",
+      "expected_accepted": false,
+      "expected_error_code": "package_signature_untrusted"
+    },
+    {
+      "id": "signature_tampered",
+      "operation": "tamper_signature",
+      "expected_accepted": false,
+      "expected_error_code": "package_signature_untrusted"
+    },
+    {
+      "id": "compatibility_contract_drift",
+      "operation": "resign_contract_drift",
+      "expected_accepted": false,
+      "expected_error_code": "package_contract_incompatible"
+    },
+    {
+      "id": "compatibility_catalog_drift",
+      "operation": "resign_catalog_drift",
+      "expected_accepted": false,
+      "expected_error_code": "package_catalog_incompatible"
+    },
+    {
+      "id": "deck_not_exact_60",
+      "operation": "resign_deck_59",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped"
+    },
+    {
+      "id": "policy_document_invalid",
+      "operation": "resign_policy_float",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported"
+    },
+    {
+      "id": "forbidden_python",
+      "operation": "add_python_member",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported"
+    },
+    {
+      "id": "forbidden_native",
+      "operation": "add_native_member",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported"
+    },
+    {
+      "id": "forbidden_nested_archive",
+      "operation": "add_nested_archive",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported"
+    }
+  ]
+}

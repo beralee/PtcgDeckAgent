@@ -6,19 +6,7 @@
 android/
 
 .claude/
-.codex/*
-!.codex/skills/
-.codex/skills/*
-!.codex/skills/ptcg-limitless-importer/
-!.codex/skills/ptcg-limitless-importer/**
-!.codex/skills/design-ptcg-deck-training-puzzles/
-!.codex/skills/design-ptcg-deck-training-puzzles/**
-!.codex/skills/upgrade-ptcg-deck-training-puzzles/
-!.codex/skills/upgrade-ptcg-deck-training-puzzles/**
-!.codex/skills/iterate-dragapult-corpus-model/
-!.codex/skills/iterate-dragapult-corpus-model/**
-!.codex/skills/build-evolve-ptcg-base-graph-strategy/
-!.codex/skills/build-evolve-ptcg-base-graph-strategy/**
+.codex/
 .codex-remote-attachments/
 .worktrees/
 
@@ -42,6 +30,8 @@ battle_review_api.json
 
 # Local runtime artifacts
 logs/
+.ptcgdap-local/
+artifacts/
 tmp/*
 !tmp/.gdignore
 tmp_benchmark_logs/
@@ -65,3 +55,17 @@ assets/ui/Codex_files/
 
 # Local Python cache
 scripts/training/__pycache__/
+# Private cloud service implementation lives in the adjacent
+# PtcgDAP-private-cloud workspace and must never be reintroduced here.
+services/ptcgdap_replay/
+deploy/alipay-cloudrun/
+deploy/godot-v18-ladder/
+deploy/ptcgdap-platform/
+
+# Machine-local Godot test/export mirrors.
+.godot_benchmark_user/
+.godot_route_package_recheck/
+/Godot/
+
+# Local native extension build tree (runtime copies live under bin/ptcgai_ort).
+native/ptcgai_ort_actor/build/

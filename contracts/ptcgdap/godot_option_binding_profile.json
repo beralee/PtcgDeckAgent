@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-godot-option-binding-p3-wp2-v1",
+  "mode": "shadow_host_private_option_binding_only",
+  "parents": {
+    "p3_wp1_manifest_canonical_sha256": "B47E808277C954003494A5C414E02AD6FA81C0CE6EC73A1E7064B40E991B2F4F",
+    "decision_port_bundle_canonical_sha256": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "selection_bundle_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "supported_source_option_types": [
+    3,
+    7,
+    13,
+    14,
+    15
+  ],
+  "identity_rules": {
+    "current_snapshot": "exact current EngineDecisionSnapshot owned by the exact EngineDecisionPort",
+    "current_window": "exact current sealed CabtSelectionWindow instance; equivalent serialized or separately rebuilt windows are not authority",
+    "position": "source and window option arrays remain position aligned and are never sorted",
+    "source_window_match": "chooser, select type/context/cardinality/remain counters, option count/type and PLAY index agree; projected identity fields remain owned by the P2 projector",
+    "fingerprints": "the exact current window fingerprint at each position is copied into audit and revalidated at resolution"
+  },
+  "private_binding_rules": {
+    "callback_binding_hash": "exact uppercase SHA-256 retained only inside the owner; never serialized",
+    "commands": "one exact weak-referenceable command object per current option position",
+    "object_refs": "zero to sixteen exact weak-referenceable private engine objects per option position",
+    "storage": "weak exact-object references only; no Godot instance ID, display name or public DTO authority",
+    "liveness": "any released command or object reference invalidates resolution for that position"
+  },
+  "generation_rules": {
+    "binding_version": "positive exact safe integer, monotonically increasing after each accepted replacement",
+    "accepted_replacement": "atomically installs the new binding and invalidates the old binding",
+    "rejected_replacement": "does not disturb the last accepted binding",
+    "snapshot_replacement": "a newer port snapshot invalidates the previous binding even without a new bind call"
+  },
+  "limits": {
+    "max_options": 256,
+    "max_private_refs_per_option": 16,
+    "max_total_private_refs": 4096
+  },
+  "error_codes": [
+    "",
+    "binding_contract_error",
+    "invalid_port",
+    "snapshot_not_current",
+    "snapshot_owner_mismatch",
+    "snapshot_integrity_invalid",
+    "source_mutated",
+    "invalid_window",
+    "window_mismatch",
+    "invalid_callback_binding_hash",
+    "invalid_private_commands",
+    "invalid_private_object_refs",
+    "reference_released",
+    "binding_not_current",
+    "option_index_invalid",
+    "binding_integrity_invalid",
+    "owner_mismatch"
+  ],
+  "serialization_contract": {
+    "binding_audit_fields": [
+      "binding_profile",
+      "binding_version",
+      "snapshot_id",
+      "window_id",
+      "public_observation_hash",
+      "chooser_player_index",
+      "option_count",
+      "option_fingerprints",
+      "authority",
+      "authoritative"
+    ],
+    "resolution_audit_fields": [
+      "binding_profile",
+      "binding_version",
+      "snapshot_id",
+      "window_id",
+      "option_index",
+      "fingerprint_hash",
+      "authority",
+      "authoritative"
+    ],
+    "forbidden_fields": [
+      "callback_binding_hash",
+      "private_engine_command",
+      "private_object_refs",
+      "object_id",
+      "instance_id",
+      "ticket",
+      "consume",
+      "commit",
+      "execute",
+      "_pending_choice",
+      "_dialog_data"
+    ],
+    "dto_only": true,
+    "consumer_rule": "serialized/schema-valid dictionaries and result objects grant no ticket, commit or execution authority; future execution must revalidate current context and mint a separate one-use ticket"
+  },
+  "threat_boundary": {
+    "ordinary_mutation": "fields, arrays, dictionaries, owner state and weak-reference release fail closed in tests",
+    "same_process_reflection": "malicious same-process reflection is not a security sandbox and is outside this shadow slice"
+  },
+  "conformance_faults": {
+    "bind": [
+      "none",
+      "window_option_reorder",
+      "window_payload_change",
+      "window_chooser_change",
+      "callback_lowercase",
+      "command_count",
+      "command_primitive",
+      "reference_count",
+      "reference_primitive",
+      "source_mutation",
+      "null_window"
+    ],
+    "resolve": [
+      "none",
+      "callback_change",
+      "source_mutation",
+      "equivalent_window_copy",
+      "bool_index",
+      "negative_index",
+      "out_of_range"
+    ]
+  }
+}

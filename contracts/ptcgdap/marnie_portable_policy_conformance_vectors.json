@@ -1,0 +1,1648 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "vectors",
+  "vector_set_id": "ptcgdap-marnie-portable-policy-conformance-v1",
+  "profile_id": "marnie_portable_policy_profile_v1",
+  "cases": [
+    {
+      "case_id": "evaluate-w0-initial",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w0_initial"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "237FA344AA73BBAAD2528BBC3E1702B8F26F78747217AE783B338FA2CCB67844",
+          "frames": [
+            {
+              "ordinal": 0,
+              "frame_id": "w0_initial",
+              "capability_id": "initial_deck",
+              "node_id": "n00_initial_deck",
+              "owner_route": "capability_initial_deck",
+              "output_domain": "initial_deck_card_ids",
+              "status": "action",
+              "reason_code": "official_initial_deck_fixture",
+              "action": [
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                104,
+                104,
+                112,
+                112,
+                112,
+                112,
+                646,
+                646,
+                646,
+                646,
+                647,
+                647,
+                647,
+                648,
+                648,
+                648,
+                860,
+                860,
+                1079,
+                1079,
+                1079,
+                1080,
+                1086,
+                1086,
+                1086,
+                1086,
+                1097,
+                1097,
+                1097,
+                1122,
+                1137,
+                1152,
+                1152,
+                1152,
+                1152,
+                1182,
+                1182,
+                1219,
+                1219,
+                1219,
+                1219,
+                1227,
+                1227,
+                1227,
+                1227,
+                1231,
+                1259,
+                1259,
+                1259,
+                1259
+              ],
+              "public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+              "window_id": null,
+              "option_fingerprints": [],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53",
+              "parent_base_result_hash": "A3C49DDECFEDCE0E27E37A452C2E5C949417ABBEA623EC59E19884A3BCB0640A",
+              "parent_base_decision_audit_id": null,
+              "parent_base_trace_hash": null,
+              "previous_portable_trace_hash": null,
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "237FA344AA73BBAAD2528BBC3E1702B8F26F78747217AE783B338FA2CCB67844"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w1-setup-active",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w1_setup_active"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "055BAC418F1FB5EAE0B5FB7AEB5B679835821774FD2F690A707AF256EB4125B7",
+          "frames": [
+            {
+              "ordinal": 1,
+              "frame_id": "w1_setup_active",
+              "capability_id": "setup_active",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+              "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+              "option_fingerprints": [
+                "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54",
+                "999D88E29A10063AB95B9524B235E3FBDB3567F31DE2243E6EE23DDEBDCBE8D8"
+              ],
+              "selected_option_fingerprints": [
+                "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280",
+              "parent_base_result_hash": "ED279D8FD3E4582EBEA7845527B862AD2F5893BB4AB453BFFF373728F0B0CBBF",
+              "parent_base_decision_audit_id": "BCD60CA38EEF6683833C22FB634F0AC5F4513B223052B55D452B5D44ADB9C486",
+              "parent_base_trace_hash": "05251EE3F8461E1AA3794CD311B5AC6D6B764DF5C90C5465027971CF9293D0B5",
+              "previous_portable_trace_hash": "237FA344AA73BBAAD2528BBC3E1702B8F26F78747217AE783B338FA2CCB67844",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "055BAC418F1FB5EAE0B5FB7AEB5B679835821774FD2F690A707AF256EB4125B7"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w2-setup-bench",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w2_setup_bench"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "0D418EF26EB496EF4C49E927C56798CB07917AA35991169A0BE555D74E59EDAE",
+          "frames": [
+            {
+              "ordinal": 2,
+              "frame_id": "w2_setup_bench",
+              "capability_id": "setup_bench",
+              "node_id": "n20_optional_zero",
+              "owner_route": "capability_optional_zero",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "deterministic_optional_zero",
+              "action": [],
+              "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+              "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+              "option_fingerprints": [
+                "01F7E2802E89C3E6060C3A6142F80243A6A2829C528CF57B4EE9E612798DC998"
+              ],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7",
+              "parent_base_result_hash": "11772088BB3229DF6A5DB361FE5053E50E2BCCD3A7060B41D90A3DCB85B491CD",
+              "parent_base_decision_audit_id": null,
+              "parent_base_trace_hash": null,
+              "previous_portable_trace_hash": "055BAC418F1FB5EAE0B5FB7AEB5B679835821774FD2F690A707AF256EB4125B7",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "0D418EF26EB496EF4C49E927C56798CB07917AA35991169A0BE555D74E59EDAE"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w3-main",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w3_main"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "11D7DB09CEA8AB0D6AF552C324FD5A6A9D7FB38737DCDB6AB5CEDED5117F79F3",
+          "frames": [
+            {
+              "ordinal": 3,
+              "frame_id": "w3_main",
+              "capability_id": "main_action_frontier",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                2
+              ],
+              "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+              "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+              "option_fingerprints": [
+                "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+                "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+                "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+                "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+              ],
+              "selected_option_fingerprints": [
+                "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                2
+              ],
+              "parent_capability_decision_hash": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C",
+              "parent_base_result_hash": "B970390B52A650461D9FF2FED939223CB485C46B42931DAF22C10C60CC51EC4B",
+              "parent_base_decision_audit_id": "8D0ACD6199C068A77E357D36EE189A8FF0428B76B48F84A7605AA4F6F06099FA",
+              "parent_base_trace_hash": "583D8D3DB6EE8E03A3C72DBA730AAFB2D189896F1CB6F4EA9263A3EED2C846ED",
+              "previous_portable_trace_hash": "0D418EF26EB496EF4C49E927C56798CB07917AA35991169A0BE555D74E59EDAE",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "11D7DB09CEA8AB0D6AF552C324FD5A6A9D7FB38737DCDB6AB5CEDED5117F79F3"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w4-spikemuth-deck",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w4_spikemuth_deck"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "F936109A19D79C1083ACAF0C716864577002F5946665B90BE029D6FB659BB638",
+          "frames": [
+            {
+              "ordinal": 4,
+              "frame_id": "w4_spikemuth_deck",
+              "capability_id": "spikemuth_tutor",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [],
+              "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+              "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+              "option_fingerprints": [
+                "D3B647EB593D95803C13B7E6D5EEE491F3FA95ACC7E177FB40E260ECAA7694FF",
+                "1F361F00EC8782D154516FDF5E612A5044CC79643E9AE6E6E3DCC0FD7F849366"
+              ],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [
+                1
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1
+              ],
+              "parent_capability_decision_hash": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8",
+              "parent_base_result_hash": "73C8E465C53AEEB0DD3FB51784E03820E1A572EF4060E061152B47EFABF21B30",
+              "parent_base_decision_audit_id": "84B655E6C1FC9DFFD5F9922708E8ADB09692BA95526E2C885DDA322E1794D6C1",
+              "parent_base_trace_hash": "7E0E309EC31B9B7745262AAB4A64F88BC9F59BE62C5040CF76EB175D86C96751",
+              "previous_portable_trace_hash": "11D7DB09CEA8AB0D6AF552C324FD5A6A9D7FB38737DCDB6AB5CEDED5117F79F3",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "F936109A19D79C1083ACAF0C716864577002F5946665B90BE029D6FB659BB638"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w5-punk-up-sources",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w5_punk_up_sources"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "EE6DA688F7961A1C32E086740C6D674AB716120CD72AB1DB405B911E2A6DE863",
+          "frames": [
+            {
+              "ordinal": 5,
+              "frame_id": "w5_punk_up_sources",
+              "capability_id": "punk_up",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [],
+              "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+              "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+              "option_fingerprints": [
+                "5763F49B6896C9C3BE96B628211350EED7490AAFEBF384763A960A45616B4C1A",
+                "A2E7D6B5C4AFF2D6DE7A2851F89EA340BFAC763C9EE1D8649E2E1636B2D5E7C9",
+                "2771CA0AB9D2D6E06186AC52DE325670D220F42228C89F28DD26DDA6DE4193EC",
+                "37D3A377ACE760ACB1499D3FFC8B6B45D0A7AA54B8992D502B520BCE6FD8B065",
+                "DDFA73690E275FDCB0AFAF28C5C150CA50CE40769EA6E702A5A06F544C6B3C3B"
+              ],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "parent_capability_decision_hash": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD",
+              "parent_base_result_hash": "0428EA87FECC981738D4A84209C20F0FD6BAC664605F3D28D1A37DA877977B69",
+              "parent_base_decision_audit_id": "8AC3E2E927FA07A51D727243EE9F5048B6C5255355D5DB9C0DFFF34353A402B9",
+              "parent_base_trace_hash": "AA5538D3DC7CBD1B9F1FB228DA807F4D130D66D262F041055F89133E0A451924",
+              "previous_portable_trace_hash": "F936109A19D79C1083ACAF0C716864577002F5946665B90BE029D6FB659BB638",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "EE6DA688F7961A1C32E086740C6D674AB716120CD72AB1DB405B911E2A6DE863"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w5-punk-up-target-1",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w5_punk_up_target_1"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "57DDFA01864ECB052ABF3D22EA4D745E8F693C2A9FAA80A75832FBB5E6B23E52",
+          "frames": [
+            {
+              "ordinal": 6,
+              "frame_id": "w5_punk_up_target_1",
+              "capability_id": "punk_up",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+              "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+              "option_fingerprints": [
+                "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A",
+                "DD690BEDAB21BEC8C0F09DBAC5FE2F8362F3AFE86055091DEA4F41D24132FF41",
+                "47B6367EF1F5D62D31BE7C2F328892BB9195101BB11B574A58C71CA81EE00B2A"
+              ],
+              "selected_option_fingerprints": [
+                "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1,
+                2
+              ],
+              "parent_capability_decision_hash": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F",
+              "parent_base_result_hash": "0372D9E9A7379139943F906447DFE10B162FDA8C1E5190D625C8524CB9ACC039",
+              "parent_base_decision_audit_id": "A5F6DF561992DD0B1E947A007C5214ACE8F52AF6A67770BCB5322CB609539A72",
+              "parent_base_trace_hash": "A05E70B55B196CE97A62383DF46DFA875B84747DA3C08720A152826C35DC2DDB",
+              "previous_portable_trace_hash": "EE6DA688F7961A1C32E086740C6D674AB716120CD72AB1DB405B911E2A6DE863",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "57DDFA01864ECB052ABF3D22EA4D745E8F693C2A9FAA80A75832FBB5E6B23E52"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w5-punk-up-target-2",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w5_punk_up_target_2"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "8A3B729D27477746488ECD64EFDB7770DB744BD924D3BDA4C64B6ABAC2329047",
+          "frames": [
+            {
+              "ordinal": 7,
+              "frame_id": "w5_punk_up_target_2",
+              "capability_id": "punk_up",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+              "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+              "option_fingerprints": [
+                "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA",
+                "49283B1DA263B058FB56392BF0BF8321CC1C8699280C6FE093DEE4562C2C93AD",
+                "066873DACD68DAF418147FD8B09C49C18A5F05D9CE438736BC273BE7A4BE96BB"
+              ],
+              "selected_option_fingerprints": [
+                "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1,
+                2
+              ],
+              "parent_capability_decision_hash": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E",
+              "parent_base_result_hash": "6A269BB2D96A2D89CFE1BBED5C7A7A9E925A7F5CE9F453A2978BEE7036961DFF",
+              "parent_base_decision_audit_id": "295275D1349610DC06A05FCAE5B56A0BC3CE7D5D29BCAEFDCCF9B1217B311CF0",
+              "parent_base_trace_hash": "733B1AA99DEC70FD066C7B4AF87B3806C2224EBB64B368A2E824BCC15DCAE788",
+              "previous_portable_trace_hash": "57DDFA01864ECB052ABF3D22EA4D745E8F693C2A9FAA80A75832FBB5E6B23E52",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "8A3B729D27477746488ECD64EFDB7770DB744BD924D3BDA4C64B6ABAC2329047"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w6-shadow-bullet-attack",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w6_shadow_bullet_attack"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "EB29810C2A5575D1718770B5FE77035428D8BA43651005A3DC8C62B137B83BBB",
+          "frames": [
+            {
+              "ordinal": 8,
+              "frame_id": "w6_shadow_bullet_attack",
+              "capability_id": "shadow_bullet",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                1
+              ],
+              "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+              "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+              "option_fingerprints": [
+                "E980669EACACAA379DEA4094E1221A8B375FE1619F136F84CE2AA7F99A09DF3F",
+                "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481",
+                "E95ED4DB748E1793A24F76327E4534BDEA497664ECE75B38F8331C213C666B56",
+                "F3FA5EEF2FC8C21B83A340B4B2C3E200C0FB85EF25923FDEF843817D38F57C7A"
+              ],
+              "selected_option_fingerprints": [
+                "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481"
+              ],
+              "capability_proposal_indexes": [
+                1
+              ],
+              "adapter_hint_indexes": [
+                1
+              ],
+              "parent_capability_decision_hash": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B",
+              "parent_base_result_hash": "7230F248355359B2E21C6E11955D3A06D298FD1234664ABE7661BA1916F1255B",
+              "parent_base_decision_audit_id": "6228E2CF8348AD7AC85AE46FC10217C7026795D1FF5EE1F6F32952E3E54200AA",
+              "parent_base_trace_hash": "2294307851EE855248ED02F118D35FEB093F4FB4FDC4F6844D0F0304FB527792",
+              "previous_portable_trace_hash": "8A3B729D27477746488ECD64EFDB7770DB744BD924D3BDA4C64B6ABAC2329047",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "EB29810C2A5575D1718770B5FE77035428D8BA43651005A3DC8C62B137B83BBB"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w6-shadow-bullet-target",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w6_shadow_bullet_target"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "10EAB86EE9091A97D0EACED4ED93EF789DE880580FE16E4400F5D974F77AB4CC",
+          "frames": [
+            {
+              "ordinal": 9,
+              "frame_id": "w6_shadow_bullet_target",
+              "capability_id": "shadow_bullet",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+              "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+              "option_fingerprints": [
+                "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86",
+                "8EEEE8456F36E0F2463E37CC8FB948018B4F35EB114C2AE057ADCF0CA68A1514"
+              ],
+              "selected_option_fingerprints": [
+                "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1
+              ],
+              "parent_capability_decision_hash": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05",
+              "parent_base_result_hash": "478ABDEB8421C465947FB5DF2334262B828B7392BC4317424EEBD0D545EABF2D",
+              "parent_base_decision_audit_id": "601F56D6F33553A63982C87D41B67E5E464C8E01500433C46118BEDB9677473F",
+              "parent_base_trace_hash": "F7757C387620769B2D3746DE216AAB6F92F6F2971C8C78D39E6DE72C89E2C297",
+              "previous_portable_trace_hash": "EB29810C2A5575D1718770B5FE77035428D8BA43651005A3DC8C62B137B83BBB",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "10EAB86EE9091A97D0EACED4ED93EF789DE880580FE16E4400F5D974F77AB4CC"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w7-take-prize",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w7_take_prize"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "D5817C69BED2609E182522EFE8A022D7B12190F36700B581AA16F63E21185A81",
+          "frames": [
+            {
+              "ordinal": 10,
+              "frame_id": "w7_take_prize",
+              "capability_id": "take_prize",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+              "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+              "option_fingerprints": [
+                "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D",
+                "3EED37CA3938D5630382BB6E879899F94BD738B2ECCD430F0750DDE18E568E31",
+                "6F18273B1989E3C93DFCC307FCA9A15BB12619FC7B98529C83F9914AE557450B",
+                "069D894CB831AA7E8C408C0CFEB5F0A389C1572481C0EAD110D52E2CA9A78A62",
+                "FDC5C27718D22788B0676848AA54D921F706CB8D5E5A0B84643F41A28743A88C",
+                "7B3B2FFEDE10C13AF404742E80C2B772625B54312FE178185FFE1697517079EA"
+              ],
+              "selected_option_fingerprints": [
+                "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044",
+              "parent_base_result_hash": "B7BE389A430377FD4EB3CFE23042B565E71FA5CB1CEC7DDD2D8ED835EF809869",
+              "parent_base_decision_audit_id": "F1CDA52DAF3962ABBF07FE3B0E3A2842D91198893F603B94C76968DF971D9845",
+              "parent_base_trace_hash": "F200C2347B50CF949848AF71AB040B77957248E23CB90877ACD61E19CED7B989",
+              "previous_portable_trace_hash": "10EAB86EE9091A97D0EACED4ED93EF789DE880580FE16E4400F5D974F77AB4CC",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "D5817C69BED2609E182522EFE8A022D7B12190F36700B581AA16F63E21185A81"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w7-forced-send-out",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w7_forced_send_out"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "14F32B457668D51D2BDE41550AFAA7B21E0BA86B1C715C42BAB70B67E2BF292A",
+          "frames": [
+            {
+              "ordinal": 11,
+              "frame_id": "w7_forced_send_out",
+              "capability_id": "forced_send_out",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+              "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+              "option_fingerprints": [
+                "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D",
+                "A648808C2AADFA4B10CED883DB2E8CA7630C78A391B52D2F3B949EB0563388A8",
+                "804D5598A6A6E0BE883BCB0521EFC11C7CC32FDDB2E6C752CB1D7DB70E1E7041",
+                "545E00EAFCA19D321F0713C5179FD920E764708B4EB36E065AEB39A05FAC0A3D"
+              ],
+              "selected_option_fingerprints": [
+                "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5",
+              "parent_base_result_hash": "7A4FDC45A0DE33259B9A57BDCD488409286D05DF869425652E2D90A83840F543",
+              "parent_base_decision_audit_id": "B506EE80CFD7DEED3CDA477F5934B37B446C0C3BBB668ED3610BBC7A9780050F",
+              "parent_base_trace_hash": "F99F57F186BAD8A66A9AAC06DABDD75B2B056F42371B651BD45F3D8A1D4284C6",
+              "previous_portable_trace_hash": "D5817C69BED2609E182522EFE8A022D7B12190F36700B581AA16F63E21185A81",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "14F32B457668D51D2BDE41550AFAA7B21E0BA86B1C715C42BAB70B67E2BF292A"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-w7-terminal",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w7_terminal"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "AF8630DCEB004664A4BB90F16C9FD582FCA191316FB3482E5B3ACED773EC84E1",
+          "frames": [
+            {
+              "ordinal": 12,
+              "frame_id": "w7_terminal",
+              "capability_id": "terminal_without_callback",
+              "node_id": "n90_terminal",
+              "owner_route": "terminal_lifecycle",
+              "output_domain": "terminal_no_callback",
+              "status": "terminal_no_callback",
+              "reason_code": "terminal_no_callback",
+              "action": [],
+              "public_observation_hash": null,
+              "window_id": null,
+              "option_fingerprints": [],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "61696DD101D607EEDC060AB0A33821AD07AED58FD0EB7C1EC7F2FA28BC9B7D69",
+              "parent_base_result_hash": "A4A56B2B1C02185CA48A344CF835124D44E0CF625A51FE7D033F177451BF4D70",
+              "parent_base_decision_audit_id": null,
+              "parent_base_trace_hash": null,
+              "previous_portable_trace_hash": "14F32B457668D51D2BDE41550AFAA7B21E0BA86B1C715C42BAB70B67E2BF292A",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "AF8630DCEB004664A4BB90F16C9FD582FCA191316FB3482E5B3ACED773EC84E1"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-all",
+      "operation": "evaluate_all",
+      "input": {},
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 13,
+          "chain_head": "AF8630DCEB004664A4BB90F16C9FD582FCA191316FB3482E5B3ACED773EC84E1",
+          "frames": [
+            {
+              "ordinal": 0,
+              "frame_id": "w0_initial",
+              "capability_id": "initial_deck",
+              "node_id": "n00_initial_deck",
+              "owner_route": "capability_initial_deck",
+              "output_domain": "initial_deck_card_ids",
+              "status": "action",
+              "reason_code": "official_initial_deck_fixture",
+              "action": [
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                104,
+                104,
+                112,
+                112,
+                112,
+                112,
+                646,
+                646,
+                646,
+                646,
+                647,
+                647,
+                647,
+                648,
+                648,
+                648,
+                860,
+                860,
+                1079,
+                1079,
+                1079,
+                1080,
+                1086,
+                1086,
+                1086,
+                1086,
+                1097,
+                1097,
+                1097,
+                1122,
+                1137,
+                1152,
+                1152,
+                1152,
+                1152,
+                1182,
+                1182,
+                1219,
+                1219,
+                1219,
+                1219,
+                1227,
+                1227,
+                1227,
+                1227,
+                1231,
+                1259,
+                1259,
+                1259,
+                1259
+              ],
+              "public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+              "window_id": null,
+              "option_fingerprints": [],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53",
+              "parent_base_result_hash": "A3C49DDECFEDCE0E27E37A452C2E5C949417ABBEA623EC59E19884A3BCB0640A",
+              "parent_base_decision_audit_id": null,
+              "parent_base_trace_hash": null,
+              "previous_portable_trace_hash": null,
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "237FA344AA73BBAAD2528BBC3E1702B8F26F78747217AE783B338FA2CCB67844"
+            },
+            {
+              "ordinal": 1,
+              "frame_id": "w1_setup_active",
+              "capability_id": "setup_active",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+              "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+              "option_fingerprints": [
+                "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54",
+                "999D88E29A10063AB95B9524B235E3FBDB3567F31DE2243E6EE23DDEBDCBE8D8"
+              ],
+              "selected_option_fingerprints": [
+                "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280",
+              "parent_base_result_hash": "ED279D8FD3E4582EBEA7845527B862AD2F5893BB4AB453BFFF373728F0B0CBBF",
+              "parent_base_decision_audit_id": "BCD60CA38EEF6683833C22FB634F0AC5F4513B223052B55D452B5D44ADB9C486",
+              "parent_base_trace_hash": "05251EE3F8461E1AA3794CD311B5AC6D6B764DF5C90C5465027971CF9293D0B5",
+              "previous_portable_trace_hash": "237FA344AA73BBAAD2528BBC3E1702B8F26F78747217AE783B338FA2CCB67844",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "055BAC418F1FB5EAE0B5FB7AEB5B679835821774FD2F690A707AF256EB4125B7"
+            },
+            {
+              "ordinal": 2,
+              "frame_id": "w2_setup_bench",
+              "capability_id": "setup_bench",
+              "node_id": "n20_optional_zero",
+              "owner_route": "capability_optional_zero",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "deterministic_optional_zero",
+              "action": [],
+              "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+              "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+              "option_fingerprints": [
+                "01F7E2802E89C3E6060C3A6142F80243A6A2829C528CF57B4EE9E612798DC998"
+              ],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7",
+              "parent_base_result_hash": "11772088BB3229DF6A5DB361FE5053E50E2BCCD3A7060B41D90A3DCB85B491CD",
+              "parent_base_decision_audit_id": null,
+              "parent_base_trace_hash": null,
+              "previous_portable_trace_hash": "055BAC418F1FB5EAE0B5FB7AEB5B679835821774FD2F690A707AF256EB4125B7",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "0D418EF26EB496EF4C49E927C56798CB07917AA35991169A0BE555D74E59EDAE"
+            },
+            {
+              "ordinal": 3,
+              "frame_id": "w3_main",
+              "capability_id": "main_action_frontier",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                2
+              ],
+              "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+              "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+              "option_fingerprints": [
+                "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+                "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+                "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+                "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+              ],
+              "selected_option_fingerprints": [
+                "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                2
+              ],
+              "parent_capability_decision_hash": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C",
+              "parent_base_result_hash": "B970390B52A650461D9FF2FED939223CB485C46B42931DAF22C10C60CC51EC4B",
+              "parent_base_decision_audit_id": "8D0ACD6199C068A77E357D36EE189A8FF0428B76B48F84A7605AA4F6F06099FA",
+              "parent_base_trace_hash": "583D8D3DB6EE8E03A3C72DBA730AAFB2D189896F1CB6F4EA9263A3EED2C846ED",
+              "previous_portable_trace_hash": "0D418EF26EB496EF4C49E927C56798CB07917AA35991169A0BE555D74E59EDAE",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "11D7DB09CEA8AB0D6AF552C324FD5A6A9D7FB38737DCDB6AB5CEDED5117F79F3"
+            },
+            {
+              "ordinal": 4,
+              "frame_id": "w4_spikemuth_deck",
+              "capability_id": "spikemuth_tutor",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [],
+              "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+              "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+              "option_fingerprints": [
+                "D3B647EB593D95803C13B7E6D5EEE491F3FA95ACC7E177FB40E260ECAA7694FF",
+                "1F361F00EC8782D154516FDF5E612A5044CC79643E9AE6E6E3DCC0FD7F849366"
+              ],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [
+                1
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1
+              ],
+              "parent_capability_decision_hash": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8",
+              "parent_base_result_hash": "73C8E465C53AEEB0DD3FB51784E03820E1A572EF4060E061152B47EFABF21B30",
+              "parent_base_decision_audit_id": "84B655E6C1FC9DFFD5F9922708E8ADB09692BA95526E2C885DDA322E1794D6C1",
+              "parent_base_trace_hash": "7E0E309EC31B9B7745262AAB4A64F88BC9F59BE62C5040CF76EB175D86C96751",
+              "previous_portable_trace_hash": "11D7DB09CEA8AB0D6AF552C324FD5A6A9D7FB38737DCDB6AB5CEDED5117F79F3",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "F936109A19D79C1083ACAF0C716864577002F5946665B90BE029D6FB659BB638"
+            },
+            {
+              "ordinal": 5,
+              "frame_id": "w5_punk_up_sources",
+              "capability_id": "punk_up",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [],
+              "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+              "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+              "option_fingerprints": [
+                "5763F49B6896C9C3BE96B628211350EED7490AAFEBF384763A960A45616B4C1A",
+                "A2E7D6B5C4AFF2D6DE7A2851F89EA340BFAC763C9EE1D8649E2E1636B2D5E7C9",
+                "2771CA0AB9D2D6E06186AC52DE325670D220F42228C89F28DD26DDA6DE4193EC",
+                "37D3A377ACE760ACB1499D3FFC8B6B45D0A7AA54B8992D502B520BCE6FD8B065",
+                "DDFA73690E275FDCB0AFAF28C5C150CA50CE40769EA6E702A5A06F544C6B3C3B"
+              ],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "parent_capability_decision_hash": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD",
+              "parent_base_result_hash": "0428EA87FECC981738D4A84209C20F0FD6BAC664605F3D28D1A37DA877977B69",
+              "parent_base_decision_audit_id": "8AC3E2E927FA07A51D727243EE9F5048B6C5255355D5DB9C0DFFF34353A402B9",
+              "parent_base_trace_hash": "AA5538D3DC7CBD1B9F1FB228DA807F4D130D66D262F041055F89133E0A451924",
+              "previous_portable_trace_hash": "F936109A19D79C1083ACAF0C716864577002F5946665B90BE029D6FB659BB638",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "EE6DA688F7961A1C32E086740C6D674AB716120CD72AB1DB405B911E2A6DE863"
+            },
+            {
+              "ordinal": 6,
+              "frame_id": "w5_punk_up_target_1",
+              "capability_id": "punk_up",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+              "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+              "option_fingerprints": [
+                "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A",
+                "DD690BEDAB21BEC8C0F09DBAC5FE2F8362F3AFE86055091DEA4F41D24132FF41",
+                "47B6367EF1F5D62D31BE7C2F328892BB9195101BB11B574A58C71CA81EE00B2A"
+              ],
+              "selected_option_fingerprints": [
+                "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1,
+                2
+              ],
+              "parent_capability_decision_hash": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F",
+              "parent_base_result_hash": "0372D9E9A7379139943F906447DFE10B162FDA8C1E5190D625C8524CB9ACC039",
+              "parent_base_decision_audit_id": "A5F6DF561992DD0B1E947A007C5214ACE8F52AF6A67770BCB5322CB609539A72",
+              "parent_base_trace_hash": "A05E70B55B196CE97A62383DF46DFA875B84747DA3C08720A152826C35DC2DDB",
+              "previous_portable_trace_hash": "EE6DA688F7961A1C32E086740C6D674AB716120CD72AB1DB405B911E2A6DE863",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "57DDFA01864ECB052ABF3D22EA4D745E8F693C2A9FAA80A75832FBB5E6B23E52"
+            },
+            {
+              "ordinal": 7,
+              "frame_id": "w5_punk_up_target_2",
+              "capability_id": "punk_up",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+              "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+              "option_fingerprints": [
+                "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA",
+                "49283B1DA263B058FB56392BF0BF8321CC1C8699280C6FE093DEE4562C2C93AD",
+                "066873DACD68DAF418147FD8B09C49C18A5F05D9CE438736BC273BE7A4BE96BB"
+              ],
+              "selected_option_fingerprints": [
+                "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1,
+                2
+              ],
+              "parent_capability_decision_hash": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E",
+              "parent_base_result_hash": "6A269BB2D96A2D89CFE1BBED5C7A7A9E925A7F5CE9F453A2978BEE7036961DFF",
+              "parent_base_decision_audit_id": "295275D1349610DC06A05FCAE5B56A0BC3CE7D5D29BCAEFDCCF9B1217B311CF0",
+              "parent_base_trace_hash": "733B1AA99DEC70FD066C7B4AF87B3806C2224EBB64B368A2E824BCC15DCAE788",
+              "previous_portable_trace_hash": "57DDFA01864ECB052ABF3D22EA4D745E8F693C2A9FAA80A75832FBB5E6B23E52",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "8A3B729D27477746488ECD64EFDB7770DB744BD924D3BDA4C64B6ABAC2329047"
+            },
+            {
+              "ordinal": 8,
+              "frame_id": "w6_shadow_bullet_attack",
+              "capability_id": "shadow_bullet",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                1
+              ],
+              "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+              "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+              "option_fingerprints": [
+                "E980669EACACAA379DEA4094E1221A8B375FE1619F136F84CE2AA7F99A09DF3F",
+                "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481",
+                "E95ED4DB748E1793A24F76327E4534BDEA497664ECE75B38F8331C213C666B56",
+                "F3FA5EEF2FC8C21B83A340B4B2C3E200C0FB85EF25923FDEF843817D38F57C7A"
+              ],
+              "selected_option_fingerprints": [
+                "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481"
+              ],
+              "capability_proposal_indexes": [
+                1
+              ],
+              "adapter_hint_indexes": [
+                1
+              ],
+              "parent_capability_decision_hash": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B",
+              "parent_base_result_hash": "7230F248355359B2E21C6E11955D3A06D298FD1234664ABE7661BA1916F1255B",
+              "parent_base_decision_audit_id": "6228E2CF8348AD7AC85AE46FC10217C7026795D1FF5EE1F6F32952E3E54200AA",
+              "parent_base_trace_hash": "2294307851EE855248ED02F118D35FEB093F4FB4FDC4F6844D0F0304FB527792",
+              "previous_portable_trace_hash": "8A3B729D27477746488ECD64EFDB7770DB744BD924D3BDA4C64B6ABAC2329047",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "EB29810C2A5575D1718770B5FE77035428D8BA43651005A3DC8C62B137B83BBB"
+            },
+            {
+              "ordinal": 9,
+              "frame_id": "w6_shadow_bullet_target",
+              "capability_id": "shadow_bullet",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+              "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+              "option_fingerprints": [
+                "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86",
+                "8EEEE8456F36E0F2463E37CC8FB948018B4F35EB114C2AE057ADCF0CA68A1514"
+              ],
+              "selected_option_fingerprints": [
+                "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [
+                0,
+                1
+              ],
+              "parent_capability_decision_hash": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05",
+              "parent_base_result_hash": "478ABDEB8421C465947FB5DF2334262B828B7392BC4317424EEBD0D545EABF2D",
+              "parent_base_decision_audit_id": "601F56D6F33553A63982C87D41B67E5E464C8E01500433C46118BEDB9677473F",
+              "parent_base_trace_hash": "F7757C387620769B2D3746DE216AAB6F92F6F2971C8C78D39E6DE72C89E2C297",
+              "previous_portable_trace_hash": "EB29810C2A5575D1718770B5FE77035428D8BA43651005A3DC8C62B137B83BBB",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "10EAB86EE9091A97D0EACED4ED93EF789DE880580FE16E4400F5D974F77AB4CC"
+            },
+            {
+              "ordinal": 10,
+              "frame_id": "w7_take_prize",
+              "capability_id": "take_prize",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+              "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+              "option_fingerprints": [
+                "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D",
+                "3EED37CA3938D5630382BB6E879899F94BD738B2ECCD430F0750DDE18E568E31",
+                "6F18273B1989E3C93DFCC307FCA9A15BB12619FC7B98529C83F9914AE557450B",
+                "069D894CB831AA7E8C408C0CFEB5F0A389C1572481C0EAD110D52E2CA9A78A62",
+                "FDC5C27718D22788B0676848AA54D921F706CB8D5E5A0B84643F41A28743A88C",
+                "7B3B2FFEDE10C13AF404742E80C2B772625B54312FE178185FFE1697517079EA"
+              ],
+              "selected_option_fingerprints": [
+                "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044",
+              "parent_base_result_hash": "B7BE389A430377FD4EB3CFE23042B565E71FA5CB1CEC7DDD2D8ED835EF809869",
+              "parent_base_decision_audit_id": "F1CDA52DAF3962ABBF07FE3B0E3A2842D91198893F603B94C76968DF971D9845",
+              "parent_base_trace_hash": "F200C2347B50CF949848AF71AB040B77957248E23CB90877ACD61E19CED7B989",
+              "previous_portable_trace_hash": "10EAB86EE9091A97D0EACED4ED93EF789DE880580FE16E4400F5D974F77AB4CC",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "D5817C69BED2609E182522EFE8A022D7B12190F36700B581AA16F63E21185A81"
+            },
+            {
+              "ordinal": 11,
+              "frame_id": "w7_forced_send_out",
+              "capability_id": "forced_send_out",
+              "node_id": "n10_base_final",
+              "owner_route": "base_final",
+              "output_domain": "current_window_indexes",
+              "status": "action",
+              "reason_code": "base_final_decision",
+              "action": [
+                0
+              ],
+              "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+              "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+              "option_fingerprints": [
+                "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D",
+                "A648808C2AADFA4B10CED883DB2E8CA7630C78A391B52D2F3B949EB0563388A8",
+                "804D5598A6A6E0BE883BCB0521EFC11C7CC32FDDB2E6C752CB1D7DB70E1E7041",
+                "545E00EAFCA19D321F0713C5179FD920E764708B4EB36E065AEB39A05FAC0A3D"
+              ],
+              "selected_option_fingerprints": [
+                "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D"
+              ],
+              "capability_proposal_indexes": [
+                0
+              ],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5",
+              "parent_base_result_hash": "7A4FDC45A0DE33259B9A57BDCD488409286D05DF869425652E2D90A83840F543",
+              "parent_base_decision_audit_id": "B506EE80CFD7DEED3CDA477F5934B37B446C0C3BBB668ED3610BBC7A9780050F",
+              "parent_base_trace_hash": "F99F57F186BAD8A66A9AAC06DABDD75B2B056F42371B651BD45F3D8A1D4284C6",
+              "previous_portable_trace_hash": "D5817C69BED2609E182522EFE8A022D7B12190F36700B581AA16F63E21185A81",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "14F32B457668D51D2BDE41550AFAA7B21E0BA86B1C715C42BAB70B67E2BF292A"
+            },
+            {
+              "ordinal": 12,
+              "frame_id": "w7_terminal",
+              "capability_id": "terminal_without_callback",
+              "node_id": "n90_terminal",
+              "owner_route": "terminal_lifecycle",
+              "output_domain": "terminal_no_callback",
+              "status": "terminal_no_callback",
+              "reason_code": "terminal_no_callback",
+              "action": [],
+              "public_observation_hash": null,
+              "window_id": null,
+              "option_fingerprints": [],
+              "selected_option_fingerprints": [],
+              "capability_proposal_indexes": [],
+              "adapter_hint_indexes": [],
+              "parent_capability_decision_hash": "61696DD101D607EEDC060AB0A33821AD07AED58FD0EB7C1EC7F2FA28BC9B7D69",
+              "parent_base_result_hash": "A4A56B2B1C02185CA48A344CF835124D44E0CF625A51FE7D033F177451BF4D70",
+              "parent_base_decision_audit_id": null,
+              "parent_base_trace_hash": null,
+              "previous_portable_trace_hash": "14F32B457668D51D2BDE41550AFAA7B21E0BA86B1C715C42BAB70B67E2BF292A",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "portable_trace_hash": "AF8630DCEB004664A4BB90F16C9FD582FCA191316FB3482E5B3ACED773EC84E1"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "production_actions_used": false
+        }
+      }
+    },
+    {
+      "case_id": "binding-exact",
+      "operation": "verify_binding",
+      "input": {
+        "frame_id": "w3_main",
+        "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+        "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+        "option_fingerprints": [
+          "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+          "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+          "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+          "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+        ]
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "binding_matches": true,
+          "frame_id": "w3_main",
+          "portable_trace_hash": "11D7DB09CEA8AB0D6AF552C324FD5A6A9D7FB38737DCDB6AB5CEDED5117F79F3",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "binding-reordered",
+      "operation": "verify_binding",
+      "input": {
+        "frame_id": "w3_main",
+        "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+        "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+        "option_fingerprints": [
+          "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A",
+          "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+          "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+          "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2"
+        ]
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "binding-stale",
+      "operation": "verify_binding",
+      "input": {
+        "frame_id": "w3_main",
+        "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+        "window_id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "option_fingerprints": [
+          "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+          "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+          "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+          "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+        ]
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "tie-break-spikemuth-current-order",
+      "operation": "inspect_tie_break",
+      "input": {
+        "frame_id": "w4_spikemuth_deck"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "frame_id": "w4_spikemuth_deck",
+          "node_id": "n10_base_final",
+          "owner_route": "base_final",
+          "option_fingerprints": [
+            "D3B647EB593D95803C13B7E6D5EEE491F3FA95ACC7E177FB40E260ECAA7694FF",
+            "1F361F00EC8782D154516FDF5E612A5044CC79643E9AE6E6E3DCC0FD7F849366"
+          ],
+          "capability_proposal_indexes": [
+            1
+          ],
+          "adapter_hint_indexes": [
+            0,
+            1
+          ],
+          "base_final_action": [],
+          "parent_base_trace_hash": "7E0E309EC31B9B7745262AAB4A64F88BC9F59BE62C5040CF76EB175D86C96751",
+          "portable_trace_hash": "F936109A19D79C1083ACAF0C716864577002F5946665B90BE029D6FB659BB638",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "tie-break-punk-up-current-order",
+      "operation": "inspect_tie_break",
+      "input": {
+        "frame_id": "w5_punk_up_sources"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "frame_id": "w5_punk_up_sources",
+          "node_id": "n10_base_final",
+          "owner_route": "base_final",
+          "option_fingerprints": [
+            "5763F49B6896C9C3BE96B628211350EED7490AAFEBF384763A960A45616B4C1A",
+            "A2E7D6B5C4AFF2D6DE7A2851F89EA340BFAC763C9EE1D8649E2E1636B2D5E7C9",
+            "2771CA0AB9D2D6E06186AC52DE325670D220F42228C89F28DD26DDA6DE4193EC",
+            "37D3A377ACE760ACB1499D3FFC8B6B45D0A7AA54B8992D502B520BCE6FD8B065",
+            "DDFA73690E275FDCB0AFAF28C5C150CA50CE40769EA6E702A5A06F544C6B3C3B"
+          ],
+          "capability_proposal_indexes": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "adapter_hint_indexes": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "base_final_action": [],
+          "parent_base_trace_hash": "AA5538D3DC7CBD1B9F1FB228DA807F4D130D66D262F041055F89133E0A451924",
+          "portable_trace_hash": "EE6DA688F7961A1C32E086740C6D674AB716120CD72AB1DB405B911E2A6DE863",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "inspect-n00-initial-deck",
+      "operation": "inspect_node",
+      "input": {
+        "node_id": "n00_initial_deck"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "node_id": "n00_initial_deck",
+          "owner_route": "capability_initial_deck",
+          "output_domain": "initial_deck_card_ids",
+          "action_owner": "capability_policy",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "inspect-n10-base-final",
+      "operation": "inspect_node",
+      "input": {
+        "node_id": "n10_base_final"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "node_id": "n10_base_final",
+          "owner_route": "base_final",
+          "output_domain": "current_window_indexes",
+          "action_owner": "public_base_graph",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "inspect-n20-optional-zero",
+      "operation": "inspect_node",
+      "input": {
+        "node_id": "n20_optional_zero"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "node_id": "n20_optional_zero",
+          "owner_route": "capability_optional_zero",
+          "output_domain": "current_window_indexes",
+          "action_owner": "capability_policy",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "inspect-n90-terminal",
+      "operation": "inspect_node",
+      "input": {
+        "node_id": "n90_terminal"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "node_id": "n90_terminal",
+          "owner_route": "terminal_lifecycle",
+          "output_domain": "terminal_no_callback",
+          "action_owner": "lifecycle",
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "unknown-node",
+      "operation": "inspect_node",
+      "input": {
+        "node_id": "PRIVATE_SENTINEL"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "unsupported_node",
+        "value": null
+      }
+    },
+    {
+      "case_id": "unknown-frame",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "unknown"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_unknown",
+        "value": null
+      }
+    },
+    {
+      "case_id": "invalid-frame-type",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": {
+          "host_type": "integer",
+          "value": 1
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "invalid-operation-type",
+      "operation": {
+        "host_type": "string_name",
+        "value": "evaluate_all"
+      },
+      "input": {},
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "unknown-operation",
+      "operation": "PRIVATE_SENTINEL",
+      "input": {},
+      "expected": {
+        "ok": false,
+        "error_code": "operation_unknown",
+        "value": null
+      }
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SENTINEL"
+  ],
+  "consumer_rule": "Results are offline public differential DTOs; recompute exact parent owners and never use this artifact as live window, binding, ticket or execution authority."
+}

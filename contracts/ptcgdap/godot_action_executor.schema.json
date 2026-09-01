@@ -1,0 +1,361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/godot_action_executor.schema.json",
+  "title": "PtcgDAP GodotActionExecutor audit DTOs",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "kind",
+    "value"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "profile_id": {
+      "const": "ptcgdap-godot-action-executor-p3-wp4-v1"
+    },
+    "kind": {
+      "enum": [
+        "preflight_result",
+        "commit_result"
+      ]
+    },
+    "value": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "preflight_result"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "$ref": "#/$defs/preflightResult"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "commit_result"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "$ref": "#/$defs/commitResult"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "executorAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executor_profile",
+        "preflight_id",
+        "preflight_generation",
+        "ticket_id",
+        "ticket_generation",
+        "binding_version",
+        "snapshot_id",
+        "window_id",
+        "public_observation_hash",
+        "chooser_player_index",
+        "selected_indexes",
+        "selected_fingerprint_hashes",
+        "resolution_count",
+        "state",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "executor_profile": {
+          "const": "ptcgdap-godot-action-executor-p3-wp4-v1"
+        },
+        "preflight_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "preflight_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "ticket_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "binding_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "window_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "public_observation_hash": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "chooser_player_index": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "selected_indexes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "uniqueItems": true
+        },
+        "selected_fingerprint_hashes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          }
+        },
+        "resolution_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "committed",
+            "aborted"
+          ]
+        },
+        "authority": {
+          "const": "godot_action_executor_shadow"
+        },
+        "authoritative": {
+          "const": false
+        }
+      },
+      "allOf": [
+        {
+          "properties": {
+            "selected_fingerprint_hashes": {
+              "minItems": 0
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "aborted"
+              }
+            }
+          },
+          "then": {}
+        }
+      ]
+    },
+    "preflightResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "enum": [
+            "",
+            "executor_integrity_invalid",
+            "invalid_ticket_owner",
+            "invalid_claim_result",
+            "claim_not_accepted",
+            "invalid_binding_owner",
+            "binding_not_current",
+            "snapshot_not_current",
+            "window_not_current",
+            "callback_mismatch",
+            "selection_mismatch",
+            "private_resolution_invalid",
+            "private_reference_unavailable",
+            "active_preflight_exists",
+            "preflight_space_exhausted"
+          ]
+        },
+        "audit": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/executorAudit"
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "error_code": {
+              "const": ""
+            },
+            "audit": {
+              "$ref": "#/$defs/executorAudit"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "error_code": {
+              "enum": [
+                "executor_integrity_invalid",
+                "invalid_ticket_owner",
+                "invalid_claim_result",
+                "claim_not_accepted",
+                "invalid_binding_owner",
+                "binding_not_current",
+                "snapshot_not_current",
+                "window_not_current",
+                "callback_mismatch",
+                "selection_mismatch",
+                "private_resolution_invalid",
+                "private_reference_unavailable",
+                "active_preflight_exists",
+                "preflight_space_exhausted"
+              ]
+            },
+            "audit": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "commitResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "enum": [
+            "",
+            "executor_integrity_invalid",
+            "invalid_preflight",
+            "owner_mismatch",
+            "preflight_integrity_invalid",
+            "preflight_not_current",
+            "already_committed",
+            "preflight_aborted",
+            "commit_context_changed",
+            "private_resolution_invalid",
+            "private_reference_unavailable"
+          ]
+        },
+        "audit": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/executorAudit"
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "accepted": {
+              "const": true
+            },
+            "error_code": {
+              "const": ""
+            },
+            "audit": {
+              "$ref": "#/$defs/executorAudit"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accepted": {
+              "const": false
+            },
+            "error_code": {
+              "enum": [
+                "executor_integrity_invalid",
+                "invalid_preflight",
+                "owner_mismatch",
+                "preflight_integrity_invalid",
+                "preflight_not_current",
+                "already_committed",
+                "preflight_aborted",
+                "commit_context_changed",
+                "private_resolution_invalid",
+                "private_reference_unavailable"
+              ]
+            },
+            "audit": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

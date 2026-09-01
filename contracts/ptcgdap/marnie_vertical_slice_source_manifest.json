@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-marnie-vertical-slice-source-manifest-p5-wp1-v1",
+  "source_policy": {
+    "official_oracle": "read_only_development_source_compiler_input_only",
+    "runtime_dependency": false,
+    "private_replay_copy_allowed": false,
+    "public_seat_step_extraction_only": true,
+    "name_text_art_inference": "forbidden"
+  },
+  "inputs": [
+    {
+      "id": "candidate_manifest_json_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/candidate_manifest.json",
+      "bytes": 1366,
+      "raw_sha256": "2BF52818FD030013B4E87BDA1872E04E90805D3D7D97092A445E78E3C25A1C1B",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "deck_csv_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/deck.csv",
+      "bytes": 312,
+      "raw_sha256": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "main_py_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/main.py",
+      "bytes": 112856,
+      "raw_sha256": "3802A739CF6BD92B31168A1A455890C3FDA3EF933E65D36CB7B8DF5E98F10EC1",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "source_policy_py_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/source_policy.py",
+      "bytes": 48245,
+      "raw_sha256": "4ED25A095FAF96BE23E4092250377BC770496B7DF11081AD9B7592E887B9A90B",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "source_profile_py_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/source_profile.py",
+      "bytes": 3429,
+      "raw_sha256": "5845D5016FEA85F4B84E261AD2EF65FDA76C035FBCB3DC60940F76AE136A3E95",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "episode_89540503_replay_json_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "artifacts/online_episodes/55171940_raihan_public_20260802/raw/55171940/replays/episode-89540503-replay.json",
+      "bytes": 757047,
+      "raw_sha256": "90FCA708C823791055B60C38599E2A7CF82DCC9E9D2DB83240962DA7AB1B7309",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "episode_89541193_replay_json_official",
+      "root_id": "ptcgabc_read_only_oracle",
+      "path": "artifacts/online_episodes/55171940_raihan_public_20260802/raw/55171940/replays/episode-89541193-replay.json",
+      "bytes": 3871895,
+      "raw_sha256": "D02F774EC35D8F5A7AA44831ABEA4F77833F25780E7C271A76E3121F5A980D89",
+      "canonical_json_v1_sha256": null
+    },
+    {
+      "id": "local_deck_800018501",
+      "root_id": "ptcgdap",
+      "path": "data/bundled_user/decks/800018501.json",
+      "bytes": 13723,
+      "raw_sha256": "8E28C31BE70AB2971EAED9AAB8C6A2D7A3412A95E0E335A702C1F13D547B805F",
+      "canonical_json_v1_sha256": "CB2FD50F40D75BDD9E38B826580A516BDCE7C51B17A43C63CE58E0CC19127CAB"
+    },
+    {
+      "id": "p2_card_id_catalog_bundle",
+      "root_id": "ptcgdap",
+      "path": "contracts/ptcgdap/card_id_catalog_bundle.json",
+      "bytes": 1850,
+      "raw_sha256": "E84B3B05D3272A7305A484DBEC2959487873DDC2C29FB9FA8BBC25B3A2F0CAA0",
+      "canonical_json_v1_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4"
+    },
+    {
+      "id": "p2_card_id_source_manifest",
+      "root_id": "ptcgdap",
+      "path": "contracts/ptcgdap/card_id_catalog_source_manifest.json",
+      "bytes": 8241,
+      "raw_sha256": "0C3AB10CDDF9BC4226C041A935E8B25BE5D0FEFA8A1BD7EFB131FAB4AE119AB6",
+      "canonical_json_v1_sha256": "14A01DB7AF8344C8289E02D03478DB5CB8195F8EB78E01976D0672B871EEC90F"
+    },
+    {
+      "id": "p2_official_card_attack_master",
+      "root_id": "ptcgdap",
+      "path": "data/ptcgdap/card_id_catalog/official_card_attack_master_v1.json",
+      "bytes": 451457,
+      "raw_sha256": "C3D03B717A73FFCB40C5431479370A971ABF7A9C4674384CE937DF75FCBBEAAC",
+      "canonical_json_v1_sha256": "3ED86C598ECD0BB5367FB575E94113BFE488E0B98FC64D6FABC50A1B0EAA8ED3"
+    },
+    {
+      "id": "p2_marnie_exact_bridge",
+      "root_id": "ptcgdap",
+      "path": "data/ptcgdap/card_id_catalog/marnie_exact_print_bridge_v1.json",
+      "bytes": 5566,
+      "raw_sha256": "923F33E90ADE3393878FCA68EA4C52003B8EB0B064E2FF7E37C42AA8DF858E44",
+      "canonical_json_v1_sha256": "15BDE946C5C5B0102D13C04AE5B7676CB7FB071C32BC35507C24556E1D9FBEC5"
+    },
+    {
+      "id": "p4_wp6_parent_manifest",
+      "root_id": "ptcgdap",
+      "path": "artifacts/ptcgdap/p4_wp6/manifest.json",
+      "bytes": 5123,
+      "raw_sha256": "95FEAAC3956C3CBDC72EF68AEF8289A60F65F5FDDA7FD0038BC86374B607FE39",
+      "canonical_json_v1_sha256": "93B0F8170124AE5DD184FBD1BD17BBEC60C805A6EFC9D348C1B5ADAF5AD3369E"
+    },
+    {
+      "id": "ptcgdap_source_lock",
+      "root_id": "ptcgdap",
+      "path": "docs/ptcgdap/SOURCE_LOCK.json",
+      "bytes": 7958,
+      "raw_sha256": "DD5B2FB796731DCC4D2068B2C3D939346AB89A54D162F625845AB58A66767023",
+      "canonical_json_v1_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+    }
+  ]
+}

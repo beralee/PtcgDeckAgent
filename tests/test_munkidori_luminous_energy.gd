@@ -164,13 +164,58 @@ func test_munkidori_ability_uses_counter_distribution_followup_ui() -> String:
 		"source_pokemon": [source_slot],
 	})
 	var followup: Dictionary = followup_steps[0] if not followup_steps.is_empty() else {}
+	var initial_metadata := UcisInteractionCompiler.metadata_for_step(initial_steps[0]) \
+		if not initial_steps.is_empty() else {}
 
 	return run_checks([
 		assert_eq(initial_steps.size(), 1, "Munkidori should first ask only for the damaged own source Pokemon"),
 		assert_eq(str(initial_steps[0].get("id", "")), "source_pokemon", "Initial Munkidori step should select the source Pokemon"),
+		assert_eq(int(initial_metadata.get("select_type_raw", -1)), 1, "Aligned source selection should use official CARD select semantics"),
+		assert_eq(int(initial_metadata.get("context_raw", -1)), 16, "Aligned source selection should use official REMOVE_DAMAGE_COUNTER context"),
 		assert_eq(str(followup.get("id", "")), "target_damage_counters", "Follow-up should store counter placement assignments"),
 		assert_eq(str(followup.get("ui_mode", "")), "counter_distribution", "Follow-up should reuse Dragapult-style counter distribution UI"),
 		assert_eq(int(followup.get("total_counters", 0)), 2, "Follow-up should cap available counters by source damage"),
 		assert_true(bool(followup.get("allow_partial", false)), "Munkidori should allow moving fewer than the maximum counters"),
 		assert_eq(int(followup.get("max_assignments", 0)), 1, "Munkidori should finish after one target assignment"),
+		assert_eq(
+			followup.get("ucis_counter_count_window", {}),
+			{
+				"ucis_context_name": "REMOVE_DAMAGE_COUNTER_COUNT",
+			},
+			"Aligned mode should expand the rich Godot interaction into the official count window",
+		),
+		assert_eq(
+			followup.get("ucis_counter_target_window", {}),
+			{
+				"ucis_context_name": "DAMAGE_COUNTER",
+			},
+			"Aligned mode should follow the count with the official damage-counter target window",
+		),
+	])
+
+
+func test_munkidori_accepts_transition_period_official_number_option_shape() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	var munki_cd := _make_basic_pokemon_data(
+		"Munkidori", "P", 110, "Basic", "", "munkidori_number_option_compat_test"
+	)
+	munki_cd.abilities = [{"name": "亢奋脑力"}]
+	var munki_slot := _make_slot(munki_cd, 0)
+	munki_slot.attached_energy.append(CardInstance.create(_make_energy_data("Darkness Energy", "D"), 0))
+	player.active_pokemon = munki_slot
+	var source_slot: PokemonSlot = player.bench[0]
+	source_slot.damage_counters = 30
+	var target_slot: PokemonSlot = opponent.active_pokemon
+	var effect := AbilityMoveDamageCountersToOpponent.new(3)
+	effect.execute_ability(munki_slot, 0, [{
+		"source_pokemon": [source_slot],
+		"counter_count": [{"number": 2}],
+		"target_pokemon": [target_slot],
+	}], state)
+
+	return run_checks([
+		assert_eq(source_slot.damage_counters, 10, "Legacy in-flight NUMBER options should still remove the selected two counters"),
+		assert_eq(target_slot.damage_counters, 20, "Legacy in-flight NUMBER options should not collapse to zero counters"),
 	])

@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/shadow_match_owner_gate.schema.json",
+  "title": "PtcgDAP whole-match shadow owner gate audit DTOs",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/gateAudit"
+    },
+    {
+      "$ref": "#/$defs/gateResult"
+    }
+  ],
+  "$defs": {
+    "positiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "nonNegativeSafeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "gateAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "gate_generation",
+        "state",
+        "match_generation",
+        "active_mode",
+        "rollback_pending",
+        "next_forced_mode",
+        "rollback_applied",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "profile": {
+          "const": "ptcgdap-shadow-match-owner-gate-p3-wp6-v1"
+        },
+        "gate_generation": {
+          "$ref": "#/$defs/nonNegativeSafeInteger"
+        },
+        "state": {
+          "enum": [
+            "idle",
+            "active",
+            "between_matches"
+          ]
+        },
+        "match_generation": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/positiveSafeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "active_mode": {
+          "oneOf": [
+            {
+              "enum": [
+                "legacy",
+                "aligned_shadow"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rollback_pending": {
+          "type": "boolean"
+        },
+        "next_forced_mode": {
+          "oneOf": [
+            {
+              "const": "legacy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rollback_applied": {
+          "type": "boolean"
+        },
+        "authority": {
+          "const": "shadow_match_owner_gate_audit"
+        },
+        "authoritative": {
+          "const": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "active"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "match_generation": {
+                "$ref": "#/$defs/positiveSafeInteger"
+              },
+              "active_mode": {
+                "enum": [
+                  "legacy",
+                  "aligned_shadow"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "idle"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "gate_generation": {
+                "const": 0
+              },
+              "match_generation": {
+                "type": "null"
+              },
+              "active_mode": {
+                "type": "null"
+              },
+              "rollback_pending": {
+                "const": false
+              },
+              "rollback_applied": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "between_matches"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "match_generation": {
+                "$ref": "#/$defs/positiveSafeInteger"
+              },
+              "active_mode": {
+                "type": "null"
+              },
+              "rollback_applied": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "rollback_pending": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "next_forced_mode": {
+                "const": "legacy"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "next_forced_mode": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "rollback_applied": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "state": {
+                "const": "active"
+              },
+              "active_mode": {
+                "const": "legacy"
+              },
+              "rollback_pending": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "enum": [
+            "",
+            "invalid_gate",
+            "invalid_mode",
+            "invalid_match_generation",
+            "active_match_exists",
+            "no_active_match",
+            "stale_match_generation",
+            "broker_required",
+            "broker_forbidden",
+            "broker_invalid",
+            "broker_match_generation_mismatch",
+            "rollback_already_pending",
+            "generation_exhausted"
+          ]
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/gateAudit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "const": ""
+              },
+              "audit": {
+                "$ref": "#/$defs/gateAudit"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "enum": [
+                  "invalid_gate",
+                  "invalid_mode",
+                  "invalid_match_generation",
+                  "active_match_exists",
+                  "no_active_match",
+                  "stale_match_generation",
+                  "broker_required",
+                  "broker_forbidden",
+                  "broker_invalid",
+                  "broker_match_generation_mismatch",
+                  "rollback_already_pending",
+                  "generation_exhausted"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -22,6 +22,7 @@ var _active_event_serial: int = 0
 var _event_timeout_seconds: float = EVENT_TIMEOUT_SECONDS
 var _submitted_events: int = 0
 var _last_state_transition_signature: String = ""
+var _playback_speed: float = 1.0
 
 
 func setup(scene: Object) -> void:
@@ -41,6 +42,14 @@ func setup(scene: Object) -> void:
 func set_animators_for_tests(zone_animator: RefCounted, feedback_animator: RefCounted) -> void:
 	_zone_animator = zone_animator
 	_feedback_animator = feedback_animator
+	set_playback_speed(_playback_speed)
+
+
+func set_playback_speed(speed: float) -> void:
+	_playback_speed = clampf(speed, 0.5, 4.0)
+	for animator: RefCounted in [_zone_animator, _feedback_animator]:
+		if animator != null and animator.has_method("set_playback_speed"):
+			animator.call("set_playback_speed", _playback_speed)
 
 
 func prime_snapshot(game_state: GameState, view_player: int) -> void:
@@ -209,7 +218,7 @@ func _schedule_event_timeout(expected_generation: int, expected_serial: int) -> 
 	var tree := (_scene as Node).get_tree()
 	if tree == null:
 		return
-	var timer := tree.create_timer(_event_timeout_seconds)
+	var timer := tree.create_timer(_event_timeout_seconds / _playback_speed)
 	timer.timeout.connect(
 		Callable(self, "_on_event_timeout").bind(expected_generation, expected_serial),
 		CONNECT_ONE_SHOT

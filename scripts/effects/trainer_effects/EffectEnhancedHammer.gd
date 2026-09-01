@@ -8,7 +8,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _special_energy(state.players[1 - card.owner_index]).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var items: Array = _special_energy(opponent)
 	var labels: Array[String] = []

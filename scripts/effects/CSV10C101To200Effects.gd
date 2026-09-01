@@ -22,12 +22,12 @@ class AttackCoinFlipCopyOpponentAttack extends AttackCopyAttack:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_preview_interaction_steps(card: CardInstance, attack: Dictionary, _state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_preview_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, _state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_index(card, attack)):
 			return []
 		return [_coin_result_step("Flip a coin. If heads, choose an attack on the opponent Active Pokemon to copy.", "preview")]
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, _state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, _state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_index(card, attack)):
 			return []
 		var flipper := _coin_flipper if _coin_flipper != null else CoinFlipper.new()
@@ -37,7 +37,7 @@ class AttackCoinFlipCopyOpponentAttack extends AttackCopyAttack:
 		var title := "Coin result: heads. Continue to choose a copied attack." if _pending_heads else "Coin result: tails. The attack has no effect."
 		return [_coin_result_step(title, result)]
 
-	func get_followup_attack_interaction_steps(
+	func build_ucis_followup_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		attack: Dictionary,
 		state: GameState,
@@ -46,10 +46,10 @@ class AttackCoinFlipCopyOpponentAttack extends AttackCopyAttack:
 		if not _heads_from_context(resolved_context):
 			return []
 		if not resolved_context.has(AttackCopyAttack.STEP_ID):
-			return super.get_attack_interaction_steps(card, attack, state)
+			return super.build_ucis_attack_interaction_steps_spec_steps(card, attack, state)
 		var copied_context := resolved_context.duplicate(true)
 		copied_context.erase(RESULT_STEP_ID)
-		return super.get_followup_attack_interaction_steps(card, attack, state, copied_context)
+		return super.build_ucis_followup_attack_interaction_steps_spec_steps(card, attack, state, copied_context)
 
 	func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
 		return super.get_damage_bonus(attacker, state) if _resolved_heads() else 0
@@ -89,6 +89,8 @@ class AttackCoinFlipCopyOpponentAttack extends AttackCopyAttack:
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
+			"ucis_context_name": "COIN_HEAD",
+			"ucis_option_type_name": "NO" if result == "tails" else "YES",
 			"wait_for_coin_animation": true,
 			"force_dialog": true,
 		}
@@ -143,7 +145,7 @@ class AttackDiscardOpponentActiveEnergy extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -269,7 +271,7 @@ class AbilitySearchNamedPokemon extends BaseEffect:
 		var owner := pokemon.get_top_card().owner_index
 		return state.current_player_index == owner and not pokemon.has_ability_used(state.turn_number) and not state.players[owner].deck.is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var player := state.players[card.owner_index]
@@ -287,7 +289,7 @@ class AbilitySearchNamedPokemon extends BaseEffect:
 			{"allow_cancel": true}
 		)]
 
-	func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 		if not should_preview_empty_search_deck(resolved_context):
 			return []
 		return [build_readonly_deck_preview_step("View deck", state.players[card.owner_index].deck)]
@@ -340,7 +342,7 @@ class AttackLookTopOptionalDiscard extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -399,7 +401,7 @@ class AbilityEvolveAttachNamedEnergyFromDiscard extends BaseEffect:
 		var owner := pokemon.get_top_card().owner_index
 		return state.current_player_index == owner and pokemon.turn_evolved == state.turn_number and not pokemon.has_ability_used(state.turn_number) and not _candidates(state.players[owner]).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var candidates := _candidates(state.players[card.owner_index])
@@ -496,8 +498,8 @@ class AttackChooseOpponentBenchAsActive extends AttackSwitchOpponentActive:
 	func _init(match_attack_index: int = -1) -> void:
 		super(match_attack_index)
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
-		var steps := super.get_attack_interaction_steps(card, attack, state)
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+		var steps := super.build_ucis_attack_interaction_steps_spec_steps(card, attack, state)
 		for step: Dictionary in steps:
 			step["title"] = "Choose 1 opposing Benched Pokemon to switch into the Active Spot"
 			step["opponent_chooses"] = false
@@ -572,7 +574,7 @@ class AttackEvolveOwnPokemonFromDeck extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -595,7 +597,7 @@ class AttackEvolveOwnPokemonFromDeck extends BaseEffect:
 			"requires_followup_interaction": true,
 		}]
 
-	func get_followup_attack_interaction_steps(
+	func build_ucis_followup_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		attack: Dictionary,
 		state: GameState,
@@ -788,7 +790,7 @@ class AbilityEvolvePlaceDamageCounters extends BaseEffect:
 			and not pokemon.has_ability_used(state.turn_number) \
 			and not state.players[1 - owner].get_all_pokemon().is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var candidates := state.players[1 - card.owner_index].get_all_pokemon()
@@ -842,7 +844,7 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -998,7 +1000,7 @@ class AbilityActiveDamagedSearchNamedPokemonToBench extends BaseEffect:
 		name_fragments = fragments.duplicate()
 		max_count = maxi(0, count)
 
-	func get_reactive_interaction_steps(source: PokemonSlot, attacker: PokemonSlot, state: GameState) -> Array[Dictionary]:
+	func build_ucis_reactive_interaction_steps_spec_steps(source: PokemonSlot, attacker: PokemonSlot, state: GameState) -> Array[Dictionary]:
 		if source == null or source.get_top_card() == null or attacker == null or attacker.get_top_card() == null or state == null:
 			return []
 		var owner := source.get_top_card().owner_index
@@ -1121,7 +1123,7 @@ class AttackDamagedBenchCounterMultiplier extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var candidates := state.players[1 - card.owner_index].bench.duplicate()
@@ -1235,7 +1237,7 @@ class AttackRevealOpponentHandCardToBottom extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -1317,7 +1319,7 @@ class AttackDamageTwoOpponentPokemon extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var candidates := state.players[1 - card.owner_index].get_all_pokemon()
@@ -1385,7 +1387,7 @@ class AbilitySearchPsychicMetalEnergyAssign extends BaseEffect:
 			and not _energies(player).is_empty() \
 			and not _targets(player).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var player := state.players[card.owner_index]
@@ -1509,7 +1511,7 @@ class AttackDiscardSelectedSelfEnergy extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -1601,7 +1603,7 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -1631,6 +1633,8 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 			"title": "Reveal the top %d opponent deck cards; you may use an attack from a Pokemon found there" % reveal_count,
 			"items": options,
 			"labels": labels,
+			"ucis_context_name": "ATTACK",
+			"ucis_option_type_name": "ATTACK",
 			"presentation": "action_hud",
 			"visible_scope": "opponent_top_cards_revealed",
 			"revealed_cards": revealed,
@@ -1640,7 +1644,7 @@ class AttackCopyOpponentTopDeckPokemonAttack extends BaseEffect:
 			"force_confirm": true,
 		}]
 
-	func get_followup_attack_interaction_steps(
+	func build_ucis_followup_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		_attack: Dictionary,
 		state: GameState,
@@ -1849,7 +1853,7 @@ class AttackBothPlayersDiscardSelectedHandCard extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var own := state.players[card.owner_index]
@@ -1950,7 +1954,7 @@ class AbilityDiscardTwoDrawOne extends BaseEffect:
 			and not pokemon.has_ability_used(state.turn_number) \
 			and state.players[owner].hand.size() >= 2
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var hand := state.players[card.owner_index].hand
@@ -2112,7 +2116,7 @@ class AbilityEvolveRecoverNamedItems extends BaseEffect:
 			and not pokemon.has_ability_used(state.turn_number) \
 			and not _candidates(state.players[owner]).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var candidates := _candidates(state.players[card.owner_index])
@@ -2209,7 +2213,7 @@ class AbilityEvolveGustOpponentBench extends BaseEffect:
 			and not pokemon.has_ability_used(state.turn_number) \
 			and not state.players[1 - owner].bench.is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -2283,7 +2287,7 @@ class EffectHealSelectedPokemonDiscardEnergy extends BaseEffect:
 			return false
 		return not _eligible_pairs(state.players[card.owner_index]).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var player := state.players[card.owner_index]
@@ -2387,7 +2391,7 @@ class EffectReturnDiscardCardsToDeck extends BaseEffect:
 	func can_execute(card: CardInstance, state: GameState) -> bool:
 		return card != null and state != null and not _legal(state.players[card.owner_index]).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var legal := _legal(state.players[card.owner_index])
@@ -2452,7 +2456,7 @@ class EffectExchangeAllPrizes extends BaseEffect:
 		if count <= 0:
 			return
 		var old_prizes := player.prizes.duplicate()
-		old_prizes.shuffle()
+		player.shuffle_cards(old_prizes, "exchange_all_prizes")
 		player.prizes.clear()
 		for old_prize: CardInstance in old_prizes:
 			old_prize.face_up = false
@@ -2516,7 +2520,7 @@ class EffectSearchBasicNamedPokemonToBench extends BaseEffect:
 		var player := state.players[card.owner_index]
 		return BenchLimit.get_available_bench_space(state, player) > 0 and not _legal(player).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var player := state.players[card.owner_index]
@@ -2590,7 +2594,7 @@ class EffectHiddenPrizeHandSwap extends BaseEffect:
 		var opponent := state.players[1 - card.owner_index]
 		return not opponent.hand.is_empty() and not _facedown_prize_indices(opponent).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if not can_execute(card, state):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -2622,7 +2626,7 @@ class EffectHiddenPrizeHandSwap extends BaseEffect:
 			"allow_cancel": true,
 		}]
 
-	func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 		var selected := _resolve_selection(card, state, resolved_context)
 		if selected.is_empty():
 			return []
@@ -2710,7 +2714,7 @@ class EffectCoinSearchNamedPokemonByStage extends BaseEffect:
 	func can_execute(card: CardInstance, state: GameState) -> bool:
 		return card != null and state != null and not state.players[card.owner_index].deck.is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if not can_execute(card, state):
 			return []
 		var heads := _flipper().flip()
@@ -2729,7 +2733,7 @@ class EffectCoinSearchNamedPokemonByStage extends BaseEffect:
 			{"allow_cancel": true, "force_confirm": true}
 		)]
 
-	func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 		if not should_preview_empty_search_deck(resolved_context):
 			return []
 		return [build_readonly_deck_preview_step("View deck", state.players[card.owner_index].deck)]
@@ -2795,7 +2799,7 @@ class EffectCoinDamageCountersOpponentOrSelf extends BaseEffect:
 		counter_count = maxi(0, counters)
 		coin_flipper = flipper
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var heads := _flipper().flip()
@@ -2861,7 +2865,7 @@ class EffectSearchNamedSupporter extends BaseEffect:
 	func can_execute(card: CardInstance, state: GameState) -> bool:
 		return card != null and state != null and not state.players[card.owner_index].deck.is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var player := state.players[card.owner_index]
@@ -2870,7 +2874,7 @@ class EffectSearchNamedSupporter extends BaseEffect:
 			return [build_empty_search_resolution_step("No matching Team Rocket Supporter was found.")]
 		return [build_full_library_search_step(STEP_ID, "Choose 1 Team Rocket Supporter", player.deck, legal, VISIBLE_SCOPE_OWN_FULL_DECK, 0, 1, {"allow_cancel": true, "force_confirm": true})]
 
-	func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 		if not should_preview_empty_search_deck(resolved_context):
 			return []
 		return [build_readonly_deck_preview_step("View deck", state.players[card.owner_index].deck)]

@@ -1,0 +1,426 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-engine-decision-port-p3-wp1-v1",
+  "host_token_encoding": {
+    "card_reference": "card:<fixture-label>",
+    "null_reference": null
+  },
+  "publish_cases": [
+    {
+      "id": "null-reset",
+      "match_generation": 1,
+      "decision_generation": 1,
+      "chooser_player_index": 0,
+      "source": {
+        "select": null,
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": null
+      }
+    },
+    {
+      "id": "scalar-order",
+      "match_generation": 1,
+      "decision_generation": 2,
+      "chooser_player_index": 0,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 7,
+              "index": 2
+            },
+            {
+              "type": 14
+            },
+            {
+              "type": 3
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null,
+          null
+        ],
+        "turn_action_count": 3
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": null
+      }
+    },
+    {
+      "id": "attack-index",
+      "match_generation": 1,
+      "decision_generation": 3,
+      "chooser_player_index": 0,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 13,
+              "local_attack_index": 0
+            },
+            {
+              "type": 13,
+              "local_attack_index": 1
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null,
+          null
+        ],
+        "turn_action_count": 4
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": null
+      }
+    },
+    {
+      "id": "card-reference",
+      "match_generation": 1,
+      "decision_generation": 4,
+      "chooser_player_index": 1,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 15
+            },
+            {
+              "type": 15
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          "card:a",
+          "card:b"
+        ],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": null
+      }
+    },
+    {
+      "id": "deck-context-effect",
+      "match_generation": 1,
+      "decision_generation": 5,
+      "chooser_player_index": 1,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 14
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": [
+          "card:a",
+          "card:b"
+        ],
+        "context_card": "card:c",
+        "effect_card": "card:d",
+        "option_card_refs": [
+          null
+        ],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "audit": null
+      }
+    },
+    {
+      "id": "bad-match",
+      "match_generation": 0,
+      "decision_generation": 1,
+      "chooser_player_index": 0,
+      "source": {
+        "select": null,
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_match_generation",
+        "audit": null
+      }
+    },
+    {
+      "id": "bad-generation",
+      "match_generation": 1,
+      "decision_generation": 0,
+      "chooser_player_index": 0,
+      "source": {
+        "select": null,
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_decision_generation",
+        "audit": null
+      }
+    },
+    {
+      "id": "bad-chooser",
+      "match_generation": 1,
+      "decision_generation": 1,
+      "chooser_player_index": 2,
+      "source": {
+        "select": null,
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_chooser_player_index",
+        "audit": null
+      }
+    },
+    {
+      "id": "source-extra-key",
+      "match_generation": 1,
+      "decision_generation": 1,
+      "chooser_player_index": 0,
+      "source": {
+        "select": null,
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [],
+        "turn_action_count": 0,
+        "private": "sentinel"
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_decision_source",
+        "audit": null
+      }
+    },
+    {
+      "id": "bad-option-shape",
+      "match_generation": 1,
+      "decision_generation": 1,
+      "chooser_player_index": 0,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 14,
+              "index": 0
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null
+        ],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_option_source",
+        "audit": null
+      }
+    },
+    {
+      "id": "missing-card-ref",
+      "match_generation": 1,
+      "decision_generation": 1,
+      "chooser_player_index": 0,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 15
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          null
+        ],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_reference",
+        "audit": null
+      }
+    },
+    {
+      "id": "ref-on-scalar",
+      "match_generation": 1,
+      "decision_generation": 1,
+      "chooser_player_index": 0,
+      "source": {
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 14
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        },
+        "deck_cards": null,
+        "context_card": null,
+        "effect_card": null,
+        "option_card_refs": [
+          "card:a"
+        ],
+        "turn_action_count": 0
+      },
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_reference",
+        "audit": null
+      }
+    }
+  ],
+  "transition_cases": [
+    {
+      "id": "strictly-increasing",
+      "generations": [
+        1,
+        2,
+        3
+      ],
+      "expected": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": "duplicate-generation",
+      "generations": [
+        1,
+        1
+      ],
+      "expected": [
+        "",
+        "stale_decision_generation"
+      ]
+    },
+    {
+      "id": "decreasing-generation",
+      "generations": [
+        2,
+        1
+      ],
+      "expected": [
+        "",
+        "stale_decision_generation"
+      ]
+    }
+  ],
+  "mutation_cases": [
+    "option_reorder",
+    "scalar_change",
+    "reference_replace",
+    "reference_release",
+    "cross_port",
+    "copied_dto"
+  ]
+}

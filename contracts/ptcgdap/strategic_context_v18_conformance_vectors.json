@@ -1,0 +1,1109 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-strategic-context-v18-conformance-p4-wp1-v1",
+  "profile_id": "ptcgdap-strategic-context-v18-p4-wp1-v1",
+  "decision_profile_id": "ptcgdap-policy-decision-p4-wp1-v1",
+  "fixture": {
+    "firewall_vector_case_id": "regular-accepted",
+    "public_hash_authority": "firewall_accepted",
+    "expected_window": {
+      "window_version": 1,
+      "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+      "hash_profile": "cabt_selection_window_v1",
+      "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+      "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+      "public_hash_authority": "firewall_accepted",
+      "chooser_player_index": 0,
+      "decision_state": "policy_allowed",
+      "fallback_reasons": [],
+      "select_type_raw": 9,
+      "select_context_raw": 41,
+      "min_count": 1,
+      "max_count": 1,
+      "remain_damage_counter": 0,
+      "remain_energy_cost": 0,
+      "context_card": null,
+      "effect": null,
+      "public_deck_candidates": null,
+      "options": [
+        {
+          "type": 1
+        },
+        {
+          "type": 2
+        }
+      ],
+      "option_fingerprints": [
+        "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E",
+        "3CC190D5833C33F535FF377FBD1976C56BCFED571B1726FEFC9AE1065BDE7BED"
+      ]
+    },
+    "expected_context": {
+      "schema_version": 1,
+      "profile_id": "ptcgdap-strategic-context-v18-p4-wp1-v1",
+      "source": {
+        "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "chooser_player_index": 0,
+        "option_fingerprint_profile": "cabt_option_fingerprint_v1",
+        "option_count": 2
+      },
+      "clocks": {
+        "turn": 0,
+        "turn_action_count": 1,
+        "remaining_overage_time": 599,
+        "acting_prizes_remaining": 6,
+        "opponent_prizes_remaining": 6,
+        "acting_deck_count": 50,
+        "opponent_deck_count": 50,
+        "acting_hand_count": 1,
+        "opponent_hand_count": 3
+      },
+      "public_state": {
+        "turn_flags": {
+          "first_player": -1,
+          "result": -1,
+          "supporter_played": false,
+          "stadium_played": false,
+          "energy_attached": false,
+          "retreated": false
+        },
+        "stadium": [],
+        "acting_player": {
+          "active": [
+            {
+              "id": 100,
+              "serial": 10,
+              "playerIndex": 0,
+              "hp": 70,
+              "maxHp": 70,
+              "appearThisTurn": false,
+              "energies": [],
+              "energyCards": [],
+              "tools": [],
+              "preEvolution": []
+            }
+          ],
+          "bench": [],
+          "benchMax": 5,
+          "deckCount": 50,
+          "discard": [],
+          "prize": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "handCount": 1,
+          "hand": [
+            {
+              "id": 7,
+              "serial": 30,
+              "playerIndex": 0
+            }
+          ],
+          "poisoned": false,
+          "burned": false,
+          "asleep": false,
+          "paralyzed": false,
+          "confused": false
+        },
+        "opponent_player": {
+          "active": [
+            {
+              "id": 101,
+              "serial": 11,
+              "playerIndex": 1,
+              "hp": 70,
+              "maxHp": 70,
+              "appearThisTurn": false,
+              "energies": [],
+              "energyCards": [],
+              "tools": [],
+              "preEvolution": []
+            }
+          ],
+          "bench": [],
+          "benchMax": 5,
+          "deckCount": 50,
+          "discard": [],
+          "prize": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "handCount": 3,
+          "hand": null,
+          "poisoned": false,
+          "burned": false,
+          "asleep": false,
+          "paralyzed": false,
+          "confused": false
+        }
+      },
+      "select_semantics": {
+        "select_type_raw": 9,
+        "select_context_raw": 41,
+        "min_count": 1,
+        "max_count": 1,
+        "remain_damage_counter": 0,
+        "remain_energy_cost": 0,
+        "context_card": null,
+        "effect": null,
+        "options": [
+          {
+            "index": 0,
+            "fingerprint": "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E",
+            "raw": {
+              "type": 1
+            }
+          },
+          {
+            "index": 1,
+            "fingerprint": "3CC190D5833C33F535FF377FBD1976C56BCFED571B1726FEFC9AE1065BDE7BED",
+            "raw": {
+              "type": 2
+            }
+          }
+        ]
+      },
+      "opponent_public_belief": {
+        "status": "unknown",
+        "candidates": [],
+        "public_evidence_ids": []
+      },
+      "public_event_delta": [],
+      "provenance": {
+        "firewall_contract_hash": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+        "records": [
+          {
+            "output_pointer": "",
+            "source_pointer": "",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select",
+            "source_pointer": "/select",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/type",
+            "source_pointer": "/select/type",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/context",
+            "source_pointer": "/select/context",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/minCount",
+            "source_pointer": "/select/minCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/maxCount",
+            "source_pointer": "/select/maxCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/remainDamageCounter",
+            "source_pointer": "/select/remainDamageCounter",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/remainEnergyCost",
+            "source_pointer": "/select/remainEnergyCost",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/option",
+            "source_pointer": "/select/option",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/option/0",
+            "source_pointer": "/select/option/0",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/option/0/type",
+            "source_pointer": "/select/option/0/type",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/option/1",
+            "source_pointer": "/select/option/1",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/option/1/type",
+            "source_pointer": "/select/option/1/type",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/deck",
+            "source_pointer": "/select/deck",
+            "visibility": "authorized_window_visible",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/contextCard",
+            "source_pointer": "/select/contextCard",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/select/effect",
+            "source_pointer": "/select/effect",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/logs",
+            "source_pointer": "/logs",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current",
+            "source_pointer": "/current",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/turn",
+            "source_pointer": "/current/turn",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/turnActionCount",
+            "source_pointer": "/current/turnActionCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/yourIndex",
+            "source_pointer": "/current/yourIndex",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/firstPlayer",
+            "source_pointer": "/current/firstPlayer",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/supporterPlayed",
+            "source_pointer": "/current/supporterPlayed",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/stadiumPlayed",
+            "source_pointer": "/current/stadiumPlayed",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/energyAttached",
+            "source_pointer": "/current/energyAttached",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/retreated",
+            "source_pointer": "/current/retreated",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/result",
+            "source_pointer": "/current/result",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/stadium",
+            "source_pointer": "/current/stadium",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/looking",
+            "source_pointer": "/current/looking",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players",
+            "source_pointer": "/current/players",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0",
+            "source_pointer": "/current/players/0",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active",
+            "source_pointer": "/current/players/0/active",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0",
+            "source_pointer": "/current/players/0/active/0",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/id",
+            "source_pointer": "/current/players/0/active/0/id",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/serial",
+            "source_pointer": "/current/players/0/active/0/serial",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/playerIndex",
+            "source_pointer": "/current/players/0/active/0/playerIndex",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/hp",
+            "source_pointer": "/current/players/0/active/0/hp",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/maxHp",
+            "source_pointer": "/current/players/0/active/0/maxHp",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/appearThisTurn",
+            "source_pointer": "/current/players/0/active/0/appearThisTurn",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/energies",
+            "source_pointer": "/current/players/0/active/0/energies",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/energyCards",
+            "source_pointer": "/current/players/0/active/0/energyCards",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/tools",
+            "source_pointer": "/current/players/0/active/0/tools",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/active/0/preEvolution",
+            "source_pointer": "/current/players/0/active/0/preEvolution",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/bench",
+            "source_pointer": "/current/players/0/bench",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/benchMax",
+            "source_pointer": "/current/players/0/benchMax",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/deckCount",
+            "source_pointer": "/current/players/0/deckCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/discard",
+            "source_pointer": "/current/players/0/discard",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize",
+            "source_pointer": "/current/players/0/prize",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize/0",
+            "source_pointer": "/current/players/0/prize/0",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize/1",
+            "source_pointer": "/current/players/0/prize/1",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize/2",
+            "source_pointer": "/current/players/0/prize/2",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize/3",
+            "source_pointer": "/current/players/0/prize/3",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize/4",
+            "source_pointer": "/current/players/0/prize/4",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/prize/5",
+            "source_pointer": "/current/players/0/prize/5",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/handCount",
+            "source_pointer": "/current/players/0/handCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/hand",
+            "source_pointer": "/current/players/0/hand",
+            "visibility": "acting_player_visible",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/hand/0",
+            "source_pointer": "/current/players/0/hand/0",
+            "visibility": "acting_player_visible",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/hand/0/id",
+            "source_pointer": "/current/players/0/hand/0/id",
+            "visibility": "acting_player_visible",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/hand/0/serial",
+            "source_pointer": "/current/players/0/hand/0/serial",
+            "visibility": "acting_player_visible",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/hand/0/playerIndex",
+            "source_pointer": "/current/players/0/hand/0/playerIndex",
+            "visibility": "acting_player_visible",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/poisoned",
+            "source_pointer": "/current/players/0/poisoned",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/burned",
+            "source_pointer": "/current/players/0/burned",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/asleep",
+            "source_pointer": "/current/players/0/asleep",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/paralyzed",
+            "source_pointer": "/current/players/0/paralyzed",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/0/confused",
+            "source_pointer": "/current/players/0/confused",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1",
+            "source_pointer": "/current/players/1",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active",
+            "source_pointer": "/current/players/1/active",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0",
+            "source_pointer": "/current/players/1/active/0",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/id",
+            "source_pointer": "/current/players/1/active/0/id",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/serial",
+            "source_pointer": "/current/players/1/active/0/serial",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/playerIndex",
+            "source_pointer": "/current/players/1/active/0/playerIndex",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/hp",
+            "source_pointer": "/current/players/1/active/0/hp",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/maxHp",
+            "source_pointer": "/current/players/1/active/0/maxHp",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/appearThisTurn",
+            "source_pointer": "/current/players/1/active/0/appearThisTurn",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/energies",
+            "source_pointer": "/current/players/1/active/0/energies",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/energyCards",
+            "source_pointer": "/current/players/1/active/0/energyCards",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/tools",
+            "source_pointer": "/current/players/1/active/0/tools",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/active/0/preEvolution",
+            "source_pointer": "/current/players/1/active/0/preEvolution",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/bench",
+            "source_pointer": "/current/players/1/bench",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/benchMax",
+            "source_pointer": "/current/players/1/benchMax",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/deckCount",
+            "source_pointer": "/current/players/1/deckCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/discard",
+            "source_pointer": "/current/players/1/discard",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize",
+            "source_pointer": "/current/players/1/prize",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize/0",
+            "source_pointer": "/current/players/1/prize/0",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize/1",
+            "source_pointer": "/current/players/1/prize/1",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize/2",
+            "source_pointer": "/current/players/1/prize/2",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize/3",
+            "source_pointer": "/current/players/1/prize/3",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize/4",
+            "source_pointer": "/current/players/1/prize/4",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/prize/5",
+            "source_pointer": "/current/players/1/prize/5",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/handCount",
+            "source_pointer": "/current/players/1/handCount",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/hand",
+            "source_pointer": "/current/players/1/hand",
+            "visibility": "concealed_placeholder",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/poisoned",
+            "source_pointer": "/current/players/1/poisoned",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/burned",
+            "source_pointer": "/current/players/1/burned",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/asleep",
+            "source_pointer": "/current/players/1/asleep",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/paralyzed",
+            "source_pointer": "/current/players/1/paralyzed",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/current/players/1/confused",
+            "source_pointer": "/current/players/1/confused",
+            "visibility": "official_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/step",
+            "source_pointer": "/step",
+            "visibility": "framework_public",
+            "authority": "official_cabt_wire",
+            "transform": "exact_copy"
+          },
+          {
+            "output_pointer": "/remainingOverageTime",
+            "source_pointer": "/remainingOverageTime",
+            "visibility": "framework_public",
+            "authority": "official_cabt_wire",
+            "transform": "framework_name_restore"
+          }
+        ]
+      },
+      "authority": "strategic_context_public_audit",
+      "authoritative": false,
+      "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4"
+    }
+  },
+  "context_rejections": [
+    {
+      "id": "firewall-rejected",
+      "fault": "rejected_firewall",
+      "expected_error_code": "firewall_not_accepted"
+    },
+    {
+      "id": "window-hash-mismatch",
+      "fault": "window_hash_mismatch",
+      "expected_error_code": "source_hash_mismatch"
+    },
+    {
+      "id": "chooser-mismatch",
+      "fault": "chooser_mismatch",
+      "expected_error_code": "chooser_mismatch"
+    },
+    {
+      "id": "select-mismatch",
+      "fault": "select_mismatch",
+      "expected_error_code": "select_mismatch"
+    },
+    {
+      "id": "initial-window",
+      "fault": "initial_select_null",
+      "expected_error_code": "unsupported_initial_window"
+    },
+    {
+      "id": "fake-firewall",
+      "fault": "fake_firewall_result",
+      "expected_error_code": "invalid_firewall_result"
+    },
+    {
+      "id": "fake-window",
+      "fault": "fake_window",
+      "expected_error_code": "invalid_window"
+    }
+  ],
+  "decision_cases": [
+    {
+      "id": "policy-first",
+      "selected_indexes": [
+        0
+      ],
+      "resolution_owner": "policy",
+      "resolution_reason_code": "policy_selection_accepted",
+      "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+      "scene_id": "fixture-scene",
+      "decision_id": "fixture-policy-first",
+      "determinism_key": "fixture-determinism-policy-first",
+      "expected_decision": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-policy-decision-p4-wp1-v1",
+        "selected_indexes": [
+          0
+        ],
+        "selected_semantic_intent": {
+          "kind": "current_option_fingerprints",
+          "options": [
+            {
+              "index": 0,
+              "fingerprint": "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E"
+            }
+          ]
+        },
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+        "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+        "scene_id": "fixture-scene",
+        "decision_id": "fixture-policy-first",
+        "determinism_key": "fixture-determinism-policy-first",
+        "authority": "policy_decision_public_audit",
+        "authoritative": false,
+        "audit_id": "B5AC71D7F1432B5CDEF7DCEA74387CC05952EA907CCD2A91A59AD4135C759F57"
+      }
+    },
+    {
+      "id": "policy-second",
+      "selected_indexes": [
+        1
+      ],
+      "resolution_owner": "policy",
+      "resolution_reason_code": "policy_selection_accepted",
+      "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+      "scene_id": "fixture-scene",
+      "decision_id": "fixture-policy-second",
+      "determinism_key": "fixture-determinism-policy-second",
+      "expected_decision": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-policy-decision-p4-wp1-v1",
+        "selected_indexes": [
+          1
+        ],
+        "selected_semantic_intent": {
+          "kind": "current_option_fingerprints",
+          "options": [
+            {
+              "index": 1,
+              "fingerprint": "3CC190D5833C33F535FF377FBD1976C56BCFED571B1726FEFC9AE1065BDE7BED"
+            }
+          ]
+        },
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+        "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+        "scene_id": "fixture-scene",
+        "decision_id": "fixture-policy-second",
+        "determinism_key": "fixture-determinism-policy-second",
+        "authority": "policy_decision_public_audit",
+        "authoritative": false,
+        "audit_id": "AC4A6DE62401C7424CF158D21A646EF62E2183FCF9B2D055374FE9F7C20EA819"
+      }
+    },
+    {
+      "id": "fallback-invalid-output",
+      "selected_indexes": [
+        0
+      ],
+      "resolution_owner": "deterministic_fallback",
+      "resolution_reason_code": "invalid_policy_output",
+      "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+      "scene_id": "fixture-scene",
+      "decision_id": "fixture-fallback-invalid-output",
+      "determinism_key": "fixture-determinism-fallback-invalid-output",
+      "expected_decision": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-policy-decision-p4-wp1-v1",
+        "selected_indexes": [
+          0
+        ],
+        "selected_semantic_intent": {
+          "kind": "current_option_fingerprints",
+          "options": [
+            {
+              "index": 0,
+              "fingerprint": "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E"
+            }
+          ]
+        },
+        "owner_layer": "base_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_tier": "same_public_window_deterministic",
+        "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+        "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+        "scene_id": "fixture-scene",
+        "decision_id": "fixture-fallback-invalid-output",
+        "determinism_key": "fixture-determinism-fallback-invalid-output",
+        "authority": "policy_decision_public_audit",
+        "authoritative": false,
+        "audit_id": "72533224BE26428B227F8C86063E0A549B42AC154F36C5646077B4129372D02E"
+      }
+    },
+    {
+      "id": "fallback-timeout",
+      "selected_indexes": [
+        0
+      ],
+      "resolution_owner": "deterministic_fallback",
+      "resolution_reason_code": "policy_timeout",
+      "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+      "scene_id": "fixture-scene",
+      "decision_id": "fixture-fallback-timeout",
+      "determinism_key": "fixture-determinism-fallback-timeout",
+      "expected_decision": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-policy-decision-p4-wp1-v1",
+        "selected_indexes": [
+          0
+        ],
+        "selected_semantic_intent": {
+          "kind": "current_option_fingerprints",
+          "options": [
+            {
+              "index": 0,
+              "fingerprint": "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E"
+            }
+          ]
+        },
+        "owner_layer": "base_fallback",
+        "reason_code": "policy_timeout",
+        "fallback_tier": "same_public_window_deterministic",
+        "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+        "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20",
+        "scene_id": "fixture-scene",
+        "decision_id": "fixture-fallback-timeout",
+        "determinism_key": "fixture-determinism-fallback-timeout",
+        "authority": "policy_decision_public_audit",
+        "authoritative": false,
+        "audit_id": "A6C83BD45014B225DACF6EEB0C503E2D8069C1A8F7D6E0A198E1C6DD851611BA"
+      }
+    }
+  ],
+  "decision_rejections": [
+    {
+      "id": "context-window-mismatch",
+      "fault": "different_window",
+      "expected_error_code": "invalid_context"
+    },
+    {
+      "id": "fake-resolution",
+      "fault": "fake_resolution",
+      "expected_error_code": "invalid_resolution"
+    },
+    {
+      "id": "bad-policy-hash",
+      "fault": "lowercase_policy_hash",
+      "expected_error_code": "invalid_policy_hash"
+    },
+    {
+      "id": "empty-scene",
+      "fault": "empty_scene_id",
+      "expected_error_code": "invalid_decision_identity"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SEARCH_SENTINEL",
+    "PRIVATE_RNG_SENTINEL",
+    "PRIVATE_CALLBACK_SENTINEL",
+    "PRIVATE_ENGINE_SENTINEL"
+  ],
+  "consumer_rule": "Serialized context and decision values are public audit only and never execution authority."
+}

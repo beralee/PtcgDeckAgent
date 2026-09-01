@@ -1,0 +1,45 @@
+{
+  "document_type": "dragapult_rules_ai_opponent_lock_v1",
+  "schema_version": 1,
+  "deck_id": 575720,
+  "deck_path": "data/bundled_user/decks/575720.json",
+  "deck_raw_sha256": "F6EE202C9FEEC256A865648066E818646F98B07227008B359CA40921864896D1",
+  "deck_canonical_sha256": "38C14210A0974B13C5491CE7A9E77D37E4E798C8F7CEB4EBF647F839918641F7",
+  "strategy_id": "miraidon",
+  "decision_runtime_mode": "rules_only",
+  "network_allowed": false,
+  "runtime_artifacts": [
+    {
+      "path": "scripts/ai/AIOpponent.gd",
+      "raw_sha256": "00077ED32713BA6E2108D55B0B653CBFE332757AD829ED605E2DDE1201A00130"
+    },
+    {
+      "path": "scripts/ai/AILegalActionBuilder.gd",
+      "raw_sha256": "67631B187D4C8823E3BBD399FC4AFA28FEE127B42921A876F21084134DFAADB5"
+    },
+    {
+      "path": "scripts/ai/AIStepResolver.gd",
+      "raw_sha256": "2D9E1F29D2E5A0DAA4AAC95D853D182012B0846F7FE02C8400CC5540797B574A"
+    },
+    {
+      "path": "scripts/ai/HeadlessMatchBridge.gd",
+      "raw_sha256": "17FAFF5AA410EC8452521E7A57777993B8E2A2D0CF236496CDD0570E5C17EC92"
+    },
+    {
+      "path": "scripts/ai/AIBenchmarkRunner.gd",
+      "raw_sha256": "55A771DD934F41351169B3F5ED62E84200A226E5B52AC9E06A4E4A2648E7A69D"
+    },
+    {
+      "path": "scripts/ai/DeckStrategyRegistry.gd",
+      "raw_sha256": "88D38F966B0703884C6440D7EC8176F73E4337327FFC6012D656D1285BA448E5"
+    },
+    {
+      "path": "scripts/ai/DeckStrategyMiraidon.gd",
+      "raw_sha256": "1ACA0F5D88870D2B49A3A433E8F3BF74A263950774B61E7D45B791B24E9B584F"
+    },
+    {
+      "path": "scripts/engine/GameStateMachine.gd",
+      "raw_sha256": "338EC3EAFAC21905C958582272BEBCDC76374E059E810A71ED2659970E52EAAC"
+    }
+  ]
+}

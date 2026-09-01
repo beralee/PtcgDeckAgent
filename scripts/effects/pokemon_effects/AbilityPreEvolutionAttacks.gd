@@ -51,7 +51,7 @@ func get_granted_attacks_for_target(
 	return entries
 
 
-func get_granted_attack_interaction_steps(
+func build_ucis_granted_attack_interaction_steps_spec_steps(
 	pokemon: PokemonSlot,
 	granted_attack: Dictionary,
 	state: GameState
@@ -71,7 +71,7 @@ func get_granted_attack_interaction_steps(
 	)
 
 
-func get_followup_granted_attack_interaction_steps(
+func build_ucis_followup_granted_attack_interaction_steps_spec_steps(
 	pokemon: PokemonSlot,
 	granted_attack: Dictionary,
 	state: GameState,

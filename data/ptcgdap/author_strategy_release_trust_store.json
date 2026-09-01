@@ -1,0 +1,16 @@
+{
+  "document_type": "author_strategy_release_trust_store_v1",
+  "schema_version": 1,
+  "store_id": "ptcgdap-product-release-trust-v1",
+  "approval_status": "approved",
+  "keys": [
+    {
+      "key_id": "ptcgdap.product.release.ed25519.v1",
+      "algorithm": "ed25519",
+      "public_key_base64": "vdpuqrowRq72ecivA+cpZfvg7deqCpX9Gq9KS292DAA=",
+      "scope": "production_release",
+      "execution_trusted": true,
+      "status": "active"
+    }
+  ]
+}

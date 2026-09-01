@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-local-uid-public-context-as-wp6-v1",
+  "parent_bundle_canonical_sha256": "C80F4C4FDAEA5AC29BD3C5617BFAC72BE38709696F7EA1995D3D153113DD3CA1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "card_identity": {
+    "domain": "godot_local_card_uid_v1",
+    "construction": "set_code + '_' + card_index",
+    "syntax_pattern": "^[A-Za-z0-9.]+_[A-Za-z0-9]+$",
+    "set_code_pattern": "^[A-Za-z0-9.]+$",
+    "card_index_pattern": "^[A-Za-z0-9]+$",
+    "component_max_length": 32,
+    "portable_to_cabt": false,
+    "merge_with_official_card_id": false,
+    "display_name_mapping_allowed": false
+  },
+  "binding_contract": {
+    "exact_top_level_allowlist": [
+      "schema_version",
+      "card_id_domain",
+      "source",
+      "options",
+      "acting_hand",
+      "acting_active"
+    ],
+    "source_matches_current_strategic_context": [
+      "context_hash",
+      "window_id"
+    ],
+    "options_match_current_window_by_exact_index_order": true,
+    "acting_cards_match_public_serial_order": true,
+    "all_non_null_uids_must_be_in_pinned_deck_manifest": true,
+    "opponent_hidden_identity_allowed": false,
+    "private_sentinel_allowed": false,
+    "old_window_reuse_allowed": false
+  },
+  "hash_contract": {
+    "canonicalization": "RFC8785_JCS_IJSON_SAFE_SUBSET",
+    "local_context_prefix_utf8_hex": "50544347444150004C4F43414C5F5549445F5055424C49435F434F4E544558545F563100",
+    "allowed_uid_set_prefix_utf8_hex": "50544347444150004C4F43414C5F5549445F414C4C4F5745445F5345545F563100",
+    "allowed_uid_set_sort": "ascending_unicode_codepoint"
+  },
+  "stable_error_codes": [
+    "local_uid_contract_error",
+    "invalid_local_uid_public_context"
+  ],
+  "scope": {
+    "windows_device_local_shadow": true,
+    "player_live_authority": false,
+    "cabt_export": false,
+    "android": false
+  }
+}

@@ -25,7 +25,11 @@ class RefSceneStub:
 		_add_button("BtnBattleLayout")
 		_add_button("BtnBattleMore")
 		_add_button("BtnReplayPrevTurn")
+		_add_button("BtnReplayPlayPause")
 		_add_button("BtnReplayNextTurn")
+		var speed := OptionButton.new()
+		speed.name = "OptReplaySpeed"
+		add_child(speed)
 		_add_button("BtnReplayContinue")
 		_add_button("BtnReplayBackToList")
 		_add_panel("LeftPanel", VBoxContainer.new())
@@ -94,11 +98,13 @@ func test_bind_from_scene_keeps_replay_button_group_compatible() -> String:
 	var buttons: Array = refs.call("replay_buttons")
 
 	var result := run_checks([
-		assert_eq(buttons.size(), 4, "Refs should keep the existing replay button group contract"),
+		assert_eq(buttons.size(), 5, "Refs should expose native replay navigation and play/pause buttons"),
 		assert_not_null(refs.get("replay_prev_turn_button"), "Previous replay button should be bound"),
 		assert_not_null(refs.get("replay_next_turn_button"), "Next replay button should be bound"),
 		assert_not_null(refs.get("replay_continue_button"), "Continue replay button should be bound"),
 		assert_not_null(refs.get("replay_back_to_list_button"), "Back-to-list replay button should be bound"),
+		assert_not_null(refs.get("replay_play_pause_button"), "Play/pause replay button should be bound"),
+		assert_not_null(refs.get("replay_speed_option"), "Replay speed option should be bound"),
 	])
 	scene.free()
 	return result

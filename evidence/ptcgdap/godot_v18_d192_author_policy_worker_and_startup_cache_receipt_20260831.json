@@ -1,0 +1,183 @@
+{
+  "schema_version": "ptcgdap_d192_acceptance_receipt_v1",
+  "decision_id": "D192",
+  "created_at": "2026-08-31T23:18:00+08:00",
+  "work_package": "author_policy_worker_package_presentation_existing_thinking_hud_v18_mode_and_startup_cache",
+  "status": "focused_accepted_player_visible_windows_pending",
+  "godot": "4.6.1.stable.official.14d19694e",
+  "changes": {
+    "live_policy_execution_profile": "worker_v1",
+    "rollback_policy_execution_profile": "main_thread_v1",
+    "rollback_environment_variable": "PTCGDAP_AUTHOR_POLICY_EXECUTION_PROFILE",
+    "worker_owns": [
+      "frozen_public_frame_selector_compute",
+      "optional_local_model_leaf_compute"
+    ],
+    "main_thread_owns": [
+      "public_observation_projection",
+      "process_frame_polling",
+      "current_window_revalidation",
+      "host_binding_and_engine_execution"
+    ],
+    "thinking_hud_reused": true,
+    "thinking_title_source": "sealed_package_author_display_name",
+    "current_deck_label_source": "sealed_package_deck_display_name_plus_compact_version",
+    "example_thinking_title": "波导的勇者 正在计算行动...",
+    "example_current_deck_label": "玛丽的礼盒5.30",
+    "hud_archive_reinspection_removed": true,
+    "battle_card_geometry_modified": false,
+    "builtin_v18_mode_restored": true,
+    "artifact_scan_excluded": true
+  },
+  "startup_acceptance": {
+    "command": "Godot_v4.6.1-stable_win64_console.exe --headless --path D:\\ai\\code\\PtcgDAP --quit",
+    "exit_code": 0,
+    "elapsed_milliseconds": 2309,
+    "artifact_global_class_paths": 0,
+    "artifact_gdextension_paths": 0,
+    "total_gdextension_paths": 1,
+    "gdextension_path": "res://scripts/ai/ptcgdap/native/ptcgai_ort_actor.gdextension"
+  },
+  "test_runs": [
+    {
+      "name": "worker_nonblocking_stale_and_model_leaf",
+      "result": "3/3",
+      "log": ".godot_test_user/logs/focused-20260831-224812.log",
+      "sha256": "C114408F2900667FBDC4FA3EDD76FB01037FB7E14B02946B91CDB4DD82A21C72"
+    },
+    {
+      "name": "author_live_performance_contract",
+      "result": "8/8",
+      "log": ".godot_test_user/logs/focused-20260831-231503.log",
+      "sha256": "E5F2CD610AB94C6FCCC6B38DDC77AC7F5D4F484540E636B11661ED0ECAF7F2ED"
+    },
+    {
+      "name": "package_author_deck_and_530_pinned_label_presentation",
+      "result": "1/1",
+      "log": ".godot_test_user/logs/focused-20260831-231442.log",
+      "sha256": "4A0CC1AA960B2FAC69F4DF8C2FD5222983DA5E01B8AEE7CBBD79233C2D0991F2"
+    },
+    {
+      "name": "battle_scene_exact_author_owner_route",
+      "result": "1/1",
+      "log": ".godot_test_user/logs/focused-20260831-231512.log",
+      "sha256": "360D62CAB24F039780CE8FAE37B181E6D5CD417FB41C7565C65C0F863F14C6A8"
+    },
+    {
+      "name": "battle_setup_mode_segments",
+      "result": "1/1",
+      "log": ".godot_test_user/logs/focused-20260831-224526.log",
+      "sha256": "7389C9BD3745D1DABBC44EC45E96E95D108D88374CF33B452468F17C386E3887"
+    },
+    {
+      "name": "author_mode_switches_back_to_builtin_v18",
+      "result": "1/1",
+      "log": ".godot_test_user/logs/focused-20260831-224539.log",
+      "sha256": "F235BA5A37442E03FF15EAAD91A7757254BE54F924FBADB8F3461349C4B7A836"
+    },
+    {
+      "name": "windows_landscape_ns_zoroark_v18_entry",
+      "result": "1/1",
+      "log": ".godot_test_user/logs/focused-20260831-224552.log",
+      "sha256": "5F18A082DAA140AB8A2139208D03F43CC2148A66D26815644B98443FF2E250AE"
+    }
+  ],
+  "known_red": {
+    "name": "windows_ui_acceptance_routes_rules_seat_zero_and_author_seat_one",
+    "result": "0/1",
+    "log": ".godot_test_user/logs/focused-20260831-224718.log",
+    "sha256": "1E051BF29B6BB3B69925A3B910B3D34AC639EB217010C663BDA9C35F3593F1EC",
+    "reason": "fixture_pending_choice_identity_expectation_conflicts_with_authoritative_pending_decision_snapshot_priority",
+    "waived": false
+  },
+  "source_artifacts": [
+    {
+      "path": "artifacts/ptcgdap/.gdignore",
+      "bytes": 310,
+      "sha256": "05F3A9E239116D180A6306970AF964F01D0C1DC96142572177EDFD943CF00D9B"
+    },
+    {
+      "path": "scripts/ai/ptcgdap/host/godot/AuthorStrategyPolicyWorker.gd",
+      "bytes": 4778,
+      "sha256": "A34C052C686D6110B197298C81AEC6BAA38937B3121C8FFC8C757C14307EFAEC"
+    },
+    {
+      "path": "scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorDevelopmentBattleOwner.gd",
+      "bytes": 110118,
+      "sha256": "EC42E3E95F4546DCAA5FDB69F94111C457782704CD3CA7E0179CA202C266CB5E"
+    },
+    {
+      "path": "scripts/ai/ptcgdap/packages/AuthorStrategyPackageHandle.gd",
+      "bytes": 10963,
+      "sha256": "6F89CB3846E098A2F2D8255AC71E980AE717A36980554CF9735EC16B3B222CBD"
+    },
+    {
+      "path": "scripts/ai/ptcgdap/packages/AuthorStrategyDeckMaterializer.gd",
+      "bytes": 3410,
+      "sha256": "451FDDA1A8BAFC2632D4D8B4D4867951CA7CC76FD0C96E0F2AFC3500F2176AC9"
+    },
+    {
+      "path": "scripts/ui/battle/BattleDisplayController.gd",
+      "bytes": 55830,
+      "sha256": "C40DA7E25B3BEA4F239F06DDC33218B9A1CC28ED335C6B32B041447B186E9604"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneSetupEffectAiRuntime.gd",
+      "bytes": 104207,
+      "sha256": "DCCC55A3A4CB23961BE17762FB32F2548371751E1CF29717965FB844346694EB"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd",
+      "bytes": 80530,
+      "sha256": "B80F8C51F4FE8C3D23FF7D9E5892A85EAFC6EC8423BE4526A2A100C9F6154F2A"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneRuntimeFoundation.gd",
+      "bytes": 43037,
+      "sha256": "DC528DF4233DD948E6DDC3A30A4090BE9A67721D3E4EB836FC58CDC2FC8B0941"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd",
+      "bytes": 49521,
+      "sha256": "7D4485E8A6279D66715FE121FBD57C11E3BA8BA5C7081823B8633AF5ABD0C2E9"
+    },
+    {
+      "path": "scenes/battle/BattleSceneRuntime.gd",
+      "bytes": 118960,
+      "sha256": "3F0AFEC9F0BFF6019B608CD30DD18CB4B115CC27F15B52923A8A195F8A8BA60F"
+    },
+    {
+      "path": "scenes/battle_setup/BattleSetup.gd",
+      "bytes": 219523,
+      "sha256": "76E4340D59F30E2E832B07E4FD5B2D1F9A14884BF37CD29058FBAD34283FBCFE"
+    },
+    {
+      "path": "tests/ptcgdap/godot/test_author_strategy_windows_player_owner.gd",
+      "bytes": 58944,
+      "sha256": "D59692A61E1E8B52277E4E40E300A9A2D0FF53AF2171221BB92F428DF68E1FF4"
+    },
+    {
+      "path": "tests/ptcgdap/godot/test_author_live_performance_contract.gd",
+      "bytes": 13196,
+      "sha256": "5586ECA626BAAD06713952F575A773EC64FFB11CAAC0319D04948BCD9560C5A1"
+    },
+    {
+      "path": "tests/test_battle_setup_ai_versions.gd",
+      "bytes": 68137,
+      "sha256": "68D93F78BDD440EAA1AB301A35B7543AAE674B3675D779F81AEE27FC4A3528E5"
+    }
+  ],
+  "rollback": {
+    "worker": "set PTCGDAP_AUTHOR_POLICY_EXECUTION_PROFILE=main_thread_v1 before the next match",
+    "worker_failure": "device-local deterministic fallback from the same public window; never remote inference",
+    "cache": "do not restore artifact-scanned caches; relocate duplicate source/extension copies before removing .gdignore"
+  },
+  "known_gaps": [
+    "player_visible_windows_full_match_frame_time_and_animation_end acceptance pending",
+    "public observation projection remains on the main thread",
+    "warm editor scan of normal project assets remains approximately 16 seconds",
+    "official CABT and full-engine parity not claimed",
+    "production Android and A5 not claimed"
+  ],
+  "alignment": "local_godot_windows_author_player_orchestration_only"
+}

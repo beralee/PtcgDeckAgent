@@ -23,7 +23,7 @@ func can_use_embrace_on_target(target: PokemonSlot, state: GameState = null) -> 
 	return _is_valid_target(target, state)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var energy_items: Array = []
 	var energy_labels: Array[String] = []

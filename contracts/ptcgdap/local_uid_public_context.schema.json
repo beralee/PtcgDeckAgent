@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/local_uid_public_context.schema.json",
+  "title": "PTCGDAP local stable-card-UID public prompt binding",
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "localCardUid": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9.]+_[A-Za-z0-9]+$",
+      "not": {
+        "pattern": "(?i:private)"
+      }
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "local_card_uid"
+      ],
+      "properties": {
+        "index": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "local_card_uid": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/localCardUid"
+            }
+          ]
+        }
+      }
+    },
+    "publicCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "serial",
+        "local_card_uid"
+      ],
+      "properties": {
+        "serial": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 1
+            }
+          ]
+        },
+        "local_card_uid": {
+          "$ref": "#/$defs/localCardUid"
+        }
+      }
+    },
+    "localUidPublicContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "card_id_domain",
+        "source",
+        "options",
+        "acting_hand",
+        "acting_active"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "card_id_domain": {
+          "const": "godot_local_card_uid_v1"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "context_hash",
+            "window_id"
+          ],
+          "properties": {
+            "context_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "window_id": {
+              "$ref": "#/$defs/hash"
+            }
+          }
+        },
+        "options": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        },
+        "acting_hand": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "$ref": "#/$defs/publicCard"
+          }
+        },
+        "acting_active": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/publicCard"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/localUidPublicContext"
+}

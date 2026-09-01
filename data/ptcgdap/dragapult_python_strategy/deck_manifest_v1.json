@@ -1,0 +1,281 @@
+{
+  "document_type": "dragapult_python_strategy_deck_manifest_v1",
+  "schema_version": 1,
+  "deck_id": "dragapult.18.0.800018499",
+  "source_deck_id": 800018499,
+  "source_deck_raw_sha256": "9BC21DCC24F4C9F0E1E9F0F6888E96FA821F7D6BF4E10AB7E78D2E8AE27DB1E0",
+  "source_deck_canonical_sha256": "91AC9D3CEC464E9CCF24720AF216EE5F0CC2917ABF995CDB992ACEBD6E6AFE60",
+  "card_id_domain": "godot_local_card_uid_v1",
+  "card_count": 60,
+  "unique_card_count": 24,
+  "cabt_exportable": false,
+  "platform_scope": [
+    "windows_development_acceptance"
+  ],
+  "cards": [
+    {
+      "local_card_uid": "CSV10C_008",
+      "set_code": "CSV10C",
+      "card_index": "008",
+      "count": 1,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "a5b32602f9c443a038fef288059aeb43",
+      "source_raw_sha256": "42EAF26F4A6EC452DEF7E82FCC2208D17896E59796F972C51ECB438AD4F7ED80",
+      "source_canonical_sha256": "53C3D037A53A25B9B1D5B66E880E7BC0BAA91A3D7676A9B9DB091679C4EB7A55"
+    },
+    {
+      "local_card_uid": "CSV10C_207",
+      "set_code": "CSV10C",
+      "card_index": "207",
+      "count": 3,
+      "card_type": "Supporter",
+      "stage": "",
+      "effect_id": "8d9b3076693b9f692bae94d057498720",
+      "source_raw_sha256": "5FD01B81CADEB4E3B30AED08840B72DEB0AFB4FD10C94181CBBE208B6B86B3F9",
+      "source_canonical_sha256": "2B861CA2D2234E266F9F7DC4ECBDD6B70A8285FFFEA57CDE9A06371F582740CE"
+    },
+    {
+      "local_card_uid": "CSV1C_079",
+      "set_code": "CSV1C",
+      "card_index": "079",
+      "count": 1,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "74b83ef8987d072950dfe3bde3364d87",
+      "source_raw_sha256": "2E514E9816950E528C17A5BCA269A1C99772781AA006A1B56D19AEA07F815984",
+      "source_canonical_sha256": "89721C6FEF7ABC9B41110AA900E007E91595BF714EC2CA08B3E21EED76B52A44"
+    },
+    {
+      "local_card_uid": "CSV1C_112",
+      "set_code": "CSV1C",
+      "card_index": "112",
+      "count": 4,
+      "card_type": "Item",
+      "stage": "",
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "source_raw_sha256": "A961F90A6B016DF1953B96F8E236D127D03852258BF5DB1C1A6AAC35BBB908D6",
+      "source_canonical_sha256": "20B0A2D5652D819A519460B87D397B978D5FB5FBCCB8F8BDE963A4C5B417AB8D"
+    },
+    {
+      "local_card_uid": "CSV1C_121",
+      "set_code": "CSV1C",
+      "card_index": "121",
+      "count": 4,
+      "card_type": "Supporter",
+      "stage": "",
+      "effect_id": "aecd80ca2722885c3d062a2255346f3e",
+      "source_raw_sha256": "79F19B4691E8F8A817F5FB3EC17F5D91601EC2AEA55EDC8078B0D4445C777762",
+      "source_canonical_sha256": "5FE4E20ACBE5CF09643631FA94C86C73E5D0539902D3C367397D3BA12C6AFBE8"
+    },
+    {
+      "local_card_uid": "CSV1C_127",
+      "set_code": "CSV1C",
+      "card_index": "127",
+      "count": 4,
+      "card_type": "Special Energy",
+      "stage": "",
+      "effect_id": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+      "source_raw_sha256": "F2B7D5BAF7005C82C834DB48B06564055A470BE2F967E336052C77F026306806",
+      "source_canonical_sha256": "9A3893CC9C49F3A9ACD584C1BE03D4CE1C43D31E983C2CE126150E27388A206E"
+    },
+    {
+      "local_card_uid": "CSV3C_123",
+      "set_code": "CSV3C",
+      "card_index": "123",
+      "count": 4,
+      "card_type": "Supporter",
+      "stage": "",
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "source_raw_sha256": "A3FD12456E9991925DA4D21A42E6B5BB472C64F31833D9149C8305F9C81E17F6",
+      "source_canonical_sha256": "E3D9251865479E4AB1DA7C8B2A3B949630C975F4C7B720977DAD9A1E06AAD6AD"
+    },
+    {
+      "local_card_uid": "CSV6C_114",
+      "set_code": "CSV6C",
+      "card_index": "114",
+      "count": 3,
+      "card_type": "Item",
+      "stage": "",
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "source_raw_sha256": "5F086E6492A5AFDD4A668A06616D166C56AE401BC79866AFF3F6BD3BE0477CDA",
+      "source_canonical_sha256": "77F5C4FBD875D331B52006D08F6C1D5FE204EB9DA73BD64A1E36F31263B32280"
+    },
+    {
+      "local_card_uid": "CSV6C_125",
+      "set_code": "CSV6C",
+      "card_index": "125",
+      "count": 2,
+      "card_type": "Supporter",
+      "stage": "",
+      "effect_id": "73d5f46ecf3a6d71b23ce7bc1a28d4f4",
+      "source_raw_sha256": "36A589A7B02ED1353AE1A3200BB70C124F61B917A22E8059D7236897A0DD4F93",
+      "source_canonical_sha256": "45E4A5FB1AA857B5E753B15187B7A92D391A4EB964C4862DBDDF642646F2B659"
+    },
+    {
+      "local_card_uid": "CSV7C_177",
+      "set_code": "CSV7C",
+      "card_index": "177",
+      "count": 4,
+      "card_type": "Item",
+      "stage": "",
+      "effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+      "source_raw_sha256": "1D3C1D8C97B6FC1ED177B9BCE21896AB3B97F6CCEC004E52DC1FDAAEF80AA98A",
+      "source_canonical_sha256": "A8EAC832E3C1629BA51C847FEB34BA8B4BB1660D290C577F439094B59CE9981A"
+    },
+    {
+      "local_card_uid": "CSV7C_203",
+      "set_code": "CSV7C",
+      "card_index": "203",
+      "count": 1,
+      "card_type": "Special Energy",
+      "stage": "",
+      "effect_id": "83aba7d0c92c81e8c03b3785af695c2f",
+      "source_raw_sha256": "3157BDEC42189CBB468E71B45CB0C0AD03E32C24DE72028B58C6798BC56A01E3",
+      "source_canonical_sha256": "854DB66A62F548528566C2C24E78B227DD7BC9D2C2811319520D1DF735838CCC"
+    },
+    {
+      "local_card_uid": "CSV8C_094",
+      "set_code": "CSV8C",
+      "card_index": "094",
+      "count": 2,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "66fee12502043db7d92b97b0d62b0f59",
+      "source_raw_sha256": "9EEDD84B0FDA69DFBED0A32C0321C2E4B9A8A4B6C905D22F3EB8FEBBAB56C2A1",
+      "source_canonical_sha256": "8540B67BA8C3F5D45AC0F9E372A7C3B7BDCA7F3F050D4159D704C08E18526A8F"
+    },
+    {
+      "local_card_uid": "CSV8C_135",
+      "set_code": "CSV8C",
+      "card_index": "135",
+      "count": 1,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+      "source_raw_sha256": "D8A5D264E79015D4D16C5E9639B18308D9F4B8298FADADF3FC8E4DF364C23FE7",
+      "source_canonical_sha256": "A7AE7159CFD756C3A4F25A0D157DA24E2E363D7F317D32553380BBA548078459"
+    },
+    {
+      "local_card_uid": "CSV8C_157",
+      "set_code": "CSV8C",
+      "card_index": "157",
+      "count": 4,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "e793842faf5a8017e5456f898b1bf9d2",
+      "source_raw_sha256": "8CFCD71A90387295DA44FBFC8C36D29191AC9DB14E632EDEC759FE8CCC2EA46C",
+      "source_canonical_sha256": "75A5DE8A16E18AC38B6AF72BCD5B232F1890AF71EA267B03E72B01E8732EB15A"
+    },
+    {
+      "local_card_uid": "CSV8C_158",
+      "set_code": "CSV8C",
+      "card_index": "158",
+      "count": 4,
+      "card_type": "Pokemon",
+      "stage": "Stage 1",
+      "effect_id": "4e13cd08de3b6d141ce8e2f09d17a3a4",
+      "source_raw_sha256": "4694B0B9FDE1EB14D471126FB754DFB40E7BDAB9A4E4F638F8F0C07E1647A414",
+      "source_canonical_sha256": "195633EFBBAC0209B0F7C9FC134185FEE46B19B26FE2B3178539F2B66F1AF70F"
+    },
+    {
+      "local_card_uid": "CSV8C_159",
+      "set_code": "CSV8C",
+      "card_index": "159",
+      "count": 3,
+      "card_type": "Pokemon",
+      "stage": "Stage 2",
+      "effect_id": "52a205820de799a53a689f23cbeb8622",
+      "source_raw_sha256": "C175E577B4E1AE7D2713ABBEC473CDEA5375A69BBBABADA4163204BE299AF56E",
+      "source_canonical_sha256": "AB64E2443CA6B18435F7B99AE869B272ECAA61D0B2D79CEB8CE0527434D12579"
+    },
+    {
+      "local_card_uid": "CSV8C_172",
+      "set_code": "CSV8C",
+      "card_index": "172",
+      "count": 1,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "f2afef80b13b8f6a071facbcade0251c",
+      "source_raw_sha256": "025128712CB0513FFFADC1700CD1F0507BD2DDD6963BB27843AF21B8AC6D0124",
+      "source_canonical_sha256": "97167C1A0505A8CECF239B42E8ADD95CB4CC0ACCDA1CA021CC7E857E6D88EEE0"
+    },
+    {
+      "local_card_uid": "CSV8C_183",
+      "set_code": "CSV8C",
+      "card_index": "183",
+      "count": 2,
+      "card_type": "Item",
+      "stage": "",
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "source_raw_sha256": "713F2B15DED2F144E562667A5B7AC853E6770DDA3616934882664BF67D9AA457",
+      "source_canonical_sha256": "FB05919614D31D6362E7CBCDDCB7137EC1EC2AB160B4D20FA8E0634F3E2A0AB2"
+    },
+    {
+      "local_card_uid": "CSV8C_203",
+      "set_code": "CSV8C",
+      "card_index": "203",
+      "count": 1,
+      "card_type": "Stadium",
+      "stage": "",
+      "effect_id": "4e16157bfa88a41e823d058a732df8e0",
+      "source_raw_sha256": "C8BA3F30BD1847F8012376A1BF32E2ED0D8EA7D028886FC0119FBCA8DA9968B9",
+      "source_canonical_sha256": "9659769BCFEC4CA97BC56F7E358913BED5A637C5E89AC9DB42484535F5104244"
+    },
+    {
+      "local_card_uid": "CSV9.5C_004",
+      "set_code": "CSV9.5C",
+      "card_index": "004",
+      "count": 2,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "28505a8ad6e07e74382c1b5e09737932",
+      "source_raw_sha256": "20609F805C051F9CA5D4CEB8AB3FA75F23E34D735B5687B06FBFD95C7E8E013A",
+      "source_canonical_sha256": "B8816BC843A3750592C285D0D1D04C562BD29616ED4B6029D670EF9B2A57C86B"
+    },
+    {
+      "local_card_uid": "CSV9C_078",
+      "set_code": "CSV9C",
+      "card_index": "078",
+      "count": 1,
+      "card_type": "Pokemon",
+      "stage": "Basic",
+      "effect_id": "f8c2715403e3f4ea9783c46be2de832b",
+      "source_raw_sha256": "A2B97B850ED020FBE0CE68EF5C6E4ADD25383DFCDE8FC74224A6CACE32CF7C2E",
+      "source_canonical_sha256": "FA286BEE68AAFEE4CFAF15F7229F936F734ABC459A9EFE85506C7A4989DD7628"
+    },
+    {
+      "local_card_uid": "CSVE1C_FIR",
+      "set_code": "CSVE1C",
+      "card_index": "FIR",
+      "count": 2,
+      "card_type": "Basic Energy",
+      "stage": "",
+      "effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+      "source_raw_sha256": "0A43CCFFCE7E89CCAB9F66D2AD82D972958A6231616F06FBEEE0B77BB24A394E",
+      "source_canonical_sha256": "E889930AE0BABC7761D79B76D8BF30EA376FE145E0CC8079313B6434AFE81D20"
+    },
+    {
+      "local_card_uid": "CSVE1C_PSY",
+      "set_code": "CSVE1C",
+      "card_index": "PSY",
+      "count": 2,
+      "card_type": "Basic Energy",
+      "stage": "",
+      "effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+      "source_raw_sha256": "6F49343EBC7C3B4BF3AD3299A24D0379721CD6E1BB4E6B6B230EF0CEA546E705",
+      "source_canonical_sha256": "4A5FE70F4A58E1F7068197D2D10E58DD8AEDB14C6B2F90FDA75DB2B18A3A0D76"
+    },
+    {
+      "local_card_uid": "CSVH1aC_023",
+      "set_code": "CSVH1aC",
+      "card_index": "023",
+      "count": 4,
+      "card_type": "Supporter",
+      "stage": "",
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "source_raw_sha256": "99BA9B7B2FECC55BCF4B7C1B8511B43B5147BCFF5351402BB9366BB50273B154",
+      "source_canonical_sha256": "62ACE01AE1F20EE51C0A27BAEE0C8D6FE9D94FA9CE96DFCC777CBDA80E1A5008"
+    }
+  ]
+}

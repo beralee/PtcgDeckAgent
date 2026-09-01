@@ -9,6 +9,7 @@ class FakeAnimator extends RefCounted:
 	var started: Array[String] = []
 	var callbacks: Array[Callable] = []
 	var cancel_calls := 0
+	var playback_speed := 1.0
 
 	func handles(_event: Dictionary) -> bool:
 		return true
@@ -27,6 +28,9 @@ class FakeAnimator extends RefCounted:
 	func cancel_all() -> void:
 		cancel_calls += 1
 		callbacks.clear()
+
+	func set_playback_speed(speed: float) -> void:
+		playback_speed = speed
 
 
 class FakeScene extends Control:
@@ -88,6 +92,18 @@ func test_queue_runs_one_event_at_a_time_and_releases_input_after_the_last_compl
 	scene.free()
 
 	return result
+
+
+func test_replay_speed_is_forwarded_to_existing_battle_animators() -> String:
+	var zone_animator := FakeAnimator.new()
+	var feedback_animator := FakeAnimator.new()
+	var controller: RefCounted = ControllerScript.new()
+	controller.call("set_animators_for_tests", zone_animator, feedback_animator)
+	controller.call("set_playback_speed", 4.0)
+	return run_checks([
+		assert_eq(zone_animator.playback_speed, 4.0, "Zone animation must obey the replay player's speed"),
+		assert_eq(feedback_animator.playback_speed, 4.0, "Feedback animation must obey the replay player's speed"),
+	])
 
 
 func test_visual_sequence_does_not_report_idle_between_queued_actions() -> String:

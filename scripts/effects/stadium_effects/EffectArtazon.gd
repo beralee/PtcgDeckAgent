@@ -24,7 +24,7 @@ func can_headless_execute(_card: CardInstance, state: GameState) -> bool:
 	return not _get_valid_pokemon(player).is_empty()
 
 
-func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var pi: int = state.current_player_index
 	var player: PlayerState = state.players[pi]
 	if BenchLimit.is_bench_full(state, player):
@@ -47,7 +47,7 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 	)]
 
 
-func get_followup_interaction_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if not should_preview_empty_search_deck(resolved_context):
 		return []
 	var player: PlayerState = state.players[state.current_player_index]

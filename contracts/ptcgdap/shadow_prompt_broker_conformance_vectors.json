@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-prompt-broker-p3-wp5-v1",
+  "family_cases": [
+    {
+      "case_id": "family-w1",
+      "family": "W1",
+      "expected_accepted": true,
+      "expected_state": "open"
+    },
+    {
+      "case_id": "family-w2",
+      "family": "W2",
+      "expected_accepted": true,
+      "expected_state": "open"
+    },
+    {
+      "case_id": "family-w3",
+      "family": "W3",
+      "expected_accepted": true,
+      "expected_state": "open"
+    },
+    {
+      "case_id": "family-w4",
+      "family": "W4",
+      "expected_accepted": true,
+      "expected_state": "open"
+    },
+    {
+      "case_id": "family-w5",
+      "family": "W5",
+      "expected_accepted": true,
+      "expected_state": "open"
+    },
+    {
+      "case_id": "family-w6",
+      "family": "W6",
+      "expected_accepted": true,
+      "expected_state": "open"
+    },
+    {
+      "case_id": "family-w7",
+      "family": "W7",
+      "expected_accepted": true,
+      "expected_state": "open"
+    }
+  ],
+  "lifecycle_cases": [
+    {
+      "case_id": "open-first",
+      "scenario": "open_first",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "open",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "prepare-success",
+      "scenario": "prepare_success",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "prepared",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "resolve-success",
+      "scenario": "resolve_success",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "awaiting_reobserve",
+      "expected_resolution_count": 1
+    },
+    {
+      "case_id": "ordered-multi-success",
+      "scenario": "ordered_multi_success",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "awaiting_reobserve",
+      "expected_resolution_count": 2
+    },
+    {
+      "case_id": "resolve-replay",
+      "scenario": "resolve_replay",
+      "expected_accepted": false,
+      "expected_error": "reobserve_required",
+      "expected_state": "awaiting_reobserve",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "open-while-active",
+      "scenario": "open_while_active",
+      "expected_accepted": false,
+      "expected_error": "active_prompt_exists",
+      "expected_state": "open",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "stale-next-snapshot",
+      "scenario": "stale_next_snapshot",
+      "expected_accepted": false,
+      "expected_error": "stale_decision_generation",
+      "expected_state": "awaiting_reobserve",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "same-window-reused",
+      "scenario": "same_window_reused",
+      "expected_accepted": false,
+      "expected_error": "same_window_reused",
+      "expected_state": "awaiting_reobserve",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "new-prompt-after-reobserve",
+      "scenario": "new_prompt_after_reobserve",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "open",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "selection-wrong-window",
+      "scenario": "selection_wrong_window",
+      "expected_accepted": false,
+      "expected_error": "selection_invalid",
+      "expected_state": "aborted",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "ticket-issue-failure",
+      "scenario": "ticket_issue_failure",
+      "expected_accepted": false,
+      "expected_error": "ticket_issue_failed",
+      "expected_state": "aborted",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "commit-failure",
+      "scenario": "commit_failure",
+      "expected_accepted": false,
+      "expected_error": "commit_failed",
+      "expected_state": "aborted",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "cross-broker-prompt",
+      "scenario": "cross_broker_prompt",
+      "expected_accepted": false,
+      "expected_error": "cross_owner",
+      "expected_state": "open",
+      "expected_resolution_count": 0
+    },
+    {
+      "case_id": "reset-invalidates-old",
+      "scenario": "reset_invalidates_old",
+      "expected_accepted": false,
+      "expected_error": "match_generation_mismatch",
+      "expected_state": "superseded",
+      "expected_resolution_count": 0
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SESSION_SENTINEL",
+    "PRIVATE_CALLBACK_SENTINEL",
+    "PRIVATE_COMMAND_SENTINEL",
+    "PRIVATE_SOURCE_SENTINEL"
+  ]
+}

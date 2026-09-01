@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "profile",
+  "profile_id": "marnie_portable_policy_profile_v1",
+  "status": "offline_shadow",
+  "parent_bundle_hashes": {
+    "marnie_capability_policy": "F4E88E5DB4E480BA8441BE7B3A7C81CE3DB40ED1917EB37BCDCAC1C32B1ABD6C",
+    "marnie_public_base": "67EBA6348277001692942FD58E8D1B9D50C54F0FFC783D8802BA3CCB45691105",
+    "marnie_trajectory_replay": "E203A688BEC1AFFFABAAF06098361B3FAE04B84431F99AE75A19F891BFA9599F"
+  },
+  "portable_nodes": [
+    {
+      "node_id": "n00_initial_deck",
+      "owner_route": "capability_initial_deck",
+      "output_domain": "initial_deck_card_ids",
+      "action_owner": "capability_policy"
+    },
+    {
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "action_owner": "public_base_graph"
+    },
+    {
+      "node_id": "n20_optional_zero",
+      "owner_route": "capability_optional_zero",
+      "output_domain": "current_window_indexes",
+      "action_owner": "capability_policy"
+    },
+    {
+      "node_id": "n90_terminal",
+      "owner_route": "terminal_lifecycle",
+      "output_domain": "terminal_no_callback",
+      "action_owner": "lifecycle"
+    }
+  ],
+  "dispatch": [
+    {
+      "ordinal": 0,
+      "frame_id": "w0_initial",
+      "node_id": "n00_initial_deck",
+      "owner_route": "capability_initial_deck",
+      "output_domain": "initial_deck_card_ids",
+      "parent_base_case_id": "source-w0-initial"
+    },
+    {
+      "ordinal": 1,
+      "frame_id": "w1_setup_active",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w1-setup-active"
+    },
+    {
+      "ordinal": 2,
+      "frame_id": "w2_setup_bench",
+      "node_id": "n20_optional_zero",
+      "owner_route": "capability_optional_zero",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w2-setup-bench"
+    },
+    {
+      "ordinal": 3,
+      "frame_id": "w3_main",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w3-main"
+    },
+    {
+      "ordinal": 4,
+      "frame_id": "w4_spikemuth_deck",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w4-spikemuth-deck"
+    },
+    {
+      "ordinal": 5,
+      "frame_id": "w5_punk_up_sources",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w5-punk-up-sources"
+    },
+    {
+      "ordinal": 6,
+      "frame_id": "w5_punk_up_target_1",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w5-punk-up-target-1"
+    },
+    {
+      "ordinal": 7,
+      "frame_id": "w5_punk_up_target_2",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w5-punk-up-target-2"
+    },
+    {
+      "ordinal": 8,
+      "frame_id": "w6_shadow_bullet_attack",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w6-shadow-bullet-attack"
+    },
+    {
+      "ordinal": 9,
+      "frame_id": "w6_shadow_bullet_target",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w6-shadow-bullet-target"
+    },
+    {
+      "ordinal": 10,
+      "frame_id": "w7_take_prize",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w7-take-prize"
+    },
+    {
+      "ordinal": 11,
+      "frame_id": "w7_forced_send_out",
+      "node_id": "n10_base_final",
+      "owner_route": "base_final",
+      "output_domain": "current_window_indexes",
+      "parent_base_case_id": "source-w7-forced-send-out"
+    },
+    {
+      "ordinal": 12,
+      "frame_id": "w7_terminal",
+      "node_id": "n90_terminal",
+      "owner_route": "terminal_lifecycle",
+      "output_domain": "terminal_no_callback",
+      "parent_base_case_id": "source-w7-terminal"
+    }
+  ],
+  "hash_profiles": {
+    "portable_trace": {
+      "prefix_utf8_hex": "50544347444150004D41524E49455F504F525441424C455F54524143455F563100"
+    }
+  },
+  "binding_contract": {
+    "ordered_option_fingerprints_required": true,
+    "stale_or_reordered_binding_fails_closed": true,
+    "binding_probe_returns_action": false,
+    "old_indexes_are_reusable": false
+  },
+  "tie_break_contract": {
+    "adapter_hints_are_diagnostic": true,
+    "base_final_action_is_authoritative_inside_offline_composition": true,
+    "package_can_override_base": false,
+    "ordered_hints_are_preserved": true
+  },
+  "authority_contract": {
+    "parent_owners_are_recomputed": true,
+    "serialized_results_are_authority": false,
+    "window_or_binding_authority": false,
+    "ticket_or_command_authority": false,
+    "execution_authority": false,
+    "live_owner": false
+  },
+  "scope_contract": {
+    "source_locked_frame_count": 13,
+    "offline_seeded_extensions_in_trajectory": 0,
+    "public_only": true,
+    "portable_ready": false,
+    "package_exportable": false,
+    "device_accepted": false
+  }
+}

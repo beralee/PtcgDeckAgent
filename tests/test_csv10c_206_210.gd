@@ -62,6 +62,17 @@ func test_csv10c_207_brocks_scouting_exposes_mode_and_full_library_search() -> S
 	effect.execute(supporter, [{"brocks_scouting_mode": ["basic"], "brocks_scouting_basic": [basic_a, basic_b]}], state)
 	return run_checks([
 		assert_eq(mode_steps.size(), 1, "CSV10C_207 should expose a Basic-or-Evolution mode choice"),
+		assert_eq(effect.get_ucis_last_error(), "", "CSV10C_207 mode choice must compile through UCIS"),
+		assert_eq(
+			str((mode_steps[0].get("__ucis", {}) as Dictionary).get("primitive", "")) if not mode_steps.is_empty() else "",
+			"ChooseBoolean",
+			"The two-mode choice must use the registered boolean UCIS primitive"
+		),
+		assert_eq(
+			mode_steps[0].get("items", []) if not mode_steps.is_empty() else [],
+			[true, false],
+			"Basic and Evolution modes must retain deterministic option order"
+		),
 		assert_eq(search_steps.size(), 1, "CSV10C_207 should expose a follow-up search step"),
 		assert_eq(str(search_steps[0].get("visible_scope", "")) if not search_steps.is_empty() else "", BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK, "CSV10C_207 should show the complete own library"),
 		assert_true(illegal in (search_steps[0].get("card_items", []) as Array) if not search_steps.is_empty() else false, "CSV10C_207 should show illegal cards as disabled"),

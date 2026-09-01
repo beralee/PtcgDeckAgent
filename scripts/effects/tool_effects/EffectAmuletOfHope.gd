@@ -4,7 +4,7 @@ extends BaseEffect
 const STEP_ID := "cards_to_hand"
 
 
-func get_knockout_interaction_steps(holder: PokemonSlot, state: GameState) -> Array[Dictionary]:
+func build_ucis_knockout_interaction_steps_spec_steps(holder: PokemonSlot, state: GameState) -> Array[Dictionary]:
 	if holder == null or holder.get_top_card() == null or state == null:
 		return []
 	var player := state.players[holder.get_top_card().owner_index]

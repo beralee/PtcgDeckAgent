@@ -20,7 +20,7 @@ func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
 	return true
 
 
-func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var pi: int = state.current_player_index
 	var player: PlayerState = state.players[pi]
 	var items: Array = []

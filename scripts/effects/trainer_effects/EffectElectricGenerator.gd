@@ -14,7 +14,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return false
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var energy_items: Array = []
 	var energy_labels: Array[String] = []
@@ -47,6 +47,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,
+			"ucis_context_name": "ACTIVATE",
+			"ucis_option_type_name": "YES",
 		}]
 
 	return [build_card_assignment_step(

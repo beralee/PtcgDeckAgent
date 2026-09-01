@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-match-host-as-wp4-v1",
+  "parent_author_package_bundle_canonical_sha256": "B416F2CBA2795B62126B6EF7B5F07A9000E84D5FA1DF62C1753CADC9E82E106B",
+  "cabt_contract_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+  "card_catalog_bundle_canonical_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+  "restricted_base_executor_bundle_canonical_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+  "portable_backend_bundle_canonical_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "match_handle_contract": {
+    "archive_recaptured_at_match_prepare": true,
+    "archive_and_all_payloads_revalidated": true,
+    "one_match_claim": true,
+    "pins_are_immutable_copy_isolated_values": true,
+    "exact_official_id_to_local_printing_only": true,
+    "localized_or_display_name_inference": false
+  },
+  "shadow_host_contract": {
+    "input_owner": "existing_exact_strategic_context_and_current_selection_window",
+    "output": "current_window_indexes_and_public_audit_only",
+    "prompt_one_use": true,
+    "classic_fallback_allowed": false,
+    "engine_execution_authority": false,
+    "live_authority": false,
+    "battle_scene_consumer": false
+  },
+  "development_fixture_trust": {
+    "test_signature_only": true,
+    "execution_trusted": false,
+    "development_shadow_ready": true,
+    "exportable": false
+  },
+  "stable_error_codes": [
+    "package_file_missing",
+    "package_integrity_invalid",
+    "package_contract_incompatible",
+    "package_deck_unmapped",
+    "package_policy_unsupported",
+    "package_handle_already_claimed",
+    "invalid_match_identity",
+    "invalid_current_window_owner",
+    "invalid_prompt_authority",
+    "prompt_already_open",
+    "prompt_already_consumed",
+    "prompt_not_open",
+    "shadow_policy_failed",
+    "shadow_audit_integrity_invalid"
+  ]
+}

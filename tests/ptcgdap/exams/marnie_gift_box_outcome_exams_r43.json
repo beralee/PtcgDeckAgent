@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "document_type": "ptcgdap_strategy_outcome_exam_corpus_v1",
+  "corpus_id": "marnie-gift-box-r43-final-state-outcomes",
+  "status": "promoted_gate",
+  "repetitions_per_exam": 5,
+  "comparison_contract": {
+    "board": "active exact; bench unordered multiset",
+    "hand": "unordered card-name multiset",
+    "discard": "unordered card-name multiset",
+    "action_order": "not compared"
+  },
+  "strategy_package": {
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "5.3.0",
+    "archive_sha256": "863EE8C8FA093B67863C5C60754A3BF4DF9796C7557084191A0C2A581E94A3A3",
+    "install_source": "built_in"
+  },
+  "exams": [
+    {
+      "exam_id": "t6_tm_evolution_final_two_lines",
+      "issue_number": 1,
+      "turn_number": 6,
+      "provenance": "direct_replay_turn_plus_linked_counterfactual",
+      "expected_end_state": {
+        "scenario_id": "t6_tm_evolution_final_two_lines",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV10C_146", "evolution_stack": ["CSV10C_146"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV10C_147", "evolution_stack": ["CSV10C_146", "CSV10C_147"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV1C_121", "CSV10C_216", "CSV8C_183"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 0},
+            "bench": [], "hand": [], "prize_count": 4
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV5C_119", "CSV1C_112"]},
+          "opponent": {"discard_card_names": []}
+        }
+      },
+      "candidate_end_state": {
+        "scenario_id": "t6_tm_evolution_final_two_lines",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV10C_146", "evolution_stack": ["CSV10C_146"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV10C_147", "evolution_stack": ["CSV10C_146", "CSV10C_147"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV8C_183", "CSV1C_121", "CSV10C_216"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 0},
+            "bench": [], "hand": [], "prize_count": 4
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV1C_112", "CSV5C_119"]},
+          "opponent": {"discard_card_names": []}
+        }
+      }
+    },
+    {
+      "exam_id": "t8_punk_up_final_all_available_energy",
+      "issue_number": 2,
+      "turn_number": 8,
+      "provenance": "direct_replay_turn",
+      "expected_end_state": {
+        "scenario_id": "t8_punk_up_final_all_available_energy",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV10C_148", "evolution_stack": ["CSV10C_146", "CSV10C_147", "CSV10C_148"], "energy_count": 3, "energy_types": {"D": 3}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV10C_216", "CSV1C_109"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 20},
+            "bench": [], "hand": [], "prize_count": 3
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV5C_119", "CSV1C_121"]},
+          "opponent": {"discard_card_names": ["CSV2C_127"]}
+        }
+      },
+      "candidate_end_state": {
+        "scenario_id": "t8_punk_up_final_all_available_energy",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV10C_148", "evolution_stack": ["CSV10C_146", "CSV10C_147", "CSV10C_148"], "energy_count": 3, "energy_types": {"D": 3}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV1C_109", "CSV10C_216"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 20},
+            "bench": [], "hand": [], "prize_count": 3
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV1C_121", "CSV5C_119"]},
+          "opponent": {"discard_card_names": ["CSV2C_127"]}
+        }
+      }
+    },
+    {
+      "exam_id": "t4_spikemuth_final_morgrem_acquired",
+      "issue_number": 3,
+      "turn_number": 4,
+      "provenance": "direct_replay_turn_plus_linked_search",
+      "expected_end_state": {
+        "scenario_id": "t4_spikemuth_final_morgrem_acquired",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV10C_146", "evolution_stack": ["CSV10C_146"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV10C_147", "CSV1C_121", "CSV8C_183"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_052", "evolution_stack": ["CSV10C_052"], "energy_count": 1, "energy_types": {"G": 1}, "tool_name": "", "damage": 0},
+            "bench": [], "hand": [], "prize_count": 5
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV2C_127", "CSV1C_112"]},
+          "opponent": {"discard_card_names": []}
+        }
+      },
+      "candidate_end_state": {
+        "scenario_id": "t4_spikemuth_final_morgrem_acquired",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV10C_146", "evolution_stack": ["CSV10C_146"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV8C_183", "CSV10C_147", "CSV1C_121"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_052", "evolution_stack": ["CSV10C_052"], "energy_count": 1, "energy_types": {"G": 1}, "tool_name": "", "damage": 0},
+            "bench": [], "hand": [], "prize_count": 5
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV1C_112", "CSV2C_127"]},
+          "opponent": {"discard_card_names": []}
+        }
+      }
+    },
+    {
+      "exam_id": "t6_supporter_final_refill_and_disruption",
+      "issue_number": 4,
+      "turn_number": 6,
+      "provenance": "direct_replay_turn_plus_linked_supporter_windows",
+      "expected_end_state": {
+        "scenario_id": "t6_supporter_final_refill_and_disruption",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV10C_147", "evolution_stack": ["CSV10C_146", "CSV10C_147"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV10C_148", "CSVE1C_DAR", "CSV7C_177", "CSV8C_183", "CSVH1C_045", "CSV10C_216"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 20},
+            "bench": [], "hand": [], "prize_count": 3
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV3C_123", "CSV1C_112", "CSV5C_119"]},
+          "opponent": {"discard_card_names": []}
+        }
+      },
+      "candidate_end_state": {
+        "scenario_id": "t6_supporter_final_refill_and_disruption",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV10C_147", "evolution_stack": ["CSV10C_146", "CSV10C_147"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV10C_216", "CSVH1C_045", "CSV8C_183", "CSV7C_177", "CSVE1C_DAR", "CSV10C_148"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 20},
+            "bench": [], "hand": [], "prize_count": 3
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV5C_119", "CSV3C_123", "CSV1C_112"]},
+          "opponent": {"discard_card_names": []}
+        }
+      }
+    },
+    {
+      "exam_id": "t5_send_out_final_budew_active",
+      "issue_number": 5,
+      "turn_number": 5,
+      "provenance": "direct_replay_turn",
+      "expected_end_state": {
+        "scenario_id": "t5_send_out_final_budew_active",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 20},
+              {"pokemon_name": "CSV10C_147", "evolution_stack": ["CSV10C_146", "CSV10C_147"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0}
+            ],
+            "hand": ["CSV10C_148", "CSV10C_216", "CSV1C_121"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 20},
+            "bench": [], "hand": [], "prize_count": 3
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV5C_119", "CSV1C_112", "CSV1C_123"]},
+          "opponent": {"discard_card_names": []}
+        }
+      },
+      "candidate_end_state": {
+        "scenario_id": "t5_send_out_final_budew_active",
+        "primary": {
+          "tracked_player": {
+            "active": {"pokemon_name": "CSV9.5C_004", "evolution_stack": ["CSV9.5C_004"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+            "bench": [
+              {"pokemon_name": "CSV7C_059", "evolution_stack": ["CSV9.5C_043", "CSV7C_059"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV10C_147", "evolution_stack": ["CSV10C_146", "CSV10C_147"], "energy_count": 0, "energy_types": {}, "tool_name": "", "damage": 0},
+              {"pokemon_name": "CSV8C_094", "evolution_stack": ["CSV8C_094"], "energy_count": 1, "energy_types": {"D": 1}, "tool_name": "", "damage": 20}
+            ],
+            "hand": ["CSV1C_121", "CSV10C_148", "CSV10C_216"],
+            "prize_count": 6
+          },
+          "opponent": {
+            "active": {"pokemon_name": "CSV10C_010", "evolution_stack": ["CSV10C_010"], "energy_count": 2, "energy_types": {"G": 2}, "tool_name": "", "damage": 20},
+            "bench": [], "hand": [], "prize_count": 3
+          }
+        },
+        "secondary": {
+          "tracked_player": {"discard_card_names": ["CSV1C_123", "CSV1C_112", "CSV5C_119"]},
+          "opponent": {"discard_card_names": []}
+        }
+      }
+    }
+  ]
+}

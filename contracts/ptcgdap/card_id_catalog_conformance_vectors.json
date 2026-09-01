@@ -1,0 +1,1850 @@
+{
+  "artifact_id": "ptcgdap-card-id-catalog-conformance-vectors-v1",
+  "result_contract": {
+    "copy_only": true,
+    "failure": {
+      "ok": false,
+      "value": null
+    },
+    "fields_in_order": [
+      "ok",
+      "error_code",
+      "value"
+    ],
+    "rejected_value_echo": "forbidden",
+    "success": {
+      "error_code": null,
+      "ok": true
+    }
+  },
+  "schema_version": 1,
+  "stable_error_codes": [
+    "catalog_not_loaded",
+    "catalog_bundle_trust_anchor_mismatch",
+    "catalog_artifact_set_invalid",
+    "catalog_artifact_hash_mismatch",
+    "catalog_integrity_invalid",
+    "source_anchor_mismatch",
+    "source_file_missing",
+    "source_hash_mismatch",
+    "schema_unsupported",
+    "input_type_invalid",
+    "official_card_unknown",
+    "official_card_unmapped",
+    "official_printing_unavailable",
+    "official_attack_unknown",
+    "local_printing_unmapped",
+    "local_source_missing",
+    "local_source_hash_mismatch",
+    "mapping_conflict",
+    "attack_unmapped",
+    "attack_owner_mismatch",
+    "attack_map_incomplete"
+  ],
+  "vectors": [
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "7",
+            "expansion": "SVE"
+          },
+          "official_card_id": 7,
+          "ordered_official_attack_ids": []
+        }
+      },
+      "id": "official-card-7",
+      "input": {
+        "official_card_id": 7
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "51",
+            "expansion": "TWM"
+          },
+          "official_card_id": 103,
+          "ordered_official_attack_ids": [
+            130
+          ]
+        }
+      },
+      "id": "official-card-103",
+      "input": {
+        "official_card_id": 103
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "53",
+            "expansion": "TWM"
+          },
+          "official_card_id": 104,
+          "ordered_official_attack_ids": [
+            131
+          ]
+        }
+      },
+      "id": "official-card-104",
+      "input": {
+        "official_card_id": 104
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "95",
+            "expansion": "TWM"
+          },
+          "official_card_id": 112,
+          "ordered_official_attack_ids": [
+            141
+          ]
+        }
+      },
+      "id": "official-card-112",
+      "input": {
+        "official_card_id": 112
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "134",
+            "expansion": "DRI"
+          },
+          "official_card_id": 646,
+          "ordered_official_attack_ids": [
+            934,
+            935
+          ]
+        }
+      },
+      "id": "official-card-646",
+      "input": {
+        "official_card_id": 646
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "135",
+            "expansion": "DRI"
+          },
+          "official_card_id": 647,
+          "ordered_official_attack_ids": [
+            936
+          ]
+        }
+      },
+      "id": "official-card-647",
+      "input": {
+        "official_card_id": 647
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "136",
+            "expansion": "DRI"
+          },
+          "official_card_id": 648,
+          "ordered_official_attack_ids": [
+            937
+          ]
+        }
+      },
+      "id": "official-card-648",
+      "input": {
+        "official_card_id": 648
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "46",
+            "expansion": "ASC"
+          },
+          "official_card_id": 860,
+          "ordered_official_attack_ids": [
+            1239
+          ]
+        }
+      },
+      "id": "official-card-860",
+      "input": {
+        "official_card_id": 860
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "165",
+            "expansion": "TWM"
+          },
+          "official_card_id": 1080,
+          "ordered_official_attack_ids": []
+        }
+      },
+      "id": "official-card-1080",
+      "input": {
+        "official_card_id": 1080
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "61",
+            "expansion": "SFA"
+          },
+          "official_card_id": 1097,
+          "ordered_official_attack_ids": []
+        }
+      },
+      "id": "official-card-1097",
+      "input": {
+        "official_card_id": 1097
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": {
+            "collection_no": "169",
+            "expansion": "DRI"
+          },
+          "official_card_id": 1259,
+          "ordered_official_attack_ids": []
+        }
+      },
+      "id": "official-card-1259",
+      "input": {
+        "official_card_id": 1259
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unknown",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-card-unknown",
+      "input": {
+        "official_card_id": 1268
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "input_type_invalid",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-card-bool",
+      "input": {
+        "official_card_id": {
+          "host_type": "bool",
+          "value": true
+        }
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "input_type_invalid",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-card-unsafe",
+      "input": {
+        "official_card_id": {
+          "decimal": "9007199254740992",
+          "host_type": "unsafe_integer"
+        }
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 916,
+          "ordered_official_attack_ids": [
+            1320,
+            1321
+          ]
+        }
+      },
+      "id": "official-card-printing-null-916",
+      "input": {
+        "official_card_id": 916
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 925,
+          "ordered_official_attack_ids": [
+            1331
+          ]
+        }
+      },
+      "id": "official-card-printing-null-925",
+      "input": {
+        "official_card_id": 925
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 929,
+          "ordered_official_attack_ids": [
+            1335
+          ]
+        }
+      },
+      "id": "official-card-printing-null-929",
+      "input": {
+        "official_card_id": 929
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 947,
+          "ordered_official_attack_ids": [
+            1360
+          ]
+        }
+      },
+      "id": "official-card-printing-null-947",
+      "input": {
+        "official_card_id": 947
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 992,
+          "ordered_official_attack_ids": [
+            1432,
+            1433
+          ]
+        }
+      },
+      "id": "official-card-printing-null-992",
+      "input": {
+        "official_card_id": 992
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 998,
+          "ordered_official_attack_ids": [
+            1440
+          ]
+        }
+      },
+      "id": "official-card-printing-null-998",
+      "input": {
+        "official_card_id": 998
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 999,
+          "ordered_official_attack_ids": [
+            1441
+          ]
+        }
+      },
+      "id": "official-card-printing-null-999",
+      "input": {
+        "official_card_id": 999
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "exact_english_printing_or_null": null,
+          "official_card_id": 1083,
+          "ordered_official_attack_ids": []
+        }
+      },
+      "id": "official-card-printing-null-1083",
+      "input": {
+        "official_card_id": 1083
+      },
+      "operation": "lookup_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 130,
+          "owner_attack_ordinal": 0,
+          "owner_official_card_id": 103
+        }
+      },
+      "id": "official-attack-130",
+      "input": {
+        "official_attack_id": 130
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 131,
+          "owner_attack_ordinal": 0,
+          "owner_official_card_id": 104
+        }
+      },
+      "id": "official-attack-131",
+      "input": {
+        "official_attack_id": 131
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 141,
+          "owner_attack_ordinal": 0,
+          "owner_official_card_id": 112
+        }
+      },
+      "id": "official-attack-141",
+      "input": {
+        "official_attack_id": 141
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 934,
+          "owner_attack_ordinal": 0,
+          "owner_official_card_id": 646
+        }
+      },
+      "id": "official-attack-934",
+      "input": {
+        "official_attack_id": 934
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 935,
+          "owner_attack_ordinal": 1,
+          "owner_official_card_id": 646
+        }
+      },
+      "id": "official-attack-935",
+      "input": {
+        "official_attack_id": 935
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 1239,
+          "owner_attack_ordinal": 0,
+          "owner_official_card_id": 860
+        }
+      },
+      "id": "official-attack-1239",
+      "input": {
+        "official_attack_id": 1239
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": "official_attack_unknown",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-attack-unknown",
+      "input": {
+        "official_attack_id": 1557
+      },
+      "operation": "lookup_official_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {
+            "0": 131
+          },
+          "local_printing": {
+            "card_index": "059",
+            "set_code": "CSV7C"
+          },
+          "official_card_id": 104,
+          "source_canonical_json_v1_sha256": "6342EEAB3468FF43718D841C9DD55E750F0FFA27ECB8622FD5478AA820AFDD95"
+        }
+      },
+      "id": "local-printing-CSV7C-059",
+      "input": {
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {
+            "0": 141
+          },
+          "local_printing": {
+            "card_index": "094",
+            "set_code": "CSV8C"
+          },
+          "official_card_id": 112,
+          "source_canonical_json_v1_sha256": "8540B67BA8C3F5D45AC0F9E372A7C3B7BDCA7F3F050D4159D704C08E18526A8F"
+        }
+      },
+      "id": "local-printing-CSV8C-094",
+      "input": {
+        "local_printing": {
+          "card_index": "094",
+          "set_code": "CSV8C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {},
+          "local_printing": {
+            "card_index": "173",
+            "set_code": "CSV8C"
+          },
+          "official_card_id": 1080,
+          "source_canonical_json_v1_sha256": "DE4487B0030DEBAFE37303E51E978E3FA5C0C09BCADDD8245B365F2ED988ED94"
+        }
+      },
+      "id": "local-printing-CSV8C-173",
+      "input": {
+        "local_printing": {
+          "card_index": "173",
+          "set_code": "CSV8C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {},
+          "local_printing": {
+            "card_index": "183",
+            "set_code": "CSV8C"
+          },
+          "official_card_id": 1097,
+          "source_canonical_json_v1_sha256": "FB05919614D31D6362E7CBCDDCB7137EC1EC2AB160B4D20FA8E0634F3E2A0AB2"
+        }
+      },
+      "id": "local-printing-CSV8C-183",
+      "input": {
+        "local_printing": {
+          "card_index": "183",
+          "set_code": "CSV8C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {},
+          "local_printing": {
+            "card_index": "DAR",
+            "set_code": "CSVE1C"
+          },
+          "official_card_id": 7,
+          "source_canonical_json_v1_sha256": "B29AF1051D130851567F72BA2759A71B9BF51405DDF15305645B3C0BFF218084"
+        }
+      },
+      "id": "local-printing-CSVE1C-DAR",
+      "input": {
+        "local_printing": {
+          "card_index": "DAR",
+          "set_code": "CSVE1C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {
+            "0": 934,
+            "1": 935
+          },
+          "local_printing": {
+            "card_index": "134",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 646,
+          "source_canonical_json_v1_sha256": "D7259EED7B9B583DFF95AC92D7CF1E258B84B1F678F21C1743563AC03929C733"
+        }
+      },
+      "id": "local-printing-LEN_DRI-134",
+      "input": {
+        "local_printing": {
+          "card_index": "134",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {
+            "0": 936
+          },
+          "local_printing": {
+            "card_index": "135",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 647,
+          "source_canonical_json_v1_sha256": "651B012760D24BBC2E09BCC2A4A1F5010AEB595B4C98046246CC669C2362E824"
+        }
+      },
+      "id": "local-printing-LEN_DRI-135",
+      "input": {
+        "local_printing": {
+          "card_index": "135",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {
+            "0": 937
+          },
+          "local_printing": {
+            "card_index": "136",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 648,
+          "source_canonical_json_v1_sha256": "A041E7168A5CA50C82E76DDBA0CEC6F2C7F66C34593B4D6A9A8C68690664021A"
+        }
+      },
+      "id": "local-printing-LEN_DRI-136",
+      "input": {
+        "local_printing": {
+          "card_index": "136",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_attack_index_to_official_attack_id": {},
+          "local_printing": {
+            "card_index": "169",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 1259,
+          "source_canonical_json_v1_sha256": "28079978B465F21F50CE9FDDA8B7EB9B6406C409F29BDCDC9D67E747FEAF3E1B"
+        }
+      },
+      "id": "local-printing-LEN_DRI-169",
+      "input": {
+        "local_printing": {
+          "card_index": "169",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": "local_printing_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-printing-case",
+      "input": {
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "csv7c"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": "local_printing_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-printing-space",
+      "input": {
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C "
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": "local_printing_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-printing-leading-zero",
+      "input": {
+        "local_printing": {
+          "card_index": "0059",
+          "set_code": "CSV7C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": "local_printing_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-printing-snorunt-no-name-guess",
+      "input": {
+        "local_printing": {
+          "card_index": "043",
+          "set_code": "CSV9.5C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": "local_printing_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-printing-csv10c-alias-denied",
+      "input": {
+        "local_printing": {
+          "card_index": "146",
+          "set_code": "CSV10C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": "input_type_invalid",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-printing-type",
+      "input": {
+        "local_printing": {
+          "card_index": {
+            "host_type": "integer",
+            "value": 59
+          },
+          "set_code": "CSV7C"
+        }
+      },
+      "operation": "lookup_local_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 131,
+          "official_card_id": 104,
+          "owner_attack_ordinal": 0
+        }
+      },
+      "id": "local-attack-CSV7C-059-0",
+      "input": {
+        "local_attack_index": 0,
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 141,
+          "official_card_id": 112,
+          "owner_attack_ordinal": 0
+        }
+      },
+      "id": "local-attack-CSV8C-094-0",
+      "input": {
+        "local_attack_index": 0,
+        "local_printing": {
+          "card_index": "094",
+          "set_code": "CSV8C"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 934,
+          "official_card_id": 646,
+          "owner_attack_ordinal": 0
+        }
+      },
+      "id": "local-attack-LEN_DRI-134-0",
+      "input": {
+        "local_attack_index": 0,
+        "local_printing": {
+          "card_index": "134",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 935,
+          "official_card_id": 646,
+          "owner_attack_ordinal": 1
+        }
+      },
+      "id": "local-attack-LEN_DRI-134-1",
+      "input": {
+        "local_attack_index": 1,
+        "local_printing": {
+          "card_index": "134",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 936,
+          "official_card_id": 647,
+          "owner_attack_ordinal": 0
+        }
+      },
+      "id": "local-attack-LEN_DRI-135-0",
+      "input": {
+        "local_attack_index": 0,
+        "local_printing": {
+          "card_index": "135",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "official_attack_id": 937,
+          "official_card_id": 648,
+          "owner_attack_ordinal": 0
+        }
+      },
+      "id": "local-attack-LEN_DRI-136-0",
+      "input": {
+        "local_attack_index": 0,
+        "local_printing": {
+          "card_index": "136",
+          "set_code": "LEN_DRI"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": "attack_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-attack-oob",
+      "input": {
+        "local_attack_index": 1,
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": "local_printing_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-attack-unmapped-card",
+      "input": {
+        "local_attack_index": 0,
+        "local_printing": {
+          "card_index": "043",
+          "set_code": "CSV9.5C"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": "input_type_invalid",
+        "ok": false,
+        "value": null
+      },
+      "id": "local-attack-bool",
+      "input": {
+        "local_attack_index": {
+          "host_type": "bool",
+          "value": true
+        },
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        }
+      },
+      "operation": "lookup_local_attack"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "DAR",
+            "set_code": "CSVE1C"
+          },
+          "official_card_id": 7,
+          "source_canonical_json_v1_sha256": "B29AF1051D130851567F72BA2759A71B9BF51405DDF15305645B3C0BFF218084"
+        }
+      },
+      "id": "mapped-official-7",
+      "input": {
+        "official_card_id": 7
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "059",
+            "set_code": "CSV7C"
+          },
+          "official_card_id": 104,
+          "source_canonical_json_v1_sha256": "6342EEAB3468FF43718D841C9DD55E750F0FFA27ECB8622FD5478AA820AFDD95"
+        }
+      },
+      "id": "mapped-official-104",
+      "input": {
+        "official_card_id": 104
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "094",
+            "set_code": "CSV8C"
+          },
+          "official_card_id": 112,
+          "source_canonical_json_v1_sha256": "8540B67BA8C3F5D45AC0F9E372A7C3B7BDCA7F3F050D4159D704C08E18526A8F"
+        }
+      },
+      "id": "mapped-official-112",
+      "input": {
+        "official_card_id": 112
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "134",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 646,
+          "source_canonical_json_v1_sha256": "D7259EED7B9B583DFF95AC92D7CF1E258B84B1F678F21C1743563AC03929C733"
+        }
+      },
+      "id": "mapped-official-646",
+      "input": {
+        "official_card_id": 646
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "135",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 647,
+          "source_canonical_json_v1_sha256": "651B012760D24BBC2E09BCC2A4A1F5010AEB595B4C98046246CC669C2362E824"
+        }
+      },
+      "id": "mapped-official-647",
+      "input": {
+        "official_card_id": 647
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "136",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 648,
+          "source_canonical_json_v1_sha256": "A041E7168A5CA50C82E76DDBA0CEC6F2C7F66C34593B4D6A9A8C68690664021A"
+        }
+      },
+      "id": "mapped-official-648",
+      "input": {
+        "official_card_id": 648
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "173",
+            "set_code": "CSV8C"
+          },
+          "official_card_id": 1080,
+          "source_canonical_json_v1_sha256": "DE4487B0030DEBAFE37303E51E978E3FA5C0C09BCADDD8245B365F2ED988ED94"
+        }
+      },
+      "id": "mapped-official-1080",
+      "input": {
+        "official_card_id": 1080
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "183",
+            "set_code": "CSV8C"
+          },
+          "official_card_id": 1097,
+          "source_canonical_json_v1_sha256": "FB05919614D31D6362E7CBCDDCB7137EC1EC2AB160B4D20FA8E0634F3E2A0AB2"
+        }
+      },
+      "id": "mapped-official-1097",
+      "input": {
+        "official_card_id": 1097
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "local_printing": {
+            "card_index": "169",
+            "set_code": "LEN_DRI"
+          },
+          "official_card_id": 1259,
+          "source_canonical_json_v1_sha256": "28079978B465F21F50CE9FDDA8B7EB9B6406C409F29BDCDC9D67E747FEAF3E1B"
+        }
+      },
+      "id": "mapped-official-1259",
+      "input": {
+        "official_card_id": 1259
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-860",
+      "input": {
+        "official_card_id": 860
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1079",
+      "input": {
+        "official_card_id": 1079
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1086",
+      "input": {
+        "official_card_id": 1086
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1122",
+      "input": {
+        "official_card_id": 1122
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1137",
+      "input": {
+        "official_card_id": 1137
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1152",
+      "input": {
+        "official_card_id": 1152
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1182",
+      "input": {
+        "official_card_id": 1182
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1219",
+      "input": {
+        "official_card_id": 1219
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1227",
+      "input": {
+        "official_card_id": 1227
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unmapped",
+        "ok": false,
+        "value": null
+      },
+      "id": "known-official-unmapped-1231",
+      "input": {
+        "official_card_id": 1231
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": "official_card_unknown",
+        "ok": false,
+        "value": null
+      },
+      "id": "unknown-official-unmapped",
+      "input": {
+        "official_card_id": 1268
+      },
+      "operation": "lookup_local_printing_for_official_card"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": {
+          "collection_no": "53",
+          "expansion": "TWM"
+        }
+      },
+      "id": "official-printing-104",
+      "input": {
+        "official_card_id": 104
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-916",
+      "input": {
+        "official_card_id": 916
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-925",
+      "input": {
+        "official_card_id": 925
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-929",
+      "input": {
+        "official_card_id": 929
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-947",
+      "input": {
+        "official_card_id": 947
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-992",
+      "input": {
+        "official_card_id": 992
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-998",
+      "input": {
+        "official_card_id": 998
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-999",
+      "input": {
+        "official_card_id": 999
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": "official_printing_unavailable",
+        "ok": false,
+        "value": null
+      },
+      "id": "official-printing-unavailable-1083",
+      "input": {
+        "official_card_id": 1083
+      },
+      "operation": "lookup_official_printing"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-CSV7C-059-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/CSV7C_059.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-CSV7C-059-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/CSV7C_059.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-CSV8C-094-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "094",
+          "set_code": "CSV8C"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/CSV8C_094.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-CSV8C-094-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "094",
+          "set_code": "CSV8C"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/CSV8C_094.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-CSV8C-173-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "173",
+          "set_code": "CSV8C"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/CSV8C_173.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-CSV8C-173-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "173",
+          "set_code": "CSV8C"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/CSV8C_173.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-CSV8C-183-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "183",
+          "set_code": "CSV8C"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/CSV8C_183.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-CSV8C-183-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "183",
+          "set_code": "CSV8C"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/CSV8C_183.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-CSVE1C-DAR-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "DAR",
+          "set_code": "CSVE1C"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/CSVE1C_DAR.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-CSVE1C-DAR-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "DAR",
+          "set_code": "CSVE1C"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/CSVE1C_DAR.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-LEN_DRI-134-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "134",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/LEN_DRI_134.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-LEN_DRI-134-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "134",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_134.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-LEN_DRI-135-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "135",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/LEN_DRI_135.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-LEN_DRI-135-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "135",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_135.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-LEN_DRI-136-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "136",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/LEN_DRI_136.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-LEN_DRI-136-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "136",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_136.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": true
+      },
+      "id": "validate-local-source-LEN_DRI-169-bytes",
+      "input": {
+        "local_printing": {
+          "card_index": "169",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "bytes",
+        "source_file": "data/bundled_user/cards/LEN_DRI_169.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": "local_source_hash_mismatch",
+        "ok": false,
+        "value": null
+      },
+      "id": "validate-local-source-LEN_DRI-169-mutated",
+      "input": {
+        "local_printing": {
+          "card_index": "169",
+          "set_code": "LEN_DRI"
+        },
+        "materialization": "mutated_tree",
+        "mutation": {
+          "field": "card_index",
+          "value": "__PTCGDAP_DRIFT__"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_169.json"
+      },
+      "operation": "validate_local_source"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": "9199FF5CDD6958FC3191F193E56829B75DB694A1488920250F4678AA052F79FE"
+      },
+      "id": "artifact-hash-schema",
+      "input": {
+        "artifact_id": "schema"
+      },
+      "operation": "artifact_canonical_sha256"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": "14A01DB7AF8344C8289E02D03478DB5CB8195F8EB78E01976D0672B871EEC90F"
+      },
+      "id": "artifact-hash-source_manifest",
+      "input": {
+        "artifact_id": "source_manifest"
+      },
+      "operation": "artifact_canonical_sha256"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": "3ED86C598ECD0BB5367FB575E94113BFE488E0B98FC64D6FABC50A1B0EAA8ED3"
+      },
+      "id": "artifact-hash-official_master",
+      "input": {
+        "artifact_id": "official_master"
+      },
+      "operation": "artifact_canonical_sha256"
+    },
+    {
+      "expected": {
+        "error_code": null,
+        "ok": true,
+        "value": "15BDE946C5C5B0102D13C04AE5B7676CB7FB071C32BC35507C24556E1D9FBEC5"
+      },
+      "id": "artifact-hash-exact_bridge",
+      "input": {
+        "artifact_id": "exact_bridge"
+      },
+      "operation": "artifact_canonical_sha256"
+    }
+  ]
+}

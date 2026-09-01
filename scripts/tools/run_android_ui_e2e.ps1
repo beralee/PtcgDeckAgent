@@ -17,9 +17,14 @@ if (-not $ArtifactDirectory) {
 New-Item -ItemType Directory -Force -Path $ArtifactDirectory | Out-Null
 
 if (-not $SkipProvision) {
-    $provisionScript = Join-Path $repoRoot ".codex\skills\ptcg-android-export-emulator\scripts\export_and_run_android.ps1"
-    & powershell -ExecutionPolicy Bypass -File $provisionScript -ProjectPath $repoRoot -ApkPath $ApkPath
-    if ($LASTEXITCODE -ne 0) { throw "Android export/install/launch provisioning failed with exit code $LASTEXITCODE" }
+	$exportScript = Join-Path $repoRoot "scripts\tools\export_ptcgdap_device_release.ps1"
+	$releaseRoot = Join-Path $repoRoot ".tmp\ptcgdap_device_release\android-ui-e2e-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+	& powershell -ExecutionPolicy Bypass -File $exportScript -AndroidOnly -OutputDirectory $releaseRoot
+	if ($LASTEXITCODE -ne 0) { throw "Android export failed with exit code $LASTEXITCODE" }
+	$ApkPath = Join-Path $releaseRoot "PtcgDeckAgent.apk"
+	if (-not (Test-Path -LiteralPath $AdbPath)) { throw "adb.exe not found: $AdbPath" }
+	$installOutput = & $AdbPath install -r $ApkPath 2>&1
+	if ($LASTEXITCODE -ne 0) { throw "Android install failed with exit code $LASTEXITCODE`n$(($installOutput | Out-String).Trim())" }
 }
 
 if (-not (Test-Path -LiteralPath $AdbPath)) { throw "adb.exe not found: $AdbPath" }

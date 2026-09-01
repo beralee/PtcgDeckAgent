@@ -49,7 +49,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return _has_matching_energy(player.deck)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var matching_energy_cards: Array[CardInstance] = _collect_matching_energy_cards(player.deck)
 	if matching_energy_cards.is_empty():

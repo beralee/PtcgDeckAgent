@@ -1,15 +1,18 @@
 ## 对战设置场景
 extends Control
 
-const DeckViewDialogScript := preload("res://scripts/ui/decks/DeckViewDialog.gd")
-const DeckDiscussionDialogScene := preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
-const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
-const BattleMusicImportAdapterScript := preload("res://scripts/audio/BattleMusicImportAdapter.gd")
+const AuthorStrategySetupModelScript := preload("res://scripts/ui/battle/author_strategy/AuthorStrategySetupModel.gd")
+const AuthorStrategyWindowsExecutionGateScript := preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
+const AuthorStrategyFeatureGateScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
 
 const DECK_DISCUSSION_DIALOG_SCRIPT_PATH := "res://scenes/deck_editor/DeckDiscussionDialog.gd"
+const DECK_DISCUSSION_DIALOG_SCENE_PATH := "res://scenes/deck_editor/DeckDiscussionDialog.tscn"
+const DECK_VIEW_DIALOG_SCRIPT_PATH := "res://scripts/ui/decks/DeckViewDialog.gd"
+const ZENMUX_CLIENT_SCRIPT_PATH := "res://scripts/network/ZenMuxClient.gd"
+const BATTLE_MUSIC_IMPORT_ADAPTER_SCRIPT_PATH := "res://scripts/audio/BattleMusicImportAdapter.gd"
 const FIRST_PLAYER_RANDOM := -1
 const FIRST_PLAYER_PLAYER_ONE := 0
 const FIRST_PLAYER_PLAYER_TWO := 1
@@ -33,8 +36,20 @@ const DRAGAPULT_DUSKNOIR_DECK_ID := 575723
 const V17_AI_DECK_PRIORITY_IDS: Array[int] = [
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 ]
+const LOCAL_OPTIMIZED_RULE_DECK_IDS: Array[int] = [
+	800017097, # 无碟沙奈朵
+	800017280, # 铝钢龙钢铁防线
+	800018499, # 多龙巴鲁托
+	800018501, # 玛俐的长毛巨魔
+	800018502, # N 的索罗亚克
+	800018509, # 猛雷鼓厄诡椪
+	800018543, # 竹兰烈咬陆鲨
+]
+const LOCAL_OPTIMIZED_RULE_LABEL := "开发工具包优化版"
 const BACKGROUND_CARD_SIZE := Vector2(188, 112)
 const BACKGROUND_GALLERY_HEIGHT := 132.0
+const BACKGROUND_PREVIEW_MAX_SIZE := Vector2i(320, 180)
+const BATTLE_SCENE_PREWARM_IDLE_DELAY_SECONDS := 1.0
 const BACKGROUND_GALLERY_DRAG_THRESHOLD := 12.0
 const BACKGROUND_GALLERY_WHEEL_STEP := 96
 const DECK_PICKER_MAIN_FONT_SIZE := 28
@@ -50,7 +65,7 @@ const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
 const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const DECK_PICKER_ALL := "all"
 const DECK_PICKER_RECENT := "recent"
-const DECK_PICKER_LIMIT := 80
+const DECK_PICKER_LIMIT := 512
 const DECK_PICKER_SEARCH_DEBOUNCE_SECONDS := 0.08
 const DECK_PICKER_TOUCH_BOUND_META := "_battle_setup_deck_picker_touch_bound"
 const BGM_PICKER_OVERLAY_NAME := "BattleMusicPickerOverlay"
@@ -59,6 +74,7 @@ const STARTUP_INPUT_SHIELD_NODE_NAME := "BattleSetupStartupInputShield"
 const STARTUP_INPUT_SHIELD_MIN_SECONDS := 0.05
 const INITIAL_DECK_REFRESH_MAX_ATTEMPTS := 10
 const INITIAL_DECK_REFRESH_INTERVAL_SECONDS := 0.12
+const PERFORMANCE_TRACE_ARG := "--ptcgdap-performance-trace"
 const AI_SETUP_HELP_COPY := "规则模型可直接开打；想使用大模型或策略探讨，请先在 AI 设置填写 API，并用“测试”确认当前模型可用。"
 const AI_DECK_LLM_MARKER := " *"
 const AI_DECK_LLM_LEGEND_COPY := "* 表示该卡组支持大模型版 AI（需先在“AI 设置”中配置模型 API）"
@@ -70,6 +86,7 @@ var _deck_usage_stats: Dictionary = {}
 var _battle_backgrounds: Array[String] = []
 var _background_cards: Array[PanelContainer] = []
 var _selected_background_path: String = DEFAULT_BACKGROUND
+static var _shared_background_preview_cache: Dictionary = {}
 var _background_gallery_drag_active: bool = false
 var _background_gallery_dragging: bool = false
 var _background_gallery_drag_start_position: Vector2 = Vector2.ZERO
@@ -82,11 +99,11 @@ var _ai_version_registry: RefCounted = AIVersionRegistryScript.new()
 var _ai_fixed_deck_order_registry: RefCounted = AIFixedDeckOrderRegistryScript.new()
 var _deck_strategy_registry: RefCounted = DeckStrategyRegistryScript.new()
 var _playable_ai_versions: Array[Dictionary] = []
-var _deck_view_dialog: RefCounted = DeckViewDialogScript.new()
+var _deck_view_dialog: RefCounted = null
 var _pending_ai_strategy_variant_id: String = ""
 var _strategy_discussion_dialog: AcceptDialog = null
 var _strategy_discussion_signature := ""
-var _llm_model_test_client: ZenMuxClient = ZenMuxClientScript.new()
+var _llm_model_test_client: RefCounted = null
 var _pending_llm_model_test_config: Dictionary = {}
 var _llm_model_test_in_progress: bool = false
 var _portrait_action_footer_candidate: Button = null
@@ -126,9 +143,14 @@ var _initial_deck_refresh_generation: int = 0
 var _initial_deck_refresh_attempts: int = 0
 var _startup_input_shield: Control = null
 var _startup_input_shield_until_msec: int = 0
+var _author_strategy_records: Array[Dictionary] = []
+var _author_strategy_selected_ref: Dictionary = {}
+var _startup_performance: Dictionary = {}
 
 
 func _ready() -> void:
+	var ready_started := Time.get_ticks_usec()
+	_startup_performance["ready_enter_msec"] = roundi(float(ready_started) / 1000.0)
 	if _ready_initialized:
 		return
 	_ready_initialized = true
@@ -138,6 +160,7 @@ func _ready() -> void:
 	%ModeOption.clear()
 	%ModeOption.add_item("自己练牌", 0)
 	%ModeOption.add_item("AI 对战", 1)
+	%ModeOption.add_item("作者策略包", 2)
 	%ModeOption.item_selected.connect(_on_mode_changed)
 	_setup_mode_options()
 
@@ -185,21 +208,35 @@ func _ready() -> void:
 		%BtnTestLLMModel.pressed.connect(_on_test_llm_model_pressed)
 	if not %BtnPreviewBgm.pressed.is_connected(_on_bgm_preview_pressed):
 		%BtnPreviewBgm.pressed.connect(_on_bgm_preview_pressed)
+	if not %AuthorStrategyPackageOption.item_selected.is_connected(_on_author_strategy_package_changed):
+		%AuthorStrategyPackageOption.item_selected.connect(_on_author_strategy_package_changed)
 	_connect_button_pressed_once(%BtnImportBgm, Callable(self, "_on_bgm_import_pressed"))
 	_connect_button_pressed_once(%BtnRescanBgm, Callable(self, "_on_bgm_rescan_pressed"))
-	_ensure_battle_music_import_adapter()
+	_setup_author_strategy_catalog()
+	_startup_performance["ui_setup_msec"] = roundi(float(Time.get_ticks_usec() - ready_started) / 1000.0)
 
+	var data_started := Time.get_ticks_usec()
 	_load_deck_usage_stats()
 	_refresh_deck_options()
+	_startup_performance["deck_options_msec"] = roundi(float(Time.get_ticks_usec() - data_started) / 1000.0)
+	data_started = Time.get_ticks_usec()
 	_load_settings()
 	_restore_returned_setup_context()
 	_refresh_ai_ui_visibility()
+	_startup_performance["settings_restore_msec"] = roundi(float(Time.get_ticks_usec() - data_started) / 1000.0)
 	_apply_non_battle_layout()
 	_install_startup_input_shield_if_requested()
 	call_deferred("_apply_non_battle_layout")
 	call_deferred("_stabilize_initial_non_battle_layout")
 	_schedule_initial_deck_options_refresh()
-	call_deferred("_request_battle_scene_resource_prewarm")
+	call_deferred("_schedule_battle_scene_resource_prewarm")
+	_startup_performance["ready_total_msec"] = roundi(float(Time.get_ticks_usec() - ready_started) / 1000.0)
+	if PERFORMANCE_TRACE_ARG in OS.get_cmdline_user_args():
+		print("PTCGDAP_BATTLE_SETUP_STARTUP=" + JSON.stringify(_startup_performance))
+
+
+func startup_performance_snapshot() -> Dictionary:
+	return _startup_performance.duplicate(true)
 
 
 func _notification(what: int) -> void:
@@ -210,10 +247,18 @@ func _notification(what: int) -> void:
 func _request_battle_scene_resource_prewarm() -> void:
 	if not is_inside_tree():
 		return
+	_prewarm_battle_scene_resource()
+
+
+func _schedule_battle_scene_resource_prewarm() -> void:
+	if not is_inside_tree():
+		return
 	var tree := get_tree()
 	if tree == null:
 		return
-	tree.process_frame.connect(Callable(self, "_prewarm_battle_scene_resource"), CONNECT_ONE_SHOT)
+	await tree.create_timer(BATTLE_SCENE_PREWARM_IDLE_DELAY_SECONDS).timeout
+	if is_inside_tree():
+		_request_battle_scene_resource_prewarm()
 
 
 func _prewarm_battle_scene_resource() -> void:
@@ -405,6 +450,8 @@ func _on_card_database_decks_changed() -> void:
 
 
 func _schedule_initial_deck_options_refresh() -> void:
+	if _has_initial_deck_options_ready():
+		return
 	_initial_deck_refresh_generation += 1
 	_initial_deck_refresh_attempts = 0
 	call_deferred("_refresh_deck_options_after_initial_data_settle", _initial_deck_refresh_generation)
@@ -447,6 +494,8 @@ func _has_live_deferred_refresh_controls() -> bool:
 func _has_initial_deck_options_ready() -> bool:
 	if _deck_list.size() < 1:
 		return false
+	if _is_author_strategy_mode():
+		return true
 	if _ai_deck_list.is_empty():
 		return false
 	if not _is_ai_mode() and _deck_list.size() < 2:
@@ -626,14 +675,13 @@ func _apply_landscape_setup_scroll_metrics(scroll: ScrollContainer, content_colu
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size = Vector2.ZERO
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	HudThemeScript.style_scroll_container(scroll, "touch")
+	NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 	var vbar := scroll.get_v_scroll_bar()
 	if vbar != null:
-		vbar.visible = false
-		vbar.modulate.a = 0.0
-		vbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vbar.custom_minimum_size = Vector2.ZERO
+		vbar.modulate.a = 1.0
+		vbar.mouse_filter = Control.MOUSE_FILTER_STOP
 	content_columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_columns.custom_minimum_size = Vector2.ZERO
@@ -651,7 +699,7 @@ func _reset_landscape_minimum_sizes(node: Node) -> void:
 func _apply_setup_text_layout_mode(portrait: bool) -> void:
 	var ai_help := find_child("AiHelp", true, false) as Label
 	if ai_help != null:
-		ai_help.visible = true
+		ai_help.visible = not _is_author_strategy_mode()
 		ai_help.text = AI_SETUP_HELP_COPY
 		ai_help.custom_minimum_size = Vector2.ZERO
 		ai_help.clip_text = true
@@ -1549,6 +1597,12 @@ func _setup_mode_options() -> void:
 		0: %ModeTwoPlayerButton,
 		1: %ModeAIButton,
 	}
+	var author_button := %ModeAuthorStrategyButton as Button
+	if author_button != null:
+		# Runtime mode 2 remains an internal owner boundary. D116 intentionally
+		# exposes it through the shared AI-opponent picker, not a third mode tab.
+		author_button.visible = false
+		author_button.disabled = true
 	for option_index_variant: Variant in _mode_segment_buttons.keys():
 		var option_index := int(option_index_variant)
 		var button := _mode_segment_buttons[option_index] as Button
@@ -1561,6 +1615,9 @@ func _setup_mode_options() -> void:
 
 
 func _on_mode_segment_pressed(option_index: int) -> void:
+	if option_index != 2:
+		_author_strategy_selected_ref = {}
+		GameManager.reset_author_strategy_selection()
 	_select_mode_option(option_index)
 	_on_mode_changed(option_index)
 
@@ -1570,6 +1627,8 @@ func _select_mode_option(option_index: int) -> void:
 	if mode_option == null or mode_option.item_count <= 0:
 		return
 	var normalized := clampi(option_index, 0, mode_option.item_count - 1)
+	if normalized == 2 and not AuthorStrategyFeatureGateScript.is_enabled():
+		normalized = 0
 	mode_option.select(normalized)
 	_sync_mode_segment_buttons()
 	_refresh_first_player_segment_labels()
@@ -1579,12 +1638,13 @@ func _sync_mode_segment_buttons() -> void:
 	var mode_option := _find_battle_setup_option("ModeOption")
 	if mode_option == null:
 		return
+	var surface_option_index := 1 if mode_option.selected == 2 else mode_option.selected
 	for option_index_variant: Variant in _mode_segment_buttons.keys():
 		var option_index := int(option_index_variant)
 		var button := _mode_segment_buttons[option_index] as Button
 		if button == null:
 			continue
-		var active: bool = option_index == mode_option.selected
+		var active: bool = option_index == surface_option_index
 		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
@@ -1600,6 +1660,190 @@ func _on_mode_changed(_index: int) -> void:
 	_mark_strategy_discussion_deck_changed()
 	_refresh_deck_options(false)
 	_refresh_ai_ui_visibility()
+
+
+func _setup_author_strategy_catalog() -> void:
+	if not AuthorStrategyFeatureGateScript.is_enabled():
+		_author_strategy_selected_ref = {}
+		GameManager.reset_author_strategy_selection()
+		_apply_author_strategy_catalog_report({
+			"metadata_records": [],
+			"ready_records": [],
+			"diagnostics": [{"error_code": "author_strategy_feature_disabled"}],
+			"feature_enabled": false,
+		})
+		return
+	if AuthorStrategyPackageCatalog == null:
+		_apply_author_strategy_catalog_report({"metadata_records": [], "diagnostics": []})
+		return
+	var callback := Callable(self, "_apply_author_strategy_catalog_report")
+	if AuthorStrategyPackageCatalog.has_signal("catalog_changed") and not AuthorStrategyPackageCatalog.catalog_changed.is_connected(callback):
+		AuthorStrategyPackageCatalog.catalog_changed.connect(callback)
+	_apply_author_strategy_catalog_report({
+		"metadata_records": AuthorStrategyPackageCatalog.list_metadata_records(),
+		"ready_records": AuthorStrategyPackageCatalog.list_ready_records(),
+		"diagnostics": AuthorStrategyPackageCatalog.list_diagnostics(),
+		"metadata_only": AuthorStrategyPackageCatalog.list_ready_records().is_empty(),
+		"match_authority": not AuthorStrategyPackageCatalog.list_ready_records().is_empty(),
+	}, GameManager.get_author_strategy_selection())
+
+
+func _apply_author_strategy_catalog_report(report: Dictionary, preferred_ref: Dictionary = {}) -> void:
+	var retained_ref := preferred_ref.duplicate(true)
+	if retained_ref.is_empty():
+		retained_ref = _author_strategy_selected_ref.duplicate(true)
+	var view: Dictionary = AuthorStrategySetupModelScript.normalize_catalog_report(report, retained_ref)
+	_author_strategy_records.clear()
+	for value: Variant in view.get("records", []):
+		if value is Dictionary:
+			_author_strategy_records.append(value.duplicate(true))
+	var option := get_node_or_null("%AuthorStrategyPackageOption") as OptionButton
+	if option == null:
+		return
+	option.clear()
+	for record: Dictionary in _author_strategy_records:
+		var label := str(record.get("display_label", record.get("display_name", "未命名策略")))
+		var index := option.item_count
+		option.add_item(label)
+		option.set_item_metadata(index, record.get("stable_ref", {}).duplicate(true))
+		option.set_item_tooltip(index, "%s\n%s" % [
+			record.get("display_name", "未命名策略"),
+			_author_strategy_catalog_status_detail(record),
+		])
+	var selected_index := int(view.get("selected_index", -1))
+	if selected_index >= 0 and selected_index < option.item_count:
+		option.select(selected_index)
+		_author_strategy_selected_ref = _author_strategy_records[selected_index].get("stable_ref", {}).duplicate(true)
+		GameManager.set_author_strategy_selection(AuthorStrategySetupModelScript.setup_selection_record(_author_strategy_records[selected_index]))
+	else:
+		_author_strategy_selected_ref = {}
+		GameManager.reset_author_strategy_selection()
+	option.disabled = option.item_count == 0
+	_refresh_author_strategy_details(str(view.get("empty_reason", "")))
+	_refresh_author_strategy_mode_visibility()
+	_sync_deck_picker_buttons()
+
+
+func _on_author_strategy_package_changed(index: int) -> void:
+	if index < 0 or index >= _author_strategy_records.size():
+		_author_strategy_selected_ref = {}
+		GameManager.reset_author_strategy_selection()
+	else:
+		var record := _author_strategy_records[index]
+		_author_strategy_selected_ref = record.get("stable_ref", {}).duplicate(true)
+		GameManager.set_author_strategy_selection(AuthorStrategySetupModelScript.setup_selection_record(record))
+	_refresh_author_strategy_details()
+	_refresh_author_strategy_mode_visibility()
+	_sync_deck_picker_buttons()
+
+
+func _selected_author_strategy_record() -> Dictionary:
+	var option := get_node_or_null("%AuthorStrategyPackageOption") as OptionButton
+	if option == null or option.selected < 0 or option.selected >= _author_strategy_records.size():
+		return {}
+	var record := _author_strategy_records[option.selected]
+	if not AuthorStrategySetupModelScript.same_ref(record.get("stable_ref", {}), _author_strategy_selected_ref):
+		return {}
+	return record.duplicate(true)
+
+
+func _select_author_strategy_ref(reference: Dictionary) -> bool:
+	var option := get_node_or_null("%AuthorStrategyPackageOption") as OptionButton
+	if option == null:
+		return false
+	for index: int in _author_strategy_records.size():
+		var candidate := _author_strategy_records[index].get("stable_ref", {}) as Dictionary
+		if AuthorStrategySetupModelScript.same_ref(candidate, reference):
+			option.select(index)
+			_on_author_strategy_package_changed(index)
+			return true
+	_author_strategy_selected_ref = {}
+	GameManager.reset_author_strategy_selection()
+	option.select(-1)
+	_refresh_author_strategy_details("selection_missing")
+	return false
+
+
+func _refresh_author_strategy_details(empty_reason: String = "") -> void:
+	var status_label := get_node_or_null("%AuthorStrategyStatusLabel") as Label
+	var details_label := get_node_or_null("%AuthorStrategyDetailsLabel") as Label
+	if status_label == null or details_label == null:
+		return
+	var record := _selected_author_strategy_record()
+	if record.is_empty():
+		status_label.text = "已保存的策略包不存在" if empty_reason == "selection_missing" else "未发现有效策略包" if empty_reason == "catalog_invalid" else "尚未安装策略包"
+		details_label.text = "请选择具有完全相同包 ID、版本和文件哈希的本地策略包。当前阶段不会启动对战。" if empty_reason == "selection_missing" else "策略包只会在本机读取；当前阶段尚未接入对战。"
+		return
+	status_label.text = _author_strategy_display_status_label(record)
+	var source_label := "内置" if str(record.get("install_source", "")) == "built_in" else "用户目录" if str(record.get("install_source", "")) == "user" else "未知来源"
+	details_label.text = "%s\n作者：%s · 卡组：%s\n版本：%s · 来源：%s\n%s" % [
+		str(record.get("summary", "暂无说明")),
+		str(record.get("author_name", "未知作者")),
+		str(record.get("deck_name", "未命名卡组")),
+		str(record.get("package_version", "")),
+		source_label,
+		_author_strategy_display_status_detail(record),
+	]
+
+
+func _author_strategy_start_allowed() -> bool:
+	var record := _selected_author_strategy_record()
+	return _author_strategy_record_can_start(record)
+
+
+func _author_strategy_record_can_start(record: Dictionary) -> bool:
+	if record.is_empty():
+		return false
+	var admitted: Dictionary = AuthorStrategyWindowsExecutionGateScript.evaluate_selection(
+		AuthorStrategyPackageCatalog,
+		AuthorStrategySetupModelScript.setup_selection_record(record)
+	)
+	return bool(admitted.get("ok", false))
+
+
+func _materialize_author_strategy_deck(record: Dictionary) -> Dictionary:
+	if record.is_empty():
+		return {"ok": false, "error": "selection_missing"}
+	var selection := AuthorStrategySetupModelScript.setup_selection_record(record)
+	var requested: Dictionary = AuthorStrategyWindowsExecutionGateScript.request_match_handle(
+		AuthorStrategyPackageCatalog, selection
+	)
+	if not bool(requested.get("ok", false)):
+		return requested
+	var materialized: Dictionary = GameManager.materialize_author_strategy_battle_deck(
+		requested.get("handle")
+	)
+	if not bool(materialized.get("ok", false)):
+		return materialized
+	materialized["selection"] = selection
+	materialized["handle"] = requested.get("handle", {})
+	return materialized
+
+
+func _author_strategy_catalog_status_detail(record: Dictionary) -> String:
+	if record.is_empty():
+		return "当前不能开始对战。"
+	var admitted: Dictionary = AuthorStrategyWindowsExecutionGateScript.evaluate_selection(
+		AuthorStrategyPackageCatalog,
+		AuthorStrategySetupModelScript.setup_selection_record(record)
+	)
+	if bool(admitted.get("ok", false)):
+		return "已通过当前 Windows 执行门；选择后会从包内 CSV 重新验证并生成对战牌组。"
+	return "%s 已加载并可选择，但当前执行门未放行。" % str(
+		record.get("status_detail", "当前不能开始对战。")
+	)
+
+
+func _author_strategy_display_status_label(record: Dictionary) -> String:
+	return "已加载 · 可开战" if _author_strategy_record_can_start(record) else "已加载 · 暂不可开战"
+
+
+func _author_strategy_display_status_detail(record: Dictionary) -> String:
+	if _author_strategy_record_can_start(record):
+		return "已通过当前 Windows 执行门；开始对战时仍会重新验证完整策略包。"
+	return "%s 已加载并可选择，但当前执行门未放行。" % str(
+		record.get("status_detail", "当前不能开始对战。")
+	)
 
 
 func _on_deck1_changed(_index: int) -> void:
@@ -1632,20 +1876,63 @@ func _refresh_ai_ui_visibility() -> void:
 	_refresh_first_player_segment_labels()
 	var mode_option := _find_battle_setup_option("ModeOption")
 	var is_ai: bool = mode_option != null and mode_option.selected == 1
+	var is_author := _is_author_strategy_mode()
+	var is_ai_surface := is_ai or is_author
 	var deck2_label := find_child("Deck2Label", true, false) as Label
+	var deck2_row := find_child("Deck2Row", true, false) as Control
 	var ai_preview_strength := _find_battle_setup_option("AIPreviewStrengthOption")
 	if deck2_label == null or ai_preview_strength == null:
 		return
-	deck2_label.text = "AI 卡组" if is_ai else "玩家2 卡组"
+	deck2_label.text = "AI 卡组" if is_ai_surface else "玩家2 卡组"
+	deck2_label.visible = true
+	if deck2_row != null:
+		deck2_row.visible = true
 	ai_preview_strength.visible = is_ai
 	ai_preview_strength.disabled = not is_ai
 	var deck2_edit_button := _find_battle_setup_button("Deck2EditButton")
 	if deck2_edit_button != null:
-		deck2_edit_button.visible = not is_ai
+		deck2_edit_button.visible = not is_ai_surface
 	_refresh_ai_strategy_variant_options()
 	_refresh_llm_model_controls()
 	_refresh_deck_action_buttons()
 	_reapply_current_non_battle_layout_metrics()
+	_refresh_author_strategy_mode_visibility()
+
+
+func _refresh_author_strategy_mode_visibility() -> void:
+	var is_author := _is_author_strategy_mode()
+	var panel := get_node_or_null("%AuthorStrategyPanel") as Control
+	if panel != null:
+		panel.visible = is_author
+	var package_option := get_node_or_null("%AuthorStrategyPackageOption") as OptionButton
+	if package_option != null:
+		# Selection is owned by the unified AI-card/deck picker. Keep this hidden
+		# OptionButton only as the stable-ref backing control.
+		package_option.visible = false
+	var ai_help := find_child("AiHelp", true, false) as Control
+	if ai_help != null:
+		ai_help.visible = not is_author
+	if is_author:
+		for node_name: String in [
+			"AIModeStatusTitle", "AIModeStatusBody", "AISourceLabel", "AISourceOption",
+			"AIVersionLabel", "AIVersionOption", "AIStrategyLabel", "AIStrategySegment",
+			"AIStrategyOption", "AIModelCurrentLabel", "LLMModelLabel", "LLMModelRow",
+			"LLMModelStatus", "BtnDiscussStrategyAI",
+		]:
+			var control := find_child(node_name, true, false) as Control
+			if control != null:
+				control.visible = false
+	var start_button := _find_battle_setup_button("BtnStart")
+	if start_button != null:
+		if is_author:
+			var development_allowed := _author_strategy_start_allowed()
+			start_button.disabled = not development_allowed
+			if development_allowed and AuthorStrategyWindowsExecutionGateScript.is_device_canary_requested():
+				start_button.text = "开始 Windows 设备验收"
+			else:
+				start_button.text = "开始 Windows 开发对战" if development_allowed else "当前策略包不可运行"
+		else:
+			start_button.text = "开始对战"
 
 
 func _setup_ai_preview_strength_options() -> void:
@@ -1782,17 +2069,27 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 	if deck == null:
 		return []
 	var base_id := _selected_ai_strategy_id()
+	var local_optimized := int(deck.id) in LOCAL_OPTIMIZED_RULE_DECK_IDS
 	var v18cpg_variants := V18CPGRegistryAdapterScript.variants_for_deck(
 		int(deck.id), base_id, _has_llm_api_configured()
 	)
 	if not v18cpg_variants.is_empty():
+		if local_optimized:
+			v18cpg_variants[0]["label"] = LOCAL_OPTIMIZED_RULE_LABEL
 		return v18cpg_variants
 	var llm_strategy_id := DeckStrategyRegistryScript.llm_strategy_id_for_deck(int(deck.id), base_id)
 	if llm_strategy_id == "":
+		if local_optimized and base_id != "":
+			var local_variants: Array[Dictionary] = [{
+				"id": base_id,
+				"label": LOCAL_OPTIMIZED_RULE_LABEL,
+				"runtime_kind": "rules",
+			}]
+			return local_variants
 		return []
 	var variants: Array[Dictionary] = [{
 		"id": base_id,
-		"label": "规则版",
+		"label": LOCAL_OPTIMIZED_RULE_LABEL if local_optimized else "规则版",
 	}]
 	if _has_llm_api_configured():
 		variants.append({
@@ -1937,6 +2234,19 @@ func _refresh_ai_mode_summary(is_ai: bool, has_llm_api: bool, selected_is_llm: b
 		status_body.text = "使用 %s，会有思考时间，能力中等；需要有效的模型 API，请先在 AI 设置中测试确认。" % selected_model_label
 		status_title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.52, 1.0))
 		return
+	var selected_deck := _selected_deck_for_slot(1)
+	if selected_deck != null and int(selected_deck.id) in LOCAL_OPTIMIZED_RULE_DECK_IDS:
+		var strategy_id := _selected_ai_strategy_variant_id()
+		if strategy_id.is_empty():
+			strategy_id = _selected_ai_strategy_id()
+		status_title.text = "当前 AI: 开发工具包优化策略"
+		status_body.text = "已加载 %s（%d）\n策略：%s" % [
+			selected_deck.deck_name,
+			int(selected_deck.id),
+			strategy_id,
+		]
+		status_title.add_theme_color_override("font_color", Color(0.34, 1.0, 0.58, 1.0))
+		return
 	status_title.text = "当前 AI: 规则模型(默认)"
 	if has_llm_api:
 		status_body.text = "速度快，能力较低，不用设置；已检测到大模型 API，可切换到大模型版并点测试确认。"
@@ -1990,6 +2300,11 @@ func _on_test_llm_model_pressed() -> void:
 		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
 		_refresh_llm_model_controls()
 		return
+	if not _ensure_llm_model_test_client():
+		%LLMModelStatus.text = "测试失败：AI 网络组件不可用"
+		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
+		_refresh_llm_model_controls()
+		return
 
 	_pending_llm_model_test_config = config.duplicate(true)
 	_llm_model_test_in_progress = true
@@ -1998,8 +2313,9 @@ func _on_test_llm_model_pressed() -> void:
 	%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.86, 0.36))
 	_refresh_llm_model_controls()
 
-	_llm_model_test_client.set_timeout_seconds(float(config.get("timeout_seconds", 60.0)))
-	var error := _llm_model_test_client.request_json(
+	_llm_model_test_client.call("set_timeout_seconds", float(config.get("timeout_seconds", 60.0)))
+	var error := int(_llm_model_test_client.call(
+		"request_json",
 		self,
 		endpoint,
 		api_key,
@@ -2015,13 +2331,30 @@ func _on_test_llm_model_pressed() -> void:
 			"max_tokens": 80,
 		},
 		_on_test_llm_model_response
-	)
+	))
 	if error != OK:
 		_llm_model_test_in_progress = false
 		%BtnTestLLMModel.disabled = false
 		%LLMModelStatus.text = "测试失败：请求无法启动 (%d)" % error
 		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
 		_refresh_llm_model_controls()
+
+
+func _ensure_llm_model_test_client() -> bool:
+	if _llm_model_test_client != null:
+		return true
+	var client_script := ResourceLoader.load(
+		ZENMUX_CLIENT_SCRIPT_PATH,
+		"GDScript",
+		ResourceLoader.CACHE_MODE_REUSE
+	) as Script
+	if client_script == null:
+		return false
+	var client: Variant = client_script.new()
+	if not client is RefCounted:
+		return false
+	_llm_model_test_client = client as RefCounted
+	return true
 
 
 func _on_test_llm_model_response(response: Dictionary) -> void:
@@ -2081,9 +2414,9 @@ func _refresh_first_player_segment_labels() -> void:
 	var player_one_button := get_node_or_null("%FirstPlayerOneButton") as Button
 	var player_two_button := get_node_or_null("%FirstPlayerTwoButton") as Button
 	if player_one_button != null:
-		player_one_button.text = "玩家先攻" if _is_ai_mode() else "玩家1先攻"
+		player_one_button.text = "玩家先攻" if _is_any_ai_controlled_mode() else "玩家1先攻"
 	if player_two_button != null:
-		player_two_button.text = "AI先攻" if _is_ai_mode() else "玩家2先攻"
+		player_two_button.text = "AI先攻" if _is_any_ai_controlled_mode() else "玩家2先攻"
 
 
 func _on_first_player_segment_pressed(option_index: int) -> void:
@@ -2257,7 +2590,15 @@ func _setup_background_gallery() -> void:
 	if not gallery.gui_input.is_connected(input_callable):
 		gallery.gui_input.connect(input_callable)
 	call_deferred("_hide_background_gallery_scrollbar")
-	_refresh_background_gallery()
+	call_deferred("_refresh_background_gallery_after_first_frame")
+
+
+func _refresh_background_gallery_after_first_frame() -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if is_inside_tree():
+		_refresh_background_gallery()
 
 
 func _configure_background_gallery_scroll(gallery: ScrollContainer) -> void:
@@ -2347,7 +2688,17 @@ func _refresh_battle_music_tracks(preferred_track_id: String = "") -> void:
 func _ensure_battle_music_import_adapter() -> void:
 	if _battle_music_import_adapter != null and is_instance_valid(_battle_music_import_adapter):
 		return
-	_battle_music_import_adapter = BattleMusicImportAdapterScript.new()
+	var adapter_script := ResourceLoader.load(
+		BATTLE_MUSIC_IMPORT_ADAPTER_SCRIPT_PATH,
+		"GDScript",
+		ResourceLoader.CACHE_MODE_REUSE
+	) as Script
+	if adapter_script == null:
+		return
+	_battle_music_import_adapter = adapter_script.new()
+	if not _battle_music_import_adapter is Node:
+		_battle_music_import_adapter = null
+		return
 	_battle_music_import_adapter.name = "BattleMusicImportAdapter"
 	add_child(_battle_music_import_adapter)
 	if not _battle_music_import_adapter.track_imported.is_connected(_on_bgm_track_imported):
@@ -3652,9 +4003,11 @@ func _ensure_deck_picker_overlay() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "DeckPickerScroll"
-	scroll.custom_minimum_size = Vector2(0, 430)
+	scroll.custom_minimum_size = Vector2.ZERO
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	HudThemeScript.style_scroll_container(scroll)
 	root.add_child(scroll)
 
@@ -3757,7 +4110,12 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
 		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 15)) if portrait else 14)
 	var scroll := _deck_picker_panel.find_child("DeckPickerScroll", true, false) as ScrollContainer
 	if scroll != null:
-		scroll.custom_minimum_size.y = float(context.get("list_item_min_height", 90.0)) * (3.2 if portrait else 4.8)
+		# The panel owns the height. A fixed four/five-row minimum made the VBox
+		# taller than a 720p Windows viewport and left the bottom choices outside
+		# the actual scroll viewport.
+		scroll.custom_minimum_size.y = 0.0
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		HudThemeScript.style_scroll_container(scroll, "auto")
 		if portrait:
 			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
@@ -3828,11 +4186,16 @@ func _refresh_deck_picker() -> void:
 	_refresh_deck_picker_tabs()
 
 	var decks := _decks_for_picker(_deck_picker_slot_index, _deck_picker_category, _deck_picker_search)
+	var author_records: Array[Dictionary] = []
+	if _is_ai_deck_picker_slot(_deck_picker_slot_index):
+		author_records = _author_strategy_records_for_picker(_deck_picker_search)
 	if _deck_picker_subtitle != null:
-		_deck_picker_subtitle.text = _deck_picker_subtitle_text(_deck_picker_slot_index, _deck_picker_category, decks.size())
+		_deck_picker_subtitle.text = _deck_picker_subtitle_text(
+			_deck_picker_slot_index, _deck_picker_category, decks.size() + author_records.size()
+		)
 	if _deck_picker_llm_legend != null:
 		_deck_picker_llm_legend.visible = _is_ai_deck_picker_slot(_deck_picker_slot_index)
-	if decks.is_empty():
+	if decks.is_empty() and author_records.is_empty():
 		var empty := Label.new()
 		empty.text = "没有找到符合条件的卡组"
 		empty.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 90.0)) if portrait else 90.0)
@@ -3846,7 +4209,11 @@ func _refresh_deck_picker() -> void:
 
 	var selected_deck := _selected_deck_for_slot(_deck_picker_slot_index)
 	var selected_id := selected_deck.id if selected_deck != null else -1
+	if _is_author_strategy_mode() and _deck_picker_slot_index == 1:
+		selected_id = -1
 	var count := 0
+	# Built-in decks are the compatibility baseline and must never be crowded
+	# out by a large package catalog. Packages follow in the same scroll view.
 	for deck: DeckData in decks:
 		if count >= DECK_PICKER_LIMIT:
 			break
@@ -3864,7 +4231,38 @@ func _refresh_deck_picker() -> void:
 		button.add_theme_stylebox_override("hover", _deck_picker_card_style(is_selected, true))
 		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		button.set_meta("deck_id", deck.id)
 		button.pressed.connect(_on_deck_picker_deck_selected.bind(_deck_picker_slot_index, deck.id))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+		_deck_picker_grid.add_child(button)
+		count += 1
+	for record: Dictionary in author_records:
+		if count >= DECK_PICKER_LIMIT:
+			break
+		var is_selected := AuthorStrategySetupModelScript.same_ref(
+			record.get("stable_ref", {}), _author_strategy_selected_ref
+		)
+		var button := Button.new()
+		button.name = "AuthorStrategyPickerButton"
+		button.text = str(record.get("display_label", record.get("display_name", "未命名策略")))
+		button.tooltip_text = "完整名称：%s\n%s\n卡组：%s\n%s" % [
+			record.get("display_name", "未命名策略"),
+			record.get("summary", "暂无说明"),
+			record.get("deck_name", "未命名卡组"),
+			_author_strategy_display_status_detail(record),
+		]
+		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 90.0)) if portrait else 86.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", DECK_PICKER_LIST_FONT_SIZE)) if portrait else DECK_PICKER_LIST_FONT_SIZE)
+		button.add_theme_color_override("font_color", HUD_TEXT)
+		button.add_theme_color_override("font_hover_color", Color.WHITE)
+		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
+		button.add_theme_stylebox_override("hover", _deck_picker_card_style(is_selected, true))
+		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
+		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		button.set_meta("author_strategy_ref", record.get("stable_ref", {}).duplicate(true))
+		button.pressed.connect(_on_deck_picker_author_strategy_selected.bind(record.get("stable_ref", {}).duplicate(true)))
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 		_deck_picker_grid.add_child(button)
 		count += 1
@@ -3929,6 +4327,12 @@ func _deck_picker_card_pressed_style() -> StyleBoxFlat:
 
 
 func _on_deck_picker_deck_selected(slot_index: int, deck_id: int) -> void:
+	if slot_index == 1 and _is_author_strategy_mode():
+		_author_strategy_selected_ref = {}
+		GameManager.reset_author_strategy_selection()
+		_select_mode_option(1)
+		_refresh_deck_options(false)
+		_refresh_ai_ui_visibility()
 	var option := _deck_option_for_slot(slot_index)
 	_select_option_for_deck_id(option, deck_id)
 	if slot_index == 0:
@@ -3936,6 +4340,30 @@ func _on_deck_picker_deck_selected(slot_index: int, deck_id: int) -> void:
 	else:
 		_on_deck2_changed(option.selected)
 	_close_deck_picker()
+
+
+func _on_deck_picker_author_strategy_selected(reference: Dictionary) -> void:
+	if not _select_author_strategy_ref(reference):
+		return
+	_select_mode_option(2)
+	_refresh_deck_options(false)
+	_refresh_ai_ui_visibility()
+	_sync_deck_picker_buttons()
+	_close_deck_picker()
+
+
+func _author_strategy_records_for_picker(search: String) -> Array[Dictionary]:
+	var query := search.strip_edges().to_lower()
+	var result: Array[Dictionary] = []
+	for record: Dictionary in _author_strategy_records:
+		if query.is_empty() or (
+			str(record.get("display_name", "")).to_lower().contains(query)
+			or str(record.get("author_name", "")).to_lower().contains(query)
+			or str(record.get("deck_name", "")).to_lower().contains(query)
+			or str(record.get("package_id", "")).to_lower().contains(query)
+		):
+			result.append(record.duplicate(true))
+	return result
 
 
 func _decks_for_picker(slot_index: int, category: String, search: String) -> Array[DeckData]:
@@ -4003,7 +4431,7 @@ func _deck_matches_search(deck: DeckData, search: String) -> bool:
 
 
 func _deck_picker_subtitle_text(slot_index: int, category: String, count: int) -> String:
-	var slot_name := "玩家1" if slot_index == 0 else ("AI" if _is_ai_mode() else "玩家2")
+	var slot_name := "玩家1" if slot_index == 0 else ("AI" if _is_any_ai_controlled_mode() else "玩家2")
 	var category_text := "全部卡组"
 	match category:
 		DECK_PICKER_RECENT:
@@ -4054,7 +4482,7 @@ func _deck_option_for_slot(slot_index: int) -> OptionButton:
 
 
 func _deck_source_list_for_slot(slot_index: int) -> Array:
-	if slot_index == 1 and _is_ai_mode():
+	if slot_index == 1 and _is_any_ai_controlled_mode():
 		return _ai_deck_list
 	return _deck_list
 
@@ -4089,7 +4517,7 @@ func _default_deck_picker_category(slot_index: int) -> String:
 
 
 func _is_ai_deck_picker_slot(slot_index: int) -> bool:
-	return slot_index == 1 and _is_ai_mode()
+	return slot_index == 1 and _is_any_ai_controlled_mode()
 
 
 func _sync_deck_picker_buttons() -> void:
@@ -4109,6 +4537,19 @@ func _sync_deck_picker_button(slot_index: int) -> void:
 	button.add_theme_font_size_override("font_size", font_size)
 	button.clip_text = true
 	button.custom_minimum_size.y = float(_current_non_battle_layout_context.get("primary_button_height", 68.0)) if portrait else 68.0
+	if slot_index == 1 and _is_author_strategy_mode():
+		var record := _selected_author_strategy_record()
+		button.disabled = record.is_empty()
+		button.text = str(record.get("display_label", record.get("display_name", "选择 AI 对手")))
+		button.tooltip_text = "完整名称：%s\n%s\n作者：%s\n版本：%s\n卡组：%s\n%s" % [
+			record.get("display_name", "未命名策略"),
+			record.get("summary", "暂无说明"),
+			record.get("author_name", "未知作者"),
+			record.get("package_version", ""),
+			record.get("deck_name", "未命名卡组"),
+			_author_strategy_display_status_detail(record),
+		]
+		return
 	if deck == null:
 		button.text = "选择卡组"
 		button.tooltip_text = ""
@@ -4136,22 +4577,50 @@ func _ai_deck_supports_llm(deck: DeckData) -> bool:
 
 
 func _load_background_preview_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
+	var cached: Variant = _shared_background_preview_cache.get(path)
+	if cached is Texture2D:
+		return cached as Texture2D
+	var texture: Texture2D = null
+	if FileAccess.file_exists(path):
+		var bytes := FileAccess.get_file_as_bytes(path)
+		var image := Image.new()
+		var extension := path.get_extension().to_lower()
+		var load_error := ERR_FILE_UNRECOGNIZED
+		if extension == "png":
+			load_error = image.load_png_from_buffer(bytes)
+		elif extension == "jpg" or extension == "jpeg":
+			load_error = image.load_jpg_from_buffer(bytes)
+		elif extension == "webp":
+			load_error = image.load_webp_from_buffer(bytes)
+		if load_error == OK and not image.is_empty():
+			var scale := minf(
+				float(BACKGROUND_PREVIEW_MAX_SIZE.x) / float(image.get_width()),
+				float(BACKGROUND_PREVIEW_MAX_SIZE.y) / float(image.get_height())
+			)
+			if scale < 1.0:
+				image.resize(
+					maxi(1, roundi(float(image.get_width()) * scale)),
+					maxi(1, roundi(float(image.get_height()) * scale)),
+					Image.INTERPOLATE_LANCZOS
+				)
+			texture = ImageTexture.create_from_image(image)
+	if texture == null and ResourceLoader.exists(path):
 		var resource := load(path)
 		if resource is Texture2D:
-			return resource as Texture2D
-	if FileAccess.file_exists(path):
-		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
-		if image != null and not image.is_empty():
-			return ImageTexture.create_from_image(image)
-	return null
+			texture = resource as Texture2D
+	if texture != null:
+		_shared_background_preview_cache[path] = texture
+	return texture
 
 
 func _refresh_deck_options(preserve_deck2_selection: bool = true) -> void:
 	var selected_deck1 := _selected_deck_for_slot(0)
 	var selected_deck2 := _selected_deck_for_slot(1) if preserve_deck2_selection else null
 	_deck_list = CardDatabase.get_all_decks()
-	_ai_deck_list = CardDatabase.get_all_ai_decks()
+	if _is_any_ai_controlled_mode():
+		_ai_deck_list = CardDatabase.get_all_ai_decks()
+	else:
+		_ai_deck_list = []
 	_apply_deck_option_controls(selected_deck1, selected_deck2)
 
 
@@ -4169,7 +4638,7 @@ func _apply_deck_option_controls(selected_deck1: DeckData = null, selected_deck2
 		var label := "%s (%d张)" % [deck.deck_name, deck.total_cards]
 		deck1_option.add_item(label)
 		deck1_option.set_item_metadata(deck1_option.item_count - 1, deck.id)
-	if _is_ai_mode():
+	if _is_any_ai_controlled_mode():
 		for ai_deck: DeckData in _ai_deck_list:
 			deck2_option.add_item("%s (%d张)" % [_deck_selection_display_name(ai_deck, 1), ai_deck.total_cards])
 			deck2_option.set_item_metadata(deck2_option.item_count - 1, ai_deck.id)
@@ -4182,8 +4651,9 @@ func _apply_deck_option_controls(selected_deck1: DeckData = null, selected_deck2
 	var default_deck2_id := _default_deck2_id_for_current_mode()
 	_select_option_for_deck_id(deck2_option, selected_deck2.id if selected_deck2 != null else default_deck2_id)
 	var has_required_decks := _has_required_deck_options_for_current_mode()
+	no_deck_warning.text = "请先在卡组中心导入玩家卡组" if _is_author_strategy_mode() else "请先在卡组中心导入至少两个卡组"
 	no_deck_warning.visible = not has_required_decks
-	start_button.disabled = not has_required_decks
+	start_button.disabled = not has_required_decks or (_is_author_strategy_mode() and not _author_strategy_start_allowed())
 	_sync_deck_picker_buttons()
 	_refresh_deck_action_buttons()
 	_refresh_ai_controls_after_deck_option_rebuild()
@@ -4203,13 +4673,15 @@ func _refresh_ai_controls_after_deck_option_rebuild() -> void:
 func _has_required_deck_options_for_current_mode() -> bool:
 	if _deck_list.size() < 1:
 		return false
+	if _is_author_strategy_mode():
+		return true
 	if _is_ai_mode():
 		return not _ai_deck_list.is_empty()
 	return _deck_list.size() >= 2
 
 
 func _default_deck2_id_for_current_mode() -> int:
-	if _is_ai_mode() and not _ai_deck_list.is_empty():
+	if _is_any_ai_controlled_mode() and not _ai_deck_list.is_empty():
 		var first_ai_deck := _ai_deck_list[0] as DeckData
 		if first_ai_deck != null:
 			return first_ai_deck.id
@@ -4217,6 +4689,10 @@ func _default_deck2_id_for_current_mode() -> int:
 
 
 func _selected_deck_for_slot(slot_index: int) -> DeckData:
+	if slot_index == 1 and _is_author_strategy_mode():
+		# Generic setup rendering is a metadata-only hot path. The package archive
+		# is recaptured and its CSV is materialized only by _apply_setup_selection.
+		return null
 	var option := _deck_option_for_slot(slot_index)
 	if option == null:
 		return null
@@ -4225,7 +4701,7 @@ func _selected_deck_for_slot(slot_index: int) -> DeckData:
 		return null
 	var selected_text := option.get_item_text(selected_index)
 	var selected_metadata: Variant = option.get_item_metadata(selected_index)
-	var source_list: Array = _deck_list if slot_index == 0 or not _is_ai_mode() else _ai_deck_list
+	var source_list: Array = _deck_list if slot_index == 0 or not _is_any_ai_controlled_mode() else _ai_deck_list
 	var lookup_lists: Array = [source_list]
 	if slot_index == 1:
 		lookup_lists.append(_deck_list)
@@ -4249,12 +4725,21 @@ func _is_ai_mode() -> bool:
 	return mode_option != null and mode_option.selected == 1
 
 
+func _is_author_strategy_mode() -> bool:
+	var mode_option := _find_battle_setup_option("ModeOption")
+	return AuthorStrategyFeatureGateScript.is_enabled() and mode_option != null and mode_option.selected == 2
+
+
+func _is_any_ai_controlled_mode() -> bool:
+	return _is_ai_mode() or _is_author_strategy_mode()
+
+
 func _select_option_for_deck_id(option: OptionButton, deck_id: int) -> void:
 	if option == null or option.item_count <= 0:
 		return
 	var source_list: Array = _deck_list
 	var deck2_option := _deck_option_for_slot(1)
-	if option == deck2_option and _is_ai_mode():
+	if option == deck2_option and _is_any_ai_controlled_mode():
 		source_list = _ai_deck_list
 	for i: int in option.item_count:
 		var metadata: Variant = option.get_item_metadata(i)
@@ -4290,11 +4775,40 @@ func _first_player_option_index_from_choice(choice: int) -> int:
 func _apply_setup_selection() -> bool:
 	var mode_option := _find_battle_setup_option("ModeOption")
 	var mode_idx: int = mode_option.selected if mode_option != null else 0
-	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER if mode_idx == 0 else GameManager.GameMode.VS_AI
-
 	var deck1 := _selected_deck_for_slot(0)
-	var deck2 := _selected_deck_for_slot(1)
-	if deck1 == null or deck2 == null:
+	var deck2: DeckData = null
+	if deck1 == null:
+		return false
+	match mode_idx:
+		0:
+			GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+			deck2 = _selected_deck_for_slot(1)
+		1:
+			GameManager.current_mode = GameManager.GameMode.VS_AI
+			deck2 = _selected_deck_for_slot(1)
+		2:
+			if not AuthorStrategyFeatureGateScript.is_enabled():
+				return false
+			GameManager.current_mode = GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+			var author_record := _selected_author_strategy_record()
+			if author_record.is_empty():
+				return false
+			var admitted: Dictionary = AuthorStrategyWindowsExecutionGateScript.evaluate_selection(
+				AuthorStrategyPackageCatalog,
+				AuthorStrategySetupModelScript.setup_selection_record(author_record)
+			)
+			if not bool(admitted.get("ok", false)):
+				return false
+			var materialized := _materialize_author_strategy_deck(author_record)
+			var author_selection: Dictionary = materialized.get("selection", {})
+			if not bool(materialized.get("ok", false)) \
+				or not GameManager.set_author_strategy_selection(author_selection):
+				return false
+			deck2 = materialized.get("deck") as DeckData
+		_:
+			return false
+
+	if deck2 == null:
 		return false
 
 	GameManager.selected_deck_ids = [deck1.id, deck2.id]
@@ -4309,7 +4823,10 @@ func _apply_setup_selection() -> bool:
 	if _is_ai_mode():
 		_save_llm_model_selection()
 	GameManager.mark_current_battle_as_non_tournament()
-
+	if _is_author_strategy_mode():
+		GameManager.reset_ai_selection()
+		GameManager.ai_deck_strategy = ""
+		return true
 	var ai_source := _ai_source_from_option_index(%AISourceOption.selected)
 	var ai_version: Dictionary = {}
 	if ai_source == "latest_trained":
@@ -4349,6 +4866,10 @@ func _exit_tree() -> void:
 		var callback := Callable(self, "_on_card_database_decks_changed")
 		if CardDatabase.decks_changed.is_connected(callback):
 			CardDatabase.decks_changed.disconnect(callback)
+	if AuthorStrategyPackageCatalog != null and AuthorStrategyPackageCatalog.has_signal("catalog_changed"):
+		var catalog_callback := Callable(self, "_apply_author_strategy_catalog_report")
+		if AuthorStrategyPackageCatalog.catalog_changed.is_connected(catalog_callback):
+			AuthorStrategyPackageCatalog.catalog_changed.disconnect(catalog_callback)
 	BattleMusicManager.stop_battle_music()
 
 
@@ -4371,6 +4892,7 @@ func _save_settings() -> void:
 		"mode": mode_option.selected if mode_option != null else 0,
 		"ai_preview_strength_index": %AIPreviewStrengthOption.selected,
 		"ai_strategy_variant_id": _selected_ai_strategy_variant_id(),
+		"author_strategy_ref": _author_strategy_selected_ref.duplicate(true),
 	}
 	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
 	if file != null:
@@ -4412,6 +4934,11 @@ func _load_settings() -> void:
 			_refresh_deck_options()
 	_select_option_for_deck_id(_deck_option_for_slot(0), deck1_id)
 	_select_option_for_deck_id(_deck_option_for_slot(1), deck2_id)
+	var saved_author_ref: Variant = data.get("author_strategy_ref", {})
+	if saved_author_ref is Dictionary:
+		_select_author_strategy_ref(saved_author_ref)
+	else:
+		_select_author_strategy_ref({})
 	var ai_preview_strength_index: int = int(data.get("ai_preview_strength_index", AI_PREVIEW_STRENGTH_WEAK))
 	if ai_preview_strength_index >= 0 and ai_preview_strength_index < %AIPreviewStrengthOption.item_count:
 		%AIPreviewStrengthOption.select(ai_preview_strength_index)
@@ -4460,6 +4987,7 @@ func _capture_setup_selection_context() -> Dictionary:
 		"ai_version_index": ai_version_option.selected if ai_version_option != null else 0,
 		"ai_preview_strength_index": ai_preview_strength_option.selected if ai_preview_strength_option != null else 0,
 		"ai_strategy_variant_id": _selected_ai_strategy_variant_id(),
+		"author_strategy_ref": _author_strategy_selected_ref.duplicate(true),
 	}
 
 
@@ -4496,6 +5024,9 @@ func _apply_setup_context(context: Dictionary) -> void:
 	if ai_preview_strength_index >= 0 and ai_preview_strength_index < %AIPreviewStrengthOption.item_count:
 		%AIPreviewStrengthOption.select(ai_preview_strength_index)
 	_pending_ai_strategy_variant_id = str(context.get("ai_strategy_variant_id", ""))
+	var author_ref: Variant = context.get("author_strategy_ref", {})
+	if author_ref is Dictionary:
+		_select_author_strategy_ref(author_ref)
 
 	_refresh_ai_ui_visibility()
 
@@ -4526,7 +5057,7 @@ func _refresh_deck_action_buttons() -> void:
 		deck2_view_button.disabled = deck2 == null
 	var deck2_edit_button := _find_battle_setup_button("Deck2EditButton")
 	if deck2_edit_button != null:
-		var deck2_edit_visible := not hide_web_portrait_edit and not _is_ai_mode()
+		var deck2_edit_visible := not hide_web_portrait_edit and not _is_any_ai_controlled_mode()
 		deck2_edit_button.visible = deck2_edit_visible
 		deck2_edit_button.mouse_filter = Control.MOUSE_FILTER_STOP if deck2_edit_visible else Control.MOUSE_FILTER_IGNORE
 		deck2_edit_button.focus_mode = Control.FOCUS_ALL if deck2_edit_visible else Control.FOCUS_NONE
@@ -4623,7 +5154,14 @@ func _on_discuss_strategy_ai_pressed() -> void:
 
 
 func _create_strategy_discussion_dialog() -> AcceptDialog:
-	var dialog := DeckDiscussionDialogScene.instantiate() as AcceptDialog
+	var dialog_scene := ResourceLoader.load(
+		DECK_DISCUSSION_DIALOG_SCENE_PATH,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REUSE
+	) as PackedScene
+	if dialog_scene == null:
+		return null
+	var dialog := dialog_scene.instantiate() as AcceptDialog
 	if dialog == null:
 		return null
 	if not dialog.has_method("setup_for_match"):
@@ -4637,13 +5175,25 @@ func _on_deck_view_pressed(slot_index: int) -> void:
 	var deck := _selected_deck_for_slot(slot_index)
 	if deck == null:
 		return
+	if _deck_view_dialog == null:
+		var dialog_script := ResourceLoader.load(
+			DECK_VIEW_DIALOG_SCRIPT_PATH,
+			"GDScript",
+			ResourceLoader.CACHE_MODE_REUSE
+		) as Script
+		if dialog_script == null:
+			return
+		var dialog: Variant = dialog_script.new()
+		if not dialog is RefCounted:
+			return
+		_deck_view_dialog = dialog as RefCounted
 	_deck_view_dialog.call("show_deck", self, deck)
 
 
 func _on_deck_edit_pressed(slot_index: int) -> void:
 	if _should_hide_deck_edit_for_web_portrait():
 		return
-	if _is_ai_mode() and slot_index == 1:
+	if _is_any_ai_controlled_mode() and slot_index == 1:
 		return
 	var deck := _selected_deck_for_slot(slot_index)
 	if deck == null:

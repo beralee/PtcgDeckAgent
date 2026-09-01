@@ -21,7 +21,7 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return can_execute(card, state)
 
 
-func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[state.current_player_index]
 	var pairs := _build_stage1_pairs(player, state)
 	if pairs.is_empty():
@@ -53,7 +53,7 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 	return [step]
 
 
-func get_followup_interaction_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	var player: PlayerState = state.players[state.current_player_index]
 	var assignment := _resolve_stage1_assignment(player, state, resolved_context)
 	if assignment.is_empty():

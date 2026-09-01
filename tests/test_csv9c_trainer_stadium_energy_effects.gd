@@ -595,6 +595,10 @@ func test_csv9c_196_crispin_moves_one_energy_to_hand_and_attaches_a_different_ty
 		Effect196.HAND_STEP_ID: [fire],
 	})
 	var followup_step: Dictionary = followup[0] if not followup.is_empty() else {}
+	var first_metadata := UcisInteractionCompiler.metadata_for_step(steps[0]) \
+		if not steps.is_empty() else {}
+	var followup_metadata := UcisInteractionCompiler.metadata_for_step(followup_step)
+	var target_metadata: Dictionary = followup_metadata.get("target_semantics", {})
 
 	effect.execute(card, [{
 		Effect196.HAND_STEP_ID: [fire],
@@ -603,9 +607,15 @@ func test_csv9c_196_crispin_moves_one_energy_to_hand_and_attaches_a_different_ty
 
 	return run_checks([
 		assert_eq(steps.size(), 1, "Crispin should ask for hand Energy first, then build attachment from that choice"),
+		assert_eq(first_metadata.get("select_type_raw"), 4, "Crispin hand step should expose official SelectType.ENERGY"),
+		assert_eq(first_metadata.get("context_raw"), 31, "Crispin hand step should expose official SelectContext.TO_HAND_ENERGY"),
 		assert_true(bool(steps[0].get("requires_followup_interaction", false)), "Crispin hand Energy step should declare the attachment follow-up"),
 		assert_eq(steps[0].get("card_indices", []), [0, -1, 1, -1], "Crispin hand step should show full deck and disable duplicate Energy types"),
 		assert_eq(followup.size(), 1, "Crispin should offer an attachment follow-up after a hand Energy is selected"),
+		assert_eq(followup_metadata.get("select_type_raw"), 1, "Crispin attachment source is a deck card and should expose official SelectType.CARD"),
+		assert_eq(followup_metadata.get("context_raw"), 22, "Crispin attachment source should expose official SelectContext.ATTACH_TO"),
+		assert_eq(target_metadata.get("select_type_raw"), 1, "Crispin attachment target should expose official SelectType.CARD"),
+		assert_eq(target_metadata.get("context_raw"), 21, "Crispin attachment target should expose official SelectContext.ATTACH_FROM"),
 		assert_eq(followup_step.get("source_items", []), [water], "Crispin follow-up should only allow a different Energy type from the hand choice"),
 		assert_eq(followup_step.get("source_card_indices", []), [-1, -1, 0, -1], "Crispin attachment follow-up should show full deck and only enable different-type Energy"),
 		assert_true(fire in player.hand, "Chosen first Energy should move to hand"),

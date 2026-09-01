@@ -34,7 +34,7 @@ func can_trigger_end_turn(slot: PokemonSlot, state: GameState) -> bool:
 	return not _basic_energy_choices(state.players[owner_index]).is_empty()
 
 
-func get_end_turn_interaction_steps(slot: PokemonSlot, state: GameState) -> Array[Dictionary]:
+func build_ucis_end_turn_interaction_steps_spec_steps(slot: PokemonSlot, state: GameState) -> Array[Dictionary]:
 	if not can_trigger_end_turn(slot, state):
 		return []
 	if _is_resolved_this_turn(slot, state):

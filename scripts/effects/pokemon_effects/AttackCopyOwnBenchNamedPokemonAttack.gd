@@ -16,7 +16,7 @@ func _init(processor: EffectProcessor = null, name_prefix: String = "", blocked_
 	blocked_attack_names = blocked_names
 
 
-func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
 		return []
 	var player: PlayerState = state.players[card.owner_index]
@@ -55,10 +55,12 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": true,
+		"ucis_context_name": "ATTACK",
+		"ucis_option_type_name": "ATTACK",
 	}]
 
 
-func get_followup_attack_interaction_steps(
+func build_ucis_followup_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState,

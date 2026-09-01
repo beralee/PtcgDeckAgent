@@ -1,0 +1,685 @@
+{
+  "schema_version": 1,
+  "work_package": "AS-WP2",
+  "source_vector_path": "contracts/ptcgdap/author_strategy_package_conformance_vectors.json",
+  "source_vector_canonical_sha256": "49F4493D89E74B4ED6F54957BAFDC0E3C1161C5BA695203AE3CEE17DEE50EE33",
+  "case_count": 30,
+  "cases": [
+    {
+      "case_id": "valid_minimal",
+      "operation": "build_valid_minimal",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/00-valid_minimal.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "C3251A725E933341D17A129AD065F3D4E836CF7EE886693F51528366A1A68392",
+      "expected_accepted": true,
+      "expected_error_code": null,
+      "expected_metadata": {
+        "archive_sha256": "C3251A725E933341D17A129AD065F3D4E836CF7EE886693F51528366A1A68392",
+        "author": {
+          "author_id": "test.fixture",
+          "display_name": "Fixture Author"
+        },
+        "compatibility": {
+          "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+          "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "minimum_game_api": "ptcgdap-author-host-v1",
+          "required_capabilities": []
+        },
+        "deck": {
+          "deck_path": "deck/deck.csv",
+          "display_name": "Synthetic Exact 60",
+          "manifest_path": "deck/deck_manifest.json"
+        },
+        "deck_card_count": 60,
+        "deck_card_id_domain": "official_cabt_card_id",
+        "deck_contract_valid": true,
+        "deck_manifest_sha256": "7913471EDA9CD6E63D6F80EC59D24394F980F3A918DA8F96F507141261EB3EB7",
+        "deck_platform_scope": [],
+        "execution_authority": false,
+        "execution_trusted": false,
+        "files_manifest_sha256": "1B994255B1AF8749E8934C55B2E5370FFAF83C241012F8EDE9E5518AAA04790A",
+        "live_consumer": false,
+        "manifest_canonical_sha256": "6803244992793E4016754347B3E6700959D51DF82AD120A17699BE5AFC603590",
+        "manifest_sha256": "6803244992793E4016754347B3E6700959D51DF82AD120A17699BE5AFC603590",
+        "metadata_only": true,
+        "model_artifact_sha256": null,
+        "model_manifest_sha256": null,
+        "package_document_type": "strategy_package_v1",
+        "package_id": "test.fixture.author-ai",
+        "package_version": "1.0.0",
+        "policy_contract_valid": true,
+        "policy_ir_sha256": "82E814F1630F2747A758DDD7B2F87E71BAE7BBFB9DA18C85923124D0B3F90ED6",
+        "policy_mode": "rules_only",
+        "profile_id": "ptcgdap-author-strategy-package-v1",
+        "signature_status": "test_fixture_trusted",
+        "source_deck_id": null,
+        "strategy": {
+          "display_name": "Fixture Public AI",
+          "summary": "Synthetic offline package fixture"
+        }
+      }
+    },
+    {
+      "case_id": "valid_manifest_whitespace_identity",
+      "operation": "rebuild_manifest_whitespace",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/01-valid_manifest_whitespace_identity.ptcgai",
+      "archive_bytes": 5236,
+      "archive_sha256": "89F27F292299495E90119F053F782DD4D236C58F4FC2DBB69ACE8E3544F783E1",
+      "expected_accepted": true,
+      "expected_error_code": null,
+      "expected_metadata": {
+        "archive_sha256": "89F27F292299495E90119F053F782DD4D236C58F4FC2DBB69ACE8E3544F783E1",
+        "author": {
+          "author_id": "test.fixture",
+          "display_name": "Fixture Author"
+        },
+        "compatibility": {
+          "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+          "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "minimum_game_api": "ptcgdap-author-host-v1",
+          "required_capabilities": []
+        },
+        "deck": {
+          "deck_path": "deck/deck.csv",
+          "display_name": "Synthetic Exact 60",
+          "manifest_path": "deck/deck_manifest.json"
+        },
+        "deck_card_count": 60,
+        "deck_card_id_domain": "official_cabt_card_id",
+        "deck_contract_valid": true,
+        "deck_manifest_sha256": "7913471EDA9CD6E63D6F80EC59D24394F980F3A918DA8F96F507141261EB3EB7",
+        "deck_platform_scope": [],
+        "execution_authority": false,
+        "execution_trusted": false,
+        "files_manifest_sha256": "B9D8250A178E9A3F06235432C1F8EC8314BC62864782EEABB979C214C312BD3B",
+        "live_consumer": false,
+        "manifest_canonical_sha256": "6803244992793E4016754347B3E6700959D51DF82AD120A17699BE5AFC603590",
+        "manifest_sha256": "6BA727566E55103BC18AD1F249FB94BBB50D5928ADC75426E644BBAF6ACAF15F",
+        "metadata_only": true,
+        "model_artifact_sha256": null,
+        "model_manifest_sha256": null,
+        "package_document_type": "strategy_package_v1",
+        "package_id": "test.fixture.author-ai",
+        "package_version": "1.0.0",
+        "policy_contract_valid": true,
+        "policy_ir_sha256": "82E814F1630F2747A758DDD7B2F87E71BAE7BBFB9DA18C85923124D0B3F90ED6",
+        "policy_mode": "rules_only",
+        "profile_id": "ptcgdap-author-strategy-package-v1",
+        "signature_status": "test_fixture_trusted",
+        "source_deck_id": null,
+        "strategy": {
+          "display_name": "Fixture Public AI",
+          "summary": "Synthetic offline package fixture"
+        }
+      }
+    },
+    {
+      "case_id": "archive_not_zip",
+      "operation": "replace_archive_non_zip",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/02-archive_not_zip.ptcgai",
+      "archive_bytes": 9,
+      "archive_sha256": "A3989126344744EF800DBC88BF7E744853F3F2EAC75C9AB3301F4E845EF22078",
+      "expected_accepted": false,
+      "expected_error_code": "package_archive_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "archive_entry_order_drift",
+      "operation": "reverse_entry_order",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/03-archive_entry_order_drift.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "F585AFFA72B44185AEFD944CA845A2BA5F0D3434A6695759A3A1BEF8C3E6686A",
+      "expected_accepted": false,
+      "expected_error_code": "package_archive_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "archive_timestamp_drift",
+      "operation": "change_entry_timestamp",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/04-archive_timestamp_drift.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "1EB3E75091EF5A00BB1332BC99888A95201E9DAE49EEB111351E61BD492E6AAD",
+      "expected_accepted": false,
+      "expected_error_code": "package_archive_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "path_parent_traversal",
+      "operation": "add_parent_traversal",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/05-path_parent_traversal.ptcgai",
+      "archive_bytes": 5167,
+      "archive_sha256": "D67D3C69689A3CD402AAFE82CB06C67E7CA6B99112684D1301ECC614F09D46CF",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "path_backslash",
+      "operation": "add_backslash_path",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/06-path_backslash.ptcgai",
+      "archive_bytes": 5165,
+      "archive_sha256": "EE67553E3E34DA03B3BC094068C3412229D4AC111B03704852FF0A8F0729008A",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "path_absolute",
+      "operation": "add_absolute_path",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/07-path_absolute.ptcgai",
+      "archive_bytes": 5167,
+      "archive_sha256": "5CA265FD4967D1DE02D2983BE0CF61BD869D5FAB7F9AADA16803CB6045DB5D12",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "path_drive_letter",
+      "operation": "add_drive_path",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/08-path_drive_letter.ptcgai",
+      "archive_bytes": 5165,
+      "archive_sha256": "130624FB68136DB0339CE309B7BCB152D9126B5AFEEDB80997D95FD774614027",
+      "expected_accepted": false,
+      "expected_error_code": "package_path_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "duplicate_exact_path",
+      "operation": "add_duplicate_exact",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/09-duplicate_exact_path.ptcgai",
+      "archive_bytes": 5164,
+      "archive_sha256": "85F2F0196D4214C05A68532CA33683CC24142DC1E1BD6FE9F45E2B79A8B455F9",
+      "expected_accepted": false,
+      "expected_error_code": "package_duplicate_path",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "duplicate_casefold_path",
+      "operation": "add_duplicate_casefold",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/10-duplicate_casefold_path.ptcgai",
+      "archive_bytes": 5169,
+      "archive_sha256": "33B45AAC25C813F1BF2BC8D0969C4520F0AA62D5297F8BFC0F7D980B8DF0F68B",
+      "expected_accepted": false,
+      "expected_error_code": "package_duplicate_path",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "resource_entry_count",
+      "operation": "exceed_entry_count",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/11-resource_entry_count.ptcgai",
+      "archive_bytes": 7081,
+      "archive_sha256": "648898E1CCCF80D33BA70C2C7147818D20E0F56E497B8E72C4425E07AAF8760F",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "resource_single_file",
+      "operation": "exceed_single_file",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/12-resource_single_file.ptcgai",
+      "archive_bytes": 8393782,
+      "archive_sha256": "C07CD85864780223A10AE572E4D050B880909B5DEBF2F7873AA11B21E69E8DB9",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "resource_compression_ratio",
+      "operation": "exceed_compression_ratio",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/13-resource_compression_ratio.ptcgai",
+      "archive_bytes": 4440,
+      "archive_sha256": "A528964A0AFF24BC457A6B98D585672DE7CC2561E3C43B5A19E298677471C366",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "manifest_duplicate_key",
+      "operation": "duplicate_manifest_key",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/14-manifest_duplicate_key.ptcgai",
+      "archive_bytes": 5080,
+      "archive_sha256": "44827651F68701C9C3CCB3AF9914A32EDBAA3742294EA8530403477A32DC847A",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "manifest_bom",
+      "operation": "prefix_manifest_bom",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/15-manifest_bom.ptcgai",
+      "archive_bytes": 5064,
+      "archive_sha256": "74919D99FF7A46CC342A970A66E2C6DFAD95982AFB25A3B22AB2B845A3934594",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "manifest_float",
+      "operation": "set_manifest_float",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/16-manifest_float.ptcgai",
+      "archive_bytes": 5063,
+      "archive_sha256": "B8BAD2BE6970A21B9A2ED1BD32D0B61E45B40BC3D9A71F6AEBA7DBD652BE5FD8",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "manifest_unsafe_integer",
+      "operation": "set_manifest_unsafe_integer",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/17-manifest_unsafe_integer.ptcgai",
+      "archive_bytes": 5076,
+      "archive_sha256": "9435C841C185DC93A502E4774C2A3895540D191FE4BFC021E19E69142B07541B",
+      "expected_accepted": false,
+      "expected_error_code": "package_manifest_invalid",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "missing_required_file",
+      "operation": "drop_license",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/18-missing_required_file.ptcgai",
+      "archive_bytes": 4952,
+      "archive_sha256": "9B2CF302D3F226CB124EDE2C8BAEB2992C055E6FA89E901C61A1FF00857A6389",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_missing",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "unlisted_extra_file",
+      "operation": "add_unlisted_text",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/19-unlisted_extra_file.ptcgai",
+      "archive_bytes": 5160,
+      "archive_sha256": "1839ACD06640ECD812F5798EC44B31734A87519DD5F63A7237F783E9893A19C6",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_unlisted",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "payload_hash_mismatch",
+      "operation": "tamper_payload",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/20-payload_hash_mismatch.ptcgai",
+      "archive_bytes": 5036,
+      "archive_sha256": "9C7E215A471F7E8A5566884934ACE90C4C4CE435F8006DBAD95039B160EF6328",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_hash_mismatch",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "signature_unknown_key",
+      "operation": "sign_unknown_key",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/21-signature_unknown_key.ptcgai",
+      "archive_bytes": 5039,
+      "archive_sha256": "75F1ED8D02F21E92FC3A029BA73CC9A30FC9F384A6D00575CD4ACF30AE17EEB1",
+      "expected_accepted": false,
+      "expected_error_code": "package_signature_untrusted",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "signature_tampered",
+      "operation": "tamper_signature",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/22-signature_tampered.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "EAF4E2566EB321EF38357B5DE2536E41828F6BBA507A673FE0B3111ECDE303A1",
+      "expected_accepted": false,
+      "expected_error_code": "package_signature_untrusted",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "compatibility_contract_drift",
+      "operation": "resign_contract_drift",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/23-compatibility_contract_drift.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "C73215BC59B6F637FDB3097C6AFAE9673B50A6BF59F1AA6BF07BDB3A161384C4",
+      "expected_accepted": false,
+      "expected_error_code": "package_contract_incompatible",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "compatibility_catalog_drift",
+      "operation": "resign_catalog_drift",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/24-compatibility_catalog_drift.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "6707AA396D3B19BC7B3264D57248F4EBB07A9EF366AB4E21B174D631A8FF442A",
+      "expected_accepted": false,
+      "expected_error_code": "package_catalog_incompatible",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "deck_not_exact_60",
+      "operation": "resign_deck_59",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/25-deck_not_exact_60.ptcgai",
+      "archive_bytes": 5061,
+      "archive_sha256": "AF5E90C035AEC54330843C416DCD7511ED5A8CEB0DF4F0106B3559E3BF403693",
+      "expected_accepted": false,
+      "expected_error_code": "package_deck_unmapped",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "policy_document_invalid",
+      "operation": "resign_policy_float",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/26-policy_document_invalid.ptcgai",
+      "archive_bytes": 5070,
+      "archive_sha256": "1076B6E447070B5C0DC2C24E753FB4CF6CF617EEEE3A0062F62DF2542CF827FA",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "forbidden_python",
+      "operation": "add_python_member",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/27-forbidden_python.ptcgai",
+      "archive_bytes": 5169,
+      "archive_sha256": "E26B51751FFCA372CE801109B07A960CDF813107ED0077528D7E096D07B3F23E",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "forbidden_native",
+      "operation": "add_native_member",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/28-forbidden_native.ptcgai",
+      "archive_bytes": 5169,
+      "archive_sha256": "ACBB90A6B77A7C3045484CD8867C946B77ABD621831537ACA42D1034E07ED9D4",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "forbidden_nested_archive",
+      "operation": "add_nested_archive",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/29-forbidden_nested_archive.ptcgai",
+      "archive_bytes": 5173,
+      "archive_sha256": "8C073587285B055B281EE3B24D1318377580FE226933CC644D53E62C76FA4319",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    }
+  ],
+  "loader_case_count": 9,
+  "loader_cases": [
+    {
+      "case_id": "optional_weights_png_valid",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/30-optional_weights_png_valid.ptcgai",
+      "archive_bytes": 5660,
+      "archive_sha256": "E8B8E1A86E8BBE0D165BC7A3E1C98B8DA712E7D29FFCFB8BCD702654E4E496DE",
+      "expected_accepted": true,
+      "expected_error_code": null,
+      "expected_metadata": {
+        "archive_sha256": "E8B8E1A86E8BBE0D165BC7A3E1C98B8DA712E7D29FFCFB8BCD702654E4E496DE",
+        "author": {
+          "author_id": "test.fixture",
+          "display_name": "Fixture Author"
+        },
+        "compatibility": {
+          "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+          "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "minimum_game_api": "ptcgdap-author-host-v1",
+          "required_capabilities": []
+        },
+        "deck": {
+          "deck_path": "deck/deck.csv",
+          "display_name": "Synthetic Exact 60",
+          "manifest_path": "deck/deck_manifest.json"
+        },
+        "deck_card_count": 60,
+        "deck_card_id_domain": "official_cabt_card_id",
+        "deck_contract_valid": true,
+        "deck_manifest_sha256": "7913471EDA9CD6E63D6F80EC59D24394F980F3A918DA8F96F507141261EB3EB7",
+        "deck_platform_scope": [],
+        "execution_authority": false,
+        "execution_trusted": false,
+        "files_manifest_sha256": "D987900E31DC8BD61B1EE6C9BDD043227487EE88E033FAF7F4FC142FB7EAACAC",
+        "live_consumer": false,
+        "manifest_canonical_sha256": "81421B5FE09DBF0129691B202B5C4AE601D484C9D4B3FB2852A1895F1F9C18A8",
+        "manifest_sha256": "81421B5FE09DBF0129691B202B5C4AE601D484C9D4B3FB2852A1895F1F9C18A8",
+        "metadata_only": true,
+        "model_artifact_sha256": null,
+        "model_manifest_sha256": null,
+        "package_document_type": "strategy_package_v1",
+        "package_id": "test.fixture.author-ai",
+        "package_version": "1.0.0",
+        "policy_contract_valid": true,
+        "policy_ir_sha256": "82E814F1630F2747A758DDD7B2F87E71BAE7BBFB9DA18C85923124D0B3F90ED6",
+        "policy_mode": "rules_only",
+        "profile_id": "ptcgdap-author-strategy-package-v1",
+        "signature_status": "test_fixture_trusted",
+        "source_deck_id": null,
+        "strategy": {
+          "display_name": "Fixture Public AI",
+          "summary": "Synthetic offline package fixture"
+        }
+      }
+    },
+    {
+      "case_id": "optional_image_unlisted",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/31-optional_image_unlisted.ptcgai",
+      "archive_bytes": 5362,
+      "archive_sha256": "2DA66A6D49517A8CD4A7606B01ACFB311C93CA1CD8E6A47D79898A65BCEC013A",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_unlisted",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "optional_image_invalid",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/32-optional_image_invalid.ptcgai",
+      "archive_bytes": 5320,
+      "archive_sha256": "F6CA5A0D421733D5952A60120AC1E68601C30A9D2B00D00B9434F024AA9FCBDA",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "optional_image_oversized",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/33-optional_image_oversized.ptcgai",
+      "archive_bytes": 5332,
+      "archive_sha256": "3FB2CE4BFD6112FDD230212C4B439113D2CC15F033860D050EFE2C903ECE1A4C",
+      "expected_accepted": false,
+      "expected_error_code": "package_resource_limit_exceeded",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "unknown_required_capability",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/34-unknown_required_capability.ptcgai",
+      "archive_bytes": 5080,
+      "archive_sha256": "04C08F57F52BDFCB3AB5E5E1187D07220DE27ED05C746422892ABE0ECF47D916",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "config_forbidden_url",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/35-config_forbidden_url.ptcgai",
+      "archive_bytes": 5094,
+      "archive_sha256": "069525434A69760E6DDD72D0FA705CDA3407E0B71A863836EA45F1B8D968F818",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "config_nested_value",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/36-config_nested_value.ptcgai",
+      "archive_bytes": 5081,
+      "archive_sha256": "28FD48C34D8084F94988CA822136C7EFB6E1B5A1F298272ED0BC9DB63966707A",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "policy_duplicate_capability",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/37-policy_duplicate_capability.ptcgai",
+      "archive_bytes": 5057,
+      "archive_sha256": "D2ECB340BB96BC55E81B109C7E33BA8DDF488D0275F7F1B95C849D6F9861AD94",
+      "expected_accepted": false,
+      "expected_error_code": "package_policy_unsupported",
+      "expected_metadata": null
+    },
+    {
+      "case_id": "optional_weight_missing",
+      "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/38-optional_weight_missing.ptcgai",
+      "archive_bytes": 5078,
+      "archive_sha256": "BE94E074286F2B17C1CB233B31B9AE4F62C6EDA84B4F5D34E972EC4553FF04A4",
+      "expected_accepted": false,
+      "expected_error_code": "package_file_missing",
+      "expected_metadata": null
+    }
+  ],
+  "catalog_case_count": 4,
+  "catalog_cases": [
+    {
+      "case_id": "empty_roots",
+      "candidates": [],
+      "expected": {
+        "schema_version": 1,
+        "metadata_records": [],
+        "ready_records": [],
+        "diagnostics": [],
+        "metadata_only": true,
+        "match_authority": false
+      }
+    },
+    {
+      "case_id": "exact_duplicate_and_invalid",
+      "candidates": [
+        {
+          "install_source": "built_in",
+          "location_id": "a.ptcgai",
+          "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/00-valid_minimal.ptcgai"
+        },
+        {
+          "install_source": "user",
+          "location_id": "b.ptcgai",
+          "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/00-valid_minimal.ptcgai"
+        },
+        {
+          "install_source": "user",
+          "location_id": "bad.ptcgai",
+          "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/20-payload_hash_mismatch.ptcgai"
+        }
+      ],
+      "expected": {
+        "schema_version": 1,
+        "metadata_records": [
+          {
+            "archive_sha256": "C3251A725E933341D17A129AD065F3D4E836CF7EE886693F51528366A1A68392",
+            "author": {
+              "author_id": "test.fixture",
+              "display_name": "Fixture Author"
+            },
+            "compatibility": {
+              "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+              "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+              "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+              "minimum_game_api": "ptcgdap-author-host-v1",
+              "required_capabilities": []
+            },
+            "deck": {
+              "deck_path": "deck/deck.csv",
+              "display_name": "Synthetic Exact 60",
+              "manifest_path": "deck/deck_manifest.json"
+            },
+            "deck_card_count": 60,
+            "deck_card_id_domain": "official_cabt_card_id",
+            "deck_contract_valid": true,
+            "deck_manifest_sha256": "7913471EDA9CD6E63D6F80EC59D24394F980F3A918DA8F96F507141261EB3EB7",
+            "deck_platform_scope": [],
+            "execution_authority": false,
+            "execution_trusted": false,
+            "files_manifest_sha256": "1B994255B1AF8749E8934C55B2E5370FFAF83C241012F8EDE9E5518AAA04790A",
+            "live_consumer": false,
+            "manifest_canonical_sha256": "6803244992793E4016754347B3E6700959D51DF82AD120A17699BE5AFC603590",
+            "manifest_sha256": "6803244992793E4016754347B3E6700959D51DF82AD120A17699BE5AFC603590",
+            "metadata_only": true,
+            "model_artifact_sha256": null,
+            "model_manifest_sha256": null,
+            "package_document_type": "strategy_package_v1",
+            "package_id": "test.fixture.author-ai",
+            "package_version": "1.0.0",
+            "policy_contract_valid": true,
+            "policy_ir_sha256": "82E814F1630F2747A758DDD7B2F87E71BAE7BBFB9DA18C85923124D0B3F90ED6",
+            "policy_mode": "rules_only",
+            "profile_id": "ptcgdap-author-strategy-package-v1",
+            "signature_status": "test_fixture_trusted",
+            "source_deck_id": null,
+            "strategy": {
+              "display_name": "Fixture Public AI",
+              "summary": "Synthetic offline package fixture"
+            },
+            "catalog_key": "8445F08AFA9DCB818820FBB1C5A90CCB87D7B4C9D0613A496FC30843670CC74A",
+            "install_source": "built_in",
+            "install_sources": [
+              "built_in",
+              "user"
+            ],
+            "status": "metadata_only",
+            "match_authority": false
+          }
+        ],
+        "ready_records": [],
+        "diagnostics": [
+          {
+            "candidate_id": "candidate-0002",
+            "install_source": "user",
+            "error_code": "package_file_hash_mismatch"
+          }
+        ],
+        "metadata_only": true,
+        "match_authority": false
+      }
+    },
+    {
+      "case_id": "same_identity_different_archive",
+      "candidates": [
+        {
+          "install_source": "built_in",
+          "location_id": "a.ptcgai",
+          "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/00-valid_minimal.ptcgai"
+        },
+        {
+          "install_source": "user",
+          "location_id": "b.ptcgai",
+          "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/01-valid_manifest_whitespace_identity.ptcgai"
+        }
+      ],
+      "expected": {
+        "schema_version": 1,
+        "metadata_records": [],
+        "ready_records": [],
+        "diagnostics": [
+          {
+            "candidate_id": "713D3A995E6DB4CE",
+            "install_source": "conflict",
+            "error_code": "package_identity_conflict"
+          }
+        ],
+        "metadata_only": true,
+        "match_authority": false
+      }
+    },
+    {
+      "case_id": "invalid_install_source",
+      "candidates": [
+        {
+          "install_source": "remote",
+          "location_id": "forbidden.ptcgai",
+          "archive_path": "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/00-valid_minimal.ptcgai"
+        }
+      ],
+      "expected": {
+        "schema_version": 1,
+        "metadata_records": [],
+        "ready_records": [],
+        "diagnostics": [
+          {
+            "candidate_id": "candidate-0000",
+            "install_source": "invalid",
+            "error_code": "package_archive_invalid"
+          }
+        ],
+        "metadata_only": true,
+        "match_authority": false
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ class RefreshHandSceneStub extends Control:
 	var _selected_hand_card: CardInstance = null
 	var _play_card_size: Vector2 = Vector2(130, 182)
 	var _portrait_active: bool = false
+	var _review_mode: bool = false
 
 	func _init() -> void:
 		_hand_scroll.name = "HandScroll"
@@ -33,6 +34,33 @@ class RefreshHandSceneStub extends Control:
 
 	func _is_portrait_battle_layout_active() -> bool:
 		return _portrait_active
+
+	func _is_review_mode() -> bool:
+		return _review_mode
+
+
+class FieldSceneStub extends Control:
+	var _slot_card_views: Dictionary = {}
+	var _field_interaction_slot_index_by_id: Dictionary = {}
+	var _gsm: GameStateMachine = null
+	var _play_card_size: Vector2 = Vector2(130, 182)
+
+	func _is_portrait_battle_layout_active() -> bool:
+		return false
+
+	func _field_interaction_selected_slot_ids() -> Array[String]:
+		return []
+
+	func _is_field_interaction_active() -> bool:
+		return false
+
+
+class RecordingFieldCardView extends BattleCardView:
+	var setup_call_count: int = 0
+
+	func setup_from_instance(inst: CardInstance = null, mode: String = MODE_HAND) -> void:
+		setup_call_count += 1
+		super.setup_from_instance(inst, mode)
 
 
 func _make_refresh_hand_scene_stub(current_player: int, turn_number: int) -> RefreshHandSceneStub:
@@ -61,6 +89,38 @@ func _hand_test_card(name: String, owner: int = 0) -> CardInstance:
 	data.name = name
 	data.card_type = "Item"
 	return CardInstance.create(data, owner)
+
+
+func _field_test_slot(name: String, owner: int = 0) -> PokemonSlot:
+	var data := CardData.new()
+	data.name = name
+	data.card_type = "Pokemon"
+	data.hp = 120
+	var slot := PokemonSlot.new()
+	slot.pokemon_stack.append(CardInstance.create(data, owner))
+	return slot
+
+
+func test_field_refresh_rebinds_unchanged_cards_to_restore_authoritative_ui_state() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := FieldSceneStub.new()
+	var panel := PanelContainer.new()
+	var card_view := RecordingFieldCardView.new()
+	panel.add_child(card_view)
+	scene.add_child(panel)
+	var slot := _field_test_slot("Stable Active")
+	card_view.setup_from_instance(slot.get_top_card(), BattleCardView.MODE_SLOT_ACTIVE)
+	scene._slot_card_views = {"my_active": card_view}
+	var before := card_view.setup_call_count
+
+	controller.call("refresh_slot_card_view", scene, "my_active", slot, true)
+	controller.call("refresh_slot_card_view", scene, "my_active", slot, true)
+	var result := run_checks([
+		assert_eq(card_view.setup_call_count, before + 2, "Every committed field repaint must rebind the card view so stale animation geometry cannot survive on Windows"),
+		assert_eq(card_view.card_instance, slot.get_top_card(), "The authoritative repaint must retain the current card identity"),
+	])
+	scene.free()
+	return result
 
 
 func test_get_selected_deck_name_falls_back_to_unknown_label() -> String:
@@ -194,6 +254,23 @@ func test_refresh_hand_falls_back_to_waiting_text_when_opponent_has_no_current_t
 	var label := hand_container.get_child(0) as Label
 	return run_checks([
 		assert_eq(label.text, BattleI18n.t("battle.hand.waiting"), "The hand area should fall back to the waiting copy before the opponent logs a new action this turn"),
+	])
+
+
+func test_native_replay_keeps_local_hand_visible_during_ai_turn() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(1, 8)
+	scene._review_mode = true
+	var local_card := _hand_test_card("Nest Ball")
+	scene._gsm.game_state.players[0].hand.append(local_card)
+
+	controller.call("refresh_hand", scene)
+
+	var hand_container: HBoxContainer = scene._hand_container
+	var rendered_card := hand_container.get_child(0) as BattleCardView
+	return run_checks([
+		assert_eq(str(hand_container.get_meta("battle_hand_surface_mode", "")), "cards", "Replay must keep the local player's real hand surface visible across both turns"),
+		assert_eq(rendered_card.card_instance.instance_id if rendered_card != null else -1, local_card.instance_id, "Replay must render the recorded hand identity through the normal BattleCardView"),
 	])
 
 

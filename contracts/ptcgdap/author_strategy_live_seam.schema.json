@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/author_strategy_live_seam.schema.json",
+  "title": "PTCGDAP AS-WP5 W1 setup-active development canary witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "accepted",
+    "error_code",
+    "prompt_family",
+    "callback_role",
+    "match_generation",
+    "decision_generation",
+    "snapshot_id",
+    "window_id",
+    "public_observation_hash",
+    "selected_indexes",
+    "selection_source",
+    "broker_state",
+    "engine_applied",
+    "reobserved",
+    "old_authority_invalidated",
+    "development_canary",
+    "player_package_authority",
+    "classic_fallback_used",
+    "witness_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "profile_id": {
+      "const": "ptcgdap-author-strategy-live-seam-as-wp5-v1"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string",
+      "maxLength": 96
+    },
+    "prompt_family": {
+      "const": "W1"
+    },
+    "callback_role": {
+      "const": "setup_active"
+    },
+    "match_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decision_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "window_id": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "public_observation_hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "selected_indexes": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "selection_source": {
+      "enum": [
+        "policy",
+        "deterministic_fallback",
+        "none"
+      ]
+    },
+    "broker_state": {
+      "enum": [
+        "awaiting_reobserve",
+        "aborted",
+        "none"
+      ]
+    },
+    "engine_applied": {
+      "type": "boolean"
+    },
+    "reobserved": {
+      "type": "boolean"
+    },
+    "old_authority_invalidated": {
+      "type": "boolean"
+    },
+    "development_canary": {
+      "const": true
+    },
+    "player_package_authority": {
+      "const": false
+    },
+    "classic_fallback_used": {
+      "const": false
+    },
+    "witness_hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    }
+  }
+}

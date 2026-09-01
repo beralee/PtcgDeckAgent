@@ -1,0 +1,1084 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/marnie_capability_policy.schema.json",
+  "title": "PtcgDAP Marnie capability policy artifacts",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/profileArtifact"
+    },
+    {
+      "$ref": "#/$defs/policyArtifact"
+    },
+    {
+      "$ref": "#/$defs/vectorsArtifact"
+    },
+    {
+      "$ref": "#/$defs/bundleArtifact"
+    }
+  ],
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_id",
+        "capability_id",
+        "rule_id",
+        "target_official_id"
+      ],
+      "properties": {
+        "frame_id": {
+          "type": "string",
+          "enum": [
+            "w0_initial",
+            "w1_setup_active",
+            "w2_setup_bench",
+            "w3_main",
+            "w4_spikemuth_deck",
+            "w5_punk_up_sources",
+            "w5_punk_up_target_1",
+            "w5_punk_up_target_2",
+            "w6_shadow_bullet_attack",
+            "w6_shadow_bullet_target",
+            "w7_take_prize",
+            "w7_forced_send_out",
+            "w7_terminal"
+          ]
+        },
+        "capability_id": {
+          "type": "string",
+          "enum": [
+            "initial_deck",
+            "setup_active",
+            "setup_bench",
+            "main_action_frontier",
+            "spikemuth_tutor",
+            "punk_up",
+            "shadow_bullet",
+            "take_prize",
+            "forced_send_out",
+            "terminal_without_callback"
+          ]
+        },
+        "rule_id": {
+          "type": "string",
+          "enum": [
+            "official_initial_deck",
+            "first_min",
+            "optional_zero",
+            "public_deck_card_id",
+            "all_public_deck_card_id",
+            "official_attack_id",
+            "terminal_no_callback"
+          ]
+        },
+        "target_official_id": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/safeInteger"
+                },
+                {
+                  "minimum": 1
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "frameDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "frame_id",
+        "capability_id",
+        "capability_state",
+        "status",
+        "reason_code",
+        "rule_id",
+        "selection_domain",
+        "selected_indexes",
+        "selected_card_ids",
+        "public_observation_hash",
+        "window_id",
+        "option_fingerprints",
+        "previous_decision_hash",
+        "decision_hash",
+        "production_action_used",
+        "execution_authority"
+      ],
+      "properties": {
+        "ordinal": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "frame_id": {
+          "type": "string",
+          "enum": [
+            "w0_initial",
+            "w1_setup_active",
+            "w2_setup_bench",
+            "w3_main",
+            "w4_spikemuth_deck",
+            "w5_punk_up_sources",
+            "w5_punk_up_target_1",
+            "w5_punk_up_target_2",
+            "w6_shadow_bullet_attack",
+            "w6_shadow_bullet_target",
+            "w7_take_prize",
+            "w7_forced_send_out",
+            "w7_terminal"
+          ]
+        },
+        "capability_id": {
+          "type": "string",
+          "enum": [
+            "initial_deck",
+            "setup_active",
+            "setup_bench",
+            "main_action_frontier",
+            "spikemuth_tutor",
+            "punk_up",
+            "shadow_bullet",
+            "take_prize",
+            "forced_send_out",
+            "terminal_without_callback"
+          ]
+        },
+        "capability_state": {
+          "const": "source_locked_fixture_only"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "not_applicable_terminal"
+          ]
+        },
+        "reason_code": {
+          "type": "string",
+          "enum": [
+            "official_initial_deck_fixture",
+            "deterministic_policy_selected",
+            "terminal_no_callback"
+          ]
+        },
+        "rule_id": {
+          "type": "string",
+          "enum": [
+            "official_initial_deck",
+            "first_min",
+            "optional_zero",
+            "public_deck_card_id",
+            "all_public_deck_card_id",
+            "official_attack_id",
+            "terminal_no_callback"
+          ]
+        },
+        "selection_domain": {
+          "type": "string",
+          "enum": [
+            "initial_deck_card_ids",
+            "current_window_indexes",
+            "none"
+          ]
+        },
+        "selected_indexes": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/safeInteger"
+                  },
+                  {
+                    "minimum": 0
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "selected_card_ids": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "minItems": 60,
+              "maxItems": 60,
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/safeInteger"
+                  },
+                  {
+                    "minimum": 1
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "public_observation_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          ]
+        },
+        "window_id": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          ]
+        },
+        "option_fingerprints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9A-F]{64}$"
+          }
+        },
+        "previous_decision_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          ]
+        },
+        "decision_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "production_action_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        }
+      }
+    },
+    "policyResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "frame_count",
+        "chain_head",
+        "frames",
+        "production_actions_used",
+        "execution_authority"
+      ],
+      "properties": {
+        "accepted": {
+          "const": true
+        },
+        "frame_count": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "chain_head": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/frameDecision"
+          }
+        },
+        "production_actions_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        }
+      }
+    },
+    "dto": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ok",
+            "error_code",
+            "value"
+          ],
+          "properties": {
+            "ok": {
+              "const": true
+            },
+            "error_code": {
+              "const": ""
+            },
+            "value": {
+              "$ref": "#/$defs/policyResult"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ok",
+            "error_code",
+            "value"
+          ],
+          "properties": {
+            "ok": {
+              "const": false
+            },
+            "error_code": {
+              "type": "string",
+              "enum": [
+                "input_type_invalid",
+                "frame_unknown",
+                "operation_unknown",
+                "frame_binding_mismatch",
+                "policy_integrity_invalid"
+              ]
+            },
+            "value": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "profileArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "profile_id",
+        "parent_replay_bundle_canonical_sha256",
+        "parent_fixture_bundle_canonical_sha256",
+        "base_firewall_bundle_canonical_sha256",
+        "capability_ids",
+        "frame_ids",
+        "capability_state",
+        "result_hash_prefix_utf8_hex",
+        "production_actions_used",
+        "execution_authority",
+        "live_owner",
+        "portable_ready"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "profile"
+        },
+        "profile_id": {
+          "const": "marnie_capability_policy_profile_v1"
+        },
+        "parent_replay_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "parent_fixture_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "base_firewall_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "capability_ids": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "initial_deck"
+            },
+            {
+              "const": "setup_active"
+            },
+            {
+              "const": "setup_bench"
+            },
+            {
+              "const": "main_action_frontier"
+            },
+            {
+              "const": "spikemuth_tutor"
+            },
+            {
+              "const": "punk_up"
+            },
+            {
+              "const": "shadow_bullet"
+            },
+            {
+              "const": "take_prize"
+            },
+            {
+              "const": "forced_send_out"
+            },
+            {
+              "const": "terminal_without_callback"
+            }
+          ],
+          "items": false,
+          "minItems": 10,
+          "maxItems": 10
+        },
+        "frame_ids": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "w0_initial"
+            },
+            {
+              "const": "w1_setup_active"
+            },
+            {
+              "const": "w2_setup_bench"
+            },
+            {
+              "const": "w3_main"
+            },
+            {
+              "const": "w4_spikemuth_deck"
+            },
+            {
+              "const": "w5_punk_up_sources"
+            },
+            {
+              "const": "w5_punk_up_target_1"
+            },
+            {
+              "const": "w5_punk_up_target_2"
+            },
+            {
+              "const": "w6_shadow_bullet_attack"
+            },
+            {
+              "const": "w6_shadow_bullet_target"
+            },
+            {
+              "const": "w7_take_prize"
+            },
+            {
+              "const": "w7_forced_send_out"
+            },
+            {
+              "const": "w7_terminal"
+            }
+          ],
+          "items": false,
+          "minItems": 13,
+          "maxItems": 13
+        },
+        "capability_state": {
+          "const": "source_locked_fixture_only"
+        },
+        "result_hash_prefix_utf8_hex": {
+          "const": "50544347444150004D41524E49455F4341504142494C4954595F504F4C4943595F524553554C545F563100"
+        },
+        "production_actions_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "live_owner": {
+          "const": false
+        },
+        "portable_ready": {
+          "const": false
+        }
+      }
+    },
+    "policyArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "policy_id",
+        "profile_id",
+        "parent_replay_bundle_canonical_sha256",
+        "parent_fixture_bundle_canonical_sha256",
+        "rules",
+        "initial_deck_card_ids",
+        "production_actions_used",
+        "execution_authority"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "policy"
+        },
+        "policy_id": {
+          "const": "ptcgdap-marnie-capability-policy-v1"
+        },
+        "profile_id": {
+          "const": "marnie_capability_policy_profile_v1"
+        },
+        "parent_replay_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "parent_fixture_bundle_canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "rules": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            },
+            {
+              "$ref": "#/$defs/rule"
+            }
+          ],
+          "items": false,
+          "minItems": 13,
+          "maxItems": 13
+        },
+        "initial_deck_card_ids": {
+          "type": "array",
+          "minItems": 60,
+          "maxItems": 60,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/safeInteger"
+              },
+              {
+                "minimum": 1
+              }
+            ]
+          }
+        },
+        "production_actions_used": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        }
+      }
+    },
+    "vectorCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "operation",
+        "input",
+        "expected"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "evaluate_all",
+            "evaluate_frame",
+            "probe_frame_mutation",
+            "private_sentinel"
+          ]
+        },
+        "input": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [],
+              "properties": {}
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "frame_id"
+              ],
+              "properties": {
+                "frame_id": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "host_type",
+                        "value"
+                      ],
+                      "properties": {
+                        "host_type": {
+                          "const": "integer"
+                        },
+                        "value": {
+                          "$ref": "#/$defs/safeInteger"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "frame_id",
+                "field",
+                "value"
+              ],
+              "properties": {
+                "frame_id": {
+                  "type": "string",
+                  "enum": [
+                    "w0_initial",
+                    "w1_setup_active",
+                    "w2_setup_bench",
+                    "w3_main",
+                    "w4_spikemuth_deck",
+                    "w5_punk_up_sources",
+                    "w5_punk_up_target_1",
+                    "w5_punk_up_target_2",
+                    "w6_shadow_bullet_attack",
+                    "w6_shadow_bullet_target",
+                    "w7_take_prize",
+                    "w7_forced_send_out",
+                    "w7_terminal"
+                  ]
+                },
+                "field": {
+                  "type": "string",
+                  "enum": [
+                    "public_observation_hash",
+                    "window_id",
+                    "option_fingerprints",
+                    "options",
+                    "min_count",
+                    "private_sentinel"
+                  ]
+                },
+                "value": {}
+              }
+            }
+          ]
+        },
+        "expected": {
+          "$ref": "#/$defs/dto"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "evaluate_all"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [],
+                "properties": {}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "evaluate_frame"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "frame_id"
+                ],
+                "properties": {
+                  "frame_id": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "host_type",
+                          "value"
+                        ],
+                        "properties": {
+                          "host_type": {
+                            "const": "integer"
+                          },
+                          "value": {
+                            "$ref": "#/$defs/safeInteger"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "probe_frame_mutation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "frame_id",
+                  "field",
+                  "value"
+                ],
+                "properties": {
+                  "frame_id": {
+                    "type": "string",
+                    "enum": [
+                      "w0_initial",
+                      "w1_setup_active",
+                      "w2_setup_bench",
+                      "w3_main",
+                      "w4_spikemuth_deck",
+                      "w5_punk_up_sources",
+                      "w5_punk_up_target_1",
+                      "w5_punk_up_target_2",
+                      "w6_shadow_bullet_attack",
+                      "w6_shadow_bullet_target",
+                      "w7_take_prize",
+                      "w7_forced_send_out",
+                      "w7_terminal"
+                    ]
+                  },
+                  "field": {
+                    "type": "string",
+                    "enum": [
+                      "public_observation_hash",
+                      "window_id",
+                      "option_fingerprints",
+                      "options",
+                      "min_count",
+                      "private_sentinel"
+                    ]
+                  },
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "private_sentinel"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [],
+                "properties": {}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "vectorsArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "vector_set_id",
+        "profile_id",
+        "cases"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "vectors"
+        },
+        "vector_set_id": {
+          "const": "ptcgdap-marnie-capability-policy-conformance-v1"
+        },
+        "profile_id": {
+          "const": "marnie_capability_policy_profile_v1"
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 20,
+          "items": {
+            "$ref": "#/$defs/vectorCase"
+          }
+        }
+      }
+    },
+    "bundleArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_kind",
+        "bundle_id",
+        "status",
+        "parent_replay_bundle",
+        "parent_fixture_bundle",
+        "artifacts",
+        "self_hash_policy"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "artifact_kind": {
+          "const": "bundle"
+        },
+        "bundle_id": {
+          "const": "ptcgdap-marnie-capability-policy-p5-wp3-v1"
+        },
+        "status": {
+          "const": "offline_shadow_policy"
+        },
+        "parent_replay_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "contracts/ptcgdap/marnie_trajectory_replay_bundle.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "parent_fixture_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "contracts/ptcgdap/marnie_vertical_slice_bundle.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_capability_policy_schema_v1"
+                },
+                "path": {
+                  "const": "contracts/ptcgdap/marnie_capability_policy.schema.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_capability_policy_profile_v1"
+                },
+                "path": {
+                  "const": "contracts/ptcgdap/marnie_capability_policy_profile.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_capability_policy_rules_v1"
+                },
+                "path": {
+                  "const": "data/ptcgdap/marnie_vertical_slice/marnie_capability_policy_v1.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "path",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "id": {
+                  "const": "marnie_capability_policy_vectors_v1"
+                },
+                "path": {
+                  "const": "contracts/ptcgdap/marnie_capability_policy_conformance_vectors.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            }
+          ],
+          "items": false
+        },
+        "self_hash_policy": {
+          "const": "bundle and bound artifacts do not contain the final bundle hash"
+        }
+      }
+    }
+  }
+}

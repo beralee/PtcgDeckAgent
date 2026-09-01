@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-marnie-deck-identity-diff-v1",
+  "same_deck": false,
+  "comparison_authority": "exact numeric official Card ID and explicitly reviewed source-hashed printing bridge only",
+  "name_text_art_inference": "forbidden",
+  "official": {
+    "card_count": 60,
+    "unique_card_id_count": 19,
+    "bridged_card_count": 34,
+    "bridged_unique_card_id_count": 9,
+    "unmapped_card_count": 26,
+    "unmapped_official_card_ids": [
+      860,
+      1079,
+      1086,
+      1122,
+      1137,
+      1152,
+      1182,
+      1219,
+      1227,
+      1231
+    ]
+  },
+  "local": {
+    "card_count": 60,
+    "unique_printing_count": 28,
+    "bridged_card_count": 15,
+    "bridged_unique_printing_count": 4,
+    "unbridged_card_count": 45
+  },
+  "cabt_exportable": false,
+  "reason_codes": [
+    "deck_lists_not_equal",
+    "official_ids_local_unmapped",
+    "local_printings_unbridged",
+    "engine_parity_not_evaluated"
+  ]
+}

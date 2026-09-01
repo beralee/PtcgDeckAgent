@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "marnie_prompt_broker_profile",
+  "profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+  "frame_order": [
+    "w0_initial",
+    "w1_setup_active",
+    "w2_setup_bench",
+    "w3_main",
+    "w4_spikemuth_deck",
+    "w5_punk_up_sources",
+    "w5_punk_up_target_1",
+    "w5_punk_up_target_2",
+    "w6_shadow_bullet_attack",
+    "w6_shadow_bullet_target",
+    "w7_take_prize",
+    "w7_forced_send_out",
+    "w7_terminal"
+  ],
+  "match_generation": 1,
+  "session_id": "session:marnie-p5-wp5-offline",
+  "parent_contracts": {
+    "vertical_slice_bundle": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425",
+    "capability_policy_bundle": "F4E88E5DB4E480BA8441BE7B3A7C81CE3DB40ED1917EB37BCDCAC1C32B1ABD6C",
+    "identity_projection_bundle": "1EB530AB7DFACBE6AB098A6C67D6AAE0BC1871FF3E2F48C9284E8539EE6ACDC4",
+    "shadow_prompt_broker_bundle": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+    "engine_decision_port_bundle": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "godot_option_binding_bundle": "4FFFEC48E4E1FE0774BB6E343D4D4B0384A9210057DEE06415C2A20F2899B1C1"
+  },
+  "port_extension": {
+    "method": "publish_p5_extended",
+    "profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+    "option_shapes": {
+      "8": [
+        "type",
+        "area",
+        "index",
+        "inPlayArea",
+        "inPlayIndex"
+      ],
+      "12": [
+        "type"
+      ],
+      "13": [
+        "type",
+        "local_attack_index",
+        "official_attack_id"
+      ]
+    }
+  },
+  "binding_extension": {
+    "method": "bind_p5_extended",
+    "profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+    "compare_fields": {
+      "7": [
+        "index"
+      ],
+      "8": [
+        "area",
+        "index",
+        "inPlayArea",
+        "inPlayIndex"
+      ],
+      "13": [
+        "official_attack_id",
+        "attackId"
+      ]
+    }
+  },
+  "error_codes": [
+    "",
+    "input_type_invalid",
+    "operation_unknown",
+    "frame_unknown",
+    "contract_integrity_invalid",
+    "lifecycle_rejected"
+  ],
+  "result_contract": {
+    "serialized_results_are_authority": false,
+    "private_capabilities_serialized": false,
+    "execution_authority": false,
+    "production_actions_used": false,
+    "reobserve_after_every_commit": true
+  },
+  "limits": {
+    "frame_count": 13,
+    "brokered_frame_count": 11,
+    "max_options": 256
+  }
+}

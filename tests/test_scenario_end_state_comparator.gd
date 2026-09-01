@@ -339,3 +339,97 @@ func test_compare_marks_prize_race_regression_as_fail() -> String:
 		assert_eq(String(verdict.get("status", "")), "FAIL", "A worse prize race should be classified as FAIL"),
 		assert_str_contains(String(verdict.get("reason", "")), "prize race", "FAIL reasons should explain the prize-race regression"),
 	])
+
+
+func test_compare_treats_discard_as_an_unordered_multiset() -> String:
+	CardInstance.reset_id_counter()
+	var expected_game_state := _make_game_state(
+		_make_player(
+			0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono"], 3,
+			["Rare Candy", "Professor's Research"]
+		),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var ai_game_state := _make_game_state(
+		_make_player(
+			0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono"], 3,
+			["Professor's Research", "Rare Candy"]
+		),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var verdict: Dictionary = ComparatorScript.compare(
+		_extract_end_state(ai_game_state, 0, "unordered_discard"),
+		_extract_end_state(expected_game_state, 0, "unordered_discard"),
+		[]
+	)
+
+	return run_checks([
+		assert_eq(String(verdict.get("status", "")), "PASS", "Discard order must not affect an otherwise exact result"),
+		assert_eq((verdict.get("diff", []) as Array).size(), 0),
+	])
+
+
+func test_compare_rejects_a_discard_multiset_mismatch() -> String:
+	CardInstance.reset_id_counter()
+	var expected_game_state := _make_game_state(
+		_make_player(
+			0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono"], 3,
+			["Rare Candy", "Professor's Research"]
+		),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var ai_game_state := _make_game_state(
+		_make_player(
+			0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono"], 3,
+			["Rare Candy"]
+		),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var verdict: Dictionary = ComparatorScript.compare(
+		_extract_end_state(ai_game_state, 0, "discard_mismatch"),
+		_extract_end_state(expected_game_state, 0, "discard_mismatch"),
+		[]
+	)
+
+	return run_checks([
+		assert_eq(String(verdict.get("status", "")), "DIVERGE", "A missing discard card must fail the exact outcome gate"),
+		assert_true(
+			_diff_has_path(verdict, "secondary.tracked_player.discard_card_names"),
+			"Discard mismatches must be visible in the audit diff"
+		),
+	])
+
+
+func test_approved_alternative_cannot_bypass_discard_multiset() -> String:
+	CardInstance.reset_id_counter()
+	var expected_game_state := _make_game_state(
+		_make_player(0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono"], 3, ["Rare Candy"]),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var ai_game_state := _make_game_state(
+		_make_player(0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono", "Ultra Ball"], 3, ["Rare Candy"]),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var approved_game_state := _make_game_state(
+		_make_player(
+			0, _make_slot(0, ["Kirlia"], 100, 20, ["P"]), [], ["Iono", "Ultra Ball"], 3,
+			["Rare Candy", "Professor's Research"]
+		),
+		_make_player(1, _make_slot(1, ["Miraidon ex"], 220, 80, ["L"]), [], [], 4)
+	)
+	var verdict: Dictionary = ComparatorScript.compare(
+		_extract_end_state(ai_game_state, 0, "alternative_discard_mismatch"),
+		_extract_end_state(expected_game_state, 0, "alternative_discard_mismatch"),
+		[{
+			"alternative_id": "same_primary_wrong_discard",
+			"end_state": _extract_end_state(approved_game_state, 0, "alternative_discard_mismatch"),
+		}]
+	)
+
+	return run_checks([
+		assert_false(
+			String(verdict.get("status", "")) == "PASS",
+			"Approved alternatives must include the discard multiset"
+		),
+		assert_eq(String(verdict.get("matched_alternative_id", "")), ""),
+	])

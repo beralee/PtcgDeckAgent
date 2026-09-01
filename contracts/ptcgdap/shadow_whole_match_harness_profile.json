@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-whole-match-harness-p3-wp8-v1",
+  "parent_applier_bundle_canonical_sha256": "7539A9D5120666AEBA1325DD6623F437831A024996BD612F3EC677F78C9F8F4C",
+  "parent_owner_gate_bundle_canonical_sha256": "9B8202E67756E388AFB0A13EA1FD20227ADF0718DF8454420A2B1FC7A5D31B8C",
+  "parent_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+  "states": [
+    "ready",
+    "active",
+    "completed",
+    "faulted",
+    "dirty",
+    "rollback_verified"
+  ],
+  "error_codes": [
+    "invalid_harness",
+    "invalid_gate",
+    "owner_mode_not_aligned",
+    "invalid_broker",
+    "broker_not_current",
+    "already_started",
+    "not_started",
+    "match_terminal",
+    "invalid_broker_result",
+    "stale_prompt_chain",
+    "prompt_limit_exceeded",
+    "prompt_apply_failed",
+    "dirty_game_detected",
+    "rollback_request_failed",
+    "match_end_failed",
+    "rollback_not_required",
+    "invalid_match_generation",
+    "next_match_rollback_failed"
+  ],
+  "fault_codes": [
+    "",
+    "capture_failed",
+    "command_apply_failed",
+    "rollback_failed",
+    "invalid_broker_result",
+    "stale_prompt_chain",
+    "prompt_limit_exceeded"
+  ],
+  "limits": {
+    "max_prompt_count": 64
+  },
+  "semantics": {
+    "exact_aligned_gate_and_broker_required": true,
+    "fresh_applier_per_prompt": true,
+    "strict_broker_generation_order": true,
+    "unique_snapshot_window_execution_ids": true,
+    "any_prompt_fault_requests_next_match_legacy": true,
+    "recoverable_restore_is_clean": true,
+    "restore_failure_is_dirty_and_terminal": true,
+    "next_match_generation_strictly_increases": true,
+    "rollback_changes_current_match": false,
+    "live_consumer": false,
+    "serialized_report_is_authority": false,
+    "schema_alone_authorizes_report": false
+  },
+  "private_fields_forbidden_from_report": [
+    "private_engine_command",
+    "private_object_refs",
+    "captured_state",
+    "session_id",
+    "callback_binding_hash",
+    "current_source",
+    "broker",
+    "gate",
+    "applier",
+    "prompt",
+    "binding",
+    "ticket",
+    "preflight"
+  ]
+}

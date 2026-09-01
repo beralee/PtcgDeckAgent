@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "profile_id": "marnie_vertical_slice_profile_v1",
+  "status": "offline_shadow_fixture",
+  "parent": {
+    "p4_wp6_manifest_canonical_sha256": "93B0F8170124AE5DD184FBD1BD17BBEC60C805A6EFC9D348C1B5ADAF5AD3369E",
+    "p4_budget_bundle_canonical_sha256": "0D82BDE31BD0FA0C44527880D9D6451C2733702913708532C512F3BFF81D8BF9",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "artifact_serialization": "canonical_json_v1; public binary64 values use exact IEEE-754 hex typed nodes",
+  "deck_identity_rule": "official and local manifests are permanently distinct until every count/printing/effect/support relation is explicitly proven",
+  "trajectory_rule": "private replay containers remain oracle-only; serialized frames contain only allow-listed public seat/step extraction",
+  "w2_firewall_rule": "current own_active_concealed rejection is recorded, not converted to acceptance",
+  "serialized_authority": "audit_and_conformance_only",
+  "live_authority": false,
+  "client_confidentiality": "artifacts are assumed extractable; hashes provide integrity and provenance only"
+}

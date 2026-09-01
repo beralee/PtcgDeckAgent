@@ -13,20 +13,35 @@ static func compare(
 		normalized_ai.get("primary", {}) as Dictionary,
 		normalized_expected.get("primary", {}) as Dictionary
 	)
+	if bool(normalized_expected.get("has_secondary", false)):
+		if not bool(normalized_ai.get("has_secondary", false)):
+			strict_diff.append({
+				"path": "secondary",
+				"kind": "secondary_state_missing",
+				"expected": normalized_expected.get("secondary", {}),
+				"actual": {},
+			})
+		else:
+			strict_diff.append_array(_diff_discard_multisets(
+				normalized_ai.get("secondary", {}) as Dictionary,
+				normalized_expected.get("secondary", {}) as Dictionary
+			))
 	var scenario_id := _resolve_scenario_id(normalized_ai, normalized_expected)
 
 	if strict_diff.is_empty():
 		return _build_verdict(
 			scenario_id,
 			"PASS",
-			"strict primary match",
+			"strict board, hand, prize, and discard match",
 			"",
 			false,
 			[],
 			normalized_ai
 		)
 
-	var alternative_match := _find_matching_alternative(normalized_ai, approved_alternatives)
+	var alternative_match := _find_matching_alternative(
+		normalized_ai, normalized_expected, approved_alternatives
+	)
 	if bool(alternative_match.get("matched", false)):
 		return _build_verdict(
 			scenario_id,
@@ -208,6 +223,31 @@ static func _diff_primary(actual_primary: Dictionary, expected_primary: Dictiona
 	return diff
 
 
+static func _diff_discard_multisets(
+	actual_secondary: Dictionary,
+	expected_secondary: Dictionary
+) -> Array:
+	var diff: Array = []
+	for side: String in ["tracked_player", "opponent"]:
+		var actual_player: Dictionary = actual_secondary.get(side, {}) as Dictionary
+		var expected_player: Dictionary = expected_secondary.get(side, {}) as Dictionary
+		var actual_discard := _sorted_string_array(
+			actual_player.get("discard_card_names", [])
+		)
+		var expected_discard := _sorted_string_array(
+			expected_player.get("discard_card_names", [])
+		)
+		if actual_discard == expected_discard:
+			continue
+		diff.append({
+			"path": "secondary.%s.discard_card_names" % side,
+			"kind": "discard_mismatch",
+			"expected": expected_discard,
+			"actual": actual_discard,
+		})
+	return diff
+
+
 static func _compare_player_primary(path: String, actual_player: Dictionary, expected_player: Dictionary, diff: Array) -> void:
 	_compare_slot("%s.active" % path, actual_player.get("active", {}) as Dictionary, expected_player.get("active", {}) as Dictionary, diff)
 	_compare_bench("%s.bench" % path, actual_player.get("bench", []) as Array, expected_player.get("bench", []) as Array, diff)
@@ -295,7 +335,11 @@ static func _compare_slot_field(path: String, field: String, actual_slot: Dictio
 	})
 
 
-static func _find_matching_alternative(ai_end_state: Dictionary, approved_alternatives: Array) -> Dictionary:
+static func _find_matching_alternative(
+	ai_end_state: Dictionary,
+	expected_end_state: Dictionary,
+	approved_alternatives: Array
+) -> Dictionary:
 	for index in range(approved_alternatives.size()):
 		var alt_variant: Variant = approved_alternatives[index]
 		if not alt_variant is Dictionary:
@@ -307,6 +351,16 @@ static func _find_matching_alternative(ai_end_state: Dictionary, approved_altern
 			ai_end_state.get("primary", {}) as Dictionary,
 			normalized_alt.get("primary", {}) as Dictionary
 		)
+		if bool(expected_end_state.get("has_secondary", false)):
+			if (
+				not bool(ai_end_state.get("has_secondary", false))
+				or not bool(normalized_alt.get("has_secondary", false))
+			):
+				continue
+			alt_diff.append_array(_diff_discard_multisets(
+				ai_end_state.get("secondary", {}) as Dictionary,
+				normalized_alt.get("secondary", {}) as Dictionary
+			))
 		if alt_diff.is_empty():
 			var alternative_id := str(alternative.get("alternative_id", alternative.get("id", "approved_alt_%d" % index)))
 			return {

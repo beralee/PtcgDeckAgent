@@ -1,0 +1,34 @@
+{
+  "document_type": "local_policy_executor_profile_v1",
+  "schema_version": 1,
+  "profile_id": "ptcgdap-windows-local-policy-executor-v1",
+  "executor_id": "ptcgdap-local-policy-executor-v1",
+  "manifest_path": "data/ptcgdap/marnie_windows_local_policy_executor_v1.json",
+  "parent_policy_package_canonical_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC",
+  "declared_target": {
+    "host": "godot",
+    "platform": "windows",
+    "architecture": "x86_64",
+    "execution_location": "device_local",
+    "portable_baseline": "gdscript"
+  },
+  "runtime_authority": {
+    "selects_current_window_indexes": true,
+    "owns_engine_commit": false,
+    "owns_action_ticket": false,
+    "classic_fallback": false,
+    "remote_fallback": false
+  },
+  "model_contract": {
+    "learned_model": "none",
+    "backend": "none",
+    "operator_case_count": 0,
+    "operator_skip_count": 0
+  },
+  "rollback": {
+    "previous_executor": "AuthorStrategyDevelopmentPolicy.gd",
+    "new_matches_only": true,
+    "match_hot_swap": false
+  },
+  "production_ready": false
+}

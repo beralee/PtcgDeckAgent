@@ -114,7 +114,15 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 11
-text = "上一回合"
+text = "上一步"
+
+[node name="BtnReplayPlayPause" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 11
+text = "播放"
 
 [node name="BtnReplayNextTurn" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions" unique_id=214996014]
 unique_name_in_owner = true
@@ -122,7 +130,18 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 11
-text = "下一回合"
+text = "下一步"
+
+[node name="OptReplaySpeed" type="OptionButton" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 11
+item_count = 1
+selected = 0
+popup/item_0/text = "1×"
+popup/item_0/id = 0
 
 [node name="BtnReplayContinue" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions" unique_id=1723489036]
 unique_name_in_owner = true
@@ -138,7 +157,7 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 11
-text = "返回复盘列表"
+text = "退出录像"
 
 [node name="BtnBack" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions" unique_id=1413636544]
 unique_name_in_owner = true

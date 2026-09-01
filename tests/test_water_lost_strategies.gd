@@ -92,7 +92,7 @@ func _add_lost_zone_cards(player: PlayerState, count: int) -> void:
 		player.lost_zone.append(CardInstance.create(_make_trainer_cd("Lost%d" % i), player.player_index))
 
 
-func test_palkia_gholdengo_setup_prefers_palkia_active() -> String:
+func test_palkia_gholdengo_setup_prefers_gimmighoul_active_into_miraidon() -> String:
 	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
 	if s == null:
 		return "DeckStrategyPalkiaGholdengo.gd should load before setup behavior can be tested"
@@ -105,9 +105,191 @@ func test_palkia_gholdengo_setup_prefers_palkia_active() -> String:
 	var active_name: String = str(player.hand[active_idx].card_data.name) if active_idx >= 0 else ""
 	var bench_indices: Array = choice.get("bench_hand_indices", [])
 	return run_checks([
-		assert_eq(active_name, "Origin Forme Palkia V", "Palkia/Gholdengo should lead with Palkia V when available"),
+		assert_eq(active_name, "Gimmighoul", "Palkia/Gholdengo should lead Gimmighoul instead of exposing a Lightning-weak two-prize Palkia V into Miraidon"),
+		assert_true(bench_indices.has(1), "Palkia/Gholdengo should preserve Palkia V as a bench setup piece"),
 		assert_true(bench_indices.size() >= 1, "Palkia/Gholdengo opening plan should still bench support basics"),
 	])
+
+
+func test_palkia_gholdengo_counts_every_basic_energy_for_make_it_rain() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before Make It Rain energy modeling can be tested"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex", [],
+		[{"name": "Make It Rain", "cost": "M", "damage": "50x"}], 2
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0))
+	for i: int in 4:
+		player.hand.append(CardInstance.create(_make_energy_cd("Water Energy %d" % i, "W"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Damaged Miraidon ex", "Basic", "L", 200, "", "ex"), 1)
+
+	var attack_score: float = s.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return assert_true(attack_score >= 600.0, "Make It Rain must count Water and every other Basic Energy in hand, not only Metal Energy (score=%f)" % attack_score)
+
+
+func test_palkia_gholdengo_make_it_rain_discards_only_minimum_lethal_energy() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before Make It Rain payment selection can be tested"
+	var gs := _make_game_state(5)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Damaged Miraidon ex", "Basic", "L", 120, "", "ex"), 1)
+	var energies: Array = []
+	for i: int in 4:
+		energies.append(CardInstance.create(_make_energy_cd("Basic Energy %d" % i, "W" if i % 2 == 0 else "M"), 0))
+
+	var selected: Array = s.pick_interaction_items(
+		energies,
+		{"id": "discard_basic_energy", "max_select": 4},
+		{"game_state": gs, "player_index": 0}
+	)
+	return assert_eq(selected.size(), 3, "Make It Rain should discard only the minimum three Basic Energy needed for 120 HP")
+
+
+func test_palkia_gholdengo_generic_discard_protects_make_it_rain_energy() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before discard-cost selection can be tested"
+	var energy := CardInstance.create(_make_energy_cd("Basic Metal Energy", "M"), 0)
+	var spare_item := CardInstance.create(_make_trainer_cd("Spent Buddy-Buddy Poffin"), 0)
+	var step := {"id": "discard_cards"}
+	var energy_score: float = s.score_interaction_target(energy, step, {})
+	var item_score: float = s.score_interaction_target(spare_item, step, {})
+	return assert_true(item_score > energy_score, "Generic discard costs should spend spare Trainers before Make It Rain fuel (item=%f energy=%f)" % [item_score, energy_score])
+
+
+func test_palkia_gholdengo_superior_retrieval_values_water_energy_fuel() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before Basic Energy recovery scoring can be tested"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0))
+	for i: int in 3:
+		player.discard_pile.append(CardInstance.create(_make_energy_cd("Discard Water Energy %d" % i, "W"), 0))
+	var superior := CardInstance.create(_make_trainer_cd("Superior Energy Retrieval"), 0)
+	var score: float = s.score_action_absolute({"kind": "play_trainer", "card": superior}, gs, 0)
+	return assert_true(score >= 300.0, "Superior Energy Retrieval should value recoverable Water Energy as Make It Rain fuel (score=%f)" % score)
+
+
+func test_palkia_gholdengo_opening_metal_attach_prefers_active_gimmighoul() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before opening attachment scoring can be tested"
+	var gs := _make_game_state(1)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gimmighoul", "Basic", "M", 70), 0)
+	var bench_gimmighoul := _make_slot(_make_pokemon_cd("Gimmighoul", "Basic", "M", 70), 0)
+	player.bench.append(bench_gimmighoul)
+	player.hand.append(CardInstance.create(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0))
+	var metal := CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0)
+	var active_score: float = s.score_action_absolute({"kind": "attach_energy", "card": metal, "target_slot": player.active_pokemon}, gs, 0)
+	var bench_score: float = s.score_action_absolute({"kind": "attach_energy", "card": metal, "target_slot": bench_gimmighoul}, gs, 0)
+	return assert_true(active_score > bench_score + 80.0, "Opening Metal should fund the active Gimmighoul that can evolve and attack next turn (active=%f bench=%f)" % [active_score, bench_score])
+
+
+func test_palkia_gholdengo_stops_coin_bonus_when_deck_is_thin() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before thin-deck draw control can be tested"
+	var gs := _make_game_state(15)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex",
+		[{"name": "Coin Bonus", "text": "Draw 1 card, or 2 if Active."}], [], 2
+	), 0)
+	for i: int in 6:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var score: float = s.score_action_absolute({"kind": "use_ability", "source_slot": player.active_pokemon}, gs, 0)
+	return assert_true(score <= 0.0, "Coin Bonus should be suppressed at six cards instead of accelerating a deck-out (score=%f)" % score)
+
+
+func test_palkia_gholdengo_holds_weak_nonlethal_make_it_rain() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before low-damage attack control can be tested"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var attack_score: float = s.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return assert_true(attack_score < 0.0, "A nonlethal 50-damage Make It Rain should preserve its only fuel instead of ending the turn (score=%f)" % attack_score)
+
+
+func test_palkia_gholdengo_stops_search_churn_when_deck_is_thin() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before thin-deck action control can be tested"
+	var gs := _make_game_state(15)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0)
+	for i: int in 6:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var cipher := CardInstance.create(_make_trainer_cd("Ciphermaniac's Codebreaking", "Supporter"), 0)
+	var cipher_score: float = s.score_action_absolute({"kind": "play_trainer", "card": cipher}, gs, 0)
+	var end_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(end_score > cipher_score, "A six-card deck should pass instead of spending Ciphermaniac on non-converting churn (end=%f cipher=%f)" % [end_score, cipher_score])
+
+
+func test_palkia_gholdengo_does_not_end_setup_turn_with_gimmighoul_chip() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before setup-attack control can be tested"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gimmighoul", "Basic", "M", 70), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var attack_score: float = s.score_action_absolute({"kind": "attack", "attack_index": 0, "projected_damage": 20}, gs, 0)
+	return assert_true(attack_score < 0.0, "A 20-damage Gimmighoul attack should not terminate a setup turn (score=%f)" % attack_score)
+
+
+func test_palkia_gholdengo_holds_nonlethal_four_energy_burst_into_miraidon() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before burst conversion can be tested"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0))
+	for i: int in 4:
+		player.hand.append(CardInstance.create(_make_energy_cd("Basic Energy %d" % i, "W" if i % 2 == 0 else "M"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var attack_score: float = s.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return assert_true(attack_score < 0.0, "Four Energy should be preserved until Make It Rain reaches the 220 HP knockout threshold (score=%f)" % attack_score)
+
+
+func test_palkia_gholdengo_avoids_late_palkia_liability_under_lightning_pressure() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before matchup liability control can be tested"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var palkia := CardInstance.create(_make_pokemon_cd("Origin Forme Palkia V", "Basic", "W", 220, "", "V"), 0)
+	var score: float = s.score_action_absolute({"kind": "play_basic_to_bench", "card": palkia}, gs, 0)
+	return assert_true(score < 0.0, "Once Gholdengo is online, a Lightning-weak two-prize Palkia V should stay out of gust range (score=%f)" % score)
+
+
+func test_palkia_gholdengo_does_not_spend_gust_without_a_ko() -> String:
+	var s := _new_strategy(PALKIA_GHOLDENGO_SCRIPT_PATH)
+	if s == null:
+		return "DeckStrategyPalkiaGholdengo.gd should load before gust conversion can be tested"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Gholdengo ex", "Stage 1", "M", 260, "Gimmighoul", "ex"), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Metal Energy", "M"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var boss := CardInstance.create(_make_trainer_cd("Boss's Orders", "Supporter"), 0)
+	var score: float = s.score_action_absolute({"kind": "play_trainer", "card": boss}, gs, 0)
+	return assert_true(score < 0.0, "Boss's Orders should be held when the current Make It Rain cannot convert a knockout (score=%f)" % score)
 
 
 func test_palkia_gholdengo_resource_loop_scores_above_setup_cards() -> String:
@@ -274,6 +456,8 @@ func test_palkia_gholdengo_irida_beats_generic_draw_when_engine_is_missing() -> 
 	var player := gs.players[0]
 	player.active_pokemon = _make_slot(_make_pokemon_cd("Origin Forme Palkia V", "Basic", "W", 220, "", "V"), 0)
 	player.bench.append(_make_slot(_make_pokemon_cd("Gimmighoul", "Basic", "M", 60), 0))
+	for i: int in 20:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
 	var score_irida: float = s.score_action_absolute(
 		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Irida", "Supporter"), 0)},
 		gs,

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+  "profile_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+  "ir_profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+  "parent_strategic_context_bundle_canonical_sha256": "AACFA7E2E7F914180A2B7A5C4D92D6514ACC5F4622FC95B57DC225673893F98F",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "base_graph_v1_8_source_raw_sha256": "5D3035312390936D86DE4E2BAF520CE38AB0A79137E1D93199B909D79FBCA3D2",
+  "base_graph_v1_8_contract_raw_sha256": "E8A010E5B6458D2B43811DE683EA2147044D06624502B7314907747E8B0EB5B9",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/strategic_trace_v2.schema.json",
+      "canonical_sha256": "9E455A3D90121265046BE7A48DD182E15B197D0D0930AE7FC1254D98637870F5"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/strategic_trace_v2_profile.json",
+      "canonical_sha256": "5F98592945C60DE94896960C240F5D19002154F2FBEC6A82F553D4ED9EF1A00E"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/strategic_trace_v2_conformance_vectors.json",
+      "canonical_sha256": "5270260C817BE20A749A0404A2413CDB90F5C7AF871BD1DFCC64ECF85DA4E7B1"
+    }
+  ]
+}

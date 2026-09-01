@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/turn_program_generation_v1.schema.json",
+  "title": "PTCGDAP Turn Program generation v1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "cases"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "profile_id": {"const": "ptcgdap-turn-program-generation-conformance-v1"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {"$ref": "#/$defs/case"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public_observation_hash", "window_id"],
+      "properties": {
+        "public_observation_hash": {"$ref": "#/$defs/sha256"},
+        "window_id": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "schema_version", "profile_id", "sequence", "seat", "prompt_kind",
+        "source", "public_state", "options"
+      ],
+      "properties": {
+        "schema_version": {"const": 2},
+        "profile_id": {"const": "ptcgdap-competitive-public-frame-v2"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "seat": {"enum": [0, 1]},
+        "prompt_kind": {"type": "string", "minLength": 1},
+        "source": {"$ref": "#/$defs/source"},
+        "public_state": {
+          "type": "object",
+          "required": ["turn_number", "self"],
+          "properties": {
+            "turn_number": {"type": "integer", "minimum": 0},
+            "self": {
+              "type": "object",
+              "required": ["prizes_remaining"],
+              "properties": {
+                "prizes_remaining": {"type": "integer", "minimum": 0, "maximum": 6}
+              }
+            }
+          }
+        },
+        "options": {"type": "array"}
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id", "transaction_id", "method_id", "depends_on",
+        "terminal_kind", "effect_kind"
+      ],
+      "properties": {
+        "step_id": {"$ref": "#/$defs/identifier"},
+        "transaction_id": {"$ref": "#/$defs/identifier"},
+        "method_id": {"$ref": "#/$defs/identifier"},
+        "depends_on": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "terminal_kind": {"enum": ["none", "attack", "end_turn"]},
+        "effect_kind": {
+          "enum": [
+            "ability", "attack", "bench", "conversion", "damage_transfer",
+            "disruption", "draw", "end_turn", "energy", "evolution",
+            "handoff", "search", "tool"
+          ]
+        }
+      }
+    },
+    "option_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind", "projected_damage", "projected_knockout",
+        "target_remaining_hp", "target_prize_value"
+      ],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "projected_damage": {"type": ["integer", "null"], "minimum": 0},
+        "projected_knockout": {"type": "boolean"},
+        "target_remaining_hp": {"type": ["integer", "null"], "minimum": 0},
+        "target_prize_value": {"type": ["integer", "null"], "minimum": 0, "maximum": 3}
+      }
+    },
+    "base_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admissible", "current_step_executable", "mandatory_preserved",
+        "terminal_preserved", "base_vetoed"
+      ],
+      "properties": {
+        "admissible": {"type": "boolean"},
+        "current_step_executable": {"type": "boolean"},
+        "mandatory_preserved": {"type": "boolean"},
+        "terminal_preserved": {"type": "boolean"},
+        "base_vetoed": {"type": "boolean"}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program_id", "goal_id", "route_id", "deadline_turns", "priority",
+        "source_kind", "semantic_steps", "current_step_id",
+        "current_option_facts", "terminal_option_facts", "base_proof"
+      ],
+      "properties": {
+        "program_id": {"$ref": "#/$defs/identifier"},
+        "goal_id": {"$ref": "#/$defs/identifier"},
+        "route_id": {"$ref": "#/$defs/identifier"},
+        "deadline_turns": {"type": "integer", "minimum": 0, "maximum": 8},
+        "priority": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "source_kind": {
+          "enum": ["turn_transaction", "turn_route", "base_action", "base_terminal"]
+        },
+        "semantic_steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/step"}
+        },
+        "current_step_id": {"$ref": "#/$defs/identifier"},
+        "current_option_facts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/option_fact"}
+        },
+        "terminal_option_facts": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/option_fact"}
+        },
+        "base_proof": {"$ref": "#/$defs/base_proof"}
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "audit_hash", "candidate_count", "emitted_count", "program_ids",
+        "selected_program_id", "selected_current_step_id", "ranked_program_ids"
+      ],
+      "properties": {
+        "audit_hash": {"$ref": "#/$defs/sha256"},
+        "candidate_count": {"type": "integer", "minimum": 1, "maximum": 64},
+        "emitted_count": {"type": "integer", "minimum": 1, "maximum": 8},
+        "program_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "selected_program_id": {"$ref": "#/$defs/identifier"},
+        "selected_current_step_id": {"$ref": "#/$defs/identifier"},
+        "ranked_program_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "frame", "max_programs", "candidates", "expected"],
+      "properties": {
+        "case_id": {"$ref": "#/$defs/identifier"},
+        "frame": {"$ref": "#/$defs/frame"},
+        "max_programs": {"type": "integer", "minimum": 1, "maximum": 8},
+        "candidates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {"$ref": "#/$defs/candidate"}
+        },
+        "expected": {"$ref": "#/$defs/expected"}
+      }
+    }
+  }
+}

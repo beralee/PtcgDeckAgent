@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+  "parent_bundle_canonical_sha256": "ADDD4CB48BD10FA0478854124D8E63AEE42B898C0EB81692BA35F8D7F90414C4",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "source_authority": "exact_current_p4_wp1_context_and_p4_wp2_ir_owner",
+  "hash_contract": {
+    "canonicalization": "RFC8785_JCS_IJSON_SAFE_SUBSET",
+    "execution_prefix_utf8_hex": "5054434744415000524553545249435445445F424153455F47524150485F455845435554494F4E5F563100"
+  },
+  "execution_contract": {
+    "selection_precedence": [
+      "terminal",
+      "mandatory",
+      "legal_frontier"
+    ],
+    "hard_tier_order": "lexicographic_ascending_safe_integer_array",
+    "adapter_authority": "same_tier_ordering_hint_only",
+    "base_veto_cannot_remove_forced_indexes": true,
+    "fallback": "same_window_first_min",
+    "option_order": "current_context_source_order",
+    "node_audit": "every_ir_node_in_exact_graph_order"
+  },
+  "result_contract": {
+    "serialized_result_is_execution_authority": false,
+    "owner_revalidation_required": true,
+    "selected_indexes_require_future_current_window_sanitization": true
+  },
+  "stable_error_codes": [
+    "contract_error",
+    "invalid_context",
+    "invalid_ir",
+    "invalid_execution_input",
+    "forced_index_vetoed",
+    "insufficient_candidates",
+    "execution_integrity_invalid"
+  ],
+  "private_identifier_tokens_denied": [
+    "PRIVATE"
+  ],
+  "private_keys_denied": [
+    "raw_private_hash",
+    "token_free_callback_hash",
+    "search_begin_input",
+    "session",
+    "callback",
+    "binding",
+    "ticket",
+    "command",
+    "object_ref",
+    "pokemon_entity_serial"
+  ],
+  "scope": {
+    "restricted_ir_executor": true,
+    "adapter_implementation": false,
+    "policy": false,
+    "trace_issuer": false,
+    "live_owner": false
+  }
+}

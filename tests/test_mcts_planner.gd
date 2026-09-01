@@ -4,6 +4,13 @@ extends TestBase
 const MCTSPlannerScript = preload("res://scripts/ai/MCTSPlanner.gd")
 
 
+class BenchDevelopmentEvaluator extends RefCounted:
+	func evaluate_board(game_state: GameState, player_index: int) -> float:
+		if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+			return 0.0
+		return float(game_state.players[player_index].bench.size()) * 100.0
+
+
 func _make_basic_card_data(card_name: String, hp: int = 100) -> CardData:
 	var card := CardData.new()
 	card.name = card_name
@@ -64,6 +71,7 @@ func _make_battle_gsm_with_bench_option() -> GameStateMachine:
 
 func test_mcts_planner_returns_action_sequence() -> String:
 	var planner := MCTSPlannerScript.new()
+	planner.deck_strategy = BenchDevelopmentEvaluator.new()
 	var gsm := _make_battle_gsm_with_bench_option()
 	var sequence: Array = planner.plan_turn(gsm, 0, {
 		"branch_factor": 3,
@@ -78,6 +86,7 @@ func test_mcts_planner_returns_action_sequence() -> String:
 
 func test_mcts_planner_sequence_ends_with_end_turn_or_attack() -> String:
 	var planner := MCTSPlannerScript.new()
+	planner.deck_strategy = BenchDevelopmentEvaluator.new()
 	var gsm := _make_battle_gsm_with_bench_option()
 	var sequence: Array = planner.plan_turn(gsm, 0, {
 		"branch_factor": 3,
@@ -95,6 +104,7 @@ func test_mcts_planner_sequence_ends_with_end_turn_or_attack() -> String:
 
 func test_mcts_planner_discovers_bench_before_attack() -> String:
 	var planner := MCTSPlannerScript.new()
+	planner.deck_strategy = BenchDevelopmentEvaluator.new()
 	var gsm := _make_battle_gsm_with_bench_option()
 	var sequence: Array = planner.plan_turn(gsm, 0, {
 		"branch_factor": 3,
@@ -114,6 +124,7 @@ func test_mcts_planner_discovers_bench_before_attack() -> String:
 
 func test_mcts_planner_does_not_modify_original() -> String:
 	var planner := MCTSPlannerScript.new()
+	planner.deck_strategy = BenchDevelopmentEvaluator.new()
 	var gsm := _make_battle_gsm_with_bench_option()
 	var original_hand_size: int = gsm.game_state.players[0].hand.size()
 	var original_bench_size: int = gsm.game_state.players[0].bench.size()

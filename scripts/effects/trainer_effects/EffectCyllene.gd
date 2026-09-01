@@ -13,7 +13,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _recoverable_cards(state.players[card.owner_index]).is_empty()
 
 
-func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_preview_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
 		"title": "投掷2枚硬币",
@@ -22,7 +22,7 @@ func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Ar
 	}]
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	_pending_heads_count = _flip_heads_count()
 	if _pending_heads_count <= 0:
 		return []
