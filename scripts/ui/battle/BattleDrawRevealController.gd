@@ -1079,7 +1079,8 @@ func _should_defer_for_handover(scene: Object, player_index: int) -> bool:
 
 
 func _is_ai_reveal(_scene: Object, player_index: int) -> bool:
-	return GameManager.current_mode == GameManager.GameMode.VS_AI and player_index == 1
+	return GameManager.current_mode in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI] \
+		and player_index == 1
 
 
 func _is_hidden_two_player_reveal(scene: Object, player_index: int) -> bool:
@@ -1089,7 +1090,11 @@ func _is_hidden_two_player_reveal(scene: Object, player_index: int) -> bool:
 func _is_hidden_opponent_reveal(scene: Object, player_index: int) -> bool:
 	if player_index == int(scene.get("_view_player")):
 		return false
-	return GameManager.current_mode == GameManager.GameMode.TWO_PLAYER or GameManager.current_mode == GameManager.GameMode.VS_AI
+	return GameManager.current_mode in [
+		GameManager.GameMode.TWO_PLAYER,
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]
 
 
 func _uses_top_center_hand_target(scene: Object, player_index: int) -> bool:

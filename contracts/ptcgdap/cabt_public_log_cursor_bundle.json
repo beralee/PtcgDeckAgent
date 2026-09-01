@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-public-log-cursor-p2-wp4-v1",
+  "parent_firewall_bundle": {
+    "id": "ptcgdap-public-firewall-p2-wp3-v1",
+    "canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947"
+  },
+  "p1_contract_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+  "artifacts": [
+    {
+      "id": "cabt_public_log_cursor_schema_v1",
+      "path": "contracts/ptcgdap/cabt_public_log_cursor.schema.json",
+      "canonical_sha256": "44C277A27A04170B464DC1D9FF8CC0AC069507D498BE8C12A52B3905B376526B"
+    },
+    {
+      "id": "cabt_public_log_cursor_profile_v1",
+      "path": "contracts/ptcgdap/cabt_public_log_cursor_profile.json",
+      "canonical_sha256": "20B9B9744B152D74D53BBE5EA3005110B36D86D0D9B13FBF09A7C27AB24C21A5"
+    },
+    {
+      "id": "cabt_public_log_cursor_conformance_v1",
+      "path": "contracts/ptcgdap/cabt_public_log_cursor_conformance_vectors.json",
+      "canonical_sha256": "12DBB22C8C29B85DCC9F92A2BE01682976636DEF646C0C9B79A6CCDBD39CB52D"
+    }
+  ]
+}

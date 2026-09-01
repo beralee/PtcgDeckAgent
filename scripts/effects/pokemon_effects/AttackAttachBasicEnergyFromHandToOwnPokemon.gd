@@ -19,7 +19,7 @@ func applies_to_attack_index(index: int) -> bool:
 	return attack_index_to_match < 0 or attack_index_to_match == index
 
 
-func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 		return []
 	var player: PlayerState = state.players[card.owner_index]

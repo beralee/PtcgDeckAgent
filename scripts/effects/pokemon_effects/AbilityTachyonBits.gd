@@ -20,7 +20,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return state.players[1 - owner_index].active_pokemon != null
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent := state.players[1 - card.owner_index]
 	var items: Array = []
 	var labels: Array[String] = []

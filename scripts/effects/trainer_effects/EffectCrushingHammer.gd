@@ -19,7 +19,7 @@ func can_execute(_card: CardInstance, state: GameState) -> bool:
 	return false
 
 
-func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_preview_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
 		"title": "投掷1枚硬币",
@@ -28,7 +28,7 @@ func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Ar
 	}]
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var flipper: CoinFlipper = _coin_flipper if _coin_flipper != null else CoinFlipper.new()
 	_pending_heads = flipper.flip()
 	_has_pending_flip = true

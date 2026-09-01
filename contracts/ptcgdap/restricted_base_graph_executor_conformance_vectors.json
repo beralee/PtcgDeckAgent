@@ -1,0 +1,1282 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+  "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+  "parent_ir_profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+  "context_fixture": {
+    "case_id": "single-select-main-policy-context",
+    "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+    "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+    "option_count": 2,
+    "min_count": 1,
+    "max_count": 1
+  },
+  "execution_cases": [
+    {
+      "id": "fallback-first",
+      "ir_case_id": "minimal-base",
+      "input": {
+        "execution_id": "fallback-first",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": []
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "fallback-first",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA"
+        },
+        "selected_indexes": [
+          0
+        ],
+        "reason_code": "deterministic_fallback",
+        "fallback_branch": "same_window_first_min",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              0
+            ],
+            "output_indexes": [
+              0
+            ]
+          }
+        ],
+        "adapter_audit": [],
+        "authoritative": false,
+        "execution_hash": "5BCD9F4587790AA38C6080E22C18C3E6707030CA4C57BDA6894E85FCC96A73B4"
+      }
+    },
+    {
+      "id": "best-hard-tier",
+      "ir_case_id": "minimal-base",
+      "input": {
+        "execution_id": "best-hard-tier",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              1
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": []
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "best-hard-tier",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "deterministic_fallback",
+        "fallback_branch": "same_window_first_min",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [],
+        "authoritative": false,
+        "execution_hash": "9AD8937D9D2207AE14317C217EDA39B754797B091ECF8A15B86B12AE96764157"
+      }
+    },
+    {
+      "id": "base-veto-first",
+      "ir_case_id": "minimal-base",
+      "input": {
+        "execution_id": "base-veto-first",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [
+          0
+        ],
+        "adapter_proposals": []
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "base-veto-first",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "deterministic_fallback",
+        "fallback_branch": "same_window_first_min",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [],
+        "authoritative": false,
+        "execution_hash": "E121BC84F15B8A3228C667FFAE60A9B9643CEAE5A6997C25110D846569857F97"
+      }
+    },
+    {
+      "id": "mandatory-second",
+      "ir_case_id": "minimal-base",
+      "input": {
+        "execution_id": "mandatory-second",
+        "mandatory_indexes": [
+          1
+        ],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": []
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "mandatory-second",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "mandatory_selection",
+        "fallback_branch": "mandatory",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [],
+        "authoritative": false,
+        "execution_hash": "FA4C4DF2ADA66140903DED7E28A40FAF64F27C33A7A56901FB8D4BB896AC6AFE"
+      }
+    },
+    {
+      "id": "terminal-over-mandatory",
+      "ir_case_id": "minimal-base",
+      "input": {
+        "execution_id": "terminal-over-mandatory",
+        "mandatory_indexes": [
+          0
+        ],
+        "terminal_indexes": [
+          1
+        ],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": []
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "terminal-over-mandatory",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "terminal_selection",
+        "fallback_branch": "terminal",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [],
+        "authoritative": false,
+        "execution_hash": "84F6D0A123EF8C49F545BC7E536B89B1EFBCC3F0B83FFB9460EB9A59DB0D5A49"
+      }
+    },
+    {
+      "id": "goal-hint-second",
+      "ir_case_id": "public-adapter-proposals",
+      "input": {
+        "execution_id": "goal-hint-second",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": [
+          {
+            "operator": "goal_proposal",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_goal_proposal"
+          }
+        ]
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "goal-hint-second",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "deterministic_fallback",
+        "fallback_branch": "same_window_first_min",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n12",
+            "operator": "goal_proposal",
+            "owner": "adapter",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n14",
+            "operator": "macro_proposal",
+            "owner": "adapter",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n22",
+            "operator": "tiebreak_score",
+            "owner": "adapter",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [
+          {
+            "operator": "goal_proposal",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_goal_proposal"
+          }
+        ],
+        "authoritative": false,
+        "execution_hash": "91E90D3CB76D30E45D90FDE9EDD324DA7A1252E20700B5694A0A802C98F1185B"
+      }
+    },
+    {
+      "id": "macro-hint-second",
+      "ir_case_id": "public-adapter-proposals",
+      "input": {
+        "execution_id": "macro-hint-second",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": [
+          {
+            "operator": "macro_proposal",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_macro_proposal"
+          }
+        ]
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "macro-hint-second",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "deterministic_fallback",
+        "fallback_branch": "same_window_first_min",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n12",
+            "operator": "goal_proposal",
+            "owner": "adapter",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n14",
+            "operator": "macro_proposal",
+            "owner": "adapter",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n22",
+            "operator": "tiebreak_score",
+            "owner": "adapter",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [
+          {
+            "operator": "macro_proposal",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_macro_proposal"
+          }
+        ],
+        "authoritative": false,
+        "execution_hash": "0F154504FC9CCA4F641E43C8E3AD9167846002FB3A873AB221A2BC36F5F41448"
+      }
+    },
+    {
+      "id": "tiebreak-hint-second",
+      "ir_case_id": "public-adapter-proposals",
+      "input": {
+        "execution_id": "tiebreak-hint-second",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": [
+          {
+            "operator": "tiebreak_score",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_tiebreak_proposal"
+          }
+        ]
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-executor-p4-wp3-v1",
+        "execution_id": "tiebreak-hint-second",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "reason_code": "deterministic_fallback",
+        "fallback_branch": "same_window_first_min",
+        "node_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n12",
+            "operator": "goal_proposal",
+            "owner": "adapter",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n14",
+            "operator": "macro_proposal",
+            "owner": "adapter",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "node_id": "n22",
+            "operator": "tiebreak_score",
+            "owner": "adapter",
+            "input_indexes": [
+              0,
+              1
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1,
+              0
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "input_indexes": [
+              1,
+              0
+            ],
+            "output_indexes": [
+              1
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "input_indexes": [
+              1
+            ],
+            "output_indexes": [
+              1
+            ]
+          }
+        ],
+        "adapter_audit": [
+          {
+            "operator": "tiebreak_score",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_tiebreak_proposal"
+          }
+        ],
+        "authoritative": false,
+        "execution_hash": "0495F2B510D653099730054986D672E1A8D5827CE69EDF9831AC85175BF13250"
+      }
+    }
+  ],
+  "execution_rejections": [
+    {
+      "id": "fake-context",
+      "fault": "fake_context",
+      "expected_error_code": "invalid_context"
+    },
+    {
+      "id": "fake-ir",
+      "fault": "fake_ir",
+      "expected_error_code": "invalid_ir"
+    },
+    {
+      "id": "mandatory-not-list",
+      "mutation": {
+        "field": "mandatory_indexes",
+        "value": true
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "duplicate-mandatory",
+      "mutation": {
+        "field": "mandatory_indexes",
+        "value": [
+          0,
+          0
+        ]
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "terminal-out-of-range",
+      "mutation": {
+        "field": "terminal_indexes",
+        "value": [
+          2
+        ]
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "missing-tier",
+      "mutation": {
+        "field": "base_hard_tiers",
+        "value": [
+          {
+            "index": 0,
+            "tier": [
+              0
+            ]
+          }
+        ]
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "forced-index-vetoed",
+      "mutation": {
+        "field": "mandatory_indexes",
+        "value": [
+          0
+        ],
+        "also": {
+          "field": "base_vetoed_indexes",
+          "value": [
+            0
+          ]
+        }
+      },
+      "expected_error_code": "forced_index_vetoed"
+    },
+    {
+      "id": "unknown-proposal",
+      "mutation": {
+        "field": "adapter_proposals",
+        "value": [
+          {
+            "operator": "python_callable",
+            "indexes": [
+              0
+            ],
+            "reason_code": "public_goal_proposal"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "private-proposal",
+      "mutation": {
+        "field": "adapter_proposals",
+        "value": [
+          {
+            "operator": "goal_proposal",
+            "indexes": [
+              0
+            ],
+            "reason_code": "PRIVATE_SENTINEL"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "proposal-out-of-range",
+      "mutation": {
+        "field": "adapter_proposals",
+        "value": [
+          {
+            "operator": "goal_proposal",
+            "indexes": [
+              2
+            ],
+            "reason_code": "public_goal_proposal"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_execution_input"
+    },
+    {
+      "id": "veto-all",
+      "mutation": {
+        "field": "base_vetoed_indexes",
+        "value": [
+          0,
+          1
+        ]
+      },
+      "expected_error_code": "insufficient_candidates"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_HAND_SENTINEL",
+    "PRIVATE_SEARCH_SENTINEL",
+    "PRIVATE_SESSION_SENTINEL"
+  ],
+  "consumer_rule": "Serialized execution results are audit/conformance values only. Future selection authority must revalidate exact current window and sanitize selected indexes in the owner call chain."
+}

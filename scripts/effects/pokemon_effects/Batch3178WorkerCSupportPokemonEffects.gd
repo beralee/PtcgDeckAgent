@@ -65,7 +65,7 @@ class SilentWingsOpponentHandPreview extends BaseEffect:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
 
-	func get_attack_interaction_steps(
+	func build_ucis_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		_attack: Dictionary,
 		state: GameState

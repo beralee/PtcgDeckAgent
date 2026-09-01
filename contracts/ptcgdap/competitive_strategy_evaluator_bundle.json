@@ -1,0 +1,19 @@
+{
+  "document_type": "competitive_strategy_evaluator_bundle_v1",
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-competitive-strategy-evaluator-csp-wp2-v1",
+  "digest_mode": "canonical_json_v1",
+  "artifact_set_policy": "exact_ids_paths_hashes_no_duplicates",
+  "artifacts": [
+    {
+      "artifact_id": "profile",
+      "path": "contracts/ptcgdap/competitive_strategy_evaluator_profile.json",
+      "canonical_sha256": "FB2F9BCD385D1F0D55BC8569006562E16BEC4A5A4D22BD3C1398355F75C5EC26"
+    },
+    {
+      "artifact_id": "vectors",
+      "path": "contracts/ptcgdap/competitive_strategy_evaluator_conformance_vectors.json",
+      "canonical_sha256": "EF4AFDE907BF25EAA97847A19CB407998B51DB1E6661FAFC6B583D451C810EAB"
+    }
+  ]
+}

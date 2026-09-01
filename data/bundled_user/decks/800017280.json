@@ -19,7 +19,7 @@
 		{
 			"card_index": "138",
 			"card_type": "Pokemon",
-			"count": 3,
+			"count": 4,
 			"effect_id": "ecce5b1818ae13630c3a09449489c424",
 			"name": "铝钢桥龙ex",
 			"name_en": "",
@@ -33,36 +33,20 @@
 			"source_url": "https://limitlesstcg.com/cards/SSP/130"
 		},
 		{
-			"card_index": "095",
+			"card_index": "052",
 			"card_type": "Pokemon",
-			"count": 2,
-			"effect_id": "a5438c6290fdef331fe1ba579b6f4928",
-			"name": "猛恶菇",
-			"name_en": "Brute Bonnet",
+			"count": 1,
+			"effect_id": "04653d073ffc3ca2202746e4f9aebabd",
+			"name": "玛纳霏",
+			"name_en": "Manaphy",
 			"resolved_via": "exact_print",
-			"set_code": "CSV6C",
-			"source_card_index": "123",
+			"set_code": "CS5bC",
+			"source_card_index": "41",
 			"source_language": "en",
-			"source_name": "Brute Bonnet",
+			"source_name": "Manaphy",
 			"source_provider": "limitless",
-			"source_set_code": "PAR",
-			"source_url": "https://limitlesstcg.com/cards/PAR/123"
-		},
-		{
-			"card_index": "127",
-			"card_type": "Pokemon",
-			"count": 2,
-			"effect_id": "277e3fdeae03359715f5b1432e00619c",
-			"name": "桃歹郎",
-			"name_en": "",
-			"resolved_via": "simplified_chinese_reprint",
-			"set_code": "CSV9C",
-			"source_card_index": "149",
-			"source_language": "en",
-			"source_name": "Pecharunt",
-			"source_provider": "limitless",
-			"source_set_code": "SVP",
-			"source_url": "https://limitlesstcg.com/cards/SVP/149"
+			"source_set_code": "BRS",
+			"source_url": "https://limitlesstcg.com/cards/BRS/41"
 		},
 		{
 			"card_index": "105",
@@ -113,22 +97,6 @@
 			"source_url": "https://limitlesstcg.com/cards/SFA/38"
 		},
 		{
-			"card_index": "151",
-			"card_type": "Pokemon",
-			"count": 1,
-			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
-			"name": "梦幻ex",
-			"name_en": "Mew ex",
-			"resolved_via": "exact_print",
-			"set_code": "151C",
-			"source_card_index": "151",
-			"source_language": "en",
-			"source_name": "Mew ex",
-			"source_provider": "limitless",
-			"source_set_code": "MEW",
-			"source_url": "https://limitlesstcg.com/cards/MEW/151"
-		},
-		{
 			"card_index": "199",
 			"card_type": "Supporter",
 			"count": 4,
@@ -163,7 +131,7 @@
 		{
 			"card_index": "121",
 			"card_type": "Supporter",
-			"count": 2,
+			"count": 4,
 			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
 			"name": "博士的研究",
 			"name_en": "Professor's Research",
@@ -243,7 +211,7 @@
 		{
 			"card_index": "113",
 			"card_type": "Item",
-			"count": 3,
+			"count": 4,
 			"effect_id": "768b545a38fccd5e265093b5adce10af",
 			"name": "宝可装置3.0",
 			"name_en": "Pokégear 3.0",
@@ -259,7 +227,7 @@
 		{
 			"card_index": "183",
 			"card_type": "Item",
-			"count": 3,
+			"count": 4,
 			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
 			"name": "夜间担架",
 			"name_en": "Night Stretcher",
@@ -275,7 +243,7 @@
 		{
 			"card_index": "115",
 			"card_type": "Item",
-			"count": 2,
+			"count": 4,
 			"effect_id": "e366f56ecd3f805a28294109a1a37453",
 			"name": "大地容器",
 			"name_en": "Earthen Vessel",
@@ -321,57 +289,9 @@
 			"source_url": "https://limitlesstcg.com/cards/SVI/182"
 		},
 		{
-			"card_index": "118",
-			"card_type": "Tool",
-			"count": 3,
-			"effect_id": "8da8631aa1827b122ec65b712939ad48",
-			"name": "驱劲能量 古代",
-			"name_en": "Ancient Booster Energy Capsule",
-			"resolved_via": "same_print_group",
-			"set_code": "CSV6C",
-			"source_card_index": "140",
-			"source_language": "en",
-			"source_name": "Ancient Booster Energy Capsule",
-			"source_provider": "limitless",
-			"source_set_code": "TEF",
-			"source_url": "https://limitlesstcg.com/cards/TEF/140"
-		},
-		{
-			"card_index": "187",
-			"card_type": "Tool",
-			"count": 2,
-			"effect_id": "a77ef1e9df5b37e1d529682b2b38a4b8",
-			"name": "锁链粘糕",
-			"name_en": "Binding Mochi",
-			"resolved_via": "same_print_group",
-			"set_code": "CSV8C",
-			"source_card_index": "95",
-			"source_language": "en",
-			"source_name": "Binding Mochi",
-			"source_provider": "limitless",
-			"source_set_code": "PRE",
-			"source_url": "https://limitlesstcg.com/cards/PRE/95"
-		},
-		{
-			"card_index": "200",
-			"card_type": "Stadium",
-			"count": 3,
-			"effect_id": "16a6fb86a8ebd1cffc6f171250057d5c",
-			"name": "危险密林",
-			"name_en": "Perilous Jungle",
-			"resolved_via": "exact_print",
-			"set_code": "CSV7C",
-			"source_card_index": "156",
-			"source_language": "en",
-			"source_name": "Perilous Jungle",
-			"source_provider": "limitless",
-			"source_set_code": "TEF",
-			"source_url": "https://limitlesstcg.com/cards/TEF/156"
-		},
-		{
 			"card_index": "MET",
 			"card_type": "Basic Energy",
-			"count": 7,
+			"count": 12,
 			"effect_id": "4557c01497b81767fdaa0004089ecfb3",
 			"name": "基本钢能量",
 			"name_en": "Metal Energy",
@@ -386,7 +306,7 @@
 		}
 	],
 	"deck_code": "",
-	"deck_name": "18.0 毒桥龙",
+	"deck_name": "18.0 铝钢龙钢铁防线",
 	"id": 800017280,
 	"import_date": "2026-07-17T09:14:30",
 	"source_id": "17280",
@@ -395,5 +315,5 @@
 	"strategy": "",
 	"total_cards": 60,
 	"updated_at": 1784250870397,
-	"variant_name": "18.0 毒桥龙"
+	"variant_name": "18.0 铝钢龙钢铁防线"
 }

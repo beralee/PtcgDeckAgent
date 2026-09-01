@@ -1,0 +1,1165 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "vectors",
+  "vector_set_id": "ptcgdap-marnie-capability-policy-conformance-v1",
+  "profile_id": "marnie_capability_policy_profile_v1",
+  "cases": [
+    {
+      "case_id": "frame-w0_initial",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w0_initial"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53",
+          "frames": [
+            {
+              "ordinal": 0,
+              "frame_id": "w0_initial",
+              "capability_id": "initial_deck",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "official_initial_deck_fixture",
+              "rule_id": "official_initial_deck",
+              "selection_domain": "initial_deck_card_ids",
+              "selected_indexes": null,
+              "selected_card_ids": [
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                104,
+                104,
+                112,
+                112,
+                112,
+                112,
+                646,
+                646,
+                646,
+                646,
+                647,
+                647,
+                647,
+                648,
+                648,
+                648,
+                860,
+                860,
+                1079,
+                1079,
+                1079,
+                1080,
+                1086,
+                1086,
+                1086,
+                1086,
+                1097,
+                1097,
+                1097,
+                1122,
+                1137,
+                1152,
+                1152,
+                1152,
+                1152,
+                1182,
+                1182,
+                1219,
+                1219,
+                1219,
+                1219,
+                1227,
+                1227,
+                1227,
+                1227,
+                1231,
+                1259,
+                1259,
+                1259,
+                1259
+              ],
+              "public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+              "window_id": null,
+              "option_fingerprints": [],
+              "previous_decision_hash": null,
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w1_setup_active",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w1_setup_active"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280",
+          "frames": [
+            {
+              "ordinal": 1,
+              "frame_id": "w1_setup_active",
+              "capability_id": "setup_active",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+              "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+              "option_fingerprints": [
+                "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54",
+                "999D88E29A10063AB95B9524B235E3FBDB3567F31DE2243E6EE23DDEBDCBE8D8"
+              ],
+              "previous_decision_hash": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w2_setup_bench",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w2_setup_bench"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7",
+          "frames": [
+            {
+              "ordinal": 2,
+              "frame_id": "w2_setup_bench",
+              "capability_id": "setup_bench",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "optional_zero",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [],
+              "selected_card_ids": null,
+              "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+              "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+              "option_fingerprints": [
+                "01F7E2802E89C3E6060C3A6142F80243A6A2829C528CF57B4EE9E612798DC998"
+              ],
+              "previous_decision_hash": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w3_main",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w3_main"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C",
+          "frames": [
+            {
+              "ordinal": 3,
+              "frame_id": "w3_main",
+              "capability_id": "main_action_frontier",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+              "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+              "option_fingerprints": [
+                "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+                "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+                "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+                "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+              ],
+              "previous_decision_hash": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w4_spikemuth_deck",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w4_spikemuth_deck"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8",
+          "frames": [
+            {
+              "ordinal": 4,
+              "frame_id": "w4_spikemuth_deck",
+              "capability_id": "spikemuth_tutor",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "public_deck_card_id",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                1
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+              "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+              "option_fingerprints": [
+                "D3B647EB593D95803C13B7E6D5EEE491F3FA95ACC7E177FB40E260ECAA7694FF",
+                "1F361F00EC8782D154516FDF5E612A5044CC79643E9AE6E6E3DCC0FD7F849366"
+              ],
+              "previous_decision_hash": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w5_punk_up_sources",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w5_punk_up_sources"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD",
+          "frames": [
+            {
+              "ordinal": 5,
+              "frame_id": "w5_punk_up_sources",
+              "capability_id": "punk_up",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "all_public_deck_card_id",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+              "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+              "option_fingerprints": [
+                "5763F49B6896C9C3BE96B628211350EED7490AAFEBF384763A960A45616B4C1A",
+                "A2E7D6B5C4AFF2D6DE7A2851F89EA340BFAC763C9EE1D8649E2E1636B2D5E7C9",
+                "2771CA0AB9D2D6E06186AC52DE325670D220F42228C89F28DD26DDA6DE4193EC",
+                "37D3A377ACE760ACB1499D3FFC8B6B45D0A7AA54B8992D502B520BCE6FD8B065",
+                "DDFA73690E275FDCB0AFAF28C5C150CA50CE40769EA6E702A5A06F544C6B3C3B"
+              ],
+              "previous_decision_hash": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w5_punk_up_target_1",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w5_punk_up_target_1"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F",
+          "frames": [
+            {
+              "ordinal": 6,
+              "frame_id": "w5_punk_up_target_1",
+              "capability_id": "punk_up",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+              "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+              "option_fingerprints": [
+                "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A",
+                "DD690BEDAB21BEC8C0F09DBAC5FE2F8362F3AFE86055091DEA4F41D24132FF41",
+                "47B6367EF1F5D62D31BE7C2F328892BB9195101BB11B574A58C71CA81EE00B2A"
+              ],
+              "previous_decision_hash": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w5_punk_up_target_2",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w5_punk_up_target_2"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E",
+          "frames": [
+            {
+              "ordinal": 7,
+              "frame_id": "w5_punk_up_target_2",
+              "capability_id": "punk_up",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+              "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+              "option_fingerprints": [
+                "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA",
+                "49283B1DA263B058FB56392BF0BF8321CC1C8699280C6FE093DEE4562C2C93AD",
+                "066873DACD68DAF418147FD8B09C49C18A5F05D9CE438736BC273BE7A4BE96BB"
+              ],
+              "previous_decision_hash": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w6_shadow_bullet_attack",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w6_shadow_bullet_attack"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B",
+          "frames": [
+            {
+              "ordinal": 8,
+              "frame_id": "w6_shadow_bullet_attack",
+              "capability_id": "shadow_bullet",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "official_attack_id",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                1
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+              "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+              "option_fingerprints": [
+                "E980669EACACAA379DEA4094E1221A8B375FE1619F136F84CE2AA7F99A09DF3F",
+                "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481",
+                "E95ED4DB748E1793A24F76327E4534BDEA497664ECE75B38F8331C213C666B56",
+                "F3FA5EEF2FC8C21B83A340B4B2C3E200C0FB85EF25923FDEF843817D38F57C7A"
+              ],
+              "previous_decision_hash": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w6_shadow_bullet_target",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w6_shadow_bullet_target"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05",
+          "frames": [
+            {
+              "ordinal": 9,
+              "frame_id": "w6_shadow_bullet_target",
+              "capability_id": "shadow_bullet",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+              "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+              "option_fingerprints": [
+                "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86",
+                "8EEEE8456F36E0F2463E37CC8FB948018B4F35EB114C2AE057ADCF0CA68A1514"
+              ],
+              "previous_decision_hash": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w7_take_prize",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w7_take_prize"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044",
+          "frames": [
+            {
+              "ordinal": 10,
+              "frame_id": "w7_take_prize",
+              "capability_id": "take_prize",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+              "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+              "option_fingerprints": [
+                "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D",
+                "3EED37CA3938D5630382BB6E879899F94BD738B2ECCD430F0750DDE18E568E31",
+                "6F18273B1989E3C93DFCC307FCA9A15BB12619FC7B98529C83F9914AE557450B",
+                "069D894CB831AA7E8C408C0CFEB5F0A389C1572481C0EAD110D52E2CA9A78A62",
+                "FDC5C27718D22788B0676848AA54D921F706CB8D5E5A0B84643F41A28743A88C",
+                "7B3B2FFEDE10C13AF404742E80C2B772625B54312FE178185FFE1697517079EA"
+              ],
+              "previous_decision_hash": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w7_forced_send_out",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w7_forced_send_out"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5",
+          "frames": [
+            {
+              "ordinal": 11,
+              "frame_id": "w7_forced_send_out",
+              "capability_id": "forced_send_out",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+              "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+              "option_fingerprints": [
+                "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D",
+                "A648808C2AADFA4B10CED883DB2E8CA7630C78A391B52D2F3B949EB0563388A8",
+                "804D5598A6A6E0BE883BCB0521EFC11C7CC32FDDB2E6C752CB1D7DB70E1E7041",
+                "545E00EAFCA19D321F0713C5179FD920E764708B4EB36E065AEB39A05FAC0A3D"
+              ],
+              "previous_decision_hash": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-w7_terminal",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "w7_terminal"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 1,
+          "chain_head": "61696DD101D607EEDC060AB0A33821AD07AED58FD0EB7C1EC7F2FA28BC9B7D69",
+          "frames": [
+            {
+              "ordinal": 12,
+              "frame_id": "w7_terminal",
+              "capability_id": "terminal_without_callback",
+              "capability_state": "source_locked_fixture_only",
+              "status": "not_applicable_terminal",
+              "reason_code": "terminal_no_callback",
+              "rule_id": "terminal_no_callback",
+              "selection_domain": "none",
+              "selected_indexes": null,
+              "selected_card_ids": null,
+              "public_observation_hash": null,
+              "window_id": null,
+              "option_fingerprints": [],
+              "previous_decision_hash": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "61696DD101D607EEDC060AB0A33821AD07AED58FD0EB7C1EC7F2FA28BC9B7D69"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "all-frames",
+      "operation": "evaluate_all",
+      "input": {},
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "frame_count": 13,
+          "chain_head": "61696DD101D607EEDC060AB0A33821AD07AED58FD0EB7C1EC7F2FA28BC9B7D69",
+          "frames": [
+            {
+              "ordinal": 0,
+              "frame_id": "w0_initial",
+              "capability_id": "initial_deck",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "official_initial_deck_fixture",
+              "rule_id": "official_initial_deck",
+              "selection_domain": "initial_deck_card_ids",
+              "selected_indexes": null,
+              "selected_card_ids": [
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                104,
+                104,
+                112,
+                112,
+                112,
+                112,
+                646,
+                646,
+                646,
+                646,
+                647,
+                647,
+                647,
+                648,
+                648,
+                648,
+                860,
+                860,
+                1079,
+                1079,
+                1079,
+                1080,
+                1086,
+                1086,
+                1086,
+                1086,
+                1097,
+                1097,
+                1097,
+                1122,
+                1137,
+                1152,
+                1152,
+                1152,
+                1152,
+                1182,
+                1182,
+                1219,
+                1219,
+                1219,
+                1219,
+                1227,
+                1227,
+                1227,
+                1227,
+                1231,
+                1259,
+                1259,
+                1259,
+                1259
+              ],
+              "public_observation_hash": "8C16E623D9EF221CF948B94C9717DCEABAF0011D615C94990DE41EDF4535F669",
+              "window_id": null,
+              "option_fingerprints": [],
+              "previous_decision_hash": null,
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53"
+            },
+            {
+              "ordinal": 1,
+              "frame_id": "w1_setup_active",
+              "capability_id": "setup_active",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+              "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+              "option_fingerprints": [
+                "CF888D62D1E0D554FBAEE405DC314A80BD3216C13B528BECB20E3291EDEFFA54",
+                "999D88E29A10063AB95B9524B235E3FBDB3567F31DE2243E6EE23DDEBDCBE8D8"
+              ],
+              "previous_decision_hash": "0598EF3F74FAD9DEA78B18211AB9098CDE9BC1DC90B2AC255573237ADF183B53",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280"
+            },
+            {
+              "ordinal": 2,
+              "frame_id": "w2_setup_bench",
+              "capability_id": "setup_bench",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "optional_zero",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [],
+              "selected_card_ids": null,
+              "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+              "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+              "option_fingerprints": [
+                "01F7E2802E89C3E6060C3A6142F80243A6A2829C528CF57B4EE9E612798DC998"
+              ],
+              "previous_decision_hash": "7E4862A39F3FC4BF4577876926BA578050783F614DBE7A64BF4780DEB5309280",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7"
+            },
+            {
+              "ordinal": 3,
+              "frame_id": "w3_main",
+              "capability_id": "main_action_frontier",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+              "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+              "option_fingerprints": [
+                "72B14AF6DCF49DDD599839BB579D00279D3D80132FDE174F6B038B1B2E7BE1B2",
+                "C773B613B818173AB33E475F31FBAB5CD36352ACA9AF25974361E10ABB76F0F4",
+                "97FBF977F6A8112947412B4A941E1FD9C13F6633D7282BA0748377A07459D9B3",
+                "E3955ACF1C8F28D373D1A3B4E4054CC703D91AF3626131B2963B6045824A425A"
+              ],
+              "previous_decision_hash": "1D36ACD80A83441EC850CADD4FE9BA9D6A6DDA849101DE09016CA9D3C5AAACC7",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C"
+            },
+            {
+              "ordinal": 4,
+              "frame_id": "w4_spikemuth_deck",
+              "capability_id": "spikemuth_tutor",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "public_deck_card_id",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                1
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+              "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+              "option_fingerprints": [
+                "D3B647EB593D95803C13B7E6D5EEE491F3FA95ACC7E177FB40E260ECAA7694FF",
+                "1F361F00EC8782D154516FDF5E612A5044CC79643E9AE6E6E3DCC0FD7F849366"
+              ],
+              "previous_decision_hash": "75D23B5C01D920E67A54D6C9BDA5BD9F0FA2AA4E245F78BCDB8544E374F4438C",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8"
+            },
+            {
+              "ordinal": 5,
+              "frame_id": "w5_punk_up_sources",
+              "capability_id": "punk_up",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "all_public_deck_card_id",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+              "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+              "option_fingerprints": [
+                "5763F49B6896C9C3BE96B628211350EED7490AAFEBF384763A960A45616B4C1A",
+                "A2E7D6B5C4AFF2D6DE7A2851F89EA340BFAC763C9EE1D8649E2E1636B2D5E7C9",
+                "2771CA0AB9D2D6E06186AC52DE325670D220F42228C89F28DD26DDA6DE4193EC",
+                "37D3A377ACE760ACB1499D3FFC8B6B45D0A7AA54B8992D502B520BCE6FD8B065",
+                "DDFA73690E275FDCB0AFAF28C5C150CA50CE40769EA6E702A5A06F544C6B3C3B"
+              ],
+              "previous_decision_hash": "DDA2785AA0DE5CDD49B42301DDB45DADE33F535109BB82C049921AFE0E2117F8",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD"
+            },
+            {
+              "ordinal": 6,
+              "frame_id": "w5_punk_up_target_1",
+              "capability_id": "punk_up",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+              "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+              "option_fingerprints": [
+                "455C1875A0DCE9F3A02F2B038C44711EF90C43507DA1278E0FE1FA932EFECB6A",
+                "DD690BEDAB21BEC8C0F09DBAC5FE2F8362F3AFE86055091DEA4F41D24132FF41",
+                "47B6367EF1F5D62D31BE7C2F328892BB9195101BB11B574A58C71CA81EE00B2A"
+              ],
+              "previous_decision_hash": "E8F63ED3FD6C84E09ADE50988BA4D4FCCA36CD28B043AEAFE935F072146F80DD",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F"
+            },
+            {
+              "ordinal": 7,
+              "frame_id": "w5_punk_up_target_2",
+              "capability_id": "punk_up",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+              "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+              "option_fingerprints": [
+                "703950A2A3DF80D011F3A614EE8491CFE056B271F05FA7FEA2E8417B6DEC41CA",
+                "49283B1DA263B058FB56392BF0BF8321CC1C8699280C6FE093DEE4562C2C93AD",
+                "066873DACD68DAF418147FD8B09C49C18A5F05D9CE438736BC273BE7A4BE96BB"
+              ],
+              "previous_decision_hash": "F496643A8E56281D0F9A2E571D539B8EF3B0B940488FE0F65EF4A525434D193F",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E"
+            },
+            {
+              "ordinal": 8,
+              "frame_id": "w6_shadow_bullet_attack",
+              "capability_id": "shadow_bullet",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "official_attack_id",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                1
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+              "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+              "option_fingerprints": [
+                "E980669EACACAA379DEA4094E1221A8B375FE1619F136F84CE2AA7F99A09DF3F",
+                "1770C1C8CC91E795C6F710956F28ED4FD347CEA0E9369C0D74A5CF3D9D60E481",
+                "E95ED4DB748E1793A24F76327E4534BDEA497664ECE75B38F8331C213C666B56",
+                "F3FA5EEF2FC8C21B83A340B4B2C3E200C0FB85EF25923FDEF843817D38F57C7A"
+              ],
+              "previous_decision_hash": "B302DD2AF002FC1A957668ACFFD157364A9BEC9891F01840717A0CEDE7DAA40E",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B"
+            },
+            {
+              "ordinal": 9,
+              "frame_id": "w6_shadow_bullet_target",
+              "capability_id": "shadow_bullet",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+              "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+              "option_fingerprints": [
+                "E815A0BDBAA0B2E015B7B65779C5F8ECA67524D77A18F5D6479D6A08D4E73A86",
+                "8EEEE8456F36E0F2463E37CC8FB948018B4F35EB114C2AE057ADCF0CA68A1514"
+              ],
+              "previous_decision_hash": "D194B5646215F51780226D8BDE8CB1E8E9FD1B1674ECA821FD1E23CC7B18445B",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05"
+            },
+            {
+              "ordinal": 10,
+              "frame_id": "w7_take_prize",
+              "capability_id": "take_prize",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+              "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+              "option_fingerprints": [
+                "26FA8115631A2A197B1E127D613FE8C88EF3DB814E48644036C6C501FB18381D",
+                "3EED37CA3938D5630382BB6E879899F94BD738B2ECCD430F0750DDE18E568E31",
+                "6F18273B1989E3C93DFCC307FCA9A15BB12619FC7B98529C83F9914AE557450B",
+                "069D894CB831AA7E8C408C0CFEB5F0A389C1572481C0EAD110D52E2CA9A78A62",
+                "FDC5C27718D22788B0676848AA54D921F706CB8D5E5A0B84643F41A28743A88C",
+                "7B3B2FFEDE10C13AF404742E80C2B772625B54312FE178185FFE1697517079EA"
+              ],
+              "previous_decision_hash": "A3F6206557854FF4EFBEB8989424EE44DC9CB0CC0A781C924825349F69DBEC05",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044"
+            },
+            {
+              "ordinal": 11,
+              "frame_id": "w7_forced_send_out",
+              "capability_id": "forced_send_out",
+              "capability_state": "source_locked_fixture_only",
+              "status": "accepted",
+              "reason_code": "deterministic_policy_selected",
+              "rule_id": "first_min",
+              "selection_domain": "current_window_indexes",
+              "selected_indexes": [
+                0
+              ],
+              "selected_card_ids": null,
+              "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+              "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+              "option_fingerprints": [
+                "D33D99A53487F9039326F0D64F011E65A14C30ED83D8354B1F131362D884F10D",
+                "A648808C2AADFA4B10CED883DB2E8CA7630C78A391B52D2F3B949EB0563388A8",
+                "804D5598A6A6E0BE883BCB0521EFC11C7CC32FDDB2E6C752CB1D7DB70E1E7041",
+                "545E00EAFCA19D321F0713C5179FD920E764708B4EB36E065AEB39A05FAC0A3D"
+              ],
+              "previous_decision_hash": "A69210FB7148C4359B1DEC8A47AF688506B3182CA0E1C4D2E288B579C6699044",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5"
+            },
+            {
+              "ordinal": 12,
+              "frame_id": "w7_terminal",
+              "capability_id": "terminal_without_callback",
+              "capability_state": "source_locked_fixture_only",
+              "status": "not_applicable_terminal",
+              "reason_code": "terminal_no_callback",
+              "rule_id": "terminal_no_callback",
+              "selection_domain": "none",
+              "selected_indexes": null,
+              "selected_card_ids": null,
+              "public_observation_hash": null,
+              "window_id": null,
+              "option_fingerprints": [],
+              "previous_decision_hash": "9BB6DDF1926115C0CD439FFC769BFC687C687EB3AAF2211CC04B9EA5FA2D46F5",
+              "production_action_used": false,
+              "execution_authority": false,
+              "decision_hash": "61696DD101D607EEDC060AB0A33821AD07AED58FD0EB7C1EC7F2FA28BC9B7D69"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "frame-type",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": {
+          "host_type": "integer",
+          "value": 1
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "frame-unknown",
+      "operation": "evaluate_frame",
+      "input": {
+        "frame_id": "private_sentinel"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_unknown",
+        "value": null
+      }
+    },
+    {
+      "case_id": "mutate-public-hash",
+      "operation": "probe_frame_mutation",
+      "input": {
+        "frame_id": "w6_shadow_bullet_attack",
+        "field": "public_observation_hash",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "mutate-window-id",
+      "operation": "probe_frame_mutation",
+      "input": {
+        "frame_id": "w4_spikemuth_deck",
+        "field": "window_id",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "mutate-fingerprints",
+      "operation": "probe_frame_mutation",
+      "input": {
+        "frame_id": "w6_shadow_bullet_target",
+        "field": "option_fingerprints",
+        "value": []
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "reorder-options",
+      "operation": "probe_frame_mutation",
+      "input": {
+        "frame_id": "w3_main",
+        "field": "options",
+        "value": "reverse"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "mutate-cardinality",
+      "operation": "probe_frame_mutation",
+      "input": {
+        "frame_id": "w1_setup_active",
+        "field": "min_count",
+        "value": 0
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "frame_binding_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "private-field",
+      "operation": "probe_frame_mutation",
+      "input": {
+        "frame_id": "w3_main",
+        "field": "private_sentinel",
+        "value": "PRIVATE"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "operation-unknown",
+      "operation": "private_sentinel",
+      "input": {},
+      "expected": {
+        "ok": false,
+        "error_code": "operation_unknown",
+        "value": null
+      }
+    }
+  ]
+}

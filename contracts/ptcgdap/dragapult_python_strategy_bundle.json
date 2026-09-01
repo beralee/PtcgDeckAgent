@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-dragapult-python-strategy-acceptance-v1",
+  "profile_id": "ptcgdap-dragapult-python-public-strategy-v1",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/dragapult_python_strategy.schema.json",
+      "canonical_sha256": "DA89A9E3BCCC19F0778BA1B2473A695CB6B57BD98F082446BDF8F9D07A460098"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/dragapult_python_strategy_profile.json",
+      "canonical_sha256": "BAD898A4847CD49477F2D2D8C2C67FF505C8423FD998541E36A3C5E8491FEEA3"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/dragapult_python_strategy_conformance_vectors.json",
+      "canonical_sha256": "DF9FF21E0C773457669E82E788003DE827A6C7BBDCE2F285F9D06131F7EAF422"
+    },
+    {
+      "id": "deck_manifest",
+      "path": "data/ptcgdap/dragapult_python_strategy/deck_manifest_v1.json",
+      "canonical_sha256": "74D3C15E6A81D68F089B34673019CC455B73D06D2B26F02A1722BDB64C9C9EFA"
+    },
+    {
+      "id": "policy",
+      "path": "data/ptcgdap/dragapult_python_strategy/policy_v1.json",
+      "canonical_sha256": "BD2621352EEF3CDD0B4A68F1AA81CD10F1FADA7EF290704C1E46B6E2FF2C2AD6"
+    },
+    {
+      "id": "opponent",
+      "path": "data/ptcgdap/dragapult_python_strategy/rules_ai_opponent_v1.json",
+      "canonical_sha256": "4087CD38DCC747872E85F381693D7763C025E64EA726AEDA49960E8D8CB1C55C"
+    }
+  ]
+}

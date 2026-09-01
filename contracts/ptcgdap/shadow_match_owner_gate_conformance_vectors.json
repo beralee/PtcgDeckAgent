@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-match-owner-gate-p3-wp6-v1",
+  "cases": [
+    {
+      "case_id": "begin-legacy",
+      "scenario": "begin_legacy",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "active",
+      "expected_mode": "legacy",
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "begin-aligned",
+      "scenario": "begin_aligned",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "active",
+      "expected_mode": "aligned_shadow",
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "active-owner-switch-rejected",
+      "scenario": "active_owner_switch",
+      "expected_accepted": false,
+      "expected_error": "active_match_exists",
+      "expected_state": "active",
+      "expected_mode": "legacy",
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "request-next-legacy",
+      "scenario": "request_next_legacy",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "active",
+      "expected_mode": "aligned_shadow",
+      "expected_rollback_pending": true
+    },
+    {
+      "case_id": "current-owner-unchanged-after-request",
+      "scenario": "current_owner_after_request",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "active",
+      "expected_mode": "aligned_shadow",
+      "expected_rollback_pending": true
+    },
+    {
+      "case_id": "end-with-pending-rollback",
+      "scenario": "end_with_pending",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "between_matches",
+      "expected_mode": null,
+      "expected_rollback_pending": true
+    },
+    {
+      "case_id": "next-aligned-request-forced-legacy",
+      "scenario": "next_forced_legacy",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "active",
+      "expected_mode": "legacy",
+      "expected_rollback_pending": false,
+      "expected_rollback_applied": true
+    },
+    {
+      "case_id": "pending-rollback-cannot-be-overwritten",
+      "scenario": "duplicate_rollback_request",
+      "expected_accepted": false,
+      "expected_error": "rollback_already_pending",
+      "expected_state": "active",
+      "expected_mode": "aligned_shadow",
+      "expected_rollback_pending": true
+    },
+    {
+      "case_id": "stale-generation",
+      "scenario": "stale_generation",
+      "expected_accepted": false,
+      "expected_error": "stale_match_generation",
+      "expected_state": "between_matches",
+      "expected_mode": null,
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "aligned-without-broker",
+      "scenario": "aligned_without_broker",
+      "expected_accepted": false,
+      "expected_error": "broker_required",
+      "expected_state": "idle",
+      "expected_mode": null,
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "aligned-cross-generation-broker",
+      "scenario": "aligned_cross_generation_broker",
+      "expected_accepted": false,
+      "expected_error": "broker_match_generation_mismatch",
+      "expected_state": "idle",
+      "expected_mode": null,
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "legacy-with-broker",
+      "scenario": "legacy_with_broker",
+      "expected_accepted": false,
+      "expected_error": "broker_forbidden",
+      "expected_state": "idle",
+      "expected_mode": null,
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "strictly-newer-match",
+      "scenario": "strictly_newer_match",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "active",
+      "expected_mode": "legacy",
+      "expected_rollback_pending": false
+    },
+    {
+      "case_id": "audit-copy-nonauthority",
+      "scenario": "audit_copy_nonauthority",
+      "expected_accepted": false,
+      "expected_error": "invalid_gate",
+      "expected_state": "active",
+      "expected_mode": "legacy",
+      "expected_rollback_pending": false
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SESSION_SENTINEL",
+    "PRIVATE_BROKER_SENTINEL",
+    "PRIVATE_PROMPT_SENTINEL"
+  ]
+}

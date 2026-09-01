@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-godot-option-binding-p3-wp2-v1",
+  "parent": {
+    "work_package": "P3-WP1",
+    "manifest_canonical_sha256": "B47E808277C954003494A5C414E02AD6FA81C0CE6EC73A1E7064B40E991B2F4F",
+    "decision_port_bundle_canonical_sha256": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "selection_bundle_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/godot_option_binding.schema.json",
+      "canonical_sha256": "FF4CE1D7F1655062E8BD25951E34030582408CBA4990A9E8C34351B68D98614F"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/godot_option_binding_profile.json",
+      "canonical_sha256": "2E42620EFF40CEC465FF46B4F252389AABF8D26708B1B93F392FB03D169E71C0"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/godot_option_binding_conformance_vectors.json",
+      "canonical_sha256": "8B13EABF6039F20346D4F52326E4B20CDD6FE000E7F685B7527DB6163F06B40F"
+    }
+  ]
+}

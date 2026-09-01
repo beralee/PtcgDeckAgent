@@ -1,0 +1,504 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/public_deck_adapter.schema.json",
+  "title": "PTCGDAP P4-WP4 public deck adapter documents and proposal audit values",
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+      "not": {
+        "pattern": "(?i:private)"
+      }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "index": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/safeInteger"
+        },
+        {
+          "minimum": 0
+        }
+      ]
+    },
+    "indexArray": {
+      "type": "array",
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/index"
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "operator",
+        "reason_code",
+        "goal_stage",
+        "priority",
+        "predicate"
+      ],
+      "properties": {
+        "rule_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "operator": {
+          "enum": [
+            "goal_proposal",
+            "macro_proposal",
+            "tiebreak_score"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "public_goal_proposal",
+            "public_macro_proposal",
+            "public_tiebreak_proposal"
+          ]
+        },
+        "goal_stage": {
+          "enum": [
+            "acquire",
+            "deploy",
+            "fund",
+            "ready",
+            "execute",
+            "maintain",
+            "recover"
+          ]
+        },
+        "priority": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 0
+            }
+          ]
+        },
+        "predicate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "select_type_raw",
+            "select_context_raw",
+            "option_type_raw",
+            "option_card_id",
+            "option_player_index",
+            "acting_hand_card_id",
+            "acting_active_card_id"
+          ],
+          "properties": {
+            "select_type_raw": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            },
+            "select_context_raw": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            },
+            "option_type_raw": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            },
+            "option_card_id": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            },
+            "option_player_index": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            },
+            "acting_hand_card_id": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            },
+            "acting_active_card_id": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/safeInteger"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "goal_proposal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_goal_proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "macro_proposal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_macro_proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "tiebreak_score"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_tiebreak_proposal"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "adapterDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "adapter_id",
+        "adapter_version",
+        "rules"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "adapter_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "adapter_version": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 1
+            }
+          ]
+        },
+        "rules": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/rule"
+          }
+        }
+      }
+    },
+    "compiledAdapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "adapter_id",
+        "adapter_version",
+        "rules",
+        "profile_id",
+        "authoritative",
+        "adapter_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "adapter_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "adapter_version": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeInteger"
+            },
+            {
+              "minimum": 1
+            }
+          ]
+        },
+        "rules": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/rule"
+          }
+        },
+        "profile_id": {
+          "const": "ptcgdap-public-deck-adapter-p4-wp4-v1"
+        },
+        "authoritative": {
+          "const": false
+        },
+        "adapter_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    },
+    "adapterProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator",
+        "indexes",
+        "reason_code"
+      ],
+      "properties": {
+        "operator": {
+          "enum": [
+            "goal_proposal",
+            "macro_proposal",
+            "tiebreak_score"
+          ]
+        },
+        "indexes": {
+          "$ref": "#/$defs/indexArray"
+        },
+        "reason_code": {
+          "enum": [
+            "public_goal_proposal",
+            "public_macro_proposal",
+            "public_tiebreak_proposal"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "goal_proposal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_goal_proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "macro_proposal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_macro_proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operator": {
+                "const": "tiebreak_score"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_code": {
+                "const": "public_tiebreak_proposal"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "matchedRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "operator",
+        "goal_stage",
+        "matched_indexes"
+      ],
+      "properties": {
+        "rule_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "operator": {
+          "enum": [
+            "goal_proposal",
+            "macro_proposal",
+            "tiebreak_score"
+          ]
+        },
+        "goal_stage": {
+          "enum": [
+            "acquire",
+            "deploy",
+            "fund",
+            "ready",
+            "execute",
+            "maintain",
+            "recover"
+          ]
+        },
+        "matched_indexes": {
+          "$ref": "#/$defs/indexArray"
+        }
+      }
+    },
+    "proposalResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "proposal_id",
+        "adapter_id",
+        "source",
+        "adapter_proposals",
+        "matched_rules",
+        "authoritative",
+        "proposal_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-public-deck-adapter-p4-wp4-v1"
+        },
+        "proposal_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "adapter_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "context_hash",
+            "window_id",
+            "adapter_hash"
+          ],
+          "properties": {
+            "context_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "window_id": {
+              "$ref": "#/$defs/hash"
+            },
+            "adapter_hash": {
+              "$ref": "#/$defs/hash"
+            }
+          }
+        },
+        "adapter_proposals": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/adapterProposal"
+          }
+        },
+        "matched_rules": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/matchedRule"
+          }
+        },
+        "authoritative": {
+          "const": false
+        },
+        "proposal_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/adapterDocument"
+    },
+    {
+      "$ref": "#/$defs/compiledAdapter"
+    },
+    {
+      "$ref": "#/$defs/proposalResult"
+    }
+  ]
+}

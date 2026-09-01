@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "bundle",
+  "bundle_id": "ptcgdap-marnie-capability-policy-p5-wp3-v1",
+  "status": "offline_shadow_policy",
+  "parent_replay_bundle": {
+    "path": "contracts/ptcgdap/marnie_trajectory_replay_bundle.json",
+    "canonical_sha256": "E203A688BEC1AFFFABAAF06098361B3FAE04B84431F99AE75A19F891BFA9599F"
+  },
+  "parent_fixture_bundle": {
+    "path": "contracts/ptcgdap/marnie_vertical_slice_bundle.json",
+    "canonical_sha256": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425"
+  },
+  "artifacts": [
+    {
+      "id": "marnie_capability_policy_schema_v1",
+      "path": "contracts/ptcgdap/marnie_capability_policy.schema.json",
+      "canonical_sha256": "C15A41854F00B4F1F2C50C09A87AC7CF59980BAE68016BCB76F7DC54BFA187A5"
+    },
+    {
+      "id": "marnie_capability_policy_profile_v1",
+      "path": "contracts/ptcgdap/marnie_capability_policy_profile.json",
+      "canonical_sha256": "E5C7AB57E8D0ADEC6B1F216E3AF3B24FB03E3366C7F2EADC7E5F6B9324B4F52E"
+    },
+    {
+      "id": "marnie_capability_policy_rules_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/marnie_capability_policy_v1.json",
+      "canonical_sha256": "37B17560543EE13B0ADFEDA2F2CD95E344C4CE9BEA32C9AF95FEAC3BED0C1F1D"
+    },
+    {
+      "id": "marnie_capability_policy_vectors_v1",
+      "path": "contracts/ptcgdap/marnie_capability_policy_conformance_vectors.json",
+      "canonical_sha256": "D9A1C101115BA2DC39F70B09FA6EFD9BC64941E4348C52028F647B713EADEAF4"
+    }
+  ],
+  "self_hash_policy": "bundle and bound artifacts do not contain the final bundle hash"
+}

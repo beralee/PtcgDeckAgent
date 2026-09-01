@@ -26,8 +26,18 @@ const DECKS := {
 	"charizard_dragapult": {"id": 800025404, "name": "自爆恶喷"},
 }
 
+static var _catalog_cache: Dictionary = {}
+static var _catalog_cache_signature := ""
+static var _catalog_cache_hits := 0
+static var _catalog_cache_misses := 0
+
 
 static func load_catalog(path: String = CATALOG_PATH) -> Dictionary:
+	var signature := _cache_signature(path)
+	if not _catalog_cache.is_empty() and _catalog_cache_signature == signature:
+		_catalog_cache_hits += 1
+		return _catalog_cache.duplicate(true)
+	_catalog_cache_misses += 1
 	if not FileAccess.file_exists(path):
 		return {"scenarios": [], "errors": ["missing catalog: %s" % path]}
 	var json := JSON.new()
@@ -42,7 +52,9 @@ static func load_catalog(path: String = CATALOG_PATH) -> Dictionary:
 	_apply_scenario_overlay(catalog, N_ZOROARK_HIGH_DIFFICULTY_OVERLAY_PATH)
 	_apply_scenario_overlay(catalog, CHARIZARD_DRAGAPULT_HIGH_DIFFICULTY_OVERLAY_PATH)
 	catalog["errors"] = validate_catalog(catalog)
-	return catalog
+	_catalog_cache = catalog.duplicate(true)
+	_catalog_cache_signature = signature
+	return catalog.duplicate(true)
 
 
 static func _apply_scenario_overlay(catalog: Dictionary, overlay_path: String) -> void:
@@ -74,7 +86,10 @@ static func _apply_scenario_overlay(catalog: Dictionary, overlay_path: String) -
 
 
 static func list_scenarios(path: String = CATALOG_PATH, deck_key: String = "") -> Array[Dictionary]:
-	var catalog := load_catalog(path)
+	return list_scenarios_from_catalog(load_catalog(path), deck_key)
+
+
+static func list_scenarios_from_catalog(catalog: Dictionary, deck_key: String = "") -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for value: Variant in catalog.get("scenarios", []):
 		if value is Dictionary and (deck_key == "" or str((value as Dictionary).get("deck_key", "")) == deck_key):
@@ -84,6 +99,37 @@ static func list_scenarios(path: String = CATALOG_PATH, deck_key: String = "") -
 		return int(a.get("order", 0)) < int(b.get("order", 0)) if deck_compare == 0 else deck_compare < 0
 	)
 	return result
+
+
+static func clear_catalog_cache_for_tests() -> void:
+	_catalog_cache = {}
+	_catalog_cache_signature = ""
+	_catalog_cache_hits = 0
+	_catalog_cache_misses = 0
+
+
+static func catalog_cache_stats_for_tests() -> Dictionary:
+	return {"hits": _catalog_cache_hits, "misses": _catalog_cache_misses}
+
+
+static func _cache_signature(path: String) -> String:
+	var paths: Array[String] = [
+		path,
+		PROVEN_DRAGAPULT_OVERLAY_PATH,
+		GHOLDENGO_CURRICULUM_OVERLAY_PATH,
+		HIGH_DIFFICULTY_OVERLAY_PATH,
+		GARDEVOIR_GRAPH_OVERLAY_PATH,
+		N_ZOROARK_HIGH_DIFFICULTY_OVERLAY_PATH,
+		CHARIZARD_DRAGAPULT_HIGH_DIFFICULTY_OVERLAY_PATH,
+	]
+	var parts: PackedStringArray = PackedStringArray()
+	for source_path: String in paths:
+		parts.append("%s:%d:%d" % [
+			source_path,
+			FileAccess.get_modified_time(source_path),
+			FileAccess.get_size(source_path) if FileAccess.file_exists(source_path) else -1,
+		])
+	return "|".join(parts)
 
 
 static func get_scenario(scenario_id: String, path: String = CATALOG_PATH) -> Dictionary:

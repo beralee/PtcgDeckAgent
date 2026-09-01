@@ -1,0 +1,345 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/raw_cabt_envelope.schema.json",
+  "title": "RawCabtEnvelope contract artifact",
+  "description": "Host-only raw-preserving envelope implemented by the P1-WP2 offline Python and GDScript runtimes. P1-WP3 adds a separate immutable selection-window core; the public firewall, policy, Host binding, and live-owner behavior remain later work packages.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "envelope_version",
+    "source_lock_id",
+    "hash_profile",
+    "raw_payload",
+    "raw_private_hash",
+    "token_free_callback_hash",
+    "field_presence",
+    "known_view",
+    "unknown_fields",
+    "framework",
+    "enum_values",
+    "parse_issues",
+    "opaque_search_capability_present",
+    "firewall_status",
+    "public_observation_hash",
+    "source_contract_hash"
+  ],
+  "properties": {
+    "envelope_version": {
+      "const": 1
+    },
+    "source_lock_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hash_profile": {
+      "const": "cabt_tree_hash_v1",
+      "description": "Exact canonicalization, domain separation, token normalization, and firewall rules are defined by cabt_tree_hash_profile.json."
+    },
+    "raw_payload": {
+      "description": "Exact callback JSON tree as received by the Host. Object key whitespace/order are not claimed because the callback is already a parsed mapping.",
+      "type": "object",
+      "required": [
+        "select",
+        "logs",
+        "current",
+        "search_begin_input"
+      ],
+      "properties": {
+        "select": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "logs": {
+          "type": "array"
+        },
+        "current": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "search_begin_input": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "raw_private_hash": {
+      "description": "cabt_tree_hash_v1 domain raw_private over the full Host-only raw tree, including an opaque search token when present. Never a public trace field.",
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "token_free_callback_hash": {
+      "description": "cabt_tree_hash_v1 domain token_free_callback over the complete callback tree, including additive unknown fields, after the exact Search-token replacement declared by the hash profile. Host-only until the public firewall accepts the tree.",
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "field_presence": {
+      "description": "JSON Pointer to missing/null/value state; preserves absence separately from explicit null.",
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "missing",
+          "null",
+          "value"
+        ]
+      }
+    },
+    "known_view": {
+      "description": "Typed-view input surface. The three roots are always present for a structurally valid callback; nested type or enum errors yield a partial root plus parse_issues and make the envelope policy-ineligible. Policy exposure is a later allow-list projection and excludes the opaque token.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "select",
+        "logs",
+        "current"
+      ],
+      "properties": {
+        "select": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "logs": {
+          "type": "array"
+        },
+        "current": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    },
+    "unknown_fields": {
+      "description": "Host-private quarantine index only; unknown values remain solely in raw_payload. Unknown pointer names are excluded from safe/public metadata because a future key name can itself contain private material.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pointer",
+          "presence",
+          "json_type"
+        ],
+        "properties": {
+          "pointer": {
+            "type": "string"
+          },
+          "presence": {
+            "enum": [
+              "missing",
+              "null",
+              "value"
+            ]
+          },
+          "json_type": {
+            "enum": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "framework": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "remaining_overage_time": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "enum_values": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pointer",
+          "raw_int",
+          "known_name",
+          "authority"
+        ],
+        "properties": {
+          "pointer": {
+            "type": "string"
+          },
+          "raw_int": {
+            "type": "integer"
+          },
+          "known_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "authority": {
+            "enum": [
+              "official_known",
+              "locked_engine_only",
+              "unknown_future"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "authority": {
+                  "const": "unknown_future"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "known_name": {
+                  "type": "null"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "known_name": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "parse_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "pointer",
+          "severity"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "pointer": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "warning",
+              "error"
+            ]
+          }
+        }
+      }
+    },
+    "opaque_search_capability_present": {
+      "type": "boolean"
+    },
+    "firewall_status": {
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ]
+    },
+    "public_observation_hash": {
+      "description": "cabt_tree_hash_v1 domain public_observation over the separate immutable allow-list projection. Non-null only after firewall acceptance. Raw additive fields remain quarantined unless a reviewed public schema explicitly allow-lists them; every key present in the accepted projection is bound.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "source_contract_hash": {
+      "description": "Uppercase SHA-256 of canonical_json_v1 bytes for contracts/ptcgdap/cabt_contract_bundle.json. It binds the reviewed envelope schema, hash profile and vectors, enum snapshot, option-shape contract, typed-view profile, immutable selection schema/profile, and shared selection vectors; it is not an observation hash.",
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "opaque_search_capability_present": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "raw_payload": {
+            "required": [
+              "search_begin_input"
+            ],
+            "properties": {
+              "search_begin_input": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "raw_payload": {
+            "properties": {
+              "search_begin_input": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "firewall_status": {
+            "const": "accepted"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "public_observation_hash": {
+            "type": "string",
+            "pattern": "^[0-9A-F]{64}$"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "public_observation_hash": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

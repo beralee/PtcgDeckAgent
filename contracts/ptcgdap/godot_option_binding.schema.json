@@ -1,0 +1,1160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/godot_option_binding.schema.json",
+  "title": "PtcgDAP current-window Host-private GodotOptionBinding shadow contract",
+  "$defs": {
+    "bindingAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_profile",
+        "binding_version",
+        "snapshot_id",
+        "window_id",
+        "public_observation_hash",
+        "chooser_player_index",
+        "option_count",
+        "option_fingerprints",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "binding_profile": {
+          "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+        },
+        "binding_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "window_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "public_observation_hash": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "chooser_player_index": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "option_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "option_fingerprints": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          }
+        },
+        "authority": {
+          "const": "godot_option_binding_shadow"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "bindingResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "enum": [
+            "",
+            "binding_contract_error",
+            "invalid_port",
+            "snapshot_not_current",
+            "snapshot_owner_mismatch",
+            "snapshot_integrity_invalid",
+            "source_mutated",
+            "invalid_window",
+            "window_mismatch",
+            "invalid_callback_binding_hash",
+            "invalid_private_commands",
+            "invalid_private_object_refs",
+            "reference_released",
+            "binding_not_current",
+            "option_index_invalid",
+            "binding_integrity_invalid",
+            "owner_mismatch"
+          ]
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "binding_profile",
+                "binding_version",
+                "snapshot_id",
+                "window_id",
+                "public_observation_hash",
+                "chooser_player_index",
+                "option_count",
+                "option_fingerprints",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "binding_profile": {
+                  "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+                },
+                "binding_version": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "snapshot_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "window_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "public_observation_hash": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "chooser_player_index": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1
+                  ]
+                },
+                "option_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "option_fingerprints": {
+                  "type": "array",
+                  "maxItems": 256,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-F0-9]{64}$"
+                  }
+                },
+                "authority": {
+                  "const": "godot_option_binding_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "resolutionAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_profile",
+        "binding_version",
+        "snapshot_id",
+        "window_id",
+        "option_index",
+        "fingerprint_hash",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "binding_profile": {
+          "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+        },
+        "binding_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "window_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "option_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fingerprint_hash": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "authority": {
+          "const": "godot_option_resolution_shadow"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "resolutionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "enum": [
+            "",
+            "binding_contract_error",
+            "invalid_port",
+            "snapshot_not_current",
+            "snapshot_owner_mismatch",
+            "snapshot_integrity_invalid",
+            "source_mutated",
+            "invalid_window",
+            "window_mismatch",
+            "invalid_callback_binding_hash",
+            "invalid_private_commands",
+            "invalid_private_object_refs",
+            "reference_released",
+            "binding_not_current",
+            "option_index_invalid",
+            "binding_integrity_invalid",
+            "owner_mismatch"
+          ]
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "binding_profile",
+                "binding_version",
+                "snapshot_id",
+                "window_id",
+                "option_index",
+                "fingerprint_hash",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "binding_profile": {
+                  "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+                },
+                "binding_version": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "snapshot_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "window_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "option_index": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "fingerprint_hash": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "authority": {
+                  "const": "godot_option_resolution_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "conformanceVectors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "host_token_encoding",
+        "fixture",
+        "bind_cases",
+        "resolve_cases",
+        "transition_cases"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+        },
+        "host_token_encoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "card_reference",
+            "command_reference",
+            "object_reference",
+            "null_reference"
+          ],
+          "properties": {
+            "card_reference": {
+              "const": "card:<fixture-label>"
+            },
+            "command_reference": {
+              "const": "command:<fixture-label>"
+            },
+            "object_reference": {
+              "const": "object:<fixture-label>"
+            },
+            "null_reference": {
+              "type": "null"
+            }
+          }
+        },
+        "fixture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "match_generation",
+            "decision_generation",
+            "chooser_player_index",
+            "source",
+            "window",
+            "callback_binding_hash",
+            "private_commands",
+            "private_object_refs",
+            "expected_snapshot_id",
+            "expected_window_id",
+            "expected_option_fingerprints"
+          ],
+          "properties": {
+            "match_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "decision_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "chooser_player_index": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "select",
+                "deck_cards",
+                "context_card",
+                "effect_card",
+                "option_card_refs",
+                "turn_action_count"
+              ],
+              "properties": {
+                "select": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "context",
+                        "minCount",
+                        "maxCount",
+                        "remainDamageCounter",
+                        "remainEnergyCost",
+                        "option",
+                        "deck",
+                        "contextCard",
+                        "effect"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "context": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "minCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "maxCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "remainDamageCounter": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "remainEnergyCost": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "option": {
+                          "type": "array",
+                          "maxItems": 256,
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "type"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "const": 3
+                                  }
+                                }
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "type",
+                                  "index"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "const": 7
+                                  },
+                                  "index": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                }
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "type",
+                                  "local_attack_index"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "const": 13
+                                  },
+                                  "local_attack_index": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                }
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "type"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "const": 14
+                                  }
+                                }
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "type"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "const": 15
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "deck": {
+                          "type": "null"
+                        },
+                        "contextCard": {
+                          "type": "null"
+                        },
+                        "effect": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "deck_cards": {
+                  "type": "null"
+                },
+                "context_card": {
+                  "type": "null"
+                },
+                "effect_card": {
+                  "type": "null"
+                },
+                "option_card_refs": {
+                  "type": "array",
+                  "maxItems": 256,
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^card:[a-z0-9_-]+$"
+                      }
+                    ]
+                  }
+                },
+                "turn_action_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            },
+            "window": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "select",
+                "public_observation_hash",
+                "public_hash_authority",
+                "chooser_player_index"
+              ],
+              "properties": {
+                "select": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "context",
+                    "minCount",
+                    "maxCount",
+                    "remainDamageCounter",
+                    "remainEnergyCost",
+                    "option",
+                    "deck",
+                    "contextCard",
+                    "effect"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "context": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "minCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "maxCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "remainDamageCounter": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "remainEnergyCost": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "option": {
+                      "type": "array",
+                      "maxItems": 256,
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "type",
+                              "area",
+                              "index",
+                              "playerIndex"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": 3
+                              },
+                              "area": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "index": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "playerIndex": {
+                                "type": "integer",
+                                "enum": [
+                                  0,
+                                  1
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "type",
+                              "index"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": 7
+                              },
+                              "index": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "type",
+                              "attackId"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": 13
+                              },
+                              "attackId": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "type"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": 14
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "type",
+                              "cardId",
+                              "serial"
+                            ],
+                            "properties": {
+                              "type": {
+                                "const": 15
+                              },
+                              "cardId": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "serial": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "deck": {
+                      "type": "null"
+                    },
+                    "contextCard": {
+                      "type": "null"
+                    },
+                    "effect": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "public_observation_hash": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "public_hash_authority": {
+                  "const": "conformance_fixture"
+                },
+                "chooser_player_index": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1
+                  ]
+                }
+              }
+            },
+            "callback_binding_hash": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "private_commands": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "type": "string",
+                "pattern": "^command:[a-z0-9_-]+$"
+              }
+            },
+            "private_object_refs": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "string",
+                  "pattern": "^(object|card):[a-z0-9_-]+$"
+                }
+              }
+            },
+            "expected_snapshot_id": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "expected_window_id": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{64}$"
+            },
+            "expected_option_fingerprints": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-F0-9]{64}$"
+              }
+            }
+          }
+        },
+        "bind_cases": {
+          "type": "array",
+          "minItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "fault",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "fault": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "window_option_reorder",
+                  "window_payload_change",
+                  "window_chooser_change",
+                  "callback_lowercase",
+                  "command_count",
+                  "command_primitive",
+                  "reference_count",
+                  "reference_primitive",
+                  "source_mutation",
+                  "null_window"
+                ]
+              },
+              "expected": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "accepted",
+                  "error_code",
+                  "audit"
+                ],
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  },
+                  "error_code": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "binding_contract_error",
+                      "invalid_port",
+                      "snapshot_not_current",
+                      "snapshot_owner_mismatch",
+                      "snapshot_integrity_invalid",
+                      "source_mutated",
+                      "invalid_window",
+                      "window_mismatch",
+                      "invalid_callback_binding_hash",
+                      "invalid_private_commands",
+                      "invalid_private_object_refs",
+                      "reference_released",
+                      "binding_not_current",
+                      "option_index_invalid",
+                      "binding_integrity_invalid",
+                      "owner_mismatch"
+                    ]
+                  },
+                  "audit": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "binding_profile",
+                          "binding_version",
+                          "snapshot_id",
+                          "window_id",
+                          "public_observation_hash",
+                          "chooser_player_index",
+                          "option_count",
+                          "option_fingerprints",
+                          "authority",
+                          "authoritative"
+                        ],
+                        "properties": {
+                          "binding_profile": {
+                            "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+                          },
+                          "binding_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "snapshot_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "window_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "public_observation_hash": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "chooser_player_index": {
+                            "type": "integer",
+                            "enum": [
+                              0,
+                              1
+                            ]
+                          },
+                          "option_count": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "option_fingerprints": {
+                            "type": "array",
+                            "maxItems": 256,
+                            "items": {
+                              "type": "string",
+                              "pattern": "^[A-F0-9]{64}$"
+                            }
+                          },
+                          "authority": {
+                            "const": "godot_option_binding_shadow"
+                          },
+                          "authoritative": {
+                            "const": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "resolve_cases": {
+          "type": "array",
+          "minItems": 7,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "fault",
+              "option_index",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "fault": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "callback_change",
+                  "source_mutation",
+                  "equivalent_window_copy",
+                  "bool_index",
+                  "negative_index",
+                  "out_of_range"
+                ]
+              },
+              "option_index": {
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "expected": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "accepted",
+                  "error_code",
+                  "audit"
+                ],
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  },
+                  "error_code": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "binding_contract_error",
+                      "invalid_port",
+                      "snapshot_not_current",
+                      "snapshot_owner_mismatch",
+                      "snapshot_integrity_invalid",
+                      "source_mutated",
+                      "invalid_window",
+                      "window_mismatch",
+                      "invalid_callback_binding_hash",
+                      "invalid_private_commands",
+                      "invalid_private_object_refs",
+                      "reference_released",
+                      "binding_not_current",
+                      "option_index_invalid",
+                      "binding_integrity_invalid",
+                      "owner_mismatch"
+                    ]
+                  },
+                  "audit": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "binding_profile",
+                          "binding_version",
+                          "snapshot_id",
+                          "window_id",
+                          "option_index",
+                          "fingerprint_hash",
+                          "authority",
+                          "authoritative"
+                        ],
+                        "properties": {
+                          "binding_profile": {
+                            "const": "ptcgdap-godot-option-binding-p3-wp2-v1"
+                          },
+                          "binding_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "snapshot_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "window_id": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "option_index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "fingerprint_hash": {
+                            "type": "string",
+                            "pattern": "^[A-F0-9]{64}$"
+                          },
+                          "authority": {
+                            "const": "godot_option_resolution_shadow"
+                          },
+                          "authoritative": {
+                            "const": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "transition_cases": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "scenario",
+              "expected_old_error"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "scenario": {
+                "type": "string",
+                "enum": [
+                  "new_snapshot",
+                  "accepted_replacement",
+                  "rejected_replacement"
+                ]
+              },
+              "expected_old_error": {
+                "type": "string",
+                "enum": [
+                  "",
+                  "binding_contract_error",
+                  "invalid_port",
+                  "snapshot_not_current",
+                  "snapshot_owner_mismatch",
+                  "snapshot_integrity_invalid",
+                  "source_mutated",
+                  "invalid_window",
+                  "window_mismatch",
+                  "invalid_callback_binding_hash",
+                  "invalid_private_commands",
+                  "invalid_private_object_refs",
+                  "reference_released",
+                  "binding_not_current",
+                  "option_index_invalid",
+                  "binding_integrity_invalid",
+                  "owner_mismatch"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/bindingAudit"
+    },
+    {
+      "$ref": "#/$defs/bindingResult"
+    },
+    {
+      "$ref": "#/$defs/resolutionAudit"
+    },
+    {
+      "$ref": "#/$defs/resolutionResult"
+    },
+    {
+      "$ref": "#/$defs/conformanceVectors"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+  "parent_bundle_canonical_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "source_authority": "exact_current_p4_wp1_strategic_context_owner",
+  "hash_contract": {
+    "canonicalization": "RFC8785_JCS_IJSON_SAFE_SUBSET",
+    "adapter_prefix_utf8_hex": "50544347444150005055424C49435F4445434B5F414441505445525F563100",
+    "proposal_prefix_utf8_hex": "50544347444150005055424C49435F4445434B5F414441505445525F50524F504F53414C5F563100"
+  },
+  "adapter_contract": {
+    "goal_stages": [
+      "acquire",
+      "deploy",
+      "fund",
+      "ready",
+      "execute",
+      "maintain",
+      "recover"
+    ],
+    "operators": [
+      "goal_proposal",
+      "macro_proposal",
+      "tiebreak_score"
+    ],
+    "operator_reason_codes": {
+      "goal_proposal": "public_goal_proposal",
+      "macro_proposal": "public_macro_proposal",
+      "tiebreak_score": "public_tiebreak_proposal"
+    },
+    "predicate_fields": [
+      "select_type_raw",
+      "select_context_raw",
+      "option_type_raw",
+      "option_card_id",
+      "option_player_index",
+      "acting_hand_card_id",
+      "acting_active_card_id"
+    ],
+    "predicate_combination": "all_non_null_fields_must_match",
+    "ordering": "minimum_priority_then_rule_order_then_current_option_index",
+    "proposal_authority": "same_base_tier_ordering_hint_only",
+    "missing_option_field": "predicate_does_not_match"
+  },
+  "result_contract": {
+    "serialized_result_is_execution_authority": false,
+    "owner_revalidation_required": true,
+    "future_executor_must_revalidate_exact_context_and_ir": true,
+    "proposal_may_not_filter_legality_or_forced_indexes": true
+  },
+  "stable_error_codes": [
+    "contract_error",
+    "invalid_adapter_document",
+    "unsupported_adapter_operator",
+    "unsupported_goal_stage",
+    "invalid_public_predicate",
+    "private_adapter_input",
+    "adapter_integrity_invalid",
+    "invalid_context",
+    "invalid_adapter",
+    "invalid_proposal_id",
+    "proposal_integrity_invalid"
+  ],
+  "forbidden_fields": [
+    "callable",
+    "module",
+    "class",
+    "code",
+    "script",
+    "path",
+    "url",
+    "import",
+    "private_state",
+    "display_name",
+    "localized_name",
+    "image"
+  ],
+  "private_keys_denied": [
+    "raw_private_hash",
+    "token_free_callback_hash",
+    "search_begin_input",
+    "session",
+    "callback",
+    "binding",
+    "ticket",
+    "command",
+    "object_ref",
+    "pokemon_entity_serial"
+  ],
+  "scope": {
+    "public_deck_adapter_proposal": true,
+    "deck_specific_rules": false,
+    "policy": false,
+    "trace_issuer": false,
+    "live_owner": false
+  }
+}

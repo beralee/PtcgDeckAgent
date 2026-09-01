@@ -1,0 +1,442 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/device_manifest_v1.schema.json",
+  "title": "PTCGDAP Windows no-model device manifest v1",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "nullable_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_type",
+    "schema_version",
+    "manifest_id",
+    "manifest_version",
+    "target_platforms",
+    "deferred_targets",
+    "local_policy_executor",
+    "inference_backend",
+    "model_artifacts",
+    "execution",
+    "device_acceptance_profile",
+    "resource_profile",
+    "package_integrity",
+    "fallback",
+    "release_status"
+  ],
+  "properties": {
+    "document_type": {
+      "const": "device_manifest_v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "manifest_id": {
+      "const": "ptcgdap-marnie-windows-device-v1"
+    },
+    "manifest_version": {
+      "const": "1.1.0"
+    },
+    "target_platforms": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "os",
+          "architecture",
+          "abi",
+          "host",
+          "minimum_runtime_version",
+          "runtime_build",
+          "portable_baseline"
+        ],
+        "properties": {
+          "os": {
+            "const": "windows"
+          },
+          "architecture": {
+            "const": "x86_64"
+          },
+          "abi": {
+            "const": "windows-x86_64"
+          },
+          "host": {
+            "const": "godot"
+          },
+          "minimum_runtime_version": {
+            "const": "4.6.1"
+          },
+          "runtime_build": {
+            "const": "4.6.1.stable.official.14d19694e"
+          },
+          "portable_baseline": {
+            "const": "gdscript"
+          }
+        }
+      }
+    },
+    "deferred_targets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "os",
+          "architecture",
+          "declared",
+          "reason"
+        ],
+        "properties": {
+          "os": {
+            "const": "android"
+          },
+          "architecture": {
+            "const": "arm64-v8a"
+          },
+          "declared": {
+            "const": false
+          },
+          "reason": {
+            "const": "independent_android_adapter_and_a5_required"
+          }
+        }
+      }
+    },
+    "local_policy_executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "canonical_sha256",
+        "executor_id",
+        "executor_version"
+      ],
+      "properties": {
+        "path": {
+          "const": "data/ptcgdap/marnie_windows_local_policy_executor_v1.json"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "executor_id": {
+          "const": "ptcgdap-local-policy-executor-v1"
+        },
+        "executor_version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "inference_backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "version",
+        "implementation_path",
+        "implementation_hash"
+      ],
+      "properties": {
+        "kind": {
+          "const": "none"
+        },
+        "version": {
+          "type": "null"
+        },
+        "implementation_path": {
+          "type": "null"
+        },
+        "implementation_hash": {
+          "$ref": "#/$defs/nullable_sha256"
+        }
+      }
+    },
+    "model_artifacts": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location",
+        "aligned_ai_network",
+        "external_compute",
+        "system_python",
+        "sidecar",
+        "dynamic_model_download"
+      ],
+      "properties": {
+        "location": {
+          "const": "device_local"
+        },
+        "aligned_ai_network": {
+          "const": "denied"
+        },
+        "external_compute": {
+          "const": "denied"
+        },
+        "system_python": {
+          "const": false
+        },
+        "sidecar": {
+          "const": false
+        },
+        "dynamic_model_download": {
+          "const": false
+        }
+      }
+    },
+    "device_acceptance_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "profile_id",
+        "canonical_sha256",
+        "approval_status",
+        "formal_a5_eligible",
+        "thresholds_authority"
+      ],
+      "properties": {
+        "path": {
+          "const": "data/ptcgdap/author_strategy_device_acceptance_profile.json"
+        },
+        "profile_id": {
+          "const": "ptcgdap-device-acceptance-candidate-v1"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "approval_status": {
+          "const": "approved"
+        },
+        "formal_a5_eligible": {
+          "const": false
+        },
+        "thresholds_authority": {
+          "const": "referenced_profile_only"
+        }
+      }
+    },
+    "resource_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_platform",
+        "limits",
+        "candidate_override_allowed",
+        "acceptance_claim"
+      ],
+      "properties": {
+        "source_platform": {
+          "const": "windows"
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_cold_start_msec",
+            "max_catalog_scan_msec",
+            "max_match_load_msec",
+            "max_decision_p95_msec",
+            "max_peak_memory_mib",
+            "max_package_mib",
+            "max_thermal_status",
+            "max_battery_drain_percent_per_hour"
+          ],
+          "properties": {
+            "max_cold_start_msec": {
+              "const": 10000
+            },
+            "max_catalog_scan_msec": {
+              "const": 1000
+            },
+            "max_match_load_msec": {
+              "const": 6000
+            },
+            "max_decision_p95_msec": {
+              "const": 250
+            },
+            "max_peak_memory_mib": {
+              "const": 1024
+            },
+            "max_package_mib": {
+              "const": 750
+            },
+            "max_thermal_status": {
+              "type": "null"
+            },
+            "max_battery_drain_percent_per_hour": {
+              "type": "null"
+            }
+          }
+        },
+        "candidate_override_allowed": {
+          "const": false
+        },
+        "acceptance_claim": {
+          "const": true
+        }
+      }
+    },
+    "package_integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hash_algorithm",
+        "manifest_hash_algorithm",
+        "author_archive_sha256",
+        "production_signature_required",
+        "production_signature_status",
+        "signature_algorithm",
+        "signing_key_id",
+        "trust_root_id",
+        "signed_scope",
+        "development_unsigned_allowed"
+      ],
+      "properties": {
+        "hash_algorithm": {
+          "const": "sha256"
+        },
+        "manifest_hash_algorithm": {
+          "const": "canonical_json_v1_sha256"
+        },
+        "author_archive_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "production_signature_required": {
+          "const": true
+        },
+        "production_signature_status": {
+          "const": "unprovisioned"
+        },
+        "signature_algorithm": {
+          "const": "ed25519"
+        },
+        "signing_key_id": {
+          "type": "null"
+        },
+        "trust_root_id": {
+          "type": "null"
+        },
+        "signed_scope": {
+          "const": "production_release"
+        },
+        "development_unsigned_allowed": {
+          "const": true
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "owner",
+        "remote",
+        "classic_raw_state",
+        "new_matches_only",
+        "match_hot_swap",
+        "rollback_manifest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "deterministic_local"
+        },
+        "owner": {
+          "const": "restricted_base_graph"
+        },
+        "remote": {
+          "const": false
+        },
+        "classic_raw_state": {
+          "const": false
+        },
+        "new_matches_only": {
+          "const": true
+        },
+        "match_hot_swap": {
+          "const": false
+        },
+        "rollback_manifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "document_type",
+            "path",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "document_type": {
+              "const": "policy_package_v1"
+            },
+            "path": {
+              "const": "data/ptcgdap/marnie_windows_policy_package_v1.json"
+            },
+            "canonical_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      }
+    },
+    "release_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_scope",
+        "p6_04_windows_manifest_complete",
+        "device_profile_approved",
+        "os_network_isolation_proven",
+        "production_ready",
+        "a2_claimed",
+        "a5_claimed",
+        "android_claimed"
+      ],
+      "properties": {
+        "authority_scope": {
+          "const": "development_and_device_canary_only"
+        },
+        "p6_04_windows_manifest_complete": {
+          "const": true
+        },
+        "device_profile_approved": {
+          "const": true
+        },
+        "os_network_isolation_proven": {
+          "const": false
+        },
+        "production_ready": {
+          "const": false
+        },
+        "a2_claimed": {
+          "const": false
+        },
+        "a5_claimed": {
+          "const": false
+        },
+        "android_claimed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

@@ -14,7 +14,7 @@ func _init(look: int = 4, pick: int = 2) -> void:
 	pick_count = pick
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState

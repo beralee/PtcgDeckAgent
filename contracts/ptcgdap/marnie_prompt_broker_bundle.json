@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "marnie_prompt_broker_bundle",
+  "bundle_id": "ptcgdap-marnie-prompt-broker-bundle-p5-wp5-v1",
+  "profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+  "parent_contracts": {
+    "vertical_slice_bundle": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425",
+    "capability_policy_bundle": "F4E88E5DB4E480BA8441BE7B3A7C81CE3DB40ED1917EB37BCDCAC1C32B1ABD6C",
+    "identity_projection_bundle": "1EB530AB7DFACBE6AB098A6C67D6AAE0BC1871FF3E2F48C9284E8539EE6ACDC4",
+    "shadow_prompt_broker_bundle": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+    "engine_decision_port_bundle": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "godot_option_binding_bundle": "4FFFEC48E4E1FE0774BB6E343D4D4B0384A9210057DEE06415C2A20F2899B1C1"
+  },
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/marnie_prompt_broker.schema.json",
+      "canonical_sha256": "6D5942D4A319B78FFF9B49814A9661DD0CA99E4E3B531DF0B5A5E13FEBFF153A"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/marnie_prompt_broker_profile.json",
+      "canonical_sha256": "A136829945D95CC686FB7D5BBC705FF0ABB6387975CAA45191D0C3DA1B06E096"
+    },
+    {
+      "id": "audit",
+      "path": "data/ptcgdap/marnie_vertical_slice/marnie_prompt_broker_v1.json",
+      "canonical_sha256": "05A9AC6440B16EEC83C7FD42A360ADF481142C5EB313170CC407AF8A1CA6B393"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/marnie_prompt_broker_conformance_vectors.json",
+      "canonical_sha256": "98CD8D6EB35469A74BD042DF00714AF5601E16F89E247FBAE2E9855830FB1391"
+    }
+  ],
+  "production_actions_used": false,
+  "execution_authority": false
+}

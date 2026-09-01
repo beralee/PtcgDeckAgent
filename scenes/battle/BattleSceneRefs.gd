@@ -24,6 +24,8 @@ var replay_prev_turn_button: Button = null
 var replay_next_turn_button: Button = null
 var replay_continue_button: Button = null
 var replay_back_to_list_button: Button = null
+var replay_play_pause_button: Button = null
+var replay_speed_option: OptionButton = null
 
 var left_panel: Control = null
 var right_panel: Control = null
@@ -74,7 +76,9 @@ func bind_from_scene(scene: Node) -> void:
 		_find(scene, "BtnReplayPrevTurn") as Button,
 		_find(scene, "BtnReplayNextTurn") as Button,
 		_find(scene, "BtnReplayContinue") as Button,
-		_find(scene, "BtnReplayBackToList") as Button
+		_find(scene, "BtnReplayBackToList") as Button,
+		_find(scene, "BtnReplayPlayPause") as Button,
+		_find(scene, "OptReplaySpeed") as OptionButton
 	)
 
 	left_panel = _find(scene, "LeftPanel") as Control
@@ -106,12 +110,16 @@ func bind_replay_buttons(
 	prev_turn_button: Button,
 	next_turn_button: Button,
 	continue_button: Button,
-	back_to_list_button: Button
+	back_to_list_button: Button,
+	play_pause_button: Button = null,
+	speed_option: OptionButton = null
 ) -> void:
 	replay_prev_turn_button = prev_turn_button
 	replay_next_turn_button = next_turn_button
 	replay_continue_button = continue_button
 	replay_back_to_list_button = back_to_list_button
+	replay_play_pause_button = play_pause_button
+	replay_speed_option = speed_option
 
 
 func replay_buttons() -> Array[Button]:
@@ -120,6 +128,7 @@ func replay_buttons() -> Array[Button]:
 		replay_next_turn_button,
 		replay_continue_button,
 		replay_back_to_list_button,
+		replay_play_pause_button,
 	]
 
 

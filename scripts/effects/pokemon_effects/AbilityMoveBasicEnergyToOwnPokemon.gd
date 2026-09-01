@@ -24,7 +24,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return _has_valid_source(player)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
 		return []
 	var player: PlayerState = state.players[card.owner_index]

@@ -4,7 +4,7 @@ extends BaseEffect
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
 
 
-func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
+func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	if card == null:
 		return []
 	var player: PlayerState = state.players[card.owner_index]

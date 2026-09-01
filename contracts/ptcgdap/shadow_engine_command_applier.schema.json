@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/shadow_engine_command_applier.schema.json",
+  "title": "PtcgDAP isolated shadow executed-witness DTOs",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/executedWitness"
+    },
+    {
+      "$ref": "#/$defs/applyResult"
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-F0-9]{64}$"
+    },
+    "positiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "nonNegativeSafeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "executedWitness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "execution_id",
+        "execution_generation",
+        "match_generation",
+        "broker_generation",
+        "decision_generation",
+        "snapshot_id",
+        "window_id",
+        "public_observation_hash",
+        "chooser_player_index",
+        "selected_indexes",
+        "selected_fingerprint_hashes",
+        "resolution_count",
+        "state",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "profile": {
+          "const": "ptcgdap-shadow-engine-command-applier-p3-wp7-v1"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "execution_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "match_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "broker_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "decision_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "snapshot_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "window_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "public_observation_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "chooser_player_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "selected_indexes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonNegativeSafeInteger"
+          },
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "selected_fingerprint_hashes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "resolution_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256
+        },
+        "state": {
+          "const": "executed"
+        },
+        "authority": {
+          "const": "shadow_executed_witness_audit"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "applyResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "witness",
+        "rolled_back",
+        "poisoned"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "enum": [
+            "",
+            "invalid_applier",
+            "invalid_gate",
+            "owner_mode_not_aligned",
+            "invalid_broker",
+            "broker_not_current",
+            "invalid_broker_result",
+            "prompt_not_committed",
+            "already_applied",
+            "invalid_command",
+            "duplicate_command",
+            "capture_failed",
+            "command_apply_failed",
+            "rollback_failed"
+          ]
+        },
+        "witness": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/executedWitness"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rolled_back": {
+          "type": "boolean"
+        },
+        "poisoned": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "const": ""
+              },
+              "witness": {
+                "$ref": "#/$defs/executedWitness"
+              },
+              "rolled_back": {
+                "const": false
+              },
+              "poisoned": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "enum": [
+                  "invalid_applier",
+                  "invalid_gate",
+                  "owner_mode_not_aligned",
+                  "invalid_broker",
+                  "broker_not_current",
+                  "invalid_broker_result",
+                  "prompt_not_committed",
+                  "already_applied",
+                  "invalid_command",
+                  "duplicate_command",
+                  "capture_failed",
+                  "command_apply_failed",
+                  "rollback_failed"
+                ]
+              },
+              "witness": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "poisoned": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "const": "rollback_failed"
+              },
+              "rolled_back": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

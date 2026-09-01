@@ -20,7 +20,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return opponent.get_all_pokemon().size() >= 2 and source_count >= 1
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var source_items: Array = []
 	var source_labels: Array[String] = []
@@ -56,11 +56,13 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		{
 			"id": "counter_count",
 			"title": "选择要移动的伤害指示物数量",
-			"items": [1, 2],
+			"items": [{"number": 1}, {"number": 2}],
 			"labels": ["移动1个伤害指示物", "移动2个伤害指示物"],
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,
+			"ucis_context_name": "DAMAGE_COUNTER_COUNT",
+			"ucis_option_type_name": "NUMBER",
 		},
 	]
 
@@ -76,7 +78,11 @@ func execute_ability(pokemon: PokemonSlot, _ability_index: int, targets: Array, 
 	if source == null or target == null or source == target:
 		return
 	var count_raw: Array = ctx.get("counter_count", [])
-	var count: int = int(count_raw[0]) if not count_raw.is_empty() else 1
+	var count: int = 1
+	if not count_raw.is_empty():
+		var selected_count: Variant = count_raw[0]
+		count = int((selected_count as Dictionary).get("number", 1)) \
+			if selected_count is Dictionary else int(selected_count)
 	count = clampi(count, 1, 2)
 	var moved_damage: int = mini(count * 10, source.damage_counters)
 	if moved_damage <= 0:

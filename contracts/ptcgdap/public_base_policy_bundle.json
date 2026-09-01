@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+  "parent_bundle_canonical_sha256": "C80F4C4FDAEA5AC29BD3C5617BFAC72BE38709696F7EA1995D3D153113DD3CA1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "artifacts": [
+    {
+      "id": "public_base_policy.schema",
+      "path": "contracts/ptcgdap/public_base_policy.schema.json",
+      "canonical_sha256": "25041F0E72EEC217522B0606CA77C100D66DD76ECED39C7F3B233DFB4C0FB42D"
+    },
+    {
+      "id": "public_base_policy_profile",
+      "path": "contracts/ptcgdap/public_base_policy_profile.json",
+      "canonical_sha256": "AEA206038915757F1D32004CBF0E5662A244953A5D40C7952281E861D4E3313C"
+    },
+    {
+      "id": "public_base_policy_conformance_vectors",
+      "path": "contracts/ptcgdap/public_base_policy_conformance_vectors.json",
+      "canonical_sha256": "377F5BB2B3DE594D1DD17B5FD548D6EAB26D5CA7D933DBEF6D8B24216CE65072"
+    }
+  ]
+}

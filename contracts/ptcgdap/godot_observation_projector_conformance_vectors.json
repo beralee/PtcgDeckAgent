@@ -1,0 +1,677 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-godot-observation-projector-conformance-v1",
+  "profile_id": "godot_observation_projector_v1",
+  "state_fixtures": {
+    "base_mapped_state": {
+      "turn": 2,
+      "turn_action_count": 3,
+      "acting_player_index": 0,
+      "first_player_index": 0,
+      "supporter_played": false,
+      "stadium_played": false,
+      "energy_attached": true,
+      "retreated": false,
+      "result": -1,
+      "stadium": null,
+      "players": [
+        {
+          "active": [
+            {
+              "stack": [
+                {
+                  "official_card_id": 646,
+                  "serial": 1,
+                  "player_index": 0
+                }
+              ],
+              "attached_energy": [
+                {
+                  "official_card_id": 7,
+                  "serial": 2,
+                  "player_index": 0,
+                  "energy_type": 7
+                }
+              ],
+              "tool": null,
+              "hp": 70,
+              "max_hp": 70,
+              "appear_this_turn": false,
+              "status": {
+                "poisoned": false,
+                "burned": false,
+                "asleep": false,
+                "paralyzed": false,
+                "confused": false
+              }
+            }
+          ],
+          "bench": [],
+          "bench_max": 5,
+          "deck_count": 50,
+          "discard": [
+            {
+              "official_card_id": 1097,
+              "serial": 4,
+              "player_index": 0
+            }
+          ],
+          "hand": [
+            {
+              "official_card_id": 647,
+              "serial": 3,
+              "player_index": 0
+            },
+            {
+              "official_card_id": 648,
+              "serial": 5,
+              "player_index": 0
+            }
+          ],
+          "hand_count": 2,
+          "prize_count": 6,
+          "public_prizes": {}
+        },
+        {
+          "active": [
+            {
+              "stack": [
+                {
+                  "official_card_id": 646,
+                  "serial": 61,
+                  "player_index": 1
+                }
+              ],
+              "attached_energy": [],
+              "tool": null,
+              "hp": 60,
+              "max_hp": 70,
+              "appear_this_turn": false,
+              "status": {
+                "poisoned": false,
+                "burned": false,
+                "asleep": false,
+                "paralyzed": false,
+                "confused": false
+              }
+            }
+          ],
+          "bench": [
+            {
+              "stack": [
+                {
+                  "official_card_id": 104,
+                  "serial": 63,
+                  "player_index": 1
+                }
+              ],
+              "attached_energy": [],
+              "tool": null,
+              "hp": 60,
+              "max_hp": 60,
+              "appear_this_turn": false,
+              "status": {
+                "poisoned": false,
+                "burned": false,
+                "asleep": false,
+                "paralyzed": false,
+                "confused": false
+              }
+            }
+          ],
+          "bench_max": 5,
+          "deck_count": 49,
+          "discard": [],
+          "hand": null,
+          "hand_count": 1,
+          "prize_count": 6,
+          "public_prizes": {}
+        }
+      ]
+    }
+  },
+  "projection_cases": [
+    {
+      "case_id": "w1_setup_active",
+      "window": "W1",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 1,
+        "context": 1,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 0,
+            "playerIndex": 0
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "public_events": [],
+      "step": 1,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "542FC6F04F718934BF6E06B616585D7D6B58962D33D3719AD9B57E50F4494537",
+        "select_type": 1,
+        "select_context": 1,
+        "option_count": 1,
+        "log_count": 0,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    },
+    {
+      "case_id": "w2_setup_bench",
+      "window": "W2",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 1,
+        "context": 2,
+        "minCount": 0,
+        "maxCount": 2,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 2,
+            "index": 1,
+            "playerIndex": 0
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "public_events": [
+        {
+          "kind": "play",
+          "card": {
+            "official_card_id": 647,
+            "serial": 3,
+            "player_index": 0
+          }
+        }
+      ],
+      "step": 2,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "5CE38AB54EBED2066706522A881855E3085025837D67A78D693E60F92F057C21",
+        "select_type": 1,
+        "select_context": 2,
+        "option_count": 2,
+        "log_count": 1,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    },
+    {
+      "case_id": "w3_main_atomic",
+      "window": "W3",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 7,
+            "index": 0
+          },
+          {
+            "type": 13,
+            "attackId": 934
+          },
+          {
+            "type": 14
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "public_events": [
+        {
+          "kind": "turn_start",
+          "player_index": 0
+        }
+      ],
+      "step": 3,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "C9F1EE7A34097310E4ED0BA437DBE634382F06660A4F4D776E1F94DA27E5A7AD",
+        "select_type": 0,
+        "select_context": 0,
+        "option_count": 3,
+        "log_count": 1,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    },
+    {
+      "case_id": "w4_authorized_search",
+      "window": "W4",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 1,
+        "context": 7,
+        "minCount": 0,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 1,
+            "index": 0,
+            "playerIndex": 0
+          },
+          {
+            "type": 3,
+            "area": 1,
+            "index": 1,
+            "playerIndex": 0
+          }
+        ],
+        "deck": [
+          {
+            "official_card_id": 647,
+            "serial": 3,
+            "player_index": 0
+          },
+          {
+            "official_card_id": 648,
+            "serial": 5,
+            "player_index": 0
+          }
+        ],
+        "contextCard": null,
+        "effect": {
+          "official_card_id": 646,
+          "serial": 1,
+          "player_index": 0
+        }
+      },
+      "public_events": [
+        {
+          "kind": "play",
+          "card": {
+            "official_card_id": 646,
+            "serial": 1,
+            "player_index": 0
+          }
+        }
+      ],
+      "step": 4,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "1C0F8A1E58E3E8E78428E4D9B20D01A948472C6D827898EE129B76C2AED29D4D",
+        "select_type": 1,
+        "select_context": 7,
+        "option_count": 2,
+        "log_count": 1,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    },
+    {
+      "case_id": "w5_ordered_energy_skill",
+      "window": "W5",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 5,
+        "context": 34,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 7,
+            "serial": 2
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "public_events": [
+        {
+          "kind": "attach",
+          "card": {
+            "official_card_id": 7,
+            "serial": 2,
+            "player_index": 0,
+            "energy_type": 7
+          },
+          "target": {
+            "official_card_id": 646,
+            "serial": 1,
+            "player_index": 0
+          }
+        }
+      ],
+      "step": 5,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "A0FDC16CC72743E08C0ABE1C38B71349B3FC87940A7F75683E3A0882CE5C38C8",
+        "select_type": 5,
+        "select_context": 34,
+        "option_count": 1,
+        "log_count": 1,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    },
+    {
+      "case_id": "w6_bench_target",
+      "window": "W6",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 1,
+        "context": 25,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 5,
+            "index": 0,
+            "playerIndex": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "public_events": [
+        {
+          "kind": "attack",
+          "card": {
+            "official_card_id": 646,
+            "serial": 1,
+            "player_index": 0
+          },
+          "attack_id": 934
+        },
+        {
+          "kind": "hp_change",
+          "card": {
+            "official_card_id": 104,
+            "serial": 63,
+            "player_index": 1
+          },
+          "value": -10,
+          "put_damage_counter": false
+        }
+      ],
+      "step": 6,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "3855E45E411D76658084647B53E40DAE4A6B3DBC21EACF91748F07A23CCE94C6",
+        "select_type": 1,
+        "select_context": 25,
+        "option_count": 1,
+        "log_count": 2,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    },
+    {
+      "case_id": "w7_prize_choice",
+      "window": "W7",
+      "state_fixture_id": "base_mapped_state",
+      "select_source": {
+        "type": 1,
+        "context": 7,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 6,
+            "index": 0,
+            "playerIndex": 0
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "public_events": [
+        {
+          "kind": "move_card",
+          "card": {
+            "official_card_id": 647,
+            "serial": 3,
+            "player_index": 0
+          },
+          "from_area": 6,
+          "to_area": 2
+        }
+      ],
+      "step": 7,
+      "remainingOverageTime": 600,
+      "expected_result": {
+        "accepted": true,
+        "error_code": "",
+        "public_observation_hash": "141314DAE977F9E9B8A50E98970EBC095C8A361A79ED49573FF5F23C8130DA8D",
+        "select_type": 1,
+        "select_context": 7,
+        "option_count": 1,
+        "log_count": 1,
+        "acting_hand_visible": true,
+        "opponent_hand_hidden": true
+      }
+    }
+  ],
+  "rejection_cases": [
+    {
+      "case_id": "invalid_actor",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace",
+        "pointer": "/current_source/acting_player_index",
+        "value": 2
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_player_index",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "hand_count_mismatch",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace",
+        "pointer": "/current_source/players/0/hand_count",
+        "value": 1
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_state",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "catalog_unmapped_card",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace",
+        "pointer": "/current_source/players/0/hand/0/official_card_id",
+        "value": 860
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "card_catalog_unmapped",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "card_owner_mismatch",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace",
+        "pointer": "/current_source/players/0/hand/0/player_index",
+        "value": 1
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_card_identity",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "hp_exceeds_max",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace",
+        "pointer": "/current_source/players/0/active/0/hp",
+        "value": 71
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_state",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "attack_owner_mismatch",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace_public_events",
+        "value": [
+          {
+            "kind": "attack",
+            "card": {
+              "official_card_id": 646,
+              "serial": 1,
+              "player_index": 0
+            },
+            "attack_id": 936
+          }
+        ]
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_attack_identity",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "skill_serial_unbound",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace_select_options",
+        "value": [
+          {
+            "type": 15,
+            "cardId": 7,
+            "serial": 999
+          }
+        ]
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_select",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    },
+    {
+      "case_id": "duplicate_card_serial",
+      "base_case_id": "w1_setup_active",
+      "fault": {
+        "kind": "replace",
+        "pointer": "/current_source/players/0/hand/0/serial",
+        "value": 1
+      },
+      "expected_result": {
+        "accepted": false,
+        "error_code": "invalid_card_identity",
+        "public_observation_hash": null,
+        "select_type": null,
+        "select_context": null,
+        "option_count": 0,
+        "log_count": 0,
+        "acting_hand_visible": false,
+        "opponent_hand_hidden": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "profile_id": "godot_observation_projector_v1",
+  "bundle_id": "ptcgdap-godot-observation-projector-p2-wp5-v1",
+  "execution_scope": "shadow_only_no_live_consumer",
+  "parent_contracts": {
+    "p1_cabt_contract_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "catalog_bundle_canonical_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+    "firewall_bundle_canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+    "cursor_bundle_canonical_sha256": "ED246F029531AA8F21956A64D70F557F1BBC90450A6F9109C5286261E290319D"
+  },
+  "wire_root": {
+    "required": ["select", "logs", "current"],
+    "optional": ["step", "remainingOverageTime"],
+    "private_handoff_only": ["search_begin_input"],
+    "public_forbidden": ["search_begin_input", "raw_private_hash", "token_free_callback_hash", "host_pokemon_entity_serial", "instance_id", "object_id"]
+  },
+  "source_classes": [
+    "conformance_fixture_only",
+    "engine_public_state",
+    "engine_public_decision",
+    "match_serial_registry",
+    "strict_catalog",
+    "public_event_ledger"
+  ],
+  "visibility": {
+    "acting_hand": "card_id_serial_player_index",
+    "opponent_hand": "count_only_null_identity_list",
+    "decks": "count_only_except_select_deck_authorized_callback",
+    "face_down_prizes": "null_placeholders_only",
+    "discard_field_stadium": "public_card_identity",
+    "search_capability": "never_public",
+    "host_entity_serial": "never_public"
+  },
+  "identity": {
+    "card": "official_card_id plus match-scoped physical-card serial plus immutable playerIndex",
+    "pokemon_serial": "current top physical-card serial",
+    "pre_evolution": "older physical-card identities in stack order",
+    "attack": "strict catalog official attack ID bound to current top card and local ordinal",
+    "forbidden_authority": ["display_name", "localized_name", "instance_id", "Object.get_instance_id", "CardData.uid", "self_reported_official_id"]
+  },
+  "decision": {
+    "official_select_types": [0,1,2,3,4,5,6,7,8,9,10],
+    "official_option_types": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+    "order_rule": "preserve exact source decision order",
+    "authority_rule": "P2-WP5 decision sources are shadow-only; official ordering and execution authority remain P3",
+    "select_null_rule": "only the initial callback conformance case may use select null"
+  },
+  "engine_capture": {
+    "entrypoint": "capture_engine(GameState, GodotSerialRegistry, decision_source, public_events, source_documents, step?, remainingOverageTime?)",
+    "exact_source_types": ["GameState", "PlayerState", "CardInstance", "CardData", "PokemonSlot", "GodotSerialRegistry"],
+    "state_allow_list": "enumerate current public field, stadium, both public boards and discards, acting hand identities, hidden-zone counts and public flags; never enumerate opponent hand, either deck or face-down prizes into the portable snapshot",
+    "source_document_rule": "every visible or event-authorized CardInstance must match exact source-file bytes, live CardData safe fields, strict catalog printing identity and current match-registry card handle",
+    "host_entity_rule": "PokemonSlot registry identity is revalidated for lifecycle only and never serialized; CABT Pokemon.serial is the current top physical-card serial",
+    "decision_source_keys": ["select", "deck_cards", "context_card", "effect_card", "option_card_refs", "turn_action_count"],
+    "engine_supported_option_types": [3, 7, 13, 14, 15],
+    "option_identity_rule": "engine attack options provide a local attack ordinal and skill options provide a direct CardInstance reference; the projector derives official attack/card IDs and serials instead of trusting caller-supplied numeric identity",
+    "event_source_rule": "public event records use exact per-kind keys and direct CardInstance references; attack identity is derived from the strict local ordinal mapping",
+    "result_revalidation": "the exact owner result replays against bound live state, registry, decision snapshot, event snapshot and source bytes; mutation or stale registry fails closed"
+  },
+  "public_events": {
+    "supported_kinds": ["turn_start", "turn_end", "move_card", "play", "attach", "evolve", "attack", "hp_change", "result"],
+    "order_rule": "preserve source ledger order exactly",
+    "legacy_game_action_rule": "GameAction.data, description and local numeric card identifiers are not authority"
+  },
+  "limits": {
+    "players": 2,
+    "max_hand_cards": 60,
+    "max_discard_cards": 120,
+    "max_bench": 8,
+    "max_prizes": 12,
+    "max_options": 256,
+    "max_select_deck_cards": 120,
+    "max_public_events": 512,
+    "max_tree_depth": 64,
+    "max_tree_nodes": 20000,
+    "max_safe_integer": 9007199254740991
+  },
+  "stable_error_codes": [
+    "projector_contract_error",
+    "invalid_input",
+    "invalid_player_index",
+    "invalid_state",
+    "invalid_decision",
+    "invalid_select",
+    "invalid_card_identity",
+    "card_catalog_unmapped",
+    "card_serial_unbound",
+    "invalid_attack_identity",
+    "hidden_information_requested",
+    "invalid_public_event",
+    "stale_match_generation",
+    "limit_exceeded",
+    "firewall_rejected",
+    "engine_capture_unavailable",
+    "result_integrity_invalid"
+  ],
+  "result_contract": {
+    "accepted": "observation and public_observation_hash present; error_code empty; audit contains closed aggregate provenance only",
+    "rejected": "observation and public_observation_hash null; one closed error_code; no rejected value echo",
+    "serialization_authority": "audit/conformance only; serialized dictionaries never authorize window, policy or execution",
+    "engine_capture_authority": "only exact owner result retaining bound engine/catalog/registry/decision objects may be called engine-attested"
+  }
+}

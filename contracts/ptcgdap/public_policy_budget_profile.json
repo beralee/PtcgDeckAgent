@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+  "parent_bundle_canonical_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "budget_contract": {
+    "total_match_budget_ms": 600000,
+    "base_only_at_or_below_remaining_ms": 30000,
+    "fallback_at_or_below_remaining_ms": 5000,
+    "modes": [
+      "full",
+      "base_only",
+      "deterministic_fallback"
+    ],
+    "elapsed_input": "host_supplied_exact_nonnegative_safe_integer",
+    "remaining_and_cumulative_saturate_at_budget_bounds": true
+  },
+  "capability_contract": {
+    "required": [
+      "public_base_policy_v1",
+      "current_window_sanitizer_v1",
+      "deterministic_base_fallback_v1"
+    ],
+    "optional": [
+      "public_deck_adapter_v1",
+      "learned_policy_head_v1",
+      "search_v1"
+    ],
+    "states": [
+      "available",
+      "unavailable",
+      "unsupported"
+    ],
+    "unknown_name_behavior": "same_current_window_deterministic_fallback_without_name_echo",
+    "missing_required_behavior": "same_current_window_deterministic_fallback",
+    "missing_optional_adapter_behavior": "base_only",
+    "missing_optional_learned_or_search_behavior": "ignore_without_remote_fallback"
+  },
+  "precedence": [
+    "unknown_capability",
+    "required_capability_unavailable",
+    "budget_exhausted",
+    "budget_reserve",
+    "budget_constrained",
+    "optional_capability_unavailable",
+    "full_budget_available"
+  ],
+  "hash_contract": {
+    "canonicalization": "RFC8785_JCS_IJSON_SAFE_SUBSET",
+    "ledger_prefix_utf8_hex": "50544347444150005055424C49435F504F4C4943595F4255444745545F4C45444745525F563100",
+    "telemetry_prefix_utf8_hex": "50544347444150005055424C49435F504F4C4943595F4255444745545F54454C454D455452595F563100",
+    "result_prefix_utf8_hex": "50544347444150005055424C49435F504F4C4943595F4255444745545F524553554C545F563100"
+  },
+  "serialization_contract": {
+    "ledger_and_result_are_execution_authority": false,
+    "unknown_capability_names_are_serialized": false,
+    "selected_indexes_only_exist_for_same_current_window_fallback": true,
+    "consumer_must_revalidate_exact_window": true
+  },
+  "scope": {
+    "reads_clock": false,
+    "network": false,
+    "model": false,
+    "host": false,
+    "live_owner": false,
+    "package_or_device_profile": false
+  }
+}

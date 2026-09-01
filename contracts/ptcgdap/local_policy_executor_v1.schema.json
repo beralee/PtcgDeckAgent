@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/local_policy_executor_v1.schema.json",
+  "title": "PTCGDAP Windows local policy executor closure v1",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_type",
+    "schema_version",
+    "executor_id",
+    "executor_version",
+    "authority_scope",
+    "target",
+    "parent_policy_package",
+    "author_package",
+    "resources",
+    "implementation",
+    "input_contract",
+    "model",
+    "fallback",
+    "capabilities"
+  ],
+  "properties": {
+    "document_type": {
+      "const": "local_policy_executor_v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "executor_id": {
+      "const": "ptcgdap-local-policy-executor-v1"
+    },
+    "executor_version": {
+      "const": "1.0.0"
+    },
+    "authority_scope": {
+      "const": "development_and_device_canary_only"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "platform",
+        "architecture",
+        "execution_location",
+        "portable_baseline"
+      ],
+      "properties": {
+        "host": {
+          "const": "godot"
+        },
+        "platform": {
+          "const": "windows"
+        },
+        "architecture": {
+          "const": "x86_64"
+        },
+        "execution_location": {
+          "const": "device_local"
+        },
+        "portable_baseline": {
+          "const": "gdscript"
+        }
+      }
+    },
+    "parent_policy_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "canonical_sha256",
+        "package_id",
+        "package_version"
+      ],
+      "properties": {
+        "path": {
+          "const": "data/ptcgdap/marnie_windows_policy_package_v1.json"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "package_id": {
+          "const": "ptcgdap.marnie.windows-local.policy"
+        },
+        "package_version": {
+          "const": "0.1.0"
+        }
+      }
+    },
+    "author_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "archive_sha256",
+        "package_id",
+        "package_version"
+      ],
+      "properties": {
+        "path": {
+          "const": "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+        },
+        "archive_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "package_id": {
+          "const": "ptcgdap.marnie.windows-local"
+        },
+        "package_version": {
+          "const": "0.1.0"
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "location",
+          "path",
+          "hash_kind",
+          "sha256",
+          "required"
+        ],
+        "properties": {
+          "location": {
+            "enum": [
+              "product_bundle",
+              "author_archive"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "hash_kind": {
+            "enum": [
+              "canonical_json_v1",
+              "raw_sha256"
+            ]
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "required": {
+            "const": true
+          }
+        }
+      }
+    },
+    "implementation": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "path",
+          "raw_sha256"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "raw_sha256": {
+            "$ref": "#/$defs/sha256"
+          }
+        }
+      }
+    },
+    "input_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary",
+        "card_id_domain",
+        "policy_output",
+        "public_only",
+        "same_window_required",
+        "engine_reference_allowed"
+      ],
+      "properties": {
+        "boundary": {
+          "const": "agent(raw_observation)->list[int]"
+        },
+        "card_id_domain": {
+          "const": "godot_local_card_uid_v1"
+        },
+        "policy_output": {
+          "const": "current_window_indexes_only"
+        },
+        "public_only": {
+          "const": true
+        },
+        "same_window_required": {
+          "const": true
+        },
+        "engine_reference_allowed": {
+          "const": false
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "learned_model",
+        "backend",
+        "artifact_path",
+        "artifact_sha256",
+        "weights_status"
+      ],
+      "properties": {
+        "learned_model": {
+          "const": "none"
+        },
+        "backend": {
+          "const": "none"
+        },
+        "artifact_path": {
+          "type": "null"
+        },
+        "artifact_sha256": {
+          "type": "null"
+        },
+        "weights_status": {
+          "const": "unused_non_model_payload"
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "mode",
+        "remote",
+        "classic_raw_state",
+        "unexpected_fallback_expected"
+      ],
+      "properties": {
+        "owner": {
+          "const": "restricted_base_graph"
+        },
+        "mode": {
+          "const": "deterministic_same_window"
+        },
+        "remote": {
+          "const": false
+        },
+        "classic_raw_state": {
+          "const": false
+        },
+        "unexpected_fallback_expected": {
+          "const": 0
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cabt_search",
+        "seeded_offline",
+        "network_ingress",
+        "network_egress",
+        "system_python",
+        "external_process",
+        "dynamic_model_download",
+        "match_hot_swap"
+      ],
+      "properties": {
+        "cabt_search": {
+          "const": "none"
+        },
+        "seeded_offline": {
+          "const": false
+        },
+        "network_ingress": {
+          "const": false
+        },
+        "network_egress": {
+          "const": false
+        },
+        "system_python": {
+          "const": false
+        },
+        "external_process": {
+          "const": false
+        },
+        "dynamic_model_download": {
+          "const": false
+        },
+        "match_hot_swap": {
+          "const": false
+        }
+      }
+    }
+  }
+}

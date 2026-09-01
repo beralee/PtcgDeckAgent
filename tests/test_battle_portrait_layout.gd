@@ -4215,6 +4215,8 @@ func test_portrait_review_top_actions_keep_replay_controls_visible() -> String:
 	var prev_button := scene.find_child("BtnReplayPrevTurn", true, false) as Button
 	var next_button := scene.find_child("BtnReplayNextTurn", true, false) as Button
 	var continue_button := scene.find_child("BtnReplayContinue", true, false) as Button
+	var play_button := scene.find_child("BtnReplayPlayPause", true, false) as Button
+	var speed_option := scene.find_child("OptReplaySpeed", true, false) as OptionButton
 	var list_button := scene.find_child("BtnReplayBackToList", true, false) as Button
 	var back_button := scene.find_child("BtnBack", true, false) as Button
 	var opponent_hand_button := scene.find_child("BtnOpponentHand", true, false) as Button
@@ -4222,7 +4224,7 @@ func test_portrait_review_top_actions_keep_replay_controls_visible() -> String:
 	var zeus_button := scene.find_child("BtnZeusHelp", true, false) as Button
 	var refs: RefCounted = scene.get("_battle_scene_refs")
 	if refs != null:
-		refs.call("bind_replay_buttons", prev_button, next_button, continue_button, list_button)
+		refs.call("bind_replay_buttons", prev_button, next_button, continue_button, list_button, play_button, speed_option)
 	scene.set("_battle_mode", "review_readonly")
 	var turn_numbers: Array = scene.get("_replay_turn_numbers")
 	turn_numbers.clear()
@@ -4235,12 +4237,13 @@ func test_portrait_review_top_actions_keep_replay_controls_visible() -> String:
 	var result := run_checks([
 		assert_true(prev_button != null and prev_button.visible, "Portrait replay mode should show the previous-turn button"),
 		assert_true(next_button != null and next_button.visible, "Portrait replay mode should show the next-turn button"),
-		assert_true(continue_button != null and continue_button.visible, "Portrait replay mode should show the continue-from-here button"),
+		assert_true(continue_button != null and not continue_button.visible, "Read-only replay must hide continue-from-here in portrait"),
+		assert_true(play_button != null and play_button.visible, "Portrait replay mode should show play/pause"),
+		assert_true(speed_option != null and speed_option.visible, "Portrait replay mode should show playback speed"),
 		assert_true(list_button != null and list_button.visible, "Portrait replay mode should show the back-to-replay-list button"),
-		assert_true(back_button != null and back_button.visible, "Portrait replay mode should keep Exit visible"),
-		assert_eq(prev_button.text if prev_button != null else "", "上回合", "Portrait replay previous button should use the compact label"),
-		assert_eq(next_button.text if next_button != null else "", "下回合", "Portrait replay next button should use the compact label"),
-		assert_eq(continue_button.text if continue_button != null else "", "继续", "Portrait replay continue button should use the compact label"),
+		assert_true(back_button != null and not back_button.visible, "Portrait replay mode should hide the duplicate live Exit control"),
+		assert_eq(prev_button.text if prev_button != null else "", "上步", "Portrait replay previous button should use the compact label"),
+		assert_eq(next_button.text if next_button != null else "", "下步", "Portrait replay next button should use the compact label"),
 		assert_eq(list_button.text if list_button != null else "", "列表", "Portrait replay list button should use the compact label"),
 		assert_true(opponent_hand_button == null or not opponent_hand_button.visible, "Portrait replay mode should hide live opponent-hand actions"),
 		assert_true(discuss_button == null or not discuss_button.visible, "Portrait replay mode should hide live AI discussion actions"),

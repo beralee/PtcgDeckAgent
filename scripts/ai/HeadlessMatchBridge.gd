@@ -3,6 +3,7 @@ extends Control
 
 const AISetupPlannerScript = preload("res://scripts/ai/AISetupPlanner.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
+const UcisCompilerScript = preload("res://scripts/engine/ucis/UcisInteractionCompiler.gd")
 
 var _gsm: GameStateMachine = null
 var _pending_choice: String = ""
@@ -82,9 +83,12 @@ func get_pending_prompt_type() -> String:
 
 func get_pending_prompt_owner() -> int:
 	match _pending_choice:
+		"starting_player_choice":
+			return int(_dialog_data.get("chooser", -1))
 		"mulligan_extra_draw":
 			return int(_dialog_data.get("beneficiary", -1))
-		"take_prize", "send_out", "heavy_baton_target", "exp_share_target":
+		"take_prize", "send_out", "heavy_baton_target", "exp_share_target", \
+		"retreat_energy", "retreat_bench":
 			return int(_dialog_data.get("player", -1))
 		_ when _pending_choice.begins_with("setup_active_") or _pending_choice.begins_with("setup_bench_"):
 			return int(_dialog_data.get("player", -1))
@@ -104,7 +108,6 @@ func get_pending_prompt_owner() -> int:
 func can_resolve_pending_prompt() -> bool:
 	return _pending_choice == "mulligan_extra_draw" \
 		or _pending_choice == "take_prize" \
-		or _pending_choice == "send_out" \
 		or _pending_choice.begins_with("setup_active_") \
 		or _pending_choice.begins_with("setup_bench_")
 
@@ -126,8 +129,6 @@ func resolve_pending_prompt() -> bool:
 			resolved = _resolve_mulligan_extra_draw(dialog_data)
 		"take_prize":
 			resolved = _resolve_take_prize(dialog_data)
-		"send_out":
-			resolved = _resolve_send_out(dialog_data)
 		_ when pending_choice.begins_with("setup_active_"):
 			resolved = _resolve_setup_active(dialog_data)
 		_ when pending_choice.begins_with("setup_bench_"):
@@ -142,11 +143,16 @@ func resolve_pending_prompt() -> bool:
 
 func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 	match choice_type:
+		"starting_player_choice":
+			_pending_choice = "starting_player_choice"
+			_dialog_data = data.duplicate(true)
 		"mulligan_extra_draw":
 			_pending_choice = "mulligan_extra_draw"
 			_dialog_data = data.duplicate(true)
 		"setup_ready":
-			_begin_setup_flow()
+			if _gsm != null and _gsm.game_state != null \
+				and _gsm.game_state.first_player_index in [0, 1]:
+				_begin_setup_flow(int(_gsm.game_state.first_player_index))
 		"take_prize":
 			_pending_choice = "take_prize"
 			_dialog_data = {"player": int(data.get("player", -1))}
@@ -309,6 +315,114 @@ func _refresh_ui() -> void:
 
 func _maybe_run_ai() -> void:
 	pass
+
+
+func _show_retreat_dialog(player_index: int) -> void:
+	if _gsm == null or _gsm.game_state == null \
+		or player_index < 0 or player_index >= _gsm.game_state.players.size():
+		return
+	var player := _gsm.game_state.players[player_index]
+	var active := player.active_pokemon
+	if active == null:
+		return
+	var retreat_cost := _gsm.effect_processor.get_effective_retreat_cost(
+		active, _gsm.game_state
+	)
+	if _retreat_requires_energy_choice(active, retreat_cost):
+		_show_retreat_energy_dialog(player_index, active, retreat_cost)
+	else:
+		_show_retreat_bench_choice(
+			player_index, _default_retreat_energy_selection(active, retreat_cost)
+		)
+
+
+func _show_retreat_energy_dialog(
+	player_index: int, active: PokemonSlot, retreat_cost: int
+) -> void:
+	_pending_choice = "retreat_energy"
+	_dialog_data = {
+		"player": player_index,
+		"bench": _gsm.game_state.players[player_index].bench,
+		"energy_options": active.attached_energy.duplicate(),
+		"retreat_cost": retreat_cost,
+		"allow_cancel": true,
+		"min_select": 1,
+		"max_select": active.attached_energy.size(),
+		"prompt_type": "retreat_energy",
+	}
+
+
+func _show_retreat_bench_choice(
+	player_index: int, energy_discard: Array[CardInstance]
+) -> void:
+	_pending_choice = "retreat_bench"
+	_dialog_data = {
+		"player": player_index,
+		"bench": _gsm.game_state.players[player_index].bench,
+		"energy_discard": energy_discard.duplicate(),
+		"allow_cancel": true,
+		"min_select": 1,
+		"max_select": 1,
+		"prompt_type": "retreat_bench",
+	}
+
+
+func _retreat_requires_energy_choice(active: PokemonSlot, retreat_cost: int) -> bool:
+	if active == null or retreat_cost <= 0 or active.attached_energy.size() <= 1:
+		return false
+	return _retreat_has_valid_partial_subset(
+		active.attached_energy, retreat_cost, 0, 0, 0
+	)
+
+
+func _retreat_has_valid_partial_subset(
+	attached_energy: Array[CardInstance],
+	retreat_cost: int,
+	index: int,
+	provided: int,
+	used_count: int
+) -> bool:
+	if provided >= retreat_cost:
+		return used_count > 0 and used_count < attached_energy.size()
+	if index >= attached_energy.size():
+		return false
+	var next_provided := provided + _gsm.effect_processor.get_energy_colorless_count(
+		attached_energy[index], _gsm.game_state
+	)
+	return _retreat_has_valid_partial_subset(
+		attached_energy, retreat_cost, index + 1, next_provided, used_count + 1
+	) or _retreat_has_valid_partial_subset(
+		attached_energy, retreat_cost, index + 1, provided, used_count
+	)
+
+
+func _default_retreat_energy_selection(
+	active: PokemonSlot, retreat_cost: int
+) -> Array[CardInstance]:
+	if active == null or retreat_cost <= 0:
+		return []
+	return active.attached_energy.duplicate()
+
+
+func _retreat_selection_is_valid(
+	active: PokemonSlot, chosen_energy: Array[CardInstance], retreat_cost: int
+) -> bool:
+	if active == null:
+		return false
+	if retreat_cost <= 0:
+		return chosen_energy.is_empty()
+	if chosen_energy.is_empty() or not _gsm.rule_validator.has_enough_energy_to_retreat(
+		active, chosen_energy, retreat_cost, _gsm.effect_processor, _gsm.game_state
+	):
+		return false
+	for remove_index: int in chosen_energy.size():
+		var reduced: Array[CardInstance] = chosen_energy.duplicate()
+		reduced.remove_at(remove_index)
+		if _gsm.rule_validator.has_enough_energy_to_retreat(
+			active, reduced, retreat_cost, _gsm.effect_processor, _gsm.game_state
+		):
+			return false
+	return true
 
 
 func _try_play_to_bench(player_index: int, basic_card: CardInstance, _source: String = "") -> bool:
@@ -483,6 +597,15 @@ func _start_effect_interaction(
 	attack_effects: Array[BaseEffect] = []
 ) -> void:
 	_reset_effect_interaction()
+	var compiled := UcisCompilerScript.compile_steps(steps, "headless_ingress:%s" % kind, self)
+	if not bool(compiled.get("ok", false)):
+		set_meta("ucis_interaction_error", str(compiled.get("error_code", "unsupported_interaction_shape")))
+		return
+	var compiled_steps: Array[Dictionary] = []
+	for step_value: Variant in compiled.get("steps", []):
+		compiled_steps.append(step_value as Dictionary)
+	steps = compiled_steps
+	remove_meta("ucis_interaction_error")
 	_pending_effect_kind = kind
 	_pending_effect_player_index = player_index
 	_pending_effect_card = card
@@ -502,6 +625,11 @@ func _show_next_effect_interaction_step() -> void:
 	## 所有步骤完成 -> 执行效果
 	if _pending_effect_step_index >= _pending_effect_steps.size():
 		var success := false
+		var commit_kind := _pending_effect_kind
+		var commit_player_index := _pending_effect_player_index
+		var commit_card_uid := ""
+		if _pending_effect_card != null and _pending_effect_card.card_data != null:
+			commit_card_uid = _pending_effect_card.card_data.get_uid()
 		match _pending_effect_kind:
 			"trainer":
 				success = _gsm.play_trainer(
@@ -545,6 +673,18 @@ func _show_next_effect_interaction_step() -> void:
 					_pending_effect_player_index,
 					[_pending_effect_context]
 				)
+		if success:
+			remove_meta("last_effect_commit_failure")
+		else:
+			set_meta("last_effect_commit_failure", {
+				"kind": commit_kind,
+				"player_index": commit_player_index,
+				"card_uid": commit_card_uid,
+				"interaction_validation_error": (
+					_gsm.effect_processor.get_last_interaction_validation_error(_gsm.game_state)
+					if _gsm != null and _gsm.effect_processor != null else ""
+				),
+			})
 		_reset_effect_interaction()
 		return
 	## 还有步骤未完成 -> 设置 pending_choice 等待 AI 解决
@@ -978,38 +1118,20 @@ func _find_dialog_assignment_index_for_source(source_index: int) -> int:
 
 
 func _bootstrap_pending_mulligan_prompt() -> bool:
-	var last_mulligan_player := _get_last_mulligan_player_index()
-	if last_mulligan_player < 0:
+	if _gsm == null or not _gsm.has_method("get_pending_decision_snapshot"):
+		return false
+	var snapshot: Dictionary = _gsm.get_pending_decision_snapshot()
+	if str(snapshot.get("kind", "")) != "mulligan_extra_draw":
+		return false
+	var beneficiary := int(snapshot.get("beneficiary", -1))
+	if beneficiary not in [0, 1]:
 		return false
 	_pending_choice = "mulligan_extra_draw"
 	_dialog_data = {
-		"beneficiary": 1 - last_mulligan_player,
-		"mulligan_count": _count_mulligans_for_player(last_mulligan_player),
+		"beneficiary": beneficiary,
+		"mulligan_count": int(snapshot.get("mulligan_count", 0)),
 	}
 	return true
-
-
-func _get_last_mulligan_player_index() -> int:
-	if _gsm == null:
-		return -1
-	var actions: Array = _gsm.get_action_log()
-	for action_index: int in range(actions.size() - 1, -1, -1):
-		var action_variant: Variant = actions[action_index]
-		if action_variant is GameAction and action_variant.action_type == GameAction.ActionType.MULLIGAN:
-			return int(action_variant.player_index)
-	return -1
-
-
-func _count_mulligans_for_player(player_index: int) -> int:
-	if _gsm == null:
-		return 0
-	var count: int = 0
-	for action_variant: Variant in _gsm.get_action_log():
-		if action_variant is GameAction \
-				and action_variant.action_type == GameAction.ActionType.MULLIGAN \
-				and int(action_variant.player_index) == player_index:
-			count += 1
-	return count
 
 
 func _resolve_mulligan_extra_draw(dialog_data: Dictionary) -> bool:
@@ -1077,43 +1199,6 @@ func _resolve_take_prize(dialog_data: Dictionary) -> bool:
 	var layout: Array = _gsm.game_state.players[player_index].get_prize_layout()
 	for slot_index: int in layout.size():
 		if _gsm.resolve_take_prize(player_index, slot_index):
-			return true
-	return false
-
-
-func _resolve_send_out(dialog_data: Dictionary) -> bool:
-	if _gsm == null or _gsm.game_state == null:
-		return false
-	var send_out_player: int = int(dialog_data.get("player", -1))
-	if send_out_player < 0 or send_out_player >= _gsm.game_state.players.size():
-		return false
-	var bench: Array[PokemonSlot] = _gsm.game_state.players[send_out_player].bench
-	# 选最优：就绪攻击手（有能量+有伤害）> 有能量的 > 其他
-	var best: PokemonSlot = null
-	var best_score: float = -1.0
-	for slot: PokemonSlot in bench:
-		if slot == null or slot.get_top_card() == null:
-			continue
-		var score: float = 50.0
-		var energy_count: int = slot.attached_energy.size()
-		if energy_count >= 1:
-			score = 200.0 + float(energy_count) * 20.0
-		# 有能量且有攻击招式 → 更高优先
-		var cd: CardData = slot.get_card_data()
-		if cd != null and not cd.attacks.is_empty() and energy_count >= 1:
-			score = maxf(score, 300.0 + float(energy_count) * 30.0)
-		# ex/V 不想上前场挨打
-		if cd != null and (cd.mechanic == "ex" or cd.mechanic == "V") and score < 200.0:
-			score = 10.0
-		if score > best_score:
-			best_score = score
-			best = slot
-	if best != null:
-		if _gsm.send_out_pokemon(send_out_player, best):
-			return true
-	# 兜底
-	for bench_slot: PokemonSlot in bench:
-		if _gsm.send_out_pokemon(send_out_player, bench_slot):
 			return true
 	return false
 

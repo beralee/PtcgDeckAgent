@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-marnie-capability-inventory-v1",
+  "ability_numeric_identity": "unsupported_by_official_payload_no_synthesis",
+  "capabilities": [
+    {
+      "capability_id": "initial_deck",
+      "window_family": "W0",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [
+        7,
+        104,
+        112,
+        646,
+        647,
+        648,
+        860,
+        1079,
+        1080,
+        1086,
+        1097,
+        1122,
+        1137,
+        1152,
+        1182,
+        1219,
+        1227,
+        1231,
+        1259
+      ],
+      "local_engine_support": "implemented_current_godot_card_implementation_status",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "setup_active",
+      "window_family": "W1",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [],
+      "local_engine_support": "interface_fixture_only",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "setup_bench",
+      "window_family": "W2",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [],
+      "local_engine_support": "interface_fixture_only",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed",
+        "current_firewall_setup_concealment_mismatch"
+      ]
+    },
+    {
+      "capability_id": "main_action_frontier",
+      "window_family": "W3",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [],
+      "local_engine_support": "interface_fixture_only",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "spikemuth_tutor",
+      "window_family": "W4",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [
+        1259
+      ],
+      "local_engine_support": "implemented_current_godot_card_implementation_status",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "punk_up",
+      "window_family": "W5",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [
+        648
+      ],
+      "local_engine_support": "implemented_current_godot_card_implementation_status",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "shadow_bullet",
+      "window_family": "W6",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [
+        648
+      ],
+      "local_engine_support": "implemented_current_godot_card_implementation_status",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "take_prize",
+      "window_family": "W7",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [],
+      "local_engine_support": "interface_fixture_only",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "forced_send_out",
+      "window_family": "W7",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [],
+      "local_engine_support": "interface_fixture_only",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    },
+    {
+      "capability_id": "terminal_without_callback",
+      "window_family": "W7",
+      "required": true,
+      "official_evidence": "source_locked_profile_policy_and_or_production_frame",
+      "official_card_ids": [],
+      "local_engine_support": "interface_fixture_only",
+      "portable_ready": false,
+      "portable_blockers": [
+        "exact_deck_equivalence_absent",
+        "host_trajectory_not_replayed"
+      ]
+    }
+  ]
+}

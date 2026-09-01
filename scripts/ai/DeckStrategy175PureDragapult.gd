@@ -11,6 +11,10 @@ const DRAKLOAK_RECON_USED_FLAG := "ability_look_top_to_hand_used"
 const LANCE := "Lance"
 const LANCE_EFFECT_ID := "2df65fcd5de0d9d9e24486b059981cdf"
 const LANCE_DRAGON_STEP := "dragon_pokemon"
+const BROCKS_SCOUTING_EFFECT_ID := "8d9b3076693b9f692bae94d057498720"
+const BROCKS_SCOUTING_MODE_STEP := "brocks_scouting_mode"
+const BROCKS_SCOUTING_BASIC_STEP := "brocks_scouting_basic"
+const BROCKS_SCOUTING_EVOLUTION_STEP := "brocks_scouting_evolution"
 const MUNKIDORI := "Munkidori"
 const LUMINOUS_ENERGY_EFFECT_ID := "540ee48bb93584e4bfe3d7f5d0ee0efc"
 const NEO_UPPER_ENERGY_EFFECT_ID := "83aba7d0c92c81e8c03b3785af695c2f"
@@ -44,6 +48,12 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			or player_index >= game_state.players.size():
 		return score
 	var player: PlayerState = game_state.players[player_index]
+	if (
+		str(action.get("kind", "")) == "play_trainer"
+		and _card_name(action.get("card", null)) in [BOSSS_ORDERS, COUNTER_CATCHER]
+		and not _has_immediate_attack_window(player)
+	):
+		return -3200.0
 	if str(action.get("kind", "")) == "use_ability" \
 			and _v175_is_recon_drakloak(action.get("source_slot", null)) \
 			and _v175_dragapult_phantom_dive_ready(player.active_pokemon) \
@@ -57,6 +67,12 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 	var max_select := int(step.get("max_select", items.size()))
 	if max_select <= 0 or items.is_empty():
 		return []
+	if step_id == BROCKS_SCOUTING_MODE_STEP:
+		return _v175_pick_brocks_scouting_mode(items, _v17_context_player(context))
+	if step_id == BROCKS_SCOUTING_EVOLUTION_STEP:
+		return _v175_pick_brocks_evolution(items, max_select, _v17_context_player(context))
+	if step_id == BROCKS_SCOUTING_BASIC_STEP:
+		return _v175_pick_brocks_basics(items, max_select, context)
 	if step_id == "buddy_poffin_pokemon":
 		return _v175_pick_opening_poffin_targets(items, max_select, context)
 	if step_id == LANCE_DRAGON_STEP:
@@ -68,6 +84,9 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 
 func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	var step_id := str(step.get("id", ""))
+	if step_id == BROCKS_SCOUTING_MODE_STEP:
+		var wanted := "evolution" if _v175_brocks_evolution_mode_live(_v17_context_player(context)) else "basic"
+		return 1600.0 if str(item).to_lower() == wanted else -1200.0
 	if item is CardInstance:
 		var card := item as CardInstance
 		var name := _card_name(card)
@@ -342,6 +361,8 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 				return 520.0
 			if _v175_missing_dragapult_evolution(player):
 				return 460.0
+	if str(card.card_data.effect_id) == BROCKS_SCOUTING_EFFECT_ID:
+		return 820.0 if _v175_brocks_evolution_mode_live(player) else 520.0
 	return super._score_trainer(action, game_state, player_index)
 
 
@@ -814,6 +835,75 @@ func _v175_score_budew_search(player: PlayerState, context: Dictionary, step_id:
 	if _v17_dreepy_line_count(player) > 0:
 		score += 80.0
 	return score
+
+
+func _v175_pick_brocks_scouting_mode(items: Array, player: PlayerState) -> Array:
+	var wanted := "evolution" if _v175_brocks_evolution_mode_live(player) else "basic"
+	for item: Variant in items:
+		if str(item).to_lower() == wanted:
+			return [item]
+	return [items[0]]
+
+
+func _v175_pick_brocks_evolution(items: Array, max_select: int, player: PlayerState) -> Array:
+	var scored: Array[Dictionary] = []
+	for index: int in items.size():
+		var card: Variant = items[index]
+		if not card is CardInstance:
+			continue
+		var name := _card_name(card)
+		var score := 0.0
+		if name == DRAGAPULT_EX and _v17_count_name(player, DRAKLOAK) > 0:
+			score = 2200.0
+		elif name == DRAKLOAK and _v17_count_name(player, DREEPY) > 0:
+			score = 2100.0
+		elif name == DRAKLOAK:
+			score = 1200.0
+		elif name == DRAGAPULT_EX:
+			score = 900.0
+		scored.append({"item": card, "score": score, "index": index})
+	scored.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_score := float(left.get("score", 0.0))
+		var right_score := float(right.get("score", 0.0))
+		return left_score > right_score if not is_equal_approx(left_score, right_score) else int(left.get("index", 0)) < int(right.get("index", 0))
+	)
+	var picked: Array = []
+	for entry: Dictionary in scored:
+		if picked.size() >= max_select or float(entry.get("score", 0.0)) <= 0.0:
+			break
+		picked.append(entry.get("item"))
+	return picked
+
+
+func _v175_pick_brocks_basics(items: Array, max_select: int, context: Dictionary) -> Array:
+	var scored: Array[Dictionary] = []
+	for index: int in items.size():
+		var card: Variant = items[index]
+		if card is CardInstance:
+			scored.append({
+				"item": card,
+				"score": _score_search_pokemon(card as CardInstance, context, BROCKS_SCOUTING_BASIC_STEP),
+				"index": index,
+			})
+	scored.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_score := float(left.get("score", 0.0))
+		var right_score := float(right.get("score", 0.0))
+		return left_score > right_score if not is_equal_approx(left_score, right_score) else int(left.get("index", 0)) < int(right.get("index", 0))
+	)
+	var picked: Array = []
+	for entry: Dictionary in scored:
+		if picked.size() >= max_select:
+			break
+		picked.append(entry.get("item"))
+	return picked
+
+
+func _v175_brocks_evolution_mode_live(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _v17_count_name(player, DRAKLOAK) > 0 and _v175_deck_has(player, DRAGAPULT_EX):
+		return true
+	return _v17_count_name(player, DREEPY) > 0 and _v175_deck_has(player, DRAKLOAK)
 
 
 func _v175_score_self_handoff(slot: PokemonSlot, context: Dictionary) -> float:

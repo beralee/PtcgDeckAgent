@@ -14,7 +14,7 @@ func applies_to_attack_index(attack_index: int) -> bool:
 	return attack_index_to_match < 0 or attack_index == attack_index_to_match
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	attack: Dictionary,
 	state: GameState
@@ -37,7 +37,7 @@ func get_attack_interaction_steps(
 	}]
 
 
-func get_followup_attack_interaction_steps(
+func build_ucis_followup_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState,

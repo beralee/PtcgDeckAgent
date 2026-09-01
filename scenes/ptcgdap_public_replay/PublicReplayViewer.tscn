@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/battle/BattleScene.tscn" id="1_battle"]
+[ext_resource type="Script" path="res://scenes/ptcgdap_public_replay/PublicReplayViewer.gd" id="2_viewer"]
+
+[node name="PublicReplayViewer" instance=ExtResource("1_battle")]
+script = ExtResource("2_viewer")

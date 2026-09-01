@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "profile",
+  "profile_id": "marnie_trajectory_replay_profile_v1",
+  "status": "offline_shadow_replay",
+  "parents": {
+    "p5_wp1_manifest_canonical_sha256": "673E47F897028AC4BA322818047290BBE5D5FC28E304918F32A73410A520F944",
+    "p5_wp1_fixture_bundle_canonical_sha256": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425",
+    "p2_firewall_bundle_canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947"
+  },
+  "setup_bench_concealment": {
+    "required_select_keys": [
+      "type",
+      "context",
+      "minCount",
+      "maxCount",
+      "remainDamageCounter",
+      "remainEnergyCost",
+      "option",
+      "deck",
+      "contextCard",
+      "effect"
+    ],
+    "select_type_raw": 1,
+    "select_context_raw": 2,
+    "turn": 0,
+    "own_active_exact": [
+      null
+    ],
+    "opponent_active_exact": [
+      null
+    ],
+    "min_count": 0,
+    "max_count_relation": "safe_integer_0_to_option_count",
+    "remain_damage_counter": 0,
+    "remain_energy_cost": 0,
+    "deck": null,
+    "context_card": null,
+    "effect": null,
+    "preserve_placeholder": true,
+    "identity_reconstruction": "forbidden",
+    "all_other_own_active_null_shapes": "reject_own_active_concealed"
+  },
+  "replay": {
+    "frame_count": 13,
+    "input": "P5-WP1 public typed frames only",
+    "search_capability_materialization": "root search_begin_input is restored as null solely to satisfy raw-envelope structure and is omitted by the firewall",
+    "window_authority": "firewall_accepted",
+    "production_actions_are_policy_goldens": false,
+    "terminal_without_callback": "not_applicable_terminal"
+  },
+  "chain": {
+    "algorithm": "SHA-256",
+    "prefix_utf8_hex": "50544347444150004D41524E49455F5452414A4543544F52595F5245504C41595F563100",
+    "payload": "canonical_json_v1(frame summary without witness_hash)"
+  },
+  "serialized_authority": "audit_and_conformance_only",
+  "live_authority": false,
+  "reflection_boundary": "not a hostile same-process sandbox; no live consumer exists in P5-WP2"
+}

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "dragapult_python_public_strategy_v1",
+  "profile_id": "ptcgdap-dragapult-python-public-strategy-v1",
+  "cases": [
+    {
+      "id": "setup_active_dreepy",
+      "prompt_kind": "setup_active",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "setup_bench_dreepy",
+      "prompt_kind": "setup_bench",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "main_evolve_dragapult",
+      "prompt_kind": "main",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "search_dragapult",
+      "prompt_kind": "search",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "attack_phantom_dive",
+      "prompt_kind": "attack",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "target_low_hp",
+      "prompt_kind": "attack_target",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "take_first_prize",
+      "prompt_kind": "take_prize",
+      "expected_indexes": [
+        0
+      ]
+    },
+    {
+      "id": "send_ready_dragapult",
+      "prompt_kind": "send_out",
+      "expected_indexes": [
+        1
+      ]
+    },
+    {
+      "id": "terminal_end",
+      "prompt_kind": "terminal",
+      "expected_indexes": [
+        0
+      ]
+    },
+    {
+      "id": "reject_private",
+      "expected_error_code": "invalid_public_frame"
+    },
+    {
+      "id": "reject_unknown_uid",
+      "expected_error_code": "unknown_local_card_uid"
+    }
+  ]
+}

@@ -3,7 +3,7 @@ class_name EffectPalPad
 extends BaseEffect
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	var labels: Array[String] = []

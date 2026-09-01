@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-public-firewall-p2-wp3-v1",
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "parent_contract": {
+    "id": "ptcgdap-cabt-contract-p1-wp3-v1",
+    "path": "contracts/ptcgdap/cabt_contract_bundle.json",
+    "canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294"
+  },
+  "artifacts": [
+    {
+      "id": "cabt_public_observation_schema_v1",
+      "path": "contracts/ptcgdap/cabt_public_observation.schema.json",
+      "canonical_sha256": "7920429205450F22312332BE41DF1B82F3ED5F4277B2BFE16A63F7B07121B912"
+    },
+    {
+      "id": "cabt_public_firewall_profile_v1",
+      "path": "contracts/ptcgdap/cabt_public_firewall_profile.json",
+      "canonical_sha256": "AA287117DF497ED51DCA19FA36DC6212E3AAC0E9A1D2B871BA6130B6E963332A"
+    },
+    {
+      "id": "cabt_public_firewall_conformance_v1",
+      "path": "contracts/ptcgdap/cabt_public_firewall_conformance_vectors.json",
+      "canonical_sha256": "62C52602EE3914D62FCE5A6571C6D93E7CBF9F5E2CB6CE7DCF82A8E1018CEC58"
+    }
+  ],
+  "self_hash_policy": "bundle and bound artifacts do not contain the final bundle hash"
+}

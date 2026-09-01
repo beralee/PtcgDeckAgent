@@ -9,7 +9,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_basic_bench_targets(state.players[1 - card.owner_index]).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var targets := _get_basic_bench_targets(state.players[1 - card.owner_index])
 	var labels: Array[String] = []
 	for slot: PokemonSlot in targets:

@@ -1,0 +1,96 @@
+{
+  "document_type": "author_strategy_windows_deterministic_export_report_v1",
+  "schema_version": 1,
+  "generated_at": "2026-08-14T18:45:00+08:00",
+  "godot_version": "4.6.1.stable.official.14d19694e",
+  "canonicalizer_profile": {
+    "zip_order": "ascending_ascii_path",
+    "zip_compression": "stored",
+    "zip_timestamp": "1980-01-01T00:00:00",
+    "pck_format_version": 3,
+    "pck_engine_major_minor": "4.6",
+    "pck_payload_alignment_bytes": 16,
+    "embedded_executable_prefix_preserved": true,
+    "embedded_executable_length_preserved": true,
+    "idempotence_required": true
+  },
+  "build_a_output_directory": ".tmp/ptcgdap_device_release/20260814-deterministic-a",
+  "build_b_output_directory": ".tmp/ptcgdap_device_release/20260814-deterministic-b",
+  "inventory_entry_count": 4496,
+  "all_bound_outputs_exact_match": true,
+  "outputs": {
+    "ptcgdap-windows-resources.zip": {
+      "bytes_a": 170238380,
+      "bytes_b": 170238380,
+      "sha256_a": "9A90F8DC5750F29B421EFB9185B38348CB3A407ECAFE7C56389A92B2089A0E12",
+      "sha256_b": "9A90F8DC5750F29B421EFB9185B38348CB3A407ECAFE7C56389A92B2089A0E12",
+      "exact_match": true
+    },
+    "ptcgdap-windows-resources.pck": {
+      "bytes_a": 169887128,
+      "bytes_b": 169887128,
+      "sha256_a": "47279C38342565FE10DB55179D27300EE7EA69C9E803D8221A832C58317E7B38",
+      "sha256_b": "47279C38342565FE10DB55179D27300EE7EA69C9E803D8221A832C58317E7B38",
+      "exact_match": true
+    },
+    "PtcgDeckAgent.exe": {
+      "bytes_a": 274541480,
+      "bytes_b": 274541480,
+      "sha256_a": "6D3DCA39033468923A95ED8D0BE6FEF1EF37F0E4DCFD67420AF766D245117AB0",
+      "sha256_b": "6D3DCA39033468923A95ED8D0BE6FEF1EF37F0E4DCFD67420AF766D245117AB0",
+      "exact_match": true
+    },
+    "windows-inventory.json": {
+      "bytes_a": 858709,
+      "bytes_b": 858709,
+      "sha256_a": "69039475DB8F00E7CEFE85D30F5E842DC99264B98CA4A7AFAE8E67F0305BAD44",
+      "sha256_b": "69039475DB8F00E7CEFE85D30F5E842DC99264B98CA4A7AFAE8E67F0305BAD44",
+      "exact_match": true
+    },
+    "windows-pck-runtime-probe.log": {
+      "bytes_a": 1990,
+      "bytes_b": 1990,
+      "sha256_a": "54E2832701F2BAD3CC44F2E89EE4506B1443773734A962186DDE97EF799921C9",
+      "sha256_b": "54E2832701F2BAD3CC44F2E89EE4506B1443773734A962186DDE97EF799921C9",
+      "exact_match": true
+    }
+  },
+  "pck_runtime_probe": {
+    "accepted": true,
+    "required_path_count": 22,
+    "present_required_path_count": 22,
+    "package_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+    "package_execution_trusted": false,
+    "release_target_platforms": ["windows"],
+    "deferred_platforms": ["android"]
+  },
+  "canonicalized_executable_match": {
+    "source_report_path": ".tmp/ptcgdap_device_release/20260814-deterministic-a/windows-export-match-deterministic.json",
+    "source_report_bytes": 52299,
+    "source_report_sha256": "64D7D81B4DE4FED4900FEF67CE9DF4B41BF31EBFF03121EFFE660743BE09E0E4",
+    "executable_sha256": "6D3DCA39033468923A95ED8D0BE6FEF1EF37F0E4DCFD67420AF766D245117AB0",
+    "games": 3,
+    "seeds": [84700, 84701, 84702],
+    "clean": true,
+    "complete": true,
+    "policy_calls": 182,
+    "policy_successes": 182,
+    "policy_errors": 0,
+    "invalid_outputs": 0,
+    "same_window_fallbacks": 0,
+    "classic_fallbacks": 0,
+    "engine_commits": 179,
+    "engine_rejections": 0,
+    "external_process_attempts": 0,
+    "observed_child_processes": 0,
+    "observed_network_endpoints": 0,
+    "elapsed_msec": 11291,
+    "peak_working_set_mib": 351,
+    "decision_p95_usec": 38389,
+    "decision_maximum_usec": 140576
+  },
+  "development_only": true,
+  "production_ready": false,
+  "network_isolation_proven": false,
+  "formal_a5": false
+}

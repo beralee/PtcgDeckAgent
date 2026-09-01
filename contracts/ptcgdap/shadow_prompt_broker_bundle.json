@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-shadow-prompt-broker-p3-wp5-v1",
+  "parent_executor_bundle_canonical_sha256": "45952BE629AE98EB6070C77188FD6A2C2A644C4B6A36876193BB745B7CDA4E92",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/shadow_prompt_broker.schema.json",
+      "canonical_sha256": "B580E5F4605F12D8C773C7D61CA75BFBB9D3524918CD16E74725FFD13205F956"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/shadow_prompt_broker_profile.json",
+      "canonical_sha256": "E77469206464EF3E38784EC031615B35DC56A1608A8205910E5400C3218E6735"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/shadow_prompt_broker_conformance_vectors.json",
+      "canonical_sha256": "AB317B735EA57C19440275A263F9BFD4ABAFE78DD606AB461947DF5CAB08AA49"
+    }
+  ]
+}

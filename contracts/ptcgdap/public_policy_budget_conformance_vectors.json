@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-public-policy-budget-conformance-p4-wp6-v1",
+  "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+  "fixture": {
+    "ledger_id": "fixture.public-policy-budget",
+    "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+    "initial_ledger": {
+      "schema_version": 1,
+      "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+      "ledger_id": "fixture.public-policy-budget",
+      "decision_ordinal": 0,
+      "total_budget_ms": 600000,
+      "remaining_ms": 600000,
+      "cumulative_elapsed_ms": 0,
+      "previous_telemetry_hash": null,
+      "ledger_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5"
+    },
+    "all_available_capabilities": {
+      "public_base_policy_v1": "available",
+      "current_window_sanitizer_v1": "available",
+      "deterministic_base_fallback_v1": "available",
+      "public_deck_adapter_v1": "available",
+      "learned_policy_head_v1": "available",
+      "search_v1": "available"
+    }
+  },
+  "step_cases": [
+    {
+      "id": "full-budget",
+      "elapsed_ms": 0,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 0,
+        "remaining_after_ms": 600000,
+        "mode": "full",
+        "reason_code": "full_budget_available",
+        "known_unavailable_capabilities": [],
+        "unknown_capability_count": 0,
+        "selected_indexes": [],
+        "fallback_used": false,
+        "telemetry_hash": "6737B0A4E98E56DC4470974D3B397803F9F3B629D9F7A018307BE718D6A6734B",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 600000,
+          "cumulative_elapsed_ms": 0,
+          "previous_telemetry_hash": "6737B0A4E98E56DC4470974D3B397803F9F3B629D9F7A018307BE718D6A6734B",
+          "ledger_hash": "E48B98F82B84427D18825FC0C55C99341D52F8FA8CAA34FB1BA9DF68F7BF7BA4"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "B2183AF972BF72E1A1CF1D7245E595D437A12F24AB4152FD89F55DBF89373EA2"
+      }
+    },
+    {
+      "id": "full-optional-absent",
+      "elapsed_ms": 1,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "unsupported",
+        "search_v1": "unavailable"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 1,
+        "remaining_after_ms": 599999,
+        "mode": "full",
+        "reason_code": "full_budget_available",
+        "known_unavailable_capabilities": [
+          "learned_policy_head_v1",
+          "search_v1"
+        ],
+        "unknown_capability_count": 0,
+        "selected_indexes": [],
+        "fallback_used": false,
+        "telemetry_hash": "6F6C1F8466D5320C7F187AFF5C463C73F98A01CAE6C4D368B5C8D92CBC911A02",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 599999,
+          "cumulative_elapsed_ms": 1,
+          "previous_telemetry_hash": "6F6C1F8466D5320C7F187AFF5C463C73F98A01CAE6C4D368B5C8D92CBC911A02",
+          "ledger_hash": "7BC712182A4168714488D2C59CB63AA87E13B821D0044461035A64FB327A52B9"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "021866AB195A6D1F00BA503F396EF2FFE7A0E27309E51CAE32FE962FDE5858A9"
+      }
+    },
+    {
+      "id": "base-threshold",
+      "elapsed_ms": 570000,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 570000,
+        "remaining_after_ms": 30000,
+        "mode": "base_only",
+        "reason_code": "budget_constrained",
+        "known_unavailable_capabilities": [],
+        "unknown_capability_count": 0,
+        "selected_indexes": [],
+        "fallback_used": false,
+        "telemetry_hash": "1E5EF4F336AC16AA35CCDBC2D40479FCE97E001C7B893ACA77F0F5F0946BB681",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 30000,
+          "cumulative_elapsed_ms": 570000,
+          "previous_telemetry_hash": "1E5EF4F336AC16AA35CCDBC2D40479FCE97E001C7B893ACA77F0F5F0946BB681",
+          "ledger_hash": "B9237D11AF4E3CA4ABAFF713C5AACA597181CF3C31E931685B5497E84647C0C3"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "CFD03C49BEBF4F3CDD7754873EB8A99E4C51E52B3C4A2B72D8657A10764D7A64"
+      }
+    },
+    {
+      "id": "base-adapter-unavailable",
+      "elapsed_ms": 1,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "unsupported",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 1,
+        "remaining_after_ms": 599999,
+        "mode": "base_only",
+        "reason_code": "optional_capability_unavailable",
+        "known_unavailable_capabilities": [
+          "public_deck_adapter_v1"
+        ],
+        "unknown_capability_count": 0,
+        "selected_indexes": [],
+        "fallback_used": false,
+        "telemetry_hash": "59B7D5144680B7BB9FC3D36B2A15B60DDD21DF709D293A2CD487AC14AD1473B4",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 599999,
+          "cumulative_elapsed_ms": 1,
+          "previous_telemetry_hash": "59B7D5144680B7BB9FC3D36B2A15B60DDD21DF709D293A2CD487AC14AD1473B4",
+          "ledger_hash": "17505EE4411B398070073F664F874271AF441F2DDB0413EF7F104DBBEA00232D"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "E744E09FACD3CF938A79247C13DD5DFE01D550EB7A8E98F2930B847D9FF91C40"
+      }
+    },
+    {
+      "id": "fallback-threshold",
+      "elapsed_ms": 595000,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 595000,
+        "remaining_after_ms": 5000,
+        "mode": "deterministic_fallback",
+        "reason_code": "budget_reserve",
+        "known_unavailable_capabilities": [],
+        "unknown_capability_count": 0,
+        "selected_indexes": [
+          0
+        ],
+        "fallback_used": true,
+        "telemetry_hash": "BBF28719ED8ABEC22A44E6F98D70B03B408C236364B59236314450A1D1AEB067",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 5000,
+          "cumulative_elapsed_ms": 595000,
+          "previous_telemetry_hash": "BBF28719ED8ABEC22A44E6F98D70B03B408C236364B59236314450A1D1AEB067",
+          "ledger_hash": "A40401F0C6873078BEFD500B0AF9DC027A011DAEDF60F3820513952A5D39205C"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "A56E3353308F3B98ECDF6BAA04AAC2E72AD2AF7C091E24F2A48724669763B783"
+      }
+    },
+    {
+      "id": "budget-exhausted",
+      "elapsed_ms": 600000,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 600000,
+        "remaining_after_ms": 0,
+        "mode": "deterministic_fallback",
+        "reason_code": "budget_exhausted",
+        "known_unavailable_capabilities": [],
+        "unknown_capability_count": 0,
+        "selected_indexes": [
+          0
+        ],
+        "fallback_used": true,
+        "telemetry_hash": "CA3A0489AF850CB179B45285AF13F0D089039E1EA8C8C07BF5DC888C8C894D56",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 0,
+          "cumulative_elapsed_ms": 600000,
+          "previous_telemetry_hash": "CA3A0489AF850CB179B45285AF13F0D089039E1EA8C8C07BF5DC888C8C894D56",
+          "ledger_hash": "BEB99569F3DE03FB74DD1AE759B68D259CE9D46F14B5216D1D2DAB4D61A22F1B"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "96A9269A4EEE4C959DF740EDE8CA9A263B3F8BAC9F176054384FC6F5DB88E74B"
+      }
+    },
+    {
+      "id": "required-missing",
+      "elapsed_ms": 1,
+      "capabilities": {
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 1,
+        "remaining_after_ms": 599999,
+        "mode": "deterministic_fallback",
+        "reason_code": "required_capability_unavailable",
+        "known_unavailable_capabilities": [
+          "public_base_policy_v1"
+        ],
+        "unknown_capability_count": 0,
+        "selected_indexes": [
+          0
+        ],
+        "fallback_used": true,
+        "telemetry_hash": "94180657C909217F1AF9AE3E1D064125998711EA95531CC12B2809FEB8A85BC6",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 599999,
+          "cumulative_elapsed_ms": 1,
+          "previous_telemetry_hash": "94180657C909217F1AF9AE3E1D064125998711EA95531CC12B2809FEB8A85BC6",
+          "ledger_hash": "37DA3CE5D71D910AC1188207825B18AD34151E41C64FB8D4BD94D4D336719071"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "5A1DD4C496BD6FDCE783CBB02A236DD3DC7E94CBF09DC4D69BE5EAA4E8D08CC9"
+      }
+    },
+    {
+      "id": "unknown-capability",
+      "elapsed_ms": 1,
+      "capabilities": {
+        "public_base_policy_v1": "available",
+        "current_window_sanitizer_v1": "available",
+        "deterministic_base_fallback_v1": "available",
+        "public_deck_adapter_v1": "available",
+        "learned_policy_head_v1": "available",
+        "search_v1": "available",
+        "vendor.future_capability": "available"
+      },
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+        "ledger_id": "fixture.public-policy-budget",
+        "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+        "ledger_before_hash": "7B91191A60099776EE1DAD028CB3C2885FC5CC0DB7417BA96BADFA1D12D58BA5",
+        "decision_ordinal": 1,
+        "remaining_before_ms": 600000,
+        "elapsed_ms": 1,
+        "remaining_after_ms": 599999,
+        "mode": "deterministic_fallback",
+        "reason_code": "unknown_capability",
+        "known_unavailable_capabilities": [],
+        "unknown_capability_count": 1,
+        "selected_indexes": [
+          0
+        ],
+        "fallback_used": true,
+        "telemetry_hash": "08B3B8DEC3001859B4F2E0286974AD4497DCDECB4C97C92F996F04958188063C",
+        "next_ledger": {
+          "schema_version": 1,
+          "profile_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+          "ledger_id": "fixture.public-policy-budget",
+          "decision_ordinal": 1,
+          "total_budget_ms": 600000,
+          "remaining_ms": 599999,
+          "cumulative_elapsed_ms": 1,
+          "previous_telemetry_hash": "08B3B8DEC3001859B4F2E0286974AD4497DCDECB4C97C92F996F04958188063C",
+          "ledger_hash": "CB667711476CC014662AA51EF1484EB99966EFF410A65C69ACC84AA38E274EE3"
+        },
+        "authority": "public_policy_budget_audit",
+        "authoritative": false,
+        "result_hash": "C38972EF54AD2CA82E4F9E2379288C16DB4B05952EB0119F22A9892C2B6F33AD"
+      }
+    }
+  ],
+  "rejections": [
+    {
+      "id": "fake-ledger",
+      "fault": "fake_ledger",
+      "expected_error_code": "invalid_ledger"
+    },
+    {
+      "id": "fake-window",
+      "fault": "fake_window",
+      "expected_error_code": "invalid_window"
+    },
+    {
+      "id": "elapsed-bool",
+      "fault": "elapsed_bool",
+      "expected_error_code": "invalid_elapsed_ms"
+    },
+    {
+      "id": "elapsed-negative",
+      "fault": "elapsed_negative",
+      "expected_error_code": "invalid_elapsed_ms"
+    },
+    {
+      "id": "elapsed-unsafe",
+      "fault": "elapsed_unsafe",
+      "expected_error_code": "invalid_elapsed_ms"
+    },
+    {
+      "id": "capabilities-not-object",
+      "fault": "capabilities_not_object",
+      "expected_error_code": "invalid_capability_report"
+    },
+    {
+      "id": "capability-state-not-string",
+      "fault": "capability_state_not_string",
+      "expected_error_code": "invalid_capability_report"
+    },
+    {
+      "id": "capability-state-unknown",
+      "fault": "capability_state_unknown",
+      "expected_error_code": "invalid_capability_report"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_CLOCK_SENTINEL",
+    "PRIVATE_CAPABILITY_SENTINEL",
+    "PRIVATE_HOST_SENTINEL"
+  ],
+  "consumer_rule": "Serialized ledgers and results are public audit only and never execution authority."
+}

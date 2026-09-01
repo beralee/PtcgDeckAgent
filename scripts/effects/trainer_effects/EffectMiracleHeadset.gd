@@ -8,7 +8,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _supporters(card, state).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var legal := _supporters(card, state)
 	var labels: Array[String] = []
 	for supporter: CardInstance in legal:

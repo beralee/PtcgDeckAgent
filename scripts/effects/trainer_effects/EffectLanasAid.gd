@@ -16,7 +16,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _recoverable_discard_cards(card, state).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var items: Array[CardInstance] = _recoverable_discard_cards(card, state)
 	if items.is_empty():
 		return []

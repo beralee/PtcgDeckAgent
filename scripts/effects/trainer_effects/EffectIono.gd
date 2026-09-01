@@ -23,7 +23,7 @@ func _shuffle_hand_to_bottom_of_deck(state: GameState, pi: int) -> bool:
 	var hand_copy: Array[CardInstance] = player.hand.duplicate()
 	if hand_copy.is_empty():
 		return false
-	_shuffle_cards(hand_copy)
+	player.shuffle_cards(hand_copy, "iono_hand_to_deck_bottom")
 	for c: CardInstance in hand_copy:
 		player.hand.erase(c)
 		c.face_up = false
@@ -37,10 +37,6 @@ func _draw_by_prizes(state: GameState, pi: int, source_card: CardInstance) -> vo
 	## 按剩余奖赏卡数量决定抽牌数
 	var draw_count: int = player.prizes.size()
 	_draw_cards_with_log(state, pi, draw_count, source_card, "trainer")
-
-
-func _shuffle_cards(cards: Array[CardInstance]) -> void:
-	PlayerState.shuffle_card_array(cards)
 
 
 func get_description() -> String:

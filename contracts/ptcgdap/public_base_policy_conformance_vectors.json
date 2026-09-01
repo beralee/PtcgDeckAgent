@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+  "profile_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+  "fixture": {
+    "context_fixture_id": "regular-accepted",
+    "ir_case_id": "public-adapter-proposals",
+    "adapter_case_id": "stable",
+    "option_count": 2
+  },
+  "orchestration_cases": [
+    {
+      "id": "adapter-hint",
+      "request": {
+        "orchestration_id": "adapter-hint.orchestration",
+        "proposal_id": "adapter-hint.proposal",
+        "execution_id": "adapter-hint.execution",
+        "scene_id": "adapter-hint.scene",
+        "decision_id": "adapter-hint.decision",
+        "determinism_key": "adapter-hint.determinism",
+        "trace_id": "adapter-hint.trace",
+        "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": []
+      },
+      "expected_selected_indexes": [
+        1
+      ],
+      "expected_decision_audit_id": "89D0B62A4E64F3B762954B515131F9879F63735801C5343AC8C97794BC074E55",
+      "expected_trace_hash": "AF251AB7C2DDF0EDE21FD0C7B2BD93AA8F7981941FE7A80AF87CEFD56C7262B4",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+        "orchestration_id": "adapter-hint.orchestration",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783",
+          "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C",
+          "proposal_hash": "F3B5C2C0180846D956AE7892693702ECBB9221F492361F92183C6AA70BA76176",
+          "execution_hash": "73ABEC13CCC0ECA855D2AB4B4237B15D61F35760382132890F331527FC22CA2B",
+          "decision_audit_id": "89D0B62A4E64F3B762954B515131F9879F63735801C5343AC8C97794BC074E55",
+          "trace_hash": "AF251AB7C2DDF0EDE21FD0C7B2BD93AA8F7981941FE7A80AF87CEFD56C7262B4",
+          "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "completed_stages": [
+          "validate_exact_owners",
+          "propose_public_adapter_hints",
+          "execute_restricted_base_graph",
+          "sanitize_against_exact_current_window",
+          "issue_policy_decision",
+          "issue_strategic_trace",
+          "seal_public_audit_result"
+        ],
+        "public_only": true,
+        "authority": "public_base_policy_orchestration_audit",
+        "authoritative": false,
+        "orchestration_hash": "C1F4A8CD40F7385BB17D98E620E8F2972DB561761E6CA99CCDB07E11D727917D"
+      }
+    },
+    {
+      "id": "best-hard-tier",
+      "request": {
+        "orchestration_id": "best-hard-tier.orchestration",
+        "proposal_id": "best-hard-tier.proposal",
+        "execution_id": "best-hard-tier.execution",
+        "scene_id": "best-hard-tier.scene",
+        "decision_id": "best-hard-tier.decision",
+        "determinism_key": "best-hard-tier.determinism",
+        "trace_id": "best-hard-tier.trace",
+        "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              1
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": []
+      },
+      "expected_selected_indexes": [
+        1
+      ],
+      "expected_decision_audit_id": "2BA0A9AD76E952086F64A41D8E7D60784926E4500693FFF2BC2E6DAAE7C45829",
+      "expected_trace_hash": "3E9A738D96233AD5DEE95D4BFC0443814B84610BBA425082559057EB767698DD",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+        "orchestration_id": "best-hard-tier.orchestration",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783",
+          "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C",
+          "proposal_hash": "92EC64007A2E13A8F5030CB7EDE925652013C2F2F0EB27D306D74528E50E8878",
+          "execution_hash": "461B11F773F5B619BA2CB13F17F1AA74C71570ECE06CFEB02EA26C41400D00AB",
+          "decision_audit_id": "2BA0A9AD76E952086F64A41D8E7D60784926E4500693FFF2BC2E6DAAE7C45829",
+          "trace_hash": "3E9A738D96233AD5DEE95D4BFC0443814B84610BBA425082559057EB767698DD",
+          "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA"
+        },
+        "selected_indexes": [
+          1
+        ],
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "completed_stages": [
+          "validate_exact_owners",
+          "propose_public_adapter_hints",
+          "execute_restricted_base_graph",
+          "sanitize_against_exact_current_window",
+          "issue_policy_decision",
+          "issue_strategic_trace",
+          "seal_public_audit_result"
+        ],
+        "public_only": true,
+        "authority": "public_base_policy_orchestration_audit",
+        "authoritative": false,
+        "orchestration_hash": "7A63B44F054101ACCBF4871204BB4E001621FD7477BA055061F2BD9A59CD94BE"
+      }
+    },
+    {
+      "id": "veto-adapter-first",
+      "request": {
+        "orchestration_id": "veto-adapter-first.orchestration",
+        "proposal_id": "veto-adapter-first.proposal",
+        "execution_id": "veto-adapter-first.execution",
+        "scene_id": "veto-adapter-first.scene",
+        "decision_id": "veto-adapter-first.decision",
+        "determinism_key": "veto-adapter-first.determinism",
+        "trace_id": "veto-adapter-first.trace",
+        "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA",
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [
+          1
+        ]
+      },
+      "expected_selected_indexes": [
+        0
+      ],
+      "expected_decision_audit_id": "CE1E02C9DFD4E2D5D16274778B4B20CA68FBB6F1F43D4C117207EEE852A9BE37",
+      "expected_trace_hash": "CD6EBC6E13016146AD2D3FF4034A1850A0D3AB88FDD66FBA6BB47978C8E9C813",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+        "orchestration_id": "veto-adapter-first.orchestration",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783",
+          "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C",
+          "proposal_hash": "70ABBF45F022234241B39A3A6C011C11035E2EAA18B19A0C332B66A40E2189F2",
+          "execution_hash": "DC8774592B8EE1620FB47A5EF506A614BC5AD38CDFB1236515B83D4072332503",
+          "decision_audit_id": "CE1E02C9DFD4E2D5D16274778B4B20CA68FBB6F1F43D4C117207EEE852A9BE37",
+          "trace_hash": "CD6EBC6E13016146AD2D3FF4034A1850A0D3AB88FDD66FBA6BB47978C8E9C813",
+          "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA"
+        },
+        "selected_indexes": [
+          0
+        ],
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "completed_stages": [
+          "validate_exact_owners",
+          "propose_public_adapter_hints",
+          "execute_restricted_base_graph",
+          "sanitize_against_exact_current_window",
+          "issue_policy_decision",
+          "issue_strategic_trace",
+          "seal_public_audit_result"
+        ],
+        "public_only": true,
+        "authority": "public_base_policy_orchestration_audit",
+        "authoritative": false,
+        "orchestration_hash": "0549A63B43F55FFD4B6D476FCE28A1B59D9B4AA4DDA25BDFBDFFA2D7E04D6D15"
+      }
+    },
+    {
+      "id": "mandatory-nonminimum-tier",
+      "request": {
+        "orchestration_id": "mandatory-nonminimum-tier.orchestration",
+        "proposal_id": "mandatory-nonminimum-tier.proposal",
+        "execution_id": "mandatory-nonminimum-tier.execution",
+        "scene_id": "mandatory-nonminimum-tier.scene",
+        "decision_id": "mandatory-nonminimum-tier.decision",
+        "determinism_key": "mandatory-nonminimum-tier.determinism",
+        "trace_id": "mandatory-nonminimum-tier.trace",
+        "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA",
+        "mandatory_indexes": [
+          0
+        ],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              1
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": []
+      },
+      "expected_selected_indexes": [
+        0
+      ],
+      "expected_decision_audit_id": "4A985A695A82C0D36DA1CF5E285BC6C7C949E2B46C5A59F70C4FF9E8B7495082",
+      "expected_trace_hash": "E28194AE646200977EF9C3A88AD0C43BD45F749DBF879B8269BB1B5FD32BD954",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+        "orchestration_id": "mandatory-nonminimum-tier.orchestration",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783",
+          "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C",
+          "proposal_hash": "193711006A03DB8337A251CB16F8E9ECA6D6A159AD14E0BA5C8B9B7E3D1B0369",
+          "execution_hash": "08299A4C45520D8D6806684669B0F2CB6FD16356247AEDE3551247C5F93DD538",
+          "decision_audit_id": "4A985A695A82C0D36DA1CF5E285BC6C7C949E2B46C5A59F70C4FF9E8B7495082",
+          "trace_hash": "E28194AE646200977EF9C3A88AD0C43BD45F749DBF879B8269BB1B5FD32BD954",
+          "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA"
+        },
+        "selected_indexes": [
+          0
+        ],
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "completed_stages": [
+          "validate_exact_owners",
+          "propose_public_adapter_hints",
+          "execute_restricted_base_graph",
+          "sanitize_against_exact_current_window",
+          "issue_policy_decision",
+          "issue_strategic_trace",
+          "seal_public_audit_result"
+        ],
+        "public_only": true,
+        "authority": "public_base_policy_orchestration_audit",
+        "authoritative": false,
+        "orchestration_hash": "E6BB42ED81AD88FC88E18959E8B8F74B48324F4040B4C9D379BF894487845B40"
+      }
+    },
+    {
+      "id": "terminal-nonminimum-tier",
+      "request": {
+        "orchestration_id": "terminal-nonminimum-tier.orchestration",
+        "proposal_id": "terminal-nonminimum-tier.proposal",
+        "execution_id": "terminal-nonminimum-tier.execution",
+        "scene_id": "terminal-nonminimum-tier.scene",
+        "decision_id": "terminal-nonminimum-tier.decision",
+        "determinism_key": "terminal-nonminimum-tier.determinism",
+        "trace_id": "terminal-nonminimum-tier.trace",
+        "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA",
+        "mandatory_indexes": [
+          1
+        ],
+        "terminal_indexes": [
+          0
+        ],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              1
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": []
+      },
+      "expected_selected_indexes": [
+        0
+      ],
+      "expected_decision_audit_id": "773F1312C5A9CDFDFEEB8B1EDFDB823E1B9EA8339F78FB676B98C17272DB09E5",
+      "expected_trace_hash": "34AA74BA7922881D7077F4886B712AD5F249F35770AD5361A8A906B47F8C60FB",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-base-policy-p4-wp5-v1",
+        "orchestration_id": "terminal-nonminimum-tier.orchestration",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783",
+          "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C",
+          "proposal_hash": "0F09AE719E121AB16833B32F100196DF00A8D8D040CF6EE1366A1045A560DC08",
+          "execution_hash": "FD540DCA71A9DB5E92BFA624C04964C727F8ECD07EC45CF108469830533EF7DB",
+          "decision_audit_id": "773F1312C5A9CDFDFEEB8B1EDFDB823E1B9EA8339F78FB676B98C17272DB09E5",
+          "trace_hash": "34AA74BA7922881D7077F4886B712AD5F249F35770AD5361A8A906B47F8C60FB",
+          "policy_hash": "F13E1E254627474BE047AA7A5A646F1F1BEC6DB612E0FD7236E8FAC0D86766DA"
+        },
+        "selected_indexes": [
+          0
+        ],
+        "owner_layer": "base_graph",
+        "reason_code": "policy_selection_accepted",
+        "fallback_tier": "none",
+        "completed_stages": [
+          "validate_exact_owners",
+          "propose_public_adapter_hints",
+          "execute_restricted_base_graph",
+          "sanitize_against_exact_current_window",
+          "issue_policy_decision",
+          "issue_strategic_trace",
+          "seal_public_audit_result"
+        ],
+        "public_only": true,
+        "authority": "public_base_policy_orchestration_audit",
+        "authoritative": false,
+        "orchestration_hash": "B9A96EFEFDACC6520E0004817A23D55A6340CE9A95C7F4186A86985619AE253C"
+      }
+    }
+  ],
+  "orchestration_rejections": [
+    {
+      "id": "fake-context",
+      "fault": "fake_context",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_context"
+    },
+    {
+      "id": "fake-window",
+      "fault": "fake_window",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_window"
+    },
+    {
+      "id": "fake-ir",
+      "fault": "fake_ir",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_ir"
+    },
+    {
+      "id": "fake-adapter",
+      "fault": "fake_adapter",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_adapter"
+    },
+    {
+      "id": "private-identity",
+      "fault": "private_identity",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "private_orchestration_input"
+    },
+    {
+      "id": "lowercase-policy-hash",
+      "fault": "lowercase_policy_hash",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_orchestration_input"
+    },
+    {
+      "id": "mandatory-bool",
+      "fault": "mandatory_bool",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_orchestration_input"
+    },
+    {
+      "id": "forced-veto",
+      "fault": "forced_veto",
+      "expected_failed_stage": "execute_restricted_base_graph",
+      "expected_error_code": "base_execution_failed"
+    },
+    {
+      "id": "cross-window",
+      "fault": "cross_window",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_window"
+    },
+    {
+      "id": "mutated-adapter",
+      "fault": "mutated_adapter",
+      "expected_failed_stage": "validate_exact_owners",
+      "expected_error_code": "invalid_adapter"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE",
+    "PRIVATE_HAND_SENTINEL",
+    "PRIVATE_SEARCH_SENTINEL",
+    "PRIVATE_SESSION_SENTINEL"
+  ],
+  "consumer_rule": "The orchestration result, PolicyDecision and Strategic Trace are public audit only. Future selection, binding, ticket and engine owners must revalidate exact current authority."
+}

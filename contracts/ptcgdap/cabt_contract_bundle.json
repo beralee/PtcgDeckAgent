@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "contract_id": "ptcgdap-cabt-contract-p1-wp3-v1",
+  "status": "offline_shadow",
+  "parent_contract": {
+    "contract_id": "ptcgdap-cabt-contract-p1-wp2-v1",
+    "canonical_sha256": "A9BD1BBB725FF002DCE5BF60043AD62AC078EC07E2FDB772ED394AC5FA3EE6F3"
+  },
+  "digest_mode": "canonical_json_v1",
+  "artifact_set_policy": "exact_ids_and_paths_no_duplicates",
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "artifacts": [
+    {
+      "id": "raw_envelope_schema",
+      "path": "contracts/ptcgdap/raw_cabt_envelope.schema.json",
+      "canonical_sha256": "4BE60E82DC766A31D14B0823AEB462E3117C8652DC13EC649D5BF5219BA869F8"
+    },
+    {
+      "id": "tree_hash_profile",
+      "path": "contracts/ptcgdap/cabt_tree_hash_profile.json",
+      "canonical_sha256": "93FB67638244843CCDCB6954A15385F27FA468438E5B6DBA5629A2AF345EE6F0"
+    },
+    {
+      "id": "enum_snapshot",
+      "path": "contracts/ptcgdap/cabt_enum_snapshot.json",
+      "canonical_sha256": "67C13F67B533C1E3F4AC91A65608487FC4A41DE291FD8F2CF0EFCD475E4628A0"
+    },
+    {
+      "id": "option_sparse_shapes",
+      "path": "contracts/ptcgdap/cabt_option_sparse_shapes.json",
+      "canonical_sha256": "F9D85B3D2E1EA0CFF7B023F0C366EFE1FB8DA00A2B85D40F26A6B7DFBF4B062D"
+    },
+    {
+      "id": "typed_view_profile",
+      "path": "contracts/ptcgdap/cabt_typed_view_profile.json",
+      "canonical_sha256": "8BF305D68247111DB7C94908012AEF57636566E8246474FF0395EA25FDD89548"
+    },
+    {
+      "id": "tree_hash_conformance_vectors",
+      "path": "contracts/ptcgdap/cabt_tree_hash_conformance_vectors.json",
+      "canonical_sha256": "2FA2313FE227CEF98F0813E0ED509EC1BB2E8D71DF9A29B019DF3C0802508CA6"
+    },
+    {
+      "id": "selection_window_schema",
+      "path": "contracts/ptcgdap/cabt_selection_window.schema.json",
+      "canonical_sha256": "5F2F2E3889F6D47587A6386672E34D45EB3531E1DB4DE9D2BFA25F677AD44453"
+    },
+    {
+      "id": "selection_profile",
+      "path": "contracts/ptcgdap/cabt_selection_profile.json",
+      "canonical_sha256": "8F2133706BC33FC0125109E47835D6A06A6CC21FD5E4B324AD284FAF1D03F460"
+    },
+    {
+      "id": "selection_conformance_vectors",
+      "path": "contracts/ptcgdap/cabt_selection_conformance_vectors.json",
+      "canonical_sha256": "7467A7BCC32CAEECBCF1234DFB2E1A0497A37088765D51AB4D223E2D3773EE4E"
+    }
+  ]
+}

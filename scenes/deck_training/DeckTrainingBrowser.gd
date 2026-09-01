@@ -117,8 +117,8 @@ func _build_scenario_list() -> void:
 		child.queue_free()
 	var catalog := CatalogScript.load_catalog()
 	var errors: Array = catalog.get("errors", [])
-	var all_scenarios := CatalogScript.list_scenarios()
-	var scenarios := CatalogScript.list_scenarios(CatalogScript.CATALOG_PATH, _selected_deck_key)
+	var all_scenarios := CatalogScript.list_scenarios_from_catalog(catalog)
+	var scenarios := CatalogScript.list_scenarios_from_catalog(catalog, _selected_deck_key)
 	var admission := AdmissionVerifierScript.verify_all(all_scenarios)
 	for error: Variant in admission.get("errors", []):
 		errors.append(error)

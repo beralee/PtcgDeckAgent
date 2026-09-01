@@ -13,7 +13,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_valid_targets(state.players[card.owner_index]).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	if CSV9CEffects.player_field_return_to_hand_blocked(card.owner_index, state):
 		return []

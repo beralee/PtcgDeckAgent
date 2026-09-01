@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/shadow_whole_match_harness.schema.json",
+  "title": "PtcgDAP shadow whole-match harness audit DTOs",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/wholeMatchReport"
+    },
+    {
+      "$ref": "#/$defs/harnessResult"
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-F0-9]{64}$"
+    },
+    "positiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "wholeMatchReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "state",
+        "match_generation",
+        "prompt_count",
+        "broker_generations",
+        "decision_generations",
+        "snapshot_ids",
+        "window_ids",
+        "execution_ids",
+        "fault_code",
+        "dirty",
+        "rollback_requested",
+        "match_ended",
+        "next_match_mode",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "profile": {
+          "const": "ptcgdap-shadow-whole-match-harness-p3-wp8-v1"
+        },
+        "state": {
+          "enum": [
+            "ready",
+            "active",
+            "completed",
+            "faulted",
+            "dirty",
+            "rollback_verified"
+          ]
+        },
+        "match_generation": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/positiveSafeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prompt_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "broker_generations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/positiveSafeInteger"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "decision_generations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/positiveSafeInteger"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "snapshot_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "window_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "execution_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "fault_code": {
+          "enum": [
+            "",
+            "capture_failed",
+            "command_apply_failed",
+            "rollback_failed",
+            "invalid_broker_result",
+            "stale_prompt_chain",
+            "prompt_limit_exceeded"
+          ]
+        },
+        "dirty": {
+          "type": "boolean"
+        },
+        "rollback_requested": {
+          "type": "boolean"
+        },
+        "match_ended": {
+          "type": "boolean"
+        },
+        "next_match_mode": {
+          "oneOf": [
+            {
+              "const": "legacy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authority": {
+          "const": "shadow_whole_match_report_audit"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "harnessResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "report"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "enum": [
+            "",
+            "invalid_harness",
+            "invalid_gate",
+            "owner_mode_not_aligned",
+            "invalid_broker",
+            "broker_not_current",
+            "already_started",
+            "not_started",
+            "match_terminal",
+            "invalid_broker_result",
+            "stale_prompt_chain",
+            "prompt_limit_exceeded",
+            "prompt_apply_failed",
+            "dirty_game_detected",
+            "rollback_request_failed",
+            "match_end_failed",
+            "rollback_not_required",
+            "invalid_match_generation",
+            "next_match_rollback_failed"
+          ]
+        },
+        "report": {
+          "$ref": "#/$defs/wholeMatchReport"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "const": ""
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "enum": [
+                  "invalid_harness",
+                  "invalid_gate",
+                  "owner_mode_not_aligned",
+                  "invalid_broker",
+                  "broker_not_current",
+                  "already_started",
+                  "not_started",
+                  "match_terminal",
+                  "invalid_broker_result",
+                  "stale_prompt_chain",
+                  "prompt_limit_exceeded",
+                  "prompt_apply_failed",
+                  "dirty_game_detected",
+                  "rollback_request_failed",
+                  "match_end_failed",
+                  "rollback_not_required",
+                  "invalid_match_generation",
+                  "next_match_rollback_failed"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

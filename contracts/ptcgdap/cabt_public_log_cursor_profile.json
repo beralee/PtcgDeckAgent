@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "profile_id": "cabt_public_log_cursor_profile_v1",
+  "parent_firewall": {
+    "bundle_id": "ptcgdap-public-firewall-p2-wp3-v1",
+    "canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+    "accepted_result_profile_id": "cabt_public_firewall_profile_v1"
+  },
+  "witness_contract": {
+    "profile_id": "cabt_public_log_slice_v1",
+    "prefix_utf8_hex": "5054434744415000434142545F5055424C49435F4C4F475F534C4943455F563100",
+    "canonicalization": "RFC8785-JCS",
+    "algorithm": "SHA-256",
+    "payload_fields_in_order_independent_object": [
+      "ordinal",
+      "previous_witness",
+      "source_public_observation_hash",
+      "logs"
+    ],
+    "forbidden_fields": [
+      "session_id",
+      "match_generation",
+      "raw_private_hash",
+      "token_free_callback_hash",
+      "search_begin_input",
+      "search_capability_present"
+    ]
+  },
+  "cursor_lifecycle": {
+    "initial_ordinal": 0,
+    "initial_previous_witness": null,
+    "peek": "create one pending exact-owner slice; repeated peek of the same firewall owner result is idempotent",
+    "pending": "a different source result is rejected until the exact pending slice is committed",
+    "commit": "only the exact pending slice owner result advances ordinal and previous witness once",
+    "reset": "increment the private generation, clear pending state and replay memory, reset ordinal and previous witness",
+    "replay": "an exact firewall owner result already committed in the same generation is rejected"
+  },
+  "input_authority": {
+    "required": "exact accepted PublicObservationFirewall owner result validated against its exact bound envelope",
+    "copied_dictionary_authorizes": false,
+    "caller_log_array_authorizes": false,
+    "schema_pass_authorizes": false,
+    "godot_private_event_authorizes": false
+  },
+  "result_contract": {
+    "serialization_authority": "audit_and_conformance_only",
+    "success": "exact ordered logs, ordinal, previous witness, source public-observation hash and witness",
+    "failure": "null slice or receipt plus one closed non-echoing issue",
+    "error_codes": [
+      "invalid_firewall_result",
+      "firewall_result_not_accepted",
+      "cursor_contract_error",
+      "pending_selection_uncommitted",
+      "invalid_slice_result",
+      "slice_not_pending",
+      "slice_cursor_mismatch",
+      "slice_generation_stale",
+      "slice_integrity_invalid",
+      "source_result_replayed",
+      "public_log_limit",
+      "witness_error"
+    ],
+    "consumer_rule": "no live consumer exists; later owners must keep the exact cursor and exact pending owner result in one trusted call chain",
+    "reflection_boundary": "not a hostile same-process sandbox"
+  },
+  "limits": {
+    "max_logs_per_slice": 4096,
+    "max_log_tree_depth": 64,
+    "max_log_tree_nodes": 200000
+  },
+  "non_claims": [
+    "Godot engine log projection",
+    "Host callback ticket",
+    "public trajectory persistence",
+    "live ownership",
+    "package or device runtime"
+  ]
+}

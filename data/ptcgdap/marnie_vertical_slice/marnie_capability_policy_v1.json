@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "policy",
+  "policy_id": "ptcgdap-marnie-capability-policy-v1",
+  "profile_id": "marnie_capability_policy_profile_v1",
+  "parent_replay_bundle_canonical_sha256": "E203A688BEC1AFFFABAAF06098361B3FAE04B84431F99AE75A19F891BFA9599F",
+  "parent_fixture_bundle_canonical_sha256": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425",
+  "rules": [
+    {
+      "frame_id": "w0_initial",
+      "capability_id": "initial_deck",
+      "rule_id": "official_initial_deck",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w1_setup_active",
+      "capability_id": "setup_active",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w2_setup_bench",
+      "capability_id": "setup_bench",
+      "rule_id": "optional_zero",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w3_main",
+      "capability_id": "main_action_frontier",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w4_spikemuth_deck",
+      "capability_id": "spikemuth_tutor",
+      "rule_id": "public_deck_card_id",
+      "target_official_id": 648
+    },
+    {
+      "frame_id": "w5_punk_up_sources",
+      "capability_id": "punk_up",
+      "rule_id": "all_public_deck_card_id",
+      "target_official_id": 7
+    },
+    {
+      "frame_id": "w5_punk_up_target_1",
+      "capability_id": "punk_up",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w5_punk_up_target_2",
+      "capability_id": "punk_up",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w6_shadow_bullet_attack",
+      "capability_id": "shadow_bullet",
+      "rule_id": "official_attack_id",
+      "target_official_id": 937
+    },
+    {
+      "frame_id": "w6_shadow_bullet_target",
+      "capability_id": "shadow_bullet",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w7_take_prize",
+      "capability_id": "take_prize",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w7_forced_send_out",
+      "capability_id": "forced_send_out",
+      "rule_id": "first_min",
+      "target_official_id": null
+    },
+    {
+      "frame_id": "w7_terminal",
+      "capability_id": "terminal_without_callback",
+      "rule_id": "terminal_no_callback",
+      "target_official_id": null
+    }
+  ],
+  "initial_deck_card_ids": [
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    104,
+    104,
+    112,
+    112,
+    112,
+    112,
+    646,
+    646,
+    646,
+    646,
+    647,
+    647,
+    647,
+    648,
+    648,
+    648,
+    860,
+    860,
+    1079,
+    1079,
+    1079,
+    1080,
+    1086,
+    1086,
+    1086,
+    1086,
+    1097,
+    1097,
+    1097,
+    1122,
+    1137,
+    1152,
+    1152,
+    1152,
+    1152,
+    1182,
+    1182,
+    1219,
+    1219,
+    1219,
+    1219,
+    1227,
+    1227,
+    1227,
+    1227,
+    1231,
+    1259,
+    1259,
+    1259,
+    1259
+  ],
+  "production_actions_used": false,
+  "execution_authority": false
+}

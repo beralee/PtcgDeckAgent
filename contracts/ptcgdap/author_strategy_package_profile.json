@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-author-strategy-package-v1",
+  "container": {
+    "extension": ".ptcgai",
+    "format": "zip",
+    "nested_archives": false,
+    "arbitrary_code": false,
+    "network_or_process_capability": false
+  },
+  "required_payload_paths": [
+    "LICENSE",
+    "README.md",
+    "deck/deck.csv",
+    "deck/deck_manifest.json",
+    "policy/adapter.json",
+    "policy/config.json",
+    "policy/policy_ir.json",
+    "strategy_package.json"
+  ],
+  "generated_member_paths": [
+    "files.sha256.json",
+    "signature.json"
+  ],
+  "optional_payload_kinds": {
+    "policy/weights.bin": "weights",
+    "assets/icon.png": "png",
+    "assets/banner.png": "png",
+    "assets/icon.webp": "webp",
+    "assets/banner.webp": "webp"
+  },
+  "payload_kinds": {
+    "strategy_package.json": "json",
+    "README.md": "text",
+    "LICENSE": "text",
+    "deck/deck_manifest.json": "json",
+    "deck/deck.csv": "csv",
+    "policy/policy_ir.json": "json",
+    "policy/adapter.json": "json",
+    "policy/config.json": "json"
+  },
+  "resource_limits": {
+    "max_archive_bytes": 12582912,
+    "max_uncompressed_bytes": 16777216,
+    "max_entry_count": 16,
+    "max_path_bytes": 128,
+    "max_single_file_bytes": 8388608,
+    "max_json_bytes": 262144,
+    "max_text_bytes": 262144,
+    "max_csv_bytes": 262144,
+    "max_weights_bytes": 8388608,
+    "max_image_bytes": 2097152,
+    "max_image_width": 2048,
+    "max_image_height": 2048,
+    "max_compression_ratio": 20
+  },
+  "zip_profile": {
+    "entry_order": "ascending_ascii_path_bytes",
+    "allowed_compression_methods": [
+      0
+    ],
+    "builder_compression_method": 0,
+    "timestamp": "1980-01-01T00:00:00",
+    "create_system": 3,
+    "external_attr": 2175008768,
+    "internal_attr": 0,
+    "flag_bits": 0,
+    "entry_extra": "empty",
+    "entry_comment": "empty",
+    "archive_comment": "empty",
+    "zip64": false
+  },
+  "path_profile": {
+    "separator": "/",
+    "encoding": "ASCII",
+    "casefold_collision": "reject",
+    "empty_dot_dotdot_absolute_drive_backslash_nul": "reject"
+  },
+  "file_manifest_relation": {
+    "path": "files.sha256.json",
+    "lists": "every payload member except files.sha256.json and signature.json",
+    "order": "ascending_ascii_path_bytes",
+    "hash_domain": "raw member bytes SHA-256 uppercase"
+  },
+  "signature_profile": {
+    "path": "signature.json",
+    "algorithm": "ed25519",
+    "domain": "ptcgdap-author-strategy-package-signature-v1",
+    "signed_fields": [
+      "schema_version",
+      "domain",
+      "package_id",
+      "package_version",
+      "manifest_sha256",
+      "files_manifest_sha256"
+    ],
+    "canonicalization": "canonical_json_v1"
+  },
+  "trust_store": {
+    "caller_overrides": false,
+    "keys": [
+      {
+        "key_id": "ptcgdap-as-wp1-test-fixture-ed25519-v1",
+        "algorithm": "ed25519",
+        "public_key_base64": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+        "scope": "test_fixture_only",
+        "execution_trusted": false
+      }
+    ]
+  },
+  "compatibility_anchors": {
+    "minimum_game_api": "ptcgdap-author-host-v1",
+    "cabt_contract_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+    "base_executor_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389"
+  },
+  "policy_contract_anchors": {
+    "strategic_trace_v2_bundle_canonical_sha256": "ADDD4CB48BD10FA0478854124D8E63AEE42B898C0EB81692BA35F8D7F90414C4",
+    "public_deck_adapter_bundle_canonical_sha256": "C80F4C4FDAEA5AC29BD3C5617BFAC72BE38709696F7EA1995D3D153113DD3CA1"
+  },
+  "document_profiles": {
+    "strategy_package": "strategy_package_v1",
+    "deck_manifest": "deck_manifest_v1",
+    "policy_ir": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+    "adapter": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+    "config": "ptcgdap-author-policy-config-v1"
+  },
+  "error_precedence": [
+    "archive",
+    "path",
+    "resource",
+    "manifest_type",
+    "file_hash",
+    "signature",
+    "compatibility",
+    "deck_policy",
+    "integrity"
+  ],
+  "stable_error_codes": [
+    "package_file_missing",
+    "package_archive_invalid",
+    "package_path_invalid",
+    "package_duplicate_path",
+    "package_file_unlisted",
+    "package_file_hash_mismatch",
+    "package_signature_untrusted",
+    "package_manifest_invalid",
+    "package_identity_conflict",
+    "package_contract_incompatible",
+    "package_catalog_incompatible",
+    "package_deck_unmapped",
+    "package_policy_unsupported",
+    "package_resource_limit_exceeded",
+    "package_integrity_invalid"
+  ]
+}

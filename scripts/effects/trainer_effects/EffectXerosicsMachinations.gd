@@ -7,7 +7,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return opponent.hand.size() > 3
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var discard_count: int = maxi(0, opponent.hand.size() - 3)
 	if discard_count <= 0:

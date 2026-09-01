@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-godot-action-executor-p3-wp4-v1",
+  "fixture": {
+    "selected_indexes": [
+      1,
+      0
+    ],
+    "chooser_player_index": 0,
+    "resolution_count": 2
+  },
+  "preflight_cases": [
+    {
+      "id": "preflight-success",
+      "expected": {
+        "accepted": true,
+        "error_code": ""
+      }
+    },
+    {
+      "id": "preflight-invalid-owner",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_ticket_owner"
+      }
+    },
+    {
+      "id": "preflight-invalid-claim",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_claim_result"
+      }
+    },
+    {
+      "id": "preflight-rejected-claim",
+      "expected": {
+        "accepted": false,
+        "error_code": "claim_not_accepted"
+      }
+    },
+    {
+      "id": "preflight-invalid-binding-owner",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_binding_owner"
+      }
+    },
+    {
+      "id": "preflight-binding-stale",
+      "expected": {
+        "accepted": false,
+        "error_code": "binding_not_current"
+      }
+    },
+    {
+      "id": "preflight-snapshot-stale",
+      "expected": {
+        "accepted": false,
+        "error_code": "snapshot_not_current"
+      }
+    },
+    {
+      "id": "preflight-window-stale",
+      "expected": {
+        "accepted": false,
+        "error_code": "window_not_current"
+      }
+    },
+    {
+      "id": "preflight-callback-drift",
+      "expected": {
+        "accepted": false,
+        "error_code": "callback_mismatch"
+      }
+    },
+    {
+      "id": "preflight-selection-reordered",
+      "expected": {
+        "accepted": false,
+        "error_code": "selection_mismatch"
+      }
+    },
+    {
+      "id": "preflight-resolution-mutated",
+      "expected": {
+        "accepted": false,
+        "error_code": "private_resolution_invalid"
+      }
+    },
+    {
+      "id": "preflight-reference-released",
+      "expected": {
+        "accepted": false,
+        "error_code": "private_reference_unavailable"
+      }
+    },
+    {
+      "id": "preflight-active-exists",
+      "expected": {
+        "accepted": false,
+        "error_code": "active_preflight_exists"
+      }
+    }
+  ],
+  "commit_cases": [
+    {
+      "id": "commit-success",
+      "expected": {
+        "accepted": true,
+        "error_code": ""
+      }
+    },
+    {
+      "id": "commit-invalid-preflight",
+      "expected": {
+        "accepted": false,
+        "error_code": "invalid_preflight"
+      }
+    },
+    {
+      "id": "commit-cross-owner",
+      "expected": {
+        "accepted": false,
+        "error_code": "owner_mismatch"
+      }
+    },
+    {
+      "id": "commit-mutated-preflight",
+      "expected": {
+        "accepted": false,
+        "error_code": "preflight_integrity_invalid"
+      }
+    },
+    {
+      "id": "commit-stale-batch",
+      "expected": {
+        "accepted": false,
+        "error_code": "preflight_not_current"
+      }
+    },
+    {
+      "id": "commit-replay",
+      "expected": {
+        "accepted": false,
+        "error_code": "already_committed"
+      }
+    },
+    {
+      "id": "commit-aborted",
+      "expected": {
+        "accepted": false,
+        "error_code": "preflight_aborted"
+      }
+    },
+    {
+      "id": "commit-context-drift",
+      "expected": {
+        "accepted": false,
+        "error_code": "commit_context_changed"
+      }
+    },
+    {
+      "id": "commit-resolution-mutated",
+      "expected": {
+        "accepted": false,
+        "error_code": "private_resolution_invalid"
+      }
+    },
+    {
+      "id": "commit-reference-released",
+      "expected": {
+        "accepted": false,
+        "error_code": "private_reference_unavailable"
+      }
+    }
+  ],
+  "transition_cases": [
+    {
+      "id": "prepare-commit-replay",
+      "steps": [
+        "prepare_accept",
+        "commit_accept",
+        "commit_already_committed"
+      ]
+    },
+    {
+      "id": "prepare-abort-commit",
+      "steps": [
+        "prepare_accept",
+        "abort_accept",
+        "commit_preflight_aborted"
+      ]
+    },
+    {
+      "id": "failed-prepare-is-atomic",
+      "steps": [
+        "prepare_reject",
+        "state_none"
+      ]
+    },
+    {
+      "id": "failed-commit-aborts-without-output",
+      "steps": [
+        "prepare_accept",
+        "commit_reject",
+        "state_aborted"
+      ]
+    },
+    {
+      "id": "ordered-multi-preserved",
+      "steps": [
+        "prepare_indexes_1_0",
+        "commit_indexes_1_0"
+      ]
+    }
+  ]
+}

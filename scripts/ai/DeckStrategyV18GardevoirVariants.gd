@@ -34,6 +34,7 @@ const RELLOR_NAMES: Array[String] = ["虫滚泥", "Rellor"]
 const RABSCA_NAMES: Array[String] = ["虫甲圣", "Rabsca"]
 const BRAVERY_CHARM_NAMES: Array[String] = ["勇气护符", "Bravery Charm"]
 const ARTAZON_NAMES: Array[String] = ["深钵镇", "Artazon"]
+const RARE_CANDY_NAMES: Array[String] = ["神奇糖果", "Rare Candy"]
 
 const DRAW_SUPPORTER_NAMES: Array[String] = [
 	"博士的研究", "Professor's Research", "奇树", "Iono",
@@ -269,10 +270,14 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 	if player == null:
 		return score
 	var kind := str(action.get("kind", ""))
+	if kind == "play_trainer" \
+			and _matches(action.get("card", null), ["奇树", "Iono"]) \
+			and _no_balloon_iono_prevents_next_draw_deck_out(player):
+		return maxf(score, 2600.0)
 	if _variant_deck_id == NO_BALLOON_DECK_ID \
 			and kind == "attach_tool" \
 			and _matches(action.get("card", null), BRAVERY_CHARM_NAMES, BRAVERY_CHARM_EFFECT_ID) \
-			and _matches(action.get("target_slot", null), RALTS_NAMES):
+			and not _matches(action.get("target_slot", null), DRIFLOON_NAMES + SCREAM_TAIL_NAMES):
 		return minf(score, -4600.0)
 	if _variant_deck_id == NO_BALLOON_DECK_ID \
 			and kind == "attach_energy" \
@@ -380,6 +385,40 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 		if kind == "play_basic_to_bench" and guard_debt and _matches(action.get("card", null), RELLOR_NAMES, RELLOR_EFFECT_ID):
 			return maxf(score, 2200.0)
 	return score
+
+
+func get_discard_priority_contextual(card: CardInstance, game_state: GameState, player_index: int) -> int:
+	if (
+		game_state != null
+		and player_index >= 0
+		and player_index < game_state.players.size()
+		and _variant_deck_id == NO_BALLOON_DECK_ID
+		and _matches(card, RARE_CANDY_NAMES)
+		and _last_rare_candy_bridge_is_live(game_state.players[player_index])
+	):
+		return -120
+	return super.get_discard_priority_contextual(card, game_state, player_index)
+
+
+func _last_rare_candy_bridge_is_live(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var candy_count := 0
+	var gardevoir_accessible := false
+	for card: CardInstance in player.hand:
+		if _matches(card, RARE_CANDY_NAMES):
+			candy_count += 1
+		if _matches(card, GARDEVOIR_NAMES, GARDEVOIR_EFFECT_ID):
+			gardevoir_accessible = true
+	for card: CardInstance in player.deck:
+		if _matches(card, GARDEVOIR_NAMES, GARDEVOIR_EFFECT_ID):
+			gardevoir_accessible = true
+	var ralts_live := false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if _matches(slot, RALTS_NAMES):
+			ralts_live = true
+			break
+	return candy_count == 1 and gardevoir_accessible and ralts_live
 
 
 func _munkidori_source_damage_should_be_preserved(
@@ -666,6 +705,14 @@ func _field_has(player: PlayerState, aliases: Array[String], effect_id: String =
 		if _matches(slot, aliases, effect_id):
 			return true
 	return false
+
+
+func _no_balloon_iono_prevents_next_draw_deck_out(player: PlayerState) -> bool:
+	return _variant_id == VARIANT_NO_BALLOON \
+			and player != null \
+			and player.deck.size() <= 1 \
+			and player.hand.size() >= 3 \
+			and not player.prizes.is_empty()
 
 
 func _rabsca_guard_online(player: PlayerState) -> bool:

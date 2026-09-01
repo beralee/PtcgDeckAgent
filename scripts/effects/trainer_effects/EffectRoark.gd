@@ -28,7 +28,7 @@ func get_empty_interaction_message(card: CardInstance, state: GameState) -> Stri
 	return get_unusable_reason(card, state)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if not _has_valid_owner(card, state):
 		return []
 	var energies: Array[CardInstance] = _basic_energies(state.players[card.owner_index])

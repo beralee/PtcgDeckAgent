@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ptcgdap-marnie-official-deck-manifest-v1",
+  "deck_identity": "cabt:marnie_grimmsnarl_froslass:48f1a03e8ab8162f",
+  "source_deck_raw_sha256": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF",
+  "ordered_card_ids_canonical_sha256": "CAFA7652A6349BE806D8AC2B9ABFDB6C72CA3821F368E0D912E2D989F3B54CDD",
+  "card_count": 60,
+  "unique_card_id_count": 19,
+  "ordered_card_ids": [
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    104,
+    104,
+    112,
+    112,
+    112,
+    112,
+    646,
+    646,
+    646,
+    646,
+    647,
+    647,
+    647,
+    648,
+    648,
+    648,
+    860,
+    860,
+    1079,
+    1079,
+    1079,
+    1080,
+    1086,
+    1086,
+    1086,
+    1086,
+    1097,
+    1097,
+    1097,
+    1122,
+    1137,
+    1152,
+    1152,
+    1152,
+    1152,
+    1182,
+    1182,
+    1219,
+    1219,
+    1219,
+    1219,
+    1227,
+    1227,
+    1227,
+    1227,
+    1231,
+    1259,
+    1259,
+    1259,
+    1259
+  ],
+  "cards": [
+    {
+      "official_card_id": 7,
+      "count": 10,
+      "exact_english_printing": {
+        "collection_no": "7",
+        "expansion": "SVE"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "DAR",
+          "set_code": "CSVE1C"
+        },
+        "source_file": "data/bundled_user/cards/CSVE1C_DAR.json",
+        "local_attack_index_to_official_attack_id": {}
+      }
+    },
+    {
+      "official_card_id": 104,
+      "count": 2,
+      "exact_english_printing": {
+        "collection_no": "53",
+        "expansion": "TWM"
+      },
+      "ordered_official_attack_ids": [
+        131
+      ],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "059",
+          "set_code": "CSV7C"
+        },
+        "source_file": "data/bundled_user/cards/CSV7C_059.json",
+        "local_attack_index_to_official_attack_id": {
+          "0": 131
+        }
+      }
+    },
+    {
+      "official_card_id": 112,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "95",
+        "expansion": "TWM"
+      },
+      "ordered_official_attack_ids": [
+        141
+      ],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "094",
+          "set_code": "CSV8C"
+        },
+        "source_file": "data/bundled_user/cards/CSV8C_094.json",
+        "local_attack_index_to_official_attack_id": {
+          "0": 141
+        }
+      }
+    },
+    {
+      "official_card_id": 646,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "134",
+        "expansion": "DRI"
+      },
+      "ordered_official_attack_ids": [
+        934,
+        935
+      ],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "134",
+          "set_code": "LEN_DRI"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_134.json",
+        "local_attack_index_to_official_attack_id": {
+          "0": 934,
+          "1": 935
+        }
+      }
+    },
+    {
+      "official_card_id": 647,
+      "count": 3,
+      "exact_english_printing": {
+        "collection_no": "135",
+        "expansion": "DRI"
+      },
+      "ordered_official_attack_ids": [
+        936
+      ],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "135",
+          "set_code": "LEN_DRI"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_135.json",
+        "local_attack_index_to_official_attack_id": {
+          "0": 936
+        }
+      }
+    },
+    {
+      "official_card_id": 648,
+      "count": 3,
+      "exact_english_printing": {
+        "collection_no": "136",
+        "expansion": "DRI"
+      },
+      "ordered_official_attack_ids": [
+        937
+      ],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "136",
+          "set_code": "LEN_DRI"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_136.json",
+        "local_attack_index_to_official_attack_id": {
+          "0": 937
+        }
+      }
+    },
+    {
+      "official_card_id": 860,
+      "count": 2,
+      "exact_english_printing": {
+        "collection_no": "46",
+        "expansion": "ASC"
+      },
+      "ordered_official_attack_ids": [
+        1239
+      ],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1079,
+      "count": 3,
+      "exact_english_printing": {
+        "collection_no": "191",
+        "expansion": "SVI"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1080,
+      "count": 1,
+      "exact_english_printing": {
+        "collection_no": "165",
+        "expansion": "TWM"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "173",
+          "set_code": "CSV8C"
+        },
+        "source_file": "data/bundled_user/cards/CSV8C_173.json",
+        "local_attack_index_to_official_attack_id": {}
+      }
+    },
+    {
+      "official_card_id": 1086,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "144",
+        "expansion": "TEF"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1097,
+      "count": 3,
+      "exact_english_printing": {
+        "collection_no": "61",
+        "expansion": "SFA"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "183",
+          "set_code": "CSV8C"
+        },
+        "source_file": "data/bundled_user/cards/CSV8C_183.json",
+        "local_attack_index_to_official_attack_id": {}
+      }
+    },
+    {
+      "official_card_id": 1122,
+      "count": 1,
+      "exact_english_printing": {
+        "collection_no": "186",
+        "expansion": "SVI"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1137,
+      "count": 1,
+      "exact_english_printing": {
+        "collection_no": "85",
+        "expansion": "WHT"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1152,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "81",
+        "expansion": "POR"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1182,
+      "count": 2,
+      "exact_english_printing": {
+        "collection_no": "172",
+        "expansion": "PAL"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1219,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "176",
+        "expansion": "DRI"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1227,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "119",
+        "expansion": "MEG"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1231,
+      "count": 1,
+      "exact_english_printing": {
+        "collection_no": "87",
+        "expansion": "PFL"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": null
+    },
+    {
+      "official_card_id": 1259,
+      "count": 4,
+      "exact_english_printing": {
+        "collection_no": "169",
+        "expansion": "DRI"
+      },
+      "ordered_official_attack_ids": [],
+      "exact_local_bridge": {
+        "local_printing": {
+          "card_index": "169",
+          "set_code": "LEN_DRI"
+        },
+        "source_file": "data/bundled_user/cards/LEN_DRI_169.json",
+        "local_attack_index_to_official_attack_id": {}
+      }
+    }
+  ],
+  "native_deck_legality": "official_production_replay_accepted_source_deck",
+  "cabt_exportable": true
+}

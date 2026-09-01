@@ -6,7 +6,7 @@ const DISCARD_STEP_ID := "discard_cards"
 const TARGET_STEP_ID := "lost_vacuum_target"
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var pi: int = card.owner_index
 	var player: PlayerState = state.players[pi]
 	var hand_items: Array = []

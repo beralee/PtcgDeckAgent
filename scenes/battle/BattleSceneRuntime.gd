@@ -30,7 +30,7 @@ func _recover_battle_runtime_after_resume(reason: String = "resume") -> void:
 		_on_coin_animation_finished()
 	if _is_ai_action_pause_active():
 		_on_ai_action_pause_finished()
-	if GameManager.current_mode == GameManager.GameMode.VS_AI:
+	if GameManager.current_mode in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI]:
 		_ai_watchdog_reconcile_authoritative_decision()
 	_refresh_ui()
 	_notify_ai_watchdog_activity("runtime_resume")
@@ -39,6 +39,17 @@ func _recover_battle_runtime_after_resume(reason: String = "resume") -> void:
 
 func _ready() -> void:
 	set_process(false)
+	# Consume and snapshot the launch before any live setup helper can clear
+	# transient battle identity. Recorded labels are scene-local below.
+	var replay_launch: Dictionary = GameManager.consume_battle_replay_launch()
+	if not replay_launch.is_empty():
+		_replay_previous_selected_deck_ids.clear()
+		for deck_id_variant: Variant in replay_launch.get("_return_selected_deck_ids", []):
+			_replay_previous_selected_deck_ids.append(int(deck_id_variant))
+		_replay_previous_player_display_names.clear()
+		for name_variant: Variant in replay_launch.get("_return_player_display_names", []):
+			_replay_previous_player_display_names.append(str(name_variant))
+		_replay_global_display_context_captured = true
 	var runtime_profile: UiRuntimeProfile = (
 		GameManager.get_ui_runtime_profile()
 		if GameManager != null and GameManager.has_method("get_ui_runtime_profile")
@@ -64,6 +75,9 @@ func _ready() -> void:
 	_btn_replay_next_turn.pressed.connect(_on_replay_next_turn_pressed)
 	_btn_replay_continue.pressed.connect(_on_replay_continue_pressed)
 	_btn_replay_back_to_list.pressed.connect(_on_replay_back_to_list_pressed)
+	_btn_replay_play_pause.pressed.connect(_on_replay_play_pause_pressed)
+	_opt_replay_speed.item_selected.connect(_on_replay_speed_selected)
+	_configure_replay_player_controls()
 	_setup_battle_scene_context()
 	_btn_back.pressed.connect(_on_back_pressed)
 	_btn_battle_layout.pressed.connect(_on_battle_layout_pressed)
@@ -103,6 +117,8 @@ func _ready() -> void:
 	_btn_replay_next_turn.visible = false
 	_btn_replay_continue.visible = false
 	_btn_replay_back_to_list.visible = false
+	_btn_replay_play_pause.visible = false
+	_opt_replay_speed.visible = false
 	_opp_prize_hud_count.visible = false
 	_my_prize_hud_count.visible = false
 	for caption_path: String in [
@@ -181,7 +197,6 @@ func _ready() -> void:
 		stadium_sections.move_child(_stadium_center_section, 0)
 		stadium_sections.move_child(_lost_zone_section, 1)
 	_refresh_replay_controls()
-	var replay_launch: Dictionary = GameManager.consume_battle_replay_launch()
 	if not replay_launch.is_empty():
 		_apply_replay_launch(replay_launch)
 
@@ -240,6 +255,7 @@ func _exit_tree() -> void:
 	_release_battle_runtime_resources()
 	BattleMusicManager.stop_battle_music()
 	GameManager.apply_non_battle_orientation()
+	_restore_replay_global_display_context()
 
 
 func _release_battle_runtime_resources() -> void:
@@ -317,6 +333,8 @@ func _release_runtime_timer_nodes() -> void:
 	_ai_llm_waiting = false
 	_ai_llm_turn_requested = -1
 	_ai_llm_wait_anim_token += 1
+	_author_policy_polling = false
+	_author_policy_wait_generation += 1
 
 
 func _release_runtime_tweens() -> void:
@@ -432,6 +450,15 @@ func _clear_runtime_state_payloads() -> void:
 	_pending_prize_remaining = 0
 	_pending_prize_animating = false
 	_ai_opponent = null
+	_close_author_public_replay("runtime_state_cleared")
+	_close_author_developer_trace("runtime_state_cleared")
+	_close_author_match_evidence("runtime_state_cleared")
+	if _author_player_owner != null and _author_player_owner.has_method("close_match"):
+		_author_player_owner.close_match()
+	_author_player_owner = null
+	_author_runtime_start_error_code = ""
+	_author_strategy_author_name = ""
+	_author_strategy_deck_label = ""
 	_ai_running = false
 	_ai_step_scheduled = false
 	_ai_followup_requested = false
@@ -479,17 +506,19 @@ func _release_runtime_cache_heavy_refs() -> void:
 
 
 
-func _process(_delta: float) -> void:
-	if _responsive_layout_stabilization_frames_remaining <= 0:
-		set_process(false)
-		return
+func _process(delta: float) -> void:
+	var keep_processing := false
+	if _is_review_mode() and _replay_is_playing:
+		keep_processing = true
+		_advance_replay_playback(delta)
 	if not is_inside_tree():
 		set_process(false)
 		return
-	_apply_responsive_layout()
-	_responsive_layout_stabilization_frames_remaining -= 1
-	if _responsive_layout_stabilization_frames_remaining <= 0:
-		set_process(false)
+	if _responsive_layout_stabilization_frames_remaining > 0:
+		keep_processing = true
+		_apply_responsive_layout()
+		_responsive_layout_stabilization_frames_remaining -= 1
+	set_process(keep_processing or (_is_review_mode() and _replay_is_playing))
 
 
 
@@ -1785,11 +1814,16 @@ func _apply_portrait_top_action_compact_label(button: Button) -> void:
 		"BtnZeusHelp":
 			button.text = "宙斯"
 		"BtnReplayPrevTurn":
-			button.text = "上回合"
+			button.text = "上步"
+		"BtnReplayPlayPause":
+			if _replay_is_playing:
+				button.text = "暂停"
+			elif _replay_timeline.size() > 1 and _replay_current_frame_index >= _replay_timeline.size() - 1:
+				button.text = "重头播放"
+			else:
+				button.text = "播放"
 		"BtnReplayNextTurn":
-			button.text = "下回合"
-		"BtnReplayContinue":
-			button.text = "继续"
+			button.text = "下步"
 		"BtnReplayBackToList":
 			button.text = "列表"
 		"BtnBack":
@@ -2313,7 +2347,9 @@ func _apply_top_action_button_metrics(button_height: float, viewport_size: Vecto
 		_top_action_button_or_null(_btn_battle_layout, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleLayout"),
 		_top_action_button_or_null(_btn_battle_more, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleMore"),
 		_top_action_button_or_null(_btn_replay_prev_turn, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPrevTurn"),
+		_top_action_button_or_null(_btn_replay_play_pause, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPlayPause"),
 		_top_action_button_or_null(_btn_replay_next_turn, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayNextTurn"),
+		_top_action_button_or_null(_opt_replay_speed, "TopBar/TopBarRow/TopBarRight/TopBarActions/OptReplaySpeed"),
 		_top_action_button_or_null(_btn_replay_continue, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayContinue"),
 		_top_action_button_or_null(_btn_replay_back_to_list, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayBackToList"),
 		_top_action_button_or_null(_btn_back, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBack"),
@@ -2601,8 +2637,7 @@ func _on_state_changed(_new_phase: GameState.GamePhase) -> void:
 
 
 
-func _on_action_logged(action: GameAction) -> void:
-	_capture_battle_recording_context_if_ready()
+func _enqueue_battle_visual_action(action: GameAction) -> void:
 	if (
 		action != null
 		and _battle_visual_sequence_controller != null
@@ -2628,6 +2663,16 @@ func _on_action_logged(action: GameAction) -> void:
 			_view_player,
 			suppressed_visual_semantics
 		)
+
+
+func _on_action_logged(action: GameAction) -> void:
+	# Preserve the action-time state for presentation before any diagnostics can
+	# serialize a large public/native snapshot on the main thread.
+	_enqueue_battle_visual_action(action)
+	_record_author_public_action(action)
+	if _author_public_replay_progress_mode() == "action":
+		_record_author_public_replay_progress()
+	_capture_battle_recording_context_if_ready()
 	if action.description != "":
 		var display_description := _format_action_description_for_display(action.description)
 		if action.player_index != _view_player:
@@ -2714,11 +2759,18 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 		"mulligan_extra_draw":
 			var beneficiary: int = data.get("beneficiary", 0)
 			var count: int = data.get("mulligan_count", 1)
+			var choices: Array[String] = []
+			for draw_count: int in count + 1:
+				choices.append("让玩家 %d 多抽 %d 张牌" % [beneficiary + 1, draw_count])
 			_pending_choice = "mulligan_extra_draw"
 			_show_dialog(
 				"对手第 %d 次重抽" % count,
-				["让玩家 %d 多抽 1 张牌" % (beneficiary + 1)],
-				{"beneficiary": beneficiary, "allow_cancel": false}
+				choices,
+				{
+					"beneficiary": beneficiary,
+					"maximum_draw_count": count,
+					"allow_cancel": false,
+				}
 			)
 		"setup_ready":
 			_begin_setup_flow()
@@ -2851,6 +2903,9 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 		"reason": reason,
 		"winner_index": winner_index,
 	})
+	_finish_author_developer_trace(winner_index, reason)
+	_finish_author_match_evidence(winner_index, reason)
+	_finish_author_public_replay(winner_index, reason)
 	if _battle_recorder != null and _battle_recorder.has_method("get_match_dir"):
 		_battle_review_match_dir = str(_battle_recorder.call("get_match_dir"))
 	if tournament_match:
@@ -2898,7 +2953,6 @@ func _on_stadium_card_left_clicked(card_instance: CardInstance, card_data: CardD
 		_show_card_detail(detail_data)
 
 
-
 func _on_stadium_card_right_clicked(card_instance: CardInstance, card_data: CardData) -> void:
 	if _is_board_modal_overlay_visible():
 		return
@@ -2908,7 +2962,6 @@ func _on_stadium_card_right_clicked(card_instance: CardInstance, card_data: Card
 	var detail_data := card_data
 	if detail_data != null:
 		_show_card_detail(detail_data)
-
 
 
 func _on_stadium_area_input(event: InputEvent) -> void:
@@ -2941,7 +2994,6 @@ func _on_back_pressed() -> void:
 	_pending_choice = "confirm_exit"
 	_show_dialog("确认退出对战？当前进度不会保存。", ["确认退出", "取消"], {})
 	_dialog_cancel.visible = false
-
 
 
 func _on_zeus_help_pressed() -> void:
@@ -2992,6 +3044,9 @@ func _on_zeus_help_pressed() -> void:
 func _on_opponent_hand_pressed() -> void:
 	if _gsm == null or _gsm.game_state == null:
 		return
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+	if GameManager.current_mode not in [
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]:
 		return
 	_show_opponent_hand_cards()

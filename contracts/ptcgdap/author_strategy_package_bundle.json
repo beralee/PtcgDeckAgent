@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-author-strategy-package-as-wp1-v1",
+  "profile_id": "ptcgdap-author-strategy-package-v1",
+  "parent": {
+    "p5_wp7_manifest_canonical_sha256": "7DFA83EAB3C1841B5336061015BF291511AFEE380F629B6F394B3B6CCBA31AC7",
+    "portable_policy_bundle_canonical_sha256": "992B7F00DF412496BA414ABCC87C21C6136CB513C9C90799C897ADD18D15EDB2",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+    "as_wp1_parent_snapshot_manifest_canonical_sha256": "CD384C0A81B97837085E81759D85B654565AD58145DBF3D0F99B92770FBD65AE"
+  },
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/author_strategy_package.schema.json",
+      "canonical_sha256": "B3469DA24400407775FB6069CB5D9EE2147633770542322208B9FE102E0E20BE"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/author_strategy_package_profile.json",
+      "canonical_sha256": "1137187EF1C073E081B541602A7498B7235A3606309C35212BC6559F0EF30B79"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/author_strategy_package_conformance_vectors.json",
+      "canonical_sha256": "49F4493D89E74B4ED6F54957BAFDC0E3C1161C5BA695203AE3CEE17DEE50EE33"
+    }
+  ]
+}

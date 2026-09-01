@@ -1,0 +1,22 @@
+{
+  "document_type": "local_policy_executor_bundle_v1",
+  "schema_version": 1,
+  "executor_id": "ptcgdap-local-policy-executor-v1",
+  "artifacts": [
+    {
+      "path": "contracts/ptcgdap/local_policy_executor_v1.schema.json",
+      "raw_sha256": "3307D91B6ABAA10B7E04DB15AC352BA5B6CA74E2F987939C63CCD58A4C3698DB",
+      "canonical_sha256": "9E724DA83A697D36181690454805BEA0B39324ACCEDCCF671C48C6A9CC5DB830"
+    },
+    {
+      "path": "contracts/ptcgdap/local_policy_executor_v1_profile.json",
+      "raw_sha256": "D0618E84F75DFEBC9BD4EABC7CD0163145638007D213392A38085308B8F7C7DA",
+      "canonical_sha256": "04AB9D102CF22B6A3D24A70A714A7355EEE5CA36C7DF4D43F37415F9D2CDE340"
+    },
+    {
+      "path": "data/ptcgdap/marnie_windows_local_policy_executor_v1.json",
+      "raw_sha256": "D6D75579EABD291EEC56EB2F72F4C20E3AF0F95678387209E33FC676EB6FE9FC",
+      "canonical_sha256": "6961EEECEEB33459002A40A52AA76AB0243871439D3FDF10B9F1F4927AB6D6E0"
+    }
+  ]
+}

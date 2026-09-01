@@ -31,7 +31,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not player.deck.is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null:
 		return []
 	var player: PlayerState = state.players[card.owner_index]
@@ -77,7 +77,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	)]
 
 
-func get_followup_interaction_steps(
+func build_ucis_followup_interaction_steps_spec_steps(
 	card: CardInstance,
 	state: GameState,
 	resolved_context: Dictionary
@@ -142,7 +142,7 @@ func execute_ability(
 		if energy_card not in attached_sources:
 			return_cards.append(energy_card)
 	return_cards.append_array(others)
-	_shuffle_cards(return_cards)
+	player.shuffle_cards(return_cards, "metal_maker_bottom_order")
 	for card: CardInstance in return_cards:
 		card.face_up = false
 		player.deck.append(card)
@@ -230,10 +230,6 @@ func _resolve_assignments(
 			"target": legacy_targets[target_index],
 		})
 	return result
-
-
-func _shuffle_cards(cards: Array[CardInstance]) -> void:
-	PlayerState.shuffle_card_array(cards)
 
 
 func get_description() -> String:

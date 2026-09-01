@@ -15,7 +15,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_valid_targets(state.players[card.owner_index]).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
 		return []
 	if CSV9CEffects.player_field_return_to_hand_blocked(card.owner_index, state):
@@ -44,7 +44,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	}]
 
 
-func get_followup_interaction_steps(
+func build_ucis_followup_interaction_steps_spec_steps(
 	card: CardInstance,
 	state: GameState,
 	resolved_context: Dictionary

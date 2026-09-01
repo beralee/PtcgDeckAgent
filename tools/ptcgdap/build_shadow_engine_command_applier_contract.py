@@ -1,0 +1,46 @@
+from __future__ import annotations
+import argparse,hashlib,json,sys
+from pathlib import Path
+from typing import Any
+ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
+from scripts.ai.ptcgdap.source_lock import canonical_json_v1_bytes
+CONTRACT_ROOT=ROOT/"contracts/ptcgdap"; CONTRACT_ID="ptcgdap-shadow-engine-command-applier-p3-wp7-v1"
+PARENT_GATE="9B8202E67756E388AFB0A13EA1FD20227ADF0718DF8454420A2B1FC7A5D31B8C"; PARENT_BROKER="D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E"
+STATES=["ready","executed","aborted","poisoned"]
+ERRORS=["invalid_applier","invalid_gate","owner_mode_not_aligned","invalid_broker","broker_not_current","invalid_broker_result","prompt_not_committed","already_applied","invalid_command","duplicate_command","capture_failed","command_apply_failed","rollback_failed"]
+def ch(v:Any)->str:return hashlib.sha256(canonical_json_v1_bytes(v)).hexdigest().upper()
+def schema()->dict[str,Any]:
+    witness={"type":"object","additionalProperties":False,"required":["profile","execution_id","execution_generation","match_generation","broker_generation","decision_generation","snapshot_id","window_id","public_observation_hash","chooser_player_index","selected_indexes","selected_fingerprint_hashes","resolution_count","state","authority","authoritative"],"properties":{
+        "profile":{"const":CONTRACT_ID},"execution_id":{"$ref":"#/$defs/sha256"},"execution_generation":{"$ref":"#/$defs/positiveSafeInteger"},"match_generation":{"$ref":"#/$defs/positiveSafeInteger"},"broker_generation":{"$ref":"#/$defs/positiveSafeInteger"},"decision_generation":{"$ref":"#/$defs/positiveSafeInteger"},"snapshot_id":{"$ref":"#/$defs/sha256"},"window_id":{"$ref":"#/$defs/sha256"},"public_observation_hash":{"$ref":"#/$defs/sha256"},"chooser_player_index":{"type":"integer","minimum":0,"maximum":1},"selected_indexes":{"type":"array","items":{"$ref":"#/$defs/nonNegativeSafeInteger"},"uniqueItems":True,"maxItems":256},"selected_fingerprint_hashes":{"type":"array","items":{"$ref":"#/$defs/sha256"},"uniqueItems":True,"maxItems":256},"resolution_count":{"type":"integer","minimum":0,"maximum":256},"state":{"const":"executed"},"authority":{"const":"shadow_executed_witness_audit"},"authoritative":{"const":False}}}
+    result={"type":"object","additionalProperties":False,"required":["accepted","error_code","witness","rolled_back","poisoned"],"properties":{"accepted":{"type":"boolean"},"error_code":{"enum":["",*ERRORS]},"witness":{"oneOf":[{"$ref":"#/$defs/executedWitness"},{"type":"null"}]},"rolled_back":{"type":"boolean"},"poisoned":{"type":"boolean"}},"allOf":[{"if":{"properties":{"accepted":{"const":True}}},"then":{"properties":{"error_code":{"const":""},"witness":{"$ref":"#/$defs/executedWitness"},"rolled_back":{"const":False},"poisoned":{"const":False}}}},{"if":{"properties":{"accepted":{"const":False}}},"then":{"properties":{"error_code":{"enum":ERRORS},"witness":{"type":"null"}}}},{"if":{"properties":{"poisoned":{"const":True}}},"then":{"properties":{"error_code":{"const":"rollback_failed"},"rolled_back":{"const":False}}}}]}
+    return {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://ptcgdap.local/contracts/shadow_engine_command_applier.schema.json","title":"PtcgDAP isolated shadow executed-witness DTOs","oneOf":[{"$ref":"#/$defs/executedWitness"},{"$ref":"#/$defs/applyResult"}],"$defs":{"sha256":{"type":"string","pattern":"^[A-F0-9]{64}$"},"positiveSafeInteger":{"type":"integer","minimum":1,"maximum":9007199254740991},"nonNegativeSafeInteger":{"type":"integer","minimum":0,"maximum":9007199254740991},"executedWitness":witness,"applyResult":result}}
+def profile()->dict[str,Any]:
+    return {"schema_version":1,"profile_id":CONTRACT_ID,"parent_owner_gate_bundle_canonical_sha256":PARENT_GATE,"parent_prompt_broker_bundle_canonical_sha256":PARENT_BROKER,"states":STATES,"error_codes":ERRORS,"command_protocol":["shadow_capture","shadow_apply","shadow_restore"],"command_protocol_results":{"shadow_capture":{"argument_count":0,"result_exact_object_keys":["ok","snapshot"],"ok_exact_boolean":True},"shadow_apply":{"argument_count":0,"result_exact_boolean":True},"shadow_restore":{"argument_count":1,"result_exact_boolean":True}},"execution_hash":{"domain_prefix_utf8_hex":"5054434744415000534841444F575F45584543555445445F5749544E4553535F563100"},"limits":{"max_execution_generation_per_applier":1,"max_resolution_count":256},"semantics":{"exact_aligned_gate_and_broker_required":True,"successful_result_consumed_at_most_once":True,"capture_hook_is_observational":True,"failed_apply_restores_all_captured_state":True,"restore_failure_poison_is_terminal":True,"ordered_commands_required":True,"duplicate_command_objects_forbidden":True,"live_consumer":False,"serialized_witness_is_authority":False,"schema_alone_authorizes_witness":False,"owner_revalidates_array_count_relations":True},"private_fields_forbidden_from_witness":["private_engine_command","private_object_refs","captured_state","session_id","callback_binding_hash","current_source","broker","gate"]}
+def vectors()->dict[str,Any]:
+    cases=[
+      {"case_id":"ordered-success","scenario":"ordered_success","expected_accepted":True,"expected_error":"","expected_state":"executed","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[1,1]},
+      {"case_id":"replay-rejected","scenario":"replay","expected_accepted":False,"expected_error":"already_applied","expected_state":"executed","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[1,1]},
+      {"case_id":"legacy-gate-rejected","scenario":"legacy_gate","expected_accepted":False,"expected_error":"owner_mode_not_aligned","expected_state":"ready","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"wrong-broker-rejected","scenario":"wrong_broker","expected_accepted":False,"expected_error":"broker_not_current","expected_state":"ready","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"capture-failure","scenario":"capture_failure","expected_accepted":False,"expected_error":"capture_failed","expected_state":"aborted","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"apply-failure-restored","scenario":"apply_failure_restored","expected_accepted":False,"expected_error":"command_apply_failed","expected_state":"aborted","expected_rolled_back":True,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"restore-failure-poisons","scenario":"restore_failure","expected_accepted":False,"expected_error":"rollback_failed","expected_state":"poisoned","expected_rolled_back":False,"expected_poisoned":True,"expected_calls":[1,0]},
+      {"case_id":"duplicate-command-rejected","scenario":"duplicate_command","expected_accepted":False,"expected_error":"duplicate_command","expected_state":"aborted","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"mutated-result-rejected","scenario":"mutated_result","expected_accepted":False,"expected_error":"invalid_broker_result","expected_state":"ready","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"invalid-command-protocol","scenario":"invalid_command","expected_accepted":False,"expected_error":"invalid_command","expected_state":"aborted","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+      {"case_id":"uncommitted-result-rejected","scenario":"uncommitted_result","expected_accepted":False,"expected_error":"prompt_not_committed","expected_state":"ready","expected_rolled_back":False,"expected_poisoned":False,"expected_calls":[0,0]},
+    ]
+    return {"schema_version":1,"profile_id":CONTRACT_ID,"cases":cases,"private_sentinels":["PRIVATE_COMMAND_SENTINEL","PRIVATE_STATE_SENTINEL","PRIVATE_SESSION_SENTINEL"]}
+def documents()->dict[Path,dict[str,Any]]:
+    docs={CONTRACT_ROOT/"shadow_engine_command_applier.schema.json":schema(),CONTRACT_ROOT/"shadow_engine_command_applier_profile.json":profile(),CONTRACT_ROOT/"shadow_engine_command_applier_conformance_vectors.json":vectors()}
+    bundle={"schema_version":1,"contract_id":CONTRACT_ID,"parent_owner_gate_bundle_canonical_sha256":PARENT_GATE,"parent_prompt_broker_bundle_canonical_sha256":PARENT_BROKER,"artifacts":[{"id":i,"path":p.relative_to(ROOT).as_posix(),"canonical_sha256":ch(docs[p])} for i,p in (("schema",CONTRACT_ROOT/"shadow_engine_command_applier.schema.json"),("profile",CONTRACT_ROOT/"shadow_engine_command_applier_profile.json"),("vectors",CONTRACT_ROOT/"shadow_engine_command_applier_conformance_vectors.json"))]}; docs[CONTRACT_ROOT/"shadow_engine_command_applier_bundle.json"]=bundle; return docs
+def rendered(v:dict[str,Any])->bytes:return (json.dumps(v,ensure_ascii=False,indent=2)+"\n").encode()
+def main()->int:
+    ap=argparse.ArgumentParser();ap.add_argument("--check",action="store_true");args=ap.parse_args();failed=False
+    for p,v in documents().items():
+        b=rendered(v)
+        if args.check:
+            if not p.exists() or p.read_bytes()!=b:print(f"drift: {p.relative_to(ROOT)}");failed=True
+        else:p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b)
+    return 1 if failed else 0
+if __name__=="__main__":raise SystemExit(main())

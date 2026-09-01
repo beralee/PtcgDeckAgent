@@ -1,0 +1,91 @@
+{
+  "document_type": "dragapult_python_public_policy_v1",
+  "schema_version": 1,
+  "strategy_id": "ptcgdap.dragapult.18.0.python-public-v1",
+  "card_id_domain": "godot_local_card_uid_v1",
+  "deck_manifest_sha256": "74D3C15E6A81D68F089B34673019CC455B73D06D2B26F02A1722BDB64C9C9EFA",
+  "setup_active_priority": [
+    "CSV8C_157",
+    "CSV9.5C_004",
+    "CSV10C_008",
+    "CSV8C_094",
+    "CSV9C_078",
+    "CSV8C_135",
+    "CSV1C_079",
+    "CSV8C_172"
+  ],
+  "setup_bench_priority": [
+    "CSV8C_157",
+    "CSV8C_094",
+    "CSV9C_078",
+    "CSV8C_135",
+    "CSV9.5C_004",
+    "CSV10C_008",
+    "CSV1C_079",
+    "CSV8C_172"
+  ],
+  "search_priority": [
+    "CSV8C_159",
+    "CSV8C_158",
+    "CSV8C_157",
+    "CSV1C_127",
+    "CSVE1C_FIR",
+    "CSVE1C_PSY",
+    "CSV7C_203",
+    "CSV8C_094",
+    "CSV8C_172",
+    "CSV8C_183"
+  ],
+  "main_kind_priority": [
+    "attack",
+    "granted_attack",
+    "evolve",
+    "attach_energy",
+    "use_ability",
+    "play_basic_to_bench",
+    "play_trainer",
+    "play_stadium",
+    "use_stadium_effect",
+    "attach_tool",
+    "retreat",
+    "end_turn"
+  ],
+  "main_card_priority": [
+    "CSV8C_159",
+    "CSV8C_158",
+    "CSV8C_157",
+    "CSV1C_127",
+    "CSVE1C_FIR",
+    "CSVE1C_PSY",
+    "CSV7C_203",
+    "CSV7C_177",
+    "CSV1C_112",
+    "CSV10C_207",
+    "CSV8C_183",
+    "CSV6C_114",
+    "CSVH1aC_023",
+    "CSV6C_125",
+    "CSV1C_121",
+    "CSV3C_123",
+    "CSV8C_094"
+  ],
+  "send_out_priority": [
+    "CSV8C_159",
+    "CSV8C_158",
+    "CSV8C_172",
+    "CSV8C_094",
+    "CSV9C_078",
+    "CSV8C_135",
+    "CSV8C_157",
+    "CSV9.5C_004",
+    "CSV10C_008",
+    "CSV1C_079"
+  ],
+  "attack_tag_priority": [
+    "phantom_dive",
+    "projected_knockout",
+    "spread_knockout",
+    "attack"
+  ],
+  "fallback": "same_current_window_deterministic_first_min"
+}

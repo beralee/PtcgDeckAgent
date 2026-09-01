@@ -1,0 +1,1014 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "marnie_prompt_broker_vectors",
+  "vector_id": "ptcgdap-marnie-prompt-broker-vectors-p5-wp5-v1",
+  "profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+  "cases": [
+    {
+      "case_id": "frame-00-w0_initial",
+      "operation": "evaluate_frame",
+      "input": "w0_initial",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 0,
+          "frame_id": "w0_initial",
+          "window_family": "W0",
+          "callback_role": "initial_deck",
+          "status": "initial_deck_fixture",
+          "decision_generation": null,
+          "broker_generation": null,
+          "snapshot_id": null,
+          "source_digest": null,
+          "window_id": null,
+          "binding_version": null,
+          "option_count": 0,
+          "option_types": [],
+          "selected_indexes": null,
+          "committed_resolution_count": 0,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "not_applicable",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": null,
+          "lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2"
+        }
+      }
+    },
+    {
+      "case_id": "frame-01-w1_setup_active",
+      "operation": "evaluate_frame",
+      "input": "w1_setup_active",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 1,
+          "frame_id": "w1_setup_active",
+          "window_family": "W1",
+          "callback_role": "setup_active",
+          "status": "committed_shadow",
+          "decision_generation": 1,
+          "broker_generation": 1,
+          "snapshot_id": "4BEB4518DEFD72D0D18C39294A3E4C1BF4E60965983B02BC69CB99B3E60E2C3C",
+          "source_digest": "65E37419231388DB46F8465A5A4A64255B294184C365F406DBFC5F810A798CF4",
+          "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+          "binding_version": 1,
+          "option_count": 2,
+          "option_types": [
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2",
+          "lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F"
+        }
+      }
+    },
+    {
+      "case_id": "frame-02-w2_setup_bench",
+      "operation": "evaluate_frame",
+      "input": "w2_setup_bench",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 2,
+          "frame_id": "w2_setup_bench",
+          "window_family": "W2",
+          "callback_role": "setup_bench",
+          "status": "committed_shadow",
+          "decision_generation": 2,
+          "broker_generation": 2,
+          "snapshot_id": "9961D12F422CA55138E2E9E691D220EAAC0FF0A615728D8A321314174D95930E",
+          "source_digest": "70FED76EE6D22FA9E9E0838CD118813C1B331978847DB25C29873DC60356B3AB",
+          "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+          "binding_version": 2,
+          "option_count": 1,
+          "option_types": [
+            3
+          ],
+          "selected_indexes": [],
+          "committed_resolution_count": 0,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F",
+          "lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953"
+        }
+      }
+    },
+    {
+      "case_id": "frame-03-w3_main",
+      "operation": "evaluate_frame",
+      "input": "w3_main",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 3,
+          "frame_id": "w3_main",
+          "window_family": "W3",
+          "callback_role": "main",
+          "status": "committed_shadow",
+          "decision_generation": 3,
+          "broker_generation": 3,
+          "snapshot_id": "DA5BBCAA60BF7B8F77E3BF18369FFE523BBFC48A9A6577475B35CF42FCB74DB7",
+          "source_digest": "44172F2C96C731A9CD2E0D8B059ACEFD1DF342329BD99FE9FB0FF0A2C8877D7B",
+          "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+          "binding_version": 3,
+          "option_count": 4,
+          "option_types": [
+            8,
+            8,
+            7,
+            14
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953",
+          "lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95"
+        }
+      }
+    },
+    {
+      "case_id": "frame-04-w4_spikemuth_deck",
+      "operation": "evaluate_frame",
+      "input": "w4_spikemuth_deck",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 4,
+          "frame_id": "w4_spikemuth_deck",
+          "window_family": "W4",
+          "callback_role": "spikemuth_deck",
+          "status": "committed_shadow",
+          "decision_generation": 4,
+          "broker_generation": 4,
+          "snapshot_id": "C521F01155F1CE9808540148007EDA49BD3E8F63862067B640EB76A28CD52121",
+          "source_digest": "45923A28738EEBDA0E29FE109DB0877CFE4D52551954BB262BA52808F0EB4D57",
+          "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+          "binding_version": 4,
+          "option_count": 2,
+          "option_types": [
+            3,
+            3
+          ],
+          "selected_indexes": [
+            1
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95",
+          "lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F"
+        }
+      }
+    },
+    {
+      "case_id": "frame-05-w5_punk_up_sources",
+      "operation": "evaluate_frame",
+      "input": "w5_punk_up_sources",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 5,
+          "frame_id": "w5_punk_up_sources",
+          "window_family": "W5",
+          "callback_role": "punk_up_sources",
+          "status": "committed_shadow",
+          "decision_generation": 5,
+          "broker_generation": 5,
+          "snapshot_id": "6F48CA0B1BE59485998BD30D5BC0419D2D41A4F49537D5EF8B841247475438F3",
+          "source_digest": "DE0AB40560164DCE8C9C198F9E568FCFA79EDC13CE23DEE160EC6F80E6EFDB24",
+          "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+          "binding_version": 5,
+          "option_count": 5,
+          "option_types": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "committed_resolution_count": 5,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F",
+          "lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA"
+        }
+      }
+    },
+    {
+      "case_id": "frame-06-w5_punk_up_target_1",
+      "operation": "evaluate_frame",
+      "input": "w5_punk_up_target_1",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 6,
+          "frame_id": "w5_punk_up_target_1",
+          "window_family": "W5",
+          "callback_role": "punk_up_target",
+          "status": "committed_shadow",
+          "decision_generation": 6,
+          "broker_generation": 6,
+          "snapshot_id": "71B97BAB50EFB18BF0AE1399E3B6F685D5EC6577FC8B8F8559306740C50D246F",
+          "source_digest": "9B329089F7204194088920771E381A5728D37B82B5A9531C6F9CF945C55173FD",
+          "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+          "binding_version": 6,
+          "option_count": 3,
+          "option_types": [
+            3,
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA",
+          "lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136"
+        }
+      }
+    },
+    {
+      "case_id": "frame-07-w5_punk_up_target_2",
+      "operation": "evaluate_frame",
+      "input": "w5_punk_up_target_2",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 7,
+          "frame_id": "w5_punk_up_target_2",
+          "window_family": "W5",
+          "callback_role": "punk_up_target",
+          "status": "committed_shadow",
+          "decision_generation": 7,
+          "broker_generation": 7,
+          "snapshot_id": "9D3FA2161D16CCA598F35679415364ACCAF2386C8D0615CD37E8E57663FA358A",
+          "source_digest": "E9F771E8332974B6EF1684C6FE36FA82747CA3BA966ED496EC8E872AEA403ADF",
+          "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+          "binding_version": 7,
+          "option_count": 3,
+          "option_types": [
+            3,
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136",
+          "lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2"
+        }
+      }
+    },
+    {
+      "case_id": "frame-08-w6_shadow_bullet_attack",
+      "operation": "evaluate_frame",
+      "input": "w6_shadow_bullet_attack",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 8,
+          "frame_id": "w6_shadow_bullet_attack",
+          "window_family": "W6",
+          "callback_role": "shadow_bullet_attack",
+          "status": "committed_shadow",
+          "decision_generation": 8,
+          "broker_generation": 8,
+          "snapshot_id": "339F5342B55F930375A5F3B1E5496AAD36B5FF28539B44B9B1C470C265DBD252",
+          "source_digest": "FA6D70F2BCAE9669B76E77263D21BBDB723EAC8B155023718EB68E0D79E0E14D",
+          "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+          "binding_version": 8,
+          "option_count": 4,
+          "option_types": [
+            7,
+            13,
+            12,
+            14
+          ],
+          "selected_indexes": [
+            1
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2",
+          "lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810"
+        }
+      }
+    },
+    {
+      "case_id": "frame-09-w6_shadow_bullet_target",
+      "operation": "evaluate_frame",
+      "input": "w6_shadow_bullet_target",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 9,
+          "frame_id": "w6_shadow_bullet_target",
+          "window_family": "W6",
+          "callback_role": "shadow_bullet_target",
+          "status": "committed_shadow",
+          "decision_generation": 9,
+          "broker_generation": 9,
+          "snapshot_id": "42C7F3044CEB019104AEFCAC78BA31F29561718CD3191842BC3B1CFDE87B689E",
+          "source_digest": "1973FA9A843D1A9EA5B190F2052474B9AAF953D2E1990BE7DDEE690E5B9F0F6B",
+          "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+          "binding_version": 9,
+          "option_count": 2,
+          "option_types": [
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810",
+          "lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9"
+        }
+      }
+    },
+    {
+      "case_id": "frame-10-w7_take_prize",
+      "operation": "evaluate_frame",
+      "input": "w7_take_prize",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 10,
+          "frame_id": "w7_take_prize",
+          "window_family": "W7",
+          "callback_role": "take_prize",
+          "status": "committed_shadow",
+          "decision_generation": 10,
+          "broker_generation": 10,
+          "snapshot_id": "F1ED335E563EDC761ADB0AC5EE9F0379AB94F6176FF8FEB4B5506462685F378B",
+          "source_digest": "C82DFF78B95A55309D102112B83D13696063557F511574C95D3F36DF7EBA9A6D",
+          "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+          "binding_version": 10,
+          "option_count": 6,
+          "option_types": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9",
+          "lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18"
+        }
+      }
+    },
+    {
+      "case_id": "frame-11-w7_forced_send_out",
+      "operation": "evaluate_frame",
+      "input": "w7_forced_send_out",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 11,
+          "frame_id": "w7_forced_send_out",
+          "window_family": "W7",
+          "callback_role": "forced_send_out",
+          "status": "committed_shadow",
+          "decision_generation": 11,
+          "broker_generation": 11,
+          "snapshot_id": "0DD7EF1365F0034275E37177915F644A688B39EF50B211A71327F80451AD073A",
+          "source_digest": "5E4ADF6772098287478E4392AA324FFEFFCFFF7B8E5B41C5E86A1280630A843A",
+          "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+          "binding_version": 11,
+          "option_count": 4,
+          "option_types": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "committed_resolution_count": 1,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "awaiting_reobserve",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18",
+          "lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B"
+        }
+      }
+    },
+    {
+      "case_id": "frame-12-w7_terminal",
+      "operation": "evaluate_frame",
+      "input": "w7_terminal",
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 12,
+          "frame_id": "w7_terminal",
+          "window_family": "W7",
+          "callback_role": "terminal_no_new_callback",
+          "status": "terminal_no_callback",
+          "decision_generation": null,
+          "broker_generation": null,
+          "snapshot_id": null,
+          "source_digest": null,
+          "window_id": null,
+          "binding_version": null,
+          "option_count": 0,
+          "option_types": [],
+          "selected_indexes": null,
+          "committed_resolution_count": 0,
+          "serialized_private_resolution_count": 0,
+          "broker_state": "not_applicable",
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "production_action_used": false,
+          "execution_authority": false,
+          "previous_lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B",
+          "lifecycle_hash": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-all",
+      "operation": "evaluate_all",
+      "input": null,
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "error_code": "",
+          "frame_count": 13,
+          "brokered_frame_count": 11,
+          "initial_deck_frame_count": 1,
+          "terminal_frame_count": 1,
+          "serialized_private_resolution_count": 0,
+          "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+          "lifecycle_chain_head": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D",
+          "frames": [
+            {
+              "ordinal": 0,
+              "frame_id": "w0_initial",
+              "window_family": "W0",
+              "callback_role": "initial_deck",
+              "status": "initial_deck_fixture",
+              "decision_generation": null,
+              "broker_generation": null,
+              "snapshot_id": null,
+              "source_digest": null,
+              "window_id": null,
+              "binding_version": null,
+              "option_count": 0,
+              "option_types": [],
+              "selected_indexes": null,
+              "committed_resolution_count": 0,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "not_applicable",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": null,
+              "lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2"
+            },
+            {
+              "ordinal": 1,
+              "frame_id": "w1_setup_active",
+              "window_family": "W1",
+              "callback_role": "setup_active",
+              "status": "committed_shadow",
+              "decision_generation": 1,
+              "broker_generation": 1,
+              "snapshot_id": "4BEB4518DEFD72D0D18C39294A3E4C1BF4E60965983B02BC69CB99B3E60E2C3C",
+              "source_digest": "65E37419231388DB46F8465A5A4A64255B294184C365F406DBFC5F810A798CF4",
+              "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+              "binding_version": 1,
+              "option_count": 2,
+              "option_types": [
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "D3842B5D68627D84CFCCBD97DF518AC44C9745F6A337BC0F6CA1231CE48F2BB2",
+              "lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F"
+            },
+            {
+              "ordinal": 2,
+              "frame_id": "w2_setup_bench",
+              "window_family": "W2",
+              "callback_role": "setup_bench",
+              "status": "committed_shadow",
+              "decision_generation": 2,
+              "broker_generation": 2,
+              "snapshot_id": "9961D12F422CA55138E2E9E691D220EAAC0FF0A615728D8A321314174D95930E",
+              "source_digest": "70FED76EE6D22FA9E9E0838CD118813C1B331978847DB25C29873DC60356B3AB",
+              "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+              "binding_version": 2,
+              "option_count": 1,
+              "option_types": [
+                3
+              ],
+              "selected_indexes": [],
+              "committed_resolution_count": 0,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "85361550737EE8B672FFD1D6F33A60BCE4DFCF59E3CE6ECE518C07629873762F",
+              "lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953"
+            },
+            {
+              "ordinal": 3,
+              "frame_id": "w3_main",
+              "window_family": "W3",
+              "callback_role": "main",
+              "status": "committed_shadow",
+              "decision_generation": 3,
+              "broker_generation": 3,
+              "snapshot_id": "DA5BBCAA60BF7B8F77E3BF18369FFE523BBFC48A9A6577475B35CF42FCB74DB7",
+              "source_digest": "44172F2C96C731A9CD2E0D8B059ACEFD1DF342329BD99FE9FB0FF0A2C8877D7B",
+              "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+              "binding_version": 3,
+              "option_count": 4,
+              "option_types": [
+                8,
+                8,
+                7,
+                14
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "057F4151A1C0BD6230F83A8F751B38A51E1D6566D2705CA6329DD05FEBD2E953",
+              "lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95"
+            },
+            {
+              "ordinal": 4,
+              "frame_id": "w4_spikemuth_deck",
+              "window_family": "W4",
+              "callback_role": "spikemuth_deck",
+              "status": "committed_shadow",
+              "decision_generation": 4,
+              "broker_generation": 4,
+              "snapshot_id": "C521F01155F1CE9808540148007EDA49BD3E8F63862067B640EB76A28CD52121",
+              "source_digest": "45923A28738EEBDA0E29FE109DB0877CFE4D52551954BB262BA52808F0EB4D57",
+              "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+              "binding_version": 4,
+              "option_count": 2,
+              "option_types": [
+                3,
+                3
+              ],
+              "selected_indexes": [
+                1
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "FE0C756687231833E8CA9FD45572C4758D561433F53E7D56D2A591BCD50A8A95",
+              "lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F"
+            },
+            {
+              "ordinal": 5,
+              "frame_id": "w5_punk_up_sources",
+              "window_family": "W5",
+              "callback_role": "punk_up_sources",
+              "status": "committed_shadow",
+              "decision_generation": 5,
+              "broker_generation": 5,
+              "snapshot_id": "6F48CA0B1BE59485998BD30D5BC0419D2D41A4F49537D5EF8B841247475438F3",
+              "source_digest": "DE0AB40560164DCE8C9C198F9E568FCFA79EDC13CE23DEE160EC6F80E6EFDB24",
+              "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+              "binding_version": 5,
+              "option_count": 5,
+              "option_types": [
+                3,
+                3,
+                3,
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "committed_resolution_count": 5,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "ABDFFE144DEBA82724EA807977162AEB6FA4F71AC77AB0101ED05193F754E50F",
+              "lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA"
+            },
+            {
+              "ordinal": 6,
+              "frame_id": "w5_punk_up_target_1",
+              "window_family": "W5",
+              "callback_role": "punk_up_target",
+              "status": "committed_shadow",
+              "decision_generation": 6,
+              "broker_generation": 6,
+              "snapshot_id": "71B97BAB50EFB18BF0AE1399E3B6F685D5EC6577FC8B8F8559306740C50D246F",
+              "source_digest": "9B329089F7204194088920771E381A5728D37B82B5A9531C6F9CF945C55173FD",
+              "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+              "binding_version": 6,
+              "option_count": 3,
+              "option_types": [
+                3,
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "583CB6950180C016361A4242EB5FC5E175F0068417DD98ABFE9FD0F5912F0CCA",
+              "lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136"
+            },
+            {
+              "ordinal": 7,
+              "frame_id": "w5_punk_up_target_2",
+              "window_family": "W5",
+              "callback_role": "punk_up_target",
+              "status": "committed_shadow",
+              "decision_generation": 7,
+              "broker_generation": 7,
+              "snapshot_id": "9D3FA2161D16CCA598F35679415364ACCAF2386C8D0615CD37E8E57663FA358A",
+              "source_digest": "E9F771E8332974B6EF1684C6FE36FA82747CA3BA966ED496EC8E872AEA403ADF",
+              "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+              "binding_version": 7,
+              "option_count": 3,
+              "option_types": [
+                3,
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "635D4BC156AA519B61A349A71750102BB19B28A267BE1566A0BA10A1CD7A0136",
+              "lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2"
+            },
+            {
+              "ordinal": 8,
+              "frame_id": "w6_shadow_bullet_attack",
+              "window_family": "W6",
+              "callback_role": "shadow_bullet_attack",
+              "status": "committed_shadow",
+              "decision_generation": 8,
+              "broker_generation": 8,
+              "snapshot_id": "339F5342B55F930375A5F3B1E5496AAD36B5FF28539B44B9B1C470C265DBD252",
+              "source_digest": "FA6D70F2BCAE9669B76E77263D21BBDB723EAC8B155023718EB68E0D79E0E14D",
+              "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+              "binding_version": 8,
+              "option_count": 4,
+              "option_types": [
+                7,
+                13,
+                12,
+                14
+              ],
+              "selected_indexes": [
+                1
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "3E79FBA2B3DF7389A0ABC5CBD130ED911DB7E57A774E5F57A9E3D8AD450838F2",
+              "lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810"
+            },
+            {
+              "ordinal": 9,
+              "frame_id": "w6_shadow_bullet_target",
+              "window_family": "W6",
+              "callback_role": "shadow_bullet_target",
+              "status": "committed_shadow",
+              "decision_generation": 9,
+              "broker_generation": 9,
+              "snapshot_id": "42C7F3044CEB019104AEFCAC78BA31F29561718CD3191842BC3B1CFDE87B689E",
+              "source_digest": "1973FA9A843D1A9EA5B190F2052474B9AAF953D2E1990BE7DDEE690E5B9F0F6B",
+              "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+              "binding_version": 9,
+              "option_count": 2,
+              "option_types": [
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "76A4BA92449133721166278CF1A02A113B8534B7F928FA53AC2F9E86285ED810",
+              "lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9"
+            },
+            {
+              "ordinal": 10,
+              "frame_id": "w7_take_prize",
+              "window_family": "W7",
+              "callback_role": "take_prize",
+              "status": "committed_shadow",
+              "decision_generation": 10,
+              "broker_generation": 10,
+              "snapshot_id": "F1ED335E563EDC761ADB0AC5EE9F0379AB94F6176FF8FEB4B5506462685F378B",
+              "source_digest": "C82DFF78B95A55309D102112B83D13696063557F511574C95D3F36DF7EBA9A6D",
+              "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+              "binding_version": 10,
+              "option_count": 6,
+              "option_types": [
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "DC06EE3938B5C7E4A96A7514D2578C24F9297FB68D1062227CD11A94DD134FC9",
+              "lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18"
+            },
+            {
+              "ordinal": 11,
+              "frame_id": "w7_forced_send_out",
+              "window_family": "W7",
+              "callback_role": "forced_send_out",
+              "status": "committed_shadow",
+              "decision_generation": 11,
+              "broker_generation": 11,
+              "snapshot_id": "0DD7EF1365F0034275E37177915F644A688B39EF50B211A71327F80451AD073A",
+              "source_digest": "5E4ADF6772098287478E4392AA324FFEFFCFFF7B8E5B41C5E86A1280630A843A",
+              "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+              "binding_version": 11,
+              "option_count": 4,
+              "option_types": [
+                3,
+                3,
+                3,
+                3
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "committed_resolution_count": 1,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "awaiting_reobserve",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "EAF4227AFFAD4274AF9509C25C39803780A8C8CB6FF87D5CC333AFC5CF981D18",
+              "lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B"
+            },
+            {
+              "ordinal": 12,
+              "frame_id": "w7_terminal",
+              "window_family": "W7",
+              "callback_role": "terminal_no_new_callback",
+              "status": "terminal_no_callback",
+              "decision_generation": null,
+              "broker_generation": null,
+              "snapshot_id": null,
+              "source_digest": null,
+              "window_id": null,
+              "binding_version": null,
+              "option_count": 0,
+              "option_types": [],
+              "selected_indexes": null,
+              "committed_resolution_count": 0,
+              "serialized_private_resolution_count": 0,
+              "broker_state": "not_applicable",
+              "extension_profile_id": "ptcgdap-marnie-prompt-broker-p5-wp5-v1",
+              "production_action_used": false,
+              "execution_authority": false,
+              "previous_lifecycle_hash": "6C3F0EC68F7EB1413AD5F9916DCE1160E1136DD02F0468FEE7921A724889179B",
+              "lifecycle_hash": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D"
+            }
+          ],
+          "production_actions_used": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "audit-snapshot",
+      "operation": "audit_snapshot",
+      "input": null,
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "frame_count": 13,
+          "brokered_frame_count": 11,
+          "initial_deck_frame_count": 1,
+          "terminal_frame_count": 1,
+          "option_type_8_count": 2,
+          "option_type_12_count": 1,
+          "option_type_13_count": 1,
+          "lifecycle_chain_head": "E4462EC42ADED27A13AEBAB41CB39662381A2DD22F746047F46BD24F3895E76D"
+        }
+      }
+    },
+    {
+      "case_id": "unknown-frame",
+      "operation": "evaluate_frame",
+      "input": "missing",
+      "expected": {
+        "ok": false,
+        "error_code": "frame_unknown",
+        "value": null
+      }
+    },
+    {
+      "case_id": "frame-int",
+      "operation": "evaluate_frame",
+      "input": 1,
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "all-input",
+      "operation": "evaluate_all",
+      "input": [],
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "audit-input",
+      "operation": "audit_snapshot",
+      "input": {},
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "operation-unknown",
+      "operation": "missing",
+      "input": null,
+      "expected": {
+        "ok": false,
+        "error_code": "operation_unknown",
+        "value": null
+      }
+    },
+    {
+      "case_id": "operation-int",
+      "operation": 7,
+      "input": null,
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "operation-null",
+      "operation": null,
+      "input": null,
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "frame-null",
+      "operation": "evaluate_frame",
+      "input": null,
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    }
+  ]
+}

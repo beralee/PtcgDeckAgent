@@ -24,7 +24,7 @@ func can_headless_execute(_card: CardInstance, state: GameState) -> bool:
 	return not _matching_pokemon(state.players[state.current_player_index]).is_empty()
 
 
-func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_preview_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
 		"title": "投掷1枚硬币",
@@ -33,7 +33,7 @@ func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Ar
 	}]
 
 
-func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(_card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var flipper: CoinFlipper = _coin_flipper if _coin_flipper != null else CoinFlipper.new()
 	_pending_heads = flipper.flip()
 	_has_pending_flip = true
@@ -60,7 +60,7 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 	return [step]
 
 
-func get_followup_interaction_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if not should_preview_empty_search_deck(resolved_context):
 		return []
 	var player := state.players[state.current_player_index]

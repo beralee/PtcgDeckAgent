@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "vectors",
+  "vector_set_id": "ptcgdap-marnie-trajectory-replay-conformance-v1",
+  "profile_id": "marnie_trajectory_replay_profile_v1",
+  "cases": [
+    {
+      "case_id": "replay-all",
+      "operation": "replay_all",
+      "input": {},
+      "expected": {
+        "accepted": true,
+        "frame_count": 13,
+        "chain_head": "D52D0C7D63B3B8917E3EF680DB7F925BF61A4C26198E1A4081865D4B4570E559"
+      }
+    },
+    {
+      "case_id": "replay-w2",
+      "operation": "replay_frame",
+      "input": {
+        "frame_id": "w2_setup_bench"
+      },
+      "expected": {
+        "accepted": true,
+        "frame": {
+          "ordinal": 2,
+          "frame_id": "w2_setup_bench",
+          "source_replay_id": "89540503",
+          "source_step": 4,
+          "source_seat": 0,
+          "firewall_status": "accepted",
+          "compatibility_rule": "setup_bench_concealment_v1",
+          "public_observation_hash": "471E7166302EF53025267D643851E6A3F1BC4836B747A3184D495ABC87705867",
+          "public_hash_authority": "firewall_accepted",
+          "window_id": "10004E04D2D8950E62EE26FD59886AF4DC4BBC11A975010E5F981BEA57FC6262",
+          "option_count": 1,
+          "option_fingerprints": [
+            "01F7E2802E89C3E6060C3A6142F80243A6A2829C528CF57B4EE9E612798DC998"
+          ],
+          "own_active": [
+            null
+          ],
+          "terminal": false,
+          "previous_witness": "1DDF7A391916F1182C6303FDEE22700CE5893DCAB5754DE938977C31E5F01D51",
+          "witness_hash": "EA296A41B347671A054F92DAB8F6F67CCA4484A2CA4931F7004862421255351A"
+        }
+      }
+    },
+    {
+      "case_id": "wrong-select-type",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "select_type",
+        "value": 0
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "wrong-select-context",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "select_context",
+        "value": 1
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "wrong-turn",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "turn",
+        "value": 1
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "wrong-active-shape",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "own_active",
+        "value": []
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "wrong-max-count",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "max_count",
+        "value": 2
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "wrong-result",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "result",
+        "value": 0
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "remain-damage",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "remain_damage_counter",
+        "value": 1
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "remain-energy",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "remain_energy_cost",
+        "value": 1
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "unauthorized-deck",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "select_deck",
+        "value": []
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "context-card-present",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "context_card",
+        "value": {
+          "id": 7,
+          "serial": 8,
+          "playerIndex": 0
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "effect-present",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "effect",
+        "value": {
+          "id": 7,
+          "serial": 8,
+          "playerIndex": 0
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "opponent-active-shape",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "opponent_active",
+        "value": []
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "opponent-hand-exposed",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "opponent_hand",
+        "value": [
+          {
+            "id": 7,
+            "serial": 9,
+            "playerIndex": 1
+          }
+        ]
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "prize-identity-exposed",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "own_prize",
+        "value": {
+          "id": 7,
+          "serial": 8,
+          "playerIndex": 0
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "opponent-draw-exposed",
+      "operation": "probe_w2_mutation",
+      "input": {
+        "field": "opponent_draw_log",
+        "value": {
+          "type": 4,
+          "playerIndex": 1,
+          "cardId": 7,
+          "serial": 9
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "setup_concealment_scope_mismatch",
+        "value": null
+      }
+    },
+    {
+      "case_id": "unknown-frame",
+      "operation": "replay_frame",
+      "input": {
+        "frame_id": "private-sentinel"
+      },
+      "expected_error_code": "frame_unknown"
+    },
+    {
+      "case_id": "input-type",
+      "operation": "run",
+      "input": {
+        "operation": {
+          "host_type": "integer",
+          "value": 1
+        },
+        "value": {}
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    }
+  ]
+}

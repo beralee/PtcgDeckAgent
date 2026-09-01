@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/godot_observation_projector.schema.json",
+  "title": "PtcgDAP GodotObservationProjector shadow contract",
+  "schema_version": 1,
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/conformanceDocument"},
+    {"$ref": "#/$defs/projectorResult"}
+  ],
+  "$defs": {
+    "safeInteger": {"type":"integer","minimum":-9007199254740991,"maximum":9007199254740991},
+    "nonnegativeSafeInteger": {"type":"integer","minimum":0,"maximum":9007199254740991},
+    "positiveSafeInteger": {"type":"integer","minimum":1,"maximum":9007199254740991},
+    "sha256": {"type":"string","pattern":"^[0-9A-F]{64}$"},
+    "card": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["official_card_id","serial","player_index"],
+      "properties":{
+        "official_card_id":{"$ref":"#/$defs/positiveSafeInteger"},
+        "serial":{"$ref":"#/$defs/positiveSafeInteger"},
+        "player_index":{"type":"integer","minimum":0,"maximum":1},
+        "energy_type":{"type":"integer","minimum":0,"maximum":11}
+      }
+    },
+    "pokemonSource": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["stack","attached_energy","tool","hp","max_hp","appear_this_turn","status"],
+      "properties":{
+        "stack":{"type":"array","minItems":1,"maxItems":3,"items":{"$ref":"#/$defs/card"}},
+        "attached_energy":{"type":"array","maxItems":64,"items":{"$ref":"#/$defs/card"}},
+        "tool":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/card"}]},
+        "hp":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "max_hp":{"$ref":"#/$defs/positiveSafeInteger"},
+        "appear_this_turn":{"type":"boolean"},
+        "status":{
+          "type":"object","additionalProperties":false,
+          "required":["poisoned","burned","asleep","paralyzed","confused"],
+          "properties":{
+            "poisoned":{"type":"boolean"},"burned":{"type":"boolean"},"asleep":{"type":"boolean"},"paralyzed":{"type":"boolean"},"confused":{"type":"boolean"}
+          }
+        }
+      }
+    },
+    "playerSource": {
+      "type":"object","additionalProperties":false,
+      "required":["active","bench","bench_max","deck_count","discard","hand","hand_count","prize_count","public_prizes"],
+      "properties":{
+        "active":{"type":"array","maxItems":1,"items":{"$ref":"#/$defs/pokemonSource"}},
+        "bench":{"type":"array","maxItems":8,"items":{"$ref":"#/$defs/pokemonSource"}},
+        "bench_max":{"type":"integer","minimum":0,"maximum":8},
+        "deck_count":{"type":"integer","minimum":0,"maximum":120},
+        "discard":{"type":"array","maxItems":120,"items":{"$ref":"#/$defs/card"}},
+        "hand":{"oneOf":[{"type":"null"},{"type":"array","maxItems":60,"items":{"$ref":"#/$defs/card"}}]},
+        "hand_count":{"type":"integer","minimum":0,"maximum":60},
+        "prize_count":{"type":"integer","minimum":0,"maximum":12},
+        "public_prizes":{"type":"object","additionalProperties":{"$ref":"#/$defs/card"},"propertyNames":{"pattern":"^(0|[1-9][0-9]*)$"}}
+      }
+    },
+    "currentSource": {
+      "type":"object","additionalProperties":false,
+      "required":["turn","turn_action_count","acting_player_index","first_player_index","supporter_played","stadium_played","energy_attached","retreated","result","stadium","players"],
+      "properties":{
+        "turn":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "turn_action_count":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "acting_player_index":{"type":"integer","minimum":0,"maximum":1},
+        "first_player_index":{"type":"integer","minimum":-1,"maximum":1},
+        "supporter_played":{"type":"boolean"},"stadium_played":{"type":"boolean"},"energy_attached":{"type":"boolean"},"retreated":{"type":"boolean"},
+        "result":{"type":"integer","minimum":-1,"maximum":1},
+        "stadium":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/card"}]},
+        "players":{"type":"array","minItems":2,"maxItems":2,"items":{"$ref":"#/$defs/playerSource"}}
+      }
+    },
+    "option": {
+      "oneOf": [
+        {"type":"object","additionalProperties":false,"required":["type","number"],"properties":{"type":{"const":0},"number":{"$ref":"#/$defs/safeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type"],"properties":{"type":{"const":1}}},
+        {"type":"object","additionalProperties":false,"required":["type"],"properties":{"type":{"const":2}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index","playerIndex"],"properties":{"type":{"const":3},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"},"playerIndex":{"type":"integer","minimum":0,"maximum":1}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index","playerIndex","toolIndex"],"properties":{"type":{"const":4},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"},"playerIndex":{"type":"integer","minimum":0,"maximum":1},"toolIndex":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index","playerIndex","energyIndex"],"properties":{"type":{"const":5},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"},"playerIndex":{"type":"integer","minimum":0,"maximum":1},"energyIndex":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index","playerIndex","energyIndex","count"],"properties":{"type":{"const":6},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"},"playerIndex":{"type":"integer","minimum":0,"maximum":1},"energyIndex":{"$ref":"#/$defs/nonnegativeSafeInteger"},"count":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","index"],"properties":{"type":{"const":7},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index","inPlayArea","inPlayIndex"],"properties":{"type":{"const":8},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"},"inPlayArea":{"$ref":"#/$defs/nonnegativeSafeInteger"},"inPlayIndex":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index","inPlayArea","inPlayIndex"],"properties":{"type":{"const":9},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"},"inPlayArea":{"$ref":"#/$defs/nonnegativeSafeInteger"},"inPlayIndex":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index"],"properties":{"type":{"const":10},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","area","index"],"properties":{"type":{"const":11},"area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"index":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type"],"properties":{"type":{"const":12}}},
+        {"type":"object","additionalProperties":false,"required":["type","attackId"],"properties":{"type":{"const":13},"attackId":{"$ref":"#/$defs/positiveSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type"],"properties":{"type":{"const":14}}},
+        {"type":"object","additionalProperties":false,"required":["type","cardId","serial"],"properties":{"type":{"const":15},"cardId":{"$ref":"#/$defs/positiveSafeInteger"},"serial":{"$ref":"#/$defs/positiveSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["type","specialConditionType"],"properties":{"type":{"const":16},"specialConditionType":{"type":"integer","minimum":0,"maximum":4}}}
+      ]
+    },
+    "selectSource": {
+      "type":"object","additionalProperties":false,
+      "required":["type","context","minCount","maxCount","remainDamageCounter","remainEnergyCost","option","deck","contextCard","effect"],
+      "properties":{
+        "type":{"type":"integer","minimum":0,"maximum":10},
+        "context":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "minCount":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "maxCount":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "remainDamageCounter":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "remainEnergyCost":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "option":{"type":"array","maxItems":256,"items":{"$ref":"#/$defs/option"}},
+        "deck":{"oneOf":[{"type":"null"},{"type":"array","maxItems":120,"items":{"$ref":"#/$defs/card"}}]},
+        "contextCard":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/card"}]},
+        "effect":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/card"}]}
+      }
+    },
+    "event": {
+      "oneOf":[
+        {"type":"object","additionalProperties":false,"required":["kind","player_index"],"properties":{"kind":{"const":"turn_start"},"player_index":{"type":"integer","minimum":0,"maximum":1}}},
+        {"type":"object","additionalProperties":false,"required":["kind","player_index"],"properties":{"kind":{"const":"turn_end"},"player_index":{"type":"integer","minimum":0,"maximum":1}}},
+        {"type":"object","additionalProperties":false,"required":["kind","card","from_area","to_area"],"properties":{"kind":{"const":"move_card"},"card":{"$ref":"#/$defs/card"},"from_area":{"$ref":"#/$defs/nonnegativeSafeInteger"},"to_area":{"$ref":"#/$defs/nonnegativeSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["kind","card"],"properties":{"kind":{"const":"play"},"card":{"$ref":"#/$defs/card"}}},
+        {"type":"object","additionalProperties":false,"required":["kind","card","target"],"properties":{"kind":{"const":"attach"},"card":{"$ref":"#/$defs/card"},"target":{"$ref":"#/$defs/card"}}},
+        {"type":"object","additionalProperties":false,"required":["kind","card"],"properties":{"kind":{"const":"evolve"},"card":{"$ref":"#/$defs/card"}}},
+        {"type":"object","additionalProperties":false,"required":["kind","card","attack_id"],"properties":{"kind":{"const":"attack"},"card":{"$ref":"#/$defs/card"},"attack_id":{"$ref":"#/$defs/positiveSafeInteger"}}},
+        {"type":"object","additionalProperties":false,"required":["kind","card","value","put_damage_counter"],"properties":{"kind":{"const":"hp_change"},"card":{"$ref":"#/$defs/card"},"value":{"$ref":"#/$defs/safeInteger"},"put_damage_counter":{"type":"boolean"}}},
+        {"type":"object","additionalProperties":false,"required":["kind","player_index"],"properties":{"kind":{"const":"result"},"player_index":{"type":"integer","minimum":0,"maximum":1}}}
+      ]
+    },
+    "fixtureInput": {
+      "type":"object","additionalProperties":false,
+      "required":["current_source","select_source","public_events"],
+      "properties":{
+        "current_source":{"$ref":"#/$defs/currentSource"},
+        "select_source":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/selectSource"}]},
+        "public_events":{"type":"array","maxItems":512,"items":{"$ref":"#/$defs/event"}},
+        "step":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "remainingOverageTime":{"$ref":"#/$defs/nonnegativeSafeInteger"}
+      }
+    },
+    "expected": {
+      "type":"object","additionalProperties":false,
+      "required":["accepted","error_code","public_observation_hash","select_type","select_context","option_count","log_count","acting_hand_visible","opponent_hand_hidden"],
+      "properties":{
+        "accepted":{"type":"boolean"},
+        "error_code":{"enum":["","projector_contract_error","invalid_input","invalid_player_index","invalid_state","invalid_decision","invalid_select","invalid_card_identity","card_catalog_unmapped","card_serial_unbound","invalid_attack_identity","hidden_information_requested","invalid_public_event","stale_match_generation","limit_exceeded","firewall_rejected","engine_capture_unavailable","result_integrity_invalid"]},
+        "public_observation_hash":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/sha256"}]},
+        "select_type":{"oneOf":[{"type":"null"},{"type":"integer","minimum":0,"maximum":10}]},
+        "select_context":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/nonnegativeSafeInteger"}]},
+        "option_count":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "log_count":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "acting_hand_visible":{"type":"boolean"},
+        "opponent_hand_hidden":{"type":"boolean"}
+      },
+      "allOf":[
+        {"if":{"properties":{"accepted":{"const":true}}},"then":{"properties":{"error_code":{"const":""},"public_observation_hash":{"$ref":"#/$defs/sha256"},"acting_hand_visible":{"const":true},"opponent_hand_hidden":{"const":true}}}},
+        {"if":{"properties":{"accepted":{"const":false}}},"then":{"properties":{"error_code":{"not":{"const":""}},"public_observation_hash":{"type":"null"},"select_type":{"type":"null"},"select_context":{"type":"null"},"option_count":{"const":0},"log_count":{"const":0},"acting_hand_visible":{"const":false},"opponent_hand_hidden":{"const":false}}}}
+      ]
+    },
+    "projectionCase": {
+      "type":"object","additionalProperties":false,
+      "required":["case_id","window","state_fixture_id","select_source","public_events","step","remainingOverageTime","expected_result"],
+      "properties":{
+        "case_id":{"type":"string","minLength":1},
+        "window":{"type":"string","pattern":"^W[1-7]$"},
+        "state_fixture_id":{"const":"base_mapped_state"},
+        "select_source":{"$ref":"#/$defs/selectSource"},
+        "public_events":{"type":"array","maxItems":512,"items":{"$ref":"#/$defs/event"}},
+        "step":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "remainingOverageTime":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "expected_result":{"$ref":"#/$defs/expected"}
+      }
+    },
+    "fault": {
+      "type":"object","additionalProperties":false,"required":["kind","value"],
+      "properties":{
+        "kind":{"enum":["replace","replace_public_events","replace_select_options"]},
+        "pointer":{"type":"string","pattern":"^/current_source/"},
+        "value":{}
+      },
+      "allOf":[{"if":{"properties":{"kind":{"const":"replace"}}},"then":{"required":["pointer"]}}]
+    },
+    "rejectionCase": {
+      "type":"object","additionalProperties":false,"required":["case_id","base_case_id","fault","expected_result"],
+      "properties":{
+        "case_id":{"type":"string","minLength":1},
+        "base_case_id":{"const":"w1_setup_active"},
+        "fault":{"$ref":"#/$defs/fault"},
+        "expected_result":{"$ref":"#/$defs/expected"}
+      }
+    },
+    "conformanceDocument": {
+      "type":"object","additionalProperties":false,
+      "required":["schema_version","artifact_id","profile_id","state_fixtures","projection_cases","rejection_cases"],
+      "properties":{
+        "schema_version":{"const":1},
+        "artifact_id":{"const":"ptcgdap-godot-observation-projector-conformance-v1"},
+        "profile_id":{"const":"godot_observation_projector_v1"},
+        "state_fixtures":{"type":"object","additionalProperties":false,"required":["base_mapped_state"],"properties":{"base_mapped_state":{"$ref":"#/$defs/currentSource"}}},
+        "projection_cases":{"type":"array","minItems":7,"items":{"$ref":"#/$defs/projectionCase"}},
+        "rejection_cases":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/rejectionCase"}}
+      }
+    },
+    "audit": {
+      "type":"object","additionalProperties":false,
+      "required":["authority","source_classes","projector_bundle_hash","identity_checks","hidden_fields_emitted"],
+      "properties":{
+        "authority":{"enum":["conformance_fixture_only","engine_attested_shadow"]},
+        "source_classes":{"type":"array","uniqueItems":true,"items":{"type":"string"}},
+        "projector_bundle_hash":{"$ref":"#/$defs/sha256"},
+        "identity_checks":{"$ref":"#/$defs/nonnegativeSafeInteger"},
+        "hidden_fields_emitted":{"const":0}
+      }
+    },
+    "projectorResult": {
+      "type":"object","additionalProperties":false,
+      "required":["schema_version","profile_id","projector_bundle_hash","accepted","error_code","observation","public_observation_hash","audit"],
+      "properties":{
+        "schema_version":{"const":1},
+        "profile_id":{"const":"godot_observation_projector_v1"},
+        "projector_bundle_hash":{"$ref":"#/$defs/sha256"},
+        "accepted":{"type":"boolean"},
+        "error_code":{"enum":["","projector_contract_error","invalid_input","invalid_player_index","invalid_state","invalid_decision","invalid_select","invalid_card_identity","card_catalog_unmapped","card_serial_unbound","invalid_attack_identity","hidden_information_requested","invalid_public_event","stale_match_generation","limit_exceeded","firewall_rejected","engine_capture_unavailable","result_integrity_invalid"]},
+        "observation":{"oneOf":[{"type":"null"},{"type":"object"}]},
+        "public_observation_hash":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/sha256"}]},
+        "audit":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/audit"}]}
+      },
+      "allOf":[
+        {"if":{"properties":{"accepted":{"const":true}}},"then":{"properties":{"error_code":{"const":""},"observation":{"type":"object"},"public_observation_hash":{"$ref":"#/$defs/sha256"},"audit":{"$ref":"#/$defs/audit"}}}},
+        {"if":{"properties":{"accepted":{"const":false}}},"then":{"properties":{"error_code":{"not":{"const":""}},"observation":{"type":"null"},"public_observation_hash":{"type":"null"},"audit":{"type":"null"}}}}
+      ]
+    }
+  }
+}

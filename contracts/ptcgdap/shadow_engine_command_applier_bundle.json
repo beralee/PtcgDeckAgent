@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-shadow-engine-command-applier-p3-wp7-v1",
+  "parent_owner_gate_bundle_canonical_sha256": "9B8202E67756E388AFB0A13EA1FD20227ADF0718DF8454420A2B1FC7A5D31B8C",
+  "parent_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/shadow_engine_command_applier.schema.json",
+      "canonical_sha256": "DA648A7B1EDBE9770B25294A4C67F66E3141504038B5C73A0639A43C42D9E9CC"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/shadow_engine_command_applier_profile.json",
+      "canonical_sha256": "4DDB4E2F367019AC191779CF9913936DFFAABFEF2CC57F358CA7C2CF517E0D1E"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/shadow_engine_command_applier_conformance_vectors.json",
+      "canonical_sha256": "5D3C50D496FFB19EA2BF15ADD60C6A5964437575E85AA90FF9DCEC6B70132482"
+    }
+  ]
+}

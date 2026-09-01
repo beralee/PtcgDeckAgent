@@ -1,0 +1,22 @@
+{
+  "document_type": "device_manifest_bundle_v1",
+  "schema_version": 1,
+  "manifest_id": "ptcgdap-marnie-windows-device-v1",
+  "artifacts": [
+    {
+      "path": "contracts/ptcgdap/device_manifest_v1.schema.json",
+      "raw_sha256": "80C9E18C12C9C64D22803AAB4895DF51A3491DB7591C36028D300133149FBBBB",
+      "canonical_sha256": "7DA62BFB74561EC00DF348A2C3B28AC1BDCA94B23ED8B9ED3713CE53DC72BB1F"
+    },
+    {
+      "path": "contracts/ptcgdap/device_manifest_v1_profile.json",
+      "raw_sha256": "31C166994B936F2D21F0918382112772852468E7C5F2355B56F521E5C3DFC998",
+      "canonical_sha256": "CBE2FF2F87291BC33BB3BD750200A75FE32C3B600936FB6EE93B0A909FE1428B"
+    },
+    {
+      "path": "data/ptcgdap/marnie_windows_device_manifest_v1.json",
+      "raw_sha256": "02CBA3E0D64F5F1B8BA8D19C35749F34B682CAE16A400F60EFACC3A554BFA99A",
+      "canonical_sha256": "FCEEFEC13989C49A796905F98C099DF6E4C9C486773EA264250C75E0F39B8948"
+    }
+  ]
+}

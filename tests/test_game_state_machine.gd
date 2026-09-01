@@ -401,12 +401,46 @@ func test_mulligan_bonus_draw_from_empty_deck_does_not_lose_player() -> String:
 	gsm.game_state.players[1].hand.append(
 		CardInstance.create(_make_basic_pokemon_card_data("Mulligan Setup Basic"), 1)
 	)
+	gsm._mulligan_counts[1] = 1
+	gsm._pending_mulligan_beneficiary_index = 0
 
 	gsm.resolve_mulligan_choice(0, true)
 
 	return run_checks([
 		assert_false(gsm.game_state.is_game_over(), "A failed optional Mulligan bonus draw must not cause a deck-out loss"),
 		assert_eq(gsm.game_state.players[0].hand.size(), 0, "An empty deck should simply provide no Mulligan bonus card"),
+	])
+
+
+func test_mulligan_draw_count_accepts_exact_zero_to_maximum_and_rejects_out_of_range() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	for serial: int in 4:
+		gsm.game_state.players[0].deck.append(
+			CardInstance.create(_make_basic_pokemon_card_data("Bonus %d" % serial), serial + 10)
+		)
+	gsm.game_state.players[1].hand.append(
+		CardInstance.create(_make_basic_pokemon_card_data("Mulligan Setup Basic"), 99)
+	)
+	gsm._mulligan_counts[1] = 3
+	gsm._pending_mulligan_beneficiary_index = 0
+	var exact_ok := gsm.resolve_mulligan_draw_count(0, 2)
+	var replay := gsm.resolve_mulligan_draw_count(0, 0)
+	var before_invalid := gsm.game_state.players[0].hand.size()
+	gsm._pending_mulligan_beneficiary_index = 0
+	var invalid := gsm.resolve_mulligan_draw_count(0, 4)
+	var zero_ok := gsm.resolve_mulligan_draw_count(0, 0)
+	return run_checks([
+		assert_true(exact_ok, "a legal intermediate DRAW_COUNT must be accepted"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 2),
+		assert_false(replay, "an accepted Mulligan window must be one-shot"),
+		assert_false(invalid, "draw count above the Mulligan maximum must fail closed"),
+		assert_true(zero_ok, "invalid output must not consume the pending window, and zero remains legal"),
+		assert_eq(gsm.game_state.players[0].hand.size(), before_invalid),
 	])
 
 

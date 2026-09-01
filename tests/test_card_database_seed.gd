@@ -4,6 +4,56 @@ extends TestBase
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 
 
+func test_marnie_water_printings_refresh_stale_bundled_implementation_cache() -> String:
+	var db := CardDatabaseScript.new()
+	var checks: Array[String] = []
+	for uid: String in ["CSV7C_059", "CSV9.5C_043"]:
+		var source_path := "res://data/bundled_user/cards/%s.json" % uid
+		var source: Dictionary = db._load_json_dictionary_from_file(source_path)
+		var stale := source.duplicate(true)
+		var stale_attacks: Array = stale.get("attacks", [])
+		if not stale_attacks.is_empty() and stale_attacks[0] is Dictionary:
+			var stale_attack := (stale_attacks[0] as Dictionary).duplicate(true)
+			stale_attack["cost"] = "W"
+			stale_attacks[0] = stale_attack
+			stale["attacks"] = stale_attacks
+		checks.append(assert_true(
+			db._bundled_card_json_has_missing_implementation_data(source, stale),
+			"%s must replace an older cached attack-cost implementation" % uid,
+		))
+		checks.append(assert_false(
+			db._bundled_card_json_has_missing_implementation_data(source, source.duplicate(true)),
+			"%s must not rewrite an already-current bundled cache" % uid,
+		))
+		var unrelated_edit := source.duplicate(true)
+		var unrelated_attacks: Array = unrelated_edit.get("attacks", [])
+		if not unrelated_attacks.is_empty() and unrelated_attacks[0] is Dictionary:
+			var unrelated_attack := (unrelated_attacks[0] as Dictionary).duplicate(true)
+			unrelated_attack["cost"] = "D"
+			unrelated_attacks[0] = unrelated_attack
+			unrelated_edit["attacks"] = unrelated_attacks
+		checks.append(assert_false(
+			db._bundled_card_json_has_missing_implementation_data(source, unrelated_edit),
+			"%s migration must not overwrite an unrelated user attack-cost edit" % uid,
+		))
+		var cross_identity := stale.duplicate(true)
+		cross_identity["card_index"] = "999"
+		checks.append(assert_false(
+			db._bundled_card_json_requires_attack_cost_migration(source, cross_identity),
+			"%s migration must remain scoped to the exact local card UID" % uid,
+		))
+	var froslass: CardData = CardDatabase.get_card("CSV7C", "059")
+	var snorunt: CardData = CardDatabase.get_card("CSV9.5C", "043")
+	checks.append(assert_not_null(froslass, "Marnie Froslass must load after seed refresh"))
+	checks.append(assert_not_null(snorunt, "Marnie Snorunt must load after seed refresh"))
+	if froslass != null:
+		checks.append(assert_eq(str(froslass.attacks[0].cost), "WC", "Froslass exact attack cost after refresh"))
+	if snorunt != null:
+		checks.append(assert_eq(str(snorunt.attacks[0].cost), "WC", "Snorunt exact attack cost after refresh"))
+	db.free()
+	return run_checks(checks)
+
+
 func test_csv7c_021_shaymin_is_a_complete_bundled_seed_asset() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest: Array[String] = db._load_bundled_manifest()
@@ -736,6 +786,19 @@ func test_supported_ai_deck_ignores_user_override_and_reads_bundled_source() -> 
 		assert_not_null(resolved, "Supported AI deck should still resolve"),
 		assert_eq(str(resolved.deck_name if resolved != null else ""), str(bundled_ai.deck_name), "Supported AI decks should resolve from bundled source, not user overrides"),
 		assert_str_contains(str(resolved.strategy if resolved != null else ""), "【玩家打法要求】", "Supported AI decks should expose the bundled player-requirement strategy text"),
+	])
+
+
+func test_get_deck_lazily_materializes_only_requested_deck() -> String:
+	var db := CardDatabaseScript.new()
+	db._ensure_directories()
+	db._deck_cache = {}
+	var resolved: DeckData = db.get_deck(800018501)
+	return run_checks([
+		assert_not_null(resolved, "Marnie should resolve from the seeded local deck store"),
+		assert_eq(int(resolved.id if resolved != null else -1), 800018501),
+		assert_eq(db._deck_cache.size(), 1, "A single-deck lookup must not eagerly deserialize the full player deck catalog"),
+		assert_true(db._deck_cache.has(800018501)),
 	])
 
 
@@ -2402,6 +2465,25 @@ func test_existing_install_backfills_new_poison_box_card_resources_on_startup() 
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV5C/053.png"), "Upgrade seed should backfill Natu image for existing installs"),
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV5C/054.png"), "Upgrade seed should backfill Xatu image for existing installs"),
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV6C/080.png"), "Upgrade seed should backfill Klawf image for existing installs"),
+	])
+
+
+func test_bundled_seed_completion_marker_is_content_pinned_and_fast_path_safe() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var mismatched_manifest := manifest.duplicate()
+	mismatched_manifest.append("res://data/bundled_user/cards/DOES_NOT_EXIST.json")
+	db._write_bundled_seed_completion()
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(db.BUNDLED_SEED_COMPLETION))
+	return run_checks([
+		assert_true(parsed is Dictionary),
+		assert_eq((parsed as Dictionary).get("schema_version"), 1),
+		assert_eq((parsed as Dictionary).get("pipeline_revision"), db.BUNDLED_SEED_PIPELINE_REVISION),
+		assert_eq((parsed as Dictionary).get("content_revision"), FileAccess.get_file_as_string(db.BUNDLED_SEED_CONTENT_REVISION).strip_edges()),
+		assert_eq((parsed as Dictionary).get("manifest_entry_count"), manifest.size()),
+		assert_true(db._bundled_seed_completion_is_current(manifest)),
+		assert_false(db._bundled_seed_completion_is_current(mismatched_manifest)),
+		assert_true(db.has_method("_start_bundled_seed_target_audit"), "The O(1) startup marker must retain a deferred target-audit repair path"),
 	])
 
 

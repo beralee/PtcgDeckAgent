@@ -4697,13 +4697,23 @@ func show_setup_active_dialog(scene: Object, pi: int) -> void:
 		"card_items": basics,
 		"choice_labels": items,
 	}
-	scene.call("_ensure_ai_opponent")
-	var ai_opponent: Variant = scene.get("_ai_opponent")
-	var is_ai_prompt: bool = (
-		GameManager.current_mode == GameManager.GameMode.VS_AI
-		and ai_opponent != null
-		and pi == ai_opponent.player_index
+	var is_author_prompt: bool = (
+		scene.has_method("_is_author_setup_active_canary_prompt")
+		and bool(scene.call("_is_author_setup_active_canary_prompt", pi))
 	)
+	if is_author_prompt:
+		scene.set("_dialog_data", dialog_data)
+		scene.set("_dialog_items_data", items)
+		var author_dialog_overlay: Panel = scene.get("_dialog_overlay")
+		var author_dialog_cancel: Button = scene.get("_dialog_cancel")
+		if author_dialog_overlay != null:
+			author_dialog_overlay.visible = false
+		if author_dialog_cancel != null:
+			author_dialog_cancel.visible = false
+		scene.call_deferred("_maybe_run_author_setup_active_canary", pi)
+		return
+	var is_ai_prompt: bool = scene.has_method("_is_runtime_ai_player") \
+		and bool(scene.call("_is_runtime_ai_player", pi))
 	if is_ai_prompt:
 		scene.set("_dialog_data", dialog_data)
 		scene.set("_dialog_items_data", items)
@@ -4755,13 +4765,8 @@ func show_setup_bench_dialog(scene: Object, pi: int) -> void:
 		"choice_labels": items.slice(1),
 		"utility_actions": [{"label": "完成", "index": 0}],
 	}
-	scene.call("_ensure_ai_opponent")
-	var ai_opponent: Variant = scene.get("_ai_opponent")
-	var is_ai_prompt: bool = (
-		GameManager.current_mode == GameManager.GameMode.VS_AI
-		and ai_opponent != null
-		and pi == ai_opponent.player_index
-	)
+	var is_ai_prompt: bool = scene.has_method("_is_runtime_ai_player") \
+		and bool(scene.call("_is_runtime_ai_player", pi))
 	if is_ai_prompt:
 		scene.set("_dialog_data", dialog_data)
 		scene.set("_dialog_items_data", items)
@@ -4782,15 +4787,14 @@ func show_setup_bench_dialog(scene: Object, pi: int) -> void:
 func _schedule_followup_ai_step_if_ready(scene: Object, gsm: Variant) -> void:
 	if scene == null or gsm == null or gsm.game_state == null:
 		return
-	scene.call("_ensure_ai_opponent")
-	var ai_opponent: Variant = scene.get("_ai_opponent")
-	if GameManager.current_mode != GameManager.GameMode.VS_AI or ai_opponent == null:
+	var owner: Variant = scene.call("_runtime_ai_owner") if scene.has_method("_runtime_ai_owner") else null
+	if owner == null:
 		return
 	if str(scene.get("_pending_choice")) != "":
 		return
 	if gsm.game_state.phase == GameState.GamePhase.SETUP:
 		return
-	if gsm.game_state.current_player_index != ai_opponent.player_index:
+	if gsm.game_state.current_player_index != int(owner.player_index):
 		return
 	if bool(scene.get("_ai_running")):
 		scene.set("_ai_followup_requested", true)

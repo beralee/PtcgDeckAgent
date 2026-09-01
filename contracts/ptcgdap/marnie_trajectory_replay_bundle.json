@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-marnie-trajectory-replay-p5-wp2-v1",
+  "status": "offline_shadow_replay",
+  "parent_fixture_bundle": {
+    "path": "contracts/ptcgdap/marnie_vertical_slice_bundle.json",
+    "canonical_sha256": "7E0CF80D7B2872C29F69BA15548857F1F32407943371D3C12A266A0E471EC425"
+  },
+  "base_firewall_bundle": {
+    "path": "contracts/ptcgdap/cabt_public_firewall_bundle.json",
+    "canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947"
+  },
+  "artifacts": [
+    {
+      "id": "marnie_trajectory_replay.schema",
+      "path": "contracts/ptcgdap/marnie_trajectory_replay.schema.json",
+      "canonical_sha256": "134A3F45D029C3A0144AB58C4D0885E3E9EB51AF4F15B415C559C49DF59E1706"
+    },
+    {
+      "id": "marnie_trajectory_replay_profile_v1",
+      "path": "contracts/ptcgdap/marnie_trajectory_replay_profile.json",
+      "canonical_sha256": "A6AC96F446A747078C27587F39FA8FB83B1408F51A8C2304B8B3BA2A2C752A1D"
+    },
+    {
+      "id": "marnie_trajectory_replay_conformance_v1",
+      "path": "contracts/ptcgdap/marnie_trajectory_replay_conformance_vectors.json",
+      "canonical_sha256": "C19DFBBCC370E46816CF597AAD00B3DA8058C54F86A8DDED0FA0F8171BDAEDEC"
+    },
+    {
+      "id": "w0_w7_firewall_replay_v1",
+      "path": "data/ptcgdap/marnie_vertical_slice/w0_w7_firewall_replay_v1.json",
+      "canonical_sha256": "3056EEB3D56FD6BE59D5C06906415B697F9F7E50BF7CBB79513CDB91FB5FADB0"
+    }
+  ],
+  "self_hash_policy": "bundle and bound artifacts do not contain the final bundle hash"
+}

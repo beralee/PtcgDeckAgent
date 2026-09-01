@@ -24,7 +24,7 @@ func knocks_out_self() -> bool:
 	return true
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var items: Array = opponent.get_all_pokemon()
 	var labels: Array[String] = []

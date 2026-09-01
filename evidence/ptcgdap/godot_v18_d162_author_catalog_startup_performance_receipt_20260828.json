@@ -1,0 +1,67 @@
+{
+  "schema": "ptcgdap.author_catalog_startup_performance_receipt.v1",
+  "decision_id": "D162",
+  "generated_at": "2026-08-28T23:43:30+08:00",
+  "status": "implemented_focused_tested_player_visible_restart_confirmation_pending",
+  "alignment": "local_godot_windows_startup_metadata_optimization_with_exact_match_time_revalidation",
+  "reproduction": {
+    "built_in_archive_count": 47,
+    "built_in_archive_total_mib": 3.87,
+    "pre_fix_profile_log_created_at": "2026-08-28T23:31:46+08:00",
+    "pre_fix_profile_log_completed_at": "2026-08-28T23:32:18+08:00",
+    "pre_fix_cache_written_at": "2026-08-28T23:32:17+08:00",
+    "pre_fix_wall_msec_approx": 32000,
+    "root_cause": "cold_main_thread_archive_manifest_hash_and_ed25519_inspection",
+    "secondary_warning": "BattleSetup.tscn threaded prewarm timed out after the bounded 100 ms wait"
+  },
+  "performance": {
+    "post_fix_clean_install_wall_msec": 3383,
+    "post_fix_one_uncached_user_archive_wall_msec": 4032,
+    "clean_wall_reduction_percent_approx": 89.4,
+    "measurement_scope": "process_wall_including_godot_startup_card_database_seed_and_focused_runner"
+  },
+  "cache_contract": {
+    "schema_version": 2,
+    "cache_identity": "7D340DF70C92D44629D8A612D06E2682EED8E58600CBF06B461F9BE8005C9901",
+    "bundled_entry_count": 47,
+    "bundled_location_count": 47,
+    "location_fields": [
+      "archive_path",
+      "install_source",
+      "location_id",
+      "archive_size",
+      "archive_modified_time",
+      "archive_sha256"
+    ],
+    "startup_cache_authority": false,
+    "catalog_match_authority": false,
+    "match_time_archive_revalidation": true,
+    "rollback_environment": "PTCGDAP_AUTHOR_CATALOG_STARTUP_PROFILE=deep_scan_v1",
+    "default_profile": "cached_v2"
+  },
+  "tests": [
+    {"lane": "test_author_strategy_package_catalog.gd", "passed": 24, "failed": 0, "d162_direct_subset": 8},
+    {"lane": "test_game_manager.gd", "passed": 36, "failed": 0},
+    {"lane": "test_battle_setup_ai_versions.gd", "passed": 38, "failed": 0},
+    {"lane": "test_author_strategy_battle_setup.gd", "passed": 11, "failed": 0}
+  ],
+  "focused_total": {"passed": 109, "failed": 0},
+  "source_sha256": {
+    "scripts/ai/ptcgdap/packages/AuthorStrategyPackageCatalog.gd": "EADD35552628DA88C952D2EFB29DED7782154BFA7F109A7DC9345595AE887F1F",
+    "tests/ptcgdap/godot/test_author_strategy_package_catalog.gd": "66A3CEC1E5E924D81D0E56F37737B715E753B9E505C6B20AADACB3856109DBD0",
+    "data/ptcgdap/author_strategy_catalog_cache.json": "61ABCCDA3F354A14F1DCFC7046DE13E5D7BEDC550C805969B3B14029933F8F9D"
+  },
+  "evidence_sha256": {
+    "pre_fix_profile_log": "32D438B389BC538C17590C500C70DBBAD941B0249141FAEF6F78C471D67F7637",
+    "post_fix_clean_profile_log": "052C201D1483BEFFA2DF9505E4E5971E0DBCE65AA1432C2598ED42BAFD664E43"
+  },
+  "not_claimed": [
+    "player_visible_restart_confirmation",
+    "windows_export_package_startup_timing",
+    "rendered_frame_time_p95",
+    "android_or_a5",
+    "production",
+    "official_cabt_or_kaggle_authority",
+    "full_engine_parity"
+  ]
+}

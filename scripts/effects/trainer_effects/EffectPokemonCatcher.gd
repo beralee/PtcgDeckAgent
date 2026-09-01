@@ -14,7 +14,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not state.players[1 - card.owner_index].bench.is_empty()
 
 
-func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_preview_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
 		"title": "投掷1枚硬币",
@@ -23,7 +23,7 @@ func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Ar
 	}]
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	_pending_heads = coin_flipper.flip()
 	_has_pending_flip = true
 	if not _pending_heads:

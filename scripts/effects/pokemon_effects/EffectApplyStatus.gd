@@ -25,9 +25,9 @@ func execute_attack(
 	if not applies_to_attack_index(_attack_index):
 		return
 	if require_coin:
-		var rng := RandomNumberGenerator.new()
-		rng.randomize()
-		if rng.randi_range(0, 1) == 0:
+		var draw_processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+		var flipper: CoinFlipper = draw_processor.coin_flipper if draw_processor is EffectProcessor else CoinFlipper.new()
+		if not flipper.flip():
 			return
 	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
 	if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):

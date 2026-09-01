@@ -12,7 +12,7 @@ func _init(required_type: String = "", count: int = 1) -> void:
 	max_count = count
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState

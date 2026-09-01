@@ -1,0 +1,687 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/engine_decision_port.schema.json",
+  "title": "PtcgDAP immutable EngineDecisionPort shadow contract",
+  "$defs": {
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "match_generation",
+        "decision_generation",
+        "chooser_player_index",
+        "snapshot_id",
+        "source_digest",
+        "select",
+        "turn_action_count",
+        "reference_count",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "match_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "decision_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "chooser_player_index": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "source_digest": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{64}$"
+        },
+        "select": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "context",
+                "minCount",
+                "maxCount",
+                "remainDamageCounter",
+                "remainEnergyCost",
+                "option",
+                "deck_tokens",
+                "context_token",
+                "effect_token"
+              ],
+              "properties": {
+                "type": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "context": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "minCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "maxCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "remainDamageCounter": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "remainEnergyCost": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "option": {
+                  "type": "array",
+                  "maxItems": 256,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "position",
+                      "option",
+                      "reference_token"
+                    ],
+                    "properties": {
+                      "position": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "option": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "integer",
+                            "enum": [
+                              3,
+                              7,
+                              13,
+                              14,
+                              15
+                            ]
+                          },
+                          "index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "local_attack_index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      },
+                      "reference_token": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1
+                      }
+                    }
+                  }
+                },
+                "deck_tokens": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "maxItems": 120,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "context_token": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                },
+                "effect_token": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        "turn_action_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "reference_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "authority": {
+          "const": "engine_decision_port_shadow"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string"
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "match_generation",
+                "decision_generation",
+                "chooser_player_index",
+                "snapshot_id",
+                "source_digest",
+                "select",
+                "turn_action_count",
+                "reference_count",
+                "authority",
+                "authoritative"
+              ],
+              "properties": {
+                "match_generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "decision_generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "chooser_player_index": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1
+                  ]
+                },
+                "snapshot_id": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "source_digest": {
+                  "type": "string",
+                  "pattern": "^[A-F0-9]{64}$"
+                },
+                "select": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "context",
+                        "minCount",
+                        "maxCount",
+                        "remainDamageCounter",
+                        "remainEnergyCost",
+                        "option",
+                        "deck_tokens",
+                        "context_token",
+                        "effect_token"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "context": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "minCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "maxCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "remainDamageCounter": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "remainEnergyCost": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "option": {
+                          "type": "array",
+                          "maxItems": 256,
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "position",
+                              "option",
+                              "reference_token"
+                            ],
+                            "properties": {
+                              "position": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "option": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "type"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "type": "integer",
+                                    "enum": [
+                                      3,
+                                      7,
+                                      13,
+                                      14,
+                                      15
+                                    ]
+                                  },
+                                  "index": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "local_attack_index": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                }
+                              },
+                              "reference_token": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        },
+                        "deck_tokens": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "maxItems": 120,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "context_token": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1
+                        },
+                        "effect_token": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  ]
+                },
+                "turn_action_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reference_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "authority": {
+                  "const": "engine_decision_port_shadow"
+                },
+                "authoritative": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "match_generation",
+        "decision_generation",
+        "chooser_player_index",
+        "source",
+        "expected"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "match_generation": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "decision_generation": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "chooser_player_index": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "source": {
+          "type": "object"
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "accepted",
+            "error_code",
+            "audit"
+          ],
+          "properties": {
+            "accepted": {
+              "type": "boolean"
+            },
+            "error_code": {
+              "type": "string"
+            },
+            "audit": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "match_generation",
+                    "decision_generation",
+                    "chooser_player_index",
+                    "snapshot_id",
+                    "source_digest",
+                    "select",
+                    "turn_action_count",
+                    "reference_count",
+                    "authority",
+                    "authoritative"
+                  ],
+                  "properties": {
+                    "match_generation": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "decision_generation": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "chooser_player_index": {
+                      "type": "integer",
+                      "enum": [
+                        0,
+                        1
+                      ]
+                    },
+                    "snapshot_id": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "source_digest": {
+                      "type": "string",
+                      "pattern": "^[A-F0-9]{64}$"
+                    },
+                    "select": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "type",
+                            "context",
+                            "minCount",
+                            "maxCount",
+                            "remainDamageCounter",
+                            "remainEnergyCost",
+                            "option",
+                            "deck_tokens",
+                            "context_token",
+                            "effect_token"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "context": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "minCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "maxCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "remainDamageCounter": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "remainEnergyCost": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "option": {
+                              "type": "array",
+                              "maxItems": 256,
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "option",
+                                  "reference_token"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "option": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "properties": {
+                                      "type": {
+                                        "type": "integer",
+                                        "enum": [
+                                          3,
+                                          7,
+                                          13,
+                                          14,
+                                          15
+                                        ]
+                                      },
+                                      "index": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "local_attack_index": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      }
+                                    }
+                                  },
+                                  "reference_token": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "minLength": 1
+                                  }
+                                }
+                              }
+                            },
+                            "deck_tokens": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "maxItems": 120,
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "context_token": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "minLength": 1
+                            },
+                            "effect_token": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "turn_action_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "reference_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "authority": {
+                      "const": "engine_decision_port_shadow"
+                    },
+                    "authoritative": {
+                      "const": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/audit"
+    },
+    {
+      "$ref": "#/$defs/result"
+    },
+    {
+      "$ref": "#/$defs/vector"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-shadow-whole-match-harness-p3-wp8-v1",
+  "parent_applier_bundle_canonical_sha256": "7539A9D5120666AEBA1325DD6623F437831A024996BD612F3EC677F78C9F8F4C",
+  "parent_owner_gate_bundle_canonical_sha256": "9B8202E67756E388AFB0A13EA1FD20227ADF0718DF8454420A2B1FC7A5D31B8C",
+  "parent_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/shadow_whole_match_harness.schema.json",
+      "canonical_sha256": "C0CF02191EED9556A282061526E99B6A0C1196B4024918AA9298A32838A93A1B"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/shadow_whole_match_harness_profile.json",
+      "canonical_sha256": "D47B6FA345B3F7A4E2955BF0812D63CC625A9A868F5D556108B581C55244BE81"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/shadow_whole_match_harness_conformance_vectors.json",
+      "canonical_sha256": "4ABB41F847B0DA65DD9322F859D0F32B766E4A39E6ED6F3F5AB5CAA4EE7E3CF9"
+    }
+  ]
+}

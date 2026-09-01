@@ -679,7 +679,313 @@ func _ensure_match_end_quick_review_service() -> void:
 
 
 func _build_match_end_quick_review_payload() -> Dictionary:
-	return _match_end_quick_review_builder.call("build_payload", _match_end_stats, _view_player, _battle_review_match_dir)
+	return _match_end_quick_review_builder.call(
+		"build_payload",
+		_match_end_stats,
+		_view_player,
+		_battle_review_match_dir,
+		_author_match_quick_review_context
+	)
+
+
+func _start_author_match_evidence(owner: Variant) -> void:
+	_close_author_match_evidence("author_evidence_restarted")
+	_author_match_quick_review_context.clear()
+	_author_match_evidence_audit.clear()
+	if owner == null or GameManager.current_mode != GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		return
+	var evidence: Variant = AuthorStrategyMatchEvidenceScript.new()
+	var started: Dictionary = evidence.start(owner)
+	if not bool(started.get("ok", false)):
+		_runtime_log("author_match_evidence_rejected", str(started.get("error_code", "unknown")))
+		return
+	_author_match_evidence = evidence
+	_runtime_log("author_match_evidence_started", "path=%s" % str(started.get("path", "")))
+
+
+func _start_author_developer_trace(owner: Variant) -> void:
+	_close_author_developer_trace("author_developer_trace_restarted")
+	_author_developer_decision_trace_audit.clear()
+	if (
+		owner == null
+		or GameManager.current_mode != GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+		or _battle_review_match_dir.strip_edges().is_empty()
+	):
+		return
+	var trace: Variant = AuthorStrategyDeveloperDecisionTraceScript.new()
+	var native_event_count := -1
+	if (
+		_battle_recorder != null
+		and _battle_recorder.has_method("get_recorded_event_count")
+	):
+		native_event_count = int(_battle_recorder.call("get_recorded_event_count"))
+	var started: Dictionary = trace.start(
+		owner, _battle_review_match_dir, native_event_count
+	)
+	if not bool(started.get("ok", false)):
+		_author_developer_decision_trace_audit = trace.audit_snapshot()
+		_runtime_log(
+			"author_developer_trace_rejected",
+			str(started.get("error_code", "unknown"))
+		)
+		return
+	_author_developer_decision_trace = trace
+	_author_developer_decision_trace_audit = trace.audit_snapshot()
+	_runtime_log(
+		"author_developer_trace_started",
+		"path=%s" % str(started.get("path", ""))
+	)
+
+
+func _record_author_public_action(action: GameAction) -> void:
+	if _author_match_evidence != null and _author_match_evidence.has_method("record_action"):
+		_author_match_evidence.record_action(action)
+
+
+func _start_author_recording_channels(owner: Variant) -> void:
+	if bool(_author_recording_profile.get("developer_trace_enabled", false)):
+		_start_author_developer_trace(owner)
+	else:
+		_close_author_developer_trace("disabled_by_recording_profile")
+		_author_developer_decision_trace_audit = {
+			"state": "disabled_by_profile",
+			"profile_id": str(_author_recording_profile.get("profile_id", "")),
+			"execution_authority_granted": false,
+		}
+	if bool(_author_recording_profile.get("match_evidence_enabled", true)):
+		_start_author_match_evidence(owner)
+	else:
+		_close_author_match_evidence("disabled_by_recording_profile")
+		_author_match_evidence_audit = {
+			"state": "disabled_by_profile",
+			"profile_id": str(_author_recording_profile.get("profile_id", "")),
+		}
+	if bool(_author_recording_profile.get("public_replay_enabled", true)):
+		_start_author_public_replay(owner)
+	else:
+		_close_author_public_replay("disabled_by_recording_profile")
+		_author_public_replay_audit = {
+			"state": "disabled_by_profile",
+			"profile_id": str(_author_recording_profile.get("profile_id", "")),
+		}
+
+
+func _record_author_owner_step(owner: Variant, status: String) -> void:
+	if (
+		_author_match_evidence != null
+		and owner == _author_player_owner
+		and _author_match_evidence.has_method("record_owner_step")
+	):
+		_author_match_evidence.record_owner_step(owner, status)
+	if (
+		_author_developer_decision_trace != null
+		and owner == _author_player_owner
+		and _author_developer_decision_trace.has_method("record_owner_step")
+	):
+		var native_event_count := -1
+		if (
+			_battle_recorder != null
+			and _battle_recorder.has_method("get_recorded_event_count")
+		):
+			native_event_count = int(_battle_recorder.call("get_recorded_event_count"))
+		_author_developer_decision_trace.record_owner_step(
+			owner, status, native_event_count
+		)
+		_author_developer_decision_trace_audit = (
+			_author_developer_decision_trace.audit_snapshot()
+		)
+	if (
+		owner == _author_player_owner
+		and _author_public_replay_progress_mode() == "decision_boundary"
+	):
+		_record_author_public_replay_progress()
+	if (
+		owner == _author_player_owner
+		and _battle_recorder != null
+		and _battle_recorder.has_method("flush_pending")
+	):
+		_battle_recorder.call("flush_pending")
+
+
+func _author_public_replay_progress_mode() -> String:
+	return str(_author_recording_profile.get("public_replay_progress_mode", "action"))
+
+
+func _finish_author_developer_trace(winner_index: int, reason: String) -> void:
+	if _author_developer_decision_trace == null:
+		return
+	var turn_number := 0
+	if _gsm != null and _gsm.game_state != null:
+		turn_number = int(_gsm.game_state.turn_number)
+	var finished: Dictionary = _author_developer_decision_trace.finish(
+		_author_player_owner, winner_index, reason, turn_number
+	)
+	_author_developer_decision_trace_audit = finished.duplicate(true)
+	_runtime_log("author_developer_trace_finished", JSON.stringify({
+		"ok": bool(finished.get("ok", false)),
+		"complete": bool(finished.get("complete", false)),
+		"path": str(finished.get("path", "")),
+		"record_count": int(finished.get("record_count", 0)),
+		"decision_count": int(finished.get("decision_count", 0)),
+		"owner_step_count": int(finished.get("owner_step_count", 0)),
+		"dropped_record_count": int(finished.get("dropped_record_count", 0)),
+		"execution_authority_granted": false,
+	}))
+
+
+func _close_author_developer_trace(reason: String) -> void:
+	if (
+		_author_developer_decision_trace != null
+		and _author_developer_decision_trace.has_method("close_incomplete")
+	):
+		_author_developer_decision_trace.close_incomplete(reason)
+		_author_developer_decision_trace_audit = (
+			_author_developer_decision_trace.audit_snapshot()
+		)
+	_author_developer_decision_trace = null
+
+
+func _finish_author_match_evidence(winner_index: int, reason: String) -> void:
+	if _author_match_evidence == null:
+		return
+	var turn_number := 0
+	if _gsm != null and _gsm.game_state != null:
+		turn_number = int(_gsm.game_state.turn_number)
+	var finished: Dictionary = _author_match_evidence.finish(
+		_author_player_owner, winner_index, reason, turn_number
+	)
+	_author_match_quick_review_context = _author_match_evidence.quick_review_context()
+	_author_match_evidence_audit = finished.duplicate(true)
+	_runtime_log("author_match_evidence_finished", JSON.stringify({
+		"ok": bool(finished.get("ok", false)),
+		"path": str(finished.get("path", "")),
+		"event_count": int(finished.get("event_count", 0)),
+		"public_action_count": int(finished.get("public_action_count", 0)),
+		"dropped_action_count": int(finished.get("dropped_action_count", 0)),
+		"private_replay_used": bool(finished.get("private_replay_used", false)),
+	}))
+
+
+func _close_author_match_evidence(reason: String) -> void:
+	if _author_match_evidence != null and _author_match_evidence.has_method("close_incomplete"):
+		_author_match_evidence.close_incomplete(reason)
+	_author_match_evidence = null
+
+
+func _start_author_public_replay(owner: Variant) -> void:
+	_close_author_public_replay("author_public_replay_restarted")
+	_author_public_replay_audit.clear()
+	if owner == null or GameManager.current_mode != GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		return
+	var coordinator: Node = AuthorStrategyPublicReplayCoordinatorScript.new()
+	add_child(coordinator)
+	coordinator.replay_status_changed.connect(_on_author_public_replay_status_changed)
+	var base_url := OS.get_environment("PTCGDAP_REPLAY_BASE_URL").strip_edges()
+	if base_url.is_empty():
+		base_url = "http://127.0.0.1:8765"
+	var strategy_seat := int(owner.get("player_index"))
+	var rule_seat := 1 - strategy_seat
+	var opponent_deck_id := int(GameManager.selected_deck_ids[rule_seat]) \
+		if rule_seat >= 0 and rule_seat < GameManager.selected_deck_ids.size() else -1
+	var started: Dictionary = coordinator.start(owner, {
+		"storage_namespace": "live-community",
+		"base_url": base_url,
+		"bearer_token": OS.get_environment("PTCGDAP_REPLAY_UPLOAD_TOKEN"),
+		"allow_insecure_loopback": OS.is_debug_build(),
+		"opponent_deck_id": opponent_deck_id,
+		"strategy_seat": strategy_seat,
+	})
+	if not bool(started.get("accepted", false)):
+		_runtime_log(
+			"author_public_replay_rejected",
+			str(started.get("error_code", "unknown"))
+		)
+		remove_child(coordinator)
+		coordinator.free()
+		return
+	_author_public_replay_coordinator = coordinator
+	_author_public_replay_audit = coordinator.audit_snapshot()
+	_runtime_log(
+		"author_public_replay_started",
+		"replay_id=%s upload=%s" % [
+			str(started.get("replay_id", "")),
+			str(_author_public_replay_audit.get("upload_status", "not_configured")),
+		]
+	)
+
+
+func _record_author_public_replay_progress() -> void:
+	if (
+		_author_public_replay_coordinator == null
+		or not _author_public_replay_coordinator.has_method("record_progress")
+	):
+		return
+	var result: Dictionary = _author_public_replay_coordinator.record_progress(
+		_author_player_owner
+	)
+	if not bool(result.get("accepted", false)):
+		_runtime_log(
+			"author_public_replay_progress_rejected",
+			str(result.get("error_code", "unknown"))
+		)
+
+
+func _finish_author_public_replay(_winner_index: int, _reason: String) -> void:
+	if (
+		_author_public_replay_coordinator == null
+		or not _author_public_replay_coordinator.has_method("finish")
+	):
+		return
+	var finished: Dictionary = _author_public_replay_coordinator.finish(_author_player_owner)
+	_author_public_replay_audit = _author_public_replay_coordinator.audit_snapshot()
+	_runtime_log("author_public_replay_finished", JSON.stringify({
+		"accepted": bool(finished.get("accepted", false)),
+		"error_code": str(finished.get("error_code", "")),
+		"replay_id": str(finished.get("replay_id", "")),
+		"artifact_path": str(finished.get("artifact_path", "")),
+		"upload_status": str(finished.get("upload_status", "")),
+		"upload_error_code": str(finished.get("upload_error_code", "")),
+		"private_replay_used": false,
+	}))
+
+
+func _on_author_public_replay_status_changed(audit: Dictionary) -> void:
+	_author_public_replay_audit = audit.duplicate(true)
+	var status := str(audit.get("upload_status", ""))
+	if status in ["uploaded", "failed"]:
+		_runtime_log("author_public_replay_upload_%s" % status, JSON.stringify({
+			"replay_id": str(audit.get("replay_id", "")),
+			"status": status,
+			"error_code": str(audit.get("last_error_code", "")),
+		}))
+		if _pending_choice == "game_over" and has_method("_refresh_match_end_dialog_if_visible"):
+			call("_refresh_match_end_dialog_if_visible")
+
+
+func _author_public_replay_status_text() -> String:
+	if not bool(_author_public_replay_audit.get("local_saved", false)):
+		return ""
+	match str(_author_public_replay_audit.get("upload_status", "")):
+		"uploaded":
+			return "录像：已保存并上传"
+		"scheduled", "uploading":
+			return "录像：已保存，正在上传"
+		"failed", "configuration_error":
+			return "录像：已保存到本地，上传失败"
+		_:
+			return "录像：已保存到本地，本次未配置上传"
+
+
+func _close_author_public_replay(reason: String) -> void:
+	if _author_public_replay_coordinator != null:
+		if _author_public_replay_coordinator.has_method("close_incomplete"):
+			_author_public_replay_coordinator.close_incomplete(reason)
+		if _author_public_replay_coordinator is Node:
+			var coordinator_node := _author_public_replay_coordinator as Node
+			if coordinator_node.get_parent() == self:
+				remove_child(coordinator_node)
+			coordinator_node.free()
+	_author_public_replay_coordinator = null
 
 
 
@@ -1159,7 +1465,10 @@ func _refresh_replay_controls() -> void:
 		_battle_mode,
 		_replay_current_turn_index,
 		_replay_turn_numbers,
-		_replay_loaded_raw_snapshot
+		_replay_loaded_raw_snapshot,
+		_replay_current_frame_index,
+		_replay_timeline.size(),
+		_replay_is_playing
 	)
 
 
@@ -1457,7 +1766,7 @@ func _show_setup_active_dialog(pi: int) -> void:
 
 
 func _preferred_live_view_player(target_player: int) -> int:
-	if GameManager.current_mode == GameManager.GameMode.VS_AI:
+	if GameManager.current_mode in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI]:
 		return 0
 	return target_player
 
@@ -2529,12 +2838,11 @@ func _check_two_player_handover() -> void:
 func _should_pause_after_ai_action(action_player_index: int) -> bool:
 	if action_player_index < 0:
 		return false
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+	if GameManager.current_mode not in [GameManager.GameMode.VS_AI, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI]:
 		return false
 	if _battle_mode != "live":
 		return false
-	_ensure_ai_opponent()
-	return _ai_opponent != null and action_player_index == _ai_opponent.player_index
+	return _is_runtime_ai_player(action_player_index)
 
 
 
@@ -2634,6 +2942,8 @@ func _refresh_field_after_visual_event(semantic: String) -> void:
 func _sync_battle_visual_snapshot_before_refresh() -> void:
 	if _battle_visual_sequence_controller == null or _gsm == null or _gsm.game_state == null:
 		return
+	if _is_review_mode() and _replay_preserve_visual_sequence_during_refresh:
+		return
 	if _is_review_mode() or _gsm.game_state.phase in [
 		GameState.GamePhase.SETUP,
 		GameState.GamePhase.MULLIGAN,
@@ -2650,6 +2960,10 @@ func _set_battle_visual_input_blocked(blocked: bool) -> void:
 
 
 func _on_battle_visual_sequence_idle() -> void:
+	if _is_review_mode() and _replay_is_playing:
+		_replay_playback_accumulator = 0.0
+		set_process(true)
+		return
 	_maybe_run_ai()
 
 

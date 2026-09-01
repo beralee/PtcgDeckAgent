@@ -24,7 +24,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return true
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var slot: PokemonSlot = _find_owner_slot(card, player)
 	if slot == null or player.active_pokemon != slot or player.bench.is_empty():

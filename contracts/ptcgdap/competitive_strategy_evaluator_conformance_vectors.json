@@ -1,0 +1,1550 @@
+{
+  "document_type": "competitive_strategy_evaluator_conformance_vectors_v1",
+  "schema_version": 1,
+  "profile_id": "ptcgdap-csp-wp2-shadow-profile-v1",
+  "records": [
+    {
+      "evidence": {
+        "document_type": "evaluator_evidence_v1",
+        "schema_version": 1,
+        "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+        "match_envelope": {
+          "document_type": "match_envelope_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "lane": "official_evaluation",
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "participants": [
+            {
+              "participant_kind": "strategy_release",
+              "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+              "release_version": "0.1.0",
+              "package_id": "ptcgdap.marnie.windows-local",
+              "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+              "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+              "deck_identity": {
+                "domain": "godot_local_card_uid_v1",
+                "deck_id": "800018501",
+                "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+              },
+              "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+            },
+            {
+              "participant_kind": "platform_baseline",
+              "baseline_id": "rules-only-575720",
+              "baseline_version": "1.0.0",
+              "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+            }
+          ],
+          "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+          "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+          "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "seat_assignment": [
+            0,
+            1
+          ],
+          "seed_commitment": {
+            "capability": "paired_seed_commitment_v1",
+            "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+            "disclosure": "withheld"
+          },
+          "replay_visibility_profile": "public_at_event_time_v1",
+          "started_at_utc": "2026-08-18T00:00:00Z"
+        },
+        "replay_manifest": {
+          "document_type": "replay_manifest_v1",
+          "schema_version": 1,
+          "replay_id": "wp2-match-001-replay",
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "visibility_profile": "public_at_event_time_v1",
+          "frame_count": 2,
+          "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+          "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+          "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "complete": true
+        },
+        "runtime_report": {
+          "source": "official_evaluator_runtime",
+          "terminal": true,
+          "reported_outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "runtime_dirty_reasons": [],
+          "replay_contract_accepted": true
+        },
+        "evidence_verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+        }
+      },
+      "result": {
+        "document_type": "verified_match_result_v1",
+        "schema_version": 1,
+        "match_id": "wp2-match-001",
+        "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+        "trust_lane": "official_verified",
+        "outcome": "seat_0_win",
+        "winner_seat": 0,
+        "turn_count": 12,
+        "decision_count": 42,
+        "fault_counts": {
+          "invalid_output": 0,
+          "policy_error": 0,
+          "timeout": 0,
+          "engine_rejection": 0,
+          "fallback": 0
+        },
+        "dirty": false,
+        "dirty_reasons": [],
+        "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+        "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+        "verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+        }
+      }
+    },
+    {
+      "evidence": {
+        "document_type": "evaluator_evidence_v1",
+        "schema_version": 1,
+        "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+        "match_envelope": {
+          "document_type": "match_envelope_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-002",
+          "lane": "official_evaluation",
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "participants": [
+            {
+              "participant_kind": "strategy_release",
+              "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+              "release_version": "0.1.0",
+              "package_id": "ptcgdap.marnie.windows-local",
+              "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+              "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+              "deck_identity": {
+                "domain": "godot_local_card_uid_v1",
+                "deck_id": "800018501",
+                "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+              },
+              "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+            },
+            {
+              "participant_kind": "platform_baseline",
+              "baseline_id": "rules-only-575720",
+              "baseline_version": "1.0.0",
+              "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+            }
+          ],
+          "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+          "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+          "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "seat_assignment": [
+            1,
+            0
+          ],
+          "seed_commitment": {
+            "capability": "paired_seed_commitment_v1",
+            "commitment_sha256": "4A93C933076EBBA037C93CF6B2767DEBCDD7278821E77BBAE3A95827230CB035",
+            "disclosure": "withheld"
+          },
+          "replay_visibility_profile": "public_at_event_time_v1",
+          "started_at_utc": "2026-08-18T00:00:00Z"
+        },
+        "replay_manifest": {
+          "document_type": "replay_manifest_v1",
+          "schema_version": 1,
+          "replay_id": "wp2-match-002-replay",
+          "match_id": "wp2-match-002",
+          "match_envelope_sha256": "6B1D60FDD1ED38E44E55377089AA98F97FF9DA5B71AFAEBC4883193F73D30D24",
+          "visibility_profile": "public_at_event_time_v1",
+          "frame_count": 2,
+          "first_frame_sha256": "32193574EA1453FDDEF60FE5FCB87F27A16B737FF417827312D729B709E37451",
+          "frame_chain_root_sha256": "5AF4F19CB60061DC3BDFAD0CCFDF780EF0E74938AF41A553477DE47A909FD57F",
+          "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "complete": true
+        },
+        "runtime_report": {
+          "source": "official_evaluator_runtime",
+          "terminal": true,
+          "reported_outcome": "seat_1_win",
+          "winner_seat": 1,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "runtime_dirty_reasons": [],
+          "replay_contract_accepted": true
+        },
+        "evidence_verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "5A44B35BF57141AD65121711C65204968B49CA6AE48EB3D843C489DF23C3361A5BA4CABD3216B68F93667D688492DB2721FF14CA40B82DFC0B261322B90A5209"
+        }
+      },
+      "result": {
+        "document_type": "verified_match_result_v1",
+        "schema_version": 1,
+        "match_id": "wp2-match-002",
+        "match_envelope_sha256": "6B1D60FDD1ED38E44E55377089AA98F97FF9DA5B71AFAEBC4883193F73D30D24",
+        "trust_lane": "official_verified",
+        "outcome": "seat_1_win",
+        "winner_seat": 1,
+        "turn_count": 12,
+        "decision_count": 42,
+        "fault_counts": {
+          "invalid_output": 0,
+          "policy_error": 0,
+          "timeout": 0,
+          "engine_rejection": 0,
+          "fallback": 0
+        },
+        "dirty": false,
+        "dirty_reasons": [],
+        "replay_manifest_sha256": "323B3EF7B66FF0925F1488FF16EA171089C49C083A32639A466E26F773A102ED",
+        "evidence_sha256": "586503661BA753655EB2604A1EA52E17C8F10659AF098A63CFA492F5B4CDE895",
+        "verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "C7546C1D7043CDF8F4EEF51D4C750A708BDDA4D2F31A6D4F14D07E8FEF1C0C893980CBC493910A70B1CF07469C271E904B472319BD1D4C76ED9110379F0B060A"
+        }
+      }
+    },
+    {
+      "evidence": {
+        "document_type": "evaluator_evidence_v1",
+        "schema_version": 1,
+        "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+        "match_envelope": {
+          "document_type": "match_envelope_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-003",
+          "lane": "official_evaluation",
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "participants": [
+            {
+              "participant_kind": "strategy_release",
+              "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+              "release_version": "0.1.0",
+              "package_id": "ptcgdap.marnie.windows-local",
+              "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+              "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+              "deck_identity": {
+                "domain": "godot_local_card_uid_v1",
+                "deck_id": "800018501",
+                "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+              },
+              "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+            },
+            {
+              "participant_kind": "platform_baseline",
+              "baseline_id": "rules-only-575720",
+              "baseline_version": "1.0.0",
+              "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+            }
+          ],
+          "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+          "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+          "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "seat_assignment": [
+            0,
+            1
+          ],
+          "seed_commitment": {
+            "capability": "paired_seed_commitment_v1",
+            "commitment_sha256": "16C594A9F0B83ADF37B4118F898ACD9668670C3AD2851325C8D9EAE1E1C846A9",
+            "disclosure": "withheld"
+          },
+          "replay_visibility_profile": "public_at_event_time_v1",
+          "started_at_utc": "2026-08-18T00:00:00Z"
+        },
+        "replay_manifest": {
+          "document_type": "replay_manifest_v1",
+          "schema_version": 1,
+          "replay_id": "wp2-match-003-replay",
+          "match_id": "wp2-match-003",
+          "match_envelope_sha256": "8C4D33D2242A601B16164336F5515CA92FF31820DD135BC27D742A2459025202",
+          "visibility_profile": "public_at_event_time_v1",
+          "frame_count": 2,
+          "first_frame_sha256": "E158458D9AD818929BABB52D2151EEE376F212616647F0D263C404FB97130807",
+          "frame_chain_root_sha256": "0E4AA324D85CDF1072DFA33A7EF28919F448E58D4856F6FBEF78655F47D1394A",
+          "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "complete": true
+        },
+        "runtime_report": {
+          "source": "official_evaluator_runtime",
+          "terminal": true,
+          "reported_outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 1,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "runtime_dirty_reasons": [],
+          "replay_contract_accepted": true
+        },
+        "evidence_verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "B99892CBC30F8A0915D8012B8B333801356F7A201BEBC060AD9420E777ADF5D5E7861F9D7151B66BD9493364325604038C0F7A4D40F8F98940E0EA0ECF78FC06"
+        }
+      },
+      "result": {
+        "document_type": "verified_match_result_v1",
+        "schema_version": 1,
+        "match_id": "wp2-match-003",
+        "match_envelope_sha256": "8C4D33D2242A601B16164336F5515CA92FF31820DD135BC27D742A2459025202",
+        "trust_lane": "official_verified",
+        "outcome": "seat_1_win",
+        "winner_seat": 1,
+        "turn_count": 12,
+        "decision_count": 42,
+        "fault_counts": {
+          "invalid_output": 1,
+          "policy_error": 0,
+          "timeout": 0,
+          "engine_rejection": 0,
+          "fallback": 0
+        },
+        "dirty": false,
+        "dirty_reasons": [],
+        "replay_manifest_sha256": "D601723B672D9558F261FBA9D4C001CED633CDF9EDF58F5AA0D6F221C866FA77",
+        "evidence_sha256": "BAF14C59B37049D6DB1CE2A0F2A273B9448EEEB28C7090A83BEA599196033C1A",
+        "verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "B8FFFA47A4376C9629421B33CCAEE102255C352824E9A6EDCF962820D419D1637CF379B4610212C9B7BED491AA3BC2E2E43001A212721C3052707597FFB85A07"
+        }
+      }
+    },
+    {
+      "evidence": {
+        "document_type": "evaluator_evidence_v1",
+        "schema_version": 1,
+        "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+        "match_envelope": {
+          "document_type": "match_envelope_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-004",
+          "lane": "official_evaluation",
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "participants": [
+            {
+              "participant_kind": "strategy_release",
+              "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+              "release_version": "0.1.0",
+              "package_id": "ptcgdap.marnie.windows-local",
+              "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+              "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+              "deck_identity": {
+                "domain": "godot_local_card_uid_v1",
+                "deck_id": "800018501",
+                "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+              },
+              "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+            },
+            {
+              "participant_kind": "platform_baseline",
+              "baseline_id": "rules-only-575720",
+              "baseline_version": "1.0.0",
+              "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+            }
+          ],
+          "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+          "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+          "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "seat_assignment": [
+            1,
+            0
+          ],
+          "seed_commitment": {
+            "capability": "paired_seed_commitment_v1",
+            "commitment_sha256": "A7413752C6DAF4C63093F033F58D5327AFE4AA256BA6B72B9E9D4BFBC0940693",
+            "disclosure": "withheld"
+          },
+          "replay_visibility_profile": "public_at_event_time_v1",
+          "started_at_utc": "2026-08-18T00:00:00Z"
+        },
+        "replay_manifest": {
+          "document_type": "replay_manifest_v1",
+          "schema_version": 1,
+          "replay_id": "wp2-match-004-replay",
+          "match_id": "wp2-match-004",
+          "match_envelope_sha256": "AE3EDA9936531221970F42B88388969A1B1EFBAE3B7B5EC68DFECE17668C11BE",
+          "visibility_profile": "public_at_event_time_v1",
+          "frame_count": 2,
+          "first_frame_sha256": "365B5876BD35D112551D4CD93862192557D890A32C1E791DBB43FFEB7155A0DF",
+          "frame_chain_root_sha256": "456BF09AFF403CB00FC7E82FFD367BB294CA663A1AAD5CC86213B37CF2A0E8BA",
+          "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "complete": true
+        },
+        "runtime_report": {
+          "source": "official_evaluator_runtime",
+          "terminal": true,
+          "reported_outcome": "draw",
+          "winner_seat": null,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "runtime_dirty_reasons": [],
+          "replay_contract_accepted": true
+        },
+        "evidence_verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "6BB38BB1AFDB40620AA1596A361BEE8AAB4F5E9024A2C48F91927A63660CD9925F0335387BE8402DD1AA82B9EC74E29A9D07C831364505C82E59AB9C34E0C207"
+        }
+      },
+      "result": {
+        "document_type": "verified_match_result_v1",
+        "schema_version": 1,
+        "match_id": "wp2-match-004",
+        "match_envelope_sha256": "AE3EDA9936531221970F42B88388969A1B1EFBAE3B7B5EC68DFECE17668C11BE",
+        "trust_lane": "official_verified",
+        "outcome": "draw",
+        "winner_seat": null,
+        "turn_count": 12,
+        "decision_count": 42,
+        "fault_counts": {
+          "invalid_output": 0,
+          "policy_error": 0,
+          "timeout": 0,
+          "engine_rejection": 0,
+          "fallback": 0
+        },
+        "dirty": false,
+        "dirty_reasons": [],
+        "replay_manifest_sha256": "ED4737DF7BBC16F50A170F63EA47221B1F16B267A425EF78655DCCB593D8872C",
+        "evidence_sha256": "21AEC841E34ADDD6A945B2D6A5E0DAF99B0F25E760C7F873EED51CCCF73F622B",
+        "verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "8D1B39C12C506BFB4AD63D54B0E01321D62CFA95BCEE0EBEF2F2927A2DFF03465E5AB72010CF460D32CE335440977972BFD2135E455469E4FB719220398A4402"
+        }
+      }
+    },
+    {
+      "evidence": {
+        "document_type": "evaluator_evidence_v1",
+        "schema_version": 1,
+        "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+        "match_envelope": {
+          "document_type": "match_envelope_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-005",
+          "lane": "official_evaluation",
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "participants": [
+            {
+              "participant_kind": "strategy_release",
+              "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+              "release_version": "0.1.0",
+              "package_id": "ptcgdap.marnie.windows-local",
+              "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+              "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+              "deck_identity": {
+                "domain": "godot_local_card_uid_v1",
+                "deck_id": "800018501",
+                "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+              },
+              "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+            },
+            {
+              "participant_kind": "platform_baseline",
+              "baseline_id": "rules-only-575720",
+              "baseline_version": "1.0.0",
+              "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+            }
+          ],
+          "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+          "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+          "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+          "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "seat_assignment": [
+            0,
+            1
+          ],
+          "seed_commitment": {
+            "capability": "paired_seed_commitment_v1",
+            "commitment_sha256": "F07C4345A53042062160D957CD7CC941AF81907D92F6A183FF39AE57676CED2D",
+            "disclosure": "withheld"
+          },
+          "replay_visibility_profile": "public_at_event_time_v1",
+          "started_at_utc": "2026-08-18T00:00:00Z"
+        },
+        "replay_manifest": {
+          "document_type": "replay_manifest_v1",
+          "schema_version": 1,
+          "replay_id": "wp2-match-005-replay",
+          "match_id": "wp2-match-005",
+          "match_envelope_sha256": "DBBA7209D07283BC4C60FA62DC0121BA7B1C7CF2C01A8F20580BF42376456FA8",
+          "visibility_profile": "public_at_event_time_v1",
+          "frame_count": 2,
+          "first_frame_sha256": "757D235011375323BBD1BDE35434FF5F3A300AB6BE91974DF20BAF1A74AC383F",
+          "frame_chain_root_sha256": "9CE5F329082BBEFB14776845C1EABBD36EFF4953AD9CF106482C26F3C7F32714",
+          "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+          "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "complete": true
+        },
+        "runtime_report": {
+          "source": "official_evaluator_runtime",
+          "terminal": true,
+          "reported_outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 1
+          },
+          "runtime_dirty_reasons": [],
+          "replay_contract_accepted": true
+        },
+        "evidence_verification": {
+          "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+          "key_id": "csp-wp2-rfc8032-fixture-key",
+          "signature": "3AC01D4E4C94D4ED05637313BF68B8089604099460E98180BEACBDADCAA71293DDAAA3488AA0BEE10E35E8144CBF9537705B878A0D3C4A25D69EDB76477B1303"
+        }
+      },
+      "result": {
+        "document_type": "verified_match_result_v1",
+        "schema_version": 1,
+        "match_id": "wp2-match-005",
+        "match_envelope_sha256": "DBBA7209D07283BC4C60FA62DC0121BA7B1C7CF2C01A8F20580BF42376456FA8",
+        "trust_lane": "rejected_or_dirty",
+        "outcome": "seat_0_win",
+        "winner_seat": 0,
+        "turn_count": 12,
+        "decision_count": 42,
+        "fault_counts": {
+          "invalid_output": 0,
+          "policy_error": 0,
+          "timeout": 0,
+          "engine_rejection": 0,
+          "fallback": 1
+        },
+        "dirty": true,
+        "dirty_reasons": [
+          "fault_fallback"
+        ],
+        "replay_manifest_sha256": "D52ED2CCFCF446B855FDE1F98EEC92F81F8D56CFCD336DF9D65B19072619400F",
+        "evidence_sha256": "588B16637765BBED00BCD4BA05C3058EA5261186899DDEFA2B634ADB22FD7FE7",
+        "verification": null
+      }
+    }
+  ],
+  "expected_summary": {
+    "document_type": "evaluation_summary_v1",
+    "schema_version": 1,
+    "strategy_release": {
+      "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+      "release_version": "0.1.0",
+      "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E"
+    },
+    "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+    "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+    "aggregation_version": "win_rate_ci_integer_v1",
+    "input_match_ids": [
+      "wp2-match-001",
+      "wp2-match-002",
+      "wp2-match-003",
+      "wp2-match-004",
+      "wp2-match-005"
+    ],
+    "counts": {
+      "wins": 2,
+      "losses": 1,
+      "draws": 1,
+      "valid": 4,
+      "dirty": 1
+    },
+    "fault_counts": {
+      "invalid_output": 1,
+      "policy_error": 0,
+      "timeout": 0,
+      "engine_rejection": 0,
+      "fallback": 1
+    },
+    "win_rate_basis_points": 5000,
+    "confidence_interval_basis_points": {
+      "low": 0,
+      "high": 10000
+    },
+    "seat_breakdown": [
+      {
+        "seat": 0,
+        "wins": 1,
+        "losses": 1,
+        "draws": 0
+      },
+      {
+        "seat": 1,
+        "wins": 1,
+        "losses": 0,
+        "draws": 1
+      }
+    ],
+    "matchup_breakdown": [
+      {
+        "opponent_id": "rules-only-575720",
+        "wins": 2,
+        "losses": 1,
+        "draws": 1
+      }
+    ],
+    "materializer_build_sha256": "81A88935E5503E002D447ABBBBEAF0986B9B9A47036449D08BD7B10B1A3DE191"
+  },
+  "rejection_cases": [
+    {
+      "id": "tampered_result_signature",
+      "error_code": "result_signature_invalid",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "official_evaluation",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "official_evaluator_runtime",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 42,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      }
+    },
+    {
+      "id": "tampered_evidence",
+      "error_code": "evidence_signature_invalid",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "official_evaluation",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "official_evaluator_runtime",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 43,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+          }
+        }
+      }
+    },
+    {
+      "id": "wrong_profile",
+      "error_code": "evaluation_profile_mismatch",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "official_evaluation",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "official_evaluator_runtime",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 42,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+          }
+        }
+      }
+    },
+    {
+      "id": "engine_drift",
+      "error_code": "match_profile_mismatch",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "official_evaluation",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "official_evaluator_runtime",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 42,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+          }
+        }
+      }
+    },
+    {
+      "id": "release_drift",
+      "error_code": "strategy_release_mismatch",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "official_evaluation",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "official_evaluator_runtime",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 42,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+          }
+        }
+      }
+    },
+    {
+      "id": "community_lane",
+      "error_code": "match_lane_invalid",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "community_challenge",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "official_evaluator_runtime",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 42,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+          }
+        }
+      }
+    },
+    {
+      "id": "client_self_report",
+      "error_code": "evaluation_source_invalid",
+      "record": {
+        "evidence": {
+          "document_type": "evaluator_evidence_v1",
+          "schema_version": 1,
+          "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+          "match_envelope": {
+            "document_type": "match_envelope_v1",
+            "schema_version": 1,
+            "match_id": "wp2-match-001",
+            "lane": "official_evaluation",
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "participants": [
+              {
+                "participant_kind": "strategy_release",
+                "strategy_id": "ptcgdap.marnie.18.0.package-local-v1",
+                "release_version": "0.1.0",
+                "package_id": "ptcgdap.marnie.windows-local",
+                "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+                "manifest_canonical_sha256": "FC1170163029FF57830B2933C87560B84F63B53382F6FCBC53D981BCBB93444F",
+                "deck_identity": {
+                  "domain": "godot_local_card_uid_v1",
+                  "deck_id": "800018501",
+                  "deck_sha256": "F40AEE3218B49CA1863AC0F8193885B279B74EE61E57AB0100574F8E351C9AFD"
+                },
+                "policy_package_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
+              },
+              {
+                "participant_kind": "platform_baseline",
+                "baseline_id": "rules-only-575720",
+                "baseline_version": "1.0.0",
+                "baseline_sha256": "46ACA42E3AE833802356A2E5CFA1F54DA80041F5EECBA586EBCBDB158C33506E"
+              }
+            ],
+            "engine_sha256": "BA63D5F176C90F3C91F787F3AC91753A087997F43A8A09FBE7C0AECA80352675",
+            "rules_sha256": "9D2FAA7BD522785580D8243B03E683690E500A8583236D10CAA90500C3AB1B2E",
+            "card_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "host_contract_sha256": "B642E704B92A8A76E0D15D02C20B8CC006C4AD2FEE90324FEEBD35114DF92262",
+            "runtime_manifest_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+            "evaluation_profile_id": "csp-wp2-marnie-shadow-v1",
+            "evaluation_profile_sha256": "B5CAE2BFAF6D0E3615A9DEA483A46FBE2258251B81577C9693FF43EC81E65AFF",
+            "seat_assignment": [
+              0,
+              1
+            ],
+            "seed_commitment": {
+              "capability": "paired_seed_commitment_v1",
+              "commitment_sha256": "09091FC114A57C426830F346134DE2DF597C257559198F71B79639BD8333C9D9",
+              "disclosure": "withheld"
+            },
+            "replay_visibility_profile": "public_at_event_time_v1",
+            "started_at_utc": "2026-08-18T00:00:00Z"
+          },
+          "replay_manifest": {
+            "document_type": "replay_manifest_v1",
+            "schema_version": 1,
+            "replay_id": "wp2-match-001-replay",
+            "match_id": "wp2-match-001",
+            "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+            "visibility_profile": "public_at_event_time_v1",
+            "frame_count": 2,
+            "first_frame_sha256": "64828A84224C234250E15D55D2B1616907F4A1DF731BDE193449ECF83CEB9085",
+            "frame_chain_root_sha256": "5D528B075991D95DA943EA0744D694096CD1436828B9B24CBA8B552D8E462273",
+            "card_asset_catalog_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+            "event_dictionary_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+            "complete": true
+          },
+          "runtime_report": {
+            "source": "client_self_report",
+            "terminal": true,
+            "reported_outcome": "seat_0_win",
+            "winner_seat": 0,
+            "turn_count": 12,
+            "decision_count": 42,
+            "fault_counts": {
+              "invalid_output": 0,
+              "policy_error": 0,
+              "timeout": 0,
+              "engine_rejection": 0,
+              "fallback": 0
+            },
+            "runtime_dirty_reasons": [],
+            "replay_contract_accepted": true
+          },
+          "evidence_verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "721322E33514C5508A076E15888F9DCC057A0FDE5365845EED725A44A212CFECA5D658E0F85FAE2FB4524B525C52F716974552DA8D8270C20FBF2EBD2F9D4F04"
+          }
+        },
+        "result": {
+          "document_type": "verified_match_result_v1",
+          "schema_version": 1,
+          "match_id": "wp2-match-001",
+          "match_envelope_sha256": "7975C4EBD28EA205FA28D4762DC74AED990ED1A3206ADBD84C1743B0AAAC0585",
+          "trust_lane": "official_verified",
+          "outcome": "seat_0_win",
+          "winner_seat": 0,
+          "turn_count": 12,
+          "decision_count": 42,
+          "fault_counts": {
+            "invalid_output": 0,
+            "policy_error": 0,
+            "timeout": 0,
+            "engine_rejection": 0,
+            "fallback": 0
+          },
+          "dirty": false,
+          "dirty_reasons": [],
+          "replay_manifest_sha256": "18C9EBB810FD6D8007161D20A76570C64E41A58F8A2FBA4F7BA99AC6D2D24005",
+          "evidence_sha256": "B5ADA19126273BCE52849A037DC78700F46E6EBC15F4793E1DA27B37859732BA",
+          "verification": {
+            "evaluator_id": "ptcgdap-csp-wp2-shadow-evaluator",
+            "key_id": "csp-wp2-rfc8032-fixture-key",
+            "signature": "003B85CEC3A2CC628D28593B082BEA2FBDA0CD76BB94FA1CE0A805F3165723E8F4FDC6BB03609087A84F69EA883002122F28FE4FF0DB2A67D1142C9C0D2E5809"
+          }
+        }
+      }
+    }
+  ],
+  "confidence_interval_cases": [
+    {
+      "wins": 0,
+      "valid": 0,
+      "expected": {
+        "low": 0,
+        "high": 10000
+      }
+    },
+    {
+      "wins": 2,
+      "valid": 4,
+      "expected": {
+        "low": 0,
+        "high": 10000
+      }
+    },
+    {
+      "wins": 0,
+      "valid": 20,
+      "expected": {
+        "low": 0,
+        "high": 1612
+      }
+    },
+    {
+      "wins": 10,
+      "valid": 20,
+      "expected": {
+        "low": 2992,
+        "high": 7008
+      }
+    },
+    {
+      "wins": 20,
+      "valid": 20,
+      "expected": {
+        "low": 8388,
+        "high": 10000
+      }
+    },
+    {
+      "wins": 50,
+      "valid": 100,
+      "expected": {
+        "low": 4038,
+        "high": 5962
+      }
+    }
+  ]
+}

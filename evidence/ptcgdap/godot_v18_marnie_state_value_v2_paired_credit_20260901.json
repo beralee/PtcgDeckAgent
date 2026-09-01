@@ -1,0 +1,133 @@
+{
+  "document_type": "ptcgdap_marnie_state_value_v2_paired_credit_receipt_v1",
+  "schema_version": 1,
+  "created_date": "2026-09-01",
+  "public_only": true,
+  "development_only": true,
+  "production_ready": false,
+  "official_cabt_engine_parity": false,
+  "alignment_level": "local_windows_godot_public_policy_conformance_and_clean_benchmark_only",
+  "implementation": {
+    "state_conditioned_value": "public state + public action + public state/action interaction sparse integer heads",
+    "single_score_owner": true,
+    "paired_branch_credit_profile_id": "ptcgdap-paired-public-branch-credit-v1",
+    "paired_branch_contract": "same opponent, seed, candidate seat, public observation history, and exact host commits through the first differing main transaction; only the winning first-divergence transaction is preferred",
+    "selection_order": [
+      "authored_exam_accuracy.desc",
+      "paired_branch_exam_accuracy.desc",
+      "executed_canary_exam_accuracy.desc",
+      "validation_preference_accuracy.desc",
+      "validation_state_sign_accuracy.desc",
+      "anchor_weight_drift_l1.asc"
+    ],
+    "deck_number_feature_present": false,
+    "stale_option_index_authority": false,
+    "remote_inference_dependency": false,
+    "python_player_runtime_dependency": false
+  },
+  "training_run": {
+    "run_id": "marnie_state_value_v2_20260901_r16",
+    "selected_candidate": "fresh_refit",
+    "dataset_sha256": "CE96140C070BAB25C04B990BF2BE26EEC3ACA500EACBF9F94F16047E214D45F2",
+    "model_file_sha256": "DD0AEEE052DC89B52CE68CB18574E9CDB730894A7FD910D269B2A6AFB1BEF008",
+    "authored_exam_accuracy": 1.0,
+    "authored_exam_count": 13,
+    "paired_branch_exam_accuracy": 1.0,
+    "paired_branch_exam_count": 2,
+    "executed_canary_exam_accuracy": 1.0,
+    "executed_canary_exam_count": 6,
+    "training_preference_accuracy": 1.0,
+    "validation_preference_accuracy": 0.9727272727272728,
+    "validation_state_sign_accuracy": 0.6363636363636364,
+    "action_feature_count": 29,
+    "interaction_feature_count": 460,
+    "minimum_override_margin_utility": 300000
+  },
+  "paired_branch_evidence": [
+    {
+      "seed": 2919018,
+      "candidate_seat": 1,
+      "public_observation_hash": "3EF1796728D794752B96C21A198B167E346C31B7FC71CA469C0E95F14749045C",
+      "preferred_program_id": "base.play_stadium.babd8bd74b00e4f0",
+      "other_program_id": "base.end_turn.c2d2cbb496eee1a7",
+      "verified_live_commit": "play_stadium:CSV2C_127",
+      "verified_outcome": "win"
+    },
+    {
+      "seed": 2919001,
+      "candidate_seat": 0,
+      "public_observation_hash": "E6B75501B2AFBFB468340FB6568FB1CF863E96912D6B0EE3E8558CD00D3D32AA",
+      "preferred_program_id": "base.attack.21045ac8f19ec41e",
+      "other_program_id": "base.play_trainer.20d76d074d7ff836",
+      "verified_live_commit": "attack:0",
+      "verified_outcome": "win"
+    }
+  ],
+  "tests": {
+    "python_related": "47/47 passed",
+    "godot_package_suites": "4/4 passed",
+    "godot_package_suite_contents": "package-local hash/load; 103 replay decisions; 2 preservation windows; 2 exact state-conditioned transaction windows",
+    "invalid_error_fallback_rejection": 0
+  },
+  "benchmarks": {
+    "paired_target_4": {
+      "wins": 3,
+      "games": 4,
+      "clean": true
+    },
+    "training_seed_regression_20": {
+      "wins": 11,
+      "games": 20,
+      "win_rate_percent": 55.0,
+      "seat_0": "4/10",
+      "seat_1": "7/10",
+      "clean": true,
+      "independent": false
+    },
+    "fresh_seed_screen_20": {
+      "seed_range": "3910000-3910009 paired seats",
+      "wins": 9,
+      "games": 20,
+      "win_rate_percent": 45.0,
+      "seat_0": "3/10",
+      "seat_1": "6/10",
+      "clean": true,
+      "independent": true,
+      "predeclared_continue_gate": "at least 12/20",
+      "gate_passed": false
+    }
+  },
+  "package": {
+    "package_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "package_version": "5.36.0",
+    "archive_sha256": "E836EDE176E084946FBAF785F7F6B4DF98265EBE47FF7AAE6C4EC6AEADE620E6",
+    "embedded_model_sha256": "1960D67C67DC947E146B72F555E07F6FFF4D3C8860C70276E82C26144F5C6B99",
+    "execution_trusted": false
+  },
+  "promotion": {
+    "eligible": false,
+    "decision": "retain_current_rollback_and_default; keep_5_36_as_development_candidate",
+    "reason": "fresh independent 20-game screen was 9/20, below the predeclared 12/20 continuation gate; no 100-game promotion run was started",
+    "claimed_win_rate_lift_percentage_points": null
+  },
+  "artifacts": [
+    {"path": "artifacts/ptcgdap/training_runs/marnie_state_value_v2_20260901_r16/manifest.json", "sha256": "FF6768A27AF3D669CFFA61CE50A5341D0EB9DC12079999F8993BE1568386AA1C"},
+    {"path": "artifacts/ptcgdap/training_runs/marnie_state_value_v2_20260901_r16/dataset.json", "sha256": "A8BA1D71A9EB4A6032097E5331DA30A60F1545A8399A101EF6692A300280D043"},
+    {"path": "artifacts/ptcgdap/training_runs/marnie_state_value_v2_20260901_r16/model.json", "sha256": "DD0AEEE052DC89B52CE68CB18574E9CDB730894A7FD910D269B2A6AFB1BEF008"},
+    {"path": "artifacts/deck_training/marnie_paired_credit_targets_v536_trace_20260901.json", "sha256": "C81C9343DA22CD8FF0C986EECBC0550FCFB9937AD5F68CEFD4E8739C051B2554"},
+    {"path": "artifacts/deck_training/marnie_state_value_v2_screen20_r16_paired_credit_20260901.json", "sha256": "573BCF1EA6B5A6B30B01ADD6348C216A16A96E269F0F0C0C772B06B7D64BBE7D"},
+    {"path": "artifacts/deck_training/marnie_state_value_v2_fresh20_r16_paired_credit_20260901.json", "sha256": "1018B19CA35C8F4E49DA0188AB8C7536FA430FDFCC47638AC764484C30270EF8"}
+  ],
+  "rollback": {
+    "package": "5.21.0 / D669C1C7...B4ED",
+    "exact_100_game_result": "49/100 clean",
+    "active_authority_changed": false
+  },
+  "known_gaps": [
+    "fresh independent win-rate continuation gate failed",
+    "state sign validation remains 0.6364",
+    "460 interaction terms are too slow for a product device gate and require separately verified sparse distillation",
+    "Android/A5 resource acceptance is not run",
+    "official CABT engine parity is not claimed"
+  ]
+}

@@ -12,12 +12,12 @@ func _init(max_count: int = 3) -> void:
 	max_energy_count = max_count
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	attack: Dictionary,
 	state: GameState
 ) -> Array[Dictionary]:
-	return _make_delegate().get_attack_interaction_steps(card, attack, state)
+	return _make_delegate().build_ucis_attack_interaction_steps_spec_steps(card, attack, state)
 
 
 func execute_attack(

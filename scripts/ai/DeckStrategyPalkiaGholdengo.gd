@@ -149,6 +149,10 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 	var player: PlayerState = game_state.players[player_index]
 	match str(action.get("kind", "")):
 		"play_basic_to_bench":
+			if _card_name(action.get("card")) == PALKIA_V \
+					and _has_lightning_pressure(game_state, player_index) \
+					and (_count_name_on_field(player, GHOLDENGO_EX) > 0 or _count_name_on_field(player, GIMMIGHOUL) > 0):
+				return -180.0
 			return float(_opening_bench_priority(_card_name(action.get("card"))))
 		"evolve":
 			return _score_evolve(action, player)
@@ -215,11 +219,8 @@ func get_discard_priority(card: CardInstance) -> int:
 	if card == null or card.card_data == null:
 		return 0
 	var name: String = _card_name(card)
-	if card.card_data.is_energy():
-		if str(card.card_data.energy_provides) == METAL_ENERGY:
-			return 220
-		if str(card.card_data.energy_provides) == WATER_ENERGY:
-			return 120
+	if _is_basic_energy(card):
+		return 45
 	if name in [BIDOOF, MANAPHY]:
 		return 140
 	if name in [BUDDY_BUDDY_POFFIN, NEST_BALL]:
@@ -262,10 +263,38 @@ func get_search_priority(card: CardInstance) -> int:
 	return 20
 
 
+func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
+	var step_id := str(step.get("id", "")).to_lower()
+	var max_select := int(step.get("max_select", 1))
+	if max_select <= 0:
+		max_select = 1
+	if step_id.contains("discard_basic_energy"):
+		return _pick_make_it_rain_energy(items, max_select, context)
+	var ranked: Array[Dictionary] = []
+	for item: Variant in items:
+		ranked.append({
+			"item": item,
+			"score": score_interaction_target(item, step, context),
+		})
+	ranked.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("score", 0.0)) > float(b.get("score", 0.0))
+	)
+	var selected: Array = []
+	for entry: Dictionary in ranked:
+		if selected.size() >= max_select:
+			break
+		selected.append(entry.get("item"))
+	return selected
+
+
 func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
-	var step_id: String = str(step.get("id", ""))
+	var step_id: String = str(step.get("id", "")).to_lower()
 	if item is CardInstance:
 		var card := item as CardInstance
+		if step_id.contains("discard_basic_energy"):
+			return 940.0 if _is_basic_energy(card) else 5.0
+		if step_id == "discard_energy" or step_id.contains("discard_energy"):
+			return 860.0 if _is_basic_energy(card) else 5.0
 		if step_id in ["search_pokemon", "basic_pokemon", "bench_pokemon", "water_pokemon"]:
 			return float(get_search_priority(card))
 		if step_id in ["item_card", "search_item", "search_cards"]:
@@ -315,6 +344,8 @@ func _score_attach_energy(action: Dictionary, game_state: GameState, player: Pla
 		if name == GHOLDENGO_EX:
 			return 360.0 if not _is_burst_turn(game_state, player_index) else 460.0
 		if name == GIMMIGHOUL:
+			if slot == player.active_pokemon:
+				return 380.0 if setup_gap > 0 else 250.0
 			return 260.0 if setup_gap > 0 else 170.0
 		return 70.0
 	return 20.0
@@ -323,19 +354,24 @@ func _score_attach_energy(action: Dictionary, game_state: GameState, player: Pla
 func _score_trainer(action: Dictionary, game_state: GameState, player: PlayerState, player_index: int) -> float:
 	var name: String = _card_name(action.get("card"))
 	var setup_gap: int = _engine_setup_gap(player)
-	var discard_metal: int = _count_energy(player.discard_pile, METAL_ENERGY)
-	var hand_metal: int = _count_energy(player.hand, METAL_ENERGY)
+	var discard_basic: int = _count_basic_energy(player.discard_pile)
+	var hand_basic: int = _count_basic_energy(player.hand)
 	var active_name: String = _slot_name(player.active_pokemon)
+	if _deck_is_thin(player) and name in [
+		CIPHERMANIACS_CODEBREAKING, BUDDY_BUDDY_POFFIN, NEST_BALL,
+		EARTHEN_VESSEL, IRIDA, PROFESSORS_RESEARCH, IONO, JUDGE,
+	]:
+		return -200.0
 	if name == SUPERIOR_ENERGY_RETRIEVAL:
-		if discard_metal >= 2:
+		if discard_basic >= 2:
 			if active_name == GHOLDENGO_EX and _is_burst_turn(game_state, player_index):
 				return 380.0
 			return 330.0
 		return 110.0
 	if name == ENERGY_RETRIEVAL:
-		return 280.0 if discard_metal >= 1 else 100.0
+		return 280.0 if discard_basic >= 1 else 100.0
 	if name == EARTHEN_VESSEL:
-		if discard_metal + hand_metal < 4:
+		if discard_basic + hand_basic < 4:
 			return 320.0
 		return 190.0
 	if name == IRIDA:
@@ -343,7 +379,7 @@ func _score_trainer(action: Dictionary, game_state: GameState, player: PlayerSta
 			return 420.0
 		if setup_gap > 0:
 			return 340.0
-		if discard_metal < 2:
+		if discard_basic < 2:
 			return 230.0
 		return 170.0
 	if name == CIPHERMANIACS_CODEBREAKING:
@@ -357,9 +393,9 @@ func _score_trainer(action: Dictionary, game_state: GameState, player: PlayerSta
 			return 120.0
 		return 280.0 if player.bench.size() < 4 and setup_gap > 0 else 150.0
 	if name == BOSS_ORDERS:
-		return 320.0 if _can_current_attacker_take_ko(game_state, player_index) else 150.0
+		return 320.0 if _can_current_attacker_take_ko(game_state, player_index) else -160.0
 	if name == PRIME_CATCHER:
-		return 380.0 if _can_current_attacker_take_ko(game_state, player_index) else 180.0
+		return 380.0 if _can_current_attacker_take_ko(game_state, player_index) else -140.0
 	if name == FULL_METAL_LAB:
 		return 240.0 if _count_name_on_field(player, GHOLDENGO_EX) > 0 else 120.0
 	if name == IONO or name == JUDGE:
@@ -376,12 +412,14 @@ func _score_ability(action: Dictionary, game_state: GameState, player: PlayerSta
 	if slot == null:
 		return 0.0
 	var name: String = _slot_name(slot)
+	if _deck_is_thin(player) and name in [GHOLDENGO_EX, RADIANT_GRENINJA, BIBAREL]:
+		return -280.0
 	if name == GHOLDENGO_EX:
 		if _is_burst_turn(game_state, player_index):
 			return 180.0
 		return 280.0 if player.hand.size() <= 4 else 210.0
 	if name == RADIANT_GRENINJA:
-		return 320.0 if _count_energy(player.hand, WATER_ENERGY) + _count_energy(player.hand, METAL_ENERGY) > 0 else 70.0
+		return 320.0 if _count_basic_energy(player.hand) > 0 else 70.0
 	if name == BIBAREL:
 		return 260.0 if player.hand.size() <= 4 else 170.0
 	return 40.0
@@ -396,6 +434,13 @@ func _score_attack(action: Dictionary, game_state: GameState, player: PlayerStat
 	if projected_damage <= 0:
 		projected_damage = _predict_attack_with_board(active, game_state)
 	var target_hp: int = opponent.get_remaining_hp() if opponent != null else 999
+	var active_name := _slot_name(active)
+	if active_name == GHOLDENGO_EX and projected_damage < target_hp:
+		return -120.0
+	if active_name == GIMMIGHOUL and projected_damage < target_hp:
+		return -160.0
+	if active_name == PALKIA_V and projected_damage <= 0:
+		return -140.0
 	var base: float = 320.0 if _is_burst_turn(game_state, player_index) else 140.0
 	if projected_damage >= target_hp:
 		base += 520.0
@@ -403,7 +448,7 @@ func _score_attack(action: Dictionary, game_state: GameState, player: PlayerStat
 		base += 280.0
 	elif projected_damage > 0:
 		base += 120.0
-	if _slot_name(active) == GHOLDENGO_EX and _count_energy(player.hand, METAL_ENERGY) >= 3:
+	if _slot_name(active) == GHOLDENGO_EX and _count_basic_energy(player.hand) >= 3:
 		base += 180.0
 	return base
 
@@ -420,9 +465,9 @@ func _score_retreat(game_state: GameState, player: PlayerState, player_index: in
 
 
 func _opening_active_priority(name: String) -> int:
-	if name == PALKIA_V:
-		return 100
 	if name == GIMMIGHOUL:
+		return 110
+	if name == PALKIA_V:
 		return 82
 	if name == MANAPHY:
 		return 55
@@ -451,7 +496,7 @@ func _is_burst_turn(game_state: GameState, player_index: int) -> bool:
 	var player: PlayerState = game_state.players[player_index]
 	if player.active_pokemon == null or _slot_name(player.active_pokemon) != GHOLDENGO_EX:
 		return false
-	if _count_energy(player.hand, METAL_ENERGY) >= 3:
+	if _count_basic_energy(player.hand) >= 3:
 		return true
 	var opponent: PokemonSlot = game_state.players[1 - player_index].active_pokemon
 	if opponent == null:
@@ -503,13 +548,35 @@ func _score_attach_target(slot: PokemonSlot) -> float:
 	return 60.0
 
 
+func _pick_make_it_rain_energy(items: Array, max_select: int, context: Dictionary) -> Array:
+	var energies: Array = []
+	for item: Variant in items:
+		if item is CardInstance and _is_basic_energy(item as CardInstance):
+			energies.append(item)
+	if energies.is_empty():
+		return []
+	energies.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return score_interaction_target(a, {"id": "discard_basic_energy"}, context) > score_interaction_target(b, {"id": "discard_basic_energy"}, context)
+	)
+	var need_count := mini(max_select, energies.size())
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state != null and player_index in [0, 1] and game_state.players.size() == 2:
+		var opponent: PokemonSlot = game_state.players[1 - player_index].active_pokemon
+		if opponent != null:
+			var remaining_hp := opponent.get_remaining_hp()
+			if remaining_hp > 0:
+				need_count = mini(need_count, maxi(1, int(ceil(float(remaining_hp) / 50.0))))
+	return energies.slice(0, need_count)
+
+
 func _predict_attack_with_board(slot: PokemonSlot, game_state: GameState) -> int:
 	if slot == null:
 		return 0
 	if _slot_name(slot) == GHOLDENGO_EX:
 		var player_index: int = _find_owner_index(game_state, slot)
 		if player_index >= 0:
-			return _count_energy(game_state.players[player_index].hand, METAL_ENERGY) * 50
+			return _count_basic_energy(game_state.players[player_index].hand) * 50
 	if _slot_name(slot) == PALKIA_VSTAR:
 		return 60 + _count_total_bench(game_state) * 20
 	var generic: Dictionary = _predict_generic_attack(slot)
@@ -556,6 +623,22 @@ func _count_energy(cards: Array, energy_type: String) -> int:
 	return count
 
 
+func _count_basic_energy(cards: Array) -> int:
+	var count := 0
+	for item: Variant in cards:
+		if item is CardInstance and _is_basic_energy(item as CardInstance):
+			count += 1
+	return count
+
+
+func _is_basic_energy(card: CardInstance) -> bool:
+	return card != null and card.card_data != null and card.card_data.card_type == "Basic Energy"
+
+
+func _deck_is_thin(player: PlayerState) -> bool:
+	return player != null and player.deck.size() <= 8
+
+
 func _count_total_bench(game_state: GameState) -> int:
 	var total: int = 0
 	for player: PlayerState in game_state.players:
@@ -574,6 +657,18 @@ func _can_current_attacker_take_ko(game_state: GameState, player_index: int) -> 
 func _has_ready_attacker(player: PlayerState, game_state: GameState) -> bool:
 	for slot: PokemonSlot in _get_all_slots(player):
 		if _predict_attack_with_board(slot, game_state) > 0:
+			return true
+	return false
+
+
+func _has_lightning_pressure(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index not in [0, 1] or game_state.players.size() != 2:
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	for slot: PokemonSlot in _get_all_slots(opponent):
+		if slot == null or slot.get_card_data() == null:
+			continue
+		if str(slot.get_card_data().energy_type) == "L" or _slot_name(slot).contains("Miraidon"):
 			return true
 	return false
 

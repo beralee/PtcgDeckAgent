@@ -1,0 +1,574 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/author_strategy_match_host.schema.json",
+  "title": "PTCGDAP AS-WP4 author strategy match handle and public shadow audit",
+  "$defs": {
+    "shadowCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "match_id",
+        "prompt_id",
+        "prompt_generation",
+        "mandatory_indexes",
+        "terminal_indexes",
+        "base_hard_tiers",
+        "base_vetoed_indexes",
+        "expected_selected_indexes",
+        "expected_audit"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "match_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "prompt_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "prompt_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "mandatory_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "terminal_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "base_hard_tiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "index",
+              "tier"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "tier": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            }
+          }
+        },
+        "base_vetoed_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "expected_selected_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "expected_audit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "profile_id",
+            "match_id",
+            "prompt_id",
+            "prompt_generation",
+            "package",
+            "pins",
+            "source",
+            "selected_indexes",
+            "status",
+            "diagnostic_code",
+            "public_only",
+            "development_shadow",
+            "execution_trusted",
+            "authoritative",
+            "classic_fallback_used",
+            "audit_hash"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": 1
+            },
+            "profile_id": {
+              "const": "ptcgdap-author-strategy-match-host-as-wp4-v1"
+            },
+            "match_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+            },
+            "prompt_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+            },
+            "prompt_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "package": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "package_id",
+                "package_version",
+                "archive_sha256"
+              ],
+              "properties": {
+                "package_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                },
+                "package_version": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                },
+                "archive_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            "pins": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "manifest_sha256",
+                "files_manifest_sha256",
+                "cabt_contract_sha256",
+                "card_catalog_sha256",
+                "base_executor_sha256",
+                "policy_ir_sha256",
+                "adapter_sha256",
+                "config_sha256",
+                "weights_sha256",
+                "backend_sha256",
+                "deck_manifest_sha256",
+                "deck_csv_sha256",
+                "local_deck_mapping_sha256"
+              ],
+              "properties": {
+                "manifest_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "files_manifest_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "cabt_contract_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "card_catalog_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "base_executor_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "policy_ir_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "adapter_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "config_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "backend_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "deck_manifest_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "deck_csv_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "local_deck_mapping_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "weights_sha256": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9A-F]{64}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "public_observation_hash",
+                "window_id",
+                "context_hash",
+                "orchestration_hash",
+                "decision_audit_id",
+                "trace_hash"
+              ],
+              "properties": {
+                "public_observation_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "window_id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "context_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "orchestration_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "decision_audit_id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                "trace_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                }
+              }
+            },
+            "selected_indexes": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "status": {
+              "const": "shadow_selected"
+            },
+            "diagnostic_code": {
+              "const": ""
+            },
+            "public_only": {
+              "const": true
+            },
+            "development_shadow": {
+              "const": true
+            },
+            "execution_trusted": {
+              "const": false
+            },
+            "authoritative": {
+              "const": false
+            },
+            "classic_fallback_used": {
+              "const": false
+            },
+            "audit_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "shadowAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "match_id",
+        "prompt_id",
+        "prompt_generation",
+        "package",
+        "pins",
+        "source",
+        "selected_indexes",
+        "status",
+        "diagnostic_code",
+        "public_only",
+        "development_shadow",
+        "execution_trusted",
+        "authoritative",
+        "classic_fallback_used",
+        "audit_hash"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-author-strategy-match-host-as-wp4-v1"
+        },
+        "match_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "prompt_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "prompt_generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "package": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "package_id",
+            "package_version",
+            "archive_sha256"
+          ],
+          "properties": {
+            "package_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+            },
+            "package_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+            },
+            "archive_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "pins": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "manifest_sha256",
+            "files_manifest_sha256",
+            "cabt_contract_sha256",
+            "card_catalog_sha256",
+            "base_executor_sha256",
+            "policy_ir_sha256",
+            "adapter_sha256",
+            "config_sha256",
+            "weights_sha256",
+            "backend_sha256",
+            "deck_manifest_sha256",
+            "deck_csv_sha256",
+            "local_deck_mapping_sha256"
+          ],
+          "properties": {
+            "manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "files_manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "cabt_contract_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "card_catalog_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "base_executor_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "policy_ir_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "adapter_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "config_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "backend_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "deck_manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "deck_csv_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "local_deck_mapping_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "weights_sha256": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "public_observation_hash",
+            "window_id",
+            "context_hash",
+            "orchestration_hash",
+            "decision_audit_id",
+            "trace_hash"
+          ],
+          "properties": {
+            "public_observation_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "window_id": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "context_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "orchestration_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "decision_audit_id": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "trace_hash": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            }
+          }
+        },
+        "selected_indexes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "status": {
+          "const": "shadow_selected"
+        },
+        "diagnostic_code": {
+          "const": ""
+        },
+        "public_only": {
+          "const": true
+        },
+        "development_shadow": {
+          "const": true
+        },
+        "execution_trusted": {
+          "const": false
+        },
+        "authoritative": {
+          "const": false
+        },
+        "classic_fallback_used": {
+          "const": false
+        },
+        "audit_hash": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/shadowCase"
+    },
+    {
+      "$ref": "#/$defs/shadowAudit"
+    }
+  ]
+}

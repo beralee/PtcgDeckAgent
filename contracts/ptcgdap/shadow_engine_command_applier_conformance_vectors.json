@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-engine-command-applier-p3-wp7-v1",
+  "cases": [
+    {
+      "case_id": "ordered-success",
+      "scenario": "ordered_success",
+      "expected_accepted": true,
+      "expected_error": "",
+      "expected_state": "executed",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        1,
+        1
+      ]
+    },
+    {
+      "case_id": "replay-rejected",
+      "scenario": "replay",
+      "expected_accepted": false,
+      "expected_error": "already_applied",
+      "expected_state": "executed",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        1,
+        1
+      ]
+    },
+    {
+      "case_id": "legacy-gate-rejected",
+      "scenario": "legacy_gate",
+      "expected_accepted": false,
+      "expected_error": "owner_mode_not_aligned",
+      "expected_state": "ready",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "wrong-broker-rejected",
+      "scenario": "wrong_broker",
+      "expected_accepted": false,
+      "expected_error": "broker_not_current",
+      "expected_state": "ready",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "capture-failure",
+      "scenario": "capture_failure",
+      "expected_accepted": false,
+      "expected_error": "capture_failed",
+      "expected_state": "aborted",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "apply-failure-restored",
+      "scenario": "apply_failure_restored",
+      "expected_accepted": false,
+      "expected_error": "command_apply_failed",
+      "expected_state": "aborted",
+      "expected_rolled_back": true,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "restore-failure-poisons",
+      "scenario": "restore_failure",
+      "expected_accepted": false,
+      "expected_error": "rollback_failed",
+      "expected_state": "poisoned",
+      "expected_rolled_back": false,
+      "expected_poisoned": true,
+      "expected_calls": [
+        1,
+        0
+      ]
+    },
+    {
+      "case_id": "duplicate-command-rejected",
+      "scenario": "duplicate_command",
+      "expected_accepted": false,
+      "expected_error": "duplicate_command",
+      "expected_state": "aborted",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "mutated-result-rejected",
+      "scenario": "mutated_result",
+      "expected_accepted": false,
+      "expected_error": "invalid_broker_result",
+      "expected_state": "ready",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "invalid-command-protocol",
+      "scenario": "invalid_command",
+      "expected_accepted": false,
+      "expected_error": "invalid_command",
+      "expected_state": "aborted",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    },
+    {
+      "case_id": "uncommitted-result-rejected",
+      "scenario": "uncommitted_result",
+      "expected_accepted": false,
+      "expected_error": "prompt_not_committed",
+      "expected_state": "ready",
+      "expected_rolled_back": false,
+      "expected_poisoned": false,
+      "expected_calls": [
+        0,
+        0
+      ]
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_COMMAND_SENTINEL",
+    "PRIVATE_STATE_SENTINEL",
+    "PRIVATE_SESSION_SENTINEL"
+  ]
+}

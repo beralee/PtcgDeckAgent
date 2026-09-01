@@ -10,6 +10,7 @@ const EXPECTED_V18_STRENGTH_ORDER_IDS: Array[int] = [
 	800016834, 800018543, 800017047, 800017407, 18000230, 800015734,
 	800018502, 800018498, 800019125, 800018499, 800018105, 800033475,
 	800018497, 800017097, 800015934, 800017643, 800018539, 800018359,
+	800017280,
 ]
 
 
@@ -65,6 +66,10 @@ func _make_deck(deck_id: int, deck_name: String, signature_name: String = "") ->
 
 
 func _prime_deck_options(scene: Control) -> void:
+	# These are classic-AI fixtures. BattleSetup now persists a third top-level
+	# author mode, so never inherit the mode left by another suite/user setting.
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	mode_option.select(1)
 	scene.set("_deck_list", [
 		_make_deck(575716, "deck-a", "喷火龙ex"),
 		_make_deck(575720, "deck-b", "密勒顿ex"),
@@ -188,12 +193,16 @@ func test_battle_setup_mode_uses_hud_segment_buttons() -> String:
 	var mode_segment := scene.find_child("ModeSegment", true, false) as HBoxContainer
 	var two_player_button := scene.find_child("ModeTwoPlayerButton", true, false) as Button
 	var ai_button := scene.find_child("ModeAIButton", true, false) as Button
+	var author_button := scene.find_child("ModeAuthorStrategyButton", true, false) as Button
 	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
 
 	if ai_button != null:
 		ai_button.pressed.emit()
 	var selected_after_ai := mode_option.selected
 	var ai_controls_visible := preview_option.visible
+	if author_button != null:
+		author_button.pressed.emit()
+	var selected_after_author := mode_option.selected
 	if two_player_button != null:
 		two_player_button.pressed.emit()
 	var selected_after_two_player := mode_option.selected
@@ -202,11 +211,14 @@ func test_battle_setup_mode_uses_hud_segment_buttons() -> String:
 	return run_checks([
 		assert_true(mode_segment is HBoxContainer, "BattleSetup should expose mode choices as a HUD segment"),
 		assert_false(mode_option.visible, "Legacy mode dropdown should stay hidden behind the HUD segment"),
-		assert_eq(mode_segment.get_child_count() if mode_segment != null else 0, 2, "Mode segment should contain two choices"),
+		assert_eq(mode_segment.get_child_count() if mode_segment != null else 0, 3, "Mode segment should expose two-player, built-in AI, and author-package choices"),
 		assert_eq(two_player_button.text if two_player_button != null else "", mode_option.get_item_text(0), "Two-player mode button should mirror the hidden option label"),
 		assert_eq(ai_button.text if ai_button != null else "", mode_option.get_item_text(1), "AI mode button should mirror the hidden option label"),
+		assert_true(author_button.visible if author_button != null else false, "Author packages need a distinct visible mode so saved author state cannot impersonate built-in AI"),
+		assert_false(author_button.disabled if author_button != null else true, "The author-package mode button must accept input when the feature is enabled"),
 		assert_eq(selected_after_ai, 1, "Pressing AI mode should update the hidden mode option"),
 		assert_true(ai_controls_visible, "Pressing AI mode should refresh AI-only setup controls"),
+		assert_eq(selected_after_author, 2, "Pressing author-package mode must remain distinct from built-in AI"),
 		assert_eq(selected_after_two_player, 0, "Pressing two-player mode should update the hidden mode option"),
 		assert_true(two_player_controls_hidden, "Pressing two-player mode should hide AI-only setup controls"),
 	])
@@ -308,12 +320,44 @@ func test_battle_setup_windows_landscape_exposes_released_ns_zoroark_cpg() -> St
 		assert_eq(ids, ["v18_800018502_ns_zoroark", "v18cpg_800018502_ns_zoroark"], "Released N's Zoroark should expose Rule and V18CPG choices"),
 		assert_true(strategy_segment.visible, "Windows landscape should keep the released V18CPG selector visible"),
 		assert_eq(strategy_segment.get_child_count(), 2, "Windows landscape should show both Rule and LLM strategy buttons"),
-		assert_eq((strategy_segment.get_child(0) as Button).text, "规则版", "The first N's Zoroark strategy button should use the short rules label"),
+		assert_eq((strategy_segment.get_child(0) as Button).text, "开发工具包优化版", "The first N's Zoroark strategy button should identify the loaded toolkit strategy"),
 		assert_eq((strategy_segment.get_child(1) as Button).text, "大模型版", "The second N's Zoroark strategy button should use the short LLM label"),
+		assert_false((strategy_segment.get_child(1) as Button).disabled, "A released 18.0 strategy choice must be clickable"),
 		assert_eq(str(scene.call("_selected_ai_strategy_variant_id")), "v18_800018502_ns_zoroark", "Rule should remain the default selected strategy"),
+	])
+	(strategy_segment.get_child(1) as Button).pressed.emit()
+	result = run_checks([
+		result,
+		assert_eq(
+			str(scene.call("_selected_ai_strategy_variant_id")),
+			"v18cpg_800018502_ns_zoroark",
+			"Clicking the visible 18.0 strategy button must change the live selection"
+		),
 	])
 	scene.queue_free()
 	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_author_mode_remains_distinct_and_can_switch_back_to_builtin_v18_ai() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var ai_button := scene.find_child("ModeAIButton", true, false) as Button
+	var author_button := scene.find_child("ModeAuthorStrategyButton", true, false) as Button
+	mode_option.select(2)
+	scene.call("_select_mode_option", 2)
+
+	var author_visible := author_button.visible
+	var author_enabled := not author_button.disabled
+	ai_button.pressed.emit()
+	var selected_after_ai_press := mode_option.selected
+
+	var result := run_checks([
+		assert_true(author_visible, "The persisted author-package mode must have its own visible selector"),
+		assert_true(author_enabled, "The author-package selector must not disguise itself as the built-in AI mode"),
+		assert_eq(selected_after_ai_press, 1, "Pressing AI battle must leave author mode and restore built-in 18.0 selection"),
+	])
+	scene.queue_free()
 	return result
 
 
@@ -843,7 +887,7 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		assert_true(1700007 in resolved_ids, "AI deck list should include 17.0 Miraidon"),
 		assert_true(1700008 in resolved_ids, "AI deck list should include 17.0 Dragapult / Dusknoir"),
 		assert_true(1700011 in resolved_ids, "AI deck list should include 17.0 Regidrago"),
-		assert_eq(missing_v18_ids, [], "AI deck list should include all 24 registered 18.0 rule-AI decks"),
+		assert_eq(missing_v18_ids, [], "AI deck list should include all 25 registered 18.0 rule-AI decks"),
 		assert_eq(resolved_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck dropdown should order all 18.0 decks by final normal win rate, using strong win rate as the tie-breaker"),
 	])
 

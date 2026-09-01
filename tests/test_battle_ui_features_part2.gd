@@ -638,7 +638,7 @@ func test_battle_scene_replay_next_turn_loads_adjacent_turn_start() -> String:
 	])
 
 
-func test_battle_scene_continue_from_here_switches_to_live_mode() -> String:
+func test_battle_scene_replay_cannot_continue_from_recorded_state() -> String:
 	var battle_scene := _make_battle_scene_stub()
 	battle_scene.set("_gsm", GameStateMachine.new())
 	battle_scene.set("_battle_mode", "review_readonly")
@@ -647,9 +647,9 @@ func test_battle_scene_continue_from_here_switches_to_live_mode() -> String:
 
 	var gsm := battle_scene.get("_gsm") as GameStateMachine
 	return run_checks([
-		assert_eq(str(battle_scene.get("_battle_mode")), "live", "Continue From Here should return the scene to live mode"),
-		assert_true(battle_scene.call("_can_accept_live_action"), "Continue From Here should re-enable live actions"),
-		assert_eq(gsm.game_state.turn_number, 6, "Continue From Here should load the replay turn into GameState"),
+		assert_eq(str(battle_scene.get("_battle_mode")), "review_readonly", "Recorded state must remain presentation-only"),
+		assert_false(battle_scene.call("_can_accept_live_action"), "Replay must never re-enable live actions"),
+		assert_true(gsm.game_state.turn_number != 6, "Replay continue must not replace the rules state"),
 	])
 
 
@@ -672,7 +672,7 @@ func test_battle_scene_replay_mode_ignores_hand_card_clicks() -> String:
 	])
 
 
-func test_battle_scene_opponent_hand_button_only_visible_in_vs_ai() -> String:
+func test_battle_scene_opponent_hand_button_visible_in_all_live_ai_battles() -> String:
 	var scene := _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -695,11 +695,21 @@ func test_battle_scene_opponent_hand_button_only_visible_in_vs_ai() -> String:
 	GameManager.current_mode = GameManager.GameMode.VS_AI
 	scene.call("_refresh_ui")
 	var visible_in_vs_ai := opponent_hand_button.visible
+
+	GameManager.current_mode = GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+	scene.call("_refresh_ui")
+	var visible_in_author_strategy_ai := opponent_hand_button.visible
+
+	scene.set("_battle_mode", "review_readonly")
+	scene.call("_refresh_ui")
+	var hidden_in_replay := not opponent_hand_button.visible
 	GameManager.current_mode = previous_mode
 
 	return run_checks([
 		assert_true(hidden_in_two_player, "对手手牌按钮在双人模式下应隐藏"),
 		assert_true(visible_in_vs_ai, "对手手牌按钮在 VS_AI 模式下应显示"),
+		assert_true(visible_in_author_strategy_ai, "对手手牌按钮在开发者策略包 AI 对战中也应显示"),
+		assert_true(hidden_in_replay, "对手手牌按钮在录像回放中应继续隐藏"),
 	])
 
 
@@ -792,7 +802,10 @@ func test_battle_scene_opponent_hand_viewer_shows_card_previews() -> String:
 	var opp_hand_b := CardInstance.create(_make_trainer_cd("AI 手牌B", "Item", "debug"), 1)
 	gsm.game_state.players[1].hand = [opp_hand_a, opp_hand_b]
 
-	scene.call("_show_opponent_hand_cards")
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+	scene.call("_on_opponent_hand_pressed")
+	GameManager.current_mode = previous_mode
 	var discard_scroll := scene.get("_discard_card_scroll") as ScrollContainer
 	var first_preview := discard_card_row.get_child(0) as BattleCardView
 	var shared_drag_checks := run_checks([

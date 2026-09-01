@@ -1,0 +1,754 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+  "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+  "context_fixture": {
+    "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+    "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+    "option_count": 2
+  },
+  "adapter_documents": [
+    {
+      "id": "complete",
+      "document": {
+        "schema_version": 1,
+        "adapter_id": "public.complete",
+        "adapter_version": 1,
+        "rules": [
+          {
+            "rule_id": "goal.type2",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "acquire",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "goal.type1",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "deploy",
+            "priority": 1,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 1,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "macro.hand7",
+            "operator": "macro_proposal",
+            "reason_code": "public_macro_proposal",
+            "goal_stage": "fund",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": 7,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "macro.type1",
+            "operator": "macro_proposal",
+            "reason_code": "public_macro_proposal",
+            "goal_stage": "ready",
+            "priority": 1,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 1,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "tie.active100",
+            "operator": "tiebreak_score",
+            "reason_code": "public_tiebreak_proposal",
+            "goal_stage": "execute",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": 100
+            }
+          },
+          {
+            "rule_id": "tie.type2",
+            "operator": "tiebreak_score",
+            "reason_code": "public_tiebreak_proposal",
+            "goal_stage": "maintain",
+            "priority": 1,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "goal.unmapped999",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "recover",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": 999,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ]
+      },
+      "expected_adapter": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+        "adapter_id": "public.complete",
+        "adapter_version": 1,
+        "rules": [
+          {
+            "rule_id": "goal.type2",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "acquire",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "goal.type1",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "deploy",
+            "priority": 1,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 1,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "macro.hand7",
+            "operator": "macro_proposal",
+            "reason_code": "public_macro_proposal",
+            "goal_stage": "fund",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": 7,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "macro.type1",
+            "operator": "macro_proposal",
+            "reason_code": "public_macro_proposal",
+            "goal_stage": "ready",
+            "priority": 1,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 1,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "tie.active100",
+            "operator": "tiebreak_score",
+            "reason_code": "public_tiebreak_proposal",
+            "goal_stage": "execute",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": 100
+            }
+          },
+          {
+            "rule_id": "tie.type2",
+            "operator": "tiebreak_score",
+            "reason_code": "public_tiebreak_proposal",
+            "goal_stage": "maintain",
+            "priority": 1,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "goal.unmapped999",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "recover",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": 999,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ],
+        "authoritative": false,
+        "adapter_hash": "4EEFFA5B6A8DF0AEAAD373C7FE542998D5B4E8B2D7BF8919E6C8B1EB8D39DF31"
+      }
+    },
+    {
+      "id": "no-match",
+      "document": {
+        "schema_version": 1,
+        "adapter_id": "public.no-match",
+        "adapter_version": 1,
+        "rules": [
+          {
+            "rule_id": "none",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "recover",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": 999,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ]
+      },
+      "expected_adapter": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+        "adapter_id": "public.no-match",
+        "adapter_version": 1,
+        "rules": [
+          {
+            "rule_id": "none",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "recover",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": 999,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ],
+        "authoritative": false,
+        "adapter_hash": "4B299BD2E157D6910F32F449C9749C758D50E6202C113D17D4E977C89CA9DF86"
+      }
+    },
+    {
+      "id": "stable",
+      "document": {
+        "schema_version": 1,
+        "adapter_id": "public.stable",
+        "adapter_version": 1,
+        "rules": [
+          {
+            "rule_id": "all.second",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "ready",
+            "priority": 2,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "type2.first",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "execute",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "type1.first",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "maintain",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 1,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ]
+      },
+      "expected_adapter": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+        "adapter_id": "public.stable",
+        "adapter_version": 1,
+        "rules": [
+          {
+            "rule_id": "all.second",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "ready",
+            "priority": 2,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": null,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "type2.first",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "execute",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "type1.first",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "maintain",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 1,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ],
+        "authoritative": false,
+        "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C"
+      }
+    }
+  ],
+  "proposal_cases": [
+    {
+      "id": "complete-proposal",
+      "adapter_case_id": "complete",
+      "proposal_id": "complete-proposal",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+        "proposal_id": "complete-proposal",
+        "adapter_id": "public.complete",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "adapter_hash": "4EEFFA5B6A8DF0AEAAD373C7FE542998D5B4E8B2D7BF8919E6C8B1EB8D39DF31"
+        },
+        "adapter_proposals": [
+          {
+            "operator": "goal_proposal",
+            "indexes": [
+              1,
+              0
+            ],
+            "reason_code": "public_goal_proposal"
+          },
+          {
+            "operator": "macro_proposal",
+            "indexes": [
+              0,
+              1
+            ],
+            "reason_code": "public_macro_proposal"
+          },
+          {
+            "operator": "tiebreak_score",
+            "indexes": [
+              0,
+              1
+            ],
+            "reason_code": "public_tiebreak_proposal"
+          }
+        ],
+        "matched_rules": [
+          {
+            "rule_id": "goal.type2",
+            "operator": "goal_proposal",
+            "goal_stage": "acquire",
+            "matched_indexes": [
+              1
+            ]
+          },
+          {
+            "rule_id": "goal.type1",
+            "operator": "goal_proposal",
+            "goal_stage": "deploy",
+            "matched_indexes": [
+              0
+            ]
+          },
+          {
+            "rule_id": "macro.hand7",
+            "operator": "macro_proposal",
+            "goal_stage": "fund",
+            "matched_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "rule_id": "macro.type1",
+            "operator": "macro_proposal",
+            "goal_stage": "ready",
+            "matched_indexes": [
+              0
+            ]
+          },
+          {
+            "rule_id": "tie.active100",
+            "operator": "tiebreak_score",
+            "goal_stage": "execute",
+            "matched_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "rule_id": "tie.type2",
+            "operator": "tiebreak_score",
+            "goal_stage": "maintain",
+            "matched_indexes": [
+              1
+            ]
+          }
+        ],
+        "authoritative": false,
+        "proposal_hash": "82BD22D4A0C2A48E21A000A220F73A5EE78A85FF604E4E0C491856DE0E092B71"
+      }
+    },
+    {
+      "id": "empty-proposal",
+      "adapter_case_id": "no-match",
+      "proposal_id": "empty-proposal",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+        "proposal_id": "empty-proposal",
+        "adapter_id": "public.no-match",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "adapter_hash": "4B299BD2E157D6910F32F449C9749C758D50E6202C113D17D4E977C89CA9DF86"
+        },
+        "adapter_proposals": [],
+        "matched_rules": [],
+        "authoritative": false,
+        "proposal_hash": "3587DECD9A7DE331DC4C83C824EBCA6B02509F399E4BF8FDCA12F6D6B43745C4"
+      }
+    },
+    {
+      "id": "stable-proposal",
+      "adapter_case_id": "stable",
+      "proposal_id": "stable-proposal",
+      "expected_result": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-public-deck-adapter-p4-wp4-v1",
+        "proposal_id": "stable-proposal",
+        "adapter_id": "public.stable",
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "adapter_hash": "D36CA889D0BC675F13C05A77BD00136C78B5DD3B0A66753D38FFAD9BFAF81C0C"
+        },
+        "adapter_proposals": [
+          {
+            "operator": "goal_proposal",
+            "indexes": [
+              1,
+              0
+            ],
+            "reason_code": "public_goal_proposal"
+          }
+        ],
+        "matched_rules": [
+          {
+            "rule_id": "all.second",
+            "operator": "goal_proposal",
+            "goal_stage": "ready",
+            "matched_indexes": [
+              0,
+              1
+            ]
+          },
+          {
+            "rule_id": "type2.first",
+            "operator": "goal_proposal",
+            "goal_stage": "execute",
+            "matched_indexes": [
+              1
+            ]
+          },
+          {
+            "rule_id": "type1.first",
+            "operator": "goal_proposal",
+            "goal_stage": "maintain",
+            "matched_indexes": [
+              0
+            ]
+          }
+        ],
+        "authoritative": false,
+        "proposal_hash": "4F1433470310874F305204A0F4E2C629B0DFF27B1676A7248D19078CFA3B5811"
+      }
+    }
+  ],
+  "adapter_rejections": [
+    {
+      "id": "extra-document-key",
+      "mutation": {
+        "target": "document",
+        "field": "private_state",
+        "value": true
+      },
+      "expected_error_code": "private_adapter_input"
+    },
+    {
+      "id": "bad-adapter-id",
+      "mutation": {
+        "target": "document",
+        "field": "adapter_id",
+        "value": "PRIVATE.adapter"
+      },
+      "expected_error_code": "private_adapter_input"
+    },
+    {
+      "id": "unknown-operator",
+      "mutation": {
+        "target": "rule",
+        "field": "operator",
+        "value": "python_callable"
+      },
+      "expected_error_code": "unsupported_adapter_operator"
+    },
+    {
+      "id": "unknown-stage",
+      "mutation": {
+        "target": "rule",
+        "field": "goal_stage",
+        "value": "cheat"
+      },
+      "expected_error_code": "unsupported_goal_stage"
+    },
+    {
+      "id": "wrong-reason",
+      "mutation": {
+        "target": "rule",
+        "field": "reason_code",
+        "value": "public_macro_proposal"
+      },
+      "expected_error_code": "invalid_adapter_document"
+    },
+    {
+      "id": "priority-bool",
+      "mutation": {
+        "target": "rule",
+        "field": "priority",
+        "value": true
+      },
+      "expected_error_code": "invalid_adapter_document"
+    },
+    {
+      "id": "predicate-extra",
+      "mutation": {
+        "target": "rule",
+        "field": "predicate",
+        "value": {
+          "select_type_raw": null,
+          "select_context_raw": null,
+          "option_type_raw": null,
+          "option_card_id": null,
+          "option_player_index": null,
+          "acting_hand_card_id": null,
+          "acting_active_card_id": null,
+          "display_name": "secret"
+        }
+      },
+      "expected_error_code": "invalid_public_predicate"
+    },
+    {
+      "id": "predicate-string",
+      "mutation": {
+        "target": "rule",
+        "field": "predicate",
+        "value": {
+          "select_type_raw": null,
+          "select_context_raw": null,
+          "option_type_raw": "1",
+          "option_card_id": null,
+          "option_player_index": null,
+          "acting_hand_card_id": null,
+          "acting_active_card_id": null
+        }
+      },
+      "expected_error_code": "invalid_public_predicate"
+    },
+    {
+      "id": "predicate-private",
+      "mutation": {
+        "target": "rule",
+        "field": "predicate",
+        "value": {
+          "select_type_raw": null,
+          "select_context_raw": null,
+          "option_type_raw": "PRIVATE_HAND_SENTINEL",
+          "option_card_id": null,
+          "option_player_index": null,
+          "acting_hand_card_id": null,
+          "acting_active_card_id": null
+        }
+      },
+      "expected_error_code": "private_adapter_input"
+    },
+    {
+      "id": "duplicate-rule",
+      "mutation": {
+        "target": "document",
+        "field": "rules",
+        "value": [
+          {
+            "rule_id": "goal.type2",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "acquire",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          },
+          {
+            "rule_id": "goal.type2",
+            "operator": "goal_proposal",
+            "reason_code": "public_goal_proposal",
+            "goal_stage": "acquire",
+            "priority": 0,
+            "predicate": {
+              "select_type_raw": null,
+              "select_context_raw": null,
+              "option_type_raw": 2,
+              "option_card_id": null,
+              "option_player_index": null,
+              "acting_hand_card_id": null,
+              "acting_active_card_id": null
+            }
+          }
+        ]
+      },
+      "expected_error_code": "invalid_adapter_document"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE",
+    "PRIVATE_HAND_SENTINEL",
+    "PRIVATE_SEARCH_SENTINEL",
+    "PRIVATE_SESSION_SENTINEL"
+  ],
+  "consumer_rule": "Serialized adapter and proposal values are public audit only. The restricted executor may consume proposal indexes only as same-tier ordering hints and must retain all Base authority."
+}

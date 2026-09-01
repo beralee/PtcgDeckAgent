@@ -1,0 +1,65 @@
+{
+  "document_type": "ptcgdap_windows_ai_strategy_center_merge_receipt_v1",
+  "schema_version": 1,
+  "decision_id": "D195",
+  "date": "2026-08-31",
+  "status": "implemented_focused_tested_local_scene_accepted",
+  "contract": {
+    "home_ai_entry_count": 1,
+    "home_ai_entry_label": "AI 策略中心",
+    "workspace_order": ["catalog", "local", "replays", "settings"],
+    "workspace_labels": ["策略广场", "本地策略", "对战录像", "AI 设置"],
+    "default_workspace": "catalog",
+    "legacy_settings_workspace": "settings",
+    "settings_scene_reused": true,
+    "settings_lazy_loaded": true,
+    "battle_ui_changed": false
+  },
+  "validation": [
+    {
+      "lane": "strategy_hub_full_focused",
+      "passed": 19,
+      "failed": 0,
+      "log": ".godot_test_user/logs/focused-20260831-233958.log"
+    },
+    {
+      "lane": "settings_existing_behavior_and_portrait",
+      "passed": 2,
+      "failed": 0,
+      "logs": [
+        ".godot_test_user/logs/focused-20260831-234010.log",
+        ".godot_test_user/logs/focused-20260831-234037.log"
+      ]
+    },
+    {
+      "lane": "main_menu_landscape_portrait_touch",
+      "passed": 3,
+      "failed": 0,
+      "logs": [
+        ".godot_test_user/logs/focused-20260831-234058.log",
+        ".godot_test_user/logs/focused-20260831-234104.log",
+        ".godot_test_user/logs/focused-20260831-234110.log"
+      ]
+    }
+  ],
+  "total": {
+    "passed": 24,
+    "failed": 0
+  },
+  "changed_file_sha256": {
+    "scenes/main_menu/MainMenu.gd": "85E2F574254080B50472A96290B94AE987B35D29D2C9B49FE378697EE37BA5C7",
+    "scenes/main_menu/MainMenu.tscn": "D0F2159CB4A4C3D275942EB548D67D1A48E370FACD73884289ACCAEDE47BB3D4",
+    "scenes/settings/Settings.gd": "367DA72FAE89C531BB68B6745A02805E9134141652084B585BDD48D590F2DBC6",
+    "scripts/autoload/GameManager.gd": "3BB9D3C78ADCA205C260AD0EEB4E419C3A54CCCFD695F70F301241D75D9048A0",
+    "scenes/ptcgdap_strategy_hub/StrategyHub.gd": "1AC4FEBEC5D356F8D7349D9E1D13F8AABAD37849CD66A5526D67C1C5DB8FA14D",
+    "scenes/ptcgdap_strategy_hub/StrategyHub.tscn": "52F56CB45235EB1CB770F22CC2DE2713D7085BD0B9F2430F2C97DEC26484298B",
+    "tests/ptcgdap/godot/test_strategy_hub_scene.gd": "4217A0A6F69544DF83E84321C01CD2FFE16AB24516B22FAE6B2286DB470831D6"
+  },
+  "rollback": "Restore the home BtnSettings node, route goto_settings to SCENE_SETTINGS, and restore the original three-tab order. Preserve the existing user AI config file.",
+  "known_gaps": [
+    "player_visible_windows_pixel_acceptance_not_run",
+    "official_cabt_not_claimed",
+    "engine_parity_not_claimed",
+    "android_a5_not_claimed"
+  ]
+}

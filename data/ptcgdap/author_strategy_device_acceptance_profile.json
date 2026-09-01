@@ -1,0 +1,26 @@
+{
+  "document_type": "author_strategy_device_acceptance_profile_v1",
+  "schema_version": 1,
+  "profile_id": "ptcgdap-device-acceptance-candidate-v1",
+  "approval_status": "approved",
+  "formal_a5_eligible": false,
+  "platforms": {
+    "windows": {
+      "max_cold_start_msec": 10000,
+      "max_catalog_scan_msec": 1000,
+      "max_match_load_msec": 6000,
+      "max_decision_p95_msec": 250,
+      "max_peak_memory_mib": 1024,
+      "max_package_mib": 750,
+      "max_thermal_status": null,
+      "max_battery_drain_percent_per_hour": null
+    }
+  },
+  "measurement_method": {
+    "full_match_required": true,
+    "airplane_or_os_block_required": false,
+    "cold_start_samples": 3,
+    "decision_samples_minimum": 100,
+    "rollback_required": true
+  }
+}

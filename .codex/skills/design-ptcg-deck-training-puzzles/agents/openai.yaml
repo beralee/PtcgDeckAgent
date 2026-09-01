@@ -1,4 +1,0 @@
-interface:
-  display_name: "PTCG 残局训练设计"
-  short_description: "先深读固定卡组，再推理并证明高难度 Combo 残局"
-  default_prompt: "Use $design-ptcg-deck-training-puzzles to deep-read a frozen deck, infer distinct exact combo puzzles with random-looking hands and hidden key-card draw routes, then prove the solutions and lure failures through production rules."

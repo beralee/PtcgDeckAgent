@@ -8,7 +8,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not player.prizes.is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var prize_items: Array = []
 	var prize_labels: Array[String] = []
@@ -72,12 +72,8 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	player.hand.erase(card)
 	card.face_up = false
 	player.prizes.append(card)
-	_shuffle_cards(player.prizes)
+	player.shuffle_cards(player.prizes, "hisuian_heavy_ball_prizes")
 	player.reset_prize_layout()
-
-
-func _shuffle_cards(cards: Array[CardInstance]) -> void:
-	PlayerState.shuffle_card_array(cards)
 
 
 func get_description() -> String:

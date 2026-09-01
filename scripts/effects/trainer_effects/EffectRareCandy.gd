@@ -118,51 +118,31 @@ func _get_valid_stage2_targets(player: PlayerState, stage2_card: CardInstance, s
 	return targets
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
-	var stage2_items: Array = []
-	var stage2_labels: Array[String] = []
-	var valid_target_map: Dictionary = {}
-
+	var evolve_items: Array = []
+	var evolve_labels: Array[String] = []
 	for c: CardInstance in player.hand:
 		if not c.card_data.is_pokemon() or c.card_data.stage != "Stage 2":
 			continue
 		var valid_targets: Array[PokemonSlot] = _get_valid_stage2_targets(player, c, state)
-		if valid_targets.is_empty():
-			continue
-		stage2_items.append(c)
-		stage2_labels.append(c.card_data.name)
 		for slot: PokemonSlot in valid_targets:
-			valid_target_map[slot] = true
-
-	var target_items: Array = []
-	var target_labels: Array[String] = []
-	for slot: PokemonSlot in player.get_all_pokemon():
-		if not valid_target_map.has(slot):
-			continue
-		target_items.append(slot)
-		target_labels.append("%s (HP %d/%d)" % [slot.get_pokemon_name(), slot.get_remaining_hp(), slot.get_max_hp()])
-
-	return [
-		{
-			"id": "stage2_card",
-			"title": "选择要跳阶进化的2阶段宝可梦",
-			"items": stage2_items,
-			"labels": stage2_labels,
-			"min_select": 1,
-			"max_select": 1,
-			"allow_cancel": true,
-		},
-		{
-			"id": "target_pokemon",
-			"title": "选择要进化的基础宝可梦",
-			"items": target_items,
-			"labels": target_labels,
-			"min_select": 1,
-			"max_select": 1,
-			"allow_cancel": true,
-		},
-	]
+			evolve_items.append({
+				"kind": "evolve",
+				"card": c,
+				"target_slot": slot,
+			})
+			evolve_labels.append("%s → %s" % [slot.get_pokemon_name(), c.card_data.name])
+	return [{
+		"id": "rare_candy_evolve",
+		"title": "选择要用神奇糖果完成的进化",
+		"items": evolve_items,
+		"labels": evolve_labels,
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": true,
+		"ucis_context_name": "EVOLVE",
+	}]
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
@@ -208,16 +188,27 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var target_slot: PokemonSlot = null
 	var has_explicit_stage2 := false
 	var has_explicit_target := false
+	var pair_raw: Array = ctx.get("rare_candy_evolve", [])
+	if not pair_raw.is_empty() and pair_raw[0] is Dictionary:
+		var pair: Dictionary = pair_raw[0]
+		var pair_card: Variant = pair.get("card")
+		var pair_target: Variant = pair.get("target_slot")
+		if pair_card is CardInstance:
+			has_explicit_stage2 = true
+			stage2_card = pair_card as CardInstance
+		if pair_target is PokemonSlot:
+			has_explicit_target = true
+			target_slot = pair_target as PokemonSlot
 
 	var stage2_raw: Array = ctx.get("stage2_card", [])
-	if not stage2_raw.is_empty() and stage2_raw[0] is CardInstance:
+	if stage2_card == null and not stage2_raw.is_empty() and stage2_raw[0] is CardInstance:
 		has_explicit_stage2 = true
 		var selected_stage2: CardInstance = stage2_raw[0]
 		if selected_stage2 in player.hand:
 			stage2_card = selected_stage2
 
 	var target_raw: Array = ctx.get("target_pokemon", [])
-	if not target_raw.is_empty() and target_raw[0] is PokemonSlot:
+	if target_slot == null and not target_raw.is_empty() and target_raw[0] is PokemonSlot:
 		has_explicit_target = true
 		var selected_target: PokemonSlot = target_raw[0]
 		if selected_target in player.get_all_pokemon():

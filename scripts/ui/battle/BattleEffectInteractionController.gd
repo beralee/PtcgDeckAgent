@@ -2,6 +2,7 @@ class_name BattleEffectInteractionController
 extends RefCounted
 
 const UiInteractionSessionScript := preload("res://scripts/ui/interactions/UiInteractionSession.gd")
+const UcisCompilerScript := preload("res://scripts/engine/ucis/UcisInteractionCompiler.gd")
 
 const EFFECT_GENERATION_META := "pending_effect_interaction_generation"
 const EFFECT_RESPONSE_META := "effect_interaction_response"
@@ -25,6 +26,17 @@ func start_effect_interaction(
 	attack_effects: Array[BaseEffect] = []
 ) -> void:
 	scene.call("_reset_effect_interaction")
+	var compiled := UcisCompilerScript.compile_steps(steps, "live_ingress:%s" % kind, scene)
+	if not bool(compiled.get("ok", false)):
+		var error_code := str(compiled.get("error_code", "unsupported_interaction_shape"))
+		scene.set_meta("ucis_interaction_error", error_code)
+		scene.call("_runtime_log", "ucis_interaction_rejected", "kind=%s error=%s" % [kind, error_code])
+		return
+	var compiled_steps: Array[Dictionary] = []
+	for step_value: Variant in compiled.get("steps", []):
+		compiled_steps.append(step_value as Dictionary)
+	steps = compiled_steps
+	scene.remove_meta("ucis_interaction_error")
 	var interaction_generation := int(scene.get_meta(EFFECT_GENERATION_META, 0)) + 1
 	scene.set_meta(EFFECT_GENERATION_META, interaction_generation)
 	scene.set("_pending_effect_kind", kind)
@@ -104,11 +116,8 @@ func resolve_effect_step_chooser_player(scene: Object, step: Dictionary) -> int:
 
 
 func hide_ai_owned_effect_step_ui(scene: Object, chooser_player: int) -> void:
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
-		return
-	scene.call("_ensure_ai_opponent")
-	var ai_opponent: Variant = scene.get("_ai_opponent")
-	if ai_opponent == null or chooser_player != ai_opponent.player_index:
+	if not scene.has_method("_is_runtime_ai_player") \
+		or not bool(scene.call("_is_runtime_ai_player", chooser_player)):
 		return
 	var dialog_overlay: Panel = scene.get("_dialog_overlay")
 	var dialog_cancel: Button = scene.get("_dialog_cancel")
@@ -689,12 +698,8 @@ func _finish_effect_interaction_session(scene: Object, reason: String) -> void:
 
 
 func _is_ai_owned_chooser(scene: Object, chooser_player: int) -> bool:
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
-		return false
-	var ai_opponent: Variant = scene.get("_ai_opponent")
-	if ai_opponent != null:
-		return chooser_player == int(ai_opponent.player_index)
-	return chooser_player == 1
+	return scene.has_method("_is_runtime_ai_player") \
+		and bool(scene.call("_is_runtime_ai_player", chooser_player))
 
 
 func _finish_effect_interaction(scene: Object) -> void:
@@ -711,9 +716,12 @@ func _finish_effect_interaction(scene: Object) -> void:
 	var followup_evolve_slot: PokemonSlot = null
 	match pending_effect_kind:
 		"trainer":
+			# Capture the exact current interaction target before play_trainer()
+			# emits synchronous engine/UI signals that may replace or reset the
+			# pending context.  The accepted Rare Candy pair remains engine-checked
+			# by the effect; this only preserves its follow-up lifecycle anchor.
+			followup_evolve_slot = scene.call("_get_trainer_followup_evolve_slot")
 			success = gsm.play_trainer(pending_effect_player_index, pending_effect_card, [pending_effect_context])
-			if success:
-				followup_evolve_slot = scene.call("_get_trainer_followup_evolve_slot")
 		"play_stadium":
 			success = gsm.play_stadium(pending_effect_player_index, pending_effect_card, [pending_effect_context])
 		"ability":

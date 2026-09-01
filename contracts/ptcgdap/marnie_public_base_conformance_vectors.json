@@ -1,0 +1,1370 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "vectors",
+  "vector_set_id": "ptcgdap-marnie-public-base-conformance-v1",
+  "profile_id": "marnie_public_base_profile_v1",
+  "cases": [
+    {
+      "case_id": "evaluate-source-w0-initial",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w0-initial"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 0,
+          "case_id": "source-w0-initial",
+          "source_frame_id": "w0_initial",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "not_applicable",
+          "reason_code": "initial_no_window",
+          "macro_id": null,
+          "macro_phase": null,
+          "public_observation_hash": null,
+          "window_id": null,
+          "context_hash": null,
+          "intent_indexes": [],
+          "adapter_indexes": [],
+          "selected_indexes": [],
+          "macro_proof_hash": null,
+          "adapter_hash": null,
+          "proposal_hash": null,
+          "ir_hash": null,
+          "execution_hash": null,
+          "decision_audit_id": null,
+          "trace_hash": null,
+          "orchestration_hash": null,
+          "previous_result_hash": null,
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "A3C49DDECFEDCE0E27E37A452C2E5C949417ABBEA623EC59E19884A3BCB0640A"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w1-setup-active",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w1-setup-active"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 1,
+          "case_id": "source-w1-setup-active",
+          "source_frame_id": "w1_setup_active",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": null,
+          "macro_phase": null,
+          "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+          "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+          "context_hash": "446AB7D49B0D0945A1ADAE0452446F0E6AF09F2B9D44F3BE75B27CB5A0BA7684",
+          "intent_indexes": [],
+          "adapter_indexes": [],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": null,
+          "adapter_hash": "42E004BD3B823268D21F15F70CFFE84F8355B06D62A2F32FC9AB434F4F71A923",
+          "proposal_hash": "235C3D52C98225469AA4990B4BD968FC0EAAC37CA489C23AE85A0A2FE3576661",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "AE6504E35A67D8FA9C38C1510C45BDC662C459B1105344C154DC4A66260F0C06",
+          "decision_audit_id": "BCD60CA38EEF6683833C22FB634F0AC5F4513B223052B55D452B5D44ADB9C486",
+          "trace_hash": "05251EE3F8461E1AA3794CD311B5AC6D6B764DF5C90C5465027971CF9293D0B5",
+          "orchestration_hash": "461FEB07D84AF2F0544E77B0543FB22B14EC77931F852543508CFACBE525F490",
+          "previous_result_hash": "A3C49DDECFEDCE0E27E37A452C2E5C949417ABBEA623EC59E19884A3BCB0640A",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "ED279D8FD3E4582EBEA7845527B862AD2F5893BB4AB453BFFF373728F0B0CBBF"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w2-setup-bench",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w2-setup-bench"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 2,
+          "case_id": "source-w2-setup-bench",
+          "source_frame_id": "w2_setup_bench",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "not_applicable",
+          "reason_code": "firewall_not_accepted",
+          "macro_id": null,
+          "macro_phase": null,
+          "public_observation_hash": null,
+          "window_id": null,
+          "context_hash": null,
+          "intent_indexes": [],
+          "adapter_indexes": [],
+          "selected_indexes": [],
+          "macro_proof_hash": null,
+          "adapter_hash": null,
+          "proposal_hash": null,
+          "ir_hash": null,
+          "execution_hash": null,
+          "decision_audit_id": null,
+          "trace_hash": null,
+          "orchestration_hash": null,
+          "previous_result_hash": "ED279D8FD3E4582EBEA7845527B862AD2F5893BB4AB453BFFF373728F0B0CBBF",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "11772088BB3229DF6A5DB361FE5053E50E2BCCD3A7060B41D90A3DCB85B491CD"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w3-main",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w3-main"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 3,
+          "case_id": "source-w3-main",
+          "source_frame_id": "w3_main",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.engine.spikemuth_tutor",
+          "macro_phase": "play_stadium",
+          "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+          "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+          "context_hash": "B72E45D3620C21E18BA023655F26EA15A0A628F2EADB52A6A361DBDDB9F9FDAB",
+          "intent_indexes": [
+            2
+          ],
+          "adapter_indexes": [
+            2
+          ],
+          "selected_indexes": [
+            2
+          ],
+          "macro_proof_hash": "1CD8CAA5AA764B0037FCC535BC825A2E79D8866624A76ECF2DBE29ABDAA746AA",
+          "adapter_hash": "10ECE444E7F36C374BCEA6419BAD436B13D91423BF6DD14077C375387C365D5C",
+          "proposal_hash": "7C77EBEFF86BFB93E792AB78DF6C19530FE36B6D4A8C21238ADDBCD3C02A5DC5",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "330718A8864D210B787AD24A613EAA42CE1BE3F5994A0F03132A611C7A913BC9",
+          "decision_audit_id": "8D0ACD6199C068A77E357D36EE189A8FF0428B76B48F84A7605AA4F6F06099FA",
+          "trace_hash": "583D8D3DB6EE8E03A3C72DBA730AAFB2D189896F1CB6F4EA9263A3EED2C846ED",
+          "orchestration_hash": "602DA261E29BE95FBBF31B7EF69F64E3D5DDC45591CAAD7E20B7E6FB8A2BB0D8",
+          "previous_result_hash": "11772088BB3229DF6A5DB361FE5053E50E2BCCD3A7060B41D90A3DCB85B491CD",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "B970390B52A650461D9FF2FED939223CB485C46B42931DAF22C10C60CC51EC4B"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w4-spikemuth-deck",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w4-spikemuth-deck"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 4,
+          "case_id": "source-w4-spikemuth-deck",
+          "source_frame_id": "w4_spikemuth_deck",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.engine.spikemuth_tutor",
+          "macro_phase": "authorized_deck_search",
+          "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+          "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+          "context_hash": "C0EBDAB8DF66BA567E352B87CA5DB1D637D5F8144EDEF120992F2DFDDBE9B40E",
+          "intent_indexes": [
+            0,
+            1
+          ],
+          "adapter_indexes": [
+            0,
+            1
+          ],
+          "selected_indexes": [],
+          "macro_proof_hash": "406DDD96F856991FA234C91E7CF33AAC543E94DB3810B123571D3AB342DEFA44",
+          "adapter_hash": "C6499E41A8731D6D87542E80A3900DA652ED820D56FABD597B14EABE41AB5689",
+          "proposal_hash": "2B46418C965B2621477D28A51404E9956EDAD37F33CC4DFE9D17BFE2CEF1911F",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "EE43B3C82D57A20027CC9706275285EC85A2FE8E8705942381847C44BB75C0A9",
+          "decision_audit_id": "84B655E6C1FC9DFFD5F9922708E8ADB09692BA95526E2C885DDA322E1794D6C1",
+          "trace_hash": "7E0E309EC31B9B7745262AAB4A64F88BC9F59BE62C5040CF76EB175D86C96751",
+          "orchestration_hash": "BCE357491B01D8DF6BB1CD4BBC24DC0F5597B020404C87B142DFA03C6F1184D3",
+          "previous_result_hash": "B970390B52A650461D9FF2FED939223CB485C46B42931DAF22C10C60CC51EC4B",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "73C8E465C53AEEB0DD3FB51784E03820E1A572EF4060E061152B47EFABF21B30"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w5-punk-up-sources",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w5-punk-up-sources"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 5,
+          "case_id": "source-w5-punk-up-sources",
+          "source_frame_id": "w5_punk_up_sources",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.energy.punk_up",
+          "macro_phase": "choose_energy_sources",
+          "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+          "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+          "context_hash": "001AB268BB91D5D58515477243C19B3D6697A7F44CE0B75E234A281CA3437DA6",
+          "intent_indexes": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "adapter_indexes": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "selected_indexes": [],
+          "macro_proof_hash": "4F02939EF702D057A2502563A1CFB2BC02B370D879BD2E6F76F0AC8D4494411F",
+          "adapter_hash": "6972128A08044338BFB12E9332A740FB0CB39734ADC967183ACD58AB508E435D",
+          "proposal_hash": "51EA1921AE4D83127ECB70883B726704F8AF594FA95FBA3B8DC9775AE04069F4",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "AB42079B22D4D6F25A38EA9555E4AD14287A426A7E00F0CEA262B068C890BA14",
+          "decision_audit_id": "8AC3E2E927FA07A51D727243EE9F5048B6C5255355D5DB9C0DFFF34353A402B9",
+          "trace_hash": "AA5538D3DC7CBD1B9F1FB228DA807F4D130D66D262F041055F89133E0A451924",
+          "orchestration_hash": "CA9464C6DB2F02AA4DA0952052909F492A9D3C693E4D7BCEE75254F3818D3A42",
+          "previous_result_hash": "73C8E465C53AEEB0DD3FB51784E03820E1A572EF4060E061152B47EFABF21B30",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "0428EA87FECC981738D4A84209C20F0FD6BAC664605F3D28D1A37DA877977B69"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w5-punk-up-target-1",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w5-punk-up-target-1"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 6,
+          "case_id": "source-w5-punk-up-target-1",
+          "source_frame_id": "w5_punk_up_target_1",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.energy.punk_up",
+          "macro_phase": "choose_target",
+          "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+          "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+          "context_hash": "5E135A68368B96CD34AE4B3402F259AD610F7418B0A3575C2AB7876B45EA2F37",
+          "intent_indexes": [
+            0,
+            1,
+            2
+          ],
+          "adapter_indexes": [
+            0,
+            1,
+            2
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": "196435719EA5D02A3629F384E5C4133B113C07B595EFE8585BE6E7D44AF0683E",
+          "adapter_hash": "E108C0DD59FFB916AE1F01C56B8256E1C3E2C59205646F252CC25CF5A4317EC3",
+          "proposal_hash": "85069BB5232C7A296824565BEDDE8A14716FC4A37498F874CE7B3F51E359A2C8",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "5CFEF223E7FE52B12EC3C44CD6EE90DFF62B92E4532875755D127D166C4F023E",
+          "decision_audit_id": "A5F6DF561992DD0B1E947A007C5214ACE8F52AF6A67770BCB5322CB609539A72",
+          "trace_hash": "A05E70B55B196CE97A62383DF46DFA875B84747DA3C08720A152826C35DC2DDB",
+          "orchestration_hash": "2524A4586E3DA1AFD1CACDCFE1537733506C15BF2FDF0A79DDA72331AA19453D",
+          "previous_result_hash": "0428EA87FECC981738D4A84209C20F0FD6BAC664605F3D28D1A37DA877977B69",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "0372D9E9A7379139943F906447DFE10B162FDA8C1E5190D625C8524CB9ACC039"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w5-punk-up-target-2",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w5-punk-up-target-2"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 7,
+          "case_id": "source-w5-punk-up-target-2",
+          "source_frame_id": "w5_punk_up_target_2",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.energy.punk_up",
+          "macro_phase": "choose_target",
+          "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+          "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+          "context_hash": "53B12DF0A1B12DC9D67C24CC22762D168A8F7E56992672680A7782B5737FC29E",
+          "intent_indexes": [
+            0,
+            1,
+            2
+          ],
+          "adapter_indexes": [
+            0,
+            1,
+            2
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": "C2DF868C60EA2BBC191A6F9B82488BBDB5EE3303FD79E502AD00DCEA4C91B137",
+          "adapter_hash": "1FD7A6A0890D8D500B676532DCB91C93F1E3B5260672116CEE5C980D7F49292F",
+          "proposal_hash": "638CAF9C25ABEA8BE12C5CC8F9058CBE718779D6956242EF8072BB44C81AE263",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "B34870867DC4778EC1A9EB9903E1BEED6FF19F8C24533347E261963DBE0CDFA8",
+          "decision_audit_id": "295275D1349610DC06A05FCAE5B56A0BC3CE7D5D29BCAEFDCCF9B1217B311CF0",
+          "trace_hash": "733B1AA99DEC70FD066C7B4AF87B3806C2224EBB64B368A2E824BCC15DCAE788",
+          "orchestration_hash": "A0C9AEDCF2AF24CFDAC625A3210F946DF6FFB2A08911BA4DBA72EABC61B45771",
+          "previous_result_hash": "0372D9E9A7379139943F906447DFE10B162FDA8C1E5190D625C8524CB9ACC039",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "6A269BB2D96A2D89CFE1BBED5C7A7A9E925A7F5CE9F453A2978BEE7036961DFF"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w6-shadow-bullet-attack",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w6-shadow-bullet-attack"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 8,
+          "case_id": "source-w6-shadow-bullet-attack",
+          "source_frame_id": "w6_shadow_bullet_attack",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.prize.shadow_bullet",
+          "macro_phase": "choose_attack",
+          "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+          "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+          "context_hash": "77A5FE0510F3D127EAA3FDAFA9290198F7C45875CB21398CD0007609E039B64F",
+          "intent_indexes": [
+            1
+          ],
+          "adapter_indexes": [
+            1
+          ],
+          "selected_indexes": [
+            1
+          ],
+          "macro_proof_hash": "99019130036E9210317999CAD73CABB64BA2F43A50017ADEB1E44903A72CBFC2",
+          "adapter_hash": "355C2C54962917FB5C046D0E29C0FF365EA484FDBC4C9011B6671E94D5F2BBE8",
+          "proposal_hash": "521F8E19E97ECEE60EBDDDFB5A482460A804DDF71DE57B5375ACFA9502B0ECBB",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "2DBB4746AE0796E400827A93CD58ED636DF88565E28EA1C22310FC03F56021E7",
+          "decision_audit_id": "6228E2CF8348AD7AC85AE46FC10217C7026795D1FF5EE1F6F32952E3E54200AA",
+          "trace_hash": "2294307851EE855248ED02F118D35FEB093F4FB4FDC4F6844D0F0304FB527792",
+          "orchestration_hash": "B60DDDD546E88563BC060E3532BC67883C63360068E1C35B463B835C3E2C6310",
+          "previous_result_hash": "6A269BB2D96A2D89CFE1BBED5C7A7A9E925A7F5CE9F453A2978BEE7036961DFF",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "7230F248355359B2E21C6E11955D3A06D298FD1234664ABE7661BA1916F1255B"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w6-shadow-bullet-target",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w6-shadow-bullet-target"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 9,
+          "case_id": "source-w6-shadow-bullet-target",
+          "source_frame_id": "w6_shadow_bullet_target",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.prize.shadow_bullet",
+          "macro_phase": "choose_bench_target",
+          "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+          "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+          "context_hash": "186DB7BCB54C13771B4AF01A5B665D91CE3788605309B43A6015527DF66FCE28",
+          "intent_indexes": [
+            0,
+            1
+          ],
+          "adapter_indexes": [
+            0,
+            1
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": "BA93E25B4C26CFFE71095E14C6086594CFC1B6B42F9542A36E60CB3F4B6D5803",
+          "adapter_hash": "53B76624166EDD99310C3C760D79B61C48108FCE1A30A676775682941C250E88",
+          "proposal_hash": "C4F3FE45E1E5C007561058EDA968EC003804442BDAC9F2F7C9B19712B5778B02",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "C92BF37568F86670AABAABE214DE870C0F24EB26C71C1A0845201F65444E8704",
+          "decision_audit_id": "601F56D6F33553A63982C87D41B67E5E464C8E01500433C46118BEDB9677473F",
+          "trace_hash": "F7757C387620769B2D3746DE216AAB6F92F6F2971C8C78D39E6DE72C89E2C297",
+          "orchestration_hash": "7BD3D15F42C5073CF704DB462AA46FA2027AAB3A8C480BAE9595107E5D572783",
+          "previous_result_hash": "7230F248355359B2E21C6E11955D3A06D298FD1234664ABE7661BA1916F1255B",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "478ABDEB8421C465947FB5DF2334262B828B7392BC4317424EEBD0D545EABF2D"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w7-take-prize",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w7-take-prize"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 10,
+          "case_id": "source-w7-take-prize",
+          "source_frame_id": "w7_take_prize",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": null,
+          "macro_phase": null,
+          "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+          "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+          "context_hash": "62A416F78EE7D2EC1922BA4A184AABDCD209645716980589966802B82308B589",
+          "intent_indexes": [],
+          "adapter_indexes": [],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": null,
+          "adapter_hash": "B8C8A763A0DA6F5938765B912E83224CB232B5BE6BEEA3582A2CEE92FE41C568",
+          "proposal_hash": "CB94E8BFF21362D516FFC05346825AA00A2828FD1A210D7F9F2AEC6F35B7AFE3",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "F5418D7E21E0659CA8531150A9BB68658D78077E27A3F4471C6CA8A4BE803F64",
+          "decision_audit_id": "F1CDA52DAF3962ABBF07FE3B0E3A2842D91198893F603B94C76968DF971D9845",
+          "trace_hash": "F200C2347B50CF949848AF71AB040B77957248E23CB90877ACD61E19CED7B989",
+          "orchestration_hash": "0F6306763256EB62A9825175CF533288DD88355C5202535DBB42E924961BF030",
+          "previous_result_hash": "478ABDEB8421C465947FB5DF2334262B828B7392BC4317424EEBD0D545EABF2D",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "B7BE389A430377FD4EB3CFE23042B565E71FA5CB1CEC7DDD2D8ED835EF809869"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w7-forced-send-out",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w7-forced-send-out"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 11,
+          "case_id": "source-w7-forced-send-out",
+          "source_frame_id": "w7_forced_send_out",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": null,
+          "macro_phase": null,
+          "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+          "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+          "context_hash": "F8C479BE455669C519E81AF87D158BCEDA84298418F3FA95257DD6CCC9D75C4D",
+          "intent_indexes": [],
+          "adapter_indexes": [],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": null,
+          "adapter_hash": "8D6BF746581C9482598E46A45149EBFF5C0E986FE31DFDF5589FEDB1E54D6744",
+          "proposal_hash": "4BB0B1F797C5AA61FEA2BABFED5BEDA154638AF368B59AF188CD1BF60887C28B",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "507AC2735194FE5ED9C346DBB2E0FACFC8DC0DCB96303CD6FDEFE8CDFECFADD5",
+          "decision_audit_id": "B506EE80CFD7DEED3CDA477F5934B37B446C0C3BBB668ED3610BBC7A9780050F",
+          "trace_hash": "F99F57F186BAD8A66A9AAC06DABDD75B2B056F42371B651BD45F3D8A1D4284C6",
+          "orchestration_hash": "83DC25223DFA7F5577C09B68892A8A3810DCF5D8D4BF23A91C256E027A19DBE1",
+          "previous_result_hash": "B7BE389A430377FD4EB3CFE23042B565E71FA5CB1CEC7DDD2D8ED835EF809869",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "7A4FDC45A0DE33259B9A57BDCD488409286D05DF869425652E2D90A83840F543"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-source-w7-terminal",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "source-w7-terminal"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 12,
+          "case_id": "source-w7-terminal",
+          "source_frame_id": "w7_terminal",
+          "evidence_class": "source_locked_production_frame",
+          "offline_seeded_extension": false,
+          "status": "not_applicable",
+          "reason_code": "terminal_no_callback",
+          "macro_id": null,
+          "macro_phase": null,
+          "public_observation_hash": null,
+          "window_id": null,
+          "context_hash": null,
+          "intent_indexes": [],
+          "adapter_indexes": [],
+          "selected_indexes": [],
+          "macro_proof_hash": null,
+          "adapter_hash": null,
+          "proposal_hash": null,
+          "ir_hash": null,
+          "execution_hash": null,
+          "decision_audit_id": null,
+          "trace_hash": null,
+          "orchestration_hash": null,
+          "previous_result_hash": "7A4FDC45A0DE33259B9A57BDCD488409286D05DF869425652E2D90A83840F543",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "A4A56B2B1C02185CA48A344CF835124D44E0CF625A51FE7D033F177451BF4D70"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-seeded-poffin-primary",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "seeded-poffin-primary"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 13,
+          "case_id": "seeded-poffin-primary",
+          "source_frame_id": "w3_main",
+          "evidence_class": "offline_seeded_extension",
+          "offline_seeded_extension": true,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.engine.poffin_primary",
+          "macro_phase": "play_item",
+          "public_observation_hash": "A8449489F0F23EEE64F0EB227381E84091979F8D08E04B0846F2084ECEF0B489",
+          "window_id": "CC937F1EA2DC339E49D5D9F6F1E0AB153766D5C57B51071AB3E2A0A8C31FA18B",
+          "context_hash": "933799AC3DF6454C54A94CF291FF8B964F2FF9147C24A15BA8639711C3A2A839",
+          "intent_indexes": [
+            0
+          ],
+          "adapter_indexes": [
+            0
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": "F72E963EF0C20DDF0FBFC7707B07C35F48F8C318BDF579EC213F63EEBA9618D7",
+          "adapter_hash": "5C9013F17560C4EDB092D3B46A0C9220627E1C6238667CCFD4EA0D2BCF6B2EFE",
+          "proposal_hash": "F263EF918AFB2024021AF8A8BA7BD9D3D4E7012560094F3EB493A02EDC3F3470",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "C6634E52BC5C4C929F422CBF5F50F350E856A3CA52936FDB609AB4279DC6150A",
+          "decision_audit_id": "8EC63B24CCA64DF939EDFD05B0BDEC43DCABAAF5F0993619F011884113BA7989",
+          "trace_hash": "6A5195789AE5850BAC000B73F787F0EE1AC6DD3483D7B3FA372E6300615147E2",
+          "orchestration_hash": "50FD5D6084945E83BFFC98BBF14CC8AF1EA0381A16B65A747684C8EC4791837E",
+          "previous_result_hash": "A4A56B2B1C02185CA48A344CF835124D44E0CF625A51FE7D033F177451BF4D70",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "C5A0D0B684726C54E49842BD27F1AF1027F378D1B9DC3719D60BE9DAE80B63B0"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-seeded-evolve-grimmsnarl",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "seeded-evolve-grimmsnarl"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 14,
+          "case_id": "seeded-evolve-grimmsnarl",
+          "source_frame_id": "w3_main",
+          "evidence_class": "offline_seeded_extension",
+          "offline_seeded_extension": true,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.engine.evolve_grimmsnarl",
+          "macro_phase": "play_evolution",
+          "public_observation_hash": "C410AF11D433015CF0C33851AE40A8F43F8139B5B7D4D871F7BA1F9FB9255B19",
+          "window_id": "244360D5AA6A4C3C2D63DCE728DB52505FD2CE4C9597E98DC401CC8D3A3623D0",
+          "context_hash": "AA3766C513735946E30EC80458A769AE1A1B5CC8189F227F2E93D2363ABE738E",
+          "intent_indexes": [
+            0
+          ],
+          "adapter_indexes": [
+            0
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": "2C8FE11DB5C05AA087E88C0D0F3DC1AAD94787D70AC723AAF36E461FA32E6A0E",
+          "adapter_hash": "1CF9BD23DF9AF9CA3ADBC170DFD8E9421A434E4DDD02A33037AD0F83D85A928B",
+          "proposal_hash": "185A3DCD9FD4887B8153AA853106B74E35F8CFD0D2AB3ECC0DFC6EBA23059BF6",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "D9F1B56BDF0CBDF7A7830A2243FE17A4B73A058C8D75237CB41EE64535A25D20",
+          "decision_audit_id": "451159194D4630D951556D1A1AFF1A690F34495C21DF3E8636F3AC27DEE57784",
+          "trace_hash": "FE3D551E62C55C83F14AAAE166886AE5A146AF16803A0C53C9648D2AC5908246",
+          "orchestration_hash": "6875E065F3A6891E083B678420269BF04C34F292AAD170D89FB27143A980ADE2",
+          "previous_result_hash": "C5A0D0B684726C54E49842BD27F1AF1027F378D1B9DC3719D60BE9DAE80B63B0",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "C3D66B65B5BC237814E9D8AC6A2EAD3369195965CAD80BDA6553B2F346A7D433"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-seeded-night-stretcher",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "seeded-night-stretcher"
+      },
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "ordinal": 15,
+          "case_id": "seeded-night-stretcher",
+          "source_frame_id": "w3_main",
+          "evidence_class": "offline_seeded_extension",
+          "offline_seeded_extension": true,
+          "status": "orchestrated",
+          "reason_code": "base_orchestrated",
+          "macro_id": "marnie.recover.night_stretcher",
+          "macro_phase": "play_item",
+          "public_observation_hash": "4B003F215747C214BAB89E523205092223DA896BB3950B837AC521C37D40DC31",
+          "window_id": "F82D6FAB5916065B4C04FD2BB5339518321D33B42E2AF89B93791E24E4745F71",
+          "context_hash": "36E8FE5B11D29C5E241E9031ABC2ED02B23A985E0E311A4DCB2BCB5DF6022FB0",
+          "intent_indexes": [
+            0
+          ],
+          "adapter_indexes": [
+            0
+          ],
+          "selected_indexes": [
+            0
+          ],
+          "macro_proof_hash": "DC78547F0EBA508420A663B1E457144DD41B07600EF88A89EA7CB23371E793A4",
+          "adapter_hash": "B3B30879DD7875D9289E909EE6523291CFAFA6C5F94F431DCC5FD7C2F12A0DF3",
+          "proposal_hash": "A3AF9D99A88E8630B8536A23B23ABFDBA2AA99F03764D0C32ED414DAC3A41329",
+          "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+          "execution_hash": "56A6E5CA3392DA2A1D3B42CAB5D7B164D129FFE61459B4D4A5914F9CED7C86EF",
+          "decision_audit_id": "D72860C33A1E1E2C7495E6394EDB89D894C650C6B4866D9300D125A9AD0C8091",
+          "trace_hash": "6AAD6F2CB43EFDD194FB672FF70FCF6AAA25385CB78E04B4CE44FA2F71C0E517",
+          "orchestration_hash": "344022714D90F6EC2CA7A39FE571EEC3CE2713CEBBEA4AA7780BD7144EFF76F3",
+          "previous_result_hash": "C3D66B65B5BC237814E9D8AC6A2EAD3369195965CAD80BDA6553B2F346A7D433",
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false,
+          "result_hash": "01AAA0E94BD236A921C70D5E172F257DE4541823BE1D90D0AFC614AB1CCB0CC5"
+        }
+      }
+    },
+    {
+      "case_id": "evaluate-all",
+      "operation": "evaluate_all",
+      "input": {},
+      "expected": {
+        "ok": true,
+        "error_code": "",
+        "value": {
+          "accepted": true,
+          "case_count": 16,
+          "chain_head": "01AAA0E94BD236A921C70D5E172F257DE4541823BE1D90D0AFC614AB1CCB0CC5",
+          "cases": [
+            {
+              "ordinal": 0,
+              "case_id": "source-w0-initial",
+              "source_frame_id": "w0_initial",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "not_applicable",
+              "reason_code": "initial_no_window",
+              "macro_id": null,
+              "macro_phase": null,
+              "public_observation_hash": null,
+              "window_id": null,
+              "context_hash": null,
+              "intent_indexes": [],
+              "adapter_indexes": [],
+              "selected_indexes": [],
+              "macro_proof_hash": null,
+              "adapter_hash": null,
+              "proposal_hash": null,
+              "ir_hash": null,
+              "execution_hash": null,
+              "decision_audit_id": null,
+              "trace_hash": null,
+              "orchestration_hash": null,
+              "previous_result_hash": null,
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "A3C49DDECFEDCE0E27E37A452C2E5C949417ABBEA623EC59E19884A3BCB0640A"
+            },
+            {
+              "ordinal": 1,
+              "case_id": "source-w1-setup-active",
+              "source_frame_id": "w1_setup_active",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": null,
+              "macro_phase": null,
+              "public_observation_hash": "A9E21601E3C460BD9E2781687EBFBBB5458BB754A2AC40ADD115ACB14F1274DE",
+              "window_id": "7677B8FF753E8D52E39A537A1C10D3128B0E05FAEA88BF502F720F66BEAFF6AE",
+              "context_hash": "446AB7D49B0D0945A1ADAE0452446F0E6AF09F2B9D44F3BE75B27CB5A0BA7684",
+              "intent_indexes": [],
+              "adapter_indexes": [],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": null,
+              "adapter_hash": "42E004BD3B823268D21F15F70CFFE84F8355B06D62A2F32FC9AB434F4F71A923",
+              "proposal_hash": "235C3D52C98225469AA4990B4BD968FC0EAAC37CA489C23AE85A0A2FE3576661",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "AE6504E35A67D8FA9C38C1510C45BDC662C459B1105344C154DC4A66260F0C06",
+              "decision_audit_id": "BCD60CA38EEF6683833C22FB634F0AC5F4513B223052B55D452B5D44ADB9C486",
+              "trace_hash": "05251EE3F8461E1AA3794CD311B5AC6D6B764DF5C90C5465027971CF9293D0B5",
+              "orchestration_hash": "461FEB07D84AF2F0544E77B0543FB22B14EC77931F852543508CFACBE525F490",
+              "previous_result_hash": "A3C49DDECFEDCE0E27E37A452C2E5C949417ABBEA623EC59E19884A3BCB0640A",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "ED279D8FD3E4582EBEA7845527B862AD2F5893BB4AB453BFFF373728F0B0CBBF"
+            },
+            {
+              "ordinal": 2,
+              "case_id": "source-w2-setup-bench",
+              "source_frame_id": "w2_setup_bench",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "not_applicable",
+              "reason_code": "firewall_not_accepted",
+              "macro_id": null,
+              "macro_phase": null,
+              "public_observation_hash": null,
+              "window_id": null,
+              "context_hash": null,
+              "intent_indexes": [],
+              "adapter_indexes": [],
+              "selected_indexes": [],
+              "macro_proof_hash": null,
+              "adapter_hash": null,
+              "proposal_hash": null,
+              "ir_hash": null,
+              "execution_hash": null,
+              "decision_audit_id": null,
+              "trace_hash": null,
+              "orchestration_hash": null,
+              "previous_result_hash": "ED279D8FD3E4582EBEA7845527B862AD2F5893BB4AB453BFFF373728F0B0CBBF",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "11772088BB3229DF6A5DB361FE5053E50E2BCCD3A7060B41D90A3DCB85B491CD"
+            },
+            {
+              "ordinal": 3,
+              "case_id": "source-w3-main",
+              "source_frame_id": "w3_main",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.engine.spikemuth_tutor",
+              "macro_phase": "play_stadium",
+              "public_observation_hash": "1FC5B67C4F5B3AC72C50F1AC841CC39E9EC71CD07EEDE47B1D90D7E9246F2EF5",
+              "window_id": "7E501B4C8E638608ADEE16FA008C7C83CAFC6C963A414BA7A0FE41E92C36598A",
+              "context_hash": "B72E45D3620C21E18BA023655F26EA15A0A628F2EADB52A6A361DBDDB9F9FDAB",
+              "intent_indexes": [
+                2
+              ],
+              "adapter_indexes": [
+                2
+              ],
+              "selected_indexes": [
+                2
+              ],
+              "macro_proof_hash": "1CD8CAA5AA764B0037FCC535BC825A2E79D8866624A76ECF2DBE29ABDAA746AA",
+              "adapter_hash": "10ECE444E7F36C374BCEA6419BAD436B13D91423BF6DD14077C375387C365D5C",
+              "proposal_hash": "7C77EBEFF86BFB93E792AB78DF6C19530FE36B6D4A8C21238ADDBCD3C02A5DC5",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "330718A8864D210B787AD24A613EAA42CE1BE3F5994A0F03132A611C7A913BC9",
+              "decision_audit_id": "8D0ACD6199C068A77E357D36EE189A8FF0428B76B48F84A7605AA4F6F06099FA",
+              "trace_hash": "583D8D3DB6EE8E03A3C72DBA730AAFB2D189896F1CB6F4EA9263A3EED2C846ED",
+              "orchestration_hash": "602DA261E29BE95FBBF31B7EF69F64E3D5DDC45591CAAD7E20B7E6FB8A2BB0D8",
+              "previous_result_hash": "11772088BB3229DF6A5DB361FE5053E50E2BCCD3A7060B41D90A3DCB85B491CD",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "B970390B52A650461D9FF2FED939223CB485C46B42931DAF22C10C60CC51EC4B"
+            },
+            {
+              "ordinal": 4,
+              "case_id": "source-w4-spikemuth-deck",
+              "source_frame_id": "w4_spikemuth_deck",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.engine.spikemuth_tutor",
+              "macro_phase": "authorized_deck_search",
+              "public_observation_hash": "2AE26B3D5A81E9B2AB83A8DF3D3F3D91974C390FD99DAD2D316DA30B829D61CD",
+              "window_id": "5EA59BD50A096403E3585AC9D099D0487BA1BD6F29C7131059B9972983BCA1A2",
+              "context_hash": "C0EBDAB8DF66BA567E352B87CA5DB1D637D5F8144EDEF120992F2DFDDBE9B40E",
+              "intent_indexes": [
+                0,
+                1
+              ],
+              "adapter_indexes": [
+                0,
+                1
+              ],
+              "selected_indexes": [],
+              "macro_proof_hash": "406DDD96F856991FA234C91E7CF33AAC543E94DB3810B123571D3AB342DEFA44",
+              "adapter_hash": "C6499E41A8731D6D87542E80A3900DA652ED820D56FABD597B14EABE41AB5689",
+              "proposal_hash": "2B46418C965B2621477D28A51404E9956EDAD37F33CC4DFE9D17BFE2CEF1911F",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "EE43B3C82D57A20027CC9706275285EC85A2FE8E8705942381847C44BB75C0A9",
+              "decision_audit_id": "84B655E6C1FC9DFFD5F9922708E8ADB09692BA95526E2C885DDA322E1794D6C1",
+              "trace_hash": "7E0E309EC31B9B7745262AAB4A64F88BC9F59BE62C5040CF76EB175D86C96751",
+              "orchestration_hash": "BCE357491B01D8DF6BB1CD4BBC24DC0F5597B020404C87B142DFA03C6F1184D3",
+              "previous_result_hash": "B970390B52A650461D9FF2FED939223CB485C46B42931DAF22C10C60CC51EC4B",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "73C8E465C53AEEB0DD3FB51784E03820E1A572EF4060E061152B47EFABF21B30"
+            },
+            {
+              "ordinal": 5,
+              "case_id": "source-w5-punk-up-sources",
+              "source_frame_id": "w5_punk_up_sources",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.energy.punk_up",
+              "macro_phase": "choose_energy_sources",
+              "public_observation_hash": "AB931F8394D99A45ED44E0C5CA9A8420A4AB83BCC12B6C5F67931C525852C6CB",
+              "window_id": "454B8C79CDBFF55AA03ECD86F032BD96053F18DAD36142332F64E0A2B3051F1B",
+              "context_hash": "001AB268BB91D5D58515477243C19B3D6697A7F44CE0B75E234A281CA3437DA6",
+              "intent_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "adapter_indexes": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "selected_indexes": [],
+              "macro_proof_hash": "4F02939EF702D057A2502563A1CFB2BC02B370D879BD2E6F76F0AC8D4494411F",
+              "adapter_hash": "6972128A08044338BFB12E9332A740FB0CB39734ADC967183ACD58AB508E435D",
+              "proposal_hash": "51EA1921AE4D83127ECB70883B726704F8AF594FA95FBA3B8DC9775AE04069F4",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "AB42079B22D4D6F25A38EA9555E4AD14287A426A7E00F0CEA262B068C890BA14",
+              "decision_audit_id": "8AC3E2E927FA07A51D727243EE9F5048B6C5255355D5DB9C0DFFF34353A402B9",
+              "trace_hash": "AA5538D3DC7CBD1B9F1FB228DA807F4D130D66D262F041055F89133E0A451924",
+              "orchestration_hash": "CA9464C6DB2F02AA4DA0952052909F492A9D3C693E4D7BCEE75254F3818D3A42",
+              "previous_result_hash": "73C8E465C53AEEB0DD3FB51784E03820E1A572EF4060E061152B47EFABF21B30",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "0428EA87FECC981738D4A84209C20F0FD6BAC664605F3D28D1A37DA877977B69"
+            },
+            {
+              "ordinal": 6,
+              "case_id": "source-w5-punk-up-target-1",
+              "source_frame_id": "w5_punk_up_target_1",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.energy.punk_up",
+              "macro_phase": "choose_target",
+              "public_observation_hash": "CC1E88746CC119178A6AD639629E717C70BD2AF37EC61CFB68689CB576B40DD9",
+              "window_id": "9E0C78595FC69BBFE0CE26916BFC6F3FA5EB5FE834D7507BC1529B9E0E2D415E",
+              "context_hash": "5E135A68368B96CD34AE4B3402F259AD610F7418B0A3575C2AB7876B45EA2F37",
+              "intent_indexes": [
+                0,
+                1,
+                2
+              ],
+              "adapter_indexes": [
+                0,
+                1,
+                2
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": "196435719EA5D02A3629F384E5C4133B113C07B595EFE8585BE6E7D44AF0683E",
+              "adapter_hash": "E108C0DD59FFB916AE1F01C56B8256E1C3E2C59205646F252CC25CF5A4317EC3",
+              "proposal_hash": "85069BB5232C7A296824565BEDDE8A14716FC4A37498F874CE7B3F51E359A2C8",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "5CFEF223E7FE52B12EC3C44CD6EE90DFF62B92E4532875755D127D166C4F023E",
+              "decision_audit_id": "A5F6DF561992DD0B1E947A007C5214ACE8F52AF6A67770BCB5322CB609539A72",
+              "trace_hash": "A05E70B55B196CE97A62383DF46DFA875B84747DA3C08720A152826C35DC2DDB",
+              "orchestration_hash": "2524A4586E3DA1AFD1CACDCFE1537733506C15BF2FDF0A79DDA72331AA19453D",
+              "previous_result_hash": "0428EA87FECC981738D4A84209C20F0FD6BAC664605F3D28D1A37DA877977B69",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "0372D9E9A7379139943F906447DFE10B162FDA8C1E5190D625C8524CB9ACC039"
+            },
+            {
+              "ordinal": 7,
+              "case_id": "source-w5-punk-up-target-2",
+              "source_frame_id": "w5_punk_up_target_2",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.energy.punk_up",
+              "macro_phase": "choose_target",
+              "public_observation_hash": "D2FDCF2D08CD81847F4C377F4A24B204DD8A26B57B269BD2E3DF7EE27869DC43",
+              "window_id": "0053BBF3A66990EEA969B09AA59C68D0C07577C29C7438299BE3C9831C4ABBC1",
+              "context_hash": "53B12DF0A1B12DC9D67C24CC22762D168A8F7E56992672680A7782B5737FC29E",
+              "intent_indexes": [
+                0,
+                1,
+                2
+              ],
+              "adapter_indexes": [
+                0,
+                1,
+                2
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": "C2DF868C60EA2BBC191A6F9B82488BBDB5EE3303FD79E502AD00DCEA4C91B137",
+              "adapter_hash": "1FD7A6A0890D8D500B676532DCB91C93F1E3B5260672116CEE5C980D7F49292F",
+              "proposal_hash": "638CAF9C25ABEA8BE12C5CC8F9058CBE718779D6956242EF8072BB44C81AE263",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "B34870867DC4778EC1A9EB9903E1BEED6FF19F8C24533347E261963DBE0CDFA8",
+              "decision_audit_id": "295275D1349610DC06A05FCAE5B56A0BC3CE7D5D29BCAEFDCCF9B1217B311CF0",
+              "trace_hash": "733B1AA99DEC70FD066C7B4AF87B3806C2224EBB64B368A2E824BCC15DCAE788",
+              "orchestration_hash": "A0C9AEDCF2AF24CFDAC625A3210F946DF6FFB2A08911BA4DBA72EABC61B45771",
+              "previous_result_hash": "0372D9E9A7379139943F906447DFE10B162FDA8C1E5190D625C8524CB9ACC039",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "6A269BB2D96A2D89CFE1BBED5C7A7A9E925A7F5CE9F453A2978BEE7036961DFF"
+            },
+            {
+              "ordinal": 8,
+              "case_id": "source-w6-shadow-bullet-attack",
+              "source_frame_id": "w6_shadow_bullet_attack",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.prize.shadow_bullet",
+              "macro_phase": "choose_attack",
+              "public_observation_hash": "492B0D932DA629E978E0B5BD7C7522C6900FA4158539618870063C00BE589330",
+              "window_id": "46ED2603EFF8302F781ACDAE92C65FCA5EB1CB2502A2AFDB6193A23F1794AD4B",
+              "context_hash": "77A5FE0510F3D127EAA3FDAFA9290198F7C45875CB21398CD0007609E039B64F",
+              "intent_indexes": [
+                1
+              ],
+              "adapter_indexes": [
+                1
+              ],
+              "selected_indexes": [
+                1
+              ],
+              "macro_proof_hash": "99019130036E9210317999CAD73CABB64BA2F43A50017ADEB1E44903A72CBFC2",
+              "adapter_hash": "355C2C54962917FB5C046D0E29C0FF365EA484FDBC4C9011B6671E94D5F2BBE8",
+              "proposal_hash": "521F8E19E97ECEE60EBDDDFB5A482460A804DDF71DE57B5375ACFA9502B0ECBB",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "2DBB4746AE0796E400827A93CD58ED636DF88565E28EA1C22310FC03F56021E7",
+              "decision_audit_id": "6228E2CF8348AD7AC85AE46FC10217C7026795D1FF5EE1F6F32952E3E54200AA",
+              "trace_hash": "2294307851EE855248ED02F118D35FEB093F4FB4FDC4F6844D0F0304FB527792",
+              "orchestration_hash": "B60DDDD546E88563BC060E3532BC67883C63360068E1C35B463B835C3E2C6310",
+              "previous_result_hash": "6A269BB2D96A2D89CFE1BBED5C7A7A9E925A7F5CE9F453A2978BEE7036961DFF",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "7230F248355359B2E21C6E11955D3A06D298FD1234664ABE7661BA1916F1255B"
+            },
+            {
+              "ordinal": 9,
+              "case_id": "source-w6-shadow-bullet-target",
+              "source_frame_id": "w6_shadow_bullet_target",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.prize.shadow_bullet",
+              "macro_phase": "choose_bench_target",
+              "public_observation_hash": "AF82EDB8392CFD04927BF5872529EE78891413FA24870C7EEACA3FC029C7DAE4",
+              "window_id": "272D7157CCDE89A7099F854DEBEFE7DE43FAD759528B3940F558586F6590A64D",
+              "context_hash": "186DB7BCB54C13771B4AF01A5B665D91CE3788605309B43A6015527DF66FCE28",
+              "intent_indexes": [
+                0,
+                1
+              ],
+              "adapter_indexes": [
+                0,
+                1
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": "BA93E25B4C26CFFE71095E14C6086594CFC1B6B42F9542A36E60CB3F4B6D5803",
+              "adapter_hash": "53B76624166EDD99310C3C760D79B61C48108FCE1A30A676775682941C250E88",
+              "proposal_hash": "C4F3FE45E1E5C007561058EDA968EC003804442BDAC9F2F7C9B19712B5778B02",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "C92BF37568F86670AABAABE214DE870C0F24EB26C71C1A0845201F65444E8704",
+              "decision_audit_id": "601F56D6F33553A63982C87D41B67E5E464C8E01500433C46118BEDB9677473F",
+              "trace_hash": "F7757C387620769B2D3746DE216AAB6F92F6F2971C8C78D39E6DE72C89E2C297",
+              "orchestration_hash": "7BD3D15F42C5073CF704DB462AA46FA2027AAB3A8C480BAE9595107E5D572783",
+              "previous_result_hash": "7230F248355359B2E21C6E11955D3A06D298FD1234664ABE7661BA1916F1255B",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "478ABDEB8421C465947FB5DF2334262B828B7392BC4317424EEBD0D545EABF2D"
+            },
+            {
+              "ordinal": 10,
+              "case_id": "source-w7-take-prize",
+              "source_frame_id": "w7_take_prize",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": null,
+              "macro_phase": null,
+              "public_observation_hash": "BFF28C407C05CD9416F56F93E0B4C69776FF3931F3DFAA4C43DFF7C9C593E092",
+              "window_id": "EFE894EE979CD4F9F15425E71757FA621B0D7FBAE56D7F63B887FAEE3CBD1210",
+              "context_hash": "62A416F78EE7D2EC1922BA4A184AABDCD209645716980589966802B82308B589",
+              "intent_indexes": [],
+              "adapter_indexes": [],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": null,
+              "adapter_hash": "B8C8A763A0DA6F5938765B912E83224CB232B5BE6BEEA3582A2CEE92FE41C568",
+              "proposal_hash": "CB94E8BFF21362D516FFC05346825AA00A2828FD1A210D7F9F2AEC6F35B7AFE3",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "F5418D7E21E0659CA8531150A9BB68658D78077E27A3F4471C6CA8A4BE803F64",
+              "decision_audit_id": "F1CDA52DAF3962ABBF07FE3B0E3A2842D91198893F603B94C76968DF971D9845",
+              "trace_hash": "F200C2347B50CF949848AF71AB040B77957248E23CB90877ACD61E19CED7B989",
+              "orchestration_hash": "0F6306763256EB62A9825175CF533288DD88355C5202535DBB42E924961BF030",
+              "previous_result_hash": "478ABDEB8421C465947FB5DF2334262B828B7392BC4317424EEBD0D545EABF2D",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "B7BE389A430377FD4EB3CFE23042B565E71FA5CB1CEC7DDD2D8ED835EF809869"
+            },
+            {
+              "ordinal": 11,
+              "case_id": "source-w7-forced-send-out",
+              "source_frame_id": "w7_forced_send_out",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": null,
+              "macro_phase": null,
+              "public_observation_hash": "D0FAC15B7A0652D0A305FE51A0D23DE069CA0120C64D1C5D73FE9CC4E6372532",
+              "window_id": "4B9ACF32E98E22EA912BCCA35EE32A3C77A8C3708C7E40CFD665669E9B47B056",
+              "context_hash": "F8C479BE455669C519E81AF87D158BCEDA84298418F3FA95257DD6CCC9D75C4D",
+              "intent_indexes": [],
+              "adapter_indexes": [],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": null,
+              "adapter_hash": "8D6BF746581C9482598E46A45149EBFF5C0E986FE31DFDF5589FEDB1E54D6744",
+              "proposal_hash": "4BB0B1F797C5AA61FEA2BABFED5BEDA154638AF368B59AF188CD1BF60887C28B",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "507AC2735194FE5ED9C346DBB2E0FACFC8DC0DCB96303CD6FDEFE8CDFECFADD5",
+              "decision_audit_id": "B506EE80CFD7DEED3CDA477F5934B37B446C0C3BBB668ED3610BBC7A9780050F",
+              "trace_hash": "F99F57F186BAD8A66A9AAC06DABDD75B2B056F42371B651BD45F3D8A1D4284C6",
+              "orchestration_hash": "83DC25223DFA7F5577C09B68892A8A3810DCF5D8D4BF23A91C256E027A19DBE1",
+              "previous_result_hash": "B7BE389A430377FD4EB3CFE23042B565E71FA5CB1CEC7DDD2D8ED835EF809869",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "7A4FDC45A0DE33259B9A57BDCD488409286D05DF869425652E2D90A83840F543"
+            },
+            {
+              "ordinal": 12,
+              "case_id": "source-w7-terminal",
+              "source_frame_id": "w7_terminal",
+              "evidence_class": "source_locked_production_frame",
+              "offline_seeded_extension": false,
+              "status": "not_applicable",
+              "reason_code": "terminal_no_callback",
+              "macro_id": null,
+              "macro_phase": null,
+              "public_observation_hash": null,
+              "window_id": null,
+              "context_hash": null,
+              "intent_indexes": [],
+              "adapter_indexes": [],
+              "selected_indexes": [],
+              "macro_proof_hash": null,
+              "adapter_hash": null,
+              "proposal_hash": null,
+              "ir_hash": null,
+              "execution_hash": null,
+              "decision_audit_id": null,
+              "trace_hash": null,
+              "orchestration_hash": null,
+              "previous_result_hash": "7A4FDC45A0DE33259B9A57BDCD488409286D05DF869425652E2D90A83840F543",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "A4A56B2B1C02185CA48A344CF835124D44E0CF625A51FE7D033F177451BF4D70"
+            },
+            {
+              "ordinal": 13,
+              "case_id": "seeded-poffin-primary",
+              "source_frame_id": "w3_main",
+              "evidence_class": "offline_seeded_extension",
+              "offline_seeded_extension": true,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.engine.poffin_primary",
+              "macro_phase": "play_item",
+              "public_observation_hash": "A8449489F0F23EEE64F0EB227381E84091979F8D08E04B0846F2084ECEF0B489",
+              "window_id": "CC937F1EA2DC339E49D5D9F6F1E0AB153766D5C57B51071AB3E2A0A8C31FA18B",
+              "context_hash": "933799AC3DF6454C54A94CF291FF8B964F2FF9147C24A15BA8639711C3A2A839",
+              "intent_indexes": [
+                0
+              ],
+              "adapter_indexes": [
+                0
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": "F72E963EF0C20DDF0FBFC7707B07C35F48F8C318BDF579EC213F63EEBA9618D7",
+              "adapter_hash": "5C9013F17560C4EDB092D3B46A0C9220627E1C6238667CCFD4EA0D2BCF6B2EFE",
+              "proposal_hash": "F263EF918AFB2024021AF8A8BA7BD9D3D4E7012560094F3EB493A02EDC3F3470",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "C6634E52BC5C4C929F422CBF5F50F350E856A3CA52936FDB609AB4279DC6150A",
+              "decision_audit_id": "8EC63B24CCA64DF939EDFD05B0BDEC43DCABAAF5F0993619F011884113BA7989",
+              "trace_hash": "6A5195789AE5850BAC000B73F787F0EE1AC6DD3483D7B3FA372E6300615147E2",
+              "orchestration_hash": "50FD5D6084945E83BFFC98BBF14CC8AF1EA0381A16B65A747684C8EC4791837E",
+              "previous_result_hash": "A4A56B2B1C02185CA48A344CF835124D44E0CF625A51FE7D033F177451BF4D70",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "C5A0D0B684726C54E49842BD27F1AF1027F378D1B9DC3719D60BE9DAE80B63B0"
+            },
+            {
+              "ordinal": 14,
+              "case_id": "seeded-evolve-grimmsnarl",
+              "source_frame_id": "w3_main",
+              "evidence_class": "offline_seeded_extension",
+              "offline_seeded_extension": true,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.engine.evolve_grimmsnarl",
+              "macro_phase": "play_evolution",
+              "public_observation_hash": "C410AF11D433015CF0C33851AE40A8F43F8139B5B7D4D871F7BA1F9FB9255B19",
+              "window_id": "244360D5AA6A4C3C2D63DCE728DB52505FD2CE4C9597E98DC401CC8D3A3623D0",
+              "context_hash": "AA3766C513735946E30EC80458A769AE1A1B5CC8189F227F2E93D2363ABE738E",
+              "intent_indexes": [
+                0
+              ],
+              "adapter_indexes": [
+                0
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": "2C8FE11DB5C05AA087E88C0D0F3DC1AAD94787D70AC723AAF36E461FA32E6A0E",
+              "adapter_hash": "1CF9BD23DF9AF9CA3ADBC170DFD8E9421A434E4DDD02A33037AD0F83D85A928B",
+              "proposal_hash": "185A3DCD9FD4887B8153AA853106B74E35F8CFD0D2AB3ECC0DFC6EBA23059BF6",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "D9F1B56BDF0CBDF7A7830A2243FE17A4B73A058C8D75237CB41EE64535A25D20",
+              "decision_audit_id": "451159194D4630D951556D1A1AFF1A690F34495C21DF3E8636F3AC27DEE57784",
+              "trace_hash": "FE3D551E62C55C83F14AAAE166886AE5A146AF16803A0C53C9648D2AC5908246",
+              "orchestration_hash": "6875E065F3A6891E083B678420269BF04C34F292AAD170D89FB27143A980ADE2",
+              "previous_result_hash": "C5A0D0B684726C54E49842BD27F1AF1027F378D1B9DC3719D60BE9DAE80B63B0",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "C3D66B65B5BC237814E9D8AC6A2EAD3369195965CAD80BDA6553B2F346A7D433"
+            },
+            {
+              "ordinal": 15,
+              "case_id": "seeded-night-stretcher",
+              "source_frame_id": "w3_main",
+              "evidence_class": "offline_seeded_extension",
+              "offline_seeded_extension": true,
+              "status": "orchestrated",
+              "reason_code": "base_orchestrated",
+              "macro_id": "marnie.recover.night_stretcher",
+              "macro_phase": "play_item",
+              "public_observation_hash": "4B003F215747C214BAB89E523205092223DA896BB3950B837AC521C37D40DC31",
+              "window_id": "F82D6FAB5916065B4C04FD2BB5339518321D33B42E2AF89B93791E24E4745F71",
+              "context_hash": "36E8FE5B11D29C5E241E9031ABC2ED02B23A985E0E311A4DCB2BCB5DF6022FB0",
+              "intent_indexes": [
+                0
+              ],
+              "adapter_indexes": [
+                0
+              ],
+              "selected_indexes": [
+                0
+              ],
+              "macro_proof_hash": "DC78547F0EBA508420A663B1E457144DD41B07600EF88A89EA7CB23371E793A4",
+              "adapter_hash": "B3B30879DD7875D9289E909EE6523291CFAFA6C5F94F431DCC5FD7C2F12A0DF3",
+              "proposal_hash": "A3AF9D99A88E8630B8536A23B23ABFDBA2AA99F03764D0C32ED414DAC3A41329",
+              "ir_hash": "2F343AB7645D80D1644B8617D8B247C10D63A1CAEB84DCB93B90BA6444F2381A",
+              "execution_hash": "56A6E5CA3392DA2A1D3B42CAB5D7B164D129FFE61459B4D4A5914F9CED7C86EF",
+              "decision_audit_id": "D72860C33A1E1E2C7495E6394EDB89D894C650C6B4866D9300D125A9AD0C8091",
+              "trace_hash": "6AAD6F2CB43EFDD194FB672FF70FCF6AAA25385CB78E04B4CE44FA2F71C0E517",
+              "orchestration_hash": "344022714D90F6EC2CA7A39FE571EEC3CE2713CEBBEA4AA7780BD7144EFF76F3",
+              "previous_result_hash": "C3D66B65B5BC237814E9D8AC6A2EAD3369195965CAD80BDA6553B2F346A7D433",
+              "public_only": true,
+              "authoritative": false,
+              "execution_authority": false,
+              "result_hash": "01AAA0E94BD236A921C70D5E172F257DE4541823BE1D90D0AFC614AB1CCB0CC5"
+            }
+          ],
+          "public_only": true,
+          "authoritative": false,
+          "execution_authority": false
+        }
+      }
+    },
+    {
+      "case_id": "unknown-case",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": "unknown"
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "case_unknown",
+        "value": null
+      }
+    },
+    {
+      "case_id": "invalid-case-type",
+      "operation": "evaluate_case",
+      "input": {
+        "case_id": {
+          "host_type": "integer",
+          "value": 1
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error_code": "input_type_invalid",
+        "value": null
+      }
+    },
+    {
+      "case_id": "unknown-operation",
+      "operation": "PRIVATE_SENTINEL",
+      "input": {},
+      "expected": {
+        "ok": false,
+        "error_code": "operation_unknown",
+        "value": null
+      }
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_SENTINEL",
+    "search_begin_input",
+    "token_free_callback_hash"
+  ],
+  "consumer_rule": "Serialized cases are public audit DTOs only; consumers must recompute exact owner-bound context/window/IR/adapter results and never execute indexes from this artifact."
+}

@@ -1,0 +1,89 @@
+{
+  "checkpoint": {
+    "acting_seat": "0|1|null",
+    "callback_ordinal": "nonnegative_integer",
+    "diagnostic_capability_mask": "ordered_string_array",
+    "incremental_logs": "ordered_array",
+    "kind": "INITIAL_DECK|SELECTION|TERMINAL",
+    "option_fingerprints": "ordered_upper_sha256_array",
+    "ordered_options": "ordered_array",
+    "public_snapshot": "object",
+    "random_event_cursor": "nonnegative_integer",
+    "raw_actor_observation": "object|null",
+    "raw_observation_hash": "upper_sha256_of_public_semantics_without_opaque_search_token_value",
+    "select": "object|null",
+    "source_lane": "official_native|godot_private; adapter-bound and not inferred from observation payload",
+    "transition_ordinal": "nonnegative_integer",
+    "window_generation": "positive_integer|null",
+    "window_handle": "nonempty_string|null"
+  },
+  "commit": {
+    "input": {
+      "indexes": "unique_current_window_integer_indexes",
+      "window_handle": "exact_current_window_handle"
+    },
+    "transition_witness": {
+      "accepted": true,
+      "indexes": "exact_accepted_indexes",
+      "selection_count": "len(indexes)"
+    }
+  },
+  "start_input": {
+    "official_lane": "two exact 60-card official numeric ID arrays",
+    "godot_stored_lane": "two private deck IDs",
+    "godot_research_lane": "two exact 60-card private set_code/card_index/count entry arrays",
+    "godot_research_deck_validation": "exact keys, known private printing, positive counts, unique printing rows, total 60",
+    "starting_player_lifecycle": "coin-winning chooser receives current YES_NO/IS_FIRST window; returned index selects final first player before setup",
+    "private_state_injection": false
+  },
+  "contract_generation": 2,
+  "document_type": "ptcgdap_a3_engine_adapter_v2",
+  "methods": [
+    "create",
+    "start",
+    "next_checkpoint",
+    "commit",
+    "semantic_snapshot",
+    "random_events_since",
+    "terminal_result",
+    "dispose"
+  ],
+  "privacy": {
+    "godot_incremental_logs": "per-acting-seat public allow-list; never recursively serialize action.data or hidden engine objects",
+    "search_begin_input": "opaque_private_transport_token_never_persisted_or_compared_by_value"
+  },
+  "private_corresponding_card_operation_input": {
+    "profile": "ptcgdap_corresponding_card_operation_input_v1",
+    "authority": "research_only_not_official_raw_callback",
+    "fields": [
+      "acting_seat",
+      "select_header",
+      "ordered_semantic_options"
+    ],
+    "identity_binding": "explicit_card_attack_and_match_entity_relation_only",
+    "forbidden_binding": [
+      "display_name",
+      "translation",
+      "current_zone_guess",
+      "slot_name_guess"
+    ],
+    "return_contract": "exact_current_window_list_of_unique_integer_indexes"
+  },
+  "native_shape_notes": {
+    "official_state_card_identity": "Card.id plus Card.serial",
+    "official_option_card_identity": "Option.cardId where populated",
+    "official_in_play_shape": "locked runtime exposes active/bench entries directly; legacy reviewed fixtures may expose a stack wrapper",
+    "normalization_boundary": "only the research operation projection normalizes native identity field names"
+  },
+  "schema_version": 2,
+  "states": [
+    "CREATED",
+    "STARTED",
+    "WAITING_SELECTION",
+    "COMMITTED",
+    "INVALIDATED",
+    "NEXT_CHECKPOINT",
+    "TERMINAL",
+    "DISPOSED"
+  ]
+}

@@ -18,7 +18,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not _get_water_energy_cards(player.discard_pile).is_empty() and not _get_water_targets(player).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var energy_items: Array = _get_water_energy_cards(player.discard_pile)
 	if energy_items.is_empty():

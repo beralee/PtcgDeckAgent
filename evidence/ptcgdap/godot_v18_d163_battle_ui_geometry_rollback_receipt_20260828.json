@@ -1,0 +1,53 @@
+{
+  "schema": "ptcgdap_battle_ui_geometry_rollback_receipt_v1",
+  "work_package": "D163",
+  "generated_at": "2026-08-29T00:01:08.5775943+08:00",
+  "status": "implemented_focused_tested_visible_windows_battle_confirmation_pending",
+  "rejected_work_package": "D161",
+  "rejected_reason": "Windows player-visible acceptance found operated field cards moving downward and changing size",
+  "preserved_work_packages": [
+    "D158_author_realtime_compact_recording_visual_first_batched_logging",
+    "D162_author_catalog_cached_v2_startup"
+  ],
+  "removed_contract_signatures": [
+    "is_bound_to_instance",
+    "battle_field_slot_style_signature",
+    "_pending_field_resync_events",
+    "_request_battle_visual_completion_resync",
+    "_request_draw_reveal_completion_reconciliation",
+    "PTCGDAP_VISUAL_COMPLETION_PROFILE",
+    "_sync_field_card_foil_effects",
+    "_request_complete_prize_presentation"
+  ],
+  "tdd": {
+    "test": "test_field_refresh_rebinds_unchanged_cards_to_restore_authoritative_ui_state",
+    "red": "expected setup count 3, actual 1",
+    "green": "passed after function-level rollback"
+  },
+  "tests": {
+    "test_battle_display_controller.gd": "17/17",
+    "test_battle_visual_sequence_controller.gd": "14/14",
+    "test_author_live_performance_contract.gd": "6/6",
+    "test_battle_visual_runtime.gd": "7/7",
+    "test_switching_ticket_animation.gd": "9/9",
+    "test_battle_hand_surface_reconciliation.gd": "16/16",
+    "test_battle_ui_features_part3.gd": "84/84",
+    "total": "153/153"
+  },
+  "source_sha256": {
+    "scenes/battle/BattleCardView.gd": "08C8E6441EA19B9FAE51BC65966687CFCA62C3028A0E4402E47369318373BD00",
+    "scripts/ui/battle/BattleDisplayController.gd": "F6421C2FBD45C0FE776D913D7BE72FB0399114F318808C164CE3EDACFD5D3EB6",
+    "scripts/ui/battle/BattleDrawRevealController.gd": "EF7C2A57B11EA98F6915D1EE52B61DEAB41ED984CD0861FB02B2538A1C6D6BFE",
+    "scripts/ui/battle/visuals/BattleVisualSequenceController.gd": "A8FD5CB433C93F602657B9EFEC644592688BFA769C1445B60BF7CC2CEC5868F3",
+    "scenes/battle/runtime/BattleSceneBoardActionRuntime.gd": "9C79EEC78E9473EAA3B7DDC8ABC6B48A57B9C1C07102BB77C12AC2639CC28C9F",
+    "tests/test_battle_display_controller.gd": "8A3B50615D24EC26268747E5E3E244C4AFADB77E7E94E3D47FC0CE8DFCEC1A01",
+    "tests/test_battle_visual_sequence_controller.gd": "1F8C1206AD7A6171F7ABE63683E22E9E5F0482FF9659F0E968968F0B5B939D88",
+    "tests/ptcgdap/godot/test_author_live_performance_contract.gd": "DA5992023F8BE7025BE1E1A63945028211FF6EF0405EFFD1AEF39DCF75644681"
+  },
+  "alignment": "local_godot_windows_ui_authoritative_refresh_contract_plus_focused_integration",
+  "visible_windows_battle_confirmed": false,
+  "android_a5_confirmed": false,
+  "production_ready": false,
+  "official_cabt_authority": false,
+  "engine_parity": false
+}

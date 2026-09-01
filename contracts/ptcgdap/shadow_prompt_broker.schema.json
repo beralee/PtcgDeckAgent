@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/shadow_prompt_broker.schema.json",
+  "title": "PtcgDAP shadow prompt broker audit DTOs",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/promptAudit"
+    },
+    {
+      "$ref": "#/$defs/brokerResult"
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-F0-9]{64}$"
+    },
+    "positiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "promptAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "prompt_family",
+        "broker_generation",
+        "match_generation",
+        "decision_generation",
+        "snapshot_id",
+        "window_id",
+        "public_observation_hash",
+        "chooser_player_index",
+        "state",
+        "witness",
+        "resolution_count",
+        "authority",
+        "authoritative"
+      ],
+      "properties": {
+        "profile": {
+          "const": "ptcgdap-shadow-prompt-broker-p3-wp5-v1"
+        },
+        "prompt_family": {
+          "enum": [
+            "W1",
+            "W2",
+            "W3",
+            "W4",
+            "W5",
+            "W6",
+            "W7"
+          ]
+        },
+        "broker_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "match_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "decision_generation": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "snapshot_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "window_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "public_observation_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "chooser_player_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "state": {
+          "enum": [
+            "open",
+            "prepared",
+            "awaiting_reobserve",
+            "aborted",
+            "superseded"
+          ]
+        },
+        "witness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "accepted",
+            "bound",
+            "committed"
+          ],
+          "properties": {
+            "accepted": {
+              "type": "boolean"
+            },
+            "bound": {
+              "type": "boolean"
+            },
+            "committed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "resolution_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256
+        },
+        "authority": {
+          "const": "shadow_prompt_broker_audit"
+        },
+        "authoritative": {
+          "const": false
+        }
+      }
+    },
+    "brokerResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "error_code",
+        "audit"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "enum": [
+            "",
+            "invalid_broker",
+            "invalid_family",
+            "invalid_context",
+            "active_prompt_exists",
+            "prompt_not_current",
+            "prompt_integrity_invalid",
+            "selection_invalid",
+            "ticket_issue_failed",
+            "ticket_claim_failed",
+            "preflight_failed",
+            "commit_failed",
+            "reobserve_required",
+            "stale_decision_generation",
+            "same_window_reused",
+            "cross_owner",
+            "match_generation_mismatch",
+            "broker_aborted",
+            "generation_exhausted"
+          ]
+        },
+        "audit": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/promptAudit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "const": ""
+              },
+              "audit": {
+                "$ref": "#/$defs/promptAudit"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "accepted": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error_code": {
+                "enum": [
+                  "invalid_broker",
+                  "invalid_family",
+                  "invalid_context",
+                  "active_prompt_exists",
+                  "prompt_not_current",
+                  "prompt_integrity_invalid",
+                  "selection_invalid",
+                  "ticket_issue_failed",
+                  "ticket_claim_failed",
+                  "preflight_failed",
+                  "commit_failed",
+                  "reobserve_required",
+                  "stale_decision_generation",
+                  "same_window_reused",
+                  "cross_owner",
+                  "match_generation_mismatch",
+                  "broker_aborted",
+                  "generation_exhausted"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

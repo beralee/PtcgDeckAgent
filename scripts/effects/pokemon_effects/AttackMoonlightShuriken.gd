@@ -35,7 +35,7 @@ func ignores_defender_effects(_attacker: PokemonSlot, _state: GameState, attack_
 	return ignore_target_effects and applies_to_attack_index(attack_index)
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	_card: CardInstance,
 	_attack: Dictionary,
 	state: GameState

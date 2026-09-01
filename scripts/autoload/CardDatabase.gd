@@ -14,16 +14,20 @@ const BUNDLED_USER_DIR := "res://data/bundled_user/"
 const BUNDLED_CARDS_DIR := BUNDLED_USER_DIR + "cards/"
 const BUNDLED_DECKS_DIR := BUNDLED_USER_DIR + "decks/"
 const BUNDLED_MANIFEST := BUNDLED_USER_DIR + "_manifest.txt"
+const BUNDLED_SEED_CONTENT_REVISION := BUNDLED_USER_DIR + "_seed_content_sha256.txt"
+const BUNDLED_SEED_COMPLETION := "user://.bundled_seed_completion_v1.json"
+const BUNDLED_SEED_PIPELINE_REVISION := 1
 const EFFECT_ALIASES_PATH := CARDS_DIR + "effect_aliases.json"
 const SUPPORTED_AI_DECK_IDS: Array[int] = [
 	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
+	646600,
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 	1750002,
 	18000230, 18000625,
-	800015734, 800015934, 800016834, 800017047, 800017097, 800017407,
+	800015734, 800015934, 800016834, 800017047, 800017097, 800017280, 800017407,
 	800017631, 800017643, 800018105, 800018359, 800018497, 800018498,
 	800018499, 800018500, 800018501, 800018502, 800018509, 800018539,
-	800018543, 800018880, 800019125, 800033475,
+	800018543, 800018880, 800019125, 800033475, 800052301,
 ]
 # 2026-07-18 final same-seed n100 results versus rules-only Miraidon (575720).
 # Sort by normal-mode wins descending; strong-mode wins break equal normal scores.
@@ -52,6 +56,7 @@ const V18_AI_DECK_STRENGTH_ORDER_IDS: Array[int] = [
 	800017643, # 20% normal, 35% strong
 	800018539, # 13% normal, 35% strong
 	800018359, # 9% normal, 52% strong
+	800017280, # 72.3% rules-only versus Marnie's Grimmsnarl; Miraidon ordering pending
 ]
 const DEPRECATED_BUNDLED_DECK_IDS: Array[int] = [
 	800018921,
@@ -68,6 +73,36 @@ const BUNDLED_DECK_CARD_REPLACEMENTS := {
 		"CSV2C_054": "CS6.5C_030",
 	},
 }
+const LEGACY_ARCHALUDON_POISON_SEED_COUNTS := {
+	"151C_151": 1,
+	"CSV1C_111": 1,
+	"CSV1C_112": 4,
+	"CSV1C_121": 2,
+	"CSV2C_105": 2,
+	"CSV2C_113": 3,
+	"CSV3C_123": 2,
+	"CSV6C_095": 2,
+	"CSV6C_115": 2,
+	"CSV6C_118": 3,
+	"CSV6C_125": 1,
+	"CSV7C_200": 3,
+	"CSV8C_135": 1,
+	"CSV8C_176": 1,
+	"CSV8C_183": 3,
+	"CSV8C_187": 2,
+	"CSV8C_199": 4,
+	"CSV9C_078": 1,
+	"CSV9C_127": 2,
+	"CSV9C_136": 4,
+	"CSV9C_138": 3,
+	"CSVE1C_MET": 7,
+	"CSVH1C_043": 4,
+	"CSVH1aC_023": 2,
+}
+const BUNDLED_CARD_ATTACK_COST_MIGRATIONS := {
+	"CSV7C_059": {"attack_index": 0, "legacy_cost": "W", "current_cost": "WC"},
+	"CSV9.5C_043": {"attack_index": 0, "legacy_cost": "W", "current_cost": "WC"},
+}
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
@@ -78,10 +113,13 @@ var _bundled_deck_signature_cache: Dictionary = {}
 ## 内存中的卡组缓存 {deck_id -> DeckData}
 var _deck_cache: Dictionary = {}
 var _ai_deck_cache: Dictionary = {}
+var _deck_cache_complete := false
+var _ai_deck_cache_complete := false
 var _sorted_deck_cache: Array[DeckData] = []
 var _sorted_ai_deck_cache: Array[DeckData] = []
 var _sorted_deck_cache_dirty := true
 var _sorted_ai_deck_cache_dirty := true
+var _bundled_seed_audit_running := false
 
 ## 卡组列表变更信号
 signal decks_changed()
@@ -89,11 +127,9 @@ signal decks_changed()
 
 func _ready() -> void:
 	_ensure_directories()
-	_ensure_card_catalog_index()
 	_load_effect_aliases()
-	_seed_bundled_user_data()
-	_load_all_decks()
-	_load_all_ai_decks()
+	_seed_bundled_user_data(true)
+	call_deferred("_start_bundled_seed_target_audit")
 
 
 func _ensure_card_catalog_index() -> void:
@@ -202,8 +238,11 @@ func _ensure_directories() -> void:
 	_ensure_user_data_dir(AI_DECKS_DIR)
 
 
-func _seed_bundled_user_data() -> void:
+func _seed_bundled_user_data(use_completion_marker: bool = false) -> void:
 	var manifest := _load_bundled_manifest()
+	if use_completion_marker and _bundled_seed_completion_is_current(manifest):
+		_remove_deprecated_bundled_decks()
+		return
 	for bundled_path: String in manifest:
 		if bundled_path.ends_with(".import"):
 			continue
@@ -225,6 +264,85 @@ func _seed_bundled_user_data() -> void:
 			_copy_file_if_missing(bundled_path, target_path)
 	_backfill_deck_strategy_from_bundled(manifest)
 	_remove_deprecated_bundled_decks()
+	if use_completion_marker and _bundled_seed_targets_are_present(manifest):
+		_write_bundled_seed_completion()
+
+
+func _bundled_seed_completion_is_current(manifest: Array[String]) -> bool:
+	if not FileAccess.file_exists(BUNDLED_SEED_COMPLETION):
+		return false
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(BUNDLED_SEED_COMPLETION))
+	if not parsed is Dictionary:
+		return false
+	var marker := parsed as Dictionary
+	return (
+		int(marker.get("schema_version", 0)) == 1
+		and int(marker.get("pipeline_revision", 0)) == BUNDLED_SEED_PIPELINE_REVISION
+		and str(marker.get("content_revision", "")) == _bundled_seed_content_revision()
+		and int(marker.get("manifest_entry_count", -1)) == manifest.size()
+	)
+
+
+func _bundled_seed_targets_are_present(manifest: Array[String]) -> bool:
+	for bundled_path: String in manifest:
+		if not _bundled_seed_target_is_present(bundled_path):
+			return false
+	return true
+
+
+func _start_bundled_seed_target_audit() -> void:
+	if _bundled_seed_audit_running or not is_inside_tree():
+		return
+	_bundled_seed_audit_running = true
+	_run_bundled_seed_target_audit(_load_bundled_manifest())
+
+
+func _run_bundled_seed_target_audit(manifest: Array[String]) -> void:
+	var missing_target := false
+	for index: int in range(manifest.size()):
+		if not _bundled_seed_target_is_present(manifest[index]):
+			missing_target = true
+			break
+		if index > 0 and index % 64 == 0 and is_inside_tree():
+			await get_tree().process_frame
+	_bundled_seed_audit_running = false
+	if missing_target:
+		# Missing user copies are repaired after the first interactive frame. Card
+		# reads remain functional meanwhile because they already fall back to the
+		# immutable bundled resources.
+		_seed_bundled_user_data(false)
+
+
+func _bundled_seed_target_is_present(bundled_path: String) -> bool:
+	if bundled_path.ends_with(".import") or not FileAccess.file_exists(bundled_path):
+		return true
+	var relative := bundled_path.trim_prefix(BUNDLED_USER_DIR)
+	var target_path := ""
+	if relative.begins_with("cards/"):
+		var entry_name := relative.get_file()
+		var sub_dir := relative.trim_prefix("cards/").get_base_dir()
+		var target_dir := CARD_IMAGES_DIR.path_join(sub_dir.trim_prefix("images/")) if sub_dir.begins_with("images/") else CARDS_DIR.path_join(sub_dir)
+		target_path = _resolve_bundled_target_path(target_dir, entry_name)
+	elif relative.begins_with("decks/"):
+		target_path = DECKS_DIR.path_join(relative.get_file())
+	return target_path == "" or FileAccess.file_exists(target_path)
+
+
+func _write_bundled_seed_completion() -> void:
+	var file := FileAccess.open(BUNDLED_SEED_COMPLETION, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({
+		"schema_version": 1,
+		"pipeline_revision": BUNDLED_SEED_PIPELINE_REVISION,
+		"content_revision": _bundled_seed_content_revision(),
+		"manifest_entry_count": _load_bundled_manifest().size(),
+	}) + "\n")
+	file.close()
+
+
+func _bundled_seed_content_revision() -> String:
+	return FileAccess.get_file_as_string(BUNDLED_SEED_CONTENT_REVISION).strip_edges()
 
 
 func _remove_deprecated_bundled_decks() -> void:
@@ -349,8 +467,9 @@ func _merge_bundled_deck_migrations(bundled_data: Dictionary, user_dict: Diction
 	var deck_id := int(bundled_data.get("id", -1))
 	if deck_id != int(user_dict.get("id", -1)):
 		return false
+	var changed := _merge_legacy_archaludon_poison_seed(bundled_data, user_dict)
 	if not BUNDLED_DECK_CARD_REPLACEMENTS.has(deck_id):
-		return false
+		return changed
 	var replacements: Dictionary = BUNDLED_DECK_CARD_REPLACEMENTS[deck_id]
 	var bundled_cards: Array = bundled_data.get("cards", []) if bundled_data.get("cards", []) is Array else []
 	var user_cards: Array = user_dict.get("cards", []) if user_dict.get("cards", []) is Array else []
@@ -359,7 +478,6 @@ func _merge_bundled_deck_migrations(bundled_data: Dictionary, user_dict: Diction
 		if raw_entry is Dictionary:
 			var entry := raw_entry as Dictionary
 			bundled_by_uid[_deck_entry_uid(entry)] = entry
-	var changed := false
 	for index: int in user_cards.size():
 		if not (user_cards[index] is Dictionary):
 			continue
@@ -377,6 +495,43 @@ func _merge_bundled_deck_migrations(bundled_data: Dictionary, user_dict: Diction
 	if changed:
 		user_dict["cards"] = user_cards
 	return changed
+
+
+func _merge_legacy_archaludon_poison_seed(bundled_data: Dictionary, user_dict: Dictionary) -> bool:
+	if int(bundled_data.get("id", -1)) != 800017280:
+		return false
+	if str(user_dict.get("source_provider", "")).strip_edges().to_lower() != "limitless" \
+			or str(user_dict.get("source_id", "")).strip_edges() != "17280" \
+			or str(user_dict.get("deck_name", "")) != "18.0 毒桥龙" \
+			or str(user_dict.get("variant_name", "")) != "18.0 毒桥龙":
+		return false
+	var user_cards: Array = user_dict.get("cards", []) if user_dict.get("cards", []) is Array else []
+	if _deck_uid_count_map(user_cards) != LEGACY_ARCHALUDON_POISON_SEED_COUNTS:
+		# The seed is no longer byte-semantically equivalent to the reviewed old
+		# list, so treat it as a later user edit and leave it untouched.
+		return false
+	var bundled_cards: Array = bundled_data.get("cards", []) if bundled_data.get("cards", []) is Array else []
+	if bundled_cards.is_empty():
+		return false
+	user_dict["cards"] = bundled_cards.duplicate(true)
+	user_dict["deck_name"] = str(bundled_data.get("deck_name", ""))
+	user_dict["variant_name"] = str(bundled_data.get("variant_name", ""))
+	user_dict["total_cards"] = int(bundled_data.get("total_cards", 60))
+	return true
+
+
+func _deck_uid_count_map(cards: Array) -> Dictionary:
+	var result := {}
+	for raw_entry: Variant in cards:
+		if not (raw_entry is Dictionary):
+			return {}
+		var entry := raw_entry as Dictionary
+		var uid := _deck_entry_uid(entry)
+		var count := int(entry.get("count", 0))
+		if uid == "" or count <= 0 or result.has(uid):
+			return {}
+		result[uid] = count
+	return result
 
 
 func _deck_entry_uid(entry: Dictionary) -> String:
@@ -570,6 +725,8 @@ func _card_json_identity_matches(source_data: Dictionary, target_data: Dictionar
 
 
 func _bundled_card_json_has_missing_implementation_data(source_data: Dictionary, target_data: Dictionary) -> bool:
+	if _bundled_card_json_requires_attack_cost_migration(source_data, target_data):
+		return true
 	if int(source_data.get("bundled_implementation_revision", 0)) > int(target_data.get("bundled_implementation_revision", 0)):
 		return true
 	for key: String in [
@@ -601,6 +758,35 @@ func _bundled_card_json_has_missing_implementation_data(source_data: Dictionary,
 	if _seed_limitless_display_fields_differ(source_data, target_data):
 		return true
 	return false
+
+
+func _bundled_card_json_requires_attack_cost_migration(source_data: Dictionary, target_data: Dictionary) -> bool:
+	if not _card_json_identity_matches(source_data, target_data):
+		return false
+	var uid := "%s_%s" % [
+		str(source_data.get("set_code", "")).strip_edges(),
+		str(source_data.get("card_index", "")).strip_edges(),
+	]
+	if not BUNDLED_CARD_ATTACK_COST_MIGRATIONS.has(uid):
+		return false
+	var migration: Dictionary = BUNDLED_CARD_ATTACK_COST_MIGRATIONS[uid]
+	var attack_index := int(migration.get("attack_index", -1))
+	var source_attacks: Variant = source_data.get("attacks")
+	var target_attacks: Variant = target_data.get("attacks")
+	if (
+		attack_index < 0
+		or not source_attacks is Array
+		or not target_attacks is Array
+		or attack_index >= source_attacks.size()
+		or attack_index >= target_attacks.size()
+		or not source_attacks[attack_index] is Dictionary
+		or not target_attacks[attack_index] is Dictionary
+	):
+		return false
+	return (
+		str((source_attacks[attack_index] as Dictionary).get("cost", "")) == migration.get("current_cost")
+		and str((target_attacks[attack_index] as Dictionary).get("cost", "")) == migration.get("legacy_cost")
+	)
 
 
 func _seed_json_array_entries_missing_display_fields(source_value: Variant, target_value: Variant) -> bool:
@@ -1020,13 +1206,25 @@ func delete_deck(deck_id: int) -> void:
 
 ## 获取卡组
 func get_deck(deck_id: int) -> DeckData:
-	_ensure_deck_cache_ready()
-	return _deck_cache.get(deck_id)
+	if _deck_cache.has(deck_id):
+		return _deck_cache.get(deck_id)
+	var deck := _load_deck_from_file(DECKS_DIR.path_join("%d.json" % deck_id))
+	if deck == null:
+		deck = _load_deck_from_file(BUNDLED_DECKS_DIR.path_join("%d.json" % deck_id))
+	if deck != null:
+		_deck_cache[deck.id] = deck
+		_mark_deck_sort_cache_dirty()
+	return deck
 
 
 func get_ai_deck(deck_id: int) -> DeckData:
-	_ensure_ai_deck_cache_ready()
-	return _ai_deck_cache.get(deck_id)
+	if _ai_deck_cache.has(deck_id):
+		return _ai_deck_cache.get(deck_id)
+	var deck := _load_bundled_ai_deck(deck_id) if SUPPORTED_AI_DECK_IDS.has(deck_id) else _load_deck_from_file(AI_DECKS_DIR.path_join("%d.json" % deck_id))
+	if deck != null:
+		_ai_deck_cache[deck.id] = deck
+		_mark_ai_deck_sort_cache_dirty()
+	return deck
 
 
 ## 获取所有卡组列表
@@ -1054,13 +1252,11 @@ func get_all_ai_decks() -> Array[DeckData]:
 
 ## 是否存在指定卡组
 func has_deck(deck_id: int) -> bool:
-	_ensure_deck_cache_ready()
-	return _deck_cache.has(deck_id)
+	return get_deck(deck_id) != null
 
 
 func has_ai_deck(deck_id: int) -> bool:
-	_ensure_ai_deck_cache_ready()
-	return _ai_deck_cache.has(deck_id)
+	return get_ai_deck(deck_id) != null
 
 
 func get_supported_ai_deck_ids() -> Array[int]:
@@ -1204,6 +1400,7 @@ func _generated_ai_deck_release_key(deck: DeckData) -> int:
 ## 从文件系统加载所有卡组
 func _load_all_decks() -> void:
 	_deck_cache = _load_deck_cache_from_dir(DECKS_DIR)
+	_deck_cache_complete = true
 	_mark_deck_sort_cache_dirty()
 
 
@@ -1213,6 +1410,7 @@ func _load_all_ai_decks() -> void:
 		var bundled_ai_deck := _load_bundled_ai_deck(deck_id)
 		if bundled_ai_deck != null:
 			_ai_deck_cache[deck_id] = bundled_ai_deck
+	_ai_deck_cache_complete = true
 	_mark_ai_deck_sort_cache_dirty()
 
 
@@ -1227,17 +1425,16 @@ func _mark_ai_deck_sort_cache_dirty() -> void:
 
 
 func _ensure_deck_cache_ready() -> void:
-	if not _deck_cache.is_empty():
+	if _deck_cache_complete:
 		return
 	_ensure_directories()
-	_seed_bundled_user_data()
+	_seed_bundled_user_data(true)
 	_load_all_decks()
 
 
 func _ensure_ai_deck_cache_ready() -> void:
-	if not _ai_deck_cache.is_empty():
+	if _ai_deck_cache_complete:
 		return
-	_ensure_deck_cache_ready()
 	_load_all_ai_decks()
 
 

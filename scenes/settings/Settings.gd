@@ -29,6 +29,11 @@ var _web_platform_services: WebPlatformServices = WebPlatformServicesScript.new(
 var _active_provider: String = "deepseek"
 var _provider_configs: Dictionary = {}
 var _provider_button_group := ButtonGroup.new()
+var _embedded_in_strategy_hub := false
+
+
+func configure_for_strategy_hub_workspace() -> void:
+	_embedded_in_strategy_hub = true
 
 
 func _ready() -> void:
@@ -41,6 +46,7 @@ func _ready() -> void:
 	_connect_settings_controls()
 	_populate_model_options()
 	_load_config()
+	_apply_embedded_strategy_hub_chrome()
 	call_deferred("_apply_non_battle_layout")
 
 
@@ -55,6 +61,8 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _embedded_in_strategy_hub and not is_visible_in_tree():
+		return
 	if _handle_settings_model_picker_input(event):
 		return
 	if _handle_portrait_action_footer_input(event):
@@ -248,7 +256,7 @@ func _layout_portrait_action_footer(context: Dictionary, content_width: float, c
 	var visible_buttons: Array[Button] = []
 	for button_name: String in ["BtnSave", "BtnTest", "BtnBack"]:
 		var button := find_child(button_name, true, false) as Button
-		if button != null:
+		if button != null and button.visible:
 			button.mouse_filter = Control.MOUSE_FILTER_STOP
 			visible_buttons.append(button)
 	if not visible_buttons.is_empty():
@@ -571,6 +579,19 @@ func _configure_settings_form_bounds() -> void:
 	form.offset_top = -300
 	form.offset_right = 430
 	form.offset_bottom = 300
+
+
+func _apply_embedded_strategy_hub_chrome() -> void:
+	if not _embedded_in_strategy_hub:
+		return
+	for chrome_name: String in ["Background", "BackgroundShade", "Title"]:
+		var chrome := find_child(chrome_name, true, false) as CanvasItem
+		if chrome != null:
+			chrome.visible = false
+	var back_button := _settings_button("BtnBack")
+	if back_button != null:
+		back_button.visible = false
+		back_button.disabled = true
 
 
 func _ensure_deepseek_setup_guide() -> void:

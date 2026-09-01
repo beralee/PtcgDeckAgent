@@ -1,0 +1,68 @@
+{
+  "schema": "ptcgdap.visual_completion_performance_receipt.v1",
+  "decision_id": "D161",
+  "generated_at": "2026-08-28T22:25:00+08:00",
+  "status": "implemented_focused_tested_user_visible_post_fix_rerun_pending",
+  "alignment": "local_godot_windows_structural_and_focused_integration",
+  "reproduction": {
+    "match_id": "match_20260828_215722_938052",
+    "started_at": "2026-08-28T21:57:20+08:00",
+    "completed_at": "2026-08-28T22:04:04+08:00",
+    "native_event_count": 411,
+    "action_resolved_count": 146,
+    "choice_context_count": 59,
+    "state_snapshot_count": 204,
+    "detail_bytes": 19471148,
+    "player_visual_acceptance": false,
+    "reported_hot_edge": "animation_completion"
+  },
+  "input_hashes": {
+    "native_replay_manifest.json": "159C73ADBA28ED6C2EA3AAB41EA1CEDD3B1A4C58DB463D47EA8BCCA53F1AD40A",
+    "summary.log": "4DFB325125562862222B98680231953E7AC46E302F6B259724950E356F9471A0"
+  },
+  "contracts": {
+    "field_resync_coalesced_until_queue_drain": true,
+    "completion_work_deferred_from_tween_final_frame": true,
+    "ai_gate_released_after_repaint": true,
+    "stable_card_binding_reused": true,
+    "unchanged_status_and_style_reused": true,
+    "field_foil_sync_avoids_scene_tree_recursion": true,
+    "slow_completion_threshold_usec": 8000,
+    "rollback_environment": "PTCGDAP_VISUAL_COMPLETION_PROFILE=immediate_v1",
+    "rule_or_policy_authority_changed": false
+  },
+  "focused_tests": [
+    {"suite": "test_battle_visual_sequence_controller.gd", "passed": 16, "failed": 0},
+    {"suite": "test_battle_display_controller.gd", "passed": 17, "failed": 0},
+    {"suite": "test_battle_visual_runtime.gd", "passed": 7, "failed": 0},
+    {"suite": "test_author_live_performance_contract.gd", "passed": 6, "failed": 0},
+    {"suite": "test_battle_ui_features_part3.gd", "passed": 84, "failed": 0},
+    {"suite": "test_switching_ticket_animation.gd", "passed": 9, "failed": 0},
+    {"suite": "test_battle_hand_surface_reconciliation.gd", "passed": 16, "failed": 0}
+  ],
+  "focused_total": {"passed": 155, "failed": 0},
+  "known_unrelated_failures": [
+    "test_battle_ui_features_part2.gd: 88/92; Trekking Shoes UCIS and Nest Ball existing failures",
+    "test_ai_baseline.gd: 99/101; mulligan window and interactive ability existing failures",
+    "test_battle_scene_architecture_audit.gd: 4/5; existing BattleSceneRuntime.gd 3049-line baseline"
+  ],
+  "source_sha256": {
+    "scripts/ui/battle/visuals/BattleVisualSequenceController.gd": "BABDB87D596921C692E89EB0D6CDBA22F168050AA06A5440D1B22B1063B42976",
+    "scripts/ui/battle/BattleDisplayController.gd": "F3A68728C59923CB23FF7A244882A91DDE42A7BF1C36DE4ECF3FA8E23EB0C971",
+    "scenes/battle/BattleCardView.gd": "E094CE1D9CA43AC56114C2CDFE29165D5665883B42FC04005E863F3E56ADEEFC",
+    "scenes/battle/runtime/BattleSceneBoardActionRuntime.gd": "60EC5E5D85FB5844738EF220C74DF8236C72B226A7C913320B4B05B1E254DD23",
+    "scripts/ui/battle/BattleDrawRevealController.gd": "FB214C5EEFC1B9A1CD53613973B40869CF94D6D274223F55F599E2809F953FE4",
+    "tests/test_battle_visual_sequence_controller.gd": "609836D30916FBF6F1DD6A8D1BDFE74380C2ACF4ABCE3E465AC94B3481466BD0",
+    "tests/test_battle_display_controller.gd": "251EA22027B881145D73DA638685D75EE885A743DE0E605EA27CEB2A9BEB180C",
+    "tests/ptcgdap/godot/test_author_live_performance_contract.gd": "C6FB3FD0B7A12FA600F5BDE9F33DCD151E7CB42B88D2B3FDE518E9643731E9F4"
+  },
+  "not_claimed": [
+    "post_fix_user_visible_full_match",
+    "windows_rendered_frame_time_p95",
+    "android_or_a5",
+    "production",
+    "official_cabt_or_kaggle_authority",
+    "full_engine_parity",
+    "strategy_strength"
+  ]
+}

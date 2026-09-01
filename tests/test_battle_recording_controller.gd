@@ -37,3 +37,21 @@ func test_recording_phase_name_returns_empty_without_game_state() -> String:
 	return run_checks([
 		assert_eq(phase, "", "recording_phase_name should stay empty when no game state exists"),
 	])
+
+
+func test_local_recording_includes_ai_and_author_strategy_battles() -> String:
+	var controller := BattleRecordingControllerScript.new()
+	var previous_mode: int = GameManager.current_mode
+	var results: Array[bool] = []
+	for mode: int in [
+		GameManager.GameMode.TWO_PLAYER,
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]:
+		GameManager.current_mode = mode
+		results.append(bool(controller.call("should_record_local_battle", null)))
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_eq(results, [true, true, true], "Every local battle mode must produce a native replay record"),
+	])

@@ -1,0 +1,44 @@
+{
+  "artifact_id": "ptcgdap-card-id-catalog-bundle-p2-wp2-v1",
+  "artifact_set_policy": "exact_ids_and_paths_no_duplicates",
+  "artifacts": [
+    {
+      "canonical_sha256": "9199FF5CDD6958FC3191F193E56829B75DB694A1488920250F4678AA052F79FE",
+      "id": "schema",
+      "path": "contracts/ptcgdap/card_id_catalog.schema.json"
+    },
+    {
+      "canonical_sha256": "14A01DB7AF8344C8289E02D03478DB5CB8195F8EB78E01976D0672B871EEC90F",
+      "id": "source_manifest",
+      "path": "contracts/ptcgdap/card_id_catalog_source_manifest.json"
+    },
+    {
+      "canonical_sha256": "3ED86C598ECD0BB5367FB575E94113BFE488E0B98FC64D6FABC50A1B0EAA8ED3",
+      "id": "official_master",
+      "path": "data/ptcgdap/card_id_catalog/official_card_attack_master_v1.json"
+    },
+    {
+      "canonical_sha256": "15BDE946C5C5B0102D13C04AE5B7676CB7FB071C32BC35507C24556E1D9FBEC5",
+      "id": "exact_bridge",
+      "path": "data/ptcgdap/card_id_catalog/marnie_exact_print_bridge_v1.json"
+    },
+    {
+      "canonical_sha256": "0AF76EB91CC69BE9D8102391C98EDEB3C9DCF399C1AB1BC5ED253B5E58E305C4",
+      "id": "conformance_vectors",
+      "path": "contracts/ptcgdap/card_id_catalog_conformance_vectors.json"
+    }
+  ],
+  "digest_mode": "canonical_json_v1",
+  "parent_p1_contract": {
+    "canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "contract_id": "ptcgdap-cabt-contract-p1-wp3-v1"
+  },
+  "parent_p2_wp1": {
+    "manifest_canonical_sha256": "81BDB4B254B1A7246F1A071FB0D1ABF2125B9AF31BE6FCB20A9F7DA0DA0C8A3C",
+    "manifest_path": "artifacts/ptcgdap/p2_wp1/manifest.json",
+    "manifest_raw_sha256": "1465FF641BCF722DA3AD411F02DF8377B26872723509EABC355EE1167A1C20E9",
+    "work_package": "P2-WP1"
+  },
+  "schema_version": 1,
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+}

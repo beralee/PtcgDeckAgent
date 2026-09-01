@@ -1,0 +1,94 @@
+{
+  "author_package": {
+    "adapter_sha256": "029713CAD0ABBF8D74897817F96C5B95EFE2896DF6BCDA0EC7317E55D6ADE573",
+    "archive_sha256": "3059C308904B323AF5CA10B1956EF8BB35F77A1174CF0AD0258F1A70A128FF06",
+    "config_sha256": "B844FF63633C2FB02FCC35EE9F55B84452FF8C110FA8DFF83A7383299319B70F",
+    "deck_manifest_sha256": "CDE7DD234533EA63A5AEBC3ECEBFDEFB6B8C79C5597833224E36E4F843CA8E08",
+    "manifest_sha256": "8E2F5641917B5887482A760FFFDE49E07D2B43DA8FEFCFE721BB880420F7107A",
+    "package_id": "ptcgdap.cynthia-garchomp-800018543.windows-local",
+    "package_version": "0.1.0",
+    "path": "data/ptcgdap/author_strategy_packages/ptcgdap-cynthia-garchomp-development-candidate.ptcgai",
+    "policy_ir_sha256": "6ABC6137E39E7A23D4128B07DF0B829D3AB3B5463C63D14F1A60638B8692D2C3",
+    "weights": {
+      "path": "policy/weights.bin",
+      "sha256": "F9FCCBA3E90879CA3678D487B581B69F68B1783BA8D3183A540E0901A8B351CD",
+      "status": "unused_non_model_payload"
+    }
+  },
+  "authority_scope": "development_exact_fixture_only",
+  "capabilities": {
+    "cabt_exportable": false,
+    "cabt_search": "none",
+    "card_id_domain": "godot_local_card_uid_v1",
+    "dynamic_model_download": false,
+    "external_process": false,
+    "network_egress": false,
+    "network_ingress": false,
+    "policy_output": "current_window_indexes_only",
+    "seeded_offline": false,
+    "system_python": false
+  },
+  "contracts": {
+    "base_executor_bundle_canonical_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+    "cabt_contract_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "card_catalog_bundle_canonical_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+    "public_deck_adapter_bundle_canonical_sha256": "C80F4C4FDAEA5AC29BD3C5617BFAC72BE38709696F7EA1995D3D153113DD3CA1",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+    "strategic_trace_v2_bundle_canonical_sha256": "ADDD4CB48BD10FA0478854124D8E63AEE42B898C0EB81692BA35F8D7F90414C4"
+  },
+  "document_type": "policy_package_v1",
+  "executor": {
+    "base_executor_path": "scripts/ai/ptcgdap/public/RestrictedBaseGraphExecutor.gd",
+    "base_executor_sha256": "1962E0F77AB6DCCACCC9F3946119783B801262961E2C57715FC739904E42788F",
+    "engine_action_executor_path": "scripts/ai/ptcgdap/host/godot/AuthorStrategyEngineActionExecutor.gd",
+    "engine_action_executor_sha256": "FB109EF0DAD00FDC0AD3BA08D00122D827D7CB723750F6A404E60F85C98B7D50",
+    "host_adapter_path": "scripts/ai/ptcgdap/runtime/local/CynthiaAuthorStrategyDevelopmentPolicy.gd",
+    "host_adapter_sha256": "5245F2DF721E476E00586332D93378B8476B8D596E6A4E16B01ED55BF4CF82EB",
+    "kind": "gdscript_restricted_ir_v1",
+    "match_owner_path": "scripts/ai/ptcgdap/host/godot/CynthiaAuthorStrategyDevelopmentBattleOwner.gd",
+    "match_owner_sha256": "E929A438C1377C2FCD648321B580C1767DFC178BBA9B463C6A1D41F7A8FB86D2",
+    "policy_boundary": "agent(raw_observation)->list[int]",
+    "portable_baseline": "gdscript"
+  },
+  "fallback": {
+    "classic_raw_state": false,
+    "mode": "deterministic_same_window",
+    "owner": "restricted_base_graph",
+    "remote": false
+  },
+  "model": {
+    "artifact_path": null,
+    "artifact_sha256": null,
+    "backend": "none",
+    "learned_model": "none",
+    "unexpected_fallback_expected": 0
+  },
+  "package_id": "ptcgdap.cynthia-garchomp-800018543.windows-local.policy",
+  "package_version": "0.1.0",
+  "parents": {
+    "author_live_seam_bundle_canonical_sha256": "5CDC360999A23A2CADCAC6E7FA8D81549566DFABE37B2DB4F813C0C5189C3E16",
+    "author_match_host_bundle_canonical_sha256": "4BD207E9F9200E5AF9E2206A13EAF506382B6BA42BDEE3F0FEB5CA872885DBB9",
+    "author_package_bundle_canonical_sha256": "B416F2CBA2795B62126B6EF7B5F07A9000E84D5FA1DF62C1753CADC9E82E106B",
+    "author_release_bundle_canonical_sha256": "8C023680073C8CD0B7A423B07B840629812B2043305EA16411765A44F7F4D1EB",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "rollback": {
+    "current_match_hot_swap": false,
+    "mode": "disable_author_strategy_for_new_matches",
+    "target_canonical_sha256": "01FCA4ED2B6228732AE91B5934F1A93272F92A2EC0B144E2695616C55BE7BF07",
+    "target_kind": "author_strategy_disabled_release_profile",
+    "target_path": "contracts/ptcgdap/author_strategy_release_profile.json",
+    "user_packages_preserved": true
+  },
+  "schema_version": 1,
+  "target": {
+    "architecture": "x86_64",
+    "execution_location": "device_local",
+    "host": "godot",
+    "platform": "windows"
+  },
+  "trace": {
+    "bundle_canonical_sha256": "ADDD4CB48BD10FA0478854124D8E63AEE42B898C0EB81692BA35F8D7F90414C4",
+    "profile": "strategic_trace_v2"
+  }
+}

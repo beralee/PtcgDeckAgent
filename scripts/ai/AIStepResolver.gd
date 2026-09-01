@@ -4,6 +4,7 @@ extends RefCounted
 const AIInteractionPlannerScript = preload("res://scripts/ai/AIInteractionPlanner.gd")
 const AIInteractionFeatureEncoderScript = preload("res://scripts/ai/AIInteractionFeatureEncoder.gd")
 const AIHandoffScoringScript = preload("res://scripts/ai/AIHandoffScoring.gd")
+const UcisCompilerScript = preload("res://scripts/engine/ucis/UcisInteractionCompiler.gd")
 
 ## Optional injected deck strategy that guides interaction target choices.
 var deck_strategy: RefCounted = null
@@ -13,10 +14,12 @@ var _matchup_context: Dictionary = {}
 
 var _interaction_planner = AIInteractionPlannerScript.new()
 var _interaction_feature_encoder = AIInteractionFeatureEncoderScript.new()
+var _external_assignment_plans: Dictionary = {}
 
 
 func set_deck_strategy(strategy: RefCounted) -> void:
 	deck_strategy = strategy
+	_external_assignment_plans.clear()
 
 
 func set_matchup_context(matchup_context: Dictionary) -> void:
@@ -140,15 +143,26 @@ func _resolve_dialog_step(
 	var legal_indices: Array = legal_pool.get("indices", [])
 	var min_select: int = int(step.get("min_select", 1))
 	var max_select: int = int(step.get("max_select", 1))
+	if max_select <= 0:
+		# Read-only galleries are a local presentation affordance, not an agent
+		# decision in the official callback contract.
+		battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+		return true
 	if not legal_items.is_empty() and deck_strategy != null and deck_strategy.has_method("pick_interaction_items"):
-		var strategy_picks: Variant = deck_strategy.call("pick_interaction_items", legal_items, step, context)
-		if strategy_picks is Array and not (strategy_picks as Array).is_empty():
+		var explicit: Dictionary = _pick_explicit_interaction_items_with_empty_support(
+			legal_items, step, max_select, context
+		)
+		if bool(explicit.get("decision_pending", false)):
+			return false
+		if bool(explicit.get("has_plan", false)):
 			var explicit_indices := PackedInt32Array()
-			for picked_item: Variant in (strategy_picks as Array):
+			var seen_legal := {}
+			for picked_item: Variant in explicit.get("items", []):
 				var legal_idx: int = legal_items.find(picked_item)
-				if legal_idx >= 0 and legal_idx < legal_indices.size():
+				if legal_idx >= 0 and legal_idx < legal_indices.size() and not seen_legal.has(legal_idx):
 					explicit_indices.append(int(legal_indices[legal_idx]))
-			if explicit_indices.size() >= min_select:
+					seen_legal[legal_idx] = true
+			if explicit_indices.size() >= min_select and explicit_indices.size() <= max_select:
 				battle_scene.call("_handle_effect_interaction_choice", explicit_indices)
 				return true
 	var selected_count: int = _baseline_pick_count(legal_items.size(), min_select, max_select)
@@ -197,10 +211,54 @@ func _resolve_field_slot_step(
 	var legal_pool: Dictionary = _build_legal_item_pool(items, step, interaction_context)
 	var legal_items: Array = legal_pool.get("items", [])
 	var legal_indices: Array = legal_pool.get("indices", [])
+	var min_select: int = int(step.get("min_select", 1))
+	var max_select: int = int(step.get("max_select", 1))
+	if not legal_items.is_empty() and deck_strategy != null \
+			and deck_strategy.has_method("pick_interaction_items"):
+		# Field-slot effects such as Prime Catcher's self switch are the same
+		# immutable current-option contract as dialog interactions. Give an
+		# explicit author policy the first legal proposal, then retain the
+		# existing scorer as the audited fallback for classic strategies.
+		var explicit: Dictionary = _pick_explicit_interaction_items_with_empty_support(
+			legal_items, step, max_select, context
+		)
+		if bool(explicit.get("decision_pending", false)):
+			return false
+		if bool(explicit.get("has_plan", false)):
+			var explicit_legal_indices := PackedInt32Array()
+			var seen_legal := {}
+			for picked_item: Variant in explicit.get("items", []):
+				var legal_index: int = legal_items.find(picked_item)
+				if legal_index >= 0 and legal_index < legal_indices.size() \
+						and not seen_legal.has(legal_index):
+					explicit_legal_indices.append(legal_index)
+					seen_legal[legal_index] = true
+			if explicit_legal_indices.size() >= min_select \
+					and explicit_legal_indices.size() <= max_select:
+				for legal_index: int in explicit_legal_indices:
+					battle_scene.call(
+						"_handle_field_slot_select_index", int(legal_indices[legal_index])
+					)
+				_record_interaction_decision(
+					legal_items,
+					step,
+					context,
+					state_features,
+					explicit_legal_indices,
+					"field_slot_explicit",
+				)
+				if (
+					str(battle_scene.get("_field_interaction_mode")) == "slot_select"
+					and _is_still_resolving_step(
+						battle_scene, initial_step_index, initial_step_id
+					)
+				):
+					battle_scene.call("_finalize_field_slot_selection")
+				return true
 	var selected_count: int = _baseline_pick_count(
 		legal_items.size(),
-		int(step.get("min_select", 1)),
-		int(step.get("max_select", 1))
+		min_select,
+		max_select
 	)
 	if legal_items.is_empty() or selected_count <= 0:
 		if int(step.get("min_select", 1)) > 0:
@@ -256,6 +314,14 @@ func _resolve_counter_distribution_step(
 			step,
 			"required_counter_distribution_without_targets"
 		)
+	if (
+		deck_strategy != null
+		and deck_strategy.has_method("uses_external_decision_port")
+		and bool(deck_strategy.call("uses_external_decision_port"))
+	):
+		return _resolve_external_counter_distribution_step(
+			battle_scene, step, context, target_items, total_counters, state_features
+		)
 	var assignments: Array[Dictionary] = _build_counter_distribution_assignments(
 		target_items,
 		total_counters,
@@ -292,6 +358,175 @@ func _resolve_counter_distribution_step(
 	return true
 
 
+func _resolve_external_counter_distribution_step(
+	battle_scene: Control,
+	step: Dictionary,
+	context: Dictionary,
+	target_items: Array,
+	total_counters: int,
+	state_features: Array[float] = []
+) -> bool:
+	var entries: Array = battle_scene.get("_field_interaction_assignment_entries")
+	var assigned := 0
+	for entry_value: Variant in entries:
+		if entry_value is Dictionary:
+			assigned += maxi(0, int((entry_value as Dictionary).get("amount", 0)) / 10)
+	var remaining := total_counters - assigned
+	if remaining <= 0:
+		if battle_scene.has_method("_finalize_counter_distribution"):
+			battle_scene.call("_finalize_counter_distribution")
+		return true
+	var max_assignments := int(step.get("max_assignments", 0))
+	if max_assignments > 0 and entries.size() >= max_assignments:
+		if bool(step.get("allow_partial", false)):
+			battle_scene.call("_finalize_counter_distribution")
+			return true
+		return _abort_unresolvable_effect_step(
+			battle_scene, step, "required_counter_distribution_assignment_limit"
+		)
+	var count_window_metadata: Dictionary = step.get("ucis_counter_count_window", {})
+	var target_window_metadata: Dictionary = step.get("ucis_counter_target_window", {})
+	var uses_count_then_target_windows := (
+		not count_window_metadata.is_empty()
+		and not target_window_metadata.is_empty()
+	)
+	var selected_amount := int(
+		battle_scene.get("_field_interaction_assignment_selected_source_index")
+	)
+	if uses_count_then_target_windows and selected_amount <= 0:
+		var count_items: Array = []
+		for count: int in range(1, remaining + 1):
+			count_items.append({"number": count})
+		var count_step := step.duplicate(true)
+		count_step.erase("__ucis")
+		count_step["ui_mode"] = ""
+		count_step["items"] = count_items
+		count_step["min_select"] = 1
+		count_step["max_select"] = 1
+		for metadata_key: Variant in count_window_metadata:
+			count_step[metadata_key] = count_window_metadata[metadata_key]
+		count_step = _compile_derived_ucis_step(count_step, "counter_count")
+		if count_step.is_empty():
+			return _abort_unresolvable_effect_step(
+				battle_scene, step, "ucis_counter_count_compile_failed"
+			)
+		var count_plan: Dictionary = _pick_explicit_interaction_items_with_empty_support(
+			count_items, count_step, 1, context
+		)
+		if bool(count_plan.get("decision_pending", false)):
+			return false
+		if not bool(count_plan.get("has_plan", false)):
+			return false
+		var selected_counts: Array = count_plan.get("items", [])
+		if selected_counts.size() != 1:
+			return _abort_unresolvable_effect_step(
+				battle_scene, step, "counter_distribution_count_cardinality_invalid"
+			)
+		var selected_count_item: Variant = selected_counts[0]
+		var count_index := count_items.find(selected_count_item)
+		if count_index < 0 or not (selected_count_item is Dictionary):
+			return _abort_unresolvable_effect_step(
+				battle_scene, step, "counter_distribution_count_rebind_failed"
+			)
+		var chosen_count := int((selected_count_item as Dictionary).get("number", 0))
+		if chosen_count < 1 or chosen_count > remaining:
+			return _abort_unresolvable_effect_step(
+				battle_scene, step, "counter_distribution_count_out_of_range"
+			)
+		_record_interaction_decision(
+			count_items,
+			count_step,
+			context,
+			state_features,
+			PackedInt32Array([count_index]),
+			"counter_distribution_count"
+		)
+		battle_scene.call("_on_counter_distribution_amount_chosen", chosen_count)
+		return true
+	if uses_count_then_target_windows and selected_amount > remaining:
+		return _abort_unresolvable_effect_step(
+			battle_scene, step, "counter_distribution_selected_count_became_illegal"
+		)
+	var legal_items: Array = []
+	var source_indexes: Array[int] = []
+	var max_per_target := int(step.get("max_assignments_per_target", 0))
+	for target_index: int in target_items.size():
+		var target: Variant = target_items[target_index]
+		if not (target is PokemonSlot) or (target as PokemonSlot).get_top_card() == null:
+			continue
+		var prior_count := 0
+		for entry_value: Variant in entries:
+			if entry_value is Dictionary \
+					and int((entry_value as Dictionary).get("target_index", -1)) == target_index:
+				prior_count += 1
+		if max_per_target > 0 and prior_count >= max_per_target:
+			continue
+		legal_items.append(target)
+		source_indexes.append(target_index)
+	if legal_items.is_empty():
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			"required_counter_distribution_without_legal_target"
+		)
+	var window_step := step.duplicate(true)
+	window_step.erase("__ucis")
+	window_step["ui_mode"] = ""
+	window_step["min_select"] = 1
+	window_step["max_select"] = 1
+	if uses_count_then_target_windows:
+		for metadata_key: Variant in target_window_metadata:
+			window_step[metadata_key] = target_window_metadata[metadata_key]
+	else:
+		window_step["ucis_context_name"] = "DAMAGE_COUNTER_ANY"
+		window_step["ucis_remain_damage_counter"] = remaining
+	window_step = _compile_derived_ucis_step(window_step, "counter_target")
+	if window_step.is_empty():
+		return _abort_unresolvable_effect_step(
+			battle_scene, step, "ucis_counter_target_compile_failed"
+		)
+	var target_plan: Dictionary = _pick_explicit_interaction_items_with_empty_support(
+		legal_items, window_step, 1, context
+	)
+	if bool(target_plan.get("decision_pending", false)):
+		return false
+	if not bool(target_plan.get("has_plan", false)):
+		return false
+	var selected: Array = target_plan.get("items", [])
+	if selected.size() != 1:
+		return _abort_unresolvable_effect_step(
+			battle_scene, step, "counter_distribution_target_cardinality_invalid"
+		)
+	var local_index := legal_items.find(selected[0])
+	if local_index < 0 or local_index >= source_indexes.size():
+		return _abort_unresolvable_effect_step(
+			battle_scene, step, "counter_distribution_target_rebind_failed"
+		)
+	# Generic CABT DamageCounterAny effects publish one fresh target window per
+	# counter. Munkidori first publishes NUMBER/REMOVE_DAMAGE_COUNTER_COUNT and
+	# carries that accepted amount into its fresh CARD/DAMAGE_COUNTER target.
+	if not uses_count_then_target_windows:
+		battle_scene.call("_on_counter_distribution_amount_chosen", 1)
+	_record_interaction_decision(
+		legal_items,
+		window_step,
+		context,
+		state_features,
+		PackedInt32Array([local_index]),
+		"counter_distribution_target"
+	)
+	battle_scene.call("_handle_counter_distribution_target", source_indexes[local_index])
+	return true
+
+
+func _compile_derived_ucis_step(step: Dictionary, entrypoint: String) -> Dictionary:
+	var compiled := UcisCompilerScript.compile_steps([step], entrypoint, self)
+	if not bool(compiled.get("ok", false)):
+		return {}
+	var steps: Array = compiled.get("steps", [])
+	return (steps[0] as Dictionary) if steps.size() == 1 and steps[0] is Dictionary else {}
+
+
 func _build_counter_distribution_assignments(
 	target_items: Array,
 	total_counters: int,
@@ -307,9 +542,10 @@ func _build_counter_distribution_assignments(
 		if not (item is PokemonSlot):
 			continue
 		var slot := item as PokemonSlot
-		if slot.get_top_card() == null or slot.get_remaining_hp() <= 0:
+		var remaining_hp := _effective_remaining_hp(slot, context)
+		if slot.get_top_card() == null or remaining_hp <= 0:
 			continue
-		var counters_needed := int(ceil(float(slot.get_remaining_hp()) / 10.0))
+		var counters_needed := int(ceil(float(remaining_hp) / 10.0))
 		candidates.append({
 			"index": i,
 			"slot": slot,
@@ -380,6 +616,19 @@ func _build_counter_distribution_assignments(
 	return result
 
 
+func _effective_remaining_hp(slot: PokemonSlot, context: Dictionary) -> int:
+	if slot == null:
+		return 0
+	var state: Variant = context.get("game_state", null)
+	if state is GameState:
+		var processor: Variant = (state as GameState).shared_turn_flags.get(
+			"_draw_effect_processor", null
+		)
+		if processor != null and processor.has_method("get_effective_remaining_hp"):
+			return int(processor.call("get_effective_remaining_hp", slot, state))
+	return slot.get_remaining_hp()
+
+
 func _build_single_counter_distribution_assignment(
 	candidates: Array[Dictionary],
 	target_items: Array,
@@ -440,14 +689,28 @@ func _resolve_field_assignment_step(
 ) -> bool:
 	var initial_step_index := int(battle_scene.get("_pending_effect_step_index"))
 	var initial_step_id := str(step.get("id", ""))
+	var plan_key := _assignment_plan_key(battle_scene, step, "field")
+	var existing_value: Variant = battle_scene.get("_field_interaction_assignment_entries")
+	var existing_assignments: Array = existing_value if existing_value is Array else []
 	var assignment_plan: Dictionary = _build_assignment_source_plan(
 		step.get("source_items", []),
 		int(step.get("min_select", 0)),
 		int(step.get("max_select", 0)),
 		step,
 		context,
-		state_features
+		state_features,
+		plan_key,
+		existing_assignments
 	)
+	if bool(assignment_plan.get("decision_pending", false)):
+		return false
+	if bool(assignment_plan.get("unresolvable", false)):
+		_clear_external_assignment_plan(plan_key)
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			str(assignment_plan.get("reason", "external_assignment_source_rebind_failed"))
+		)
 	var assignments_made: int = _assign_sources_to_targets(
 		int(step.get("min_select", 0)),
 		int(step.get("max_select", 0)),
@@ -462,7 +725,21 @@ func _resolve_field_assignment_step(
 		state_features,
 		assignment_plan
 	)
+	if assignments_made < 0:
+		return false
+	if bool(assignment_plan.get("external_sequential", false)):
+		if bool(assignment_plan.get("sequential_complete", false)):
+			_clear_external_assignment_plan(plan_key)
+			if (
+				str(battle_scene.get("_field_interaction_mode")) == "assignment"
+				and _is_still_resolving_step(battle_scene, initial_step_index, initial_step_id)
+			):
+				battle_scene.call("_finalize_field_assignment_selection")
+			return true
+		if assignments_made > 0:
+			return true
 	if assignments_made <= 0 and not bool(assignment_plan.get("handled", false)):
+		_clear_external_assignment_plan(plan_key)
 		return _abort_unresolvable_effect_step(
 			battle_scene,
 			step,
@@ -482,14 +759,28 @@ func _resolve_dialog_assignment_step(
 	context: Dictionary = {},
 	state_features: Array[float] = []
 ) -> bool:
+	var plan_key := _assignment_plan_key(battle_scene, step, "dialog")
+	var existing_value: Variant = battle_scene.get("_dialog_assignment_assignments")
+	var existing_assignments: Array = existing_value if existing_value is Array else []
 	var assignment_plan: Dictionary = _build_assignment_source_plan(
 		step.get("source_items", []),
 		int(step.get("min_select", 0)),
 		int(step.get("max_select", 0)),
 		step,
 		context,
-		state_features
+		state_features,
+		plan_key,
+		existing_assignments
 	)
+	if bool(assignment_plan.get("decision_pending", false)):
+		return false
+	if bool(assignment_plan.get("unresolvable", false)):
+		_clear_external_assignment_plan(plan_key)
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			str(assignment_plan.get("reason", "external_assignment_source_rebind_failed"))
+		)
 	var assignments_made: int = _assign_sources_to_targets(
 		int(step.get("min_select", 0)),
 		int(step.get("max_select", 0)),
@@ -504,7 +795,17 @@ func _resolve_dialog_assignment_step(
 		state_features,
 		assignment_plan
 	)
+	if assignments_made < 0:
+		return false
+	if bool(assignment_plan.get("external_sequential", false)):
+		if bool(assignment_plan.get("sequential_complete", false)):
+			_clear_external_assignment_plan(plan_key)
+			battle_scene.call("_confirm_assignment_dialog")
+			return true
+		if assignments_made > 0:
+			return true
 	if assignments_made <= 0 and not bool(assignment_plan.get("handled", false)):
+		_clear_external_assignment_plan(plan_key)
 		return _abort_unresolvable_effect_step(
 			battle_scene,
 			step,
@@ -517,6 +818,7 @@ func _resolve_dialog_assignment_step(
 func _abort_unresolvable_effect_step(battle_scene: Control, step: Dictionary, reason: String) -> bool:
 	if battle_scene == null:
 		return false
+	_clear_external_assignment_plans_for_scene(battle_scene)
 	if battle_scene.has_method("_runtime_log"):
 		battle_scene.call(
 			"_runtime_log",
@@ -558,14 +860,58 @@ func _build_assignment_source_plan(
 	max_assignments: int,
 	step: Dictionary,
 	context: Dictionary = {},
-	state_features: Array[float] = []
+	state_features: Array[float] = [],
+	plan_key: String = "",
+	existing_assignments: Array = []
 ) -> Dictionary:
+	var uses_external_port := _uses_external_decision_port()
+	if uses_external_port and not plan_key.is_empty() and _external_assignment_plans.has(plan_key):
+		var stored_plan: Dictionary = _external_assignment_plans[plan_key]
+		var source_refs: Array = stored_plan.get("source_refs", [])
+		var cursor: int = int(stored_plan.get("cursor", 0))
+		if cursor >= source_refs.size():
+			return {
+				"handled": true,
+				"has_explicit_plan": true,
+				"selected_source_indices": [],
+				"external_sequential": true,
+				"sequential_complete": true,
+				"plan_key": plan_key,
+				"existing_assignments": existing_assignments,
+			}
+		var rebound_index := _find_assignment_item_index(source_items, source_refs[cursor])
+		if rebound_index < 0:
+			return {
+				"handled": false,
+				"has_explicit_plan": true,
+				"selected_source_indices": [],
+				"external_sequential": true,
+				"unresolvable": true,
+				"reason": "external_assignment_source_rebind_failed",
+				"plan_key": plan_key,
+			}
+		return {
+			"handled": true,
+			"has_explicit_plan": true,
+			"selected_source_indices": [rebound_index],
+			"external_sequential": true,
+			"sequential_complete": false,
+			"plan_key": plan_key,
+			"existing_assignments": existing_assignments,
+		}
 	var explicit_plan: Dictionary = _pick_explicit_interaction_items_with_empty_support(
 		source_items,
 		step,
 		max_assignments,
 		context
 	)
+	if bool(explicit_plan.get("decision_pending", false)):
+		return {
+			"handled": false,
+			"has_explicit_plan": false,
+			"selected_source_indices": [],
+			"decision_pending": true,
+		}
 	if bool(explicit_plan.get("has_plan", false)):
 		var selected_items: Array = explicit_plan.get("items", [])
 		var selected_indices: Array[int] = []
@@ -573,6 +919,33 @@ func _build_assignment_source_plan(
 			var source_index: int = source_items.find(wanted)
 			if source_index >= 0 and not selected_indices.has(source_index):
 				selected_indices.append(source_index)
+		if uses_external_port and not plan_key.is_empty():
+			var source_refs: Array[Dictionary] = []
+			for source_index: int in selected_indices:
+				source_refs.append(_assignment_item_reference(source_items, source_index))
+			_external_assignment_plans[plan_key] = {
+				"source_refs": source_refs,
+				"cursor": 0,
+			}
+			if selected_indices.is_empty():
+				return {
+					"handled": min_assignments <= 0,
+					"has_explicit_plan": true,
+					"selected_source_indices": [],
+					"external_sequential": true,
+					"sequential_complete": true,
+					"plan_key": plan_key,
+					"existing_assignments": existing_assignments,
+				}
+			return {
+				"handled": true,
+				"has_explicit_plan": true,
+				"selected_source_indices": [selected_indices[0]],
+				"external_sequential": true,
+				"sequential_complete": false,
+				"plan_key": plan_key,
+				"existing_assignments": existing_assignments,
+			}
 		if selected_indices.is_empty():
 			return {
 				"handled": min_assignments <= 0,
@@ -615,10 +988,30 @@ func _assign_sources_to_targets(
 	var picked_targets := PackedInt32Array()
 	var pending_assignment_counts: Dictionary = {}
 	var pending_assignments: Array[Dictionary] = []
+	var existing_assignments: Array = assignment_plan.get("existing_assignments", [])
+	for existing_assignment_variant: Variant in existing_assignments:
+		if not (existing_assignment_variant is Dictionary):
+			continue
+		var existing_assignment: Dictionary = existing_assignment_variant
+		pending_assignments.append(existing_assignment.duplicate(true))
+		var existing_target: Variant = existing_assignment.get("target")
+		var existing_target_key := _assignment_value_key(existing_target)
+		pending_assignment_counts[existing_target_key] = int(
+			pending_assignment_counts.get(existing_target_key, 0)
+		) + 1
 	var source_indices: Array = explicit_source_indices if has_explicit_plan else range(source_items.size())
 	var max_assignments_per_target := int(step.get("max_assignments_per_target", 0))
 	var single_target_only := bool(step.get("single_target_only", false))
 	var locked_target_index := -1
+	if single_target_only and not pending_assignments.is_empty():
+		locked_target_index = _find_assignment_value_index(
+			target_items,
+			pending_assignments[0].get("target")
+		)
+		if locked_target_index < 0:
+			assignment_plan["unresolvable"] = true
+			assignment_plan["reason"] = "external_assignment_target_rebind_failed"
+			return 0
 	for source_index_variant: Variant in source_indices:
 		var source_index: int = int(source_index_variant)
 		if assignments_made >= target_assignment_count:
@@ -631,10 +1024,9 @@ func _assign_sources_to_targets(
 		if max_assignments_per_target > 0:
 			for target_index: int in target_items.size():
 				var candidate: Variant = target_items[target_index]
-				if candidate is Object:
-					var candidate_id := int((candidate as Object).get_instance_id())
-					if int(pending_assignment_counts.get(candidate_id, 0)) >= max_assignments_per_target and not (target_index in excluded_targets):
-						excluded_targets.append(target_index)
+				var candidate_key := _assignment_value_key(candidate)
+				if int(pending_assignment_counts.get(candidate_key, 0)) >= max_assignments_per_target and not (target_index in excluded_targets):
+					excluded_targets.append(target_index)
 		var assignment_context: Dictionary = context.duplicate(true)
 		assignment_context["assignment_source"] = source_items[source_index]
 		assignment_context["assignment_source_index"] = source_index
@@ -648,6 +1040,8 @@ func _assign_sources_to_targets(
 			assignment_context,
 			state_features
 		)
+		if chosen_target_index == -2:
+			return -1
 		if chosen_target_index < 0:
 			continue
 		apply_assignment.call(source_index, chosen_target_index)
@@ -655,15 +1049,20 @@ func _assign_sources_to_targets(
 			locked_target_index = chosen_target_index
 		picked_targets.append(chosen_target_index)
 		var chosen_target: Variant = target_items[chosen_target_index]
-		if chosen_target is PokemonSlot:
-			var chosen_slot := chosen_target as PokemonSlot
-			var target_id := int(chosen_slot.get_instance_id())
-			pending_assignment_counts[target_id] = int(pending_assignment_counts.get(target_id, 0)) + 1
+		var target_key := _assignment_value_key(chosen_target)
+		pending_assignment_counts[target_key] = int(pending_assignment_counts.get(target_key, 0)) + 1
 		pending_assignments.append({
 			"source": source_items[source_index],
 			"target": chosen_target,
 		})
 		assignments_made += 1
+		if bool(assignment_plan.get("external_sequential", false)):
+			var plan_key := str(assignment_plan.get("plan_key", ""))
+			if not plan_key.is_empty() and _external_assignment_plans.has(plan_key):
+				var stored_plan: Dictionary = _external_assignment_plans[plan_key]
+				stored_plan["cursor"] = int(stored_plan.get("cursor", 0)) + 1
+				_external_assignment_plans[plan_key] = stored_plan
+				assignment_plan["sequential_complete"] = int(stored_plan["cursor"]) >= (stored_plan.get("source_refs", []) as Array).size()
 		_record_interaction_decision(
 			target_items,
 			step,
@@ -675,6 +1074,80 @@ func _assign_sources_to_targets(
 	return assignments_made
 
 
+func _uses_external_decision_port() -> bool:
+	return (
+		deck_strategy != null
+		and deck_strategy.has_method("uses_external_decision_port")
+		and bool(deck_strategy.call("uses_external_decision_port"))
+	)
+
+
+func _assignment_plan_key(battle_scene: Control, step: Dictionary, mode: String) -> String:
+	if battle_scene == null:
+		return ""
+	return "%d|%s|%d|%s" % [
+		int(battle_scene.get_instance_id()),
+		mode,
+		int(battle_scene.get("_pending_effect_step_index")),
+		str(step.get("id", "")),
+	]
+
+
+func _assignment_value_key(value: Variant) -> String:
+	if value is Object:
+		return "object:%d" % int((value as Object).get_instance_id())
+	return "value:%d:%s" % [typeof(value), var_to_str(value)]
+
+
+func _assignment_item_reference(items: Array, item_index: int) -> Dictionary:
+	if item_index < 0 or item_index >= items.size():
+		return {}
+	var key := _assignment_value_key(items[item_index])
+	var occurrence := 0
+	for index: int in item_index:
+		if _assignment_value_key(items[index]) == key:
+			occurrence += 1
+	return {"key": key, "occurrence": occurrence}
+
+
+func _find_assignment_item_index(items: Array, reference: Variant) -> int:
+	if not (reference is Dictionary):
+		return -1
+	var wanted_key := str((reference as Dictionary).get("key", ""))
+	var wanted_occurrence := int((reference as Dictionary).get("occurrence", 0))
+	var occurrence := 0
+	for index: int in items.size():
+		if _assignment_value_key(items[index]) != wanted_key:
+			continue
+		if occurrence == wanted_occurrence:
+			return index
+		occurrence += 1
+	return -1
+
+
+func _find_assignment_value_index(items: Array, value: Variant) -> int:
+	var wanted_key := _assignment_value_key(value)
+	for index: int in items.size():
+		if _assignment_value_key(items[index]) == wanted_key:
+			return index
+	return -1
+
+
+func _clear_external_assignment_plan(plan_key: String) -> void:
+	if not plan_key.is_empty():
+		_external_assignment_plans.erase(plan_key)
+
+
+func _clear_external_assignment_plans_for_scene(battle_scene: Control) -> void:
+	if battle_scene == null:
+		return
+	var prefix := "%d|" % int(battle_scene.get_instance_id())
+	for plan_key_variant: Variant in _external_assignment_plans.keys():
+		var plan_key := str(plan_key_variant)
+		if plan_key.begins_with(prefix):
+			_external_assignment_plans.erase(plan_key)
+
+
 func _pick_explicit_interaction_items_with_empty_support(
 	items: Array,
 	step: Dictionary,
@@ -683,7 +1156,14 @@ func _pick_explicit_interaction_items_with_empty_support(
 ) -> Dictionary:
 	if deck_strategy == null or not deck_strategy.has_method("pick_interaction_items"):
 		return {"has_plan": false, "items": []}
-	var planned: Variant = deck_strategy.call("pick_interaction_items", items, {"id": str(step.get("id", "")), "max_select": max_select}, context)
+	var public_step := step.duplicate(true)
+	public_step["max_select"] = max_select
+	var planned: Variant = deck_strategy.call("pick_interaction_items", items, public_step, context)
+	if (
+		deck_strategy.has_method("has_pending_external_decision")
+		and bool(deck_strategy.call("has_pending_external_decision"))
+	):
+		return {"has_plan": false, "items": [], "decision_pending": true}
 	if not (planned is Array):
 		return {"has_plan": false, "items": []}
 	var planned_items: Array = planned
@@ -717,6 +1197,26 @@ func _best_legal_target_index(
 ) -> int:
 	if target_items.is_empty():
 		return -1
+	if deck_strategy != null and deck_strategy.has_method("pick_interaction_target_index"):
+		var planned: Variant = deck_strategy.call(
+			"pick_interaction_target_index",
+			target_items,
+			excluded_targets.duplicate(),
+			step.duplicate(true),
+			context.duplicate(true)
+		)
+		if (
+			deck_strategy.has_method("has_pending_external_decision")
+			and bool(deck_strategy.call("has_pending_external_decision"))
+		):
+			return -2
+		if (
+			typeof(planned) == TYPE_INT
+			and int(planned) >= 0
+			and int(planned) < target_items.size()
+			and int(planned) not in excluded_targets
+		):
+			return int(planned)
 	var best_index: int = -1
 	var best_score: float = -INF
 	for i: int in target_items.size():

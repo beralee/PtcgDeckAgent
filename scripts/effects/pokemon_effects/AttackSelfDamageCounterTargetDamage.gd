@@ -27,7 +27,7 @@ func get_attack_preview_damage(
 	)
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState

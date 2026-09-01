@@ -3,7 +3,7 @@ class_name EffectSuperRod
 extends BaseEffect
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var items: Array = _recoverable_discard_cards(card, state)
 	var labels: Array[String] = []
 	for c: CardInstance in items:

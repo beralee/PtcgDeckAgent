@@ -32,7 +32,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not _basic_energy_from_hand(state.players[top.owner_index]).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null:
 		return []
 	var owner := int(card.owner_index)

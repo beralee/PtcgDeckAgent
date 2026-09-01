@@ -20,7 +20,7 @@ func applies_to_attack_index(attack_index: int) -> bool:
 	return attack_index_to_match == -1 or attack_index == attack_index_to_match
 
 
-func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	if not applies_to_attack_index(int(attack.get("_override_attack_index", _get_attack_index(card, attack)))):
 		return []
 	if card == null:

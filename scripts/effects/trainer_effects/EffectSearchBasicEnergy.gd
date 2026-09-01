@@ -20,7 +20,7 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return _can_pay_discard_cost(card, player) and not _get_basic_energy_cards(player).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var steps: Array[Dictionary] = []
 
@@ -63,7 +63,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	return steps
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if not should_preview_empty_search_deck(resolved_context):
 		return []
 	var player: PlayerState = state.players[card.owner_index]

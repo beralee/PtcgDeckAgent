@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-engine-decision-port-p3-wp1-v1",
+  "parent": {
+    "work_package": "P2-WP5",
+    "manifest_canonical_sha256": "F0A2C3E92E566163F14FA4B49C33728637660BCF192D59CA32B2B578DBAFB816",
+    "projector_bundle_canonical_sha256": "C51EA4CF1AEFCBB5B9C6D83825FF3A717CCDCC4105B804210BF6169372619041"
+  },
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/engine_decision_port.schema.json",
+      "canonical_sha256": "8EF3CBA573647B49535AFA46A980991CBBE22C001F0CD5CCD765305A73214914"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/engine_decision_port_profile.json",
+      "canonical_sha256": "39ACEB7EA9E61FAACE04160364B4CA82B98D4991A34CAA701A3A2310FC55F238"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/engine_decision_port_conformance_vectors.json",
+      "canonical_sha256": "27EF66FBE19D37A19A8AA95662BEF1E06BC29283DEBF6D87CB03569139294D8D"
+    }
+  ]
+}

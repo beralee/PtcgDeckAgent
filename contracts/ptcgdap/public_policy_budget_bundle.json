@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-public-policy-budget-p4-wp6-v1",
+  "parent_bundle_canonical_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "artifacts": [
+    {
+      "id": "public_policy_budget.schema",
+      "path": "contracts/ptcgdap/public_policy_budget.schema.json",
+      "canonical_sha256": "580A410176600BA9BD0206B5035BF50A5A33D4FC14298DDC2AE699C2DF9215C7"
+    },
+    {
+      "id": "public_policy_budget_profile",
+      "path": "contracts/ptcgdap/public_policy_budget_profile.json",
+      "canonical_sha256": "F70C5172F2E1286E16E142B9026532AADB5C34CFDC5E8B796F1E404FA3A83632"
+    },
+    {
+      "id": "public_policy_budget_conformance_vectors",
+      "path": "contracts/ptcgdap/public_policy_budget_conformance_vectors.json",
+      "canonical_sha256": "A9DF2CF48CA8BC675583B27C5E3741ABA4FA296C98ADD8106795902DD4C8EB6E"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return _has_valid_target(player.discard_pile)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	var actual_max: int = mini(max_count, bench_space)

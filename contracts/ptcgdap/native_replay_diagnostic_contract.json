@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-native-replay-diagnostic-v2",
+  "scope": "local_developer_diagnostics",
+  "legacy_playback_semantics_unchanged": true,
+  "files": {
+    "legacy_detail": "detail.jsonl",
+    "native_integrity_chain": "detail.chain.jsonl",
+    "native_manifest": "native_replay_manifest.json",
+    "developer_decisions": "developer_decisions.jsonl",
+    "developer_decision_manifest": "developer_decision_trace_manifest.json"
+  },
+  "document_types": {
+    "native_manifest": "native_replay_manifest_v2",
+    "native_witness": "native_replay_record_witness_v2",
+    "decision_window": "decision_window_record_v1",
+    "owner_step": "owner_step_witness_v1",
+    "developer_chain_record": "developer_decision_trace_record_v1",
+    "developer_manifest": "developer_decision_trace_manifest_v1",
+    "terminal": "replay_terminal_v1"
+  },
+  "hash_profiles": {
+    "detail_line": "sha256_exact_utf8_without_line_terminator_v1",
+    "native_witness": "ptcgdap_native_replay_witness_canonical_json_v2",
+    "developer_record": "ptcgdap_developer_decision_record_canonical_json_v1",
+    "option_fingerprint": "ptcgdap_public_observation_hash_scoped_option_v1"
+  },
+  "capability_states": [
+    "available",
+    "partial",
+    "unavailable"
+  ],
+  "capabilities": [
+    "legacy_playback",
+    "native_event_integrity",
+    "replay_state_frames",
+    "structured_battle_events",
+    "decision_windows",
+    "host_acceptance",
+    "terminal_status"
+  ],
+  "terminal_outcome": {
+    "completed_seat_statuses": ["DONE", "DONE"],
+    "winner_rewards": [1, -1],
+    "source": "must_be_captured_at_authoritative_game_over_not_reconstructed"
+  },
+  "privacy": {
+    "projection": "acting_policy_public_view_allow_list_v1",
+    "own_hand_allowed": true,
+    "opponent_hidden_cards_allowed": false,
+    "forbidden_keys": [
+      "deck_order",
+      "opponent_hand",
+      "opponent_hidden_hand",
+      "opponent_deck",
+      "opponent_prizes",
+      "face_down_prizes",
+      "private_rng",
+      "rng_state",
+      "search_begin_input",
+      "object_ref",
+      "callback",
+      "binding",
+      "ticket",
+      "command"
+    ],
+    "runtime_objects_allowed": false
+  },
+  "compatibility": {
+    "recordings_without_v2_manifest": "accepted_as_legacy_with_explicit_capability_gaps",
+    "missing_information": "never_inferred_or_reconstructed",
+    "diagnostic_write_failure": "must_not_interrupt_gameplay_or_legacy_recording",
+    "diagnostic_read_failure": "must_not_grant_replay_execution_authority"
+  }
+}

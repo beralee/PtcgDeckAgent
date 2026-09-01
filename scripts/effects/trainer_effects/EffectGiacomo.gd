@@ -6,7 +6,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_source_slots(state.players[1 - card.owner_index]).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var source_slots: Array[PokemonSlot] = _get_source_slots(opponent)
 	if source_slots.is_empty():

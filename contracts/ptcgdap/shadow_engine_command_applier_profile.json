@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-engine-command-applier-p3-wp7-v1",
+  "parent_owner_gate_bundle_canonical_sha256": "9B8202E67756E388AFB0A13EA1FD20227ADF0718DF8454420A2B1FC7A5D31B8C",
+  "parent_prompt_broker_bundle_canonical_sha256": "D19EC7B9B77370312C82E0572DFB016B75E3FE9F438B6C1EFFD50E0AB43C551E",
+  "states": [
+    "ready",
+    "executed",
+    "aborted",
+    "poisoned"
+  ],
+  "error_codes": [
+    "invalid_applier",
+    "invalid_gate",
+    "owner_mode_not_aligned",
+    "invalid_broker",
+    "broker_not_current",
+    "invalid_broker_result",
+    "prompt_not_committed",
+    "already_applied",
+    "invalid_command",
+    "duplicate_command",
+    "capture_failed",
+    "command_apply_failed",
+    "rollback_failed"
+  ],
+  "command_protocol": [
+    "shadow_capture",
+    "shadow_apply",
+    "shadow_restore"
+  ],
+  "command_protocol_results": {
+    "shadow_capture": {
+      "argument_count": 0,
+      "result_exact_object_keys": [
+        "ok",
+        "snapshot"
+      ],
+      "ok_exact_boolean": true
+    },
+    "shadow_apply": {
+      "argument_count": 0,
+      "result_exact_boolean": true
+    },
+    "shadow_restore": {
+      "argument_count": 1,
+      "result_exact_boolean": true
+    }
+  },
+  "execution_hash": {
+    "domain_prefix_utf8_hex": "5054434744415000534841444F575F45584543555445445F5749544E4553535F563100"
+  },
+  "limits": {
+    "max_execution_generation_per_applier": 1,
+    "max_resolution_count": 256
+  },
+  "semantics": {
+    "exact_aligned_gate_and_broker_required": true,
+    "successful_result_consumed_at_most_once": true,
+    "capture_hook_is_observational": true,
+    "failed_apply_restores_all_captured_state": true,
+    "restore_failure_poison_is_terminal": true,
+    "ordered_commands_required": true,
+    "duplicate_command_objects_forbidden": true,
+    "live_consumer": false,
+    "serialized_witness_is_authority": false,
+    "schema_alone_authorizes_witness": false,
+    "owner_revalidates_array_count_relations": true
+  },
+  "private_fields_forbidden_from_witness": [
+    "private_engine_command",
+    "private_object_refs",
+    "captured_state",
+    "session_id",
+    "callback_binding_hash",
+    "current_source",
+    "broker",
+    "gate"
+  ]
+}

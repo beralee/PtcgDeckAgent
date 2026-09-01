@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "contract_id": "ptcgdap-strategic-public-contract-p4-wp1-v1",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "public_firewall_bundle_canonical_sha256": "A2781CE6B3AC7BB6BAD04A9F15F57CE23AEC338306F60E5B3050B31245685947",
+  "selection_contract_bundle_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+  "artifacts": [
+    {
+      "id": "schema",
+      "path": "contracts/ptcgdap/strategic_context_v18.schema.json",
+      "canonical_sha256": "C355A905C25EF40D228BFA1B77B3080589DA62756E162A52B8D9CC286B8DCC0C"
+    },
+    {
+      "id": "profile",
+      "path": "contracts/ptcgdap/strategic_context_v18_profile.json",
+      "canonical_sha256": "76BB67D817D61FCAAA4CD6BA125E23F51330E94575F119653E8F364E69A720A2"
+    },
+    {
+      "id": "vectors",
+      "path": "contracts/ptcgdap/strategic_context_v18_conformance_vectors.json",
+      "canonical_sha256": "428B2466643B0F4341FC92BA5B2918650AA4974DB8ED1B41B77114DAFC29FCEA"
+    }
+  ],
+  "runtime_authority": "schema/profile only; vectors are conformance fixtures and never runtime policy input"
+}

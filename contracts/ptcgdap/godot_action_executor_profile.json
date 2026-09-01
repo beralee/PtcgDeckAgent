@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-godot-action-executor-p3-wp4-v1",
+  "parent": {
+    "work_package": "P3-WP3",
+    "manifest_raw_sha256": "9564EE72D2BD400D010123E8563F50CCF0233BDC6436A3C35FDCDD9F78710556",
+    "manifest_canonical_sha256": "5ACC39769D3A63EA7B27CAA61B107FCCF284DC52FCFB93F9B77B1547883FAF2B",
+    "action_ticket_bundle_canonical_sha256": "41F3E84C6DC5C9BC6C162B848B097211E617B5558ECB59554757E82CE58817ED",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "hash_profile": {
+    "id": "godot_action_preflight_v1",
+    "algorithm": "SHA-256",
+    "canonicalization": "canonical_json_v1",
+    "prefix_utf8_hex": "5054434744415000474F444F545F414354494F4E5F4558454355544F525F563100"
+  },
+  "states": [
+    "none",
+    "prepared",
+    "committed",
+    "aborted"
+  ],
+  "preflight_error_codes": [
+    "executor_integrity_invalid",
+    "invalid_ticket_owner",
+    "invalid_claim_result",
+    "claim_not_accepted",
+    "invalid_binding_owner",
+    "binding_not_current",
+    "snapshot_not_current",
+    "window_not_current",
+    "callback_mismatch",
+    "selection_mismatch",
+    "private_resolution_invalid",
+    "private_reference_unavailable",
+    "active_preflight_exists",
+    "preflight_space_exhausted"
+  ],
+  "commit_error_codes": [
+    "executor_integrity_invalid",
+    "invalid_preflight",
+    "owner_mismatch",
+    "preflight_integrity_invalid",
+    "preflight_not_current",
+    "already_committed",
+    "preflight_aborted",
+    "commit_context_changed",
+    "private_resolution_invalid",
+    "private_reference_unavailable"
+  ],
+  "preflight_contract": {
+    "requires_exact_owner_claim": true,
+    "requires_claim_accepted": true,
+    "requires_exact_current_context": true,
+    "requires_ordered_resolution_identity": true,
+    "one_active_preflight_per_executor": true
+  },
+  "commit_contract": {
+    "revalidates_complete_context": true,
+    "all_or_nothing": true,
+    "successful_commit_count_maximum": 1,
+    "engine_method_invocation": false,
+    "failure_returns_private_resolutions": false
+  },
+  "serialization_contract": {
+    "dto_only": true,
+    "grants_execution_authority": false,
+    "forbidden_fields": [
+      "session_id",
+      "callback_binding_hash",
+      "current_source",
+      "private_engine_command",
+      "private_object_refs",
+      "binding_resolutions",
+      "command_refs",
+      "private_refs"
+    ]
+  }
+}

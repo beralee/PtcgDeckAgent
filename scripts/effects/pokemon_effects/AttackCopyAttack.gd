@@ -12,7 +12,7 @@ func _init(processor: EffectProcessor = null) -> void:
 	_processor = processor
 
 
-func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
+func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	if card == null:
 		return []
 	var opponent: PlayerState = state.players[1 - card.owner_index]
@@ -44,10 +44,12 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": true,
+		"ucis_context_name": "ATTACK",
+		"ucis_option_type_name": "ATTACK",
 	}]
 
 
-func get_followup_attack_interaction_steps(
+func build_ucis_followup_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState,

@@ -371,6 +371,59 @@ func test_windows_does_not_prefer_python_transport_without_explicit_opt_in_or_pr
 	])
 
 
+func test_python_fallback_request_never_persists_api_key() -> String:
+	var client_result: Variant = _new_client()
+	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
+		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
+	var client: Object = (client_result as Dictionary).get("value") as Object
+	var secret := "fixture-secret-that-must-not-touch-disk"
+	var paths: Dictionary = client.call(
+		"_write_python_fallback_request",
+		"https://example.invalid/api/v1/chat/completions",
+		secret,
+		{"model": "fixture-model", "messages": []}
+	)
+	var input_path := str(paths.get("input_path", ""))
+	if input_path == "" or not FileAccess.file_exists(input_path):
+		return "Python fallback request fixture could not be written"
+	var raw := FileAccess.get_file_as_string(input_path)
+	var parsed: Variant = JSON.parse_string(raw)
+	DirAccess.remove_absolute(input_path)
+	var output_path := str(paths.get("output_path", ""))
+	if output_path != "":
+		DirAccess.remove_absolute(output_path)
+	return run_checks([
+		assert_true(parsed is Dictionary, "Fallback request must remain valid JSON"),
+		assert_false((parsed as Dictionary).has("api_key"), "Fallback request must not persist an api_key field"),
+		assert_eq(raw.find(secret), -1, "Fallback request bytes must not contain the API key"),
+		assert_true(not str(paths.get("api_key_environment_name", "")).is_empty(), "Fallback launch must receive an ephemeral environment variable name"),
+		assert_true(
+			FileAccess.get_file_as_string("res://scripts/tools/zenmux_request.py").contains("os.environ.pop"),
+			"Fallback helper must consume the API key from inherited process memory"
+		),
+	])
+
+
+func test_python_fallback_poller_uses_scene_tree_root_lifetime() -> String:
+	var client_result: Variant = _new_client()
+	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
+		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
+	var client: Object = (client_result as Dictionary).get("value") as Object
+	if not client.has_method("_python_fallback_poller_parent"):
+		return "ZenMuxClient is missing _python_fallback_poller_parent"
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is unavailable"
+	var request_owner := Node.new()
+	tree.root.add_child(request_owner)
+	var resolved: Variant = client.call("_python_fallback_poller_parent", request_owner)
+	var checks := run_checks([
+		assert_eq(resolved, tree.root, "Fallback cleanup must survive the requesting battle scene"),
+	])
+	request_owner.queue_free()
+	return checks
+
+
 func test_project_uses_bundled_tls_certificate_bundle() -> String:
 	var bundle_path := str(ProjectSettings.get_setting("network/tls/certificate_bundle_override", ""))
 	return run_checks([

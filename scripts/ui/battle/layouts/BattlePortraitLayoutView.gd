@@ -239,6 +239,7 @@ func sync_prize_hud_visibility(is_portrait: Variant = null) -> void:
 
 func sync_top_action_visibility(is_portrait: Variant = null) -> void:
 	var portrait := bool(is_portrait) if is_portrait != null else str(_call_scene("_current_resolved_battle_layout_mode")) == "portrait"
+	var review_mode := _as_bool(_call_scene("_is_review_mode"), false)
 	var layout_button := _top_action_button_or_null(_get_scene_var("_btn_battle_layout") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleLayout")
 	var more_button := _top_action_button_or_null(_get_scene_var("_btn_battle_more") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleMore")
 	var portrait_direct_buttons := _as_array(_call_scene("_portrait_direct_top_action_buttons"))
@@ -251,7 +252,9 @@ func sync_top_action_visibility(is_portrait: Variant = null) -> void:
 		_top_action_button_or_null(_get_scene_var("_btn_ai_advice") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnAiAdvice"),
 		_top_action_button_or_null(_get_scene_var("_btn_battle_discuss_ai") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleDiscussAI"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_prev_turn") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPrevTurn"),
+		_top_action_button_or_null(_get_scene_var("_btn_replay_play_pause") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPlayPause"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_next_turn") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayNextTurn"),
+		_top_action_button_or_null(_get_scene_var("_opt_replay_speed") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/OptReplaySpeed"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_continue") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayContinue"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_back_to_list") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayBackToList"),
 	]
@@ -262,12 +265,12 @@ func sync_top_action_visibility(is_portrait: Variant = null) -> void:
 	var back_button := _top_action_button_or_null(_get_scene_var("_btn_back") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBack")
 	if back_button != null:
 		_call_scene("_restore_portrait_top_action", [back_button])
-		back_button.visible = true
+		back_button.visible = not review_mode
 	if portrait:
 		var actions_popup := _get_scene_var("_portrait_actions_popup") as PopupPanel
 		if actions_popup != null:
 			actions_popup.hide()
-		if _as_bool(_call_scene("_is_review_mode"), false):
+		if review_mode:
 			for button: Button in live_direct_buttons:
 				if button == null:
 					continue

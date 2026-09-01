@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-shadow-prompt-broker-p3-wp5-v1",
+  "parent_executor_bundle_canonical_sha256": "45952BE629AE98EB6070C77188FD6A2C2A644C4B6A36876193BB745B7CDA4E92",
+  "prompt_families": [
+    "W1",
+    "W2",
+    "W3",
+    "W4",
+    "W5",
+    "W6",
+    "W7"
+  ],
+  "states": [
+    "open",
+    "prepared",
+    "awaiting_reobserve",
+    "aborted",
+    "superseded"
+  ],
+  "error_codes": [
+    "invalid_broker",
+    "invalid_family",
+    "invalid_context",
+    "active_prompt_exists",
+    "prompt_not_current",
+    "prompt_integrity_invalid",
+    "selection_invalid",
+    "ticket_issue_failed",
+    "ticket_claim_failed",
+    "preflight_failed",
+    "commit_failed",
+    "reobserve_required",
+    "stale_decision_generation",
+    "same_window_reused",
+    "cross_owner",
+    "match_generation_mismatch",
+    "broker_aborted",
+    "generation_exhausted"
+  ],
+  "limits": {
+    "max_broker_generation": 9007199254740991,
+    "max_resolution_count": 256
+  },
+  "lifecycle": {
+    "open": "bind exact current port snapshot, binding owner/set and immutable selection window",
+    "prepare": "accept an exact owner-produced selection, then issue/claim one ticket and create one executor preflight",
+    "commit": "revalidate the prepared prompt and atomically return all exact private resolutions or none",
+    "after_success": "awaiting_reobserve; old prompt and indexes have no next-prompt authority",
+    "next_prompt": "requires strictly newer decision generation and distinct snapshot, window and binding",
+    "failure": "abort current prompt with zero private resolutions and no engine mutation"
+  },
+  "authority_contract": {
+    "owner_produced_selection_required": true,
+    "same_window_witness_chain_required": true,
+    "strictly_newer_prompt_required_after_commit": true,
+    "successful_commit_count_maximum": 1,
+    "engine_method_invocation": false,
+    "serialized_audit_is_authority": false,
+    "family_label_relaxes_legality": false
+  },
+  "private_fields_forbidden_from_audit": [
+    "session_id",
+    "callback_binding_hash",
+    "current_source",
+    "private_engine_command",
+    "private_object_refs",
+    "private_resolutions",
+    "ticket",
+    "preflight"
+  ]
+}

@@ -3,9 +3,13 @@ extends RefCounted
 
 const DiscardPileRestriction := preload("res://scripts/effects/DiscardPileRestrictionHelper.gd")
 const FieldTransition := preload("res://scripts/engine/BattleFieldTransitionService.gd")
+const UcisCompiler := preload("res://scripts/engine/ucis/UcisInteractionCompiler.gd")
 
 var _attack_interaction_context: Dictionary = {}
 var _default_attack_index_to_match: int = -1
+var _ucis_last_error := ""
+var _ucis_last_diagnostic: Dictionary = {}
+var _ucis_registration_ids: Array[String] = []
 
 const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
 const EMPTY_SEARCH_CONTINUE := "continue"
@@ -41,19 +45,33 @@ func get_target_type() -> TargetType:
 	return TargetType.NONE
 
 
-func get_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return []
 
 
+func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_interaction_steps_spec_steps(card, state),
+		"interaction"
+	)
+
+
+func build_ucis_preview_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	return build_ucis_interaction_steps_spec_steps(card, state)
+
+
 func get_preview_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
-	return get_interaction_steps(card, state)
+	return _compile_ucis_steps(
+		build_ucis_preview_interaction_steps_spec_steps(card, state),
+		"preview_interaction"
+	)
 
 
 func get_empty_interaction_message(_card: CardInstance, _state: GameState) -> String:
 	return ""
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	_card: CardInstance,
 	_attack: Dictionary,
 	_state: GameState
@@ -61,15 +79,37 @@ func get_attack_interaction_steps(
 	return []
 
 
+func get_attack_interaction_steps(
+	card: CardInstance,
+	attack: Dictionary,
+	state: GameState
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_attack_interaction_steps_spec_steps(card, attack, state),
+		"attack_interaction"
+	)
+
+
+func build_ucis_attack_preview_interaction_steps_spec_steps(
+	card: CardInstance,
+	attack: Dictionary,
+	state: GameState
+) -> Array[Dictionary]:
+	return build_ucis_attack_interaction_steps_spec_steps(card, attack, state)
+
+
 func get_attack_preview_interaction_steps(
 	card: CardInstance,
 	attack: Dictionary,
 	state: GameState
 ) -> Array[Dictionary]:
-	return get_attack_interaction_steps(card, attack, state)
+	return _compile_ucis_steps(
+		build_ucis_attack_preview_interaction_steps_spec_steps(card, attack, state),
+		"attack_preview_interaction"
+	)
 
 
-func get_followup_attack_interaction_steps(
+func build_ucis_followup_attack_interaction_steps_spec_steps(
 	_card: CardInstance,
 	_attack: Dictionary,
 	_state: GameState,
@@ -78,7 +118,19 @@ func get_followup_attack_interaction_steps(
 	return []
 
 
-func get_followup_granted_attack_interaction_steps(
+func get_followup_attack_interaction_steps(
+	card: CardInstance,
+	attack: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_followup_attack_interaction_steps_spec_steps(card, attack, state, resolved_context),
+		"followup_attack_interaction"
+	)
+
+
+func build_ucis_followup_granted_attack_interaction_steps_spec_steps(
 	_pokemon: PokemonSlot,
 	_granted_attack: Dictionary,
 	_state: GameState,
@@ -87,12 +139,37 @@ func get_followup_granted_attack_interaction_steps(
 	return []
 
 
-func get_followup_interaction_steps(
+func get_followup_granted_attack_interaction_steps(
+	pokemon: PokemonSlot,
+	granted_attack: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_followup_granted_attack_interaction_steps_spec_steps(
+			pokemon, granted_attack, state, resolved_context
+		),
+		"followup_granted_attack_interaction"
+	)
+
+
+func build_ucis_followup_interaction_steps_spec_steps(
 	_card: CardInstance,
 	_state: GameState,
 	_resolved_context: Dictionary
 ) -> Array[Dictionary]:
 	return []
+
+
+func get_followup_interaction_steps(
+	card: CardInstance,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_followup_interaction_steps_spec_steps(card, state, resolved_context),
+		"followup_interaction"
+	)
 
 
 func get_interaction_context(targets: Array) -> Dictionary:
@@ -529,6 +606,10 @@ func build_full_library_search_step(
 		step["prompt_type"] = str(options.get("prompt_type", ""))
 	if options.has("force_confirm") or resolved_force_confirm:
 		step["force_confirm"] = resolved_force_confirm
+	# Card code names the semantic destination; the UCIS registry exclusively
+	# owns the corresponding raw SelectType/Context/OptionType values.
+	step["ucis_context_name"] = str(options.get("ucis_context_name", "TO_HAND"))
+	step["ucis_option_type_name"] = str(options.get("ucis_option_type_name", "CARD"))
 	return step
 
 
@@ -638,6 +719,135 @@ func add_full_library_source_metadata_to_assignment_step(
 	return step
 
 
+func get_ucis_effect_spec() -> Dictionary:
+	var script: Script = get_script()
+	var script_path := _ucis_effect_ref(script)
+	var source := str(script.source_code) if script != null else ""
+	var builder_names := UcisCompiler.builder_entrypoints_for_source(source)
+	var capability_ids := UcisCompiler.declared_capabilities_for_source(source, builder_names)
+	var source_context := HashingContext.new()
+	source_context.start(HashingContext.HASH_SHA256)
+	# HashingContext rejects an empty byte sequence. Built-in automatic effects
+	# use their stable effect reference as the source identity.
+	var source_identity := source if not source.is_empty() else script_path
+	source_context.update(source_identity.to_utf8_buffer())
+	var source_hash := source_context.finish().hex_encode().to_upper()
+	return {
+		"schema_version": 1,
+		"effect_ref": script_path,
+		"resolution_kind": "interactive" if not builder_names.is_empty() else "automatic_resolution",
+		"program_kind": capability_ids[0] if not capability_ids.is_empty() else "automatic_resolution",
+		"capability_ids": capability_ids,
+		"builder_entrypoints": builder_names,
+		"programs": UcisCompiler.declared_program_templates(
+			script_path,
+			source_hash,
+			builder_names,
+			capability_ids
+		),
+		"chooser_rule": "engine_current_chooser",
+		"visibility_rule": "acting_seat_public_only",
+		"lifecycle_anchor": "effect_runtime_checkpoint",
+		"continuation_rule": "ordered_steps",
+		"stop_rule": "program_complete",
+		"information_checkpoints": ["fresh_reobserve"],
+		"contract_generation": 2,
+		"compiler_generation": 1,
+		"source_hash": source_hash,
+	}
+
+
+func bind_ucis_registration_id(effect_id: String) -> void:
+	var normalized := effect_id.strip_edges()
+	if not normalized.is_empty() and normalized not in _ucis_registration_ids:
+		_ucis_registration_ids.append(normalized)
+		_ucis_registration_ids.sort()
+
+
+func get_ucis_registration_ids() -> Array[String]:
+	return _ucis_registration_ids.duplicate()
+
+
+func _ucis_effect_ref(script: Script) -> String:
+	if not _ucis_registration_ids.is_empty():
+		return "effect_id:%s" % ",".join(_ucis_registration_ids)
+	if script == null:
+		return "builtin:BaseEffect"
+	var resource_path := str(script.resource_path).strip_edges()
+	if not resource_path.is_empty():
+		return resource_path
+	# Inner GDScript classes have no resource_path of their own. Bind them to a
+	# deterministic source digest rather than an Object ID or display name.
+	var source := str(script.source_code)
+	if source.is_empty():
+		return "inline:BaseEffect"
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update(source.to_utf8_buffer())
+	return "inline_script_sha256:%s" % context.finish().hex_encode().to_upper()
+
+
+func get_ucis_last_error() -> String:
+	return _ucis_last_error
+
+
+func get_ucis_last_diagnostic() -> Dictionary:
+	return _ucis_last_diagnostic.duplicate(true)
+
+
+func _compile_ucis_steps(raw_steps: Array, entrypoint: String) -> Array[Dictionary]:
+	_ucis_last_error = ""
+	_ucis_last_diagnostic = {}
+	if raw_steps.is_empty():
+		return []
+	var compiled: Dictionary = UcisCompiler.compile_steps(raw_steps, entrypoint, self)
+	if bool(compiled.get("ok", false)):
+		var result: Array[Dictionary] = []
+		for step_value: Variant in compiled.get("steps", []):
+			if not step_value is Dictionary:
+				_ucis_last_error = "ucis_compiler_return_shape_invalid"
+				break
+			result.append(step_value as Dictionary)
+		if _ucis_last_error.is_empty() and result.size() == raw_steps.size():
+			return result
+	elif _ucis_last_error.is_empty():
+		_ucis_last_error = str(compiled.get("error_code", "unsupported_interaction_shape"))
+	_ucis_last_diagnostic = {
+		"effect_ref": _ucis_effect_ref(get_script()),
+		"entrypoint": entrypoint,
+		"error_code": _ucis_last_error,
+	}
+	push_error("UCIS rejected %s effect=%s: %s" % [
+		entrypoint,
+		_ucis_last_diagnostic.effect_ref,
+		_ucis_last_error,
+	])
+	# A rejected interactive shape must not be mistaken for an automatic effect.
+	# This mandatory empty sentinel prevents any engine mutation and makes both
+	# live and headless owners surface the stable unsupported error.
+	return [{
+		"id": "ucis_unsupported_interaction",
+		"items": [],
+		"labels": [],
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": false,
+		"ucis_unsupported_error": _ucis_last_error,
+		"ucis_unsupported_diagnostic": _ucis_last_diagnostic.duplicate(true),
+		"__ucis": {
+			"ucis_generation": 1,
+			"step_id": "ucis_unsupported_interaction",
+			"primitive": "ChooseCardSet",
+			"select_type_raw": 1,
+			"context_raw": 25,
+			"option_type_raw": 3,
+			"quantity_encoding": "result_list_length",
+			"next_checkpoint_rule": "fresh_reobserve",
+			"unsupported_if": [_ucis_last_error],
+		},
+	}]
+
+
 func can_execute(_card: CardInstance, _state: GameState) -> bool:
 	return true
 
@@ -654,8 +864,100 @@ func execute(_card: CardInstance, _targets: Array, _state: GameState) -> void:
 	pass
 
 
-func get_on_play_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+func build_ucis_on_play_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return []
+
+
+func get_on_play_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_on_play_interaction_steps_spec_steps(card, state),
+		"on_play_interaction"
+	)
+
+
+func build_ucis_granted_attack_interaction_steps_spec_steps(
+	_pokemon: PokemonSlot,
+	_granted_attack: Dictionary,
+	_state: GameState
+) -> Array[Dictionary]:
+	return []
+
+
+func get_granted_attack_interaction_steps(
+	pokemon: PokemonSlot,
+	granted_attack: Dictionary,
+	state: GameState
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_granted_attack_interaction_steps_spec_steps(pokemon, granted_attack, state),
+		"granted_attack_interaction"
+	)
+
+
+func build_ucis_knockout_interaction_steps_spec_steps(
+	_holder: PokemonSlot,
+	_state: GameState
+) -> Array[Dictionary]:
+	return []
+
+
+func get_knockout_interaction_steps(holder: PokemonSlot, state: GameState) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_knockout_interaction_steps_spec_steps(holder, state),
+		"knockout_interaction"
+	)
+
+
+func build_ucis_end_turn_interaction_steps_spec_steps(
+	_slot: PokemonSlot,
+	_state: GameState
+) -> Array[Dictionary]:
+	return []
+
+
+func get_end_turn_interaction_steps(slot: PokemonSlot, state: GameState) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_end_turn_interaction_steps_spec_steps(slot, state),
+		"end_turn_interaction"
+	)
+
+
+func build_ucis_reactive_interaction_steps_spec_steps(
+	_source: PokemonSlot,
+	_attacker: PokemonSlot,
+	_state: GameState
+) -> Array[Dictionary]:
+	return []
+
+
+func get_reactive_interaction_steps(
+	source: PokemonSlot,
+	attacker: PokemonSlot,
+	state: GameState
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_reactive_interaction_steps_spec_steps(source, attacker, state),
+		"reactive_interaction"
+	)
+
+
+func build_ucis_trigger_interaction_steps_spec_steps(
+	_attacker: PokemonSlot,
+	_defender: PokemonSlot,
+	_state: GameState
+) -> Array[Dictionary]:
+	return []
+
+
+func get_trigger_interaction_steps(
+	attacker: PokemonSlot,
+	defender: PokemonSlot,
+	state: GameState
+) -> Array[Dictionary]:
+	return _compile_ucis_steps(
+		build_ucis_trigger_interaction_steps_spec_steps(attacker, defender, state),
+		"trigger_interaction"
+	)
 
 
 func execute_on_play(_card: CardInstance, _state: GameState, _targets: Array = []) -> void:
@@ -704,11 +1006,12 @@ func build_empty_search_resolution_step_with_view_label(title: String, view_labe
 	return {
 		"id": "empty_search_resolution",
 		"title": title,
-		"items": [EMPTY_SEARCH_CONTINUE, EMPTY_SEARCH_VIEW_DECK],
+		"items": [true, false],
 		"labels": ["继续消耗", view_label],
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": false,
+		"ucis_context_name": "ACTIVATE",
 	}
 
 
@@ -716,7 +1019,7 @@ func should_preview_empty_search_deck(resolved_context: Dictionary) -> bool:
 	var selected_raw: Array = resolved_context.get("empty_search_resolution", [])
 	if selected_raw.is_empty():
 		return false
-	return str(selected_raw[0]) == EMPTY_SEARCH_VIEW_DECK
+	return selected_raw[0] == false or str(selected_raw[0]) == EMPTY_SEARCH_VIEW_DECK
 
 
 func has_resolved_non_internal_interaction_step(

@@ -14,11 +14,11 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return can_execute(card, state)
 
 
-func get_preview_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
-	return get_interaction_steps(card, state)
+func build_ucis_preview_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	return build_ucis_interaction_steps_spec_steps(card, state)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	if player.active_pokemon == null or player.bench.is_empty():
 		return []
@@ -28,7 +28,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	return [step]
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	if player.active_pokemon == null or player.active_pokemon.attached_energy.is_empty():
 		return []

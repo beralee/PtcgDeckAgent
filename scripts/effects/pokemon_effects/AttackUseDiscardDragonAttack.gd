@@ -16,7 +16,7 @@ func _init(processor: EffectProcessor) -> void:
 
 ## ==================== 交互步骤 ====================
 ## 让玩家从弃牌区龙系宝可梦中选择一个招式
-func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
+func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	var labels: Array[String] = []
@@ -53,13 +53,15 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": true,
+		"ucis_context_name": "ATTACK",
+		"ucis_option_type_name": "ATTACK",
 	}]
 
 
 ## ==================== 动态后续交互步骤 ====================
 ## 在玩家选择了要复制的招式之后，查询被复制招式是否有自己的交互步骤
 ## （如幻影潜袭的伤害指示物分配），并将其追加到交互流程中。
-func get_followup_attack_interaction_steps(
+func build_ucis_followup_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	_attack: Dictionary,
 	state: GameState,

@@ -1,0 +1,177 @@
+{
+  "schema_version": 2,
+  "lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "captured_date": "2026-08-09",
+  "status": "pinned_for_p1_wp1",
+  "roots": {
+    "ptcgabc": {
+      "captured_path": "D:\\ai\\code\\ptcgabc",
+      "role": "read_only_official_and_base_graph_oracle"
+    },
+    "ptcgdap": {
+      "captured_path": "D:\\ai\\code\\PtcgDAP",
+      "role": "current_worktree"
+    }
+  },
+  "hash_modes": {
+    "raw_bytes": "SHA-256 over the exact file byte stream",
+    "canonical_json_v1": "SHA-256 over duplicate-key-rejected UTF-8 JSON serialized with Unicode object keys sorted by Python code-point order, no insignificant whitespace or ASCII escaping; values are limited to object/list/string/integer/boolean/null (no floats), with no Unicode normalization"
+  },
+  "auxiliary_hash_policy": "captured_raw_sha256_and_git_blob_lf_sha256_are_diagnostic_only",
+  "official_bundle": {
+    "root_id": "ptcgabc",
+    "relative_path": "official_data/kaggle_bundle",
+    "downloaded_at_utc": "2026-07-27T14:41:55.419932+00:00",
+    "manifest": "competition_files.sha256.json",
+    "manifest_sha256": "9728A4409F2D8378F161E6BF33A871186C583CEAD3222372A5C4E092C5CB356C",
+    "file_count": 60,
+    "total_bytes": 327589562,
+    "extra_file_policy": "reject_unlocked_extras_except_reported_pycache_diagnostics"
+  },
+  "artifacts": [
+    {
+      "id": "sample_main_py",
+      "root_id": "ptcgabc",
+      "relative_path": "official_data/kaggle_bundle/sample_submission/sample_submission/main.py",
+      "hash_mode": "raw_bytes",
+      "sha256": "CD434298FFC02788D8BE9621E576687DA7CDC1FE4BE731E34AD686C6B9D8367A",
+      "role": "official_agent_entry_sample"
+    },
+    {
+      "id": "official_cg_api_py",
+      "root_id": "ptcgabc",
+      "relative_path": "official_data/kaggle_bundle/sample_submission/sample_submission/cg/api.py",
+      "hash_mode": "raw_bytes",
+      "sha256": "593F1298E52A635F90F8F505A52113E9AF114F444C293404E37906F18EE06CED",
+      "role": "official_python_contract_and_enum_source"
+    },
+    {
+      "id": "official_api_json_h",
+      "root_id": "ptcgabc",
+      "relative_path": "official_data/kaggle_bundle/ptcg_engine/ptcgProgram 22/ApiJson.h",
+      "hash_mode": "raw_bytes",
+      "sha256": "FA405A0421AD09FBAE6E3922BD73A0A07333B17790DEA7E8FD90C1B97F326851",
+      "role": "official_select_option_wire_serializer"
+    },
+    {
+      "id": "official_to_json_h",
+      "root_id": "ptcgabc",
+      "relative_path": "official_data/kaggle_bundle/ptcg_engine/ptcgProgram 22/ToJson.h",
+      "hash_mode": "raw_bytes",
+      "sha256": "84EE63939863493520EBE29E8CA717217EBF90191829EA80D1349942AA867602",
+      "role": "official_observation_wire_serializer"
+    },
+    {
+      "id": "official_types_h",
+      "root_id": "ptcgabc",
+      "relative_path": "official_data/kaggle_bundle/ptcg_engine/ptcgProgram 22/Types.h",
+      "hash_mode": "raw_bytes",
+      "sha256": "C5A9AD65B1221FC9B6ED09E5F56C6BD7EC325117CC2247592164ABE698BAD0A8",
+      "role": "official_cpp_engine_enum_source"
+    },
+    {
+      "id": "kaggle_cabt_py",
+      "root_id": "ptcgabc",
+      "relative_path": "docs/official/external/kaggle_cabt.py",
+      "hash_mode": "raw_bytes",
+      "sha256": "83966930D12DA5D8F725AC70314BF1B58B842180277437DC4EA7DC6CEEA0D176",
+      "role": "cabt_environment_source"
+    },
+    {
+      "id": "kaggle_cabt_json",
+      "root_id": "ptcgabc",
+      "relative_path": "docs/official/external/kaggle_cabt.json",
+      "hash_mode": "raw_bytes",
+      "sha256": "3B741A5B31426CA71422ADC39AFCBF709F6815AB0FDA6EE9F17482895B68A015",
+      "role": "cabt_environment_schema"
+    },
+    {
+      "id": "base_runtime_py",
+      "root_id": "ptcgabc",
+      "relative_path": "strategy_graph/base_runtime.py",
+      "hash_mode": "raw_bytes",
+      "sha256": "7320F0818FD1FA4EDBCE29D4EBAA08AECAB3FB896C9D2AB798116C95423EC595",
+      "role": "base_graph_runtime_oracle"
+    },
+    {
+      "id": "base_graph_v1_8_py",
+      "root_id": "ptcgabc",
+      "relative_path": "strategy_graph/base_graph_v1_8.py",
+      "hash_mode": "raw_bytes",
+      "sha256": "5D3035312390936D86DE4E2BAF520CE38AB0A79137E1D93199B909D79FBCA3D2",
+      "role": "base_graph_v1_8_oracle"
+    },
+    {
+      "id": "base_graph_v1_8_contract",
+      "root_id": "ptcgabc",
+      "relative_path": "strategy_graph/base_graph_v1_8_architecture_contract.json",
+      "hash_mode": "raw_bytes",
+      "sha256": "E8A010E5B6458D2B43811DE683EA2147044D06624502B7314907747E8B0EB5B9",
+      "role": "base_graph_v1_8_authority_contract"
+    },
+    {
+      "id": "candidate_official_marnie_deck",
+      "root_id": "ptcgabc",
+      "relative_path": "agents/marnie_raihan_graph_r121_pre_attack_phase_order/deck.csv",
+      "hash_mode": "raw_bytes",
+      "sha256": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF",
+      "role": "proposed_vertical_slice_official_deck"
+    },
+    {
+      "id": "candidate_local_800018501_deck",
+      "root_id": "ptcgdap",
+      "relative_path": "data/bundled_user/decks/800018501.json",
+      "hash_mode": "canonical_json_v1",
+      "sha256": "CB2FD50F40D75BDD9E38B826580A516BDCE7C51B17A43C63CE58E0CC19127CAB",
+      "captured_raw_sha256": "8E28C31BE70AB2971EAED9AAB8C6A2D7A3412A95E0E335A702C1F13D547B805F",
+      "git_blob_lf_sha256": "94D99E78BD67DCEE628E893936523B889B2D09E9E033047D1FF131FE1FA76F48",
+      "role": "proposed_vertical_slice_local_deck",
+      "portability_note": "Canonical JSON is authoritative because Git line-ending conversion changes the working-tree raw hash."
+    },
+    {
+      "id": "production_replay_89996333",
+      "root_id": "ptcgabc",
+      "relative_path": "artifacts/online_episodes/tanishi_55245395_full_20260806/replays/episode-89996333-replay.json",
+      "hash_mode": "raw_bytes",
+      "sha256": "BE4213B78666507B3A04FC686D9B7F59482F19CEECBCD01BEB75C17F7347B848",
+      "role": "production_replay_fixture_source",
+      "module_version": "1.32.3",
+      "environment_version": "1.0.0",
+      "data_classification": "private_replay_container",
+      "runtime_policy_input": false
+    },
+    {
+      "id": "local_official_engine_skill_order_replay",
+      "root_id": "ptcgabc",
+      "relative_path": "replays/crustle_core_v0_2_0_selfplay.json",
+      "hash_mode": "raw_bytes",
+      "sha256": "AC09718C3FF9D791716790C2091931AE70E9C37FC2AC970FE47E64CD5B0A5EB6",
+      "role": "local_official_engine_ordered_selection_fixture_source",
+      "module_version": "1.32.2",
+      "environment_version": "1.0.0",
+      "data_classification": "private_replay_container",
+      "runtime_policy_input": false,
+      "authority_note": "Development oracle evidence, not a production replay."
+    }
+  ],
+  "candidate_first_vertical_slice": {
+    "status": "proposed_pending_exact_mapping_audit",
+    "official_deck_artifact_id": "candidate_official_marnie_deck",
+    "local_deck_artifact_id": "candidate_local_800018501_deck",
+    "identity_rule": "These are two distinct deck lanes until an exact 60-card Card ID, printing, count, and effect audit proves equivalence. The local deck is not CABT-exportable by name."
+  },
+  "version_namespaces": {
+    "competition_page_kaggle_environments_label": "1.14.10",
+    "local_vendor_kaggle_environments": "1.32.2",
+    "observed_production_replay_module": "1.32.3",
+    "cabt_environment_schema": "1.0.0",
+    "cabt_documentation_site": "0.1.0"
+  },
+  "compatibility_rule": "Pin production replay/module evidence, official bundle hashes, and CABT environment schema together; no single semver is sufficient.",
+  "runtime_notes": [
+    "The raw Kaggle observation contains step and remainingOverageTime in addition to the CABT dataclass fields.",
+    "The local vendored seeded and continuation features are offline extensions and are not official runtime capabilities.",
+    "Replay containers are private evidence. Only exact steps[step][seat].observation extractions may enter public fixture files.",
+    "Recompute every hash and review the diff before changing this lock."
+  ]
+}

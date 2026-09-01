@@ -119,6 +119,11 @@ func _set_llm_wait_turn_label_suppressed(suppressed: bool) -> void:
 
 
 func _current_llm_wait_model_id() -> String:
+	if (
+		GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+		and _author_policy_polling
+	):
+		return "ptcgdap-author-local"
 	var config: Dictionary = GameManager.get_llm_opponent_battle_review_api_config()
 	return str(config.get("model", "")).strip_edges()
 
@@ -407,6 +412,9 @@ func _apply_llm_wait_label_text_metrics() -> void:
 
 
 func _llm_wait_model_display_name(model_id: String) -> String:
+	if model_id.strip_edges().to_lower() == "ptcgdap-author-local":
+		var author_name := _author_strategy_author_name.strip_edges()
+		return author_name if not author_name.is_empty() else "AI"
 	var normalized := GameManager.normalize_battle_review_model(model_id)
 	var lower := normalized.to_lower()
 	if lower.contains("grok"):
@@ -435,6 +443,8 @@ func _llm_wait_model_display_name(model_id: String) -> String:
 
 
 func _llm_wait_action_text_for_model(model_id: String) -> String:
+	if model_id.strip_edges().to_lower() == "ptcgdap-author-local":
+		return "正在计算行动"
 	var normalized := GameManager.normalize_battle_review_model(model_id).to_lower()
 	if normalized.contains("grok"):
 		return "正在挠头中"
@@ -745,17 +755,22 @@ func _is_portrait_battle_layout_active() -> bool:
 
 
 func _is_ai_turn_ready() -> bool:
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+	if GameManager.current_mode not in [
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]:
 		return false
 	if _gsm == null:
 		return false
-	_ensure_ai_opponent()
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
+		return false
 	if _gsm.game_state != null and _gsm.game_state.phase == GameState.GamePhase.SETUP and not _is_ai_setup_prompt():
 		return false
 	if _is_ai_setup_prompt():
 		if _is_ui_blocking_ai():
 			return false
-		return _get_ai_prompt_player_index() == _ai_opponent.player_index
+		return _get_ai_prompt_player_index() == int(owner.player_index)
 	if _pending_choice == "take_prize":
 		if _is_ui_blocking_ai():
 			return false
@@ -775,22 +790,25 @@ func _is_ai_turn_ready() -> bool:
 	if _pending_choice == "effect_interaction":
 		if _is_ui_blocking_ai():
 			return false
-		return _get_effect_interaction_prompt_player_index() == _ai_opponent.player_index
-	return _ai_opponent.should_control_turn(_gsm.game_state, _is_ui_blocking_ai())
+		return _get_effect_interaction_prompt_player_index() == int(owner.player_index)
+	return bool(owner.call("should_control_turn", _gsm.game_state, _is_ui_blocking_ai()))
 
 
 
 func _try_auto_continue_ai_draw_reveal() -> bool:
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+	if GameManager.current_mode not in [
+		GameManager.GameMode.VS_AI,
+		GameManager.GameMode.VS_AUTHOR_STRATEGY_AI,
+	]:
 		return false
 	if _draw_reveal_active != true or _draw_reveal_auto_continue_pending != true:
 		return false
 	if self is Node and (self as Node).is_inside_tree():
 		return false
-	_ensure_ai_opponent()
-	if _ai_opponent == null or _draw_reveal_current_action == null:
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null or _draw_reveal_current_action == null:
 		return false
-	if _draw_reveal_current_action.player_index != _ai_opponent.player_index:
+	if _draw_reveal_current_action.player_index != int(owner.player_index):
 		return false
 	if _battle_draw_reveal_controller == null or not _battle_draw_reveal_controller.has_method("run_auto_continue"):
 		return false
@@ -942,11 +960,12 @@ func _get_ai_prompt_player_index() -> int:
 
 
 func _is_ai_send_out_prompt() -> bool:
-	if _ai_opponent == null:
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
 		return false
 	return (
 		_pending_choice == "send_out"
-		and int(_dialog_data.get("player", -1)) == _ai_opponent.player_index
+		and int(_dialog_data.get("player", -1)) == int(owner.player_index)
 	)
 
 
@@ -985,6 +1004,11 @@ func _is_ui_blocking_ai() -> bool:
 
 
 func _ensure_ai_opponent() -> void:
+	# Tests and non-live tooling historically construct the selected classic
+	# owner through this helper before setting VS_AI.  Preserve that contract,
+	# while the author mode must never instantiate a legacy fallback owner.
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		return
 	if _ai_opponent == null:
 		_ai_opponent = _build_selected_ai_opponent()
 		_log_ai_loaded(
@@ -992,6 +1016,59 @@ func _ensure_ai_opponent() -> void:
 			str(_ai_opponent.get_meta("ai_version_id", "")),
 			str(_ai_opponent.get_meta("ai_display_name", "Default AI"))
 		)
+
+
+func _runtime_ai_owner() -> Variant:
+	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
+		if _author_development_ui_match_active \
+				and _development_player_rules_owner != null \
+				and int(_development_player_rules_owner.player_index) == _development_ui_prompt_player_index():
+			return _development_player_rules_owner
+		if _author_player_owner != null \
+			and _author_player_owner.has_method("validate_integrity") \
+			and _author_player_owner.validate_integrity():
+			return _author_player_owner
+		return null
+	if GameManager.current_mode == GameManager.GameMode.VS_AI:
+		_ensure_ai_opponent()
+		return _ai_opponent
+	return null
+
+
+func _development_ui_prompt_player_index() -> int:
+	if not _author_development_ui_match_active or _gsm == null or _gsm.game_state == null:
+		return -1
+	if _gsm.has_method("get_pending_decision_snapshot"):
+		var snapshot: Variant = _gsm.call("get_pending_decision_snapshot")
+		if snapshot is Dictionary and not (snapshot as Dictionary).is_empty():
+			var authoritative_owner := int((snapshot as Dictionary).get("owner_player_index", -1))
+			if authoritative_owner in [0, 1]:
+				return authoritative_owner
+	if _pending_choice == "mulligan_extra_draw":
+		return int(_dialog_data.get("beneficiary", -1))
+	if _pending_choice.begins_with("setup_active_") or _pending_choice.begins_with("setup_bench_"):
+		return int(_pending_choice.split("_")[-1])
+	if _pending_choice == "take_prize":
+		return _pending_prize_player_index
+	if _pending_choice in ["send_out", "heavy_baton_target", "exp_share_target"]:
+		return int(_dialog_data.get("player", -1))
+	if _pending_choice == "effect_interaction":
+		return _get_effect_interaction_prompt_player_index()
+	return _gsm.game_state.current_player_index
+
+
+func _runtime_ai_player_index() -> int:
+	var owner: Variant = _runtime_ai_owner()
+	return int(owner.player_index) if owner != null else -1
+
+
+func _is_runtime_ai_player(player_index: int) -> bool:
+	return player_index >= 0 and player_index == _runtime_ai_player_index()
+
+
+func _is_author_player_owner_prompt(player_index: int) -> bool:
+	return GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI \
+		and _is_runtime_ai_player(player_index)
 
 
 
@@ -1035,39 +1112,43 @@ func _is_ai_setup_prompt(pending_choice: String = _pending_choice) -> bool:
 
 
 func _is_ai_prize_prompt() -> bool:
-	if _ai_opponent == null:
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
 		return false
 	return (
 		_pending_choice == "take_prize"
-		and _pending_prize_player_index == _ai_opponent.player_index
+		and _pending_prize_player_index == int(owner.player_index)
 		and _pending_prize_remaining > 0
 	)
 
 
 
 func _is_ai_heavy_baton_prompt() -> bool:
-	if _ai_opponent == null:
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
 		return false
 	return (
 		_pending_choice == "heavy_baton_target"
-		and int(_dialog_data.get("player", -1)) == _ai_opponent.player_index
+		and int(_dialog_data.get("player", -1)) == int(owner.player_index)
 	)
 
 
 func _is_ai_exp_share_prompt() -> bool:
-	if _ai_opponent == null:
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
 		return false
 	return (
 		_pending_choice == "exp_share_target"
-		and int(_dialog_data.get("player", -1)) == _ai_opponent.player_index
+		and int(_dialog_data.get("player", -1)) == int(owner.player_index)
 	)
 
 
 
 func _is_ai_effect_prompt() -> bool:
-	if _ai_opponent == null:
+	var owner: Variant = _runtime_ai_owner()
+	if owner == null:
 		return false
-	return _get_effect_interaction_prompt_player_index() == _ai_opponent.player_index
+	return _get_effect_interaction_prompt_player_index() == int(owner.player_index)
 
 
 

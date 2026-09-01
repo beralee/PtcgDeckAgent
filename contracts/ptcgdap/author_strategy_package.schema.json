@@ -1,0 +1,542 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/author_strategy_package.schema.json",
+  "title": "PtcgDAP author strategy package documents v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/strategy_package"
+    },
+    {
+      "$ref": "#/$defs/files_manifest"
+    },
+    {
+      "$ref": "#/$defs/signature"
+    },
+    {
+      "$ref": "#/$defs/deck_manifest"
+    },
+    {
+      "$ref": "#/$defs/policy_ir"
+    },
+    {
+      "$ref": "#/$defs/adapter"
+    },
+    {
+      "$ref": "#/$defs/config"
+    }
+  ],
+  "$defs": {
+    "strategy_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "package_id",
+        "package_version",
+        "author",
+        "strategy",
+        "deck",
+        "policy",
+        "compatibility",
+        "presentation"
+      ],
+      "properties": {
+        "document_type": {
+          "const": "strategy_package_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "package_id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$"
+        },
+        "package_version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$",
+          "maxLength": 64
+        },
+        "author": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "author_id",
+            "display_name"
+          ],
+          "properties": {
+            "author_id": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 128,
+              "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$"
+            },
+            "display_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          }
+        },
+        "strategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "display_name",
+            "summary"
+          ],
+          "properties": {
+            "display_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          }
+        },
+        "deck": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "display_name",
+            "manifest_path",
+            "deck_path"
+          ],
+          "properties": {
+            "display_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "manifest_path": {
+              "const": "deck/deck_manifest.json"
+            },
+            "deck_path": {
+              "const": "deck/deck.csv"
+            }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "entry_kind",
+            "ir_path",
+            "adapter_path",
+            "config_path",
+            "weights_path"
+          ],
+          "properties": {
+            "entry_kind": {
+              "const": "restricted_policy_ir_v1"
+            },
+            "ir_path": {
+              "const": "policy/policy_ir.json"
+            },
+            "adapter_path": {
+              "const": "policy/adapter.json"
+            },
+            "config_path": {
+              "const": "policy/config.json"
+            },
+            "weights_path": {
+              "oneOf": [
+                {
+                  "const": "policy/weights.bin"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "compatibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "minimum_game_api",
+            "cabt_contract_sha256",
+            "card_catalog_sha256",
+            "base_executor_sha256",
+            "required_capabilities"
+          ],
+          "properties": {
+            "minimum_game_api": {
+              "const": "ptcgdap-author-host-v1"
+            },
+            "cabt_contract_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "card_catalog_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "base_executor_sha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "required_capabilities": {
+              "type": "array",
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              }
+            }
+          }
+        },
+        "presentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "icon_path",
+            "banner_path"
+          ],
+          "properties": {
+            "icon_path": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "assets/icon.png",
+                    "assets/icon.webp"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "banner_path": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "assets/banner.png",
+                    "assets/banner.webp"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "files_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "files"
+      ],
+      "properties": {
+        "document_type": {
+          "const": "files_sha256_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "files": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 13,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "kind",
+              "bytes",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*(?:/[A-Za-z0-9][A-Za-z0-9._-]*)*$"
+              },
+              "kind": {
+                "enum": [
+                  "json",
+                  "text",
+                  "csv",
+                  "weights",
+                  "png",
+                  "webp"
+                ]
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9A-F]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "algorithm",
+        "key_id",
+        "signed_payload_sha256",
+        "signature_base64"
+      ],
+      "properties": {
+        "document_type": {
+          "const": "signature_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$"
+        },
+        "signed_payload_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "signature_base64": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+/]{86}==$"
+        }
+      }
+    },
+    "deck_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "deck_id",
+        "card_id_domain",
+        "card_count",
+        "deck_csv_sha256",
+        "cabt_exportable"
+      ],
+      "properties": {
+        "document_type": {
+          "const": "deck_manifest_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "deck_id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$"
+        },
+        "card_id_domain": {
+          "const": "official_cabt_card_id"
+        },
+        "card_count": {
+          "const": 60
+        },
+        "deck_csv_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "cabt_exportable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "policy_ir": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "profile_id",
+        "graph_id",
+        "entry_node_id",
+        "required_capabilities",
+        "nodes"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "profile_id": {
+          "const": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1"
+        },
+        "graph_id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$"
+        },
+        "entry_node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "required_capabilities": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "node_id",
+              "operator",
+              "owner",
+              "config",
+              "next_node_ids"
+            ],
+            "properties": {
+              "node_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "operator": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "owner": {
+                "enum": [
+                  "base",
+                  "adapter"
+                ]
+              },
+              "config": {
+                "type": "object"
+              },
+              "next_node_ids": {
+                "type": "array",
+                "maxItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "adapter_id",
+        "adapter_version",
+        "rules"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "adapter_id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$"
+        },
+        "adapter_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "rules": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_type",
+        "schema_version",
+        "config_profile_id",
+        "values"
+      ],
+      "properties": {
+        "document_type": {
+          "const": "author_policy_config_v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "config_profile_id": {
+          "const": "ptcgdap-author-policy-config-v1"
+        },
+        "values": {
+          "type": "object",
+          "maxProperties": 128,
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]{0,63}$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

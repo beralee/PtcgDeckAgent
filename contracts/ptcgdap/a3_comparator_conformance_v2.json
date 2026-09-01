@@ -1,0 +1,28 @@
+{
+  "document_type": "ptcgdap_a3_comparator_conformance_v2",
+  "schema_version": 2,
+  "base": {
+    "acting_seat": 0,
+    "damage": 0,
+    "incremental_logs": [],
+    "kind": "SELECTION",
+    "option_order": [3, 7],
+    "random_event_cursor": 0,
+    "serial": 101,
+    "select_context": 25,
+    "select_type": 1
+  },
+  "entity_relation": {
+    "left_serial_to_entity": {"101": "deck:646:0"},
+    "right_serial_to_entity": {"9001": "deck:646:0"}
+  },
+  "cases": [
+    {"case_id": "equal", "mutation": "none", "classification": null, "path": null},
+    {"case_id": "option_reorder", "mutation": "option_reorder", "classification": "option_order_diff", "path": "/semantic_option_fingerprints"},
+    {"case_id": "damage", "mutation": "damage", "classification": "damage_diff", "path": "/public_snapshot"},
+    {"case_id": "log", "mutation": "log", "classification": "log_diff", "path": "/incremental_logs"},
+    {"case_id": "serial", "mutation": "serial", "classification": "entity_lineage_diff", "path": "/ordered_options/entity_relation"},
+    {"case_id": "rng", "mutation": "rng", "classification": "random_schedule_diff", "path": "/random_event_cursor"},
+    {"case_id": "terminal", "mutation": "terminal", "classification": "terminal_diff", "path": "/kind"}
+  ]
+}

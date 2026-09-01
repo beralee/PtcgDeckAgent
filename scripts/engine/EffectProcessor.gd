@@ -12,6 +12,7 @@ const AbilityPreventTeraAttackDamageAndEffectsScript = preload("res://scripts/ef
 const AbilityTingLuCursedLandScript = preload("res://scripts/effects/pokemon_effects/AbilityTingLuCursedLand.gd")
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
 const FieldTransition = preload("res://scripts/engine/BattleFieldTransitionService.gd")
+const JsonTreeScript = preload("res://scripts/ai/ptcgdap/cabt/CabtJsonTree.gd")
 
 const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
 const PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY := "_pending_attack_effect_energy_returns"
@@ -45,10 +46,14 @@ func _get_bound_game_state_machine() -> Object:
 
 
 func register_effect(effect_id: String, effect: BaseEffect) -> void:
+	if effect != null:
+		effect.bind_ucis_registration_id(effect_id)
 	_effect_registry[effect_id] = effect
 
 
 func register_attack_effect(effect_id: String, effect: BaseEffect) -> void:
+	if effect != null:
+		effect.bind_ucis_registration_id(effect_id)
 	if not _attack_effect_registry.has(effect_id):
 		_attack_effect_registry[effect_id] = []
 	_attack_effect_registry[effect_id].append(effect)
@@ -61,6 +66,7 @@ func replace_attack_effects(effect_id: String, effects: Array) -> void:
 	for item: Variant in effects:
 		var effect := item as BaseEffect
 		if effect != null:
+			effect.bind_ucis_registration_id(effect_id)
 			_attack_effect_registry[effect_id].append(effect)
 
 
@@ -144,6 +150,22 @@ func get_registered_count() -> int:
 
 func get_effect(effect_id: String) -> BaseEffect:
 	return _effect_registry.get(_resolve_effect_id(effect_id), null)
+
+
+## Build/load-time UCIS catalog audit surface. This returns effect instances,
+## never live choices or mutation authority, and is intentionally detached from
+## the per-window decision path.
+func get_ucis_effect_instances(effect_id: String) -> Array[BaseEffect]:
+	var result: Array[BaseEffect] = []
+	var resolved_id := _resolve_effect_id(effect_id)
+	var card_effect := _effect_registry.get(resolved_id, null) as BaseEffect
+	if card_effect != null:
+		result.append(card_effect)
+	for value: Variant in _attack_effect_registry.get(resolved_id, []):
+		var attack_effect := value as BaseEffect
+		if attack_effect != null and attack_effect not in result:
+			result.append(attack_effect)
+	return result
 
 
 func draw_cards_with_log(
@@ -359,7 +381,11 @@ func execute_card_effect(card: CardInstance, targets: Array, state: GameState) -
 		return false
 	if not validate_card_effect_context(card, targets, state):
 		return false
+	var random_context_token := coin_flipper.push_context(
+		_random_card_effect_context(card, effect_id, effect, state)
+	)
 	effect.execute(card, targets, state)
+	coin_flipper.pop_context(random_context_token)
 	return true
 
 
@@ -379,13 +405,20 @@ func execute_attack_effect(
 		return false
 	var effect_id: String = _resolve_effect_id(card_data.effect_id)
 	_begin_attack_effect_energy_return_window(state)
+	var attack_random_base := _random_attack_effect_context(
+		attacker, attack_index, effect_id, null, state
+	)
 
 	if _effect_registry.has(effect_id):
 		var card_effect: BaseEffect = _effect_registry[effect_id]
 		state.shared_turn_flags["_draw_effect_processor"] = self
+		var card_random_context := attack_random_base.duplicate(true)
+		card_random_context["effect_implementation"] = _effect_implementation(card_effect)
+		var card_random_token := coin_flipper.push_context(card_random_context)
 		card_effect.set_attack_interaction_context(targets)
 		card_effect.execute_attack(attacker, defender, attack_index, state)
 		card_effect.clear_attack_interaction_context()
+		coin_flipper.pop_context(card_random_token)
 		if state != null and state.is_game_over():
 			_finish_attack_effect_energy_return_window(state)
 			return true
@@ -398,9 +431,13 @@ func execute_attack_effect(
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
 			state.shared_turn_flags["_draw_effect_processor"] = self
+			var effect_random_context := attack_random_base.duplicate(true)
+			effect_random_context["effect_implementation"] = _effect_implementation(effect)
+			var effect_random_token := coin_flipper.push_context(effect_random_context)
 			effect.set_attack_interaction_context(targets)
 			effect.execute_attack(attacker, defender, attack_index, state)
 			effect.clear_attack_interaction_context()
+			coin_flipper.pop_context(effect_random_token)
 			if state != null and state.is_game_over():
 				_finish_attack_effect_energy_return_window(state)
 				return true
@@ -595,13 +632,21 @@ func execute_attack_effect_by_id(
 ) -> void:
 	effect_id = _resolve_effect_id(effect_id)
 	_begin_attack_effect_energy_return_window(state)
+	var attack_random_base := _random_attack_effect_context(
+		attacker, attack_index, effect_id, null, state
+	)
+	attack_random_base["effect_phase"] = "copied_attack_effect"
 	if _effect_registry.has(effect_id):
 		var card_effect: BaseEffect = _effect_registry[effect_id]
 		if exclude_effect_type == null or not is_instance_of(card_effect, exclude_effect_type):
 			state.shared_turn_flags["_draw_effect_processor"] = self
+			var card_random_context := attack_random_base.duplicate(true)
+			card_random_context["effect_implementation"] = _effect_implementation(card_effect)
+			var card_random_token := coin_flipper.push_context(card_random_context)
 			card_effect.set_attack_interaction_context(targets)
 			card_effect.execute_attack(attacker, defender, attack_index, state)
 			card_effect.clear_attack_interaction_context()
+			coin_flipper.pop_context(card_random_token)
 			if state != null and state.is_game_over():
 				_finish_attack_effect_energy_return_window(state)
 				return
@@ -616,9 +661,13 @@ func execute_attack_effect_by_id(
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
 			state.shared_turn_flags["_draw_effect_processor"] = self
+			var effect_random_context := attack_random_base.duplicate(true)
+			effect_random_context["effect_implementation"] = _effect_implementation(effect)
+			var effect_random_token := coin_flipper.push_context(effect_random_context)
 			effect.set_attack_interaction_context(targets)
 			effect.execute_attack(attacker, defender, attack_index, state)
 			effect.clear_attack_interaction_context()
+			coin_flipper.pop_context(effect_random_token)
 			if state != null and state.is_game_over():
 				_finish_attack_effect_energy_return_window(state)
 				return
@@ -695,7 +744,12 @@ func execute_ability_effect(
 				"valid": false,
 				"reason": "ability interaction validation failed",
 			})
+	var random_context := _random_ability_effect_context(
+		pokemon, ability_index, effect, state
+	)
+	var random_context_token := coin_flipper.push_context(random_context)
 	effect.call("execute_ability", pokemon, ability_index, targets, state)
+	coin_flipper.pop_context(random_context_token)
 	return true
 
 
@@ -1874,6 +1928,12 @@ func _sanitize_opponent_hand_trainer_target_value(trainer: CardInstance, value: 
 func process_pokemon_check(state: GameState) -> Array[PokemonSlot]:
 	var damaged_slots: Array[PokemonSlot] = []
 	state.shared_turn_flags["_draw_effect_processor"] = self
+	var pokemon_check_token := coin_flipper.push_context({
+		"acting_seat": int(state.current_player_index),
+		"source_identity": "pokemon_check",
+		"effect_phase": "between_turns_status",
+	})
+	var event_in_group := 0
 	for pi: int in 2:
 		var player: PlayerState = state.players[pi]
 		var slot: PokemonSlot = player.active_pokemon
@@ -1890,17 +1950,198 @@ func process_pokemon_check(state: GameState) -> Array[PokemonSlot]:
 		if slot.status_conditions.get("burned", false):
 			slot.damage_counters += 20 + get_burn_damage_bonus(slot, state)
 			took_damage = true
-			if coin_flipper.flip():
+			if coin_flipper.flip_with_metadata(_pokemon_check_coin_context(
+				state, pi, slot, "burned", event_in_group
+			)):
 				slot.status_conditions["burned"] = false
-		if slot.status_conditions.get("asleep", false) and coin_flipper.flip():
-			slot.status_conditions["asleep"] = false
+			event_in_group += 1
+		if slot.status_conditions.get("asleep", false):
+			if coin_flipper.flip_with_metadata(_pokemon_check_coin_context(
+				state, pi, slot, "asleep", event_in_group
+			)):
+				slot.status_conditions["asleep"] = false
+			event_in_group += 1
 		if pi == state.current_player_index and slot.status_conditions.get("paralyzed", false):
 			slot.status_conditions["paralyzed"] = false
 		if took_damage:
 			damaged_slots.append(slot)
 	_process_pokemon_check_abilities(state, damaged_slots)
 	_process_delayed_end_turn_discards(state)
+	coin_flipper.pop_context(pokemon_check_token)
 	return damaged_slots
+
+
+func _random_card_effect_context(
+	card: CardInstance,
+	effect_id: String,
+	effect: BaseEffect,
+	state: GameState
+) -> Dictionary:
+	var uid := ""
+	if card != null and card.card_data != null:
+		uid = card.card_data.get_uid()
+	return {
+		"acting_seat": int(card.owner_index) if card != null else -1,
+		"source_identity": "card:%s:effect:%s" % [uid, effect_id],
+		"source_card_uid": uid,
+		"source_attack_ordinal": -1,
+		"effect_id": effect_id,
+		"effect_phase": "card_effect",
+		"effect_implementation": _effect_implementation(effect),
+		"pre_state_hash": _random_state_hash(state),
+	}
+
+
+func _random_attack_effect_context(
+	attacker: PokemonSlot,
+	attack_index: int,
+	effect_id: String,
+	effect: BaseEffect,
+	state: GameState
+) -> Dictionary:
+	var top: CardInstance = attacker.get_top_card() if attacker != null else null
+	var uid := top.card_data.get_uid() if top != null and top.card_data != null else ""
+	return {
+		"acting_seat": int(top.owner_index) if top != null else -1,
+		"source_identity": "attack:%s#%d:effect:%s" % [uid, attack_index, effect_id],
+		"source_card_uid": uid,
+		"source_attack_ordinal": attack_index,
+		"effect_id": effect_id,
+		"effect_phase": "attack_effect",
+		"effect_implementation": _effect_implementation(effect),
+		"pre_state_hash": _random_state_hash(state),
+	}
+
+
+func _random_ability_effect_context(
+	pokemon: PokemonSlot,
+	ability_index: int,
+	effect: BaseEffect,
+	state: GameState
+) -> Dictionary:
+	var top: CardInstance = pokemon.get_top_card() if pokemon != null else null
+	var uid := top.card_data.get_uid() if top != null and top.card_data != null else ""
+	var effect_id := pokemon.get_card_data().effect_id \
+		if pokemon != null and pokemon.get_card_data() != null else ""
+	return {
+		"acting_seat": int(top.owner_index) if top != null else -1,
+		"source_identity": "ability:%s#%d:effect:%s" % [uid, ability_index, effect_id],
+		"source_card_uid": uid,
+		"source_attack_ordinal": -1,
+		"source_ability_ordinal": ability_index,
+		"effect_id": effect_id,
+		"effect_phase": "ability_effect",
+		"effect_implementation": _effect_implementation(effect),
+		"pre_state_hash": _random_state_hash(state),
+	}
+
+
+static func _pokemon_check_coin_context(
+	state: GameState,
+	target_seat: int,
+	slot: PokemonSlot,
+	status_condition: String,
+	event_in_group: int
+) -> Dictionary:
+	var uid := ""
+	if slot != null and slot.get_top_card() != null and slot.get_top_card().card_data != null:
+		uid = slot.get_top_card().card_data.get_uid()
+	return {
+		"source_identity": "pokemon_check:%s" % status_condition,
+		"target_identity": "seat:%d:active:%s" % [target_seat, uid],
+		"status_condition": status_condition,
+		"event_in_group": event_in_group,
+		"pre_state_hash": _random_state_hash(state),
+	}
+
+
+static func _effect_implementation(effect: Variant) -> String:
+	if effect == null or typeof(effect) != TYPE_OBJECT:
+		return ""
+	var script: Variant = effect.get_script()
+	return str(script.resource_path) if script is Script else ""
+
+
+static func _random_state_hash(state: GameState) -> String:
+	if state == null:
+		return ""
+	var players: Array = []
+	for player: PlayerState in state.players:
+		var bench: Array = []
+		for slot: PokemonSlot in player.bench:
+			bench.append(_random_public_slot_state(slot))
+		var discard: Array[String] = []
+		for card: CardInstance in player.discard_pile:
+			discard.append(_random_card_uid(card))
+		var lost_zone: Array[String] = []
+		for card: CardInstance in player.lost_zone:
+			lost_zone.append(_random_card_uid(card))
+		players.append({
+			"player_index": player.player_index,
+			"deck_count": player.deck.size(),
+			"hand_count": player.hand.size(),
+			"prize_count": player.prizes.size(),
+			"discard_count": player.discard_pile.size(),
+			"active": _random_public_slot_state(player.active_pokemon),
+			"bench": bench,
+			"discard": discard,
+			"lost_zone": lost_zone,
+		})
+	var canonical: Dictionary = JsonTreeScript.canonicalize({
+		"turn": state.turn_number,
+		"current_player_index": state.current_player_index,
+		"first_player_index": state.first_player_index,
+		"phase": int(state.phase),
+		"game_over": state.is_game_over(),
+		"winner_index": state.winner_index,
+		"stadium_uid": _random_card_uid(state.stadium_card),
+		"stadium_owner_index": state.stadium_owner_index,
+		"players": players,
+	})
+	if not bool(canonical.get("ok", false)):
+		return ""
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update(canonical.get("bytes", PackedByteArray()))
+	return context.finish().hex_encode().to_upper()
+
+
+static func _random_public_slot_state(slot: PokemonSlot) -> Dictionary:
+	if slot == null or slot.get_top_card() == null:
+		return {}
+	var stack: Array[String] = []
+	for card: CardInstance in slot.pokemon_stack:
+		stack.append(_random_card_uid(card))
+	var energy: Array = []
+	for card: CardInstance in slot.attached_energy:
+		energy.append({
+			"uid": _random_card_uid(card),
+			"provides": card.card_data.energy_provides \
+				if card != null and card.card_data != null else "",
+		})
+	var statuses: Dictionary = {}
+	var status_keys: Array = slot.status_conditions.keys()
+	status_keys.sort()
+	for key: Variant in status_keys:
+		statuses[str(key)] = bool(slot.status_conditions.get(key, false))
+	var effect_types: Array[String] = []
+	for effect_value: Variant in slot.effects:
+		if effect_value is Dictionary:
+			effect_types.append(str((effect_value as Dictionary).get("type", "")))
+	effect_types.sort()
+	return {
+		"stack": stack,
+		"damage": slot.damage_counters,
+		"status": statuses,
+		"energy": energy,
+		"tool_uid": _random_card_uid(slot.attached_tool),
+		"effect_types": effect_types,
+		"prize_value": slot.get_prize_count(),
+	}
+
+
+static func _random_card_uid(card: CardInstance) -> String:
+	return card.card_data.get_uid() if card != null and card.card_data != null else ""
 
 
 func _process_delayed_end_turn_discards(state: GameState) -> void:

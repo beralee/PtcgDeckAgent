@@ -23,7 +23,7 @@ func active_damage_is_invariant_under_interaction(attack_index: int) -> bool:
 	return applies_to_attack_index(attack_index)
 
 
-func get_attack_interaction_steps(
+func build_ucis_attack_interaction_steps_spec_steps(
 	card: CardInstance,
 	attack: Dictionary,
 	state: GameState

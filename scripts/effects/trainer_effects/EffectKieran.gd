@@ -13,17 +13,25 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return _get_available_modes(card, state).size() > 0
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var modes: Array[String] = _get_available_modes(card, state)
 	if modes.is_empty():
 		return []
+	var items: Array[bool] = []
 	var labels: Array[String] = []
-	for mode: String in modes:
-		labels.append(_get_mode_label(mode))
+	# UCIS deliberately has no arbitrary-string selection primitive. Kieran is
+	# an exact binary choice: true selects the switch branch and false selects
+	# the damage branch. When switching is unavailable, only false is exposed.
+	if MODE_SWITCH in modes:
+		items.append(true)
+		labels.append(_get_mode_label(MODE_SWITCH))
+	if MODE_DAMAGE in modes:
+		items.append(false)
+		labels.append(_get_mode_label(MODE_DAMAGE))
 	return [{
 		"id": MODE_STEP_ID,
 		"title": "选择效果",
-		"items": modes,
+		"items": items,
 		"labels": labels,
 		"min_select": 1,
 		"max_select": 1,
@@ -31,7 +39,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	}]
 
 
-func get_followup_interaction_steps(
+func build_ucis_followup_interaction_steps_spec_steps(
 	card: CardInstance,
 	state: GameState,
 	resolved_context: Dictionary
@@ -123,7 +131,11 @@ func _resolve_selected_mode(card: CardInstance, state: GameState, ctx: Dictionar
 	var available_modes: Array[String] = _get_available_modes(card, state)
 	var raw: Array = ctx.get(MODE_STEP_ID, [])
 	if not raw.is_empty():
-		var selected: String = str(raw[0])
+		var selected := ""
+		if typeof(raw[0]) == TYPE_BOOL:
+			selected = MODE_SWITCH if bool(raw[0]) else MODE_DAMAGE
+		elif typeof(raw[0]) == TYPE_STRING:
+			selected = str(raw[0])
 		if selected in available_modes:
 			return selected
 	return available_modes[0] if not available_modes.is_empty() else ""

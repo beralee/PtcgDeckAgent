@@ -45,7 +45,7 @@ class AbilityMaterialGathering extends BaseEffect:
 			and not state.players[owner].hand.is_empty()
 		)
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
 			return []
 		var items: Array = state.players[card.owner_index].hand.duplicate()
@@ -166,7 +166,7 @@ class AttackSeekingMountain extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -247,7 +247,7 @@ class AttackDistributeOpponentDamageCounters extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var targets: Array = state.players[1 - card.owner_index].get_all_pokemon()
@@ -348,7 +348,7 @@ class AttackDiscardGrassEnergyFromFieldDamage extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -462,7 +462,7 @@ class AttackRebrewBasicGrassEnergy extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		if _basic_grass_energy(state.players[card.owner_index]).is_empty():

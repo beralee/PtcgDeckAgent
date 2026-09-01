@@ -1,0 +1,877 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+  "profile_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+  "ir_profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+  "ir_cases": [
+    {
+      "id": "minimal-base",
+      "document": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+        "graph_id": "base-minimal-v1",
+        "entry_node_id": "n00",
+        "required_capabilities": [
+          "public_context",
+          "current_window",
+          "deterministic_fallback",
+          "strategic_trace_v2"
+        ],
+        "nodes": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "config": {
+              "frontier": "current_window"
+            },
+            "next_node_ids": [
+              "n10"
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "config": {
+              "mandatory_precedence": true,
+              "terminal_precedence": true
+            },
+            "next_node_ids": [
+              "n20"
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "config": {
+              "same_tier_only": true
+            },
+            "next_node_ids": [
+              "n30"
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "config": {
+              "enabled": true
+            },
+            "next_node_ids": [
+              "n40"
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "config": {
+              "strategy": "same_window_first_min"
+            },
+            "next_node_ids": [
+              "n50"
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "config": {},
+            "next_node_ids": []
+          }
+        ]
+      },
+      "expected_ir": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+        "graph_id": "base-minimal-v1",
+        "entry_node_id": "n00",
+        "required_capabilities": [
+          "public_context",
+          "current_window",
+          "deterministic_fallback",
+          "strategic_trace_v2"
+        ],
+        "nodes": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "config": {
+              "frontier": "current_window"
+            },
+            "next_node_ids": [
+              "n10"
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "config": {
+              "mandatory_precedence": true,
+              "terminal_precedence": true
+            },
+            "next_node_ids": [
+              "n20"
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "config": {
+              "same_tier_only": true
+            },
+            "next_node_ids": [
+              "n30"
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "config": {
+              "enabled": true
+            },
+            "next_node_ids": [
+              "n40"
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "config": {
+              "strategy": "same_window_first_min"
+            },
+            "next_node_ids": [
+              "n50"
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "config": {},
+            "next_node_ids": []
+          }
+        ],
+        "authority": "restricted_base_graph_ir_audit",
+        "authoritative": false,
+        "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA"
+      }
+    },
+    {
+      "id": "public-adapter-proposals",
+      "document": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+        "graph_id": "base-with-public-adapter-proposals-v1",
+        "entry_node_id": "n00",
+        "required_capabilities": [
+          "public_context",
+          "current_window",
+          "deterministic_fallback",
+          "strategic_trace_v2"
+        ],
+        "nodes": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "config": {
+              "frontier": "current_window"
+            },
+            "next_node_ids": [
+              "n10"
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "config": {
+              "mandatory_precedence": true,
+              "terminal_precedence": true
+            },
+            "next_node_ids": [
+              "n12"
+            ]
+          },
+          {
+            "node_id": "n12",
+            "operator": "goal_proposal",
+            "owner": "adapter",
+            "config": {
+              "goal_ids": [
+                "board-ready"
+              ]
+            },
+            "next_node_ids": [
+              "n14"
+            ]
+          },
+          {
+            "node_id": "n14",
+            "operator": "macro_proposal",
+            "owner": "adapter",
+            "config": {
+              "macro_ids": [
+                "prepare-attack"
+              ]
+            },
+            "next_node_ids": [
+              "n20"
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "config": {
+              "same_tier_only": true
+            },
+            "next_node_ids": [
+              "n22"
+            ]
+          },
+          {
+            "node_id": "n22",
+            "operator": "tiebreak_score",
+            "owner": "adapter",
+            "config": {
+              "feature_ids": [
+                "public-pressure"
+              ],
+              "weight_scale": 1000000
+            },
+            "next_node_ids": [
+              "n30"
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "config": {
+              "enabled": true
+            },
+            "next_node_ids": [
+              "n40"
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "config": {
+              "strategy": "same_window_first_min"
+            },
+            "next_node_ids": [
+              "n50"
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "config": {},
+            "next_node_ids": []
+          }
+        ]
+      },
+      "expected_ir": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+        "graph_id": "base-with-public-adapter-proposals-v1",
+        "entry_node_id": "n00",
+        "required_capabilities": [
+          "public_context",
+          "current_window",
+          "deterministic_fallback",
+          "strategic_trace_v2"
+        ],
+        "nodes": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base",
+            "config": {
+              "frontier": "current_window"
+            },
+            "next_node_ids": [
+              "n10"
+            ]
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base",
+            "config": {
+              "mandatory_precedence": true,
+              "terminal_precedence": true
+            },
+            "next_node_ids": [
+              "n12"
+            ]
+          },
+          {
+            "node_id": "n12",
+            "operator": "goal_proposal",
+            "owner": "adapter",
+            "config": {
+              "goal_ids": [
+                "board-ready"
+              ]
+            },
+            "next_node_ids": [
+              "n14"
+            ]
+          },
+          {
+            "node_id": "n14",
+            "operator": "macro_proposal",
+            "owner": "adapter",
+            "config": {
+              "macro_ids": [
+                "prepare-attack"
+              ]
+            },
+            "next_node_ids": [
+              "n20"
+            ]
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base",
+            "config": {
+              "same_tier_only": true
+            },
+            "next_node_ids": [
+              "n22"
+            ]
+          },
+          {
+            "node_id": "n22",
+            "operator": "tiebreak_score",
+            "owner": "adapter",
+            "config": {
+              "feature_ids": [
+                "public-pressure"
+              ],
+              "weight_scale": 1000000
+            },
+            "next_node_ids": [
+              "n30"
+            ]
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base",
+            "config": {
+              "enabled": true
+            },
+            "next_node_ids": [
+              "n40"
+            ]
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base",
+            "config": {
+              "strategy": "same_window_first_min"
+            },
+            "next_node_ids": [
+              "n50"
+            ]
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base",
+            "config": {},
+            "next_node_ids": []
+          }
+        ],
+        "authority": "restricted_base_graph_ir_audit",
+        "authoritative": false,
+        "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783"
+      }
+    }
+  ],
+  "ir_rejections": [
+    {
+      "id": "unknown-operator",
+      "mutation": {
+        "kind": "replace_operator",
+        "node_index": 0,
+        "value": "python_callable"
+      },
+      "expected_error_code": "unsupported_ir_operator"
+    },
+    {
+      "id": "adapter-owns-legality",
+      "mutation": {
+        "kind": "replace_owner",
+        "node_index": 0,
+        "value": "adapter"
+      },
+      "expected_error_code": "invalid_ir_owner"
+    },
+    {
+      "id": "bad-config",
+      "mutation": {
+        "kind": "replace_config",
+        "node_index": 0,
+        "value": {
+          "frontier": "private_engine"
+        }
+      },
+      "expected_error_code": "invalid_ir_config"
+    },
+    {
+      "id": "cycle",
+      "mutation": {
+        "kind": "replace_next",
+        "node_index": 5,
+        "value": [
+          "n00"
+        ]
+      },
+      "expected_error_code": "invalid_ir_topology"
+    },
+    {
+      "id": "missing-base-veto",
+      "mutation": {
+        "kind": "remove_node",
+        "node_index": 3
+      },
+      "expected_error_code": "missing_base_authority"
+    },
+    {
+      "id": "unsupported-capability",
+      "mutation": {
+        "kind": "append_capability",
+        "value": "private_oracle"
+      },
+      "expected_error_code": "unsupported_capability"
+    },
+    {
+      "id": "duplicate-node-id",
+      "mutation": {
+        "kind": "replace_node_id",
+        "node_index": 1,
+        "value": "n00"
+      },
+      "expected_error_code": "invalid_ir_topology"
+    }
+  ],
+  "trace_fixture": {
+    "context_case_id": "single-select-main-policy-context",
+    "decision_case_id": "policy-first",
+    "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+    "decision_audit_id": "B5AC71D7F1432B5CDEF7DCEA74387CC05952EA907CCD2A91A59AD4135C759F57"
+  },
+  "trace_cases": [
+    {
+      "id": "base-policy-first",
+      "ir_case_id": "minimal-base",
+      "trace_id": "trace-policy-first",
+      "audit": {
+        "legal_indexes": [
+          0,
+          1
+        ],
+        "strategic_indexes": [
+          0,
+          1
+        ],
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              1
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": [],
+        "fallback_reason": ""
+      },
+      "expected_trace": {
+        "schema_version": 2,
+        "profile_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+        "trace_id": "trace-policy-first",
+        "identities": {
+          "scene_id": "fixture-scene",
+          "decision_id": "fixture-policy-first",
+          "determinism_key": "fixture-determinism-policy-first"
+        },
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "decision_audit_id": "B5AC71D7F1432B5CDEF7DCEA74387CC05952EA907CCD2A91A59AD4135C759F57",
+          "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20"
+        },
+        "ir": {
+          "graph_id": "base-minimal-v1",
+          "ir_hash": "E5EB9174699256C0D252B915FB40D35F9DC56A96C34283D50094D7081D0EB0EA",
+          "required_capabilities": [
+            "public_context",
+            "current_window",
+            "deterministic_fallback",
+            "strategic_trace_v2"
+          ]
+        },
+        "frontier": {
+          "option_fingerprints": [
+            "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E",
+            "3CC190D5833C33F535FF377FBD1976C56BCFED571B1726FEFC9AE1065BDE7BED"
+          ],
+          "legal_indexes": [
+            0,
+            1
+          ],
+          "strategic_indexes": [
+            0,
+            1
+          ],
+          "mandatory_indexes": [],
+          "terminal_indexes": [],
+          "base_hard_tiers": [
+            {
+              "index": 0,
+              "tier": [
+                0,
+                0
+              ]
+            },
+            {
+              "index": 1,
+              "tier": [
+                0,
+                1
+              ]
+            }
+          ],
+          "base_vetoed_indexes": []
+        },
+        "adapter_proposals": [],
+        "owner_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base"
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base"
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base"
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base"
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base"
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base"
+          }
+        ],
+        "decision": {
+          "selected_indexes": [
+            0
+          ],
+          "owner_layer": "base_graph",
+          "reason_code": "policy_selection_accepted",
+          "fallback_tier": "none"
+        },
+        "fallback_reason": "",
+        "public_only": true,
+        "authority": "strategic_trace_v2_public_audit",
+        "authoritative": false,
+        "trace_hash": "FD9F1D4E83465DBECEA41DE6E8E7DACA567C0E52B2A2C3B2525F4834F6E378F8"
+      }
+    },
+    {
+      "id": "adapter-proposal-base-selected",
+      "ir_case_id": "public-adapter-proposals",
+      "trace_id": "trace-adapter-proposal-base-selected",
+      "audit": {
+        "legal_indexes": [
+          0,
+          1
+        ],
+        "strategic_indexes": [
+          0,
+          1
+        ],
+        "mandatory_indexes": [],
+        "terminal_indexes": [],
+        "base_hard_tiers": [
+          {
+            "index": 0,
+            "tier": [
+              0,
+              0
+            ]
+          },
+          {
+            "index": 1,
+            "tier": [
+              0,
+              0
+            ]
+          }
+        ],
+        "base_vetoed_indexes": [],
+        "adapter_proposals": [
+          {
+            "operator": "tiebreak_score",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_tiebreak_proposal"
+          }
+        ],
+        "fallback_reason": ""
+      },
+      "expected_trace": {
+        "schema_version": 2,
+        "profile_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+        "trace_id": "trace-adapter-proposal-base-selected",
+        "identities": {
+          "scene_id": "fixture-scene",
+          "decision_id": "fixture-policy-first",
+          "determinism_key": "fixture-determinism-policy-first"
+        },
+        "source": {
+          "context_hash": "E2382643C9F2624E9D660E8FB450147D659EF6BFCC711BDE6773A7F46A0297A4",
+          "decision_audit_id": "B5AC71D7F1432B5CDEF7DCEA74387CC05952EA907CCD2A91A59AD4135C759F57",
+          "policy_hash": "E4983AB3ADEB711304A9F519EAC3435E570A401484A02F7577B4464676540FF2",
+          "window_id": "2A99E9054C53CEE0AFEFD264EC9CB24FD76236F3B0E22A80CB6F5B6AAF7EE6E6",
+          "public_observation_hash": "AAD247016B2703B554E0D60BC8C01036976A170DA69ED81101094DE000B50D20"
+        },
+        "ir": {
+          "graph_id": "base-with-public-adapter-proposals-v1",
+          "ir_hash": "A829FB96F23D35207DAE1DEB5F0562F6C5AD4E18DFE75C7444372B0A04035783",
+          "required_capabilities": [
+            "public_context",
+            "current_window",
+            "deterministic_fallback",
+            "strategic_trace_v2"
+          ]
+        },
+        "frontier": {
+          "option_fingerprints": [
+            "A92ED8F0D3FEFD0F31D8460F35764C37E1668E86B2B4D6A0F8FCC9B69F11B17E",
+            "3CC190D5833C33F535FF377FBD1976C56BCFED571B1726FEFC9AE1065BDE7BED"
+          ],
+          "legal_indexes": [
+            0,
+            1
+          ],
+          "strategic_indexes": [
+            0,
+            1
+          ],
+          "mandatory_indexes": [],
+          "terminal_indexes": [],
+          "base_hard_tiers": [
+            {
+              "index": 0,
+              "tier": [
+                0,
+                0
+              ]
+            },
+            {
+              "index": 1,
+              "tier": [
+                0,
+                0
+              ]
+            }
+          ],
+          "base_vetoed_indexes": []
+        },
+        "adapter_proposals": [
+          {
+            "operator": "tiebreak_score",
+            "indexes": [
+              1
+            ],
+            "reason_code": "public_tiebreak_proposal"
+          }
+        ],
+        "owner_audit": [
+          {
+            "node_id": "n00",
+            "operator": "legality_guard",
+            "owner": "base"
+          },
+          {
+            "node_id": "n10",
+            "operator": "mandatory_terminal_guard",
+            "owner": "base"
+          },
+          {
+            "node_id": "n12",
+            "operator": "goal_proposal",
+            "owner": "adapter"
+          },
+          {
+            "node_id": "n14",
+            "operator": "macro_proposal",
+            "owner": "adapter"
+          },
+          {
+            "node_id": "n20",
+            "operator": "hard_tier_filter",
+            "owner": "base"
+          },
+          {
+            "node_id": "n22",
+            "operator": "tiebreak_score",
+            "owner": "adapter"
+          },
+          {
+            "node_id": "n30",
+            "operator": "base_veto",
+            "owner": "base"
+          },
+          {
+            "node_id": "n40",
+            "operator": "deterministic_fallback",
+            "owner": "base"
+          },
+          {
+            "node_id": "n50",
+            "operator": "emit_decision",
+            "owner": "base"
+          }
+        ],
+        "decision": {
+          "selected_indexes": [
+            0
+          ],
+          "owner_layer": "base_graph",
+          "reason_code": "policy_selection_accepted",
+          "fallback_tier": "none"
+        },
+        "fallback_reason": "",
+        "public_only": true,
+        "authority": "strategic_trace_v2_public_audit",
+        "authoritative": false,
+        "trace_hash": "BE3D4D869B66CE785942280430347FA07ED06FEB88B52D1488FBE291A55B0155"
+      }
+    }
+  ],
+  "trace_rejections": [
+    {
+      "id": "selected-not-strategic",
+      "mutation": {
+        "kind": "replace_strategic",
+        "value": [
+          1
+        ]
+      },
+      "expected_error_code": "invalid_trace_audit"
+    },
+    {
+      "id": "mandatory-filtered",
+      "mutation": {
+        "kind": "replace_mandatory",
+        "value": [
+          1
+        ]
+      },
+      "expected_error_code": "invalid_trace_audit"
+    },
+    {
+      "id": "terminal-filtered",
+      "mutation": {
+        "kind": "replace_terminal",
+        "value": [
+          1
+        ]
+      },
+      "expected_error_code": "invalid_trace_audit"
+    },
+    {
+      "id": "selected-crosses-best-tier",
+      "mutation": {
+        "kind": "swap_best_tier"
+      },
+      "expected_error_code": "invalid_trace_audit"
+    },
+    {
+      "id": "base-veto-selected",
+      "mutation": {
+        "kind": "replace_vetoed",
+        "value": [
+          0
+        ]
+      },
+      "expected_error_code": "invalid_trace_audit"
+    },
+    {
+      "id": "adapter-proposal-outside-strategic",
+      "mutation": {
+        "kind": "replace_proposals",
+        "value": [
+          {
+            "operator": "tiebreak_score",
+            "indexes": [
+              2
+            ],
+            "reason_code": "public_tiebreak_proposal"
+          }
+        ]
+      },
+      "expected_error_code": "invalid_trace_audit"
+    },
+    {
+      "id": "invalid-trace-id",
+      "mutation": {
+        "kind": "replace_trace_id",
+        "value": ""
+      },
+      "expected_error_code": "invalid_trace_identity"
+    }
+  ],
+  "private_sentinels": [
+    "PRIVATE_HAND_SENTINEL",
+    "PRIVATE_SEARCH_SENTINEL",
+    "PRIVATE_SESSION_SENTINEL"
+  ],
+  "consumer_rule": "IR and trace dictionaries are audit/conformance values only; future execution must consume exact owner-produced runtime objects and revalidate the current context/window."
+}

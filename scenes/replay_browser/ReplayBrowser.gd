@@ -392,6 +392,9 @@ func _on_replay_pressed(row: Dictionary) -> void:
 		"entry_turn_number": int(located.get("entry_turn_number", 0)),
 		"entry_source": str(located.get("entry_source", "unknown")),
 		"turn_numbers": (located.get("turn_numbers", []) as Array).duplicate(true),
+		"view_player_index": int(row.get("view_player_index", 0)),
+		"selected_deck_ids": (row.get("selected_deck_ids", []) as Array).duplicate(),
+		"player_labels": (row.get("player_labels", []) as Array).duplicate(),
 	}
 	GameManager.set_battle_replay_launch(launch)
 	if _auto_navigate_to_battle:

@@ -50,7 +50,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	player.shuffle_deck()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	for deck_card: CardInstance in player.deck:
@@ -70,7 +70,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	)]
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if not should_preview_empty_search_deck(resolved_context):
 		return []
 	var player: PlayerState = state.players[card.owner_index]

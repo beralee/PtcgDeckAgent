@@ -79,6 +79,13 @@ class FailingInteractionGSM extends RefCounted:
 		return false
 
 
+class EffectiveHpProcessor extends RefCounted:
+	var remaining_hp := 30
+
+	func get_effective_remaining_hp(_slot: PokemonSlot, _state: GameState) -> int:
+		return remaining_hp
+
+
 class FinishScene extends RefCounted:
 	var _gsm: Variant = null
 	var _pending_choice: String = "effect_interaction"
@@ -309,6 +316,32 @@ func test_step_resolver_aborts_when_choice_handler_reports_success_without_progr
 		assert_eq(scene.reset_calls, 1, "No-progress evidence must clear the dead effect interaction"),
 		assert_eq(str(scene._pending_choice), "", "A handler that leaves the same step untouched must not strand the AI on that step"),
 		assert_eq(scene.ai_calls, 1, "No-progress recovery should resume the AI pump"),
+	])
+
+
+func test_counter_distribution_uses_effective_hp_for_stadium_modified_target() -> String:
+	var resolver := AIStepResolverScript.new()
+	var card_data := _make_card_data("Modified target")
+	card_data.hp = 100
+	var target := PokemonSlot.new()
+	target.pokemon_stack.append(CardInstance.create(card_data, 0))
+	target.damage_counters = 100
+	var state := GameState.new()
+	state.shared_turn_flags["_draw_effect_processor"] = EffectiveHpProcessor.new()
+	var state_features: Array[float] = []
+	var assignments: Array = resolver.call(
+		"_build_counter_distribution_assignments",
+		[target],
+		6,
+		{"id": "bench_damage_counters", "total_counters": 6},
+		{"game_state": state},
+		state_features
+	)
+	return run_checks([
+		assert_eq(target.get_remaining_hp(), 0, "Fixture must reproduce the misleading printed-HP snapshot"),
+		assert_eq(assignments.size(), 1, "A target kept alive by a public HP modifier remains legal"),
+		assert_eq(int(assignments[0].get("target_index", -1)) if not assignments.is_empty() else -1, 0),
+		assert_eq(int(assignments[0].get("counters", 0)) if not assignments.is_empty() else 0, 6),
 	])
 
 

@@ -25,7 +25,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return _has_valid_target(state.players[pi])
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	for c: CardInstance in player.deck:

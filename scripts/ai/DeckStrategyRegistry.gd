@@ -21,6 +21,7 @@ const DeckStrategyDialgaMetangScript = preload("res://scripts/ai/DeckStrategyDia
 const DeckStrategyArceusGiratinaScript = preload("res://scripts/ai/DeckStrategyArceusGiratina.gd")
 const DeckStrategyArceusGiratinaLLMScript = preload("res://scripts/ai/DeckStrategyArceusGiratinaLLM.gd")
 const DeckStrategyPalkiaGholdengoScript = preload("res://scripts/ai/DeckStrategyPalkiaGholdengo.gd")
+const DeckStrategyPalkiaGholdengoAuthorV1Script = preload("res://scripts/ai/DeckStrategyPalkiaGholdengoAuthorV1.gd")
 const DeckStrategyPalkiaDusknoirScript = preload("res://scripts/ai/DeckStrategyPalkiaDusknoir.gd")
 const DeckStrategyLostBoxScript = preload("res://scripts/ai/DeckStrategyLostBox.gd")
 const DeckStrategyFutureBoxScript = preload("res://scripts/ai/DeckStrategyFutureBox.gd")
@@ -70,6 +71,7 @@ const _STRATEGY_SCRIPTS := {
 	"arceus_giratina": DeckStrategyArceusGiratinaScript,
 	"arceus_giratina_llm": DeckStrategyArceusGiratinaLLMScript,
 	"palkia_gholdengo": DeckStrategyPalkiaGholdengoScript,
+	"palkia_gholdengo_author_v1": DeckStrategyPalkiaGholdengoAuthorV1Script,
 	"palkia_dusknoir": DeckStrategyPalkiaDusknoirScript,
 	"lost_box": DeckStrategyLostBoxScript,
 	"future_box": DeckStrategyFutureBoxScript,
@@ -104,7 +106,7 @@ const _STRATEGY_SCRIPTS := {
 const _STRATEGY_ID_BY_DECK_ID := {
 	561444: "dialga_metang",
 	572568: "future_box",
-	575479: "palkia_gholdengo",
+	575479: "palkia_gholdengo_author_v1",
 	575620: "lost_box",
 	575653: "regidrago",
 	577861: "palkia_dusknoir",

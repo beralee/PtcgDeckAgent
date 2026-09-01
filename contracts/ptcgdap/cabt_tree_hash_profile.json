@@ -1,0 +1,93 @@
+{
+  "schema_version": 2,
+  "profile_id": "cabt_tree_hash_v1",
+  "status": "implemented_p1_wp2_offline_shadow",
+  "digest": "SHA-256",
+  "canonical_json": {
+    "standard": "RFC 8785 JSON Canonicalization Scheme (JCS)",
+    "profile_scope": "RFC 8785 canonical output over the constrained CABT safe-I-JSON profile; this is not a claim of unrestricted generic JCS input support",
+    "input": "an exact in-memory JSON tree, or strict UTF-8 JSON bytes without a leading BOM, parsed with duplicate object keys rejected before materialization",
+    "utf8_bom": "forbidden at the document boundary; a leading EF BB BF byte sequence is invalid_json in every executor",
+    "duplicate_object_keys": "rejected, including escaped-equivalent keys",
+    "finite_numbers_only": true,
+    "integer_nodes": "Python int and GDScript int nodes are accepted only in the exact interoperable range -(2^53-1)..(2^53-1); bool never impersonates int",
+    "binary64_nodes": "finite IEEE-754 binary64 values remain binary64 even when integer-valued; RFC 8785 samples such as 2^53 are valid float values, not integer nodes",
+    "decimal_json_numbers": "strict JSON bytes parsing converts decimal or exponent number tokens to correctly rounded IEEE-754 binary64 before RFC 8785 serialization; integer lexical tokens remain integer nodes",
+    "negative_zero": "serialized as 0 by RFC 8785",
+    "invalid_unicode": "reject lone surrogates and every Unicode noncharacter in object keys and string values, including U+FDD0..U+FDEF and each plane's U+FFFE/U+FFFF",
+    "unicode_normalization": "none",
+    "missing_vs_null": "missing is absent from an object; explicit null serializes as null"
+  },
+  "domain_separation": {
+    "encoding": "UTF-8 bytes",
+    "prefix_template": "PTCGDAP\u0000CABT_TREE_HASH_V1\u0000{domain}\u0000",
+    "separator_byte_hex": "00",
+    "prefix_construction": "ASCII PTCGDAP, one NUL byte, ASCII CABT_TREE_HASH_V1, one NUL byte, the ASCII domain name, then one NUL byte",
+    "domain_contracts": {
+      "raw_private": {
+        "input_tree": "RawCabtEnvelope.raw_payload exactly as received as a parsed JSON tree",
+        "precondition": "root object contains select, logs, current, and search_begin_input; search_begin_input is string or null",
+        "transformation": "none",
+        "visibility": "Host-private; forbidden in public traces and policy input"
+      },
+      "token_free_callback": {
+        "input_tree": "a deep copy of the same RawCabtEnvelope.raw_payload used by raw_private",
+        "precondition": "the raw_private precondition has passed",
+        "transformation": "replace only the root /search_begin_input value with the exact presence marker declared below; preserve every other key, value, JSON type, missing/null distinction, and array order",
+        "visibility": "Host binding identity; not policy input before firewall acceptance"
+      },
+      "public_observation": {
+        "input_tree": "the immutable allow-list PublicObservation tree emitted by the public firewall after firewall_status becomes accepted",
+        "precondition": "the firewall has constructed and accepted a separate public projection; the tree contains neither the search_begin_input key nor its presence marker",
+        "relationship": "this is not raw_payload and is not the token_free_callback tree; it is a separately supplied public projection",
+        "transformation": "none after the firewall projection is supplied",
+        "unknown_field_rule": "raw additive fields stay quarantined and absent unless a later reviewed public schema explicitly allow-lists them; every key actually present in the accepted projection is hashed",
+        "visibility": "public and policy-bindable"
+      }
+    },
+    "digest_input": "prefix bytes followed immediately by RFC 8785 canonical JSON bytes"
+  },
+  "search_capability_normalization": {
+    "field": "/search_begin_input",
+    "applies_only_to_domain": "token_free_callback",
+    "source_values": "a non-empty or empty JSON string means present; JSON null means absent; missing or any other type is a contract error",
+    "replacement_when_non_null": {
+      "$ptcgdap_opaque_search_capability_present": true
+    },
+    "replacement_when_null": {
+      "$ptcgdap_opaque_search_capability_present": false
+    },
+    "real_token_persistence": "forbidden"
+  },
+  "limits": {
+    "max_input_bytes": 67108864,
+    "max_depth": 128,
+    "max_nodes": 1000000,
+    "max_output_bytes": 67108864,
+    "node_counting": "count the root and every array element or object value as JSON values; object keys are not separate nodes"
+  },
+  "public_firewall": {
+    "public_observation_hash_before_acceptance": null,
+    "accepted_domain": "public_observation",
+    "accepted_input": "the exact allow-list PublicObservation output tree described by domain_contracts.public_observation",
+    "rejected_behavior": "no public hash, no policy call, audited later legal fallback contract"
+  },
+  "contract_bundle": {
+    "descriptor": "contracts/ptcgdap/cabt_contract_bundle.json",
+    "digest_mode": "canonical_json_v1",
+    "envelope_field": "source_contract_hash",
+    "canonical_json_v1_subset": {
+      "runtime_types": "exact object/list/string/integer/boolean/null; no host subtypes or floats",
+      "integer_range": "-9007199254740991..9007199254740991 inclusive",
+      "invalid_unicode": "reject lone surrogates and every Unicode noncharacter in object keys and string values",
+      "object_key_order": "Unicode code-point order",
+      "normalization": "none"
+    }
+  },
+  "implementation": {
+    "python": "scripts/ai/ptcgdap/cabt_tree_hash.py",
+    "godot": "scripts/ai/ptcgdap/cabt/CabtJsonTree.gd and scripts/ai/ptcgdap/cabt/CabtTreeHash.gd",
+    "cross_runtime_status": "shared_vectors_passed_offline; no live owner or public firewall claim"
+  },
+  "conformance_vectors": "contracts/ptcgdap/cabt_tree_hash_conformance_vectors.json"
+}

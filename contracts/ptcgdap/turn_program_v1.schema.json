@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ptcgdap.local/contracts/turn_program_v1.schema.json",
+  "title": "PtcgDAP public-only Turn Program request v1",
+  "description": "Non-authoritative whole-turn candidate arbitration input. It carries semantic steps and fresh public outcome estimates, never executable option indexes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "source",
+    "value_model",
+    "programs",
+    "base_proofs"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "profile_id": {"const": "ptcgdap-turn-program-request-v1"},
+    "source": {"$ref": "#/$defs/source"},
+    "value_model": {"$ref": "#/$defs/value_model"},
+    "programs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/program"}
+    },
+    "base_proofs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/base_proof"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public_observation_hash", "window_id"],
+      "properties": {
+        "public_observation_hash": {"$ref": "#/$defs/sha256"},
+        "window_id": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "value_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "model_version", "feature_weights_milli"],
+      "properties": {
+        "profile_id": {"const": "ptcgdap-turn-program-value-v1"},
+        "model_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "feature_weights_milli": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "prize_gain_milli",
+            "board_development_milli",
+            "attack_pressure_milli",
+            "next_turn_continuity_milli",
+            "hand_quality_milli",
+            "disruption_milli",
+            "resource_preservation_milli",
+            "risk_milli",
+            "unresolved_debt_milli"
+          ],
+          "properties": {
+            "prize_gain_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "board_development_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "attack_pressure_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "next_turn_continuity_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "hand_quality_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "disruption_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "resource_preservation_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "risk_milli": {"$ref": "#/$defs/signed_safe_integer"},
+            "unresolved_debt_milli": {"$ref": "#/$defs/signed_safe_integer"}
+          }
+        }
+      }
+    },
+    "signed_safe_integer": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "semantic_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "transaction_id",
+        "method_id",
+        "depends_on",
+        "terminal_kind"
+      ],
+      "properties": {
+        "step_id": {"$ref": "#/$defs/identifier"},
+        "transaction_id": {"$ref": "#/$defs/identifier"},
+        "method_id": {"$ref": "#/$defs/identifier"},
+        "depends_on": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "terminal_kind": {"enum": ["none", "attack", "end_turn"]}
+      }
+    },
+    "public_outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "final_prize_knockout",
+        "prize_gain_milli",
+        "board_development_milli",
+        "attack_pressure_milli",
+        "next_turn_continuity_milli",
+        "hand_quality_milli",
+        "disruption_milli",
+        "resource_preservation_milli",
+        "risk_milli",
+        "unresolved_debt_milli"
+      ],
+      "properties": {
+        "final_prize_knockout": {"type": "integer", "minimum": 0, "maximum": 1},
+        "prize_gain_milli": {"type": "integer", "minimum": 0, "maximum": 3000},
+        "board_development_milli": {"$ref": "#/$defs/unit_milli"},
+        "attack_pressure_milli": {"$ref": "#/$defs/unit_milli"},
+        "next_turn_continuity_milli": {"$ref": "#/$defs/unit_milli"},
+        "hand_quality_milli": {"$ref": "#/$defs/unit_milli"},
+        "disruption_milli": {"$ref": "#/$defs/unit_milli"},
+        "resource_preservation_milli": {"$ref": "#/$defs/unit_milli"},
+        "risk_milli": {"$ref": "#/$defs/unit_milli"},
+        "unresolved_debt_milli": {"$ref": "#/$defs/unit_milli"}
+      }
+    },
+    "unit_milli": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program_id",
+        "goal_id",
+        "route_id",
+        "deadline_turns",
+        "semantic_steps",
+        "public_outcome"
+      ],
+      "properties": {
+        "program_id": {"$ref": "#/$defs/identifier"},
+        "goal_id": {"$ref": "#/$defs/identifier"},
+        "route_id": {"$ref": "#/$defs/identifier"},
+        "deadline_turns": {"type": "integer", "minimum": 0, "maximum": 8},
+        "semantic_steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/semantic_step"}
+        },
+        "public_outcome": {"$ref": "#/$defs/public_outcome"}
+      }
+    },
+    "base_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program_id",
+        "admissible",
+        "current_step_id",
+        "current_step_executable",
+        "mandatory_preserved",
+        "terminal_preserved",
+        "base_vetoed"
+      ],
+      "properties": {
+        "program_id": {"$ref": "#/$defs/identifier"},
+        "admissible": {"type": "boolean"},
+        "current_step_id": {"$ref": "#/$defs/identifier"},
+        "current_step_executable": {"type": "boolean"},
+        "mandatory_preserved": {"type": "boolean"},
+        "terminal_preserved": {"type": "boolean"},
+        "base_vetoed": {"type": "boolean"}
+      }
+    }
+  },
+  "x-ptcgdap-authority": {
+    "mode": "shadow_only",
+    "returns_option_indexes": false,
+    "base_graph_final_veto": true,
+    "reobserve_before_execution": true,
+    "persistent_state": ["program_id", "goal_id", "route_id", "turn_deadline"]
+  }
+}

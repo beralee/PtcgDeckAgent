@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-author-strategy-live-seam-as-wp5-v1",
+  "profile_id": "ptcgdap-author-strategy-live-seam-as-wp5-v1",
+  "parent_author_match_host_bundle_canonical_sha256": "4BD207E9F9200E5AF9E2206A13EAF506382B6BA42BDEE3F0FEB5CA872885DBB9",
+  "artifacts": [
+    {
+      "id": "author_strategy_live_seam.schema",
+      "path": "contracts/ptcgdap/author_strategy_live_seam.schema.json",
+      "canonical_sha256": "BFC814B80EB1AE68107C407756F13C034135D7A4D1B748D5F1355B3F782C8FC2"
+    },
+    {
+      "id": "author_strategy_live_seam_profile",
+      "path": "contracts/ptcgdap/author_strategy_live_seam_profile.json",
+      "canonical_sha256": "C83A69D91B2C2B3CC936253BF8E7C4E13EDB76212E85769ED4CF98BC4A87BE16"
+    },
+    {
+      "id": "author_strategy_live_seam_conformance_vectors",
+      "path": "contracts/ptcgdap/author_strategy_live_seam_conformance_vectors.json",
+      "canonical_sha256": "58B5752C4504D9E64EF9F86DF2AA5BAB1169CDA4EDCAFAD70683CBFF74442F39"
+    }
+  ]
+}

@@ -24,7 +24,7 @@ func get_empty_interaction_message(card: CardInstance, state: GameState) -> Stri
 	return get_unusable_reason(card, state)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var hand_cards: Array[CardInstance] = _other_hand_cards(card, state)
 	if hand_cards.size() < RETURN_COUNT:
 		return []

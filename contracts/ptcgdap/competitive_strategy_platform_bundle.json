@@ -1,0 +1,30 @@
+{
+  "document_type": "competitive_strategy_platform_bundle_v1",
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-competitive-strategy-platform-csp-wp0-v1",
+  "profile_id": "competitive_strategy_platform_contract_v1",
+  "digest_mode": "canonical_json_v1",
+  "artifact_set_policy": "exact_ids_paths_hashes_no_duplicates",
+  "artifacts": [
+    {
+      "artifact_id": "schema",
+      "path": "contracts/ptcgdap/competitive_strategy_platform.schema.json",
+      "canonical_sha256": "0A4DFC61F980CC28454D8723847234913B023D8765E51A8EDD8F0E3A6E98C4EF"
+    },
+    {
+      "artifact_id": "profile",
+      "path": "contracts/ptcgdap/competitive_strategy_platform_profile.json",
+      "canonical_sha256": "5B40A811AC90287FB2F32F39F504103CD2D8DA21FA413E3BA0CA0CE781C0FA4F"
+    },
+    {
+      "artifact_id": "threat_model",
+      "path": "contracts/ptcgdap/competitive_strategy_platform_threat_model.json",
+      "canonical_sha256": "516CF6005F2C7041D69A4B03202C9BF83F8CF8D88A441690BCEE59BE1D0A7D73"
+    },
+    {
+      "artifact_id": "vectors",
+      "path": "contracts/ptcgdap/competitive_strategy_platform_conformance_vectors.json",
+      "canonical_sha256": "504DFC0433C4076AD8B0E85BD1B989CBE6C98E1327E8B3FFEAC2D06DA4CA81F4"
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-strategic-trace-v2-p4-wp2-v1",
+  "ir_profile_id": "ptcgdap-restricted-base-graph-ir-p4-wp2-v1",
+  "parent_bundle_canonical_sha256": "AACFA7E2E7F914180A2B7A5C4D92D6514ACC5F4622FC95B57DC225673893F98F",
+  "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205",
+  "base_graph_v1_8_source_raw_sha256": "5D3035312390936D86DE4E2BAF520CE38AB0A79137E1D93199B909D79FBCA3D2",
+  "base_graph_v1_8_contract_raw_sha256": "E8A010E5B6458D2B43811DE683EA2147044D06624502B7314907747E8B0EB5B9",
+  "hash_contract": {
+    "canonicalization": "RFC8785_JCS_IJSON_SAFE_SUBSET",
+    "ir_prefix_utf8_hex": "5054434744415000524553545249435445445F424153455F47524150485F49525F563100",
+    "trace_prefix_utf8_hex": "50544347444150005354524154454749435F54524143455F563200"
+  },
+  "ir_contract": {
+    "base_operators_in_required_order": [
+      "legality_guard",
+      "mandatory_terminal_guard",
+      "hard_tier_filter",
+      "base_veto",
+      "deterministic_fallback",
+      "emit_decision"
+    ],
+    "adapter_operators": [
+      "goal_proposal",
+      "macro_proposal",
+      "tiebreak_score"
+    ],
+    "adapter_reason_codes": [
+      "public_goal_proposal",
+      "public_macro_proposal",
+      "public_tiebreak_proposal"
+    ],
+    "private_identifier_tokens_denied": [
+      "PRIVATE"
+    ],
+    "required_capabilities": [
+      "public_context",
+      "current_window",
+      "deterministic_fallback",
+      "strategic_trace_v2"
+    ],
+    "graph_shape": "single_entry_linear_dag",
+    "base_owns": [
+      "legality",
+      "mandatory_terminal",
+      "hard_tier",
+      "veto",
+      "fallback",
+      "emit"
+    ],
+    "adapter_owns": [
+      "goal_proposal",
+      "macro_proposal",
+      "same_tier_tiebreak_proposal"
+    ],
+    "forbidden_fields": [
+      "callable",
+      "module",
+      "class",
+      "code",
+      "script",
+      "path",
+      "url",
+      "import",
+      "private_state"
+    ],
+    "serialized_result_is_execution_authority": false
+  },
+  "trace_contract": {
+    "source_authority": "exact_current_p4_wp1_context_and_decision_owner",
+    "legal_frontier": "all_current_window_option_indexes_in_original_order",
+    "mandatory_terminal_cannot_be_filtered": true,
+    "adapter_cannot_cross_best_base_hard_tier": true,
+    "adapter_cannot_override_base_veto_or_fallback": true,
+    "serialized_result_is_execution_authority": false
+  },
+  "stable_error_codes": [
+    "contract_error",
+    "invalid_ir_document",
+    "unsupported_ir_operator",
+    "unsupported_capability",
+    "invalid_ir_owner",
+    "invalid_ir_config",
+    "invalid_ir_topology",
+    "missing_base_authority",
+    "ir_integrity_invalid",
+    "invalid_context",
+    "invalid_decision",
+    "invalid_trace_identity",
+    "invalid_trace_audit",
+    "trace_integrity_invalid"
+  ],
+  "private_keys_denied": [
+    "raw_private_hash",
+    "token_free_callback_hash",
+    "search_begin_input",
+    "session",
+    "callback",
+    "binding",
+    "ticket",
+    "command",
+    "object_ref",
+    "pokemon_entity_serial"
+  ],
+  "scope": {
+    "strategic_trace_v2": true,
+    "restricted_ir_contract": true,
+    "ir_executor": false,
+    "adapter": false,
+    "policy": false,
+    "live_owner": false
+  }
+}

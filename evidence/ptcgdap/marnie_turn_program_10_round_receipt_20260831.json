@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "work_package": "marnie_public_turn_program_canary_and_10_round_evaluation",
+  "recorded_on": "2026-08-31",
+  "promotion_gate": {
+    "baseline_wins_required_delta": 10,
+    "minimum_candidate_wins": 56,
+    "observed_candidate_wins": 49,
+    "observed_delta_percentage_points": 3,
+    "passed": false,
+    "decision": "do_not_promote"
+  },
+  "baseline": {
+    "package_version": "5.15.0",
+    "package_sha256": "D669C1C756A5D6AD8CAA36A6A91EE7FB6D031A2A00CF9ACC896080E725A6B4ED",
+    "artifact": "artifacts/deck_training/marnie_turn_program_round0_exact100_20260831.json",
+    "artifact_sha256": "C78A9DC4365A25B2E8E3F23FB0D326C9183209B13C6D2B7E082EE0ED51008821",
+    "games": 100,
+    "wins": 46,
+    "seat_0_wins": 20,
+    "seat_1_wins": 26,
+    "clean": true
+  },
+  "architecture_control": {
+    "package_version": "5.16.0",
+    "package_sha256": "08860011CE43BF4051CE3C69AD3C37317172C5D7F2F7240DE924315A9DBE0D23",
+    "artifact": "artifacts/deck_training/marnie_turn_program_arch20_20260831.json",
+    "artifact_sha256": "30196C68EA055FA8BBC94470429572AB49C6F327E3F80E8DC93447120095850E",
+    "games": 20,
+    "wins": 10,
+    "seat_0_wins": 4,
+    "seat_1_wins": 6,
+    "clean": true
+  },
+  "screening_seed_list": [
+    2919016,
+    2919018,
+    2919035,
+    2919000,
+    2919010,
+    2919034,
+    2919043,
+    2919001,
+    2919005,
+    2919030
+  ],
+  "screening_rounds": [
+    {
+      "round": 1,
+      "package_version": "5.17.0",
+      "package_sha256": "94F2F8395DE91F2D4041DCF43E5DFEB7C245EB3444BA3C882055C613D69E3AC1",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round01_20_20260831.json",
+      "artifact_sha256": "103F2FE2A9B96FFA3B5CD5C0F97418F5A9C013907601891AFD402904FEC65536",
+      "wins": 10,
+      "seat_0_wins": 4,
+      "seat_1_wins": 6
+    },
+    {
+      "round": 2,
+      "package_version": "5.18.0",
+      "package_sha256": "4FAA16FC68648AA1B083448064BAF17DAA09EF87D6594ABE303D548C5A69D172",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round02_20_20260831.json",
+      "artifact_sha256": "DC57D9A994778B61C534513D3C39B53381DE3B029BC275406F635AF0D1CA2E17",
+      "wins": 10,
+      "seat_0_wins": 4,
+      "seat_1_wins": 6
+    },
+    {
+      "round": 3,
+      "package_version": "5.19.0",
+      "package_sha256": "A7542F41D545447B0E805B64864E32C69C5312A1BCA8D637EB2B20D7567122B5",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round03_20_20260831.json",
+      "artifact_sha256": "F323CA39F190CF2679A8C69C554DD0DA5C083D191BEE4E74A1F8EDC4359049B4",
+      "wins": 9,
+      "seat_0_wins": 2,
+      "seat_1_wins": 7
+    },
+    {
+      "round": 4,
+      "package_version": "5.20.0",
+      "package_sha256": "BB8DB937D019209398F863DE3E2962A04A4D538F34CCFAA70963C73871EED648",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round04_20_20260831.json",
+      "artifact_sha256": "56BC3794541BA228F95C11731D4082E7822F26885A545829C24AA26D958F436C",
+      "wins": 9,
+      "seat_0_wins": 2,
+      "seat_1_wins": 7
+    },
+    {
+      "round": 5,
+      "package_version": "5.21.0",
+      "package_sha256": "18E7BC3D053B6064771AA9BB2D232FBE87B8D200B2571D54F32248AAC74183E3",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round05_20_20260831.json",
+      "artifact_sha256": "D429BB0214F30852BF5422083792FBF22F4805459B363AAB1A092BD9AB8AB344",
+      "wins": 11,
+      "seat_0_wins": 4,
+      "seat_1_wins": 7
+    },
+    {
+      "round": 6,
+      "package_version": "5.22.0",
+      "package_sha256": "3152A09D8C24DC9F3D3B65232EB36A5704C9BB60481AE5811950A8C4B367971C",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round06_20_20260831.json",
+      "artifact_sha256": "5BDB75A233B5AFDBF8AFF1F0199A9246795C923D81F28A3338914C711BECEECB",
+      "wins": 8,
+      "seat_0_wins": 2,
+      "seat_1_wins": 6
+    },
+    {
+      "round": 7,
+      "package_version": "5.23.0",
+      "package_sha256": "C6CBBAB25C746CF7F86D320C267D59BC3ABDA12309606DD4EF32F20054D982B9",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round07_20_20260831.json",
+      "artifact_sha256": "6459B575E8F0EB9C6919E254D3C4E905E365F451CBBB3C99D897938A2C2A756D",
+      "wins": 8,
+      "seat_0_wins": 2,
+      "seat_1_wins": 6
+    },
+    {
+      "round": 8,
+      "package_version": "5.24.0",
+      "package_sha256": "A355848139AD8A3F5C4D9BBF1FAEE67EDAE140347ED3FB7ECDC51F5B7F726F2A",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round08_20_20260831.json",
+      "artifact_sha256": "CF069BEFEEFC0276967BE18E5BD014BAF2E79DD71160F544DAB9D5E939911643",
+      "wins": 9,
+      "seat_0_wins": 2,
+      "seat_1_wins": 7
+    },
+    {
+      "round": 9,
+      "package_version": "5.25.0",
+      "package_sha256": "E5FC96350CA89CCCA511F1DF333CEF1047711297714F629904D195D68F6DFE33",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round09_20_20260831.json",
+      "artifact_sha256": "731F738711A1369EB30A670C6018D3145A1612E2F965C9E44308D4E9173D74F8",
+      "wins": 8,
+      "seat_0_wins": 1,
+      "seat_1_wins": 7
+    },
+    {
+      "round": 10,
+      "package_version": "5.26.0",
+      "package_sha256": "3618208C52628E9AF65F1BD925A004E9A7ECB1E8800B1DEBDCDA8314BAFE9021",
+      "artifact": "artifacts/deck_training/marnie_turn_program_round10_20_20260831.json",
+      "artifact_sha256": "D726FFF46486D925815F99B23B4834E88A29AA410E5E51D0A1F7A0E18B7BA893",
+      "wins": 9,
+      "seat_0_wins": 2,
+      "seat_1_wins": 7
+    }
+  ],
+  "selected_candidate_confirmation": {
+    "round": 5,
+    "package_version": "5.21.0",
+    "package_sha256": "18E7BC3D053B6064771AA9BB2D232FBE87B8D200B2571D54F32248AAC74183E3",
+    "artifact": "artifacts/deck_training/marnie_turn_program_round05_exact100_20260831.json",
+    "artifact_sha256": "41867F8E08756474F029570644058DD45246C938E7CEF5DDCFD3D5A980ECED32",
+    "games": 100,
+    "wins": 49,
+    "seat_0_wins": 22,
+    "seat_1_wins": 27,
+    "wilson_95_lower": 0.394219989304411,
+    "wilson_95_upper": 0.586519880659728,
+    "invalid_outputs": 0,
+    "policy_errors": 0,
+    "classic_fallbacks": 0,
+    "same_window_fallbacks": 0,
+    "engine_rejections": 0,
+    "all_terminal": true,
+    "clean": true
+  },
+  "validation": {
+    "python": {
+      "passed": 50,
+      "subtests_passed": 2,
+      "failed": 0
+    },
+    "godot": {
+      "passed": 52,
+      "failed": 0,
+      "suites": {
+        "transition_evaluator": 2,
+        "turn_program_generator": 8,
+        "competitive_policy_v2": 19,
+        "r55_shadow": 1,
+        "r55_transaction_exams": 22
+      }
+    },
+    "deterministic_package_checks": {
+      "passed": 11,
+      "failed": 0
+    }
+  },
+  "authority": {
+    "implemented": "device-local Windows development canary for the declared public semantic subset",
+    "execution_trusted": false,
+    "official_cabt_validated": false,
+    "full_engine_parity": false,
+    "android_validated": false,
+    "production_promoted": false
+  },
+  "rollback": {
+    "package_version": "5.15.0",
+    "package_sha256": "D669C1C756A5D6AD8CAA36A6A91EE7FB6D031A2A00CF9ACC896080E725A6B4ED",
+    "hot_swap_allowed": false
+  }
+}

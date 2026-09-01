@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "enum_source_artifact_id": "official_cg_api_py",
+  "enum_source_sha256": "593F1298E52A635F90F8F505A52113E9AF114F444C293404E37906F18EE06CED",
+  "writer_source_artifact_id": "official_api_json_h",
+  "writer_source_sha256": "FA405A0421AD09FBAE6E3922BD73A0A07333B17790DEA7E8FD90C1B97F326851",
+  "extraction": "OptionType integer literals from official api.py plus ordered appendCommaKeyValue literal fields in each ApiJson.h SelectOptionJson case",
+  "missing_field_policy": "preserve_missing_distinct_from_explicit_null",
+  "option_types": {
+    "NUMBER": 0,
+    "YES": 1,
+    "NO": 2,
+    "CARD": 3,
+    "TOOL_CARD": 4,
+    "ENERGY_CARD": 5,
+    "ENERGY": 6,
+    "PLAY": 7,
+    "ATTACH": 8,
+    "EVOLVE": 9,
+    "ABILITY": 10,
+    "DISCARD": 11,
+    "RETREAT": 12,
+    "ATTACK": 13,
+    "END": 14,
+    "SKILL": 15,
+    "SPECIAL_CONDITION": 16
+  },
+  "shapes": {
+    "0": [
+      "type",
+      "number"
+    ],
+    "1": [
+      "type"
+    ],
+    "2": [
+      "type"
+    ],
+    "3": [
+      "type",
+      "area",
+      "index",
+      "playerIndex"
+    ],
+    "4": [
+      "type",
+      "area",
+      "index",
+      "playerIndex",
+      "toolIndex"
+    ],
+    "5": [
+      "type",
+      "area",
+      "index",
+      "playerIndex",
+      "energyIndex"
+    ],
+    "6": [
+      "type",
+      "area",
+      "index",
+      "playerIndex",
+      "energyIndex",
+      "count"
+    ],
+    "7": [
+      "type",
+      "index"
+    ],
+    "8": [
+      "type",
+      "area",
+      "index",
+      "inPlayArea",
+      "inPlayIndex"
+    ],
+    "9": [
+      "type",
+      "area",
+      "index",
+      "inPlayArea",
+      "inPlayIndex"
+    ],
+    "10": [
+      "type",
+      "area",
+      "index"
+    ],
+    "11": [
+      "type",
+      "area",
+      "index"
+    ],
+    "12": [
+      "type"
+    ],
+    "13": [
+      "type",
+      "attackId"
+    ],
+    "14": [
+      "type"
+    ],
+    "15": [
+      "type",
+      "cardId",
+      "serial"
+    ],
+    "16": [
+      "type",
+      "specialConditionType"
+    ]
+  }
+}

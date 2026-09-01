@@ -654,8 +654,8 @@ func test_non_battle_touch_bridge_can_prepare_ios_web_dom_input_before_focus() -
 		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_prepare_count(), 1, "Preparing the Web editor should create exactly one native input layer"),
 		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 0, "Preparing the Web editor must not request keyboard focus outside a user gesture"),
 		assert_eq(str(payload.get("text", "")), "574793", "Prepared Web editor should mirror the Godot input value"),
-		assert_true(bridge_script.contains("version: 9") and bridge_script.contains("prepare_only") and bridge_script.contains("prepare: function"), "The browser bridge should expose a no-focus prepare path for iOS Safari"),
-		assert_true(bridge_script.contains("focusFromNativeTap") and bridge_script.contains("'touchstart', 'touchend'") and bridge_script.contains("event.stopPropagation()"), "Prepared iOS Web inputs should retain focus against the canvas-wide touch listener"),
+		assert_true(bridge_script.contains("version: 10") and bridge_script.contains("prepare_only") and bridge_script.contains("prepare: function"), "The browser bridge should expose a no-focus prepare path for iOS Safari"),
+		assert_true(bridge_script.contains("guardNativeTap") and bridge_script.contains("'touchstart', 'pointerdown', 'mousedown', 'click'") and bridge_script.contains("event.stopPropagation()") and bridge_script.contains("if (!config.prepare_only) state.refocus()"), "Prepared iOS Web inputs should guard their native tap without repeated focus calls that can oscillate the keyboard"),
 	])
 	root.queue_free()
 	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
@@ -699,7 +699,7 @@ func test_non_battle_touch_bridge_programmatic_clear_updates_active_web_editor_a
 		assert_eq(int(changes[0]), 1, "Programmatic clear should emit exactly one text change for search filtering"),
 		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)), "Persistent search should declare native caret ownership explicitly"),
 		assert_false(bool(input.get_meta(NonBattleTouchBridgeScript.LINE_EDIT_SELECT_ALL_BOUND_META, false)), "Persistent search should reject the transient-dialog select-all policy"),
-		assert_true(bridge_script.contains("version: 9") and bridge_script.contains("setValue: function"), "The real browser proxy should support in-place value replacement while it owns keyboard focus"),
+		assert_true(bridge_script.contains("version: 10") and bridge_script.contains("setValue: function"), "The real browser proxy should support in-place value replacement while it owns keyboard focus"),
 		assert_true(bridge_script.contains("addEventListener('beforeinput'") and bridge_script.contains("addEventListener('keydown'") and bridge_script.contains("deleteText(input"), "The browser editor should capture Backspace/Delete before Godot's global Web key handler can prevent native defaults"),
 	])
 	root.queue_free()
@@ -1532,6 +1532,7 @@ func test_battle_setup_portrait_bgm_slider_footer_and_strategy_dialog_are_touch_
 	scene.size = Vector2(1080, 2400)
 	tree.root.add_child(scene)
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	scene.call("_select_mode_option", 0)
 	var available_decks: Array = scene.get("_deck_list")
 	if available_decks.size() < 2:
 		scene.call("_refresh_deck_options")

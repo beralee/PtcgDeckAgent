@@ -225,7 +225,7 @@ class AttackEvolveFromDeck:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -363,7 +363,7 @@ class AttackJoltikCharge:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -492,7 +492,7 @@ class AttackRecoverPokemonFromDiscard:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -560,7 +560,7 @@ class AttackSearchBasicEnergyToHand:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -645,7 +645,7 @@ class AttackHealOwnPokemon:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -797,7 +797,7 @@ class AttackBenchMultiDamage:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -883,7 +883,7 @@ class AttackReturnEnergyToHand:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -1016,7 +1016,7 @@ class AttackReturnSelfToDeck:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -1087,7 +1087,7 @@ class AttackHandBasicEnergyAttach:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -1171,7 +1171,7 @@ class AttackBasicPokemonKnockoutCoin:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_preview_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_preview_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -1181,7 +1181,7 @@ class AttackBasicPokemonKnockoutCoin:
 			return [_build_coin_result_step("投掷1次硬币。若为反面，选择对手备战区的1只基础宝可梦【昏厥】。", "preview")]
 		return [_build_coin_result_step("投掷1次硬币。若为反面且对手备战区没有基础宝可梦，嗡嗡屑石会发动失败。", "preview")]
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var flipper := coin_flipper if coin_flipper != null else CoinFlipper.new()
@@ -1302,7 +1302,7 @@ class AttackReturnOpponentBenchToDeck:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -1376,7 +1376,7 @@ class AttackTriFrost:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
@@ -1455,7 +1455,7 @@ class AttackSlowkingInspiration:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var player := state.players[card.owner_index]
@@ -1496,7 +1496,7 @@ class AttackSlowkingInspiration:
 			"allow_cancel": false,
 		}]
 
-	func get_followup_attack_interaction_steps(
+	func build_ucis_followup_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		attack: Dictionary,
 		state: GameState,
@@ -1687,7 +1687,7 @@ class AbilityBenchDiscardStadiumOnPlay:
 		var pi := pokemon.get_top_card().owner_index
 		return state.current_player_index == pi and pokemon in state.players[pi].bench and pokemon.turn_played == state.turn_number and pokemon.entered_bench_from_hand_this_turn(state.turn_number) and not pokemon.has_ability_used(state.turn_number)
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null or state.stadium_card == null:
 			return []
 		return [{
@@ -1740,7 +1740,7 @@ class AbilityAttachEnergyFromHandHeal:
 				return true
 		return false
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var sources: Array = []
 		var source_labels: Array[String] = []
@@ -1905,7 +1905,7 @@ class AbilityEvolveAttachMetalFromDiscard:
 		var player := state.players[pokemon.get_top_card().owner_index]
 		return not _metal_energy(player).is_empty() and not _metal_targets(player).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var sources := _metal_energy(player)
 		var targets := _metal_targets(player)
@@ -2020,7 +2020,7 @@ class AbilityNoctowlTeraTrainerSearch:
 		var player := state.players[pokemon.get_top_card().owner_index]
 		return H.player_has_tera(player) and not _trainers(player).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var items := _trainers(player)
 		if items.is_empty():
@@ -2075,7 +2075,7 @@ class AbilityFanCall:
 			return false
 		return not _targets(state.players[pi]).is_empty()
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var player := state.players[card.owner_index]
 		var items := _targets(player)
 		if items.is_empty():

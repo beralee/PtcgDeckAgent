@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-godot-action-ticket-p3-wp3-v1",
+  "parent": {
+    "work_package": "P3-WP2",
+    "manifest_canonical_sha256": "F1ABB0D82469174C321DA42D54AC24F045908183898F16F1A80E97BE4277BA0E",
+    "option_binding_bundle_canonical_sha256": "4FFFEC48E4E1FE0774BB6E343D4D4B0384A9210057DEE06415C2A20F2899B1C1",
+    "option_binding_vectors_canonical_sha256": "8B13EABF6039F20346D4F52326E4B20CDD6FE000E7F685B7527DB6163F06B40F",
+    "decision_port_bundle_canonical_sha256": "CC0026D523F2B5435031AC4E5952DB4E2C8B2C39944B333E97B1A2E4F3374C81",
+    "selection_bundle_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+    "source_lock_canonical_sha256": "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
+  },
+  "hash_profile": {
+    "id": "godot_action_ticket_v1",
+    "algorithm": "SHA-256",
+    "canonicalization": "RFC8785-JCS constrained to canonical_json_v1 safe value domain",
+    "prefix_utf8_hex": "5054434744415000474F444F545F414354494F4E5F5449434B45545F563100",
+    "payload_fields_in_order": [
+      "profile",
+      "ticket_generation",
+      "session_id",
+      "callback_binding_hash",
+      "binding_version",
+      "snapshot_id",
+      "window_id",
+      "public_observation_hash",
+      "selected_indexes",
+      "selected_fingerprint_hashes"
+    ],
+    "ticket_id_is_authority": false
+  },
+  "limits": {
+    "max_options": 256,
+    "max_selected_indexes": 256,
+    "max_private_refs_per_option": 16,
+    "max_safe_integer": 9007199254740991,
+    "one_active_ticket_per_owner": true,
+    "one_successful_claim_per_binding_version": true
+  },
+  "session_contract": {
+    "exact_host_type": "String/str",
+    "pattern": "^session:[a-z0-9_-]{1,64}$",
+    "serialized": false,
+    "cross_session_replay": "session_mismatch"
+  },
+  "issue_contract": {
+    "requires_exact_current_binding_owner_and_binding": true,
+    "requires_exact_current_port_snapshot_window_callback": true,
+    "requires_exact_owner_selection_resolution": true,
+    "selection_order_preserved": true,
+    "fingerprints_derived_from_exact_window_positions": true,
+    "same_context_retry_is_idempotent": true,
+    "different_selection_while_active": "active_ticket_exists",
+    "claimed_binding_reissue": "binding_already_claimed"
+  },
+  "claim_contract": {
+    "claim_success_count": 1,
+    "wrong_session_callback_or_public_hash_does_not_consume": true,
+    "stale_binding_or_dead_reference_revokes": true,
+    "returns_exact_binding_resolutions": true,
+    "invokes_engine_methods": false,
+    "commits_or_executes": false
+  },
+  "serialization_contract": {
+    "dto_only": true,
+    "grants_authority": false,
+    "forbidden_fields": [
+      "session_id",
+      "callback_binding_hash",
+      "private_engine_command",
+      "private_object_refs",
+      "binding_owner",
+      "binding",
+      "port",
+      "snapshot",
+      "window",
+      "selection_resolution",
+      "claim_resolutions",
+      "current_source",
+      "command_refs",
+      "private_refs"
+    ],
+    "consumer_rule": "schema or integrity success never authorizes execution; a later executor must receive the exact owner claim and revalidate current engine context"
+  },
+  "error_codes": [
+    "",
+    "ticket_contract_error",
+    "invalid_session_id",
+    "invalid_public_observation_hash",
+    "invalid_binding_owner",
+    "invalid_binding",
+    "binding_not_current",
+    "invalid_selection_resolution",
+    "selection_not_current",
+    "public_hash_mismatch",
+    "invalid_callback_binding_hash",
+    "active_ticket_exists",
+    "binding_already_claimed",
+    "ticket_space_exhausted",
+    "invalid_ticket",
+    "ticket_not_current",
+    "ticket_already_claimed",
+    "ticket_revoked",
+    "session_mismatch",
+    "callback_mismatch",
+    "private_reference_unavailable",
+    "ticket_integrity_invalid",
+    "owner_mismatch"
+  ],
+  "next_authority": {
+    "work_package": "P3-WP4",
+    "owns": "GodotActionExecutor preflight and non-live atomic command commit",
+    "implemented_here": false
+  }
+}

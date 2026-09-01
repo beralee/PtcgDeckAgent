@@ -24,7 +24,7 @@ func get_granted_attacks(_pokemon: PokemonSlot, _state: GameState) -> Array[Dict
 	}]
 
 
-func get_granted_attack_interaction_steps(
+func build_ucis_granted_attack_interaction_steps_spec_steps(
 	pokemon: PokemonSlot,
 	_attack_data: Dictionary,
 	state: GameState
@@ -52,7 +52,7 @@ func get_granted_attack_interaction_steps(
 	}]
 
 
-func get_followup_granted_attack_interaction_steps(
+func build_ucis_followup_granted_attack_interaction_steps_spec_steps(
 	pokemon: PokemonSlot,
 	_attack_data: Dictionary,
 	state: GameState,

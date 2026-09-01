@@ -1,0 +1,2391 @@
+{
+  "schema_version": 1,
+  "vector_set_id": "cabt_selection_conformance_v1",
+  "profile_id": "cabt_selection_profile_v1",
+  "source_lock_id": "ptcgdap-source-lock-2026-08-09-p1wp1",
+  "artifact_policy": {
+    "serialization": "canonical_json_v1",
+    "floats": "forbidden; runtime float faults use typed descriptors",
+    "digest_ownership": "external exact artifact set; no embedded vector digest or future contract-bundle digest"
+  },
+  "constants": {
+    "public_hash_a": "1111111111111111111111111111111111111111111111111111111111111111",
+    "public_hash_b": "2222222222222222222222222222222222222222222222222222222222222222",
+    "public_hash_authority": "conformance_fixture",
+    "chooser_player_index": 0
+  },
+  "hash_conformance_cases": [
+    {
+      "id": "window_reorder_a",
+      "profile": "cabt_selection_window_v1",
+      "payload": {
+        "chooser_player_index": 0,
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 2,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 15,
+              "cardId": 860,
+              "serial": 41
+            },
+            {
+              "type": 15,
+              "cardId": 860,
+              "serial": 42
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        }
+      },
+      "expected_canonical_utf8": "{\"chooser_player_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select\":{\"context\":0,\"contextCard\":null,\"deck\":null,\"effect\":null,\"maxCount\":2,\"minCount\":1,\"option\":[{\"cardId\":860,\"serial\":41,\"type\":15},{\"cardId\":860,\"serial\":42,\"type\":15}],\"remainDamageCounter\":0,\"remainEnergyCost\":0,\"type\":0}}",
+      "expected_digest": "37B97215A869B9B472168D591D28E1394EB76FC7CDB07CF47A583E18A0D09A5B"
+    },
+    {
+      "id": "window_reorder_b",
+      "profile": "cabt_selection_window_v1",
+      "payload": {
+        "chooser_player_index": 0,
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 2,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 15,
+              "cardId": 860,
+              "serial": 42
+            },
+            {
+              "type": 15,
+              "cardId": 860,
+              "serial": 41
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        }
+      },
+      "expected_canonical_utf8": "{\"chooser_player_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select\":{\"context\":0,\"contextCard\":null,\"deck\":null,\"effect\":null,\"maxCount\":2,\"minCount\":1,\"option\":[{\"cardId\":860,\"serial\":42,\"type\":15},{\"cardId\":860,\"serial\":41,\"type\":15}],\"remainDamageCounter\":0,\"remainEnergyCost\":0,\"type\":0}}",
+      "expected_digest": "F81D282648C11CE27B70D5EBD97D327119CFFF8C12F51BD2DC1E98961D7BE396"
+    },
+    {
+      "id": "window_public_hash_b",
+      "profile": "cabt_selection_window_v1",
+      "payload": {
+        "chooser_player_index": 0,
+        "public_observation_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "select": {
+          "type": 0,
+          "context": 0,
+          "minCount": 1,
+          "maxCount": 1,
+          "remainDamageCounter": 0,
+          "remainEnergyCost": 0,
+          "option": [
+            {
+              "type": 1
+            }
+          ],
+          "deck": null,
+          "contextCard": null,
+          "effect": null
+        }
+      },
+      "expected_canonical_utf8": "{\"chooser_player_index\":0,\"public_observation_hash\":\"2222222222222222222222222222222222222222222222222222222222222222\",\"select\":{\"context\":0,\"contextCard\":null,\"deck\":null,\"effect\":null,\"maxCount\":1,\"minCount\":1,\"option\":[{\"type\":1}],\"remainDamageCounter\":0,\"remainEnergyCost\":0,\"type\":0}}",
+      "expected_digest": "122D2CD23EAC910221828D000C864B3589F15BBD5ED591352727FF08BFEE534E"
+    },
+    {
+      "id": "fingerprint_present_null_sparse_drift",
+      "profile": "cabt_option_fingerprint_v1",
+      "payload": {
+        "window_id": "6CEFB9BB07B28A9C14048E6B74B2926D674181FEBEAFC8EB69804F1E8D786F02",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "option_index": 0,
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "option": {
+          "type": 3,
+          "area": 2,
+          "index": 0,
+          "playerIndex": null
+        },
+        "context_card": null,
+        "effect": null
+      },
+      "expected_canonical_utf8": "{\"context_card\":null,\"effect\":null,\"option\":{\"area\":2,\"index\":0,\"playerIndex\":null,\"type\":3},\"option_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select_context_raw\":0,\"select_type_raw\":0,\"window_id\":\"6CEFB9BB07B28A9C14048E6B74B2926D674181FEBEAFC8EB69804F1E8D786F02\"}",
+      "expected_digest": "E94279CA089507A66FD2C971AD9FDD58E7D6336E398E1D0B7680A1926F2997E3"
+    },
+    {
+      "id": "fingerprint_missing_sparse_field",
+      "profile": "cabt_option_fingerprint_v1",
+      "payload": {
+        "window_id": "94CE730247B13226BFE01CF05C6C16B8BF4C25EA3D5B41D1D6CECBF6DFE1B2B6",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "option_index": 0,
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "option": {
+          "type": 3,
+          "area": 2,
+          "index": 0
+        },
+        "context_card": null,
+        "effect": null
+      },
+      "expected_canonical_utf8": "{\"context_card\":null,\"effect\":null,\"option\":{\"area\":2,\"index\":0,\"type\":3},\"option_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select_context_raw\":0,\"select_type_raw\":0,\"window_id\":\"94CE730247B13226BFE01CF05C6C16B8BF4C25EA3D5B41D1D6CECBF6DFE1B2B6\"}",
+      "expected_digest": "AD93282BA35E5E8532F23E7AFF35BC1E0B26FA5D6B7F09FB861B43A71B439D18"
+    },
+    {
+      "id": "fingerprint_context_and_effect_identity",
+      "profile": "cabt_option_fingerprint_v1",
+      "payload": {
+        "window_id": "2A3AD4333F32A401E004E8E7AEC9236DC05B78CE0BDA8B615ABFEF21607AD446",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "option_index": 0,
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "option": {
+          "type": 1
+        },
+        "context_card": {
+          "id": 860,
+          "serial": 900,
+          "playerIndex": 0
+        },
+        "effect": {
+          "id": 646,
+          "serial": 901,
+          "playerIndex": 0
+        }
+      },
+      "expected_canonical_utf8": "{\"context_card\":{\"id\":860,\"playerIndex\":0,\"serial\":900},\"effect\":{\"id\":646,\"playerIndex\":0,\"serial\":901},\"option\":{\"type\":1},\"option_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select_context_raw\":0,\"select_type_raw\":0,\"window_id\":\"2A3AD4333F32A401E004E8E7AEC9236DC05B78CE0BDA8B615ABFEF21607AD446\"}",
+      "expected_digest": "7906D99C7C16F42D73D183BEAB9EE195D23277BB9440F1E7DE57A81E84390849"
+    },
+    {
+      "id": "fingerprint_identity_serial_41",
+      "profile": "cabt_option_fingerprint_v1",
+      "payload": {
+        "window_id": "8B9D97AAA9DDD2998EC00DC7F8458F7654D4D8A0FEF63F6545B3F5638D9EB88B",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "option_index": 0,
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "option": {
+          "type": 15,
+          "cardId": 860,
+          "serial": 41
+        },
+        "context_card": null,
+        "effect": null
+      },
+      "expected_canonical_utf8": "{\"context_card\":null,\"effect\":null,\"option\":{\"cardId\":860,\"serial\":41,\"type\":15},\"option_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select_context_raw\":0,\"select_type_raw\":0,\"window_id\":\"8B9D97AAA9DDD2998EC00DC7F8458F7654D4D8A0FEF63F6545B3F5638D9EB88B\"}",
+      "expected_digest": "369BBA6732AA95AFCEB17162A7E9190919703F7A7A386127D1965C8D094A8F0A"
+    },
+    {
+      "id": "fingerprint_identity_serial_42",
+      "profile": "cabt_option_fingerprint_v1",
+      "payload": {
+        "window_id": "791B549C2C2F91C37AA3BB681F37FB0B68C58D355682217D55C78EC785582E4B",
+        "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "option_index": 0,
+        "select_type_raw": 0,
+        "select_context_raw": 0,
+        "option": {
+          "type": 15,
+          "cardId": 860,
+          "serial": 42
+        },
+        "context_card": null,
+        "effect": null
+      },
+      "expected_canonical_utf8": "{\"context_card\":null,\"effect\":null,\"option\":{\"cardId\":860,\"serial\":42,\"type\":15},\"option_index\":0,\"public_observation_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"select_context_raw\":0,\"select_type_raw\":0,\"window_id\":\"791B549C2C2F91C37AA3BB681F37FB0B68C58D355682217D55C78EC785582E4B\"}",
+      "expected_digest": "03B512D853026A6D97B4A190E461A7EE7C13E1203CFFC8B9215BE77A53497915"
+    },
+    {
+      "id": "initial_deck_marnie",
+      "profile": "cabt_initial_deck_v1",
+      "payload": {
+        "card_ids": [
+          7,
+          7,
+          7,
+          7,
+          7,
+          7,
+          7,
+          7,
+          7,
+          7,
+          104,
+          104,
+          112,
+          112,
+          112,
+          112,
+          646,
+          646,
+          646,
+          646,
+          647,
+          647,
+          647,
+          648,
+          648,
+          648,
+          860,
+          860,
+          1079,
+          1079,
+          1079,
+          1080,
+          1086,
+          1086,
+          1086,
+          1086,
+          1097,
+          1097,
+          1097,
+          1122,
+          1137,
+          1152,
+          1152,
+          1152,
+          1152,
+          1182,
+          1182,
+          1219,
+          1219,
+          1219,
+          1219,
+          1227,
+          1227,
+          1227,
+          1227,
+          1231,
+          1259,
+          1259,
+          1259,
+          1259
+        ]
+      },
+      "expected_canonical_utf8": "{\"card_ids\":[7,7,7,7,7,7,7,7,7,7,104,104,112,112,112,112,646,646,646,646,647,647,647,648,648,648,860,860,1079,1079,1079,1080,1086,1086,1086,1086,1097,1097,1097,1122,1137,1152,1152,1152,1152,1182,1182,1219,1219,1219,1219,1227,1227,1227,1227,1231,1259,1259,1259,1259]}",
+      "expected_digest": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+    }
+  ],
+  "option_type_matrix": {
+    "common": {
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select_without_option": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      }
+    },
+    "cases": [
+      {
+        "id": "option_type_number",
+        "raw_option_type": 0,
+        "option": {
+          "type": 0,
+          "number": 2
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "BF73AE13CA9D742CD557708D7FB4DD98C0867480136ECD5B3B4C171296BB2D7D",
+        "expected_fingerprint": "F3B08C3E07671BB65A4E576B6000AECA7C9B220239A14F93CC0A33F3590E05B6"
+      },
+      {
+        "id": "option_type_yes",
+        "raw_option_type": 1,
+        "option": {
+          "type": 1
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "A6ED614B52DC5E242A57BE1A30C1FF616BFC3520D66E8F58DFD8FB03BDA8A37A",
+        "expected_fingerprint": "F7A53421A869EA1B717EDC9D0ABD75B14A9CEF32CAFED160A769F464BA0FA576"
+      },
+      {
+        "id": "option_type_no",
+        "raw_option_type": 2,
+        "option": {
+          "type": 2
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "D03E15BC63A8214DAC51296C5109BADDA81CB44C9E9ECDF285D9E18467F3E410",
+        "expected_fingerprint": "568D11FF5FEDD2721C03CA9E332CD47251D76680AB0F03469D6CBC02581834D1"
+      },
+      {
+        "id": "option_type_card",
+        "raw_option_type": 3,
+        "option": {
+          "type": 3,
+          "area": 2,
+          "index": 0,
+          "playerIndex": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "B44ED73D826C014770B64FF9DA58A12A45F4E61F058B44EC49616E028E0D7548",
+        "expected_fingerprint": "3DCBA27A40D057B0F79D94B932DA1AF57243BEC3963315380128ADA57ED03997"
+      },
+      {
+        "id": "option_type_tool_card",
+        "raw_option_type": 4,
+        "option": {
+          "type": 4,
+          "area": 4,
+          "index": 0,
+          "playerIndex": 0,
+          "toolIndex": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "5DDEF37228D7045F5D39BA89D90C7B348F67F84F10144C0971F25B10E5B97109",
+        "expected_fingerprint": "A15567170129C1330B91D4016CF09048783B60B9F62EA3486289D412D2918D1D"
+      },
+      {
+        "id": "option_type_energy_card",
+        "raw_option_type": 5,
+        "option": {
+          "type": 5,
+          "area": 4,
+          "index": 0,
+          "playerIndex": 0,
+          "energyIndex": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "24E5E42352F3DB4454EB631D937F4D2D21448F0BE139BB171C19E2A8EBBA51EC",
+        "expected_fingerprint": "F816907A737B7F1D4A2AA205A13B384F5231C44E310FF81E5FB7D641F5222CD1"
+      },
+      {
+        "id": "option_type_energy",
+        "raw_option_type": 6,
+        "option": {
+          "type": 6,
+          "area": 4,
+          "index": 0,
+          "playerIndex": 0,
+          "energyIndex": 0,
+          "count": 1
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "7986FCB8E4ACB377D8BB50B88D922933A083281855641C26C147423BC91368CA",
+        "expected_fingerprint": "D5BCC89E61440DF0EE1257CED2C29A09C5E64726DFABA4292E7BC70CF8BA66DF"
+      },
+      {
+        "id": "option_type_play",
+        "raw_option_type": 7,
+        "option": {
+          "type": 7,
+          "index": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "FF006CF62B0D9EBD353DD5CF41031663CA54C3BB1F87F3768EB503FB2C736F4F",
+        "expected_fingerprint": "8790918227D5A7F689753D4EE8610127DE31932F50C5FFC2E28A63C673F4355F"
+      },
+      {
+        "id": "option_type_attach",
+        "raw_option_type": 8,
+        "option": {
+          "type": 8,
+          "area": 2,
+          "index": 0,
+          "inPlayArea": 4,
+          "inPlayIndex": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "146DD0ED93456E6560AE325D603F0195C11CCF51A8D5E4050C9B5C46909CF86B",
+        "expected_fingerprint": "0D42B6296D07ACA7475AE37B4418C1ADAA36FDDAD2A006DC8946370F1CD581D7"
+      },
+      {
+        "id": "option_type_evolve",
+        "raw_option_type": 9,
+        "option": {
+          "type": 9,
+          "area": 2,
+          "index": 0,
+          "inPlayArea": 5,
+          "inPlayIndex": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "748097B50B4E4665BE042C007C6A0365930AFE2395A7EEC1A50AD2C04360CEFC",
+        "expected_fingerprint": "50E9201F89DBE5C61A77024D3BADCEE95DEEACAA0AEAC3F34447784155A9995D"
+      },
+      {
+        "id": "option_type_ability",
+        "raw_option_type": 10,
+        "option": {
+          "type": 10,
+          "area": 4,
+          "index": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "4047A00792A252DEAD584275C8D8D46F4595AC08CD782D3097663E04A6DB89D1",
+        "expected_fingerprint": "E9E47FFEA5B29EF93B01B1B52D3A08A99163F2FB767558546F70A120CC412001"
+      },
+      {
+        "id": "option_type_discard",
+        "raw_option_type": 11,
+        "option": {
+          "type": 11,
+          "area": 2,
+          "index": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "DCA9840E1F1F5D90C3D0909C19EF5630E0E2715455C8199C5E77C60AE7041D96",
+        "expected_fingerprint": "6AC4EE5B66210F91FA12295E4EEBE2612F7672DFBA24D016B0559CCA0DD81A84"
+      },
+      {
+        "id": "option_type_retreat",
+        "raw_option_type": 12,
+        "option": {
+          "type": 12
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "EBA5B1305C652BFBC01AC581BDE236DA36284240164A5437543BD75D48546A31",
+        "expected_fingerprint": "1D3C711E22BABE3711D961F924DA63A42C006B2369C494DF7F41BF7C5A61569E"
+      },
+      {
+        "id": "option_type_attack",
+        "raw_option_type": 13,
+        "option": {
+          "type": 13,
+          "attackId": 5001
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "7DDCB4A4BEA9FE7C57A5CDB002C6EB7542D957A4333C2CE815A27C0A872923A5",
+        "expected_fingerprint": "AA0E716FF0A32488493E03DFC47BEFBEA6E08C1B16BB7E25E9067977D9ACD713"
+      },
+      {
+        "id": "option_type_end",
+        "raw_option_type": 14,
+        "option": {
+          "type": 14
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "E90C0B0B5459960F78BE96280CD8ADCDA709B5AC421ECD1D90BA280F5A749E47",
+        "expected_fingerprint": "32A027B792377A1F0938AB1085F557F3433E3688EA4E297B68AA7C2978546844"
+      },
+      {
+        "id": "option_type_skill",
+        "raw_option_type": 15,
+        "option": {
+          "type": 15,
+          "cardId": 860,
+          "serial": 42
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "791B549C2C2F91C37AA3BB681F37FB0B68C58D355682217D55C78EC785582E4B",
+        "expected_fingerprint": "03B512D853026A6D97B4A190E461A7EE7C13E1203CFFC8B9215BE77A53497915"
+      },
+      {
+        "id": "option_type_special_condition",
+        "raw_option_type": 16,
+        "option": {
+          "type": 16,
+          "specialConditionType": 0
+        },
+        "expected_decision_state": "policy_allowed",
+        "expected_window_id": "C17E344882834874D69B406B5CF6A313DC27F38AB15F7CEAD07F72C5647AA375",
+        "expected_fingerprint": "48D665A3D0672CA093B69EEA4ADCBFE09F8F7CF2D70494C30D945354FB5BE7F8"
+      }
+    ]
+  },
+  "window_cases": [
+    {
+      "id": "empty_optional_window",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 0,
+        "maxCount": 0,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "B7F0D9105419007ADA6AEB0CFC258DFA50639C4E02C223437077019D55E96D79",
+      "expected_option_fingerprints": [],
+      "expected_fallback": [],
+      "expected_fallback_branch": "optional_zero"
+    },
+    {
+      "id": "optional_zero",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 0,
+        "maxCount": 2,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          },
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          },
+          {
+            "type": 14
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "EDF8459C33AE4C5F3AC6AD1989F7B158BCE3E2498E4C93362AB1FE12F418805D",
+      "expected_option_fingerprints": [
+        "369EE1A0DAF15D2763AAEB7B4EA43A1A09F6F5649AC6F04A68D41B0823126507",
+        "8FD573F45DFF348B7FE20BDB26C0355F5B4B8BB754F8F1985654A5E25570E4D2",
+        "01F15226395F4BFEDEF3EFF0F32BA7651814E56522E5C3AA89A9140939A97554"
+      ],
+      "expected_fallback": [],
+      "expected_fallback_branch": "optional_zero"
+    },
+    {
+      "id": "forced_all",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 3,
+        "maxCount": 3,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          },
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          },
+          {
+            "type": 14
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "D7F84F032B4AB42EDC1054011DE59A9B4E82FCCBE6D9FACBBF96DDA2DAC8D69C",
+      "expected_option_fingerprints": [
+        "F04EFB532AE485E64C2DDA718F96B213FCC7D799057659CA7FD9E602FAF4D7A4",
+        "06CC44F87D175C76E07B587399DB6F4309697322FDCC70C84134623074F60AF9",
+        "FBB046B50A2C2FEC26031C33D9FA781881898F3AA54D8BEEC70666A5C416619F"
+      ],
+      "expected_fallback": [
+        0,
+        1,
+        2
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "first_minimum",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 2,
+        "maxCount": 3,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          },
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          },
+          {
+            "type": 14
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "4E121216758DB4617671296AE885C21D967FEDADDE5D4A693B9CB96E7C960171",
+      "expected_option_fingerprints": [
+        "D6217C1BEDDE87E601EDE76FD65E4CE96960271FB388769C72F221385938EC9A",
+        "398BFEDAB2960BF2DBDE0027A8C02C5921DA5ED7B58651788D39C6D8E6007EB0",
+        "AF69397153D294F634269769E2F9F625EA8BFF0331C88F2001DA9AFEEA7093B1"
+      ],
+      "expected_fallback": [
+        0,
+        1
+      ],
+      "expected_fallback_branch": "first_minimum"
+    },
+    {
+      "id": "ordered_multi",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 5,
+        "context": 34,
+        "minCount": 2,
+        "maxCount": 2,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          },
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          },
+          {
+            "type": 14
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "E74684898F1AD412114C87B43B6056921E9579C2594B0DC45234881547BD4851",
+      "expected_option_fingerprints": [
+        "AEF902E825F0B104F84DDECAB7B78A11560DF8050CA10E8E7E85E23A32FC3137",
+        "77920AB3D6BC7A0D9D2408B0715D6C2A202BA5A3905089EEF828FA94B52F697B",
+        "F6CE2526A56C6674976782530FA6E57D2FD8BE3EACD74687706A66566630C294"
+      ],
+      "expected_fallback": [
+        0,
+        1
+      ],
+      "expected_fallback_branch": "first_minimum",
+      "accepted_ordered_proposal": [
+        2,
+        0
+      ]
+    },
+    {
+      "id": "reorder_a",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 2,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          },
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "37B97215A869B9B472168D591D28E1394EB76FC7CDB07CF47A583E18A0D09A5B",
+      "expected_option_fingerprints": [
+        "CF66FD2CE271F1AE981DC0F85F08427F4765B718A9C0B7240D7020052C087A6D",
+        "23478D98DFD11C3F3DF3E3A39CA35982461D7A077A6B18D99BBBD72DC55621BC"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "first_minimum"
+    },
+    {
+      "id": "reorder_b",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 2,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          },
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "F81D282648C11CE27B70D5EBD97D327119CFFF8C12F51BD2DC1E98961D7BE396",
+      "expected_option_fingerprints": [
+        "11EE9B2D8CECC376F891BD0E1F8A5FB843B52E1DE68CB265AB0704E6D98EE34D",
+        "7F8237A680B2C908CEB72AE7F234197FA34C924783C1BF9D78BF669BA6CD5440"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "first_minimum"
+    },
+    {
+      "id": "identity_serial_41",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 41
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "8B9D97AAA9DDD2998EC00DC7F8458F7654D4D8A0FEF63F6545B3F5638D9EB88B",
+      "expected_option_fingerprints": [
+        "369BBA6732AA95AFCEB17162A7E9190919703F7A7A386127D1965C8D094A8F0A"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "identity_serial_42",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 15,
+            "cardId": 860,
+            "serial": 42
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "791B549C2C2F91C37AA3BB681F37FB0B68C58D355682217D55C78EC785582E4B",
+      "expected_option_fingerprints": [
+        "03B512D853026A6D97B4A190E461A7EE7C13E1203CFFC8B9215BE77A53497915"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "present_null_sparse_drift",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 0,
+            "playerIndex": null
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "sparse_shape_mismatch"
+      ],
+      "expected_window_id": "6CEFB9BB07B28A9C14048E6B74B2926D674181FEBEAFC8EB69804F1E8D786F02",
+      "expected_option_fingerprints": [
+        "E94279CA089507A66FD2C971AD9FDD58E7D6336E398E1D0B7680A1926F2997E3"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "missing_sparse_field",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 0
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "sparse_shape_mismatch"
+      ],
+      "expected_window_id": "94CE730247B13226BFE01CF05C6C16B8BF4C25EA3D5B41D1D6CECBF6DFE1B2B6",
+      "expected_option_fingerprints": [
+        "AD93282BA35E5E8532F23E7AFF35BC1E0B26FA5D6B7F09FB861B43A71B439D18"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "extra_known_official_field_sparse_drift",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 2,
+            "index": 0,
+            "playerIndex": 0,
+            "serial": 55
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "sparse_shape_mismatch"
+      ],
+      "expected_window_id": "29D4C52028F90598536B015CFEDB86183ECD25CAFA1F777F062EB919E83D2697",
+      "expected_option_fingerprints": [
+        "84CE0FC29CD536D4DFD5D16781B3209204A89A38C664F59991D8BF198179DB39"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "context_and_effect_identity",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": {
+          "id": 860,
+          "serial": 900,
+          "playerIndex": 0
+        },
+        "effect": {
+          "id": 646,
+          "serial": 901,
+          "playerIndex": 0
+        }
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "2A3AD4333F32A401E004E8E7AEC9236DC05B78CE0BDA8B615ABFEF21607AD446",
+      "expected_option_fingerprints": [
+        "7906D99C7C16F42D73D183BEAB9EE195D23277BB9440F1E7DE57A81E84390849"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "context_serial_changed",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": {
+          "id": 860,
+          "serial": 902,
+          "playerIndex": 0
+        },
+        "effect": {
+          "id": 646,
+          "serial": 901,
+          "playerIndex": 0
+        }
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "6E378315A0DE3D8C446DCDB6A17E57C8FCDC8A7F68945A9BF44B0C340BFBBB66",
+      "expected_option_fingerprints": [
+        "BCB099346422AB8561A4ABF17DE158B0BED12AE79857283EA41CAE1458FA7105"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "unknown_select_type",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 99,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "unknown_select_type"
+      ],
+      "expected_window_id": "71903C9B0201A4B1178346B3CBC03664E697256A16E5E42F3D7C0BD2E928FBE3",
+      "expected_option_fingerprints": [
+        "5B201EE9862F6135CDB195E7776F2E1D21ADC5644D8711C5286A66CDD8DE360F"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "unknown_select_context",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 99,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "unknown_select_context"
+      ],
+      "expected_window_id": "B5C944C73366B0AD5070251D7189C92FD1E4933F362FFD7254442AD37A55E620",
+      "expected_option_fingerprints": [
+        "CA85885D6915126B01D3882CCA34B0FC387E211E6B89A990CD2F8583B284AD80"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "unknown_option_type",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 99,
+            "cardId": 860,
+            "serial": 42
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "unknown_option_type"
+      ],
+      "expected_window_id": "078AED97878597868384254A1EED070D9C86996F134EF8AFAB9A7F2E68094B4A",
+      "expected_option_fingerprints": [
+        "752B5B97E4DA1BF119C9B1FE3876B2AECD4059F5FA8E1B1CA8D97114D6A03E1B"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "unknown_official_enum_value",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 99,
+            "index": 0,
+            "playerIndex": 0
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "unknown_option_enum"
+      ],
+      "expected_window_id": "FE92F533B1BD900589828535CE64A274F1BF65520640CF1BBCA106B0AC5B2442",
+      "expected_option_fingerprints": [
+        "73481712ED0AE985D55EEBBF2CF7742BCF261F8426988B27AB311B8CCE66BCA0"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "locked_engine_only_enum_value",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 3,
+            "area": 14,
+            "index": 0,
+            "playerIndex": 0
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "fallback_only",
+      "expected_fallback_reasons": [
+        "unknown_option_enum"
+      ],
+      "expected_window_id": "F324463FC59387FFE5365646BEA385FB0F693FD1874D6A07C7FFEAE0095B2CA3",
+      "expected_option_fingerprints": [
+        "1852AC9093B12E7254FCD18B0D13B6BE8C2CE20493CA00A6F268EDB6690D9254"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "public_hash_a",
+      "public_observation_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "A6ED614B52DC5E242A57BE1A30C1FF616BFC3520D66E8F58DFD8FB03BDA8A37A",
+      "expected_option_fingerprints": [
+        "F7A53421A869EA1B717EDC9D0ABD75B14A9CEF32CAFED160A769F464BA0FA576"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    },
+    {
+      "id": "public_hash_b",
+      "public_observation_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "public_hash_authority": "conformance_fixture",
+      "chooser_player_index": 0,
+      "select": {
+        "type": 0,
+        "context": 0,
+        "minCount": 1,
+        "maxCount": 1,
+        "remainDamageCounter": 0,
+        "remainEnergyCost": 0,
+        "option": [
+          {
+            "type": 1
+          }
+        ],
+        "deck": null,
+        "contextCard": null,
+        "effect": null
+      },
+      "expected_decision_state": "policy_allowed",
+      "expected_fallback_reasons": [],
+      "expected_window_id": "122D2CD23EAC910221828D000C864B3589F15BBD5ED591352727FF08BFEE534E",
+      "expected_option_fingerprints": [
+        "E61D083BD0D3C75F204616612BA50950621D28D17ECE6B6DF61C1FBC4635F9EA"
+      ],
+      "expected_fallback": [
+        0
+      ],
+      "expected_fallback_branch": "forced_all"
+    }
+  ],
+  "build_reject_cases": [
+    {
+      "id": "authority_pending_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_input",
+        "field": "public_hash_authority",
+        "value": "pending"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "public_hash_authority_required",
+      "expected_issue_pointer": ""
+    },
+    {
+      "id": "lowercase_public_hash_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_input",
+        "field": "public_observation_hash",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_public_observation_hash",
+      "expected_issue_pointer": ""
+    },
+    {
+      "id": "boolean_chooser_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_input",
+        "field": "chooser_player_index",
+        "value": true
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_chooser_player_index",
+      "expected_issue_pointer": ""
+    },
+    {
+      "id": "unknown_select_key_rejected_without_echo",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "add_key",
+        "pointer": "/select",
+        "key": "sentinelKeyNameDoNotEcho",
+        "value": "sentinelValueDoNotEcho"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "unknown_public_key",
+      "expected_issue_pointer": "/select",
+      "forbidden_diagnostic_substrings": [
+        "sentinelKeyNameDoNotEcho",
+        "sentinelValueDoNotEcho"
+      ]
+    },
+    {
+      "id": "unknown_option_key_rejected_without_echo",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "add_key",
+        "pointer": "/select/option/0",
+        "key": "optionSecretKeyDoNotEcho",
+        "value": "optionSecretValueDoNotEcho"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "unknown_public_key",
+      "expected_issue_pointer": "/select/option/0",
+      "forbidden_diagnostic_substrings": [
+        "optionSecretKeyDoNotEcho",
+        "optionSecretValueDoNotEcho"
+      ]
+    },
+    {
+      "id": "unknown_card_key_rejected_without_echo",
+      "base_window_case_id": "context_and_effect_identity",
+      "mutation": {
+        "operation": "add_key",
+        "pointer": "/select/contextCard",
+        "key": "cardSecretKeyDoNotEcho",
+        "value": "cardSecretValueDoNotEcho"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "unknown_public_key",
+      "expected_issue_pointer": "/select/contextCard",
+      "forbidden_diagnostic_substrings": [
+        "cardSecretKeyDoNotEcho",
+        "cardSecretValueDoNotEcho"
+      ]
+    },
+    {
+      "id": "select_not_object_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select",
+        "value": []
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "select_not_object",
+      "expected_issue_pointer": "/select"
+    },
+    {
+      "id": "missing_required_select_field",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "remove_key",
+        "pointer": "/select",
+        "key": "maxCount"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "missing_select_field",
+      "expected_issue_pointer": "/select"
+    },
+    {
+      "id": "boolean_min_count_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/minCount",
+        "value": true
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_select_field_type",
+      "expected_issue_pointer": "/select/minCount"
+    },
+    {
+      "id": "negative_min_count_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/minCount",
+        "value": -1
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_cardinality",
+      "expected_issue_pointer": "/select"
+    },
+    {
+      "id": "min_greater_than_max_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/minCount",
+        "value": 2
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_cardinality",
+      "expected_issue_pointer": "/select"
+    },
+    {
+      "id": "max_greater_than_option_count_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/maxCount",
+        "value": 2
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_cardinality",
+      "expected_issue_pointer": "/select"
+    },
+    {
+      "id": "option_not_object_rejected",
+      "base_window_case_id": "public_hash_a",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/option/0",
+        "value": 1
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_option",
+      "expected_issue_pointer": "/select/option/0"
+    },
+    {
+      "id": "option_field_wrong_host_type_rejected",
+      "base_window_case_id": "option_type_card",
+      "base_section": "option_type_matrix",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/option/0/area",
+        "value": "2"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_option",
+      "expected_issue_pointer": "/select/option/0"
+    },
+    {
+      "id": "context_card_wrong_shape_rejected",
+      "base_window_case_id": "context_and_effect_identity",
+      "mutation": {
+        "operation": "remove_key",
+        "pointer": "/select/contextCard",
+        "key": "serial"
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_card",
+      "expected_issue_pointer": "/select/contextCard"
+    },
+    {
+      "id": "option_card_id_zero_rejected",
+      "base_window_case_id": "option_type_skill",
+      "base_section": "option_type_matrix",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/option/0/cardId",
+        "value": 0
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_option",
+      "expected_issue_pointer": "/select/option/0"
+    },
+    {
+      "id": "context_card_id_zero_rejected",
+      "base_window_case_id": "context_and_effect_identity",
+      "mutation": {
+        "operation": "replace_pointer",
+        "pointer": "/select/contextCard/id",
+        "value": 0
+      },
+      "expected_decision_state": "reject",
+      "expected_issue_code": "invalid_card",
+      "expected_issue_pointer": "/select/contextCard"
+    }
+  ],
+  "sanitizer_cases": [
+    {
+      "id": "valid_ordered_multi_preserves_order",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          2,
+          0
+        ]
+      },
+      "expected_validation": {
+        "accepted": true,
+        "selected_indexes": [
+          2,
+          0
+        ],
+        "reason_code": "policy_selection_accepted"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          2,
+          0
+        ],
+        "owner": "policy",
+        "reason_code": "policy_selection_accepted",
+        "fallback_branch": null
+      }
+    },
+    {
+      "id": "valid_optional_empty",
+      "window_case_id": "optional_zero",
+      "proposal": {
+        "kind": "json",
+        "value": []
+      },
+      "expected_validation": {
+        "accepted": true,
+        "selected_indexes": [],
+        "reason_code": "policy_selection_accepted"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [],
+        "owner": "policy",
+        "reason_code": "policy_selection_accepted",
+        "fallback_branch": null
+      }
+    },
+    {
+      "id": "proposal_null_not_list",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": null
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_not_list"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_object_not_list",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": {
+          "0": 0,
+          "1": 1
+        }
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_not_list"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_non_list_sequence",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "typed",
+        "type": "non_list_sequence",
+        "items": [
+          0,
+          1
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_not_list"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_boolean_index",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          true,
+          0
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_index_not_exact_int"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_float_index",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "typed",
+        "type": "list",
+        "items": [
+          {
+            "type": "float",
+            "decimal": "0.0"
+          },
+          1
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_index_not_exact_int"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_string_index",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          "0",
+          1
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_index_not_exact_int"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_too_few",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          0
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_cardinality"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_too_many",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          0,
+          1,
+          2
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_cardinality"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_duplicate_index",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          0,
+          0
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_duplicate_index"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_negative_index",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          -1,
+          0
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_index_out_of_range"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "proposal_out_of_range_index",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          0,
+          3
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_index_out_of_range"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "invalid_proposal_is_discarded_atomically",
+      "window_case_id": "ordered_multi",
+      "proposal": {
+        "kind": "json",
+        "value": [
+          2,
+          99
+        ]
+      },
+      "expected_validation": {
+        "accepted": false,
+        "selected_indexes": [],
+        "reason_code": "proposal_index_out_of_range"
+      },
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "invalid_policy_output",
+        "fallback_branch": "first_minimum"
+      },
+      "forbidden_partial_result": [
+        2
+      ]
+    }
+  ],
+  "policy_fault_cases": [
+    {
+      "id": "policy_exception",
+      "window_case_id": "first_minimum",
+      "policy_outcome": "exception",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "policy_exception",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "policy_timeout",
+      "window_case_id": "first_minimum",
+      "policy_outcome": "timeout",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "policy_timeout",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "policy_unavailable",
+      "window_case_id": "first_minimum",
+      "policy_outcome": "unavailable",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0,
+          1
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "policy_unavailable",
+        "fallback_branch": "first_minimum"
+      }
+    },
+    {
+      "id": "unknown_window_ignores_returned_proposal",
+      "window_case_id": "unknown_select_type",
+      "policy_outcome": "returned",
+      "proposal": [
+        0
+      ],
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "window_fallback_only",
+        "fallback_branch": "forced_all"
+      }
+    },
+    {
+      "id": "sparse_drift_window_ignores_returned_proposal",
+      "window_case_id": "missing_sparse_field",
+      "policy_outcome": "returned",
+      "proposal": [
+        0
+      ],
+      "expected_resolution": {
+        "accepted": true,
+        "selected_indexes": [
+          0
+        ],
+        "owner": "deterministic_fallback",
+        "reason_code": "window_fallback_only",
+        "fallback_branch": "forced_all"
+      }
+    }
+  ],
+  "initial_deck_fixture": {
+    "profile": "cabt_initial_deck_v1",
+    "authority_scope": "source_locked_conformance_fixture_only",
+    "source_artifact_id": "candidate_official_marnie_deck",
+    "source_sha256": "48F1A03E8AB8162F6DC608E6743A4F3B32004CB702CA447050E62055B85DEFBF",
+    "local_mapping_claim": false,
+    "cabt_exportable_claim": false,
+    "card_ids": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      104,
+      104,
+      112,
+      112,
+      112,
+      112,
+      646,
+      646,
+      646,
+      646,
+      647,
+      647,
+      647,
+      648,
+      648,
+      648,
+      860,
+      860,
+      1079,
+      1079,
+      1079,
+      1080,
+      1086,
+      1086,
+      1086,
+      1086,
+      1097,
+      1097,
+      1097,
+      1122,
+      1137,
+      1152,
+      1152,
+      1152,
+      1152,
+      1182,
+      1182,
+      1219,
+      1219,
+      1219,
+      1219,
+      1227,
+      1227,
+      1227,
+      1227,
+      1231,
+      1259,
+      1259,
+      1259,
+      1259
+    ],
+    "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+  },
+  "initial_deck_cases": [
+    {
+      "id": "exact_pinned_60",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_copy"
+      },
+      "expected_candidate_reason": "pinned_deck_accepted",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "initial_candidate",
+        "reason_code": "pinned_deck_accepted",
+        "candidate_reason_code": "pinned_deck_accepted",
+        "fallback_branch": null,
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_59_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_prefix",
+        "length": 59
+      },
+      "expected_candidate_reason": "deck_cardinality",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_cardinality",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_61_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_plus",
+        "items": [
+          7
+        ]
+      },
+      "expected_candidate_reason": "deck_cardinality",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_cardinality",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_boolean_card_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_replace",
+        "index": 0,
+        "value": true
+      },
+      "expected_candidate_reason": "deck_card_not_exact_int",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_card_not_exact_int",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_zero_card_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_replace",
+        "index": 0,
+        "value": 0
+      },
+      "expected_candidate_reason": "deck_card_not_positive",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_card_not_positive",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_unsafe_integer_card_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_replace",
+        "index": 0,
+        "value": {
+          "type": "unsafe_integer",
+          "decimal": "9007199254740992"
+        }
+      },
+      "expected_candidate_reason": "deck_card_not_positive",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_card_not_positive",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_sequence_mismatch_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "pinned_replace",
+        "index": 59,
+        "value": 1260
+      },
+      "expected_candidate_reason": "deck_mismatch",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_mismatch",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_non_list_sequence_falls_back",
+      "policy_outcome": "returned",
+      "candidate": {
+        "kind": "typed",
+        "type": "non_list_sequence",
+        "items_ref": "initial_deck_fixture.card_ids"
+      },
+      "expected_candidate_reason": "deck_not_list",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_not_list",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_exception_falls_back",
+      "policy_outcome": "exception",
+      "candidate": {
+        "kind": "absent"
+      },
+      "expected_candidate_reason": "deck_exception",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_exception",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_timeout_falls_back",
+      "policy_outcome": "timeout",
+      "candidate": {
+        "kind": "absent"
+      },
+      "expected_candidate_reason": "deck_timeout",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_timeout",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    },
+    {
+      "id": "candidate_unavailable_falls_back",
+      "policy_outcome": "unavailable",
+      "candidate": {
+        "kind": "absent"
+      },
+      "expected_candidate_reason": "deck_unavailable",
+      "expected_resolution": {
+        "accepted": true,
+        "selected_card_ids_ref": "initial_deck_fixture.card_ids",
+        "owner": "pinned_deck_fallback",
+        "reason_code": "pinned_deck_fallback",
+        "candidate_reason_code": "deck_unavailable",
+        "fallback_branch": "pinned_verified_deck",
+        "deck_hash": "F7CDD0968318B4D10D7FE7AB196FA24F86626DC23CF32432D7E2A7D64050A4E8"
+      }
+    }
+  ],
+  "invalid_pinned_deck_cases": [
+    {
+      "id": "pinned_59_rejected",
+      "authority_mutation": {
+        "operation": "truncate_card_ids",
+        "length": 59
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "pinned_boolean_rejected",
+      "authority_mutation": {
+        "operation": "replace_card_id",
+        "index": 0,
+        "value": true
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "pinned_unsafe_integer_rejected",
+      "authority_mutation": {
+        "operation": "replace_card_id",
+        "index": 0,
+        "value": {
+          "type": "unsafe_integer",
+          "decimal": "9007199254740992"
+        }
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "pinned_hash_mismatch_rejected",
+      "authority_mutation": {
+        "operation": "replace_field",
+        "field": "deck_hash",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "wrong_source_artifact_rejected",
+      "authority_mutation": {
+        "operation": "replace_field",
+        "field": "source_artifact_id",
+        "value": "caller_supplied_deck"
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "wrong_source_hash_rejected",
+      "authority_mutation": {
+        "operation": "replace_field",
+        "field": "source_sha256",
+        "value": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "wrong_authority_scope_rejected",
+      "authority_mutation": {
+        "operation": "replace_field",
+        "field": "authority_scope",
+        "value": "caller_verified"
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    },
+    {
+      "id": "arbitrary_self_consistent_60_rejected",
+      "authority_mutation": {
+        "operation": "replace_card_id_and_hash",
+        "index": 59,
+        "value": 1260,
+        "deck_hash": "9E191F5885EA20A7F6784C7DFB369FC4E18616C8498AAEE507766F97C85DD4B6"
+      },
+      "expected_resolution": {
+        "accepted": false,
+        "selected_card_ids": [],
+        "owner": "none",
+        "reason_code": "invalid_pinned_deck",
+        "candidate_reason_code": "invalid_pinned_deck",
+        "fallback_branch": null,
+        "deck_hash": null
+      }
+    }
+  ]
+}

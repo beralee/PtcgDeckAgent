@@ -27,7 +27,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not player.hand.is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	if player.hand.is_empty():
 		return []

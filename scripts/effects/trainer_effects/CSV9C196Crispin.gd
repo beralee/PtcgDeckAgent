@@ -15,11 +15,11 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_unique_basic_energy(player.deck).is_empty()
 
 
-func get_preview_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
-	return get_interaction_steps(card, state)
+func build_ucis_preview_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	return build_ucis_interaction_steps_spec_steps(card, state)
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var energy_items := _get_unique_basic_energy(player.deck)
 	if energy_items.is_empty():
@@ -34,12 +34,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		1,
 		{"allow_cancel": true, "force_confirm": true}
 	)
+	# CABT SelectType.ENERGY / SelectContext.TO_HAND_ENERGY. These are public
+	# selection semantics, not UI text or a private engine callback.
+	hand_step["ucis_context_name"] = "TO_HAND_ENERGY"
+	hand_step["ucis_option_type_name"] = "ENERGY"
 	if not player.get_all_pokemon().is_empty() and energy_items.size() > 1:
 		hand_step["requires_followup_interaction"] = true
 	return [hand_step]
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+func build_ucis_followup_interaction_steps_spec_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
 	if should_preview_empty_search_deck(resolved_context):
 		return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, state.players[card.owner_index].deck)]
 	var player: PlayerState = state.players[card.owner_index]
@@ -126,7 +130,7 @@ func _build_attachment_step(player: PlayerState, state: GameState, energy_items:
 	var energy_labels: Array[String] = []
 	for energy_card: CardInstance in energy_items:
 		energy_labels.append(energy_card.card_data.name)
-	return build_full_library_card_assignment_step(
+	var step := build_full_library_card_assignment_step(
 		ATTACH_STEP_ID,
 		"可再选择1张不同属性基本能量附着于自己的宝可梦",
 		player.deck,
@@ -139,6 +143,11 @@ func _build_attachment_step(player: PlayerState, state: GameState, energy_items:
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
 	)
+	# CABT names ATTACH_TO as selecting the card/energy being attached and
+	# ATTACH_FROM as selecting the Pokemon that receives it (official comments).
+	step["ucis_context_name"] = "ATTACH_TO"
+	step["ucis_target_context_name"] = "ATTACH_FROM"
+	return step
 
 
 func _get_unique_basic_energy(cards: Array[CardInstance]) -> Array:

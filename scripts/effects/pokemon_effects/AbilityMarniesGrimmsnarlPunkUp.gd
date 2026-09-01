@@ -26,7 +26,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not _collect_basic_darkness_energy(player.deck).is_empty() and not _collect_marnies_targets(player).is_empty()
 
 
-func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
 		return []
 	var player: PlayerState = state.players[card.owner_index]
@@ -46,7 +46,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			target.get_remaining_hp(),
 			target.get_max_hp(),
 		])
-	return [build_full_library_card_assignment_step(
+	var step := build_full_library_card_assignment_step(
 		ASSIGNMENT_STEP_ID,
 		"Choose up to 5 Basic Darkness Energy and attach them to your Marnie's Pokemon",
 		player.deck,
@@ -59,7 +59,14 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true,
 		{"force_confirm": true}
-	)]
+	)
+	# Locked CABT expresses Punk Up as two reobserved CARD windows: choose
+	# Energy cards to attach (ATTACH_TO), then choose the Pokemon receiving each
+	# card (ATTACH_FROM).  These raw semantics are public operation metadata;
+	# identities remain private-UID/local-serial values in this engine.
+	step["ucis_context_name"] = "ATTACH_TO"
+	step["ucis_target_context_name"] = "ATTACH_FROM"
+	return [step]
 
 
 func execute_ability(

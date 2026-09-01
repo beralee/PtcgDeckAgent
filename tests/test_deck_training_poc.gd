@@ -84,6 +84,22 @@ func test_catalog_contains_seven_v18_decks_and_seventy_scenarios() -> String:
 	return run_checks(checks)
 
 
+func test_training_catalog_is_parsed_once_and_filtered_from_the_shared_snapshot() -> String:
+	CatalogScript.clear_catalog_cache_for_tests()
+	var catalog := CatalogScript.load_catalog()
+	var all_scenarios := CatalogScript.list_scenarios_from_catalog(catalog)
+	var filtered := CatalogScript.list_scenarios_from_catalog(catalog, "dragapult")
+	var second := CatalogScript.load_catalog()
+	var stats: Dictionary = CatalogScript.catalog_cache_stats_for_tests()
+	return run_checks([
+		assert_eq(catalog, second, "Cached reads should return the same validated catalog value"),
+		assert_eq(all_scenarios.size(), 70),
+		assert_eq(filtered.size(), 10),
+		assert_eq(int(stats.get("misses", -1)), 1, "One browser build should parse the catalog only once"),
+		assert_true(int(stats.get("hits", 0)) >= 1, "Subsequent callers should reuse the validated snapshot"),
+	])
+
+
 func test_expert_authoring_contract_and_final_result_goals_are_admitted() -> String:
 	var checks: Array[String] = []
 	for scenario: Dictionary in CatalogScript.list_scenarios():

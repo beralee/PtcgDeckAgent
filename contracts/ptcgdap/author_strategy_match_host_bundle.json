@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "bundle_id": "ptcgdap-author-strategy-match-host-as-wp4-v1",
+  "digest_mode": "RFC8785_JCS_IJSON_SAFE_SUBSET_CANONICAL_SHA256",
+  "parent_author_package_bundle_canonical_sha256": "B416F2CBA2795B62126B6EF7B5F07A9000E84D5FA1DF62C1753CADC9E82E106B",
+  "cabt_contract_canonical_sha256": "2CD02F54538985426EFDB057F3A6BDA4AD154DD171BCC03667D42D102982D294",
+  "card_catalog_bundle_canonical_sha256": "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4",
+  "restricted_base_executor_bundle_canonical_sha256": "69D05747A9F91C19765D448B676C86E1D9DFA1BBAB108ED1374B854B34E48389",
+  "portable_backend_bundle_canonical_sha256": "18AAB663D9B429AC8657A75692F5DD8CF37C409CC057A328B57758C692FDB7F4",
+  "artifacts": [
+    {
+      "path": "contracts/ptcgdap/author_strategy_match_host.schema.json",
+      "canonical_sha256": "38ABB093323A5F923EB941443BF7743BBB578EFE70482D8A1AAEDB82FE22CCB4"
+    },
+    {
+      "path": "contracts/ptcgdap/author_strategy_match_host_profile.json",
+      "canonical_sha256": "3CE2626DB81C97F13FC640B99075A7E64CFBA1C5D630D116E849E8A64E78F1D3"
+    },
+    {
+      "path": "contracts/ptcgdap/author_strategy_match_host_conformance_vectors.json",
+      "canonical_sha256": "4F29886946A75B02DA0D1A8022449D49967DAA2BA84A5920DAF6CD437FC2D18B"
+    }
+  ]
+}

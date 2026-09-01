@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "profile_id": "ptcgdap-turn-program-conformance-v1",
+  "cases": [
+    {
+      "case_id": "marnie-complete-board-before-attack",
+      "frame": {
+        "schema_version": 2,
+        "profile_id": "ptcgdap-competitive-public-frame-v2",
+        "seat": 0,
+        "source": {
+          "public_observation_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "window_id": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        },
+        "public_state": {"turn_number": 5},
+        "options": []
+      },
+      "request": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-turn-program-request-v1",
+        "source": {
+          "public_observation_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "window_id": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        },
+        "value_model": {
+          "profile_id": "ptcgdap-turn-program-value-v1",
+          "model_version": 1,
+          "feature_weights_milli": {
+            "prize_gain_milli": 4000,
+            "board_development_milli": 900,
+            "attack_pressure_milli": 1100,
+            "next_turn_continuity_milli": 1300,
+            "hand_quality_milli": 500,
+            "disruption_milli": 700,
+            "resource_preservation_milli": 800,
+            "risk_milli": -2000,
+            "unresolved_debt_milli": -1000
+          }
+        },
+        "programs": [
+          {
+            "program_id": "premature-attack",
+            "goal_id": "complete-marnie-board",
+            "route_id": "premature-attack",
+            "deadline_turns": 0,
+            "semantic_steps": [
+              {
+                "step_id": "attack-now",
+                "transaction_id": "attack",
+                "method_id": "attack-method",
+                "depends_on": [],
+                "terminal_kind": "attack"
+              }
+            ],
+            "public_outcome": {
+              "final_prize_knockout": 0,
+              "prize_gain_milli": 0,
+              "board_development_milli": 0,
+              "attack_pressure_milli": 800,
+              "next_turn_continuity_milli": 0,
+              "hand_quality_milli": 0,
+              "disruption_milli": 0,
+              "resource_preservation_milli": 0,
+              "risk_milli": 250,
+              "unresolved_debt_milli": 900
+            }
+          },
+          {
+            "program_id": "complete-board-then-attack",
+            "goal_id": "complete-marnie-board",
+            "route_id": "complete-board-then-attack",
+            "deadline_turns": 0,
+            "semantic_steps": [
+              {
+                "step_id": "evolve-two",
+                "transaction_id": "tm-evolution",
+                "method_id": "tm-evolution-method",
+                "depends_on": [],
+                "terminal_kind": "none"
+              },
+              {
+                "step_id": "fill-marnie-board",
+                "transaction_id": "punk-up",
+                "method_id": "punk-up-method",
+                "depends_on": ["evolve-two"],
+                "terminal_kind": "none"
+              },
+              {
+                "step_id": "move-damage",
+                "transaction_id": "munkidori",
+                "method_id": "munkidori-method",
+                "depends_on": ["fill-marnie-board"],
+                "terminal_kind": "none"
+              },
+              {
+                "step_id": "disrupt-hand",
+                "transaction_id": "iono",
+                "method_id": "iono-method",
+                "depends_on": ["move-damage"],
+                "terminal_kind": "none"
+              },
+              {
+                "step_id": "attack-after-debt",
+                "transaction_id": "attack",
+                "method_id": "attack-method",
+                "depends_on": ["disrupt-hand"],
+                "terminal_kind": "attack"
+              }
+            ],
+            "public_outcome": {
+              "final_prize_knockout": 0,
+              "prize_gain_milli": 0,
+              "board_development_milli": 950,
+              "attack_pressure_milli": 800,
+              "next_turn_continuity_milli": 900,
+              "hand_quality_milli": 500,
+              "disruption_milli": 700,
+              "resource_preservation_milli": 650,
+              "risk_milli": 150,
+              "unresolved_debt_milli": 0
+            }
+          }
+        ],
+        "base_proofs": [
+          {
+            "program_id": "premature-attack",
+            "admissible": true,
+            "current_step_id": "attack-now",
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          },
+          {
+            "program_id": "complete-board-then-attack",
+            "admissible": true,
+            "current_step_id": "evolve-two",
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "selected_program_id": "complete-board-then-attack",
+        "selected_current_step_id": "evolve-two",
+        "ranked_program_ids": ["complete-board-then-attack", "premature-attack"],
+        "audit_hash": "7E223A95EBBD4A9C7B6142A3FFF21EFA9F9B43CF17A6279A0DC1561BAB750AD0"
+      }
+    },
+    {
+      "case_id": "final-prize-attack-is-terminal",
+      "frame": {
+        "schema_version": 2,
+        "profile_id": "ptcgdap-competitive-public-frame-v2",
+        "seat": 0,
+        "source": {
+          "public_observation_hash": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          "window_id": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+        },
+        "public_state": {"turn_number": 8},
+        "options": []
+      },
+      "request": {
+        "schema_version": 1,
+        "profile_id": "ptcgdap-turn-program-request-v1",
+        "source": {
+          "public_observation_hash": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          "window_id": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+        },
+        "value_model": {
+          "profile_id": "ptcgdap-turn-program-value-v1",
+          "model_version": 1,
+          "feature_weights_milli": {
+            "prize_gain_milli": 4000,
+            "board_development_milli": 900,
+            "attack_pressure_milli": 1100,
+            "next_turn_continuity_milli": 1300,
+            "hand_quality_milli": 500,
+            "disruption_milli": 700,
+            "resource_preservation_milli": 800,
+            "risk_milli": -2000,
+            "unresolved_debt_milli": -1000
+          }
+        },
+        "programs": [
+          {
+            "program_id": "continue-development",
+            "goal_id": "complete-marnie-board",
+            "route_id": "continue-development",
+            "deadline_turns": 0,
+            "semantic_steps": [
+              {
+                "step_id": "evolve-two",
+                "transaction_id": "tm-evolution",
+                "method_id": "tm-evolution-method",
+                "depends_on": [],
+                "terminal_kind": "none"
+              }
+            ],
+            "public_outcome": {
+              "final_prize_knockout": 0,
+              "prize_gain_milli": 0,
+              "board_development_milli": 1000,
+              "attack_pressure_milli": 1000,
+              "next_turn_continuity_milli": 1000,
+              "hand_quality_milli": 1000,
+              "disruption_milli": 1000,
+              "resource_preservation_milli": 1000,
+              "risk_milli": 0,
+              "unresolved_debt_milli": 0
+            }
+          },
+          {
+            "program_id": "take-final-prize-now",
+            "goal_id": "close-out-prizes",
+            "route_id": "take-final-prize-now",
+            "deadline_turns": 0,
+            "semantic_steps": [
+              {
+                "step_id": "final-attack",
+                "transaction_id": "attack",
+                "method_id": "attack-method",
+                "depends_on": [],
+                "terminal_kind": "attack"
+              }
+            ],
+            "public_outcome": {
+              "final_prize_knockout": 1,
+              "prize_gain_milli": 1000,
+              "board_development_milli": 0,
+              "attack_pressure_milli": 1000,
+              "next_turn_continuity_milli": 0,
+              "hand_quality_milli": 0,
+              "disruption_milli": 0,
+              "resource_preservation_milli": 0,
+              "risk_milli": 1000,
+              "unresolved_debt_milli": 1000
+            }
+          }
+        ],
+        "base_proofs": [
+          {
+            "program_id": "continue-development",
+            "admissible": true,
+            "current_step_id": "evolve-two",
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          },
+          {
+            "program_id": "take-final-prize-now",
+            "admissible": true,
+            "current_step_id": "final-attack",
+            "current_step_executable": true,
+            "mandatory_preserved": true,
+            "terminal_preserved": true,
+            "base_vetoed": false
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "error_code": "",
+        "selected_program_id": "take-final-prize-now",
+        "selected_current_step_id": "final-attack",
+        "ranked_program_ids": ["take-final-prize-now", "continue-development"],
+        "audit_hash": "6EACEA669CCEBF0DEBCEE6B712F112584F65DB17140082A294EA5D4F9F737D37"
+      }
+    }
+  ]
+}
