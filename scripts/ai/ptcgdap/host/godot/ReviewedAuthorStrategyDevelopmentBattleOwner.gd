@@ -6,9 +6,6 @@ extends "res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorDevelopmentBattleOwner
 const ReviewedPolicyScript = preload(
 	"res://scripts/ai/ptcgdap/runtime/local/ReviewedAuthorStrategyDevelopmentPolicy.gd"
 )
-const DevelopmentGateScript = preload(
-	"res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd"
-)
 
 
 class ReviewedPublicInteractionAdapter extends RefCounted:
@@ -164,6 +161,4 @@ func public_replay_identity() -> Dictionary:
 
 
 static func _candidate_for_pins(pins: Dictionary, authority_mode: String) -> Dictionary:
-	if authority_mode not in [ExecutionGateScript.DEVELOPMENT_MODE, ExecutionGateScript.DEVICE_CANARY_MODE]:
-		return {}
-	return DevelopmentGateScript.candidate_for_pins(pins)
+	return ExecutionGateScript.candidate_for_pins(pins, authority_mode)

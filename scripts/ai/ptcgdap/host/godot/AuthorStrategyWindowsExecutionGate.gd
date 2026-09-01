@@ -3,8 +3,10 @@ extends RefCounted
 
 const DevelopmentGateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd")
 const DeviceCanaryGateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDeviceCanaryGate.gd")
+const ControlDistributionGateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyControlDistributionGate.gd")
 const DEVELOPMENT_MODE := "development_exact_fixture"
 const DEVICE_CANARY_MODE := "production_device_canary"
+const CONTROL_DISTRIBUTED_MODE := "control_distributed_player"
 
 
 static func is_device_canary_requested(args: Variant = null) -> bool:
@@ -23,6 +25,10 @@ static func evaluate_selection(
 		return DeviceCanaryGateScript.evaluate_selection(
 			catalog, selection, platform_name, args, template_feature, editor_feature
 		)
+	if ControlDistributionGateScript.has_selection(catalog, selection):
+		return ControlDistributionGateScript.evaluate_selection(
+			catalog, selection, platform_name
+		)
 	var result := DevelopmentGateScript.evaluate_selection(selection, platform_name)
 	result["authority_mode"] = DEVELOPMENT_MODE
 	return result
@@ -40,6 +46,10 @@ static func request_match_handle(
 		return DeviceCanaryGateScript.request_match_handle(
 			catalog, selection, platform_name, args, template_feature, editor_feature
 		)
+	if ControlDistributionGateScript.has_selection(catalog, selection):
+		return ControlDistributionGateScript.request_match_handle(
+			catalog, selection, platform_name
+		)
 	var result := DevelopmentGateScript.request_match_handle(
 		catalog, selection, platform_name
 	)
@@ -55,4 +65,14 @@ static func validate_handle_pins(pins: Dictionary, authority_mode: String) -> St
 		return DeviceCanaryGateScript.validate_handle_pins(pins)
 	if authority_mode == DEVELOPMENT_MODE:
 		return DevelopmentGateScript.validate_handle_pins(pins)
+	if authority_mode == CONTROL_DISTRIBUTED_MODE:
+		return ControlDistributionGateScript.validate_handle_pins(pins)
 	return "invalid_bind"
+
+
+static func candidate_for_pins(pins: Dictionary, authority_mode: String) -> Dictionary:
+	if authority_mode == CONTROL_DISTRIBUTED_MODE:
+		return ControlDistributionGateScript.candidate_for_pins(pins)
+	if authority_mode in [DEVELOPMENT_MODE, DEVICE_CANARY_MODE]:
+		return DevelopmentGateScript.candidate_for_pins(pins)
+	return {}

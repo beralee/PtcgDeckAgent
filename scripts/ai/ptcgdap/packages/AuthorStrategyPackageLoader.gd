@@ -182,6 +182,15 @@ func inspect_match_bytes(archive_bytes: PackedByteArray, expected_archive_sha256
 	return _inspect_captured_bytes(archive_bytes, expected_archive_sha256, true)
 
 
+func inspect_control_distributed_player_match_bytes(
+	archive_bytes: PackedByteArray,
+	expected_archive_sha256: String
+) -> Dictionary:
+	return _inspect_captured_bytes(
+		archive_bytes, expected_archive_sha256, true, {}, true
+	)
+
+
 func inspect_control_verified_server_match_bytes(
 	archive_bytes: PackedByteArray,
 	expected_archive_sha256: String,
@@ -200,7 +209,8 @@ func _inspect_captured_bytes(
 	archive_bytes: PackedByteArray,
 	expected_archive_sha256: String,
 	include_match_payloads: bool,
-	author_signature_binding: Dictionary = {}
+	author_signature_binding: Dictionary = {},
+	control_distributed_player: bool = false
 ) -> Dictionary:
 	if _integrity_error != "":
 		return _error(_integrity_error)
@@ -217,7 +227,7 @@ func _inspect_captured_bytes(
 		return archive
 	return _validate_members(
 		archive.get("members", {}), archive_sha, include_match_payloads,
-		author_signature_binding
+		author_signature_binding, control_distributed_player
 	)
 
 
@@ -383,7 +393,8 @@ func _validate_members(
 	members: Dictionary,
 	archive_sha: String,
 	include_match_payloads: bool = false,
-	author_signature_binding: Dictionary = {}
+	author_signature_binding: Dictionary = {},
+	control_distributed_player: bool = false
 ) -> Dictionary:
 	var names: Array[String] = []
 	for path_value in members:
@@ -450,8 +461,10 @@ func _validate_members(
 		if entry.get("bytes") != value.size() or entry.get("sha256") != _sha(value):
 			return _error("package_file_hash_mismatch")
 
-	var signature_check := _verify_signature(
-		manifest, signature, members, author_signature_binding
+	var signature_check := (
+		_verify_control_distribution_signature_envelope(manifest, signature, members)
+		if control_distributed_player
+		else _verify_signature(manifest, signature, members, author_signature_binding)
 	)
 	if not bool(signature_check.get("ok", false)):
 		return signature_check
@@ -468,10 +481,12 @@ func _validate_members(
 	var signature_key: Dictionary = signature_check.get("key", {})
 	var execution_trusted: bool = signature_key.get("execution_trusted") == true
 	var registered_developer: bool = signature_key.get("scope") == "developer_registered_release"
+	var control_distributed: bool = signature_key.get("scope") == "control_distributed_release"
 	var signature_status: String = (
-		"control_verified_developer" if registered_developer else (
+		"control_distributed" if control_distributed else (
+			"control_verified_developer" if registered_developer else (
 			"production_trusted" if execution_trusted else "test_fixture_trusted"
-		)
+		))
 	)
 	var startup_deck_manifest: Variant = JSON.parse_string(members["deck/deck_manifest.json"].get_string_from_utf8())
 	startup_deck_manifest = _coerce_integral_numbers(startup_deck_manifest)
@@ -507,10 +522,10 @@ func _validate_members(
 		"deck_platform_scope": startup_deck_manifest.get("platform_scope", []).duplicate(true) if startup_deck_manifest.get("platform_scope", []) is Array else [],
 		"deck_card_count": startup_deck_manifest.get("card_count"),
 	}
-	if execution_trusted:
+	if execution_trusted or control_distributed:
 		metadata["signature_key_id"] = signature.get("key_id")
 		metadata["signature_scope"] = signature_key.get("scope")
-	if registered_developer:
+	if registered_developer or control_distributed:
 		metadata["server_competition_candidate"] = deck_policy.get(
 			"server_competition_candidate", {}
 		).duplicate(true)
@@ -779,6 +794,43 @@ func _verify_signature(
 	if public_key.size() != 32 or raw_signature.size() != 64 or not Ed25519Script.verify(public_key, signed_bytes, raw_signature):
 		return _error("package_signature_untrusted")
 	return {"ok": true, "error_code": "", "key": key.duplicate(true)}
+
+
+func _verify_control_distribution_signature_envelope(
+	manifest: Dictionary,
+	signature: Dictionary,
+	members: Dictionary
+) -> Dictionary:
+	# A player download is admitted by the exact Control release identity and
+	# archive hash. Keep the package's signed-payload relation structurally
+	# intact, but do not require every player device to provision each author's
+	# public key or re-run the author's Ed25519 trust decision.
+	var signed_payload := {
+		"schema_version": 1,
+		"domain": "ptcgdap-author-strategy-package-signature-v1",
+		"package_id": manifest.get("package_id"),
+		"package_version": manifest.get("package_version"),
+		"manifest_sha256": _sha(members["strategy_package.json"]),
+		"files_manifest_sha256": _sha(members["files.sha256.json"]),
+	}
+	var canonical: Dictionary = CabtJsonTreeScript.canonicalize_artifact(signed_payload)
+	if not bool(canonical.get("ok", false)):
+		return _error("package_signature_untrusted")
+	var signed_bytes: PackedByteArray = canonical.get("bytes", PackedByteArray())
+	var raw_signature := Marshalls.base64_to_raw(str(signature.get("signature_base64", "")))
+	if signature.get("signed_payload_sha256") != _sha(signed_bytes) \
+			or raw_signature.size() != 64:
+		return _error("package_signature_untrusted")
+	return {
+		"ok": true,
+		"error_code": "",
+		"key": {
+			"key_id": signature.get("key_id"),
+			"scope": "control_distributed_release",
+			"execution_trusted": false,
+			"status": "control_admitted",
+		},
+	}
 
 
 func _verify_compatibility(manifest: Dictionary) -> Dictionary:

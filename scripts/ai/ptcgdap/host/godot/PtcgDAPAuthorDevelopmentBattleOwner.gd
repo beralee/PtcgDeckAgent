@@ -2057,7 +2057,10 @@ func audit_snapshot() -> Dictionary:
 			"a3_private_oracle_research",
 			PLATFORM_NPC_AUTHORITY_MODE,
 		]
-		else {"development_execution_only": false, "device_canary_authority": true}
+		else {
+			"development_execution_only": false,
+			"device_canary_authority": _authority_mode == ExecutionGateScript.DEVICE_CANARY_MODE,
+		}
 	)
 	return {
 		"schema_version": 1,
@@ -2120,6 +2123,7 @@ func audit_snapshot() -> Dictionary:
 		"matched_rule_counts": policy_audit.get("matched_rule_counts", {}).duplicate(true),
 		"macro_preferred_selections": policy_audit.get("macro_preferred_selections", 0),
 		"development_player_authority": validate_integrity() and _authority_mode == ExecutionGateScript.DEVELOPMENT_MODE,
+		"control_distributed_player_authority": validate_integrity() and _authority_mode == ExecutionGateScript.CONTROL_DISTRIBUTED_MODE,
 		"device_canary_authority": validate_integrity() and bool(authority_audit["device_canary_authority"]),
 		"development_execution_only": bool(authority_audit["development_execution_only"]),
 		"production_ready": false,

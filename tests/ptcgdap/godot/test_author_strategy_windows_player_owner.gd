@@ -26,6 +26,10 @@ const BattleSceneScene = preload("res://scenes/battle/BattleScene.tscn")
 const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
 const BattleDecisionOwnerFactoryScript = preload("res://scripts/ui/battle/ai/BattleDecisionOwnerFactory.gd")
 const AuthorStrategyFeatureGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
+const PackageLoaderScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageLoader.gd")
+const PackageHandleScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageHandle.gd")
+const PackageDeckGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckGate.gd")
+const CONTROL_PLAYER_FIXTURE := "res://data/ptcgdap/author_strategy_package_backups/reviewed-raging-bolt-ogerpon-1.0.0-round30-20ED94DE.ptcgai"
 const AuthorPublicReplayCoordinatorScript = preload(
 	"res://scripts/ui/battle/author_strategy/AuthorStrategyPublicReplayCoordinator.gd"
 )
@@ -387,6 +391,61 @@ func test_production_device_canary_is_explicit_exclusive_and_unprovisioned() -> 
 		assert_eq(conflicted.get("error_code"), "device_canary_activation_invalid"),
 		assert_eq(conflicted.get("authority_mode"), ExecutionGateScript.DEVICE_CANARY_MODE),
 	])
+
+
+func test_control_distributed_player_package_binds_the_reviewed_local_battle_owner() -> String:
+	var archive_bytes := FileAccess.get_file_as_bytes(CONTROL_PLAYER_FIXTURE)
+	var hash_context := HashingContext.new()
+	hash_context.start(HashingContext.HASH_SHA256)
+	hash_context.update(archive_bytes)
+	var archive_sha := hash_context.finish().hex_encode().to_upper()
+	var loader := PackageLoaderScript.new()
+	var inspected: Dictionary = loader.call(
+		"inspect_control_distributed_player_match_bytes", archive_bytes, archive_sha
+	)
+	if not bool(inspected.get("ok", false)):
+		return "Control fixture failed inspection: %s" % str(inspected)
+	var deck_gate: Dictionary = PackageDeckGateScript.build(inspected.get("payloads", {}))
+	if not bool(deck_gate.get("ok", false)):
+		return "Control fixture failed local deck mapping: %s" % str(deck_gate)
+	var created: Dictionary = PackageHandleScript.create(
+		inspected.get("metadata", {}),
+		inspected.get("payloads", {}),
+		deck_gate.get("local_deck", [])
+	)
+	if not bool(created.get("ok", false)):
+		return "Control fixture handle failed: %s" % str(created)
+	var handle: Variant = created.get("handle")
+	var materialized: Dictionary = GameManager.materialize_author_strategy_battle_deck(handle)
+	var author_deck := materialized.get("deck") as DeckData
+	var rules_deck: DeckData = CardDatabase.get_deck(RULES_AI_DECK_ID)
+	if not bool(materialized.get("ok", false)) or author_deck == null or rules_deck == null:
+		return "Control fixture deck materialization failed: %s" % str(materialized)
+	var gsm := GameStateMachine.new()
+	gsm.start_game(rules_deck, author_deck, 0, false, true)
+	var built: Dictionary = BattleDecisionOwnerFactoryScript.build_windows_author_owner(
+		handle,
+		gsm,
+		1,
+		"control-distributed-player-owner",
+		ExecutionGateScript.CONTROL_DISTRIBUTED_MODE
+	)
+	var owner: Variant = built.get("owner")
+	var checks := run_checks([
+		assert_true(bool(built.get("ok", false)), str(built)),
+		assert_eq(built.get("owner_kind"), "author_control_distributed_player"),
+		assert_true(owner != null and owner.validate_integrity()),
+		assert_true(bool(built.get("control_distributed_player_authority", false))),
+		assert_false(bool(built.get("development_execution_only", true))),
+		assert_eq(
+			owner.audit_snapshot().get("authority_mode") if owner != null else "",
+			ExecutionGateScript.CONTROL_DISTRIBUTED_MODE
+		),
+	])
+	if owner != null:
+		owner.close_match()
+	gsm.prepare_for_disposal()
+	return checks
 
 
 func test_author_player_owner_is_not_an_aiopponent_and_completes_real_rules_game() -> String:

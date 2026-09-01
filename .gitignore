@@ -31,7 +31,10 @@ battle_review_api.json
 # Local runtime artifacts
 logs/
 .ptcgdap-local/
-artifacts/
+artifacts/*
+!artifacts/deck_training/
+artifacts/deck_training/*
+!artifacts/deck_training/.gdignore
 tmp/*
 !tmp/.gdignore
 tmp_benchmark_logs/
@@ -65,7 +68,8 @@ deploy/ptcgdap-platform/
 # Machine-local Godot test/export mirrors.
 .godot_benchmark_user/
 .godot_route_package_recheck/
-/Godot/
+/Godot/*
+!/Godot/.gdignore
 
 # Local native extension build tree (runtime copies live under bin/ptcgai_ort).
 native/ptcgai_ort_actor/build/

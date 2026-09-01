@@ -6,7 +6,7 @@ const AuthorHostScript = preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPAut
 const AuthorLocalExecutorOwnerScript = preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorLocalExecutorBattleOwner.gd")
 const CynthiaAuthorOwnerScript = preload("res://scripts/ai/ptcgdap/host/godot/CynthiaAuthorStrategyDevelopmentBattleOwner.gd")
 const ReviewedAuthorOwnerScript = preload("res://scripts/ai/ptcgdap/host/godot/ReviewedAuthorStrategyDevelopmentBattleOwner.gd")
-const DevelopmentGateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd")
+const ExecutionGateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const CYNTHIA_PACKAGE_ID := "ptcgdap.cynthia-garchomp-800018543.windows-local"
 const REVIEWED_RUNTIME_KINDS := [
@@ -64,7 +64,7 @@ static func build_windows_author_owner(
 	authority_mode: String
 ) -> Dictionary:
 	var pins: Dictionary = author_handle.to_public_dict() if author_handle != null and author_handle.has_method("to_public_dict") else {}
-	var candidate: Dictionary = DevelopmentGateScript.candidate_for_pins(pins)
+	var candidate: Dictionary = ExecutionGateScript.candidate_for_pins(pins, authority_mode)
 	var owner_script: GDScript = AuthorLocalExecutorOwnerScript
 	if pins.get("package_id") == CYNTHIA_PACKAGE_ID:
 		owner_script = CynthiaAuthorOwnerScript
@@ -75,16 +75,22 @@ static func build_windows_author_owner(
 	)
 	if not bool(built.get("ok", false)):
 		return _failure(str(built.get("error_code", "invalid_bind")))
-	var is_canary := authority_mode == "production_device_canary"
+	var is_canary := authority_mode == ExecutionGateScript.DEVICE_CANARY_MODE
+	var is_control_distributed := authority_mode == ExecutionGateScript.CONTROL_DISTRIBUTED_MODE
 	var result := _success(
 		built.get("owner"),
-		"author_windows_device_canary" if is_canary else "author_windows_development",
+		(
+			"author_control_distributed_player"
+			if is_control_distributed
+			else "author_windows_device_canary" if is_canary else "author_windows_development"
+		),
 		true,
 		true
 	)
 	result["authority_mode"] = authority_mode
-	result["development_execution_only"] = not is_canary
+	result["development_execution_only"] = not is_canary and not is_control_distributed
 	result["device_canary_authority"] = is_canary
+	result["control_distributed_player_authority"] = is_control_distributed
 	result["production_ready"] = false
 	result["policy_executor_kind"] = (
 		"restricted_policy_ir_v1"

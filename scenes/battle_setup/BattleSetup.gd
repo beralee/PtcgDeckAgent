@@ -547,6 +547,8 @@ func _refresh_layout_dependent_controls_after_non_battle_layout() -> void:
 	_update_bgm_preview_button()
 	_refresh_deck_action_buttons()
 	_apply_battle_setup_mobile_metrics(_current_non_battle_layout_context)
+	if not bool(_current_non_battle_layout_context.get("is_portrait", false)):
+		_apply_landscape_setup_hud_height_budget(_current_non_battle_layout_context)
 
 
 func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
@@ -641,6 +643,7 @@ func _apply_battle_setup_landscape_layout(context: Dictionary) -> void:
 	_reset_landscape_minimum_sizes(content_columns)
 	_apply_setup_text_layout_mode(false)
 	_apply_battle_setup_mobile_metrics(context)
+	_apply_landscape_setup_hud_height_budget(context)
 	_apply_landscape_setup_scroll_metrics(landscape_scroll, content_columns)
 	_layout_background_gallery_cards()
 	_ensure_landscape_action_footer_order()
@@ -685,6 +688,65 @@ func _apply_landscape_setup_scroll_metrics(scroll: ScrollContainer, content_colu
 	content_columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_columns.custom_minimum_size = Vector2.ZERO
+
+
+func _apply_landscape_setup_hud_height_budget(context: Dictionary) -> void:
+	# The scene already carried outer SafeArea offsets. Applying the layout
+	# context as another full margin reduced a 720p Windows HUD to 600px. Use one
+	# compact, symmetric safe-area budget for the landscape setup surface.
+	var safe_area := get_node_or_null("SafeArea") as MarginContainer
+	if safe_area != null:
+		safe_area.offset_left = 0.0
+		safe_area.offset_top = 0.0
+		safe_area.offset_right = 0.0
+		safe_area.offset_bottom = 0.0
+		var viewport_size: Vector2 = context.get("viewport_size", Vector2(1280, 720))
+		var horizontal_margin := roundi(clampf(viewport_size.x * 0.014, 14.0, 22.0))
+		var vertical_margin := roundi(clampf(viewport_size.y * 0.008, 6.0, 10.0))
+		safe_area.add_theme_constant_override("margin_left", horizontal_margin)
+		safe_area.add_theme_constant_override("margin_top", vertical_margin)
+		safe_area.add_theme_constant_override("margin_right", horizontal_margin)
+		safe_area.add_theme_constant_override("margin_bottom", vertical_margin)
+
+	var frame_margin := find_child("FrameMargin", true, false) as MarginContainer
+	if frame_margin != null:
+		frame_margin.add_theme_constant_override("margin_left", 16)
+		frame_margin.add_theme_constant_override("margin_top", 8)
+		frame_margin.add_theme_constant_override("margin_right", 16)
+		frame_margin.add_theme_constant_override("margin_bottom", 8)
+	var root := find_child("RootVBox", true, false) as VBoxContainer
+	if root != null:
+		root.add_theme_constant_override("separation", 8)
+	var content_columns := find_child("ContentColumns", true, false) as HBoxContainer
+	if content_columns != null:
+		content_columns.add_theme_constant_override("separation", 12)
+
+	for margin_name: String in ["LeftMargin", "RightMargin"]:
+		var column_margin := find_child(margin_name, true, false) as MarginContainer
+		if column_margin == null:
+			continue
+		column_margin.add_theme_constant_override("margin_left", 14)
+		column_margin.add_theme_constant_override("margin_top", 6)
+		column_margin.add_theme_constant_override("margin_right", 14)
+		column_margin.add_theme_constant_override("margin_bottom", 6)
+	for vbox_name: String in ["LeftVBox", "RightVBox"]:
+		var column_vbox := find_child(vbox_name, true, false) as VBoxContainer
+		if column_vbox != null:
+			column_vbox.add_theme_constant_override("separation", 5)
+
+	for picker_name: String in ["Deck1PickerButton", "Deck2PickerButton"]:
+		var picker := find_child(picker_name, true, false) as Button
+		if picker != null:
+			picker.custom_minimum_size.y = 52.0
+
+	# Keep the background cards horizontally scrollable without allowing their
+	# total row width to enlarge the two-column setup HUD beyond the viewport.
+	var gallery := _background_gallery_scroll()
+	if gallery != null:
+		gallery.clip_contents = true
+		gallery.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		gallery.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_hide_background_gallery_scrollbar_for(gallery)
 
 
 func _reset_landscape_minimum_sizes(node: Node) -> void:
@@ -3881,9 +3943,13 @@ func _on_deck_picker_pressed(slot_index: int) -> void:
 		_deck_picker_search_input.text = ""
 	_apply_deck_picker_mobile_metrics(_deck_picker_layout_context())
 	_refresh_deck_picker()
-	_resize_deck_picker_panel()
 	_deck_picker_overlay.visible = true
 	_deck_picker_overlay.move_to_front()
+	# PanelContainer/VBox layout is suspended while the overlay is hidden. Size
+	# the modal only after it becomes visible so the first container sort cannot
+	# restore the list's old content-driven height beyond the viewport.
+	_resize_deck_picker_panel()
+	call_deferred("_resize_deck_picker_panel")
 
 
 func _ensure_deck_picker_overlay() -> void:
@@ -4026,38 +4092,60 @@ func _resize_deck_picker_panel() -> void:
 	var viewport_size: Vector2 = context.get("viewport_size", Vector2.ZERO)
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var requested_margin := float(context.get("page_margin", 24.0)) if bool(context.get("is_portrait", false)) else 16.0
+	var edge_margin := clampf(
+		requested_margin,
+		8.0,
+		maxf(8.0, minf(viewport_size.x, viewport_size.y) * 0.12)
+	)
+	var available_size := Vector2(
+		maxf(1.0, viewport_size.x - edge_margin * 2.0),
+		maxf(1.0, viewport_size.y - edge_margin * 2.0)
+	)
 	if bool(context.get("is_portrait", false)):
-		var margin := float(context.get("page_margin", 24.0))
 		var desired_size := Vector2(
-			maxf(340.0, viewport_size.x - margin),
-			maxf(760.0, viewport_size.y - margin * 2.0)
+			clampf(viewport_size.x - edge_margin * 2.0, minf(340.0, available_size.x), available_size.x),
+			available_size.y
 		)
 		_deck_picker_panel.custom_minimum_size = desired_size
 		_deck_picker_panel.size = desired_size
-		_deck_picker_panel.position = Vector2(
-			maxf(margin, (viewport_size.x - desired_size.x) * 0.5),
-			margin
-		)
+		_deck_picker_panel.position = (viewport_size - desired_size) * 0.5
 		return
 	var landscape_size := Vector2(
-		maxf(360.0, minf(940.0, viewport_size.x * 0.92)),
-		maxf(420.0, minf(760.0, viewport_size.y * 0.88))
+		clampf(minf(940.0, viewport_size.x * 0.92), minf(360.0, available_size.x), available_size.x),
+		clampf(minf(760.0, viewport_size.y * 0.88), minf(420.0, available_size.y), available_size.y)
 	)
 	_deck_picker_panel.custom_minimum_size = landscape_size
 	_deck_picker_panel.size = landscape_size
-	_deck_picker_panel.position = Vector2(
-		maxf(0.0, (viewport_size.x - landscape_size.x) * 0.5),
-		maxf(0.0, (viewport_size.y - landscape_size.y) * 0.5)
-	)
+	_deck_picker_panel.position = (viewport_size - landscape_size) * 0.5
 
 
 func _deck_picker_layout_context() -> Dictionary:
-	if not _current_non_battle_layout_context.is_empty():
-		return _current_non_battle_layout_context
-	var size := get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
-	var mode := str(get_meta("non_battle_layout_mode", "landscape"))
-	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
-	return _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	var context := _current_non_battle_layout_context.duplicate(true)
+	var size: Vector2 = context.get("viewport_size", Vector2.ZERO)
+	if is_inside_tree():
+		var live_size := get_viewport_rect().size
+		if live_size.x > 0.0 and live_size.y > 0.0:
+			size = live_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = Vector2(1600, 900)
+	var is_mobile := bool(context.get("is_mobile_like", false)) if not context.is_empty() else (
+		OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")
+		or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	)
+	# The picker is a viewport modal, so its profile follows the physical window
+	# orientation. A persisted portrait page preference on a 1280x720 Windows
+	# window previously selected 760px-tall portrait metrics and overflowed.
+	var physical_mode := "portrait" if size.y > size.x else "landscape"
+	var context_size: Vector2 = context.get("viewport_size", Vector2.ZERO)
+	var context_matches_window := context_size.is_equal_approx(size)
+	var context_matches_orientation := bool(context.get("is_portrait", false)) == (physical_mode == "portrait")
+	if context.is_empty() or not context_matches_window or not context_matches_orientation:
+		context = _non_battle_layout_controller.call("build_context", size, physical_mode, is_mobile)
+	else:
+		context["viewport_size"] = size
+		context["safe_rect"] = Rect2(Vector2.ZERO, size)
+	return context
 
 
 func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
@@ -4212,32 +4300,14 @@ func _refresh_deck_picker() -> void:
 	if _is_author_strategy_mode() and _deck_picker_slot_index == 1:
 		selected_id = -1
 	var count := 0
-	# Built-in decks are the compatibility baseline and must never be crowded
-	# out by a large package catalog. Packages follow in the same scroll view.
-	for deck: DeckData in decks:
-		if count >= DECK_PICKER_LIMIT:
-			break
-		var is_selected := deck.id == selected_id
-		var button := Button.new()
-		button.text = _deck_selection_display_name(deck, _deck_picker_slot_index)
-		button.tooltip_text = _deck_picker_card_tooltip(deck)
-		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 76.0)) if portrait else 72.0)
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.clip_text = true
-		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", DECK_PICKER_LIST_FONT_SIZE)) if portrait else DECK_PICKER_LIST_FONT_SIZE)
-		button.add_theme_color_override("font_color", HUD_TEXT)
-		button.add_theme_color_override("font_hover_color", Color.WHITE)
-		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
-		button.add_theme_stylebox_override("hover", _deck_picker_card_style(is_selected, true))
-		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
-		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-		button.set_meta("deck_id", deck.id)
-		button.pressed.connect(_on_deck_picker_deck_selected.bind(_deck_picker_slot_index, deck.id))
-		NonBattleTouchBridgeScript.bind_button_touch(button)
-		_deck_picker_grid.add_child(button)
-		count += 1
+	# User-downloaded packages belong at the top of the unified AI picker. Keep
+	# enough slots reserved for every classic AI deck so a large package catalog
+	# cannot make released built-in opponents (including 18.0) disappear again.
+	var reserved_deck_count := mini(decks.size(), DECK_PICKER_LIMIT)
+	var author_record_limit := maxi(0, DECK_PICKER_LIMIT - reserved_deck_count)
+	var author_record_count := 0
 	for record: Dictionary in author_records:
-		if count >= DECK_PICKER_LIMIT:
+		if author_record_count >= author_record_limit:
 			break
 		var is_selected := AuthorStrategySetupModelScript.same_ref(
 			record.get("stable_ref", {}), _author_strategy_selected_ref
@@ -4263,6 +4333,29 @@ func _refresh_deck_picker() -> void:
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		button.set_meta("author_strategy_ref", record.get("stable_ref", {}).duplicate(true))
 		button.pressed.connect(_on_deck_picker_author_strategy_selected.bind(record.get("stable_ref", {}).duplicate(true)))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+		_deck_picker_grid.add_child(button)
+		author_record_count += 1
+		count += 1
+	for deck: DeckData in decks:
+		if count >= DECK_PICKER_LIMIT:
+			break
+		var is_selected := deck.id == selected_id
+		var button := Button.new()
+		button.text = _deck_selection_display_name(deck, _deck_picker_slot_index)
+		button.tooltip_text = _deck_picker_card_tooltip(deck)
+		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 76.0)) if portrait else 72.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", DECK_PICKER_LIST_FONT_SIZE)) if portrait else DECK_PICKER_LIST_FONT_SIZE)
+		button.add_theme_color_override("font_color", HUD_TEXT)
+		button.add_theme_color_override("font_hover_color", Color.WHITE)
+		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
+		button.add_theme_stylebox_override("hover", _deck_picker_card_style(is_selected, true))
+		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
+		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		button.set_meta("deck_id", deck.id)
+		button.pressed.connect(_on_deck_picker_deck_selected.bind(_deck_picker_slot_index, deck.id))
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 		_deck_picker_grid.add_child(button)
 		count += 1
@@ -4354,7 +4447,8 @@ func _on_deck_picker_author_strategy_selected(reference: Dictionary) -> void:
 
 func _author_strategy_records_for_picker(search: String) -> Array[Dictionary]:
 	var query := search.strip_edges().to_lower()
-	var result: Array[Dictionary] = []
+	var downloaded: Array[Dictionary] = []
+	var bundled: Array[Dictionary] = []
 	for record: Dictionary in _author_strategy_records:
 		if query.is_empty() or (
 			str(record.get("display_name", "")).to_lower().contains(query)
@@ -4362,8 +4456,19 @@ func _author_strategy_records_for_picker(search: String) -> Array[Dictionary]:
 			or str(record.get("deck_name", "")).to_lower().contains(query)
 			or str(record.get("package_id", "")).to_lower().contains(query)
 		):
-			result.append(record.duplicate(true))
-	return result
+			if _author_strategy_is_user_download(record):
+				downloaded.append(record.duplicate(true))
+			else:
+				bundled.append(record.duplicate(true))
+	downloaded.append_array(bundled)
+	return downloaded
+
+
+func _author_strategy_is_user_download(record: Dictionary) -> bool:
+	if str(record.get("install_source", "")) == "user":
+		return true
+	var install_sources: Variant = record.get("install_sources", [])
+	return install_sources is Array and "user" in install_sources
 
 
 func _decks_for_picker(slot_index: int, category: String, search: String) -> Array[DeckData]:

@@ -1,0 +1,2 @@
+# Runtime and test user data can contain generated card-image mirrors.
+# Keep this directory out of Godot's resource scanner/import pipeline.

@@ -55,7 +55,10 @@ func _install_captured_bytes(
 		expected_release.get("archive_sha256", "")
 	).to_upper():
 		return _error("package_download_identity_mismatch")
-	var inspected: Dictionary = loader.inspect_match_bytes(archive_bytes, archive_sha)
+	var control_distributed := not expected_release.is_empty()
+	var inspected: Dictionary = _inspect_captured_package(
+		loader, archive_bytes, archive_sha, control_distributed
+	)
 	if not bool(inspected.get("ok", false)):
 		return _error(str(inspected.get("error_code", "package_archive_invalid")))
 	var deck_gate: Dictionary = DeckGateScript.build(inspected.get("payloads", {}))
@@ -93,8 +96,13 @@ func _install_captured_bytes(
 	if bool(identity.get("user_installed", false)) and existing_user_path.is_empty():
 		return _error("package_install_catalog_refresh_failed")
 	if not existing_user_path.is_empty():
-		return _finish_install(
-			catalog, metadata, existing_user_path, true, identity_resolution_usec
+		return _finish_verified_install(
+			catalog,
+			metadata,
+			existing_user_path,
+			true,
+			identity_resolution_usec,
+			control_distributed
 		)
 
 	var user_root_absolute := ProjectSettings.globalize_path(USER_ROOT)
@@ -105,8 +113,13 @@ func _install_captured_bytes(
 	if FileAccess.file_exists(destination):
 		var destination_bytes := FileAccess.get_file_as_bytes(destination)
 		if _sha(destination_bytes) == archive_sha:
-			return _finish_install(
-				catalog, metadata, destination, true, identity_resolution_usec
+			return _finish_verified_install(
+				catalog,
+				metadata,
+				destination,
+				true,
+				identity_resolution_usec,
+				control_distributed
 			)
 		return _error("package_install_destination_conflict")
 
@@ -131,7 +144,9 @@ func _install_captured_bytes(
 		return _error("package_install_failed")
 
 	var installed_bytes := FileAccess.get_file_as_bytes(destination)
-	var installed: Dictionary = loader.inspect_match_bytes(installed_bytes, archive_sha)
+	var installed: Dictionary = _inspect_captured_package(
+		loader, installed_bytes, archive_sha, control_distributed
+	)
 	var installed_deck: Dictionary = DeckGateScript.build(installed.get("payloads", {})) if bool(installed.get("ok", false)) else {}
 	if not bool(installed.get("ok", false)) or not bool(installed_deck.get("ok", false)):
 		_remove_owned_file(destination)
@@ -140,8 +155,13 @@ func _install_captured_bytes(
 			if not bool(installed.get("ok", false))
 			else str(installed_deck.get("error_code", "package_deck_unmapped"))
 		)
-	var result := _finish_install(
-		catalog, metadata, destination, false, identity_resolution_usec
+	var result := _finish_verified_install(
+		catalog,
+		metadata,
+		destination,
+		false,
+		identity_resolution_usec,
+		control_distributed
 	)
 	if not bool(result.get("ok", false)):
 		_remove_owned_file(destination)
@@ -179,9 +199,17 @@ func remove(
 	if not install_sources is Array:
 		return _remove_error("package_remove_not_found")
 	var has_built_in: bool = "built_in" in install_sources
+	var control_distributed: bool = (
+		installed_record.get("signature_status") == "control_distributed"
+		and installed_record.get("signature_scope") == "control_distributed_release"
+	)
 
 	var discovered := _find_user_remove_targets(
-		loader, normalized_id, normalized_version, normalized_sha
+		loader,
+		normalized_id,
+		normalized_version,
+		normalized_sha,
+		control_distributed
 	)
 	if not bool(discovered.get("ok", false)):
 		return _remove_error(str(discovered.get("error_code", "package_remove_failed")))
@@ -226,12 +254,20 @@ func remove(
 		marker_changed = bool(marker.get("changed", false))
 		marker_cleanup_pending = bool(marker.get("cleanup_pending", false))
 
+	if control_distributed:
+		_forget_control_distribution(catalog, normalized_sha)
 	var report: Dictionary = catalog.scan_startup()
 	var remaining := _find_catalog_record(
 		report.get("metadata_records", []), normalized_id, normalized_version, normalized_sha
 	)
 	if not remaining.is_empty():
 		var rollback_ok := _rollback_remove_moves(moves)
+		if control_distributed and catalog.has_method("admit_control_distributed_metadata"):
+			var readmitted: Variant = catalog.call(
+				"admit_control_distributed_metadata", installed_record.duplicate(true)
+			)
+			rollback_ok = rollback_ok and readmitted is Dictionary \
+				and bool(readmitted.get("ok", false))
 		if marker_changed:
 			var marker_rollback: Dictionary = catalog.set_built_in_package_removed({
 				"package_id": normalized_id,
@@ -334,11 +370,64 @@ func _finish_install(
 	}
 
 
+func _finish_verified_install(
+	catalog: Variant,
+	metadata: Dictionary,
+	installed_path: String,
+	already_installed: bool,
+	identity_resolution_usec: int,
+	control_distributed: bool
+) -> Dictionary:
+	if control_distributed:
+		if catalog == null or not catalog.has_method("admit_control_distributed_metadata"):
+			return _error("package_catalog_unavailable")
+		var admitted: Variant = catalog.call(
+			"admit_control_distributed_metadata", metadata.duplicate(true)
+		)
+		if not admitted is Dictionary or not bool(admitted.get("ok", false)):
+			return _error(
+				str(admitted.get("error_code", "package_download_identity_invalid"))
+				if admitted is Dictionary
+				else "package_catalog_unavailable"
+			)
+	var result := _finish_install(
+		catalog, metadata, installed_path, already_installed, identity_resolution_usec
+	)
+	if control_distributed and not bool(result.get("ok", false)):
+		_forget_control_distribution(catalog, str(metadata.get("archive_sha256", "")))
+	return result
+
+
+func _inspect_captured_package(
+	loader: Variant,
+	archive_bytes: PackedByteArray,
+	archive_sha: String,
+	control_distributed: bool
+) -> Dictionary:
+	if loader == null:
+		return {"ok": false, "error_code": "package_catalog_unavailable"}
+	if control_distributed:
+		if not loader.has_method("inspect_control_distributed_player_match_bytes"):
+			return {"ok": false, "error_code": "package_catalog_unavailable"}
+		return loader.call(
+			"inspect_control_distributed_player_match_bytes", archive_bytes, archive_sha
+		)
+	if not loader.has_method("inspect_match_bytes"):
+		return {"ok": false, "error_code": "package_catalog_unavailable"}
+	return loader.call("inspect_match_bytes", archive_bytes, archive_sha)
+
+
+func _forget_control_distribution(catalog: Variant, archive_sha: String) -> void:
+	if catalog != null and catalog.has_method("forget_control_distributed_metadata"):
+		catalog.call("forget_control_distributed_metadata", archive_sha)
+
+
 func _find_user_remove_targets(
 	loader: Variant,
 	package_id: String,
 	package_version: String,
-	archive_sha: String
+	archive_sha: String,
+	control_distributed: bool
 ) -> Dictionary:
 	var targets: Array[String] = []
 	if not DirAccess.dir_exists_absolute(USER_ROOT):
@@ -355,7 +444,15 @@ func _find_user_remove_targets(
 		var bytes := FileAccess.get_file_as_bytes(path)
 		if bytes.is_empty() or _sha(bytes) != archive_sha:
 			continue
-		var inspected: Dictionary = loader.inspect_bytes(bytes, archive_sha)
+		var inspected: Dictionary
+		if control_distributed:
+			if not loader.has_method("inspect_control_distributed_player_match_bytes"):
+				return {"ok": false, "error_code": "package_remove_verification_failed"}
+			inspected = loader.call(
+				"inspect_control_distributed_player_match_bytes", bytes, archive_sha
+			)
+		else:
+			inspected = loader.inspect_bytes(bytes, archive_sha)
 		if not bool(inspected.get("ok", false)):
 			return {"ok": false, "error_code": "package_remove_verification_failed"}
 		var metadata: Dictionary = inspected.get("metadata", {})

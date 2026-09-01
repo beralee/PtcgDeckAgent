@@ -6,6 +6,9 @@ const ZipScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPacka
 const LoaderScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageLoader.gd")
 const CatalogScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageCatalog.gd")
 const InstallerScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageInstaller.gd")
+const HandleScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageHandle.gd")
+const DeckGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckGate.gd")
+const ExecutionGateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
 
 const LIMITS := {
 	"max_archive_bytes": 12582912,
@@ -17,6 +20,8 @@ const LIMITS := {
 }
 
 const INSTALLABLE_FIXTURE := "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp4/00-exact-mapped-shadow.ptcgai"
+const CONTROL_PLAYER_FIXTURE := "res://data/ptcgdap/author_strategy_package_backups/reviewed-raging-bolt-ogerpon-1.0.0-round30-20ED94DE.ptcgai"
+const UNKNOWN_AUTHOR_KEY_FIXTURE := "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/21-signature_unknown_key.ptcgai"
 const UNMAPPED_FIXTURE := "res://artifacts/ptcgdap/as_wp1/fixtures/valid_minimal.ptcgai"
 const INVALID_FIXTURE := "res://artifacts/ptcgdap/as_wp1/fixtures/invalid_payload_hash.ptcgai"
 
@@ -64,6 +69,7 @@ class SyntheticReadyReleaseGate extends RefCounted:
 class CountingInstallLoader extends RefCounted:
 	var inner: RefCounted = null
 	var metadata_scan_calls := 0
+	var control_download_calls := 0
 
 	func _init() -> void:
 		inner = load("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageLoader.gd").new()
@@ -73,6 +79,17 @@ class CountingInstallLoader extends RefCounted:
 		expected_archive_sha256: String = ""
 	) -> Dictionary:
 		return inner.call("inspect_match_bytes", archive_bytes, expected_archive_sha256)
+
+	func inspect_control_distributed_player_match_bytes(
+		archive_bytes: PackedByteArray,
+		expected_archive_sha256: String = ""
+	) -> Dictionary:
+		control_download_calls += 1
+		return inner.call(
+			"inspect_control_distributed_player_match_bytes",
+			archive_bytes,
+			expected_archive_sha256
+		)
 
 	func inspect_bytes(
 		_archive_bytes: PackedByteArray,
@@ -104,6 +121,7 @@ class FastInstallCatalog extends RefCounted:
 	var metadata: Dictionary = {}
 	var resolve_calls := 0
 	var scan_calls := 0
+	var admit_calls := 0
 
 	func resolve_install_identity(
 		_package_id: String,
@@ -122,11 +140,38 @@ class FastInstallCatalog extends RefCounted:
 	func set_built_in_package_removed(_reference: Dictionary, _removed: bool) -> Dictionary:
 		return {"ok": true, "error_code": "", "changed": false, "cleanup_pending": false}
 
+	func admit_control_distributed_metadata(value: Dictionary) -> Dictionary:
+		admit_calls += 1
+		metadata = value.duplicate(true)
+		return {"ok": true, "error_code": ""}
+
+	func forget_control_distributed_metadata(_archive_sha256: String) -> void:
+		pass
+
 	func scan_startup() -> Dictionary:
 		scan_calls += 1
 		var record := metadata.duplicate(true)
 		record["install_sources"] = ["user"]
 		return {"metadata_records": [record], "ready_records": [], "diagnostics": []}
+
+
+class ControlReadyCatalog extends RefCounted:
+	var record: Dictionary = {}
+	var handle: Variant = null
+
+	func list_ready_records() -> Array[Dictionary]:
+		return [record.duplicate(true)]
+
+	func request_ready_match_handle(
+		package_id: String,
+		package_version: String,
+		archive_sha256: String
+	) -> Dictionary:
+		if package_id != record.get("package_id") \
+				or package_version != record.get("package_version") \
+				or archive_sha256 != record.get("archive_sha256"):
+			return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
+		return {"ok": true, "error_code": "", "handle": handle}
 
 
 func test_sha512_matches_standard_vectors() -> String:
@@ -606,19 +651,30 @@ func test_fixed_user_root_scan_discovers_metadata_without_ready_authority() -> S
 	var target := FileAccess.open(target_path, FileAccess.WRITE)
 	if target == null:
 		return "could not create isolated user-root fixture"
-	target.store_buffer(source.get_buffer(source.get_length()))
+	var source_bytes := source.get_buffer(source.get_length())
+	target.store_buffer(source_bytes)
 	target = null
+	var hash_context := HashingContext.new()
+	hash_context.start(HashingContext.HASH_SHA256)
+	hash_context.update(source_bytes)
+	var target_sha := hash_context.finish().hex_encode().to_upper()
 	var catalog := CatalogScript.new()
 	var report := catalog.scan_startup()
 	var audit := catalog.audit_snapshot()
 	DirAccess.remove_absolute(target_path)
-	var user_records: Array = report.get("metadata_records", []).filter(func(record: Dictionary) -> bool: return record.get("install_source") == "user")
+	var user_records: Array = report.get("metadata_records", []).filter(func(record: Dictionary) -> bool:
+		return record.get("install_source") == "user" \
+			and record.get("archive_sha256") == target_sha
+	)
+	var target_ready_records: Array = report.get("ready_records", []).filter(
+		func(record: Dictionary) -> bool: return record.get("archive_sha256") == target_sha
+	)
 	var checks := run_checks([
 		assert_eq(user_records.size(), 1),
 		assert_eq(user_records[0].get("install_source"), "user"),
 		assert_eq(user_records[0].get("status"), "metadata_only"),
-		assert_eq(report.get("ready_records"), []),
-		assert_eq(audit.get("ready_record_count"), 0),
+		assert_eq(target_ready_records, []),
+		assert_true(int(audit.get("ready_record_count", -1)) >= 0),
 		assert_true(typeof(audit.get("last_scan_elapsed_usec")) == TYPE_INT),
 		assert_true(int(audit.get("last_scan_elapsed_usec", -1)) >= 0),
 		assert_eq(audit.get("execution_authority"), false),
@@ -700,19 +756,121 @@ func test_downloaded_package_install_requires_exact_server_release_identity() ->
 	var first: Dictionary = catalog.call("install_from_bytes", archive_bytes, expected)
 	var second: Dictionary = catalog.call("install_from_bytes", archive_bytes, expected)
 	var installed_bytes := FileAccess.get_file_as_bytes(destination) if FileAccess.file_exists(destination) else PackedByteArray()
+	var first_metadata: Dictionary = first.get("metadata", {})
+	var restarted_catalog := CatalogScript.new()
+	var restarted_report: Dictionary = restarted_catalog.scan_startup()
+	var restarted_records: Array = restarted_report.get("ready_records", []).filter(
+		func(record: Dictionary) -> bool: return record.get("archive_sha256") == archive_sha
+	)
 	var checks := run_checks([
 		assert_false(bool(rejected.get("ok", true))),
 		assert_eq(rejected.get("error_code"), "package_download_identity_mismatch"),
 		assert_true(bool(first.get("ok", false)), str(first)),
 		assert_false(bool(first.get("already_installed", true))),
 		assert_true(bool(second.get("already_installed", false))),
+		assert_eq(first_metadata.get("signature_status"), "control_distributed"),
+		assert_true(bool(first.get("player_start_allowed", false)), str(first)),
+		assert_eq(restarted_records.size(), 1, "A Control download must remain available after restart"),
+		assert_eq(restarted_records[0].get("signature_status"), "control_distributed"),
 		assert_eq(installed_bytes, archive_bytes),
 	])
+	restarted_catalog.call("forget_control_distributed_metadata", archive_sha)
 	if FileAccess.file_exists(destination):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(destination))
-	catalog.scan_startup()
+	restarted_catalog.scan_startup()
+	restarted_catalog.free()
 	catalog.free()
 	return checks
+
+
+func test_control_distributed_ready_handle_is_ordinary_player_start_authority() -> String:
+	var loader := LoaderScript.new()
+	var archive_bytes := FileAccess.get_file_as_bytes(CONTROL_PLAYER_FIXTURE)
+	var hash_context := HashingContext.new()
+	hash_context.start(HashingContext.HASH_SHA256)
+	hash_context.update(archive_bytes)
+	var archive_sha := hash_context.finish().hex_encode().to_upper()
+	var inspected: Dictionary = loader.call(
+		"inspect_control_distributed_player_match_bytes", archive_bytes, archive_sha
+	)
+	if not bool(inspected.get("ok", false)):
+		return "Control player fixture inspection failed: %s" % str(inspected)
+	var gated: Dictionary = DeckGateScript.build(inspected.get("payloads", {}))
+	if not bool(gated.get("ok", false)):
+		return "Control player fixture deck mapping failed: %s" % str(gated)
+	var created: Dictionary = HandleScript.create(
+		inspected.get("metadata", {}),
+		inspected.get("payloads", {}),
+		gated.get("local_deck", [])
+	)
+	if not bool(created.get("ok", false)):
+		return "Control player fixture handle failed: %s" % str(created)
+	var record: Dictionary = inspected.get("metadata", {}).duplicate(true)
+	record["install_source"] = "user"
+	record["install_sources"] = ["user"]
+	record["status"] = "ready"
+	record["player_start_allowed"] = true
+	var catalog := ControlReadyCatalog.new()
+	catalog.record = record
+	catalog.handle = created.get("handle")
+	var selection := {
+		"package_id": record.get("package_id"),
+		"package_version": record.get("package_version"),
+		"archive_sha256": archive_sha,
+		"install_source": "user",
+	}
+	var admitted: Dictionary = ExecutionGateScript.evaluate_selection(
+		catalog, selection, "Windows"
+	)
+	var requested: Dictionary = ExecutionGateScript.request_match_handle(
+		catalog, selection, "Windows"
+	)
+	var pins: Dictionary = created.get("handle").to_public_dict()
+	return run_checks([
+		assert_true(bool(admitted.get("ok", false)), "%s record=%s" % [
+			str(admitted), str(record)
+		]),
+		assert_eq(admitted.get("authority_mode"), ExecutionGateScript.CONTROL_DISTRIBUTED_MODE),
+		assert_true(bool(requested.get("ok", false)), str(requested)),
+		assert_eq(requested.get("authority_mode"), ExecutionGateScript.CONTROL_DISTRIBUTED_MODE),
+		assert_eq(
+			ExecutionGateScript.validate_handle_pins(
+				pins, ExecutionGateScript.CONTROL_DISTRIBUTED_MODE
+			),
+			""
+		),
+		assert_eq(
+			ExecutionGateScript.candidate_for_pins(
+				pins, ExecutionGateScript.CONTROL_DISTRIBUTED_MODE
+			).get("runtime_kind"),
+			"reviewed_competitive_policy_v2"
+		),
+	])
+
+
+func test_control_download_does_not_require_a_local_author_public_key() -> String:
+	var loader := LoaderScript.new()
+	var archive_bytes := FileAccess.get_file_as_bytes(UNKNOWN_AUTHOR_KEY_FIXTURE)
+	var hash_context := HashingContext.new()
+	hash_context.start(HashingContext.HASH_SHA256)
+	hash_context.update(archive_bytes)
+	var archive_sha := hash_context.finish().hex_encode().to_upper()
+	var local_import: Dictionary = loader.inspect_match_bytes(archive_bytes, archive_sha)
+	if not loader.has_method("inspect_control_distributed_player_match_bytes"):
+		return "loader does not expose the Control-distributed player inspection path"
+	var downloaded: Dictionary = loader.call(
+		"inspect_control_distributed_player_match_bytes", archive_bytes, archive_sha
+	)
+	var metadata: Dictionary = downloaded.get("metadata", {})
+	return run_checks([
+		assert_false(bool(local_import.get("ok", true))),
+		assert_eq(local_import.get("error_code"), "package_signature_untrusted"),
+		assert_true(bool(downloaded.get("ok", false)), str(downloaded)),
+		assert_eq(metadata.get("signature_status"), "control_distributed"),
+		assert_eq(metadata.get("signature_scope"), "control_distributed_release"),
+		assert_false(bool(metadata.get("execution_trusted", true))),
+		assert_true(metadata.get("server_competition_candidate") is Dictionary),
+	])
 
 
 func test_downloaded_install_resolves_identity_from_catalog_without_reinspecting_every_archive() -> String:
@@ -739,6 +897,8 @@ func test_downloaded_install_resolves_identity_from_catalog_without_reinspecting
 	var checks := run_checks([
 		assert_true(bool(result.get("ok", false)), str(result)),
 		assert_eq(catalog.resolve_calls, 1, "Catalog metadata must own identity resolution"),
+		assert_eq(catalog.admit_calls, 1, "Control download provenance must be retained before the catalog refresh"),
+		assert_eq(loader.control_download_calls, 2, "Both captured and installed bytes must use the Control download path"),
 		assert_eq(loader.metadata_scan_calls, 0, "Import must not deep-inspect every installed archive"),
 		assert_eq(catalog.scan_calls, 1, "Post-write catalog verification remains required"),
 	])
@@ -965,6 +1125,11 @@ func _user_package_filenames() -> Array[String]:
 
 func test_metadata_only_candidate_cannot_request_ready_match_handle() -> String:
 	var catalog := CatalogScript.new()
+	var removal_store_path := "user://ptcgdap/tests/metadata-only-empty-removals.json"
+	for path: String in [removal_store_path, removal_store_path + ".tmp", removal_store_path + ".bak"]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	catalog.set_removal_store_path_for_tests(removal_store_path)
 	var report: Dictionary = catalog.scan_startup()
 	var record: Dictionary = {}
 	for value: Variant in report.get("metadata_records", []):
@@ -978,6 +1143,9 @@ func test_metadata_only_candidate_cannot_request_ready_match_handle() -> String:
 		str(record.get("package_id")), str(record.get("package_version")), str(record.get("archive_sha256"))
 	)
 	catalog.free()
+	for path: String in [removal_store_path, removal_store_path + ".tmp", removal_store_path + ".bak"]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	return run_checks([
 		assert_false(bool(rejected.get("ok", true))),
 		assert_eq(rejected.get("error_code"), "package_release_not_approved"),

@@ -172,14 +172,15 @@ func _visible_control_child_count(parent: Control) -> int:
 	return count
 
 
-func _make_author_picker_record(index: int) -> Dictionary:
+func _make_author_picker_record(index: int, install_source: String = "user") -> Dictionary:
 	var package_id := "pkg.large.%03d" % index
 	var archive_sha256 := ("%064d" % index).right(64)
 	return {
 		"package_id": package_id,
 		"package_version": "1.0.%d" % index,
 		"archive_sha256": archive_sha256,
-		"install_source": "user",
+		"install_source": install_source,
+		"install_sources": [install_source],
 		"display_name": "作者策略 %03d" % index,
 		"display_label": "作者策略 %03d · 测试作者 · v1.0.%d" % [index, index],
 		"author_name": "测试作者",
@@ -432,6 +433,44 @@ func test_unified_ai_picker_keeps_builtin_v18_and_large_author_list_reachable() 
 	return result
 
 
+func test_unified_ai_picker_places_downloaded_strategies_before_bundled_packages_and_builtin_decks() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var builtin_v18 := _make_deck(800018502, "18.0 N的索罗亚克", "N的索罗亚克ex")
+	var bundled_package := _make_author_picker_record(8, "built_in")
+	var downloaded_package := _make_author_picker_record(7, "user")
+	var author_records: Array[Dictionary] = [bundled_package, downloaded_package]
+	mode_option.select(1)
+	scene.set("_ai_deck_list", [builtin_v18])
+	# Reverse the desired order so the picker owner must apply the priority.
+	scene.set("_author_strategy_records", author_records)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "landscape")
+	scene.call("_on_deck_picker_pressed", 1)
+
+	var grid := scene.get("_deck_picker_grid") as GridContainer
+	var first_ref: Dictionary = {}
+	var second_ref: Dictionary = {}
+	var third_deck_id := -1
+	var child_debug: Array[String] = []
+	for child: Node in grid.get_children() if grid != null else []:
+		child_debug.append("%s|author=%s|deck=%s" % [
+			str((child as Button).text) if child is Button else child.name,
+			child.get_meta("author_strategy_ref", {}),
+			child.get_meta("deck_id", -1),
+		])
+	if grid != null and grid.get_child_count() >= 3:
+		first_ref = grid.get_child(0).get_meta("author_strategy_ref", {})
+		second_ref = grid.get_child(1).get_meta("author_strategy_ref", {})
+		third_deck_id = int(grid.get_child(2).get_meta("deck_id", -1))
+	var result := run_checks([
+		assert_eq(str(first_ref.get("package_id", "")), "pkg.large.007", "A newly downloaded user strategy should be the first AI opponent choice; children=%s mode=%s" % [child_debug, mode_option.selected]),
+		assert_eq(str(second_ref.get("package_id", "")), "pkg.large.008", "Bundled author packages should follow downloaded strategies"),
+		assert_eq(third_deck_id, builtin_v18.id, "Classic built-in AI decks should follow author strategy packages without disappearing"),
+	])
+	scene.queue_free()
+	return result
+
+
 func test_windows_landscape_battle_setup_scrolls_when_ai_settings_overflow() -> String:
 	var scene := _make_scene_ready()
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "landscape")
@@ -442,6 +481,143 @@ func test_windows_landscape_battle_setup_scrolls_when_ai_settings_overflow() -> 
 		assert_true(scroll != null and scroll.get_v_scroll_bar().mouse_filter == Control.MOUSE_FILTER_STOP, "The Windows scrollbar must accept mouse dragging"),
 	])
 	scene.queue_free()
+	return result
+
+
+func test_windows_landscape_setup_hud_uses_full_height_and_shows_start_without_initial_scroll() -> String:
+	var config_snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "test-key",
+		"model": "deepseek-v4-flash",
+		"timeout_seconds": 60.0,
+		"ai_test_passed": true,
+		"ai_test_signature": "hud-layout-test",
+	})
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		_restore_battle_review_config_file(config_snapshot)
+		return "SceneTree is required for the real battle-setup HUD regression"
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1280, 720)
+	tree.root.add_child(viewport)
+	var scene: Control = BattleSetupScene.instantiate()
+	viewport.add_child(scene)
+	await tree.process_frame
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "landscape")
+	await tree.process_frame
+	await tree.process_frame
+
+	var setup_frame := scene.find_child("SetupFrame", true, false) as PanelContainer
+	var scroll := scene.find_child("LandscapeSetupScroll", true, false) as ScrollContainer
+	var start_button := scene.find_child("BtnStart", true, false) as Button
+	var frame_rect := setup_frame.get_global_rect() if setup_frame != null else Rect2()
+	var scroll_rect := scroll.get_global_rect() if scroll != null else Rect2()
+	var start_rect := start_button.get_global_rect() if start_button != null else Rect2()
+	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
+	var left_vbox := scene.find_child("LeftVBox", true, false) as VBoxContainer
+	var right_vbox := scene.find_child("RightVBox", true, false) as VBoxContainer
+	var initially_scrollable := vbar != null and vbar.max_value > vbar.page + 0.5
+	var result := run_checks([
+		assert_true(setup_frame != null and frame_rect.size.y >= 688.0, "The 720p battle-setup HUD should use nearly the full window height; frame=%s scroll=%s start=%s left=%s/%s right=%s/%s range=%s/%s" % [frame_rect, scroll_rect, start_rect, left_vbox.size if left_vbox != null else Vector2.ZERO, left_vbox.get_combined_minimum_size() if left_vbox != null else Vector2.ZERO, right_vbox.size if right_vbox != null else Vector2.ZERO, right_vbox.get_combined_minimum_size() if right_vbox != null else Vector2.ZERO, vbar.max_value if vbar != null else -1.0, vbar.page if vbar != null else -1.0]),
+		assert_true(setup_frame != null and frame_rect.position.x >= 0.0 and frame_rect.end.x <= 1280.0, "The landscape setup HUD must stay within the Windows viewport width; frame=%s" % frame_rect),
+		assert_false(initially_scrollable, "The default AI settings should fit without an initial right-side scrollbar; range=%s/%s frame=%s scroll=%s start=%s" % [vbar.max_value if vbar != null else -1.0, vbar.page if vbar != null else -1.0, frame_rect, scroll_rect, start_rect]),
+		assert_true(vbar == null or not vbar.visible, "The right-side scrollbar must stay visually hidden until the settings actually overflow"),
+		assert_true(start_button != null and start_button.is_visible_in_tree(), "The start-battle button must be visible on initial Windows layout"),
+		assert_true(start_button != null and start_rect.position.y >= scroll_rect.position.y and start_rect.end.y <= scroll_rect.end.y, "The start-battle button must be fully exposed in the first HUD viewport; scroll=%s start=%s" % [scroll_rect, start_rect]),
+	])
+	viewport.queue_free()
+	await tree.process_frame
+	_restore_battle_review_config_file(config_snapshot)
+	return result
+
+
+func test_windows_landscape_ai_picker_stays_onscreen_with_saved_portrait_preference() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var builtin_v18 := _make_deck(800018502, "18.0 N的索罗亚克", "N的索罗亚克ex")
+	var author_records: Array[Dictionary] = []
+	for index: int in 96:
+		author_records.append(_make_author_picker_record(index))
+	mode_option.select(1)
+	scene.set("_ai_deck_list", [builtin_v18])
+	scene.set("_author_strategy_records", author_records)
+	# Reproduce a Windows landscape window while an older saved setting still
+	# requests the portrait non-battle profile.
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "portrait")
+	scene.call("_on_deck_picker_pressed", 1)
+
+	var panel := scene.find_child("DeckPickerPanel", true, false) as PanelContainer
+	var picker_scroll := scene.find_child("DeckPickerScroll", true, false) as ScrollContainer
+	var panel_rect := Rect2(panel.position, panel.size) if panel != null else Rect2()
+	var result := run_checks([
+		assert_true(panel != null and panel_rect.position.y >= 0.0, "The AI picker must not start above the Windows viewport"),
+		assert_true(panel != null and panel_rect.end.y <= 720.0, "A saved portrait preference must not push the AI picker below a 720p Windows viewport"),
+		assert_true(picker_scroll != null and picker_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "The bounded AI picker must keep the large strategy list scrollable"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_windows_ai_picker_large_catalog_has_a_real_scroll_viewport() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is required for the real picker-layout regression"
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1280, 720)
+	tree.root.add_child(viewport)
+	var scene: Control = BattleSetupScene.instantiate()
+	viewport.add_child(scene)
+	await tree.process_frame
+
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var builtin_v18 := _make_deck(800018502, "18.0 N的索罗亚克", "N的索罗亚克ex")
+	var author_records: Array[Dictionary] = []
+	for index: int in 96:
+		author_records.append(_make_author_picker_record(index))
+	mode_option.select(1)
+	scene.set("_ai_deck_list", [builtin_v18])
+	scene.set("_author_strategy_records", author_records)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "portrait")
+	scene.call("_on_deck_picker_pressed", 1)
+	await tree.process_frame
+	await tree.process_frame
+
+	var panel := scene.find_child("DeckPickerPanel", true, false) as PanelContainer
+	var picker_scroll := scene.find_child("DeckPickerScroll", true, false) as ScrollContainer
+	var grid := scene.get("_deck_picker_grid") as GridContainer
+	var panel_rect := panel.get_global_rect() if panel != null else Rect2()
+	var vbar := picker_scroll.get_v_scroll_bar() if picker_scroll != null else null
+	var picker_root := scene.find_child("DeckPickerRoot", true, false) as VBoxContainer
+	var can_scroll := vbar != null and vbar.max_value > vbar.page
+	if picker_scroll != null and can_scroll:
+		picker_scroll.scroll_vertical = int(vbar.max_value - vbar.page)
+	await tree.process_frame
+	var result := run_checks([
+		assert_true(
+			panel != null and panel_rect.position.y >= 0.0 and panel_rect.end.y <= 720.0,
+			"The laid-out HUD picker panel must remain entirely inside the 720p viewport; rect=%s panel_min=%s root_min=%s scroll=%s scroll_min=%s grid=%s range=%s/%s" % [
+				panel_rect,
+				panel.get_combined_minimum_size() if panel != null else Vector2.ZERO,
+				picker_root.get_combined_minimum_size() if picker_root != null else Vector2.ZERO,
+				picker_scroll.size if picker_scroll != null else Vector2.ZERO,
+				picker_scroll.get_combined_minimum_size() if picker_scroll != null else Vector2.ZERO,
+				grid.size if grid != null else Vector2.ZERO,
+				vbar.max_value if vbar != null else -1.0,
+				vbar.page if vbar != null else -1.0,
+			]
+		),
+		assert_true(picker_scroll != null and picker_scroll.size.y > 0.0, "The strategy list must receive a non-zero real scroll viewport"),
+		assert_true(grid != null and picker_scroll != null and grid.size.y > picker_scroll.size.y, "A large strategy catalog must overflow inside the scroll viewport, not expand the HUD panel"),
+		assert_true(can_scroll, "The real Windows scrollbar must have scrollable range for 96 strategies"),
+		assert_true(picker_scroll != null and picker_scroll.scroll_vertical > 0, "The real Windows list must accept a downward scroll position"),
+	])
+	viewport.queue_free()
+	await tree.process_frame
 	return result
 
 

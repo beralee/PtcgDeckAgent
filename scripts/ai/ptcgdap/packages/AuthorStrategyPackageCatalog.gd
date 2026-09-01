@@ -252,6 +252,26 @@ func install_from_bytes(
 	)
 
 
+func admit_control_distributed_metadata(metadata: Dictionary) -> Dictionary:
+	if not _valid_control_distributed_metadata(metadata):
+		return {"ok": false, "error_code": "package_download_identity_invalid"}
+	_persistent_cache_enabled = true
+	_load_persistent_metadata_cache()
+	var archive_sha := str(metadata.get("archive_sha256", ""))
+	_metadata_cache[archive_sha] = metadata.duplicate(true)
+	_persistent_cache_dirty = true
+	return {"ok": true, "error_code": ""}
+
+
+func forget_control_distributed_metadata(archive_sha256: String) -> void:
+	var archive_sha := archive_sha256.strip_edges().to_upper()
+	var cached: Variant = _metadata_cache.get(archive_sha)
+	if cached is Dictionary and cached.get("signature_status") == "control_distributed":
+		_metadata_cache.erase(archive_sha)
+		_persistent_cache_keys.erase(archive_sha)
+		_persistent_cache_dirty = true
+
+
 func remove_package(
 	package_id: String,
 	package_version: String,
@@ -320,10 +340,23 @@ func _request_match_handle(
 	file = null
 	if _sha(captured) != archive_sha256:
 		return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
-	var inspected: Dictionary = _loader.inspect_match_bytes(captured, archive_sha256)
+	var selected_record: Dictionary = {}
+	for record: Dictionary in source_records:
+		if record.get("package_id") == package_id \
+				and record.get("package_version") == package_version \
+				and record.get("archive_sha256") == archive_sha256:
+			selected_record = record
+			break
+	var inspected: Dictionary = (
+		_loader.inspect_control_distributed_player_match_bytes(captured, archive_sha256)
+		if _valid_control_distributed_metadata(selected_record)
+		else _loader.inspect_match_bytes(captured, archive_sha256)
+	)
 	if not bool(inspected.get("ok", false)):
 		return {"ok": false, "error_code": str(inspected.get("error_code", "package_integrity_invalid")), "handle": null}
-	if require_player_ready:
+	if require_player_ready and not _valid_control_distributed_metadata(
+		inspected.get("metadata", {})
+	):
 		var release: Dictionary = _release_gate.evaluate_installed_package(inspected.get("metadata", {}))
 		if not bool(release.get("accepted", false)) or not bool(release.get("player_start_allowed", false)):
 			return {
@@ -550,7 +583,12 @@ func _rebuild(raw_candidates: Array[Dictionary]) -> Dictionary:
 				sources.append(source)
 		sources.sort_custom(func(a: String, b: String) -> bool: return INSTALL_SOURCES.find(a) < INSTALL_SOURCES.find(b))
 		metadata["install_sources"] = sources
-		var release: Dictionary = _release_gate.evaluate_installed_package(metadata)
+		var control_distributed := _valid_control_distributed_metadata(metadata)
+		var release: Dictionary = (
+			{"accepted": true, "error_code": "", "player_start_allowed": true}
+			if control_distributed
+			else _release_gate.evaluate_installed_package(metadata)
+		)
 		var player_ready := bool(release.get("accepted", false)) \
 			and bool(release.get("player_start_allowed", false))
 		metadata["status"] = "ready" if player_ready else "metadata_only"
@@ -769,6 +807,22 @@ func _valid_persistent_metadata(archive_sha: String, value: Variant) -> bool:
 		and metadata.get("author") is Dictionary
 		and metadata.get("strategy") is Dictionary
 		and metadata.get("deck") is Dictionary
+	)
+
+
+func _valid_control_distributed_metadata(value: Variant) -> bool:
+	if not value is Dictionary:
+		return false
+	var metadata := value as Dictionary
+	var candidate: Variant = metadata.get("server_competition_candidate")
+	return (
+		metadata.get("signature_status") == "control_distributed"
+		and metadata.get("signature_scope") == "control_distributed_release"
+		and metadata.get("execution_trusted") == false
+		and str(metadata.get("archive_sha256", "")).length() == 64
+		and candidate is Dictionary
+		and candidate.get("package_id") == metadata.get("package_id")
+		and candidate.get("package_version") == metadata.get("package_version")
 	)
 
 

@@ -4,9 +4,6 @@ extends "res://scripts/ai/ptcgdap/runtime/local/AuthorStrategyDevelopmentPolicy.
 ## Exact-hash, development-only executor for the reviewed Forge packages.
 ## It reuses the sealed public-frame validation and Base adjudication path,
 ## while binding package/graph/deck/rule counts from the development gate.
-const DevelopmentGateScript = preload(
-	"res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd"
-)
 
 
 static func create(
@@ -164,9 +161,7 @@ func audit_snapshot() -> Dictionary:
 
 
 static func _candidate_for_pins(pins: Dictionary, authority_mode: String) -> Dictionary:
-	if authority_mode not in [ExecutionGateScript.DEVELOPMENT_MODE, ExecutionGateScript.DEVICE_CANARY_MODE]:
-		return {}
-	return DevelopmentGateScript.candidate_for_pins(pins)
+	return ExecutionGateScript.candidate_for_pins(pins, authority_mode)
 
 
 static func _reviewed_supported_config(
