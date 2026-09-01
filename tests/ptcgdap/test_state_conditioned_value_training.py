@@ -19,11 +19,36 @@ from tools.ptcgdap.train_state_conditioned_transaction_value import (
     extract_trace_samples,
     fit_joint_model,
     preference_accuracy,
+    split_paired_branch_preferences,
     select_validation_calibrated_model,
 )
 
 
 class StateConditionedValueTrainingTest(unittest.TestCase):
+    def test_paired_branch_groups_are_disjoint_between_fit_and_selection(self) -> None:
+        samples = [
+            {"sample_id": f"sample-{offset}", "group_id": f"match-{offset // 2}"}
+            for offset in range(10)
+        ]
+
+        training, validation, receipt = split_paired_branch_preferences(samples)
+
+        training_groups = {sample["group_id"] for sample in training}
+        validation_groups = {sample["group_id"] for sample in validation}
+        self.assertTrue(training_groups)
+        self.assertTrue(validation_groups)
+        self.assertTrue(training_groups.isdisjoint(validation_groups))
+        self.assertEqual(
+            {sample["sample_id"] for sample in samples},
+            {
+                sample["sample_id"]
+                for sample in [*training, *validation]
+            },
+        )
+        self.assertEqual(sorted(training_groups), receipt["training_groups"])
+        self.assertEqual(sorted(validation_groups), receipt["validation_groups"])
+        self.assertTrue(receipt["group_disjoint"])
+
     def test_paired_branch_credit_labels_only_the_first_exact_public_divergence(self) -> None:
         model = StateConditionedTransactionValueV2.default_model(
             uid_roles=MARNIE_UID_ROLES,
@@ -219,6 +244,7 @@ class StateConditionedValueTrainingTest(unittest.TestCase):
                 "executed_canary_exam_accuracy.desc",
                 "validation_preference_accuracy.desc",
                 "validation_state_sign_accuracy.desc",
+                "interaction_feature_count.asc",
                 "anchor_weight_drift_l1.asc",
             ],
             receipt["selection_order"],
@@ -413,6 +439,27 @@ class StateConditionedValueTrainingTest(unittest.TestCase):
         payload = json.dumps(trained, sort_keys=True)
         self.assertNotIn("deck_id", payload)
         self.assertNotIn("source_deck_id", payload)
+
+    def test_joint_training_distills_interactions_to_declared_budget(self) -> None:
+        seed_model = StateConditionedTransactionValueV2.default_model(
+            uid_roles=MARNIE_UID_ROLES,
+            training_run_id="unit-sparse-interaction-v1",
+        )
+        preferences = build_authored_exam_preferences(seed_model)
+
+        trained = fit_joint_model(
+            seed_model,
+            state_samples=[],
+            preference_samples=preferences,
+            calibration_samples=preferences,
+            max_interaction_features=16,
+            training_run_id="unit-sparse-interaction-v1",
+            dataset_sha256="B" * 64,
+        )
+
+        self.assertLessEqual(len(trained["interaction_weights_milli"]), 16)
+        self.assertEqual(1.0, preference_accuracy(trained, preferences))
+        self.assertIsNone(StateConditionedTransactionValueV2.model_error(trained))
 
 
 if __name__ == "__main__":

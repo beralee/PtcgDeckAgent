@@ -35,6 +35,8 @@ def main() -> int:
         expected = REVISION.read_text(encoding="utf-8").strip() if REVISION.is_file() else ""
         if expected != actual:
             raise SystemExit(f"bundled seed revision mismatch: expected={expected!r} actual={actual}")
+    else:
+        REVISION.write_text(actual + "\n", encoding="utf-8", newline="\n")
     print(actual)
     return 0
 

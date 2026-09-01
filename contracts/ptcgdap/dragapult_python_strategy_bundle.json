@@ -31,7 +31,7 @@
     {
       "id": "opponent",
       "path": "data/ptcgdap/dragapult_python_strategy/rules_ai_opponent_v1.json",
-      "canonical_sha256": "4087CD38DCC747872E85F381693D7763C025E64EA726AEDA49960E8D8CB1C55C"
+      "canonical_sha256": "93B518B0467D979BB3E72204F537669F56BC4D7826A99A26947E43EA8A9956C9"
     }
   ]
 }

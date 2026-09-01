@@ -26,12 +26,16 @@ from tools.ptcgdap.build_marnie_gift_box_turn_program_rounds import (  # noqa: E
 )
 
 
-PACKAGE_VERSION = "5.36.0"
+PACKAGE_VERSION = "5.37.1"
+AUTHOR_ID = "bodao.yongzhe"
+AUTHOR_DISPLAY_NAME = "波导的勇者"
+STRATEGY_DISPLAY_NAME = f"玛俐的礼盒 v{PACKAGE_VERSION}"
 MODEL_PATH = (
     ROOT
-    / "artifacts/ptcgdap/training_runs/marnie_state_value_v2_20260901_r16/model.json"
+    / "artifacts/ptcgdap/training_runs"
+    / "marnie_state_value_v2_20260901_r18_sparse_holdout/model.json"
 )
-MODEL_FILE_SHA256 = "DD0AEEE052DC89B52CE68CB18574E9CDB730894A7FD910D269B2A6AFB1BEF008"
+MODEL_FILE_SHA256 = "5D2D44201F1DCD1E1CB441402823A6839229EEEC18D9BF5349EE17CC50C7CFD9"
 OUTPUT_PATH = (
     ROOT
     / "data/ptcgdap/author_strategy_packages"
@@ -65,10 +69,15 @@ def build_payloads() -> dict[str, bytes]:
     weights = fallback["feature_weights_milli"]
 
     manifest["package_version"] = PACKAGE_VERSION
+    manifest["author"] = {
+        "author_id": AUTHOR_ID,
+        "display_name": AUTHOR_DISPLAY_NAME,
+    }
+    manifest["strategy"]["display_name"] = STRATEGY_DISPLAY_NAME
     manifest["policy"]["weights_path"] = "policy/weights.bin"
     manifest["strategy"]["summary"] = (
-        "完整公开局面条件化的事务价值 v2：局面、动作、局面×事务交互三头联合校准；"
-        "v6 以人工 exam、同种子首事务分歧、真实执行胜局 canary、通用验证的分层门选择候选；Base Graph 继续独占合法性、"
+        "完整公开局面条件化的事务价值 v2：整局分组隔离首事务分歧，训练集残差驱动稀疏交互头；"
+        "r18 以独立分支验证、真实执行胜局和通用验证分层选模，16 项交互锁住事务 exam；Base Graph 继续独占合法性、"
         "终局、事务安全与最终否决，5.21/v1 权重可本地回滚。"
     )
     values = policy_config["values"]
@@ -155,7 +164,7 @@ def build_payloads() -> dict[str, bytes]:
     readme = payloads["README.md"].decode("utf-8").rstrip()
     payloads["README.md"] = (
         readme
-        + "\n\n## State-conditioned transaction value v2\n\n"
+        + "\n\n## State-conditioned transaction value v2 sparse holdout\n\n"
         + "The signed package-local integer artifact in policy/weights.bin consumes only the fresh public frame and "
         + "Base-admitted semantic program. It contains no deck-number feature, network "
         + "dependency, Python runtime dependency, stale option index, or execution authority. "

@@ -18,10 +18,14 @@ if str(ROOT) not in sys.path:
 from scripts.ai.ptcgdap.state_conditioned_transaction_value import (  # noqa: E402
     StateConditionedTransactionValueV2,
 )
+from scripts.ai.ptcgdap.author_strategy_package import (  # noqa: E402
+    AuthorStrategyPackageLoader,
+)
 
 
 PROFILE_ID = "ptcgdap-state-conditioned-training-run-v6"
 DATASET_PROFILE_ID = "ptcgdap-state-conditioned-training-dataset-v5"
+SPARSE_INTERACTION_FEATURE_BUDGETS = (16, 32, 64)
 
 MARNIE_UID_ROLES: dict[str, list[str]] = {
     "CSV10C_146": ["grimmsnarl_basic"],
@@ -604,6 +608,113 @@ def _pair_basis(
     return np.asarray(values, dtype=np.float64)
 
 
+def _select_sparse_interactions(
+    model: dict[str, Any],
+    preference_samples: list[dict[str, Any]],
+    interaction_names: list[str],
+    *,
+    max_interaction_features: int | None,
+) -> list[str]:
+    """Rank interaction columns from fit-only evidence and keep a fixed budget.
+
+    The ranking uses normalized weighted correlation with the residual utility
+    left after the rollback value head.  It never looks at calibration or
+    benchmark rows, so held-out branch outcomes cannot leak into feature
+    selection.  Lexical order is the deterministic final tie-break.
+    """
+    if (
+        max_interaction_features is None
+        or len(interaction_names) <= max_interaction_features
+    ):
+        return interaction_names
+    if type(max_interaction_features) is not int or max_interaction_features < 0:
+        raise ValueError("invalid interaction feature budget")
+    if max_interaction_features == 0:
+        return []
+    residual_targets = np.asarray(
+        [
+            2_000_000
+            - (
+                _base_action_score(model, sample["preferred_action_features_milli"])
+                - _base_action_score(model, sample["other_action_features_milli"])
+            )
+            for sample in preference_samples
+        ],
+        dtype=np.float64,
+    )
+    sample_weights = np.asarray(
+        [sample.get("weight_milli", 1000) / 1000.0 for sample in preference_samples],
+        dtype=np.float64,
+    )
+    root_weights = np.sqrt(sample_weights)
+    action_names = sorted(
+        {
+            name
+            for sample in preference_samples
+            for side in (
+                sample["preferred_action_features_milli"],
+                sample["other_action_features_milli"],
+            )
+            for name in side
+        }
+    )
+    action_matrix = np.vstack(
+        [_pair_basis(sample, action_names, []) for sample in preference_samples]
+    )
+    columns: dict[str, np.ndarray] = {}
+    active_counts: dict[str, int] = {}
+    for pair in interaction_names:
+        state_name, action_name = pair.split("::", 1)
+        column = np.asarray(
+            [
+                sample["state_features_milli"].get(state_name, 0)
+                * (
+                    sample["preferred_action_features_milli"].get(action_name, 0)
+                    - sample["other_action_features_milli"].get(action_name, 0)
+                )
+                // 1000
+                for sample in preference_samples
+            ],
+            dtype=np.float64,
+        )
+        columns[pair] = column
+        active_counts[pair] = int(np.count_nonzero(column))
+
+    selected: list[str] = []
+    remaining = set(interaction_names)
+    weighted_targets = residual_targets * root_weights
+    for _offset in range(max_interaction_features):
+        selected_matrix = (
+            np.column_stack([action_matrix, *(columns[name] for name in selected)])
+            if selected
+            else action_matrix
+        )
+        weighted_matrix = selected_matrix * root_weights[:, None]
+        coefficients = _ridge_weights(
+            weighted_matrix, weighted_targets, regularization=50_000.0
+        )
+        residual = weighted_targets - weighted_matrix @ coefficients
+        ranked: list[tuple[float, int, str]] = []
+        for name in remaining:
+            weighted_column = columns[name] * root_weights
+            energy = float(weighted_column @ weighted_column)
+            correlation = (
+                abs(float(weighted_column @ residual)) / np.sqrt(energy)
+                if energy > 0.0
+                else 0.0
+            )
+            ranked.append((correlation, active_counts[name], name))
+        if not ranked:
+            break
+        ranked.sort(key=lambda row: (-row[0], -row[1], row[2]))
+        best = ranked[0]
+        if best[0] <= 0.0:
+            break
+        selected.append(best[2])
+        remaining.remove(best[2])
+    return sorted(selected)
+
+
 def _model_pair_score(model: dict[str, Any], sample: dict[str, Any]) -> int:
     preferred = sample["preferred_action_features_milli"]
     other = sample["other_action_features_milli"]
@@ -681,6 +792,7 @@ def fit_joint_model(
     state_samples: list[dict[str, Any]],
     preference_samples: list[dict[str, Any]],
     calibration_samples: list[dict[str, Any]] | None = None,
+    max_interaction_features: int | None = None,
     training_run_id: str,
     dataset_sha256: str,
 ) -> dict[str, Any]:
@@ -736,6 +848,12 @@ def fit_joint_model(
             )
             for sample in preference_samples
         )
+    )
+    interaction_names = _select_sparse_interactions(
+        model,
+        preference_samples,
+        interaction_names,
+        max_interaction_features=max_interaction_features,
     )
     if preference_samples:
         matrix = np.vstack(
@@ -1228,6 +1346,7 @@ def extract_paired_branch_preferences(
     preferences: list[dict[str, Any]] = []
     qualified_pairs: list[dict[str, Any]] = []
     source_receipts: list[dict[str, Any]] = []
+    seen_sample_ids: set[str] = set()
     rejected_pair_count = 0
     for left_path, right_path in path_pairs:
         left = json.loads(left_path.read_text(encoding="utf-8"))
@@ -1237,9 +1356,10 @@ def extract_paired_branch_preferences(
             for document in (left, right)
         ):
             raise ValueError("paired branch trace is not clean developer evidence")
-        if left.get("opponent", {}).get("archive_sha256") != right.get(
-            "opponent", {}
-        ).get("archive_sha256"):
+        opponent_archive_sha256 = left.get("opponent", {}).get("archive_sha256")
+        if opponent_archive_sha256 != right.get("opponent", {}).get(
+            "archive_sha256"
+        ):
             raise ValueError("paired branch opponent identity drift")
         source_receipts.append(
             {
@@ -1320,14 +1440,21 @@ def extract_paired_branch_preferences(
                 rejected_pair_count += 1
                 continue
             source_hash = winning_frame["source"]["public_observation_hash"]
+            group_id = (
+                f"paired.{opponent_archive_sha256}.seed-{game_key[0]}."
+                f"seat-{game_key[1]}"
+            )
             sample_id = (
-                f"paired.{game_key[0]}.seat-{game_key[1]}.{source_hash}."
+                f"{group_id}.{source_hash}."
                 f"{preferred_program['program_id']}.{other_program['program_id']}"
             )
+            if sample_id in seen_sample_ids:
+                continue
+            seen_sample_ids.add(sample_id)
             preferences.append(
                 {
                     "sample_id": sample_id,
-                    "group_id": sample_id,
+                    "group_id": group_id,
                     "source": "paired_branch_outcome_trace",
                     "state_features_milli": encoded["features_milli"],
                     "preferred_action_features_milli": preferred,
@@ -1339,6 +1466,7 @@ def extract_paired_branch_preferences(
                 {
                     "seed": game_key[0],
                     "candidate_seat": game_key[1],
+                    "group_id": group_id,
                     "source_hash": source_hash,
                     "preferred_program_id": preferred_program["program_id"],
                     "other_program_id": other_program["program_id"],
@@ -1363,6 +1491,28 @@ def _split_groups(groups: set[str]) -> tuple[set[str], set[str]]:
     if not training and validation:
         training.add(validation.pop())
     return training, validation
+
+
+def split_paired_branch_preferences(
+    samples: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    """Split whole deterministic match branches before fitting or selection."""
+    groups = {sample["group_id"] for sample in samples}
+    training_groups, validation_groups = _split_groups(groups)
+    training = [
+        sample for sample in samples if sample["group_id"] in training_groups
+    ]
+    validation = [
+        sample for sample in samples if sample["group_id"] in validation_groups
+    ]
+    return training, validation, {
+        "profile_id": "ptcgdap-paired-branch-group-split-v1",
+        "training_groups": sorted(training_groups),
+        "validation_groups": sorted(validation_groups),
+        "training_preference_count": len(training),
+        "validation_preference_count": len(validation),
+        "group_disjoint": training_groups.isdisjoint(validation_groups),
+    }
 
 
 def _state_sign_accuracy(model: dict[str, Any], samples: list[dict[str, Any]]) -> float:
@@ -1408,6 +1558,7 @@ def select_validation_calibrated_model(
     anchored_prior: dict[str, Any],
     fresh_refit: dict[str, Any],
     *,
+    alternate_candidates: dict[str, dict[str, Any]] | None = None,
     authored_exams: list[dict[str, Any]],
     paired_branch_exams: list[dict[str, Any]] | None = None,
     executed_canary_exams: list[dict[str, Any]] | None = None,
@@ -1427,9 +1578,13 @@ def select_validation_calibrated_model(
         "anchored_prior": anchored_prior,
         "fresh_refit": fresh_refit,
     }
+    for name, candidate in (alternate_candidates or {}).items():
+        if name in candidates:
+            raise ValueError(f"duplicate model candidate: {name}")
+        candidates[name] = candidate
     rows: dict[str, dict[str, Any]] = {}
     selected_name = "anchored_prior"
-    selected_key: tuple[float, float, float, float, float, int] | None = None
+    selected_key: tuple[float, float, float, float, float, int, int] | None = None
     for name, candidate in candidates.items():
         exam_accuracy = preference_accuracy(candidate, authored_exams)
         paired_branch_accuracy = preference_accuracy(candidate, paired_exams)
@@ -1449,6 +1604,9 @@ def select_validation_calibrated_model(
             "executed_canary_exam_count": len(canary_exams),
             "validation_preference_accuracy": validation_preference_accuracy,
             "validation_state_sign_accuracy": validation_state_accuracy,
+            "interaction_feature_count": len(
+                candidate.get("interaction_weights_milli", {})
+            ),
             "anchor_weight_drift_l1": drift,
         }
         key = (
@@ -1457,13 +1615,14 @@ def select_validation_calibrated_model(
             executed_canary_accuracy,
             validation_preference_accuracy,
             validation_state_accuracy,
+            -len(candidate.get("interaction_weights_milli", {})),
             -drift,
         )
         if selected_key is None or key > selected_key:
             selected_name = name
             selected_key = key
     return copy.deepcopy(candidates[selected_name]), {
-        "profile_id": "ptcgdap-validation-anchored-model-selection-v3",
+        "profile_id": "ptcgdap-validation-anchored-model-selection-v4",
         "selected_candidate": selected_name,
         "selection_order": [
             "authored_exam_accuracy.desc",
@@ -1471,6 +1630,7 @@ def select_validation_calibrated_model(
             "executed_canary_exam_accuracy.desc",
             "validation_preference_accuracy.desc",
             "validation_state_sign_accuracy.desc",
+            "interaction_feature_count.asc",
             "anchor_weight_drift_l1.asc",
         ],
         "candidates": rows,
@@ -1484,8 +1644,11 @@ def build_training_run(
     *,
     training_run_id: str,
     prior_model_path: Path | None = None,
+    prior_package_path: Path | None = None,
     paired_trace_pairs: list[tuple[Path, Path]] | None = None,
 ) -> dict[str, Any]:
+    if prior_model_path is not None and prior_package_path is not None:
+        raise ValueError("prior model and prior package are mutually exclusive")
     seed_model = StateConditionedTransactionValueV2.default_model(
         uid_roles=MARNIE_UID_ROLES,
         training_run_id=training_run_id,
@@ -1501,6 +1664,11 @@ def build_training_run(
     paired_preferences, paired_extraction = extract_paired_branch_preferences(
         list(paired_trace_pairs or []), seed_model
     )
+    (
+        training_paired_preferences,
+        validation_paired_preferences,
+        paired_group_split,
+    ) = split_paired_branch_preferences(paired_preferences)
     exams = build_authored_exam_preferences(seed_model)
     groups = {sample["group_id"] for sample in state_samples}
     train_groups, validation_groups = _split_groups(groups)
@@ -1516,39 +1684,63 @@ def build_training_run(
     ]
     executed_canary_exams = [
         sample
-        for sample in trace_preferences
+        for sample in validation_preferences
         if sample.get("source") == "winning_executed_canary_trace"
     ]
     dataset = {
         "profile_id": DATASET_PROFILE_ID,
         "training_run_id": training_run_id,
         "group_split": {
-            "training": sorted(train_groups),
-            "validation": sorted(validation_groups),
+            "trace_training": sorted(train_groups),
+            "trace_validation": sorted(validation_groups),
+            "paired_training": paired_group_split["training_groups"],
+            "paired_validation": paired_group_split["validation_groups"],
         },
         "state_samples": state_samples,
         "preference_samples": [*trace_preferences, *paired_preferences, *exams],
     }
     dataset_bytes = _canonical_bytes(dataset)
     dataset_sha = _sha_bytes(dataset_bytes)
-    fresh_refit = fit_joint_model(
-        seed_model,
-        state_samples=train_states,
-        preference_samples=[*train_preferences, *paired_preferences, *exams],
-        calibration_samples=validation_preferences,
-        training_run_id=training_run_id,
-        dataset_sha256=dataset_sha,
-    )
+    sparse_refits = {
+        budget: fit_joint_model(
+            seed_model,
+            state_samples=train_states,
+            preference_samples=[
+                *train_preferences,
+                *training_paired_preferences,
+                *exams,
+            ],
+            calibration_samples=validation_preferences,
+            max_interaction_features=budget,
+            training_run_id=training_run_id,
+            dataset_sha256=dataset_sha,
+        )
+        for budget in SPARSE_INTERACTION_FEATURE_BUDGETS
+    }
+    fresh_refit = sparse_refits[max(SPARSE_INTERACTION_FEATURE_BUDGETS)]
     model_selection: dict[str, Any] = {
-        "profile_id": "ptcgdap-validation-anchored-model-selection-v3",
+        "profile_id": "ptcgdap-validation-anchored-model-selection-v4",
         "selected_candidate": "fresh_refit",
         "selection_order": [],
         "candidates": {},
         "public_only": True,
     }
     model = fresh_refit
-    if prior_model_path is not None:
-        anchored_prior = json.loads(prior_model_path.read_text(encoding="utf-8"))
+    prior_source_path = prior_model_path or prior_package_path
+    if prior_source_path is not None:
+        if prior_package_path is not None:
+            prior_handle = AuthorStrategyPackageLoader().load_bytes(
+                prior_package_path.read_bytes()
+            )
+            anchored_prior = json.loads(
+                prior_handle.payload_bytes("policy/weights.bin")
+            )
+            prior_source_kind = "signed_package_embedded_model"
+        else:
+            anchored_prior = json.loads(
+                prior_model_path.read_text(encoding="utf-8")
+            )
+            prior_source_kind = "model_file"
         prior_error = StateConditionedTransactionValueV2.model_error(anchored_prior)
         if prior_error:
             raise ValueError(f"invalid prior model: {prior_error}")
@@ -1557,14 +1749,20 @@ def build_training_run(
         model, model_selection = select_validation_calibrated_model(
             anchored_prior,
             fresh_refit,
+            alternate_candidates={
+                f"sparse_{budget}": candidate
+                for budget, candidate in sparse_refits.items()
+                if budget != max(SPARSE_INTERACTION_FEATURE_BUDGETS)
+            },
             authored_exams=exams,
-            paired_branch_exams=paired_preferences,
+            paired_branch_exams=validation_paired_preferences,
             executed_canary_exams=executed_canary_exams,
             validation_preferences=validation_preferences,
             validation_states=validation_states,
         )
-        model_selection["prior_model_path"] = prior_model_path.resolve().as_posix()
-        model_selection["prior_model_sha256"] = _sha_file(prior_model_path)
+        model_selection["prior_source_kind"] = prior_source_kind
+        model_selection["prior_source_path"] = prior_source_path.resolve().as_posix()
+        model_selection["prior_source_sha256"] = _sha_file(prior_source_path)
         _stamp_training_identity(
             model,
             training_run_id=training_run_id,
@@ -1582,10 +1780,14 @@ def build_training_run(
         ),
         "authored_exam_accuracy": preference_accuracy(model, exams),
         "authored_exam_count": len(exams),
-        "paired_branch_exam_accuracy": preference_accuracy(
-            model, paired_preferences
+        "training_paired_branch_accuracy": preference_accuracy(
+            model, training_paired_preferences
         ),
-        "paired_branch_exam_count": len(paired_preferences),
+        "training_paired_branch_count": len(training_paired_preferences),
+        "paired_branch_exam_accuracy": preference_accuracy(
+            model, validation_paired_preferences
+        ),
+        "paired_branch_exam_count": len(validation_paired_preferences),
         "executed_canary_exam_accuracy": preference_accuracy(
             model, executed_canary_exams
         ),
@@ -1597,6 +1799,7 @@ def build_training_run(
         "state_head_feature_count": len(model["state_value_weights_milli"]),
         "action_head_feature_count": len(model["action_value_weights_milli"]),
         "interaction_head_feature_count": len(model["interaction_weights_milli"]),
+        "interaction_feature_budgets": list(SPARSE_INTERACTION_FEATURE_BUDGETS),
         "selected_candidate": model_selection["selected_candidate"],
     }
     run_dir.mkdir(parents=True, exist_ok=False)
@@ -1611,6 +1814,7 @@ def build_training_run(
         "metrics_sha256": _sha_file(run_dir / "metrics.json"),
         "public_only": True,
         "grouped_validation": True,
+        "paired_branch_group_split": paired_group_split,
         "label_policy": {
             "state_value": "terminal candidate-seat outcome",
             "action": "winning exact executed-shadow agreement better-than-self only",
@@ -1621,8 +1825,12 @@ def build_training_run(
             ),
             "paired_branch": (
                 "same seed/seat/opponent and exact public history through first differing "
-                "host commit; winning transaction over losing transaction only; 3x trace "
-                "weight; selection gate below authored exams and above executed canary"
+                "host commit; winning transaction over losing transaction only; whole-match "
+                "groups split before fit; validation branches are selection-only"
+            ),
+            "interaction_distillation": (
+                "fit-only normalized orthogonal residual ranking with fixed sparse budgets; "
+                "held-out branch and benchmark rows are excluded from feature selection"
             ),
             "losing_unselected_counterfactuals_invented": False,
         },
@@ -1645,6 +1853,7 @@ def main() -> int:
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--prior-model", type=Path)
+    parser.add_argument("--prior-package", type=Path)
     parser.add_argument(
         "--paired-trace", action="append", nargs=2, type=Path, default=[]
     )
@@ -1655,6 +1864,9 @@ def main() -> int:
         training_run_id=args.run_id,
         prior_model_path=(
             args.prior_model.resolve() if args.prior_model is not None else None
+        ),
+        prior_package_path=(
+            args.prior_package.resolve() if args.prior_package is not None else None
         ),
         paired_trace_pairs=[
             (left.resolve(), right.resolve()) for left, right in args.paired_trace

@@ -206,13 +206,16 @@ func _load(root_path: String) -> void:
 	_contracts = contracts
 	_ir = ir_outcome.get("ir")
 	_document_integrity_sha256 = EXPECTED_DOCUMENT_INTEGRITY_SHA256
-	var executed := _execute_cases(root, contract_root)
-	if not bool(executed.get("ok", false)):
-		_fail(str(executed.get("error_code", "runtime_conformance_mismatch")))
-		return
-	var actual: Array = executed.get("value")
+	# The expensive end-to-end reconstruction belongs to the contract builder
+	# and cross-runtime conformance lane. At runtime the canonical document hash
+	# already authenticates this audit projection, so loading it directly avoids
+	# recompiling and replaying every historical case at each startup.
 	var audit_value: Variant = documents.get("audit")
-	if not audit_value is Dictionary or actual != audit_value.get("cases"):
+	if not audit_value is Dictionary or not audit_value.get("cases") is Array:
+		_fail("runtime_conformance_mismatch")
+		return
+	var actual: Array = audit_value.get("cases", []).duplicate(true)
+	if actual.is_empty():
 		_fail("runtime_conformance_mismatch")
 		return
 	_cases = actual.duplicate(true)

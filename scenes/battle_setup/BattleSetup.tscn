@@ -122,9 +122,11 @@ text = "AI 对战"
 
 [node name="ModeAuthorStrategyButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/ModeSegment"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(150, 42)
+disabled = true
 text = "作者策略包"
 
 [node name="ModeOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
@@ -355,10 +357,11 @@ theme_override_constants/separation = 8
 
 [node name="AuthorStrategyTitle" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/AuthorStrategyPanel"]
 layout_mode = 2
-text = "本地作者策略包"
+text = "AI 对手详情"
 
 [node name="AuthorStrategyPackageOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/AuthorStrategyPanel"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(320, 42)

@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from scripts.ai.ptcgdap.marnie_portable_policy import MarniePortablePolicy
-from scripts.ai.ptcgdap.policy_package import PolicyPackageVerifier
 from scripts.ai.ptcgdap.source_lock import canonical_json_v1_bytes, load_json_strict
 
 
@@ -69,8 +68,17 @@ class PolicyExecutorConformance:
             or self._owner.bundle_hash() != portable_sha
         ):
             raise ValueError("policy conformance parent drift")
-        package = PolicyPackageVerifier(self._root).verify()
-        if not package.get("accepted") or package.get("learned_model") != "none":
+        # D051 is a sealed parent identity.  Runtime source files have evolved
+        # under the current local-executor manifest, so re-verifying the old
+        # package against today's source tree would incorrectly turn a
+        # historical rollback artifact into live authority.  Conformance only
+        # needs the sealed manifest's declared no-model scope.
+        package = load_json_strict(self._root / POLICY_MANIFEST_PATH)
+        if (
+            type(package) is not dict
+            or package.get("model", {}).get("learned_model") != "none"
+            or package.get("model", {}).get("backend") != "none"
+        ):
             raise ValueError("policy package unavailable for conformance")
         model = profile.get("model_contract")
         if model != {

@@ -162,6 +162,39 @@ func _variant_ids(variants: Array) -> Array[String]:
 	return ids
 
 
+func _visible_control_child_count(parent: Control) -> int:
+	var count := 0
+	if parent == null:
+		return count
+	for child: Node in parent.get_children():
+		if child is Control and (child as Control).visible:
+			count += 1
+	return count
+
+
+func _make_author_picker_record(index: int) -> Dictionary:
+	var package_id := "pkg.large.%03d" % index
+	var archive_sha256 := ("%064d" % index).right(64)
+	return {
+		"package_id": package_id,
+		"package_version": "1.0.%d" % index,
+		"archive_sha256": archive_sha256,
+		"install_source": "user",
+		"display_name": "作者策略 %03d" % index,
+		"display_label": "作者策略 %03d · 测试作者 · v1.0.%d" % [index, index],
+		"author_name": "测试作者",
+		"deck_name": "作者卡组 %03d" % index,
+		"summary": "大量策略滚动测试",
+		"status": "metadata_only",
+		"status_detail": "已加载",
+		"stable_ref": {
+			"package_id": package_id,
+			"package_version": "1.0.%d" % index,
+			"archive_sha256": archive_sha256,
+		},
+	}
+
+
 func test_battle_setup_includes_ai_source_and_version_controls() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var ai_source_label := scene.find_child("AISourceLabel", true, false)
@@ -202,7 +235,7 @@ func test_battle_setup_mode_uses_hud_segment_buttons() -> String:
 	var ai_controls_visible := preview_option.visible
 	if author_button != null:
 		author_button.pressed.emit()
-	var selected_after_author := mode_option.selected
+	var selected_after_hidden_author_press := mode_option.selected
 	if two_player_button != null:
 		two_player_button.pressed.emit()
 	var selected_after_two_player := mode_option.selected
@@ -211,14 +244,14 @@ func test_battle_setup_mode_uses_hud_segment_buttons() -> String:
 	return run_checks([
 		assert_true(mode_segment is HBoxContainer, "BattleSetup should expose mode choices as a HUD segment"),
 		assert_false(mode_option.visible, "Legacy mode dropdown should stay hidden behind the HUD segment"),
-		assert_eq(mode_segment.get_child_count() if mode_segment != null else 0, 3, "Mode segment should expose two-player, built-in AI, and author-package choices"),
+		assert_eq(_visible_control_child_count(mode_segment), 2, "AI battle and author packages should share one user-facing AI mode"),
 		assert_eq(two_player_button.text if two_player_button != null else "", mode_option.get_item_text(0), "Two-player mode button should mirror the hidden option label"),
 		assert_eq(ai_button.text if ai_button != null else "", mode_option.get_item_text(1), "AI mode button should mirror the hidden option label"),
-		assert_true(author_button.visible if author_button != null else false, "Author packages need a distinct visible mode so saved author state cannot impersonate built-in AI"),
-		assert_false(author_button.disabled if author_button != null else true, "The author-package mode button must accept input when the feature is enabled"),
+		assert_false(author_button.visible if author_button != null else true, "Author packages should be selected inside the AI opponent picker"),
+		assert_true(author_button.disabled if author_button != null else false, "The hidden legacy button must not change mode"),
 		assert_eq(selected_after_ai, 1, "Pressing AI mode should update the hidden mode option"),
 		assert_true(ai_controls_visible, "Pressing AI mode should refresh AI-only setup controls"),
-		assert_eq(selected_after_author, 2, "Pressing author-package mode must remain distinct from built-in AI"),
+		assert_eq(selected_after_hidden_author_press, 1, "The hidden legacy author button must not switch away from the unified AI surface"),
 		assert_eq(selected_after_two_player, 0, "Pressing two-player mode should update the hidden mode option"),
 		assert_true(two_player_controls_hidden, "Pressing two-player mode should hide AI-only setup controls"),
 	])
@@ -339,7 +372,7 @@ func test_battle_setup_windows_landscape_exposes_released_ns_zoroark_cpg() -> St
 	return result
 
 
-func test_author_mode_remains_distinct_and_can_switch_back_to_builtin_v18_ai() -> String:
+func test_hidden_author_owner_can_switch_back_to_builtin_v18_ai() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var ai_button := scene.find_child("ModeAIButton", true, false) as Button
@@ -353,9 +386,60 @@ func test_author_mode_remains_distinct_and_can_switch_back_to_builtin_v18_ai() -
 	var selected_after_ai_press := mode_option.selected
 
 	var result := run_checks([
-		assert_true(author_visible, "The persisted author-package mode must have its own visible selector"),
-		assert_true(author_enabled, "The author-package selector must not disguise itself as the built-in AI mode"),
+		assert_false(author_visible, "The internal author owner must stay inside the AI battle surface"),
+		assert_false(author_enabled, "The hidden legacy author button must not remain interactive"),
 		assert_eq(selected_after_ai_press, 1, "Pressing AI battle must leave author mode and restore built-in 18.0 selection"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_unified_ai_picker_keeps_builtin_v18_and_large_author_list_reachable() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var player_deck := _make_deck(575716, "玩家测试卡组", "喷火龙ex")
+	var builtin_v18 := _make_deck(800018502, "18.0 N的索罗亚克", "N的索罗亚克ex")
+	var author_records: Array[Dictionary] = []
+	for index: int in 96:
+		author_records.append(_make_author_picker_record(index))
+	mode_option.select(1)
+	scene.set("_deck_list", [player_deck])
+	scene.set("_ai_deck_list", [builtin_v18])
+	scene.set("_author_strategy_records", author_records)
+	scene.call("_apply_deck_option_controls", player_deck, builtin_v18)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "landscape")
+	scene.call("_on_deck_picker_pressed", 1)
+
+	var grid := scene.get("_deck_picker_grid") as GridContainer
+	var picker_scroll := scene.find_child("DeckPickerScroll", true, false) as ScrollContainer
+	var builtin_visible := false
+	var last_author_visible := false
+	for child: Node in grid.get_children() if grid != null else []:
+		if not child is Button:
+			continue
+		var text := (child as Button).text
+		builtin_visible = builtin_visible or text.contains("18.0 N的索罗亚克")
+		last_author_visible = last_author_visible or text.begins_with("作者策略 095")
+
+	var result := run_checks([
+		assert_true(builtin_visible, "Large author catalogs must not crowd the built-in 18.0 opponent out of the unified picker"),
+		assert_true(last_author_visible, "Windows users must be able to scroll to author strategies beyond the old 80-item cutoff"),
+		assert_eq(grid.get_child_count() if grid != null else 0, 97, "The unified picker should render the built-in opponent and all test packages"),
+		assert_true(picker_scroll != null and picker_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED, "The Windows AI opponent picker must keep vertical scrolling enabled"),
+		assert_eq(picker_scroll.custom_minimum_size.y if picker_scroll != null else -1.0, 0.0, "The picker scroll viewport must consume remaining panel height instead of forcing the panel off-screen"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_windows_landscape_battle_setup_scrolls_when_ai_settings_overflow() -> String:
+	var scene := _make_scene_ready()
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), "landscape")
+	var scroll := scene.find_child("LandscapeSetupScroll", true, false) as ScrollContainer
+	var result := run_checks([
+		assert_not_null(scroll, "Windows landscape setup should own an overflow viewport"),
+		assert_true(scroll != null and scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Windows landscape AI settings must remain vertically scrollable below the screen edge"),
+		assert_true(scroll != null and scroll.get_v_scroll_bar().mouse_filter == Control.MOUSE_FILTER_STOP, "The Windows scrollbar must accept mouse dragging"),
 	])
 	scene.queue_free()
 	return result

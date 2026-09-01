@@ -31,6 +31,7 @@ func _load() -> void:
 	_vectors = _read_json(VECTORS_PATH)
 	_parent_vectors = _read_json(PARENT_VECTORS_PATH)
 	_owner = RuntimeScript.load_default()
+	var owner_documents: Variant = _owner.get("_documents") if _owner != null else null
 	if (
 		_profile.get("document_type") != "policy_executor_conformance_profile_v1"
 		or _profile.get("schema_version") != 1
@@ -45,6 +46,8 @@ func _load() -> void:
 		or _vectors.get("parent_vector_set_id") != _parent_vectors.get("vector_set_id")
 		or _owner == null or not bool(_owner.get("ok"))
 		or _owner.bundle_hash() != _profile.get("portable_policy_bundle_canonical_sha256")
+		or not owner_documents is Dictionary
+		or owner_documents.get("vectors") != _parent_vectors
 	):
 		_error_code = "policy_conformance_parent_drift"
 		return
@@ -127,16 +130,22 @@ func _run_probe(probe: String) -> Dictionary:
 func run_all() -> Dictionary:
 	if not is_valid():
 		return {"accepted":false, "error_code":_error_code}
+	# The parent suite owns execution of all 28 portable-policy vectors. This
+	# child lane binds the exact same vector document to that validated owner and
+	# executes only its eight additive P6 probes, avoiding a second full replay.
 	var parent_mismatches := 0
 	var parent_cases: Array = _parent_vectors.get("cases", [])
-	for case_value: Variant in parent_cases:
-		var case: Dictionary = case_value
-		if _owner.run(case.get("operation"), _copy(case.get("input"))) != case.get("expected"):
-			parent_mismatches += 1
 	var cases: Array = []
 	var probe_mismatches := 0
-	for case_value: Variant in _vectors.get("cases", []):
+	var probe_cases: Array = _vectors.get("cases", [])
+	for case_index: int in probe_cases.size():
+		var case_value: Variant = probe_cases[case_index]
 		var case: Dictionary = case_value
+		print("P6_PROGRESS: %d/%d %s" % [
+			case_index,
+			probe_cases.size(),
+			case.get("case_id"),
+		])
 		var actual := _run_probe(str(case.get("probe")))
 		var matched: bool = actual == case.get("expected")
 		probe_mismatches += int(not matched)

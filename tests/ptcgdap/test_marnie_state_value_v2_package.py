@@ -22,6 +22,13 @@ class MarnieStateValueV2PackageTest(unittest.TestCase):
 
         handle = AuthorStrategyPackageLoader().load_bytes(first)
         self.assertEqual(PACKAGE_VERSION, handle.package_version)
+        metadata = handle.to_dict()
+        self.assertEqual("bodao.yongzhe", metadata["author"]["author_id"])
+        self.assertEqual("波导的勇者", metadata["author"]["display_name"])
+        self.assertEqual(
+            "玛俐的礼盒 v5.37.1",
+            metadata["strategy"]["display_name"],
+        )
         config = json.loads(handle.payload_bytes("policy/config.json"))["values"]
         allowed_effects = set(config["turn_program_allowed_effects"].split(","))
         self.assertTrue({"draw", "disruption", "bench"}.issubset(allowed_effects))
@@ -35,6 +42,11 @@ class MarnieStateValueV2PackageTest(unittest.TestCase):
             config["turn_program_conditioned_value_sha256"],
         )
         self.assertIsNone(StateConditionedTransactionValueV2.model_error(model))
+        self.assertEqual(
+            "marnie_state_value_v2_20260901_r18_sparse_holdout",
+            model["training"]["run_id"],
+        )
+        self.assertLessEqual(len(model["interaction_weights_milli"]), 16)
         self.assertEqual(
             model["fallback_value_model"]["feature_weights_milli"]["attack_pressure_milli"],
             config["turn_program_weight_attack_pressure_milli"],

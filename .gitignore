@@ -65,7 +65,7 @@ deploy/ptcgdap-platform/
 # Machine-local Godot test/export mirrors.
 .godot_benchmark_user/
 .godot_route_package_recheck/
-Godot/
+/Godot/
 
 # Local native extension build tree (runtime copies live under bin/ptcgai_ort).
 native/ptcgai_ort_actor/build/

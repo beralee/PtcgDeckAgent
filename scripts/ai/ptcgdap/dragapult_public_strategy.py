@@ -14,7 +14,7 @@ from .source_lock import canonical_json_v1_bytes, load_json_strict
 PROFILE_ID: Final = "ptcgdap-dragapult-python-public-strategy-v1"
 STRATEGY_ID: Final = "ptcgdap.dragapult.18.0.python-public-v1"
 CARD_ID_DOMAIN: Final = "godot_local_card_uid_v1"
-EXPECTED_BUNDLE_SHA256: Final = "ABB35B389AF4CC3FA5BB1415B82406400E7A14B77672614D48DCA32B2EFF5DA1"
+EXPECTED_BUNDLE_SHA256: Final = "49A117CDEF0F0E8D7BDACC1E11E8F09D7DCDACC4D59104D7523B2E7AF8EC2F98"
 EXPECTED_ARTIFACTS: Final = MappingProxyType(
     {
         "schema": ("contracts/ptcgdap/dragapult_python_strategy.schema.json", "DA89A9E3BCCC19F0778BA1B2473A695CB6B57BD98F082446BDF8F9D07A460098"),
@@ -22,7 +22,7 @@ EXPECTED_ARTIFACTS: Final = MappingProxyType(
         "vectors": ("contracts/ptcgdap/dragapult_python_strategy_conformance_vectors.json", "DF9FF21E0C773457669E82E788003DE827A6C7BBDCE2F285F9D06131F7EAF422"),
         "deck_manifest": ("data/ptcgdap/dragapult_python_strategy/deck_manifest_v1.json", "74D3C15E6A81D68F089B34673019CC455B73D06D2B26F02A1722BDB64C9C9EFA"),
         "policy": ("data/ptcgdap/dragapult_python_strategy/policy_v1.json", "BD2621352EEF3CDD0B4A68F1AA81CD10F1FADA7EF290704C1E46B6E2FF2C2AD6"),
-        "opponent": ("data/ptcgdap/dragapult_python_strategy/rules_ai_opponent_v1.json", "4087CD38DCC747872E85F381693D7763C025E64EA726AEDA49960E8D8CB1C55C"),
+        "opponent": ("data/ptcgdap/dragapult_python_strategy/rules_ai_opponent_v1.json", "93B518B0467D979BB3E72204F537669F56BC4D7826A99A26947E43EA8A9956C9"),
     }
 )
 DEFAULT_ROOT: Final = Path(__file__).resolve().parents[3]

@@ -150,6 +150,11 @@ static func run_suites(
 
 			suite_test_count += 1
 			total += 1
+			# Emit the active test immediately. The summary is intentionally buffered,
+			# but operators must still be able to distinguish a slow test from a
+			# stalled runner and stop at the exact owning test.
+			print("RUN: %s.%s" % [suite_name, method_name])
+			var started_at_msec := Time.get_ticks_msec()
 			var runtime_errors := error_gate.take_script_errors()
 			var root_snapshot := _capture_root_children()
 			var orphan_snapshot := _capture_orphan_nodes()
@@ -164,10 +169,20 @@ static func run_suites(
 			if message == "":
 				passed += 1
 				lines.append("PASS %s" % method_name)
+				print("PASS: %s.%s (%d ms)" % [
+					suite_name,
+					method_name,
+					Time.get_ticks_msec() - started_at_msec,
+				])
 			else:
 				failed += 1
 				lines.append("FAIL %s :: %s" % [method_name, message])
-				print("FAIL: %s.%s: %s" % [suite_name, method_name, message])
+				print("FAIL: %s.%s (%d ms): %s" % [
+					suite_name,
+					method_name,
+					Time.get_ticks_msec() - started_at_msec,
+					message,
+				])
 
 		if suite_test_count == 0:
 			total += 1

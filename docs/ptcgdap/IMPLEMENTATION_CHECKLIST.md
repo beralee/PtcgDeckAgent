@@ -14,6 +14,10 @@
 - [x] GDScript is the portable player-runtime baseline.
 - [x] Author `.ptcgai` packages have explicit identity and signature contracts.
 - [x] PC/Android execution has no hosted inference prerequisite.
+- [x] Windows battle setup presents classic AI and author packages through one
+  scrollable AI-opponent picker without collapsing their runtime owners.
+- [x] Large author-package catalogs cannot displace built-in 18.0 opponents
+  from the bounded, searchable picker.
 
 ## Validation
 

@@ -47,6 +47,8 @@ func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameStat
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,
+			"ucis_context_name": "ACTIVATE",
+			"ucis_option_type_name": "YES",
 		}]
 
 	return [build_card_assignment_step(

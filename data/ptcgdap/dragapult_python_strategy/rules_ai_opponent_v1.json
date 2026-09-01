@@ -19,11 +19,11 @@
     },
     {
       "path": "scripts/ai/AIStepResolver.gd",
-      "raw_sha256": "8974448A0CCFADE9DCFEC5ECDAE2E829D207944FEE02D70404F47DEDB3D2AC1D"
+      "raw_sha256": "2D9E1F29D2E5A0DAA4AAC95D853D182012B0846F7FE02C8400CC5540797B574A"
     },
     {
       "path": "scripts/ai/HeadlessMatchBridge.gd",
-      "raw_sha256": "4F4540E627D76433A3EDC33EF03141A3F93EDE0D8931AD90EE743BD66732695F"
+      "raw_sha256": "17FAFF5AA410EC8452521E7A57777993B8E2A2D0CF236496CDD0570E5C17EC92"
     },
     {
       "path": "scripts/ai/AIBenchmarkRunner.gd",
@@ -31,7 +31,7 @@
     },
     {
       "path": "scripts/ai/DeckStrategyRegistry.gd",
-      "raw_sha256": "06383AF1417D98094C70A6A5E9CF18B3D82CE316055E36FF83C29DB8964F4DDD"
+      "raw_sha256": "88D38F966B0703884C6440D7EC8176F73E4337327FFC6012D656D1285BA448E5"
     },
     {
       "path": "scripts/ai/DeckStrategyMiraidon.gd",
@@ -39,7 +39,7 @@
     },
     {
       "path": "scripts/engine/GameStateMachine.gd",
-      "raw_sha256": "00CAFAA111B5E99053FB4405B324F012B8CFFAF8B4D545072F9DEE9B4F105778"
+      "raw_sha256": "338EC3EAFAC21905C958582272BEBCDC76374E059E810A71ED2659970E52EAAC"
     }
   ]
 }

@@ -42,6 +42,16 @@ The exact paired target run was 3/4 and verified both intended current-window co
 
 The package archive is `E836EDE176E084946FBAF785F7F6B4DF98265EBE47FF7AAE6C4EC6AEADE620E6`; the package-local integer model is `1960D67C67DC947E146B72F555E07F6FFF4D3C8860C70276E82C26144F5C6B99`. The machine-readable receipt is `evidence/ptcgdap/godot_v18_marnie_state_value_v2_paired_credit_20260901.json`.
 
+## R18 sparse holdout follow-up
+
+Run `marnie_state_value_v2_20260901_r18_sparse_holdout` closes two leakage and complexity gaps. Paired first-divergence rows are now split by the complete opponent-package, seed, and candidate-seat match identity before fitting. Validation branches are selection-only. The interaction head is chosen only from fit rows by normalized orthogonal residual ranking across fixed 16, 32, and 64 feature budgets; benchmark rows never participate in feature selection.
+
+The selected `sparse_16` model passed 13/13 authored exams, its one fit branch and one disjoint validation branch, and reached 98.25% generic validation preference accuracy with 74.60% validation state-sign accuracy. The interaction head fell from 460 terms to 16 without changing Base authority or the device-local integer runtime.
+
+On fresh paired seeds 4710000–4710009, 5.37.0 scored 9/20 versus the 5.21.0 benchmark champion's 8/20 under identical deck, opponent, seat, seed, and runtime inputs. Nineteen outcomes were unchanged; seed 4710007 seat 0 was the only candidate-only win, with no reverse flip. Both reports were clean with zero policy errors, invalid outputs, fallbacks, and engine rejections. Because 9/20 remained below the predeclared 12/20 continuation gate, the result is a screening lead only: no 100-game promotion confirmation was started and 5.21.0 remains the benchmark champion.
+
+The 5.37.0 archive is `20C669C87A07A00589654FD559DCB1704696F38E1E1398243B9A138E21B2CC8B`; its embedded integer model is `D0D9DBCF348FE70A6ACDBD62CDF6AA10AC86831748FBECC11FB39B51D19B29D5`. The machine-readable receipt is `evidence/ptcgdap/godot_v18_marnie_state_value_v2_sparse_holdout_20260901.json`.
+
 ## Remaining work
 
-The next value step is not another hand-written card exception. It is broader deterministic branch collection or bounded public rollouts that produce first-divergence advantage labels across unseen states. Separately, 460 interaction terms are too slow for a product device gate and require sparse distillation with ranking-conformance tests. Android/A5 and official CABT engine parity remain unsupported.
+The next value step is not another hand-written card exception. It is broader deterministic branch collection or bounded public rollouts that produce first-divergence advantage labels across multiple unseen match groups; two branch groups are enough to verify isolation but not enough for stable promotion. The 16-term sparse head still needs an Android/A5 performance gate. Official CABT engine parity remains unsupported.

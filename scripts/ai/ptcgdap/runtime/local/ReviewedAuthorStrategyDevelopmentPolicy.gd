@@ -7,9 +7,6 @@ extends "res://scripts/ai/ptcgdap/runtime/local/AuthorStrategyDevelopmentPolicy.
 const DevelopmentGateScript = preload(
 	"res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd"
 )
-const ServerCompetitionGateScript = preload(
-	"res://scripts/ai/ptcgdap/host/godot/AuthorStrategyServerCompetitionGate.gd"
-)
 
 
 static func create(
@@ -167,8 +164,8 @@ func audit_snapshot() -> Dictionary:
 
 
 static func _candidate_for_pins(pins: Dictionary, authority_mode: String) -> Dictionary:
-	if authority_mode == ExecutionGateScript.SERVER_COMPETITION_MODE:
-		return ServerCompetitionGateScript.candidate_for_pins(pins)
+	if authority_mode not in [ExecutionGateScript.DEVELOPMENT_MODE, ExecutionGateScript.DEVICE_CANARY_MODE]:
+		return {}
 	return DevelopmentGateScript.candidate_for_pins(pins)
 
 

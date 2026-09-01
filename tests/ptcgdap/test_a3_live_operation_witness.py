@@ -161,8 +161,7 @@ class A3LiveOperationWitnessTests(unittest.TestCase):
             type(value) is str and len(value) == 64
             for value in ledger["source_identities"].values()
         ))
-        source_paths = {
-            "qualification_generator": "tools/ptcgdap/build_a3_whole_battle_operation_qualification.py",
+        public_source_paths = {
             "live_witness_owner": "scripts/ai/ptcgdap/a3_live_operation_witness.py",
             "operation_contract": "scripts/ai/ptcgdap/a3_operation_contract.py",
             "differential_comparator": "scripts/ai/ptcgdap/a3_differential.py",
@@ -176,20 +175,28 @@ class A3LiveOperationWitnessTests(unittest.TestCase):
                 "AuthorStrategyEngineActionExecutor.gd"
             ),
             "godot_headless_bridge": "scripts/ai/HeadlessMatchBridge.gd",
-            "official_adapter": "tools/ptcgdap/private_official_cabt_bridge.py",
-            "probe_recipe_owner": "tools/ptcgdap/probe_a3_live_trace.py",
             "ucis_registry": "contracts/ptcgdap/ucis_registry_v1.json",
             "ucis_card_catalog": "contracts/ptcgdap/ucis_card_catalog_v1.json",
             "ucis_runtime_attestation": (
                 "contracts/ptcgdap/ucis_runtime_attestation_v1.json"
             ),
         }
-        for source_id, relative_path in source_paths.items():
+        for source_id, relative_path in public_source_paths.items():
             self.assertEqual(
                 ledger["source_identities"][source_id],
                 hashlib.sha256((root / relative_path).read_bytes()).hexdigest().upper(),
                 source_id,
             )
+        private_source_paths = {
+            "qualification_generator": "tools/ptcgdap/build_a3_whole_battle_operation_qualification.py",
+            "official_adapter": "tools/ptcgdap/private_official_cabt_bridge.py",
+            "probe_recipe_owner": "tools/ptcgdap/probe_a3_live_trace.py",
+        }
+        self.assertTrue(all(
+            source_id in ledger["source_identities"]
+            and not (root / relative_path).exists()
+            for source_id, relative_path in private_source_paths.items()
+        ))
         projected = dict(ledger)
         expected_hash = projected.pop("evidence_sha256")
         self.assertEqual(expected_hash, _hash(projected))

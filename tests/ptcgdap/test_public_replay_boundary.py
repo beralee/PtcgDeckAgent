@@ -35,18 +35,8 @@ class PublicReplayBoundaryTests(unittest.TestCase):
         for path in expected:
             self.assertTrue(path.is_file(), path)
 
-    def test_expected_isolated_online_service_modules_exist(self) -> None:
-        for path in (
-            ROOT / "services/__init__.py",
-            SERVICE_ROOT / "__init__.py",
-            SERVICE_ROOT / "store.py",
-            SERVICE_ROOT / "http_api.py",
-            SERVICE_ROOT / "__main__.py",
-            SERVICE_ROOT / "requirements.txt",
-            SERVICE_ROOT / "Dockerfile",
-            SERVICE_ROOT / "README.md",
-        ):
-            self.assertTrue(path.is_file(), path)
+    def test_online_service_implementation_is_private(self) -> None:
+        self.assertFalse(SERVICE_ROOT.exists())
 
     def test_replay_slice_is_additive_and_not_wired_into_existing_core_or_ui(self) -> None:
         forbidden_consumers = [
@@ -84,17 +74,11 @@ class PublicReplayBoundaryTests(unittest.TestCase):
         for token in forbidden:
             self.assertNotIn(token, sources, token)
 
-    def test_online_transport_cannot_become_ai_or_official_result_authority(self) -> None:
-        service = "\n".join(
+    def test_public_transport_cannot_become_ai_or_result_authority(self) -> None:
+        transport = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in SERVICE_ROOT.rglob("*.py")
+            for path in REPLAY_ROOT.rglob("*.gd")
         )
-        replay_core = "\n".join(
-            (SERVICE_ROOT / name).read_text(encoding="utf-8")
-            for name in ("contract.py", "store.py")
-        )
-        platform = (SERVICE_ROOT / "platform_store.py").read_text(encoding="utf-8")
-        uploader = (REPLAY_ROOT / "PublicReplayUploadClient.gd").read_text(encoding="utf-8")
         for forbidden in (
             "AIOpponent",
             "PtcgDAPAuthorMatchHost",
@@ -103,20 +87,14 @@ class PublicReplayBoundaryTests(unittest.TestCase):
             "ActionTicket",
             "BattleScene",
         ):
-            self.assertNotIn(forbidden, service + uploader)
-        self.assertIn('COMMUNITY_LANE = "community_challenge"', service)
-        self.assertNotIn('COMMUNITY_LANE = "official_verified"', service)
-        self.assertNotIn("materialize_summary", service)
-        # D072 composes a separate non-authoritative challenge-intent plane in
-        # the same process. The D071 replay core itself must remain read-only,
-        # while the new plane must explicitly deny runtime authority.
-        self.assertNotIn("player_start_allowed", replay_core)
-        self.assertIn('"runtime_authority": False', platform)
-        self.assertIn('"authoritative": False', platform)
-        self.assertIn('"grants": []', platform)
-        self.assertNotIn("user://", uploader)
-        self.assertNotIn("FileAccess.WRITE", uploader)
-        self.assertNotIn("OS.execute", uploader)
+            self.assertNotIn(forbidden, transport)
+        # Replay download and capture now deliberately use the sandboxed
+        # user:// store.  Storage is presentation data and grants no match,
+        # policy or result authority; the authority tokens above remain the
+        # owning boundary.
+        self.assertIn("user://", transport)
+        self.assertNotIn('globalize_path("res://', transport)
+        self.assertNotIn("OS.execute", transport)
 
     def test_wp0_evidence_json_remains_parseable(self) -> None:
         for name in ("manifest.json", "contract_hashes.json", "test_results.json"):

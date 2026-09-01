@@ -56,7 +56,6 @@ PROTOCOL_FILES = (
     "tools/ptcgdap/a3_godot_headless_bridge.gd",
     "tools/ptcgdap/godot_a3_jsonline_bridge.py",
     "tools/ptcgdap/build_a3_operation_qualification.py",
-    "tools/ptcgdap/private_official_cabt_bridge.py",
 )
 
 

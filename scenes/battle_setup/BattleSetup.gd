@@ -65,7 +65,7 @@ const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
 const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const DECK_PICKER_ALL := "all"
 const DECK_PICKER_RECENT := "recent"
-const DECK_PICKER_LIMIT := 80
+const DECK_PICKER_LIMIT := 512
 const DECK_PICKER_SEARCH_DEBOUNCE_SECONDS := 0.08
 const DECK_PICKER_TOUCH_BOUND_META := "_battle_setup_deck_picker_touch_bound"
 const BGM_PICKER_OVERLAY_NAME := "BattleMusicPickerOverlay"
@@ -675,14 +675,13 @@ func _apply_landscape_setup_scroll_metrics(scroll: ScrollContainer, content_colu
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size = Vector2.ZERO
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	HudThemeScript.style_scroll_container(scroll, "touch")
+	NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 	var vbar := scroll.get_v_scroll_bar()
 	if vbar != null:
-		vbar.visible = false
-		vbar.modulate.a = 0.0
-		vbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vbar.custom_minimum_size = Vector2.ZERO
+		vbar.modulate.a = 1.0
+		vbar.mouse_filter = Control.MOUSE_FILTER_STOP
 	content_columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_columns.custom_minimum_size = Vector2.ZERO
@@ -1600,11 +1599,10 @@ func _setup_mode_options() -> void:
 	}
 	var author_button := %ModeAuthorStrategyButton as Button
 	if author_button != null:
-		var author_mode_enabled := AuthorStrategyFeatureGateScript.is_enabled()
-		author_button.visible = author_mode_enabled
-		author_button.disabled = not author_mode_enabled
-		if author_mode_enabled:
-			_mode_segment_buttons[2] = author_button
+		# Runtime mode 2 remains an internal owner boundary. D116 intentionally
+		# exposes it through the shared AI-opponent picker, not a third mode tab.
+		author_button.visible = false
+		author_button.disabled = true
 	for option_index_variant: Variant in _mode_segment_buttons.keys():
 		var option_index := int(option_index_variant)
 		var button := _mode_segment_buttons[option_index] as Button
@@ -1640,12 +1638,13 @@ func _sync_mode_segment_buttons() -> void:
 	var mode_option := _find_battle_setup_option("ModeOption")
 	if mode_option == null:
 		return
+	var surface_option_index := 1 if mode_option.selected == 2 else mode_option.selected
 	for option_index_variant: Variant in _mode_segment_buttons.keys():
 		var option_index := int(option_index_variant)
 		var button := _mode_segment_buttons[option_index] as Button
 		if button == null:
 			continue
-		var active: bool = option_index == mode_option.selected
+		var active: bool = option_index == surface_option_index
 		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
@@ -1905,6 +1904,11 @@ func _refresh_author_strategy_mode_visibility() -> void:
 	var panel := get_node_or_null("%AuthorStrategyPanel") as Control
 	if panel != null:
 		panel.visible = is_author
+	var package_option := get_node_or_null("%AuthorStrategyPackageOption") as OptionButton
+	if package_option != null:
+		# Selection is owned by the unified AI-card/deck picker. Keep this hidden
+		# OptionButton only as the stable-ref backing control.
+		package_option.visible = false
 	var ai_help := find_child("AiHelp", true, false) as Control
 	if ai_help != null:
 		ai_help.visible = not is_author
@@ -3999,9 +4003,11 @@ func _ensure_deck_picker_overlay() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "DeckPickerScroll"
-	scroll.custom_minimum_size = Vector2(0, 430)
+	scroll.custom_minimum_size = Vector2.ZERO
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	HudThemeScript.style_scroll_container(scroll)
 	root.add_child(scroll)
 
@@ -4104,7 +4110,12 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
 		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 15)) if portrait else 14)
 	var scroll := _deck_picker_panel.find_child("DeckPickerScroll", true, false) as ScrollContainer
 	if scroll != null:
-		scroll.custom_minimum_size.y = float(context.get("list_item_min_height", 90.0)) * (3.2 if portrait else 4.8)
+		# The panel owns the height. A fixed four/five-row minimum made the VBox
+		# taller than a 720p Windows viewport and left the bottom choices outside
+		# the actual scroll viewport.
+		scroll.custom_minimum_size.y = 0.0
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		HudThemeScript.style_scroll_container(scroll, "auto")
 		if portrait:
 			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
@@ -4201,6 +4212,30 @@ func _refresh_deck_picker() -> void:
 	if _is_author_strategy_mode() and _deck_picker_slot_index == 1:
 		selected_id = -1
 	var count := 0
+	# Built-in decks are the compatibility baseline and must never be crowded
+	# out by a large package catalog. Packages follow in the same scroll view.
+	for deck: DeckData in decks:
+		if count >= DECK_PICKER_LIMIT:
+			break
+		var is_selected := deck.id == selected_id
+		var button := Button.new()
+		button.text = _deck_selection_display_name(deck, _deck_picker_slot_index)
+		button.tooltip_text = _deck_picker_card_tooltip(deck)
+		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 76.0)) if portrait else 72.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", DECK_PICKER_LIST_FONT_SIZE)) if portrait else DECK_PICKER_LIST_FONT_SIZE)
+		button.add_theme_color_override("font_color", HUD_TEXT)
+		button.add_theme_color_override("font_hover_color", Color.WHITE)
+		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
+		button.add_theme_stylebox_override("hover", _deck_picker_card_style(is_selected, true))
+		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
+		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		button.set_meta("deck_id", deck.id)
+		button.pressed.connect(_on_deck_picker_deck_selected.bind(_deck_picker_slot_index, deck.id))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+		_deck_picker_grid.add_child(button)
+		count += 1
 	for record: Dictionary in author_records:
 		if count >= DECK_PICKER_LIMIT:
 			break
@@ -4228,27 +4263,6 @@ func _refresh_deck_picker() -> void:
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		button.set_meta("author_strategy_ref", record.get("stable_ref", {}).duplicate(true))
 		button.pressed.connect(_on_deck_picker_author_strategy_selected.bind(record.get("stable_ref", {}).duplicate(true)))
-		NonBattleTouchBridgeScript.bind_button_touch(button)
-		_deck_picker_grid.add_child(button)
-		count += 1
-	for deck: DeckData in decks:
-		if count >= DECK_PICKER_LIMIT:
-			break
-		var is_selected := deck.id == selected_id
-		var button := Button.new()
-		button.text = _deck_selection_display_name(deck, _deck_picker_slot_index)
-		button.tooltip_text = _deck_picker_card_tooltip(deck)
-		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 76.0)) if portrait else 72.0)
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.clip_text = true
-		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", DECK_PICKER_LIST_FONT_SIZE)) if portrait else DECK_PICKER_LIST_FONT_SIZE)
-		button.add_theme_color_override("font_color", HUD_TEXT)
-		button.add_theme_color_override("font_hover_color", Color.WHITE)
-		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
-		button.add_theme_stylebox_override("hover", _deck_picker_card_style(is_selected, true))
-		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
-		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-		button.pressed.connect(_on_deck_picker_deck_selected.bind(_deck_picker_slot_index, deck.id))
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 		_deck_picker_grid.add_child(button)
 		count += 1

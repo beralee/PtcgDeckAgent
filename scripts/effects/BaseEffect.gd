@@ -1019,7 +1019,10 @@ func should_preview_empty_search_deck(resolved_context: Dictionary) -> bool:
 	var selected_raw: Array = resolved_context.get("empty_search_resolution", [])
 	if selected_raw.is_empty():
 		return false
-	return selected_raw[0] == false or str(selected_raw[0]) == EMPTY_SEARCH_VIEW_DECK
+	var selected: Variant = selected_raw[0]
+	if typeof(selected) == TYPE_BOOL:
+		return not bool(selected)
+	return str(selected) == EMPTY_SEARCH_VIEW_DECK
 
 
 func has_resolved_non_internal_interaction_step(

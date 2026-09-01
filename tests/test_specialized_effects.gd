@@ -610,6 +610,31 @@ func test_electric_generator_attaches_selected_energy_to_selected_target() -> St
 	])
 
 
+func test_electric_generator_no_energy_reveal_compiles_as_registered_continue_choice() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench[0].get_card_data().energy_type = "L"
+	player.deck.clear()
+	for index: int in 5:
+		player.deck.append(CardInstance.create(
+			_make_basic_pokemon_data("非雷能量牌 %d" % index, "C"), 0
+		))
+	var effect := EffectElectricGenerator.new()
+	var steps: Array[Dictionary] = effect.get_interaction_steps(
+		CardInstance.create(_make_trainer_data("电气发生器"), 0),
+		state
+	)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var ucis: Dictionary = step.get("__ucis", {})
+	return run_checks([
+		assert_eq(steps.size(), 1, "翻开的五张牌没有基础雷能量时仍应产生可完成的交互"),
+		assert_eq(step.get("id"), "reveal_only"),
+		assert_eq(ucis.get("primitive"), "ChooseBoolean"),
+		assert_eq(ucis.get("context_raw"), 43),
+		assert_eq(effect.get_ucis_last_error(), ""),
+	])
+
+
 func test_electric_generator_can_split_energy_between_two_benched_targets() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -1299,8 +1324,11 @@ func test_rare_candy_rejects_unrelated_evolution_target() -> String:
 	invalid_basic.turn_played = 0
 
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
-	var target_step: Dictionary = steps[1] if steps.size() > 1 else {}
-	var target_items: Array = target_step.get("items", [])
+	var pair_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var target_items: Array = []
+	for value: Variant in pair_items:
+		if value is Dictionary and (value as Dictionary).get("card") == stage2:
+			target_items.append((value as Dictionary).get("target_slot"))
 
 	effect.execute(card, [{
 		"stage2_card": [stage2],
@@ -1351,8 +1379,13 @@ func test_rare_candy_accepts_greninja_ex_without_frogadier_in_cache() -> String:
 	player.active_pokemon.turn_played = 0
 
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
-	var stage2_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
-	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var pair_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var has_greninja_pair := false
+	for value: Variant in pair_items:
+		if value is Dictionary \
+			and (value as Dictionary).get("card") == greninja \
+			and (value as Dictionary).get("target_slot") == player.active_pokemon:
+			has_greninja_pair = true
 	var can_execute: bool = effect.can_execute(card, state)
 	effect.execute(card, [], state)
 
@@ -1360,8 +1393,7 @@ func test_rare_candy_accepts_greninja_ex_without_frogadier_in_cache() -> String:
 		assert_not_null(greninja_cd, "CSV7C_123 should exist in the card database"),
 		assert_not_null(froakie_cd, "CSV2C_028 should exist in the card database"),
 		assert_true(can_execute, "Rare Candy should support Greninja ex even when Frogadier is missing from the local cache"),
-		assert_true(greninja in stage2_items, "Greninja ex should appear in the Rare Candy Stage 2 selection list"),
-		assert_true(player.active_pokemon in target_items, "Froakie should appear in the Rare Candy target list for Greninja ex"),
+		assert_true(has_greninja_pair, "Greninja ex and Froakie should appear as one legal Rare Candy pair"),
 		assert_eq(player.active_pokemon.get_pokemon_name(), greninja_cd.name, "Rare Candy should evolve Froakie directly into Greninja ex"),
 	])
 
@@ -1386,15 +1418,19 @@ func test_rare_candy_accepts_baxcalibur_without_arctibax_reference() -> String:
 	player.active_pokemon.turn_played = 0
 
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
-	var stage2_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
-	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var pair_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var has_baxcalibur_pair := false
+	for value: Variant in pair_items:
+		if value is Dictionary \
+			and (value as Dictionary).get("card") == baxcalibur \
+			and (value as Dictionary).get("target_slot") == player.active_pokemon:
+			has_baxcalibur_pair = true
 	var can_execute: bool = effect.can_execute(card, state)
 	effect.execute(card, [], state)
 
 	return run_checks([
 		assert_true(can_execute, "Rare Candy should support Baxcalibur even when Arctibax is missing from local references"),
-		assert_true(baxcalibur in stage2_items, "Baxcalibur should appear in the Rare Candy Stage 2 selection list"),
-		assert_true(player.active_pokemon in target_items, "Frigibax should appear in the Rare Candy target list for Baxcalibur"),
+		assert_true(has_baxcalibur_pair, "Baxcalibur and Frigibax should appear as one legal Rare Candy pair"),
 		assert_eq(player.active_pokemon.get_pokemon_name(), "戟脊龙", "Rare Candy should evolve Frigibax directly into Baxcalibur"),
 	])
 
@@ -1414,8 +1450,13 @@ func test_rare_candy_accepts_blaziken_ex_from_torchic_without_combusken_referenc
 	player.active_pokemon.turn_played = 0
 
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
-	var stage2_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
-	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var pair_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var has_blaziken_pair := false
+	for value: Variant in pair_items:
+		if value is Dictionary \
+			and (value as Dictionary).get("card") == blaziken \
+			and (value as Dictionary).get("target_slot") == player.active_pokemon:
+			has_blaziken_pair = true
 	var can_execute: bool = effect.can_execute(card, state)
 	effect.execute(card, [{
 		"stage2_card": [blaziken],
@@ -1427,8 +1468,7 @@ func test_rare_candy_accepts_blaziken_ex_from_torchic_without_combusken_referenc
 		assert_not_null(blaziken_cd, "CSV7C_038 Blaziken ex should exist in the card database"),
 		assert_eq(str(blaziken_cd.evolves_from), "力壮鸡", "Blaziken ex metadata should point to Combusken as the Stage 1"),
 		assert_true(can_execute, "Rare Candy should support Blaziken ex even when Combusken is missing from local references"),
-		assert_true(blaziken in stage2_items, "Blaziken ex should appear in the Rare Candy Stage 2 selection list"),
-		assert_true(player.active_pokemon in target_items, "Torchic should appear in the Rare Candy target list for Blaziken ex"),
+		assert_true(has_blaziken_pair, "Blaziken ex and Torchic should appear as one legal Rare Candy pair"),
 		assert_eq(player.active_pokemon.get_pokemon_name(), blaziken_cd.name, "Rare Candy should evolve Torchic directly into Blaziken ex"),
 	])
 
