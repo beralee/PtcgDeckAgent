@@ -1,13 +1,17 @@
-﻿repository:
-  name: PtcgDeckDojo
-  description: "Godot-based PTCG practice sandbox for deck testing, rules validation, and card-effect simulation."
+repository:
+  name: PtcgDeckAgent
+  description: "Open PTCG Agent arena for building, battling, benchmarking, and distributing reproducible game-playing strategies."
   has_issues: true
-  has_projects: false
+  has_projects: true
   has_wiki: false
   topics:
     - ptcg
     - pokemon-tcg
+    - game-ai
+    - game-agent
+    - reinforcement-learning
+    - agent-benchmark
     - godot
     - gdscript
     - rules-engine
-    - deck-testing
+    - strategy-game
