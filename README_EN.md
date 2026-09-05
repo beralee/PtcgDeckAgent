@@ -2,73 +2,87 @@
 
 <p align="center">
   <a href="https://ptcg.skillserver.cn/">
-    <img src="https://ptcg.skillserver.cn/dist/assets/dojo-home-design.png" alt="PTCG Deck Agent - PTCG AI Agent Strategy Platform" width="100%" />
+    <img src="https://ptcg.skillserver.cn/dist/assets/dojo-home-design.png" alt="PTCG Deck Agent - Open PTCG Agent Arena" width="100%" />
   </a>
 </p>
 
 <p align="center">
-  <strong>An open PTCG AI Agent strategy platform: build strategies, validate battles, compete on the AI ladder, and bring great opponents to every player's local client.</strong>
+  <strong>Build a PTCG AI. Battle other AIs. Benchmark every decision. Share it with players.</strong>
 </p>
 
 <p align="center">
-  <a href="https://ptcg.skillserver.cn/">Website</a>
+  An open PTCG Agent arena and local practice client: <strong>build → battle → benchmark → publish → improve</strong>.
+</p>
+
+<p align="center">
+  <a href="https://ptcg.skillserver.cn/">Player Client</a>
   ·
-  <a href="https://ptcg.skillserver.cn/dist/competition.html">AI Strategy Ladder</a>
+  <a href="https://ptcg.skillserver.cn/dist/competition.html">AI Ladder</a>
+  ·
+  <a href="https://github.com/beralee/ptcg-strategy-forge">Strategy Forge</a>
   ·
   <a href="https://ptcg.skillserver.cn/dist/developers.html">Developer Center</a>
   ·
-  <a href="https://github.com/beralee/ptcg-strategy-forge">PTCG Strategy Forge</a>
-  ·
   <a href="README.md">中文</a>
   ·
-  <a href="docs/README.md">Project Docs</a>
+  <a href="docs/README.md">Docs</a>
 </p>
 
-## A PTCG AI Agent Strategy Platform
+## Build. Battle. Benchmark. Share.
 
-`PTCG Deck Agent` has grown from a local practice client into a PTCG AI Agent strategy platform for developers and players.
+`PTCG Deck Agent` started as a local PTCG practice client. It is now evolving into an **Open PTCG Agent Arena** for developers, researchers, and players.
 
-- **For developers**: use [PTCG Strategy Forge](https://github.com/beralee/ptcg-strategy-forge) to create rule-based strategies or import frozen models, test them against public-information scenarios, build and validate them deterministically, then sign and upload them through the [Developer Center](https://ptcg.skillserver.cn/dist/developers.html) to enter the continuously running AI strategy ladder.
-- **For players**: download the client and compatible `.ptcgai` packages, choose built-in or community strategies from one AI-opponent picker, battle them locally, review games, and use the [strategy rankings](https://ptcg.skillserver.cn/dist/competition.html) to find the strongest or most useful practice opponent.
-- **For researchers and contributors**: study rule policies, imitation learning, reinforcement learning, bounded search, and multi-turn planning against one public policy contract with reproducible battles, decision traces, and regression tests.
+This is not just “a game with an LLM attached.” The project is trying to solve a harder systems problem:
 
-The public strategy boundary stays deliberately small:
+> **How can independently built PTCG agents compete under the same public-information boundary, the same legal-action contract, and reproducible battle conditions—and then be distributed safely to real players?**
+
+| If you are a... | You can... |
+| --- | --- |
+| **Agent developer** | Use [PTCG Strategy Forge](https://github.com/beralee/ptcg-strategy-forge) to author rule policies or import frozen models, validate them, build `.ptcgai`, and publish qualified releases |
+| **Game AI / RL researcher** | Compare rules, BC, RL, bounded search, and planning over shared public observations, decision traces, fixed scenarios, and paired benchmarks |
+| **PTCG player** | Challenge built-in and community AIs locally, review failures, and feed useful games back to strategy authors |
+| **Rules / engine contributor** | Improve rules correctness, card effects, cross-runtime conformance, regression coverage, and platform compatibility |
+
+## A deliberately small Agent interface
+
+The public strategy boundary stays simple:
 
 ```text
 agent(raw_observation) -> list[int]
 ```
 
-A strategy may return only indexes into the current legal selection window. Every accepted selection requires a fresh observation and a fresh binding. Hidden opponent cards, deck order, face-down prizes, private RNG state, and mutable engine objects never enter policy input.
+An Agent may return only indexes into the **current legal selection window**. Once a selection is accepted, that window expires; the Agent must observe and bind again before its next decision.
 
-## From an Idea to the AI Ladder
+That small API sits behind a stricter execution model:
+
+- **Public information only** — hidden opponent cards, deck order, face-down prizes, private RNG, and mutable engine objects do not enter policy input.
+- **Fresh-window decisions** — a policy never keeps long-lived engine handles or stale option indexes across accepted selections.
+- **Data-only distribution** — `.ptcgai` packages cannot ship arbitrary Python, GDScript, native libraries, or network-capable executable code.
+- **Device-local execution** — community strategy battles can run directly inside the Godot client without an operator-hosted inference service.
+- **Reproducible evidence** — fixed scenarios, decision traces, replays, cross-runtime conformance, and benchmarks are used to find the first bad decision, not just the final win rate.
+
+That lets rule systems, imitation learning, reinforcement learning, bounded search, and multi-turn planning compete inside one shared arena instead of living in isolated demos.
+
+## From a deck idea to the AI ladder
 
 ```text
-Register and receive a developer ID
-  -> Create a workspace with PTCG Strategy Forge
-  -> Author rules or import a frozen model
-  -> Run scenarios, strict validation, and deterministic builds
-  -> Sign the .ptcgai package locally with your private key
-  -> Upload it to the Developer Center for qualification
-  -> Enter the AI ladder against built-in and community strategies
-  -> Let players download, challenge, review, and improve it
+Understand the deck and its win routes
+  → create a Strategy Forge workspace
+  → author rules or import a frozen model
+  → iterate RED → GREEN on public-window scenarios
+  → check / build a deterministic .ptcgai
+  → sign locally and upload to the Developer Center
+  → pass independent qualification and enter the AI ladder
+  → improve from real battles, replays, traces, and player feedback
 ```
 
-Development validation, platform qualification, ladder performance, and player execution are separate gates. Passing local development checks does not by itself prove platform qualification, official CABT engine parity, or release approval for every device.
+Development validation, platform qualification, ladder performance, Godot rules witnessing, official CABT engine parity, and release approval are separate evidence levels. The project claims only scopes that have explicit evidence.
 
-## Developers: Build Your PTCG AI
+## Build your first PTCG Agent
 
-### Why participate
+Agent authoring happens in the separate [PTCG Strategy Forge](https://github.com/beralee/ptcg-strategy-forge) repository, so you do not need to become a Godot or rules-engine contributor first.
 
-- **One strategy contract**: every strategy sees a public observation and the current legal options; none can directly manipulate the rules engine.
-- **A complete Forge toolchain**: workspace scaffolding, rule/model modes, a supported-card snapshot, scenario checks, deterministic builds, strict validation, and public-window simulation.
-- **Reproducible evidence**: decision traces, replays, fixed scenarios, and benchmarks help locate the first bad decision instead of reporting only final win rate.
-- **A continuous AI ladder**: releases compete against built-in and developer-authored strategies under stable identities, with strategy and author rankings.
-- **Real player feedback**: players can load compatible strategies and battle them locally, so successful ideas do not remain isolated experiments.
-- **A safe data-only package**: `.ptcgai` cannot contain arbitrary Python, GDScript, native libraries, or network-capable executable code.
-
-### Quick start
-
-The current author toolchain targets Windows, PowerShell 7, and Python 3.13. First register in the [Developer Center](https://ptcg.skillserver.cn/dist/developers.html) and copy your complete developer ID, then install Forge:
+The currently validated authoring environment is **Windows + PowerShell 7 + Python 3.13**:
 
 ```powershell
 git clone https://github.com/beralee/ptcg-strategy-forge.git
@@ -77,36 +91,68 @@ cd ptcg-strategy-forge
 .\forge.ps1 doctor
 ```
 
-Then follow the public guide to create a workspace, author a strategy, check supported cards, run scenarios, build, register a public key, sign locally, and upload:
+Creating a publishable author workspace still requires a stable developer identity from the [Developer Center](https://ptcg.skillserver.cn/dist/developers.html). Private signing keys remain on the developer's machine; the platform records only the public key.
 
-- [From registration to upload: complete developer guide](https://ptcg.skillserver.cn/dist/developer-guide.html)
-- [Developer Center: accounts, signing keys, and uploads](https://ptcg.skillserver.cn/dist/developers.html)
-- [PTCG Strategy Forge source and documentation](https://github.com/beralee/ptcg-strategy-forge)
-- [Repository author-strategy developer guide](docs/ptcgdap/10-author-strategy-developer-guide.md)
+The day-to-day loop is intentionally short:
 
-Your private key must remain on your own computer; the Developer Center registers only the public key. Never commit private keys, API keys, or other credentials to Git, paste them into the website, or place them in a strategy package.
+```text
+inspect → scenario → check → build → local battle → trace → improve
+```
 
-## Players: Challenge Community AI
+Most authors work with three artifacts:
+
+1. **Strategy Blueprint** — how the deck wins, attack tempo, resource ownership, and replanning conditions;
+2. **Data-only policy / frozen actor** — the executable part of the strategy under the current public contract;
+3. **Scenarios & traces** — positive cases, negative cases, option reordering, and real failed games that lock expected behavior.
+
+Start here:
+
+- [PTCG Strategy Forge](https://github.com/beralee/ptcg-strategy-forge)
+- [Forge Quickstart](https://github.com/beralee/ptcg-strategy-forge/blob/main/docs/01-QUICKSTART.md)
+- [Registration-to-upload guide](https://ptcg.skillserver.cn/dist/developer-guide.html)
+- [Repository author-strategy guide](docs/ptcgdap/10-author-strategy-developer-guide.md)
+
+## Why this is more than another PTCG simulator
+
+### 1. Agents do not own the rules engine
+
+Policies do not manipulate BattleScene nodes, mutable engine objects, or hidden state. The engine owns legality and state progression; the Agent proposes selections only inside the current public window.
+
+### 2. A Base layer protects the safety floor
+
+Legality, mandatory / terminal handling, cardinality, veto, transaction safety, fresh rebinding, and deterministic fallback remain platform-owned. A strategy may become smarter, but it does not become more privileged.
+
+### 3. Python development and the GDScript player runtime must agree
+
+Python is used for Forge and reference validation. GDScript is the portable device-local execution baseline. Shared contracts, vectors, and differential tests are used to catch semantic drift.
+
+### 4. A benchmark should explain more than a win rate
+
+The project encourages evidence such as:
+
+- fixed seeds and seat swaps
+- first-divergence decision traces
+- scenario regression and option reorder
+- policy success / rejection / fallback audit
+- known gaps and rollback identity
+
+A strategy improvement should be able to answer: **which public fact changed which decision, why, and whether the new version actually improved the game outcome.**
+
+Public implementation status and evidence:
+
+- [PtcgDAP public status](docs/ptcgdap/STATUS.md)
+- [Competitive Author Policy v2](docs/ptcgdap/30-competitive-author-policy-v2.md)
+- [Validation / promotion / rollback](docs/ptcgdap/05-validation-promotion-and-rollback.md)
+
+## Players: challenge community AI
 
 1. Get the client from the [download page](https://ptcg.skillserver.cn/dist/index.html#download).
-2. Compare rankings, recent performance, and authors on the [AI Strategy Ladder](https://ptcg.skillserver.cn/dist/competition.html).
-3. Choose a built-in AI or load a compatible `.ptcgai` package through the in-game AI Strategy Center.
-4. Pick the opponent from the unified AI deck selector and start a device-local battle.
-5. Use battle logs, replays, and reviews to find the strongest strategy and help authors improve it.
+2. Browse strategy rankings, recent performance, and authors on the [AI Ladder](https://ptcg.skillserver.cn/dist/competition.html).
+3. Choose a built-in AI or load a compatible `.ptcgai` through the in-game Strategy Center.
+4. Start a device-local battle from the unified AI opponent picker.
+5. Use logs, replays, and reviews to find useful practice opponents and feed valuable failures back to strategy authors.
 
-The aligned strategy-battle decision path runs on the player's device and does not require an operator-hosted inference service. Optional LLM features such as deck coaching and in-battle Q&A are isolated from local strategy execution and may require a separately configured online model service.
-
-## Platform Capabilities
-
-- **Author strategy packages**: discover, validate, install, and load `.ptcgai` under stable release identities that bind author, strategy, deck, version, and content hash.
-- **AI strategy ladder**: continuous rankings for built-in and developer strategies, including match counts, recent performance, and author standings.
-- **Device-local execution**: restricted strategy IR and a local executor run inside the Godot client; packages cannot call engine methods directly.
-- **Public-information firewall**: policy input is allow-listed; hidden cards, private RNG, search credentials, and mutable engine objects remain isolated.
-- **Current-window safety**: output is only current `select.option` indexes; old windows, indexes, and authority expire immediately after selection.
-- **Base Graph protection**: legality, mandatory and terminal handling, transaction safety, veto, and deterministic fallback remain platform-owned.
-- **Cross-runtime conformance**: Python is used for development and reference validation, while GDScript is the portable player-runtime baseline; shared contracts and vectors keep them aligned.
-- **Replay-driven iteration**: battle logs, public replays, decision traces, scenario snapshots, and benchmarks support first-divergence diagnosis and regression tests.
-- **Practice and tournament tools**: regular AI battles, local two-player play, deck management, AI deck coaching, Swiss tournaments, and review workflows remain available.
+Optional LLM features such as deck coaching and battle Q&A are isolated from local strategy execution and may require a separately configured online model service.
 
 ## Preview
 
@@ -120,10 +166,10 @@ The aligned strategy-battle decision path runs on the player's device and does n
   <img src="https://ptcg.skillserver.cn/dist/assets/demo3.webp" alt="Battle overview" width="49%" />
 </p>
 
-## Technical Layout
+## Technical layout
 
 ```text
-contracts/   CABT, public-observation, package, executor, and conformance contracts
+contracts/   CABT, public-observation, strategy-package, executor, and conformance contracts
 data/        Bundled decks, cards, images, and author strategy packages
 docs/        Architecture, developer guides, strategy iteration, and validation records
 scenes/      Godot scenes, Strategy Center, battle setup, and replay UI
@@ -134,27 +180,26 @@ tools/       Strategy-package, validation, evidence, and developer utilities
 
 Key boundaries:
 
-1. `scripts/engine/` owns rules, select windows, state transitions, and effect scheduling.
+1. `scripts/engine/` owns rules, legal selection windows, state transitions, and effect scheduling.
 2. `scripts/ai/ptcgdap/` owns public observations, strategy packages, Hosts, local execution, conformance, and traces.
 3. `scripts/effects/` implements card, attack, ability, Trainer, Tool, and Stadium effects.
-4. `scenes/battle_setup/` and the Strategy Center let players choose classic AI or author strategies while keeping their runtime owners separate.
+4. `scenes/battle_setup/` and the Strategy Center provide one player-facing entry while keeping classic-AI and author-strategy runtime owners separate.
 5. `scripts/tournament/` implements local Swiss tournament flow.
 
-## Running Locally
+## Run the local client
 
 ### Requirements
 
 - Godot `4.6.x`
 - Windows is the primary validated platform
-- Android device acceptance is still in progress
-- Strategy battles do not require system Python or remote inference
-- Optional LLM chat features require a separately configured compatible service
+- Full Android device acceptance is still in progress
+- Local strategy battles do not require system Python or remote inference
 
 ### Start
 
 1. Open `project.godot` with Godot.
 2. Run `res://scenes/main_menu/MainMenu.tscn`.
-3. Open AI Battle to choose a built-in or loaded strategy, or start from deck management or tournament mode.
+3. Open AI Battle to choose a built-in or loaded strategy, or enter deck-management and tournament modes.
 
 ### Common tests
 
@@ -164,40 +209,35 @@ Key boundaries:
 & 'C:\path\to\Godot_v4.6.1-stable_win64_console.exe' --headless --path . -s res://tests/AITrainingTestRunner.gd
 ```
 
-## Status and Boundaries
+## Status and boundaries
 
-This is a fast-moving open-source PTCG AI Agent strategy platform, not a complete official judge and not an endorsement by Pokemon, PTCG, or any related rights holder.
+This is a fast-moving open-source PTCG Agent platform that also retains full local practice and rules-simulation capabilities.
 
-- The current version includes author strategy packages, a Forge development workflow, a public policy contract, local Godot execution, a unified AI-opponent picker, strategy rankings, and continuous validation infrastructure.
-- Windows is the primary product and development target; complete Android device acceptance remains open work.
-- Interface alignment, Python/GDScript conformance, Godot rules behavior, official CABT engine parity, and product release qualification are separate evidence levels. The project claims only explicitly verified scopes.
-- Third-party strategies pass package integrity, compatibility, signature, qualification, and device gates. “Valid locally” does not automatically mean “on the ladder” or “executable by every player.”
+- The public project includes author strategy packages, the Forge workflow, the public policy contract, local Godot execution, a unified AI opponent picker, strategy rankings, and validation infrastructure.
+- Windows is the primary product and development target; complete Android acceptance remains open work.
+- This repository is not a complete official judge. Official CABT engine parity is claimed only for explicitly recorded scopes.
+- Third-party strategies pass independent integrity, compatibility, signature, qualification, and device gates; “valid locally” does not automatically mean “on the ladder” or “approved for every device.”
 
-See the [PtcgDAP status record](docs/ptcgdap/STATUS.md) and [implementation checklist](docs/ptcgdap/IMPLEMENTATION_CHECKLIST.md) for current evidence and remaining work.
+See [STATUS.md](docs/ptcgdap/STATUS.md) and [IMPLEMENTATION_CHECKLIST.md](docs/ptcgdap/IMPLEMENTATION_CHECKLIST.md) for current evidence and remaining work.
 
 ## Contributing
 
-The most direct contribution is to build a strategy, put it on the ladder, and improve it from real failed games.
+The fastest way to contribute is not necessarily to change the engine first. **Build an Agent and make it fight.**
 
-Issues and pull requests are also welcome, especially for:
+We especially welcome:
 
-- New rule-based or model-based strategies, public scenarios, and `.ptcgai` packages
-- Card-effect, rules, and identity-mapping fixes
-- Reproducible bad AI decisions and battle replays
-- Strategy evaluation, benchmark, replay, and visualization tooling
-- Strategy Center, battle UI, accessibility, and multi-platform improvements
-- Windows and Android packaging or device-compatibility feedback
+- new rule policies, frozen models, public scenarios, and `.ptcgai` packages
+- reproducible bad decisions, benchmarks, traces, and visualization tools
+- card-effect, rules, identity-mapping, and interaction fixes
+- Python ↔ GDScript conformance and deterministic-build improvements
+- Strategy Center, battle UI, accessibility, and multi-platform work
+- documentation, Quickstart, test-entrypoint, and developer-experience improvements
 
-Please read:
-
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [DEVELOPMENT_SPEC.md](DEVELOPMENT_SPEC.md)
-- [docs/README.md](docs/README.md)
-- [PtcgDAP public architecture record](docs/ptcgdap/README.md)
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 ## Disclaimer
 
-This is an unofficial, non-commercial learning and research project. Pokemon, Pokemon TCG, card names, images, rules text, and related intellectual property belong to their respective owners. This project is not endorsed by or affiliated with the official rights holders and is not a substitute for an official product.
+This is an unofficial, non-commercial learning and research project. Pokémon, Pokémon TCG, card names, images, rules text, and related intellectual property belong to their respective owners. The project is not endorsed by or affiliated with the official rights holders and is not a substitute for an official product.
 
 If you fork the project, publish a strategy, or build on it, please preserve this boundary.
 
