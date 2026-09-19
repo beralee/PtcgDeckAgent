@@ -1,0 +1,213 @@
+{
+  "artifact": {
+    "frames": [
+      {
+        "acting_seat": 1,
+        "decision_trace_sha256": null,
+        "document_type": "replay_frame_v1",
+        "event_kind": "match_started",
+        "match_id": "synthetic-marnie-ui",
+        "ordinal": 0,
+        "phase": "setup",
+        "previous_frame_sha256": null,
+        "public_state": {
+          "board": [],
+          "public_cards": [],
+          "zone_counts": [
+            {
+              "deck_count": 47,
+              "hand_count": 7,
+              "prize_count": 6,
+              "seat": 0
+            },
+            {
+              "deck_count": 47,
+              "hand_count": 7,
+              "prize_count": 6,
+              "seat": 1
+            }
+          ]
+        },
+        "schema_version": 1,
+        "turn_number": 0
+      },
+      {
+        "acting_seat": 1,
+        "decision_trace_sha256": null,
+        "document_type": "replay_frame_v1",
+        "event_kind": "state_progressed",
+        "match_id": "synthetic-marnie-ui",
+        "ordinal": 1,
+        "phase": "main",
+        "previous_frame_sha256": "68AEDD79361F7244957FF73D1CDA25B01DFE87063D5067FCCF04B959817FDBEF",
+        "public_state": {
+          "board": [
+            {
+              "card_serial": 101,
+              "card_uid": "CSV8C_094",
+              "damage": 30,
+              "seat": 0,
+              "slot": 0,
+              "status": [
+                "poisoned"
+              ],
+              "zone": "active"
+            },
+            {
+              "card_serial": 102,
+              "card_uid": "CSV9.5C_043",
+              "damage": 0,
+              "seat": 0,
+              "slot": 0,
+              "status": [],
+              "zone": "bench"
+            },
+            {
+              "card_serial": 201,
+              "card_uid": "CSV7C_059",
+              "damage": 20,
+              "seat": 1,
+              "slot": 0,
+              "status": [
+                "asleep"
+              ],
+              "zone": "active"
+            },
+            {
+              "card_serial": 202,
+              "card_uid": "CSV10C_216",
+              "damage": 0,
+              "seat": 1,
+              "slot": 0,
+              "status": [],
+              "zone": "stadium"
+            }
+          ],
+          "public_cards": [
+            {
+              "card_serial": 103,
+              "card_uid": "SVP_105",
+              "seat": 0,
+              "zone": "discard"
+            },
+            {
+              "card_serial": 203,
+              "card_uid": "CSV8C_094",
+              "seat": 1,
+              "zone": "lost_zone"
+            }
+          ],
+          "zone_counts": [
+            {
+              "deck_count": 47,
+              "hand_count": 7,
+              "prize_count": 6,
+              "seat": 0
+            },
+            {
+              "deck_count": 47,
+              "hand_count": 7,
+              "prize_count": 6,
+              "seat": 1
+            }
+          ]
+        },
+        "schema_version": 1,
+        "turn_number": 1
+      },
+      {
+        "acting_seat": 1,
+        "decision_trace_sha256": null,
+        "document_type": "replay_frame_v1",
+        "event_kind": "match_finished",
+        "match_id": "synthetic-marnie-ui",
+        "ordinal": 2,
+        "phase": "terminal",
+        "previous_frame_sha256": "6A4325FD55F504FC53AC180E052CA369DB3D585BC6239C5647352390ACE1E937",
+        "public_state": {
+          "board": [],
+          "public_cards": [],
+          "zone_counts": [
+            {
+              "deck_count": 47,
+              "hand_count": 7,
+              "prize_count": 6,
+              "seat": 0
+            },
+            {
+              "deck_count": 47,
+              "hand_count": 7,
+              "prize_count": 6,
+              "seat": 1
+            }
+          ]
+        },
+        "schema_version": 1,
+        "turn_number": 1
+      }
+    ],
+    "manifest": {
+      "card_asset_catalog_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "complete": true,
+      "document_type": "replay_manifest_v1",
+      "event_dictionary_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+      "first_frame_sha256": "68AEDD79361F7244957FF73D1CDA25B01DFE87063D5067FCCF04B959817FDBEF",
+      "frame_chain_root_sha256": "29DDDF0CBC27FDC44FBF403120826E8944B98840546C5BDE699555BD6DCFCD90",
+      "frame_count": 3,
+      "match_envelope_sha256": "3538948A77B0FBD52E3247D6C68B6461690219623D5F78C617B164112B4647E5",
+      "match_id": "synthetic-marnie-ui",
+      "replay_id": "csp-wp1-unit-replay",
+      "schema_version": 1,
+      "visibility_profile": "public_at_event_time_v1"
+    },
+    "match_envelope": {
+      "card_catalog_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+      "document_type": "match_envelope_v1",
+      "engine_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "evaluation_profile_id": "csp-wp1-marnie-development-v1",
+      "evaluation_profile_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "evaluator_id": "ptcgdap-csp-wp1-local-capture",
+      "host_contract_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+      "lane": "developer_local",
+      "match_id": "synthetic-marnie-ui",
+      "participants": [
+        {
+          "archive_sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E",
+          "deck_identity": {
+            "deck_id": "800018501",
+            "deck_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            "domain": "godot_local_card_uid_v1"
+          },
+          "manifest_canonical_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "package_id": "ptcgdap.marnie.windows-local",
+          "participant_kind": "strategy_release",
+          "policy_package_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          "release_version": "0.1.0",
+          "strategy_id": "ptcgdap.marnie.18.0.package-local-v1"
+        },
+        {
+          "baseline_id": "rules-only-575720",
+          "baseline_sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "baseline_version": "1.0.0",
+          "participant_kind": "platform_baseline"
+        }
+      ],
+      "replay_visibility_profile": "public_at_event_time_v1",
+      "rules_sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "runtime_manifest_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "schema_version": 1,
+      "seat_assignment": [
+        1,
+        0
+      ],
+      "seed_commitment": {
+        "capability": "deterministic_seed_v1",
+        "commitment_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "disclosure": "withheld"
+      },
+      "started_at_utc": "2026-08-18T00:00:00Z"
+    }
+  },
+  "document_type": "synthetic_public_replay_ui_fixture_v1",
+  "provenance": "Generated from TestPublicReplayVerticalSlice._completed_replay; synthetic public data, not a real match receipt."
+}

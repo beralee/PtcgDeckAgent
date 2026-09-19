@@ -5,15 +5,16 @@ const ServiceContractScript = preload(
 	"res://scripts/ai/ptcgdap/platform/replay/PublicReplayServiceContract.gd"
 )
 
-const ACCEPTANCE_REPORT := (
-	"res://artifacts/ptcgdap/csp_wp1/marnie_public_replay_acceptance.json"
+# Synthetic public UI fixture, included in Git; not a full-match receipt.
+const UI_FIXTURE := (
+	"res://tests/ptcgdap/fixtures/public_replay_ui.json"
 )
 
 
 static func load_developer_artifact() -> Dictionary:
-	if not FileAccess.file_exists(ACCEPTANCE_REPORT):
+	if not FileAccess.file_exists(UI_FIXTURE):
 		return {}
-	var decoded: Variant = JSON.parse_string(FileAccess.get_file_as_string(ACCEPTANCE_REPORT))
+	var decoded: Variant = JSON.parse_string(FileAccess.get_file_as_string(UI_FIXTURE))
 	if not decoded is Dictionary or not decoded.get("artifact") is Dictionary:
 		return {}
 	return ServiceContractScript.coerce_integral_numbers(decoded.get("artifact")).duplicate(true)

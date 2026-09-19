@@ -106,6 +106,22 @@ def _sha(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest().upper()
 
 
+def _matches_source_raw_hash(value: bytes, expected: str) -> bool:
+    if _sha(value) == expected:
+        return True
+    # Match Godot's narrow Git checkout portability rule. Canonical JSON is
+    # still verified independently; arbitrary reformatting is not accepted.
+    try:
+        value.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return False
+    lf = value.replace(b"\r\n", b"\n")
+    crlf = lf.replace(b"\n", b"\r\n")
+    if b"\r" in lf or value not in (lf, crlf):
+        return False
+    return expected in (_sha(lf), _sha(crlf))
+
+
 def _json_bytes(value: object) -> bytes:
     return canonical_json_v1_bytes(value)
 
@@ -345,7 +361,7 @@ class AuthorStrategyExactDeckGate:
             if (
                 card.get("set_code") != set_code
                 or card.get("card_index") != card_index
-                or _sha(card_bytes) != entry.get("source_raw_sha256")
+                or not _matches_source_raw_hash(card_bytes, entry.get("source_raw_sha256"))
                 or _sha(_json_bytes(card)) != entry.get("source_canonical_sha256")
                 or card_type != entry.get("card_type")
                 or stage != entry.get("stage")

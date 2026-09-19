@@ -109,7 +109,7 @@ static func _build_windows_local(csv_value: Variant, manifest: Dictionary) -> Di
 			return _error()
 		var card_bytes := card_file.get_buffer(card_file.get_length())
 		card_file = null
-		if _sha(card_bytes) != entry.get("source_raw_sha256") or _canonical_sha(card_bytes) != entry.get("source_canonical_sha256"):
+		if not _matches_source_raw_hash(card_bytes, str(entry.get("source_raw_sha256", ""))) or _canonical_sha(card_bytes) != entry.get("source_canonical_sha256"):
 			return _error()
 		var source_document: Variant = JSON.parse_string(card_bytes.get_string_from_utf8())
 		if not source_document is Dictionary:
@@ -225,6 +225,21 @@ static func _valid_local_uid(value: String) -> bool:
 static func _canonical_sha(value: PackedByteArray) -> String:
 	var parsed: Dictionary = CabtJsonTreeScript.canonicalize_artifact_json_bytes(value)
 	return _sha(parsed.get("bytes", PackedByteArray())) if bool(parsed.get("ok", false)) else ""
+
+
+static func _matches_source_raw_hash(value: PackedByteArray, expected: String) -> bool:
+	if _sha(value) == expected:
+		return true
+	# Git checks out Windows-authored card JSON as LF on macOS. Only accept
+	# the exact LF/CRLF byte variants of that same source; canonical identity
+	# is independently required by the caller. Do not reserialize JSON here.
+	var text := value.get_string_from_utf8()
+	if text.to_utf8_buffer() != value:
+		return false
+	var lf := text.replace("\r\n", "\n")
+	if lf.contains("\r") or (text != lf and text != lf.replace("\n", "\r\n")):
+		return false
+	return _sha(lf.to_utf8_buffer()) == expected or _sha(lf.replace("\n", "\r\n").to_utf8_buffer()) == expected
 
 
 static func _sha(value: PackedByteArray) -> String:

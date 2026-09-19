@@ -1,0 +1,7 @@
+{
+  "source": "https://api.ptcg.skillserver.cn/v1/ladder/releases/release-9abe532ad39fa6c2a04385382a7eb3826642497e/profile",
+  "captured_date": "2026-09-19",
+  "package": "e719-rules-0.4.0.ptcgai",
+  "sha256": "9ABE532AD39FA6C2A04385382A7EB3826642497E7391A1BB123FC40CB1808A4E",
+  "purpose": "Unmodified public download reproducing Windows CRLF card source pins on a macOS LF checkout."
+}

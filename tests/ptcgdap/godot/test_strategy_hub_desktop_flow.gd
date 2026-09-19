@@ -9,8 +9,8 @@ class HubProbe extends HubScript:
 	var import_requested := false
 	func _on_import_local_package_pressed() -> void:
 		import_requested = true
-	func _local_package_can_start(_record: Dictionary) -> bool:
-		return true
+	func _local_package_admission(_record: Dictionary) -> Dictionary:
+		return {"ok": true}
 	func _on_local_strategy_start(reference: Dictionary) -> void:
 		started_ref = reference.duplicate(true)
 
