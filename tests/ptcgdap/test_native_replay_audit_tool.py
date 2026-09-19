@@ -296,6 +296,9 @@ class NativeReplayAuditToolTests(unittest.TestCase):
                 cwd=ROOT,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=60,
                 check=False,
             )
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
@@ -331,6 +334,9 @@ class NativeReplayAuditToolTests(unittest.TestCase):
                 cwd=ROOT,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=60,
                 check=False,
             )
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)

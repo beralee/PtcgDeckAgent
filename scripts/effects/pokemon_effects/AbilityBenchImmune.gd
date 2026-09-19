@@ -11,6 +11,7 @@ const AbilityNonRuleBoxBenchDamageShieldScript = preload("res://scripts/effects/
 const ABILITY_NAME: String = "毫不在意"
 const DAMAGE_AND_EFFECT_ABILITY_NAME: String = "深度下潜"
 const DAMAGE_AND_EFFECT_ABILITY_NAMES := [DAMAGE_AND_EFFECT_ABILITY_NAME, "藏隐"]
+const THIRTIETH_PIKACHU_HIDE_ID := "6198144fca9bc57c5ffa06bcac4c1933"
 
 
 ## 被动特性无需主动执行
@@ -34,6 +35,8 @@ static func has_bench_immune(slot: PokemonSlot) -> bool:
 	var cd: CardData = top.card_data
 	if cd == null:
 		return false
+	if cd.effect_id == THIRTIETH_PIKACHU_HIDE_ID:
+		return true
 	# 遍历卡牌的 abilities 列表，查找"毫不在意"特性
 	var abilities: Variant = cd.abilities
 	if abilities == null:
@@ -50,6 +53,8 @@ static func has_bench_damage_and_effect_immunity(slot: PokemonSlot) -> bool:
 	var top: CardInstance = slot.get_top_card() if slot != null else null
 	if top == null or top.card_data == null:
 		return false
+	if top.card_data.effect_id == THIRTIETH_PIKACHU_HIDE_ID:
+		return true
 	for ability: Variant in top.card_data.abilities:
 		if ability is Dictionary and str(ability.get("name", "")) in DAMAGE_AND_EFFECT_ABILITY_NAMES:
 			return true

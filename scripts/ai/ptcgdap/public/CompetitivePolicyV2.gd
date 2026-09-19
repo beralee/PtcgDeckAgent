@@ -961,7 +961,53 @@ static func _decide_with_execution_plan(
 		"error_code": "",
 		"selected_indexes": selected.duplicate(),
 		"audit": audit,
+		"model_frontier": _base_model_frontier(frame_value, selected, tiers, base_vetoed_indexes, mandatory_indexes, terminal_indexes, evaluated, audit),
 	}
+
+
+static func _base_model_frontier(frame: Dictionary, selected: Array, tiers: Dictionary, vetoed: Array, mandatory: Array, terminal: Array, evaluated: Dictionary, audit: Dictionary) -> Dictionary:
+	var reason := ""
+	var sem: Dictionary = frame.select_semantics
+	if not terminal.is_empty() or not mandatory.is_empty(): reason = "forced"
+	elif _model_terminal_attack(frame): reason = "terminal_attack"
+	elif sem.min_count != 1 or sem.max_count != 1 or selected.size() != 1: reason = "cardinality"
+	elif evaluated.get("selection_quotas") != null: reason = "quota"
+	elif audit.get("fallback_used",false): reason = "base_fallback"
+	elif audit.get("turn_contract",{}).get("route_authority_applied",false): reason = "route"
+	elif audit.get("turn_program_canary",{}).get("applied",false): reason = "canary"
+	else:
+		for key: String in ["semantic_transaction","turn_transaction"]:
+			var transaction: Dictionary = audit.get(key,{})
+			if transaction.get("selected_transaction_id") != null or transaction.get("transaction_id") != null or not transaction.get("state",{}).is_empty() or not transaction.get("current_indexes",[]).is_empty(): reason = "transaction"
+		if reason.is_empty() and frame.prompt_kind in ["starting_player_choice","mulligan_draw_count","setup_active","setup_bench","take_prize","send_out"]: reason = "protected_prompt"
+	var indexes := selected.duplicate()
+	var learning_kinds := ["attach_energy","play_basic_to_bench","play_stadium","end_turn","use_stadium_effect","retreat","play_trainer","attack","attach_tool","evolve","granted_attack"]
+	if reason.is_empty():
+		if frame.prompt_kind != "main": reason = "unsupported_learning_context"
+		for option: Dictionary in frame.options:
+			if option.kind not in learning_kinds: reason = "unsupported_learning_context"
+	if reason.is_empty() and not tiers.is_empty():
+		var best: Array = tiers[0]
+		for tier: Array in tiers.values():
+			if _tier_less(tier,best): best=tier
+		indexes=[]
+		for i: int in frame.options.size():
+			if tiers[i] == best and i not in vetoed: indexes.append(i)
+		for i: int in selected:
+			if i not in indexes: reason="authority_mismatch"; indexes=selected.duplicate(); break
+		if reason.is_empty() and indexes.size()<2: reason="unique"
+	return {"profile_id":"ptcgdap-base-model-frontier-v1","enabled":reason.is_empty(),"reason":reason,"indexes":indexes,"public_observation_hash":frame.source.public_observation_hash,"window_id":frame.source.window_id}
+
+
+static func _model_terminal_attack(frame: Dictionary) -> bool:
+	var prizes := int(frame.public_state.self.prizes_remaining)
+	if prizes <= 0: return false
+	for option: Dictionary in frame.options:
+		if option.kind not in ["attack","granted_attack"] or not option.get("projected_knockout",false): continue
+		var value: Variant = option.get("target_prize_value")
+		if value == null and not frame.public_state.opponent.active.is_empty(): value=frame.public_state.opponent.active[0].get("prize_value",0)
+		if value != null and int(value)>=prizes: return true
+	return false
 
 
 static func _is_option_fact(fact: String) -> bool:

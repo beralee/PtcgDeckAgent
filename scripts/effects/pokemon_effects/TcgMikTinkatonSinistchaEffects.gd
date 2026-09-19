@@ -177,7 +177,7 @@ class AttackSeekingMountain extends BaseEffect:
 		return [{
 			"id": STEP_ID,
 			"title": "Top card: %s" % top_name,
-			"items": [KEEP_CHOICE, DISCARD_DRAW_CHOICE],
+			"items": [false, true],
 			"labels": ["Put it into your hand", "Discard it, then draw 1 card"],
 			"min_select": 1,
 			"max_select": 1,
@@ -199,7 +199,7 @@ class AttackSeekingMountain extends BaseEffect:
 		return validate_context_selection(
 			get_interaction_context(targets),
 			STEP_ID,
-			[KEEP_CHOICE, DISCARD_DRAW_CHOICE],
+			[false, true, KEEP_CHOICE, DISCARD_DRAW_CHOICE],
 			1,
 			1,
 		)
@@ -215,10 +215,10 @@ class AttackSeekingMountain extends BaseEffect:
 		if selected.size() != 1:
 			return
 		var looked_at: CardInstance = player.deck.pop_front()
-		if str(selected[0]) == KEEP_CHOICE:
+		if _is_keep_choice(selected[0]):
 			looked_at.face_up = true
 			player.hand.append(looked_at)
-		elif str(selected[0]) == DISCARD_DRAW_CHOICE:
+		elif _is_discard_draw_choice(selected[0]):
 			player.discard_card(looked_at)
 			_draw_cards_with_log(state, top.owner_index, 1, top, "attack")
 		else:
@@ -233,6 +233,12 @@ class AttackSeekingMountain extends BaseEffect:
 			if card.card_data.attacks[index] == attack:
 				return index
 		return -1
+
+	func _is_keep_choice(value: Variant) -> bool:
+		return not bool(value) if typeof(value) == TYPE_BOOL else str(value) == KEEP_CHOICE
+
+	func _is_discard_draw_choice(value: Variant) -> bool:
+		return bool(value) if typeof(value) == TYPE_BOOL else str(value) == DISCARD_DRAW_CHOICE
 
 
 class AttackDistributeOpponentDamageCounters extends BaseEffect:
@@ -568,7 +574,7 @@ class AttackHealAllOwnPokemon extends BaseEffect:
 			return
 		for slot: PokemonSlot in state.players[attacker.get_top_card().owner_index].get_all_pokemon():
 			if slot != null:
-				slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+				slot.heal(heal_amount, state)
 
 	func get_description() -> String:
 		return "Heal %d damage from each of your Pokemon." % heal_amount

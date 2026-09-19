@@ -10,6 +10,9 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+# Historical AS-WP6 contracts pin the original bytes, including CRLF. Current
+# player data can evolve without rewriting those contract trust anchors.
+LOCKED_SOURCE_ROOT = ROOT / "tests/ptcgdap/fixtures/locked_local_sources"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -194,7 +197,7 @@ def _validated_review_entries(root: Path) -> dict[str, dict[str, Any]]:
     return result
 
 
-def build_marnie_deck_manifest(root: Path = ROOT) -> dict[str, object]:
+def build_marnie_deck_manifest(root: Path = LOCKED_SOURCE_ROOT) -> dict[str, object]:
     source_path = root / MARNIE_SOURCE_DECK_PATH
     source_bytes = source_path.read_bytes()
     source = load_json_strict(source_path)
@@ -325,7 +328,7 @@ def _render(value: object) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
 
 
-def rendered_artifacts(root: Path = ROOT) -> dict[str, bytes]:
+def rendered_artifacts(root: Path = LOCKED_SOURCE_ROOT) -> dict[str, bytes]:
     documents = build_contract_documents()
     rendered = {ARTIFACT_PATHS[key]: _render(value) for key, value in documents.items()}
     rendered[MARNIE_OUTPUT_MANIFEST] = _render(build_marnie_deck_manifest(root))
@@ -339,7 +342,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.write == args.check:
         raise SystemExit("choose exactly one of --write or --check")
-    rendered = rendered_artifacts(ROOT)
+    rendered = rendered_artifacts()
     if args.check:
         drift = [path for path, value in rendered.items() if not (ROOT / path).is_file() or (ROOT / path).read_bytes() != value]
         if drift:
@@ -351,7 +354,7 @@ def main() -> int:
             destination.write_bytes(value)
     documents = build_contract_documents()
     print(f"bundle_canonical_sha256={_sha(canonical_json_v1_bytes(documents['bundle']))}")
-    print(f"marnie_manifest_canonical_sha256={_sha(canonical_json_v1_bytes(build_marnie_deck_manifest(ROOT)))}")
+    print(f"marnie_manifest_canonical_sha256={_sha(canonical_json_v1_bytes(build_marnie_deck_manifest()))}")
     return 0
 
 

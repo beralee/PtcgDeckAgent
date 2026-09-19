@@ -15,6 +15,9 @@ class RiggedCoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv6c009_bounsweet_and_csv6c010_steenee_coin_math_is_exact() -> String:
 	var bounsweet := _load_card("CSV6C", "009")

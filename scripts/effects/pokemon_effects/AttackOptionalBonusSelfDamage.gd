@@ -30,7 +30,7 @@ func build_ucis_attack_interaction_steps_spec_steps(_card: CardInstance, attack:
 	return [{
 		"id": STEP_ID,
 		"title": title,
-		"items": ["no", "yes"],
+		"items": [false, true],
 		"labels": ["不追加", "追加"],
 		"min_select": 1,
 		"max_select": 1,
@@ -54,4 +54,6 @@ func get_description() -> String:
 
 func _selected_yes() -> bool:
 	var selected_raw: Array = get_attack_interaction_context().get(STEP_ID, [])
-	return not selected_raw.is_empty() and str(selected_raw[0]) == "yes"
+	if selected_raw.is_empty():
+		return false
+	return bool(selected_raw[0]) if typeof(selected_raw[0]) == TYPE_BOOL else str(selected_raw[0]) == "yes"

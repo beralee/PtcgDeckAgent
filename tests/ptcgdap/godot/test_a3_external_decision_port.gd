@@ -4,6 +4,8 @@ extends TestBase
 const PortScript = preload("res://scripts/ai/ptcgdap/host/godot/A3ExternalDecisionPort.gd")
 const OwnerScript = preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorDevelopmentBattleOwner.gd")
 const ResolverScript = preload("res://scripts/ai/AIStepResolver.gd")
+const CompetitivePolicyV2Script = preload("res://scripts/ai/ptcgdap/public/CompetitivePolicyV2.gd")
+const CrispinScript = preload("res://scripts/effects/trainer_effects/CSV9C196Crispin.gd")
 
 const MARNIE_DECK_ID := 800018501
 const RULES_AI_DECK_ID := 575720
@@ -506,6 +508,289 @@ func test_owner_emits_native_tool_energy_card_and_energy_unit_option_shapes() ->
 	])
 
 
+func test_owner_projects_crispin_physical_energy_candidates_into_native_energy_shapes() -> String:
+	var owner := OwnerScript.new()
+	owner.player_index = 0
+	owner.set("_external_decision_port", PortScript.new())
+	owner.set("_serial_registry", FakeSerialRegistry.new())
+	owner.set("_match_generation", 1)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.turn_number = 3
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	owner.set("_gsm", gsm)
+	var crispin_data: CardData = CardDatabase.get_card("CSV9C", "196")
+	var crispin := CardInstance.create(crispin_data, 0)
+	var expectations := [
+		{"card_index": "GRA", "energy_type_raw": 1},
+		{"card_index": "LIG", "energy_type_raw": 4},
+		{"card_index": "FIG", "energy_type_raw": 6},
+	]
+	var checks: Array[String] = [
+		assert_not_null(crispin_data, "CSV9C_196 should load as the real Crispin printing"),
+	]
+	for row: Dictionary in expectations:
+		var energy_data: CardData = CardDatabase.get_card("CSVE1C", str(row.get("card_index", "")))
+		checks.append(assert_not_null(energy_data, "the real basic Energy printing should load"))
+		if energy_data == null:
+			continue
+		var energy := CardInstance.create(energy_data, 0)
+		var option: Dictionary = owner.call(
+			"_make_option",
+			0,
+			energy,
+			"assignment_source",
+			{
+				"cabt_select_type_raw": 4,
+				"cabt_select_context_raw": 31,
+				"pending_effect_card": crispin,
+			}
+		)
+		var frame: Dictionary = owner.call(
+			"_build_frame",
+			"assignment_source",
+			[option],
+			0,
+			1,
+			{"type": 4, "context": 31}
+		)
+		var accepted_by_a3: Dictionary = PortScript.new().select(frame)
+		checks.append_array([
+			assert_eq(option.get("option_type_raw"), 6),
+			assert_eq(option.get("source_uid"), "CSV9C_196"),
+			assert_true(int(option.get("source_serial", 0)) > 0, "Crispin source should have a positive serial"),
+			assert_eq(option.get("card_uid"), "CSVE1C_%s" % row.get("card_index", "")),
+			assert_eq(option.get("energy_type_raw"), row.get("energy_type_raw")),
+			assert_eq(option.get("energy_count"), 1),
+			assert_true(
+				bool(accepted_by_a3.get("decision_pending", false)),
+				"A3 should accept the projected Crispin Energy option: %s" % accepted_by_a3
+			),
+			assert_true(
+				CompetitivePolicyV2Script._valid_native_option_shape(option),
+				"Competitive Policy v2 should accept the projected Crispin Energy option: %s" % option
+			),
+			assert_eq(
+				CompetitivePolicyV2Script._frame_error(frame),
+				"",
+				"the complete projected Crispin window should be a valid Competitive Policy v2 frame"
+			),
+		])
+	var result := run_checks(checks)
+	gsm.prepare_for_disposal()
+	return result
+
+
+func test_owner_energy_candidate_mapping_and_unknown_type_remain_fail_closed() -> String:
+	var owner := OwnerScript.new()
+	owner.player_index = 0
+	owner.set("_external_decision_port", PortScript.new())
+	owner.set("_serial_registry", FakeSerialRegistry.new())
+	owner.set("_match_generation", 1)
+	var source_data := CardData.new()
+	source_data.set_code = "TEST"
+	source_data.card_index = "SOURCE"
+	source_data.card_type = "Supporter"
+	var source := CardInstance.create(source_data, 0)
+	var context := {
+		"cabt_select_type_raw": 4,
+		"cabt_select_context_raw": 31,
+		"pending_effect_card": source,
+	}
+	var raw_by_energy_type := {
+		"C": 0,
+		"G": 1,
+		"R": 2,
+		"W": 3,
+		"L": 4,
+		"P": 5,
+		"F": 6,
+		"D": 7,
+		"M": 8,
+		"N": 9,
+		"ANY": 10,
+		"TEAM_ROCKET": 11,
+	}
+	var checks: Array[String] = []
+	for energy_type: String in raw_by_energy_type:
+		var energy_data := CardData.new()
+		energy_data.set_code = "TEST"
+		energy_data.card_index = "%03d" % int(raw_by_energy_type[energy_type])
+		energy_data.card_type = "Basic Energy"
+		energy_data.energy_provides = energy_type
+		var energy := CardInstance.create(energy_data, 0)
+		var option: Dictionary = owner.call(
+			"_make_option", 0, energy, "assignment_source", context
+		)
+		checks.append(assert_eq(
+			option.get("energy_type_raw"),
+			raw_by_energy_type[energy_type],
+			"physical Energy candidates should cover the complete native 0-11 mapping"
+		))
+
+	var fallback_data := CardData.new()
+	fallback_data.set_code = "TEST"
+	fallback_data.card_index = "FALLBACK"
+	fallback_data.card_type = "Basic Energy"
+	fallback_data.energy_type = "W"
+	var fallback_option: Dictionary = owner.call(
+		"_make_option",
+		0,
+		CardInstance.create(fallback_data, 0),
+		"assignment_source",
+		context
+	)
+	var unknown_data := CardData.new()
+	unknown_data.set_code = "TEST"
+	unknown_data.card_index = "UNKNOWN"
+	unknown_data.card_type = "Basic Energy"
+	var unknown_option: Dictionary = owner.call(
+		"_make_option",
+		0,
+		CardInstance.create(unknown_data, 0),
+		"assignment_source",
+		context
+	)
+	var invalid_frame := _frame("B", [unknown_option])
+	invalid_frame["select_semantics"]["select_type_raw"] = 4
+	invalid_frame["select_semantics"]["select_context_raw"] = 31
+	var rejected_by_a3: Dictionary = PortScript.new().select(invalid_frame)
+	checks.append_array([
+		assert_eq(fallback_option.get("energy_type_raw"), 3),
+		assert_eq(unknown_option.get("energy_type_raw"), null),
+		assert_false(CompetitivePolicyV2Script._valid_native_option_shape(unknown_option)),
+		assert_eq(rejected_by_a3.get("error_code"), "invalid_external_frame"),
+	])
+	return run_checks(checks)
+
+
+func test_energy_unit_projection_does_not_use_source_pokemon_attribute() -> String:
+	var owner := OwnerScript.new()
+	owner.set("_external_decision_port", PortScript.new())
+	owner.set("_serial_registry", FakeSerialRegistry.new())
+	owner.set("_match_generation", 1)
+	var pokemon := CardData.new()
+	pokemon.set_code = "TEST"
+	pokemon.card_index = "DARK"
+	pokemon.card_type = "Pokemon"
+	pokemon.energy_type = "D"
+	var slot := PokemonSlot.new()
+	slot.pokemon_stack.append(CardInstance.create(pokemon, 0))
+	slot.attached_energy.append(CardInstance.create(CardDatabase.get_card("CSVE1C", "GRA"), 0))
+	var context := {"cabt_select_type_raw": 4, "cabt_select_context_raw": 30, "source_card": slot.get_top_card()}
+	var option: Dictionary = owner.call("_make_option", 0, {"source_slot": slot}, "assignment_source", context)
+	slot.attached_energy.clear()
+	var missing: Dictionary = owner.call("_make_option", 0, {"source_slot": slot}, "assignment_source", context)
+	return run_checks([
+		assert_eq(option.get("energy_type_raw"), 1, "A Dark Pokemon with Grass Energy must expose Grass, not Dark"),
+		assert_eq(missing.get("energy_type_raw"), null, "Pokemon type must not fabricate missing Energy"),
+		assert_false(CompetitivePolicyV2Script._valid_native_option_shape(missing)),
+	])
+
+
+func test_real_crispin_three_windows_rebind_and_resolve_in_both_seats() -> String:
+	var checks: Array[String] = []
+	for seat: int in 2:
+		var gsm := GameStateMachine.new()
+		gsm.game_state = GameState.new()
+		var state := gsm.game_state
+		state.turn_number = 3
+		state.phase = GameState.GamePhase.MAIN
+		state.current_player_index = seat
+		state.first_player_index = 1 - seat
+		for player_seat: int in 2:
+			var player := PlayerState.new()
+			player.player_index = player_seat
+			player.active_pokemon = PokemonSlot.new()
+			player.active_pokemon.pokemon_stack.append(CardInstance.create(CardDatabase.get_card("CSV10C", "135"), player_seat))
+			state.players.append(player)
+		var player := state.players[seat]
+		var crispin := CardInstance.create(CardDatabase.get_card("CSV9C", "196"), seat)
+		player.hand.append(crispin)
+		for energy_index: String in ["LIG", "GRA", "FIG"]:
+			player.deck.append(CardInstance.create(CardDatabase.get_card("CSVE1C", energy_index), seat))
+		for inventory_player: PlayerState in state.players:
+			for _filler: int in range(60 - inventory_player.deck.size() - inventory_player.hand.size() - 1):
+				inventory_player.deck.append(CardInstance.create(CardDatabase.get_card("CSVE1C", "LIG"), inventory_player.player_index))
+		var port := PortScript.new()
+		var created := OwnerScript.create_external(gsm, seat, "crispin-three-windows-%d" % seat, port)
+		if not bool(created.get("ok", false)):
+			gsm.prepare_for_disposal()
+			return "Crispin fixture owner bind failed: %s" % created
+		var owner: Variant = created.get("owner")
+		var effect := CrispinScript.new()
+		var context := {"pending_effect_card": crispin}
+		var steps := effect.get_interaction_steps(crispin, state)
+		var first: Array = steps[0].get("items", [])
+		var hand_pick := _submit_crispin_items(owner, port, first, steps[0], context, checks)
+		if hand_pick.size() != 1:
+			owner.close_match()
+			gsm.prepare_for_disposal()
+			return "Crispin hand choice failed: %s" % checks
+		var resolved := {CrispinScript.HAND_STEP_ID: hand_pick}
+		var followup := effect.get_followup_interaction_steps(crispin, state, resolved)
+		var source_items: Array = followup[0].get("source_items", [])
+		var source_pick := _submit_crispin_items(owner, port, source_items, followup[0], context, checks)
+		if source_pick.size() != 1:
+			owner.close_match()
+			gsm.prepare_for_disposal()
+			return "Crispin attachment source failed: %s" % checks
+		context["source_card"] = source_pick[0]
+		var target_items: Array = followup[0].get("target_items", [])
+		owner.call("_pick_interaction_target_index", target_items, [], followup[0], context)
+		var checkpoint := port.pending_checkpoint()
+		checks.append(_check_crispin_public_frame(checkpoint, 1, 21))
+		checks.append(assert_true(bool(port.submit(str(checkpoint.get("window_handle", "")), [0]).get("ok", false))))
+		var target_index: int = owner.call("_pick_interaction_target_index", target_items, [], followup[0], context)
+		checks.append(assert_eq(target_index, 0))
+		if target_index == 0:
+			resolved[CrispinScript.ATTACH_STEP_ID] = [{"source": source_pick[0], "target": target_items[0]}]
+			effect.execute(crispin, [resolved], state)
+			checks.append(assert_true(hand_pick[0] in player.hand))
+			checks.append(assert_true(source_pick[0] in player.active_pokemon.attached_energy))
+			checks.append(assert_false(hand_pick[0].card_data.energy_provides == source_pick[0].card_data.energy_provides))
+		var audit: Dictionary = owner.audit_snapshot()
+		checks.append(assert_eq(audit.get("policy_successes"), 3, "All three current windows must deliver accepted selections"))
+		for counter: String in ["policy_errors", "same_window_fallbacks", "invalid_outputs", "engine_rejections"]:
+			checks.append(assert_eq(audit.get(counter), 0, counter))
+		owner.close_match()
+		gsm.prepare_for_disposal()
+	return run_checks(checks)
+
+
+func _submit_crispin_items(owner: Variant, port: Variant, items: Array, step: Dictionary, context: Dictionary, checks: Array[String]) -> Array:
+	owner.call("_pick_interaction_items", items, step, context)
+	var checkpoint: Dictionary = port.pending_checkpoint()
+	var hand_step := str(step.get("id")) == CrispinScript.HAND_STEP_ID
+	checks.append(_check_crispin_public_frame(checkpoint, 4 if hand_step else 1, 31 if hand_step else 22))
+	checks.append(assert_true(bool(port.submit(str(checkpoint.get("window_handle", "")), [0]).get("ok", false))))
+	return owner.call("_pick_interaction_items", items, step, context)
+
+
+func _check_crispin_public_frame(checkpoint: Dictionary, select_type: int, select_context: int) -> String:
+	if not bool(checkpoint.get("ok", false)):
+		return "Crispin checkpoint rejected: %s" % checkpoint
+	var frame: Dictionary = checkpoint.get("frame", {}).duplicate(true)
+	# The A3 port includes separate position/debt fields. They are absent from
+	# the frozen Competitive frame; verify its full validator on that shape.
+	for option: Dictionary in frame.get("options", []):
+		option.erase("option_area_raw")
+		option.erase("option_area_index")
+	frame["select_semantics"].erase("remain_damage_counter")
+	frame["select_semantics"].erase("remain_energy_cost")
+	return run_checks([
+		assert_eq(frame.get("select_semantics", {}).get("select_type_raw"), select_type),
+		assert_eq(frame.get("select_semantics", {}).get("select_context_raw"), select_context),
+		assert_eq(CompetitivePolicyV2Script._frame_error(frame), "", "Every real Crispin window must pass the full Competitive validator"),
+	])
+
+
 func test_owner_main_and_typed_interaction_option_families_match_official_enum() -> String:
 	var owner := OwnerScript.new()
 	owner.player_index = 0
@@ -555,6 +840,38 @@ func test_owner_main_and_typed_interaction_option_families_match_official_enum()
 		assert_eq(typed_target_option.get("option_type_raw"), 3),
 		assert_eq(typed_target_option.get("card_uid"), "TEST_010"),
 		assert_true(typed_target_option.get("card_uid") != "TEST_011"),
+	])
+
+
+func test_owner_projects_scalar_number_and_special_condition_candidates() -> String:
+	var owner := OwnerScript.new()
+	var number_option: Dictionary = owner.call(
+		"_make_option",
+		0,
+		3,
+		"mulligan_draw_count",
+		{
+			"cabt_select_type_raw": 8,
+			"cabt_select_context_raw": 38,
+		}
+	)
+	var condition_option: Dictionary = owner.call(
+		"_make_option",
+		0,
+		2,
+		"special_condition",
+		{
+			"cabt_select_type_raw": 10,
+			"cabt_select_context_raw": 47,
+		}
+	)
+	return run_checks([
+		assert_eq(number_option.get("option_type_raw"), 0),
+		assert_eq(number_option.get("option_number"), 3),
+		assert_true(CompetitivePolicyV2Script._valid_native_option_shape(number_option)),
+		assert_eq(condition_option.get("option_type_raw"), 16),
+		assert_eq(condition_option.get("special_condition_type"), 2),
+		assert_true(CompetitivePolicyV2Script._valid_native_option_shape(condition_option)),
 	])
 
 
@@ -635,6 +952,23 @@ func test_owner_keeps_face_down_prize_as_public_position_without_card_identity()
 		}
 	)
 	var accepted := PortScript.new().select(_frame("C", [option]))
+	var opponent_prize_option: Dictionary = owner.call(
+		"_make_option",
+		0,
+		2,
+		"search",
+		{
+			"cabt_select_type_raw": 1,
+			"cabt_select_context_raw": 7,
+			"cabt_option_type_raw": 3,
+			"option_area_raw": 6,
+			"option_player_index": 0,
+		}
+	)
+	var opponent_frame := _frame("D", [opponent_prize_option])
+	opponent_frame["select_semantics"]["select_type_raw"] = 1
+	opponent_frame["select_semantics"]["select_context_raw"] = 7
+	var opponent_accepted := PortScript.new().select(opponent_frame)
 	return run_checks([
 		assert_eq(option.get("option_type_raw"), 3),
 		assert_eq(option.get("option_area_raw"), 6),
@@ -643,4 +977,9 @@ func test_owner_keeps_face_down_prize_as_public_position_without_card_identity()
 		assert_eq(option.get("card_uid"), null),
 		assert_eq(option.get("card_serial"), null),
 		assert_true(bool(accepted.get("decision_pending", false))),
+		assert_eq(opponent_prize_option.get("option_area_index"), 2),
+		assert_eq(opponent_prize_option.get("option_player_index"), 0),
+		assert_eq(opponent_prize_option.get("card_uid"), null),
+		assert_true(bool(opponent_accepted.get("decision_pending", false))),
+		assert_false(CompetitivePolicyV2Script._valid_native_option_shape(opponent_prize_option)),
 	])

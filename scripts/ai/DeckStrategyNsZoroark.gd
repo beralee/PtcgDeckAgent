@@ -278,7 +278,14 @@ func predict_attacker_damage(slot: PokemonSlot, extra_context: int = 0) -> Dicti
 		return _predict_darmanitan(slot, _prediction_game_state, _prediction_player_index)
 	if _slot_matches(slot, [BLOODMOON_URSALUNA_EX]):
 		return {"damage": 240, "can_attack": slot.attached_energy.size() >= 3, "description": "Blood Moon"}
-	return {"damage": 0, "can_attack": false, "description": ""}
+	var best := {"damage": 0, "can_attack": false, "description": ""}
+	var validator := RuleValidator.new()
+	var processor: EffectProcessor = _prediction_game_state.shared_turn_flags.get("_draw_effect_processor") if _prediction_game_state != null else null
+	for attack: Dictionary in slot.get_attacks():
+		var damage := _parse_damage(str(attack.get("damage", "0")))
+		if damage > int(best.damage) and validator.has_enough_energy(slot, str(attack.get("cost", "")), processor, _prediction_game_state):
+			best = {"damage": damage, "can_attack": true, "description": str(attack.get("name", ""))}
+	return best
 
 
 func get_discard_priority(card: CardInstance) -> int:

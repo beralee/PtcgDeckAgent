@@ -31,7 +31,7 @@ func execute_attack(
 	for slot: PokemonSlot in state.players[player_index].bench:
 		if slot == null:
 			continue
-		slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+		slot.heal(heal_amount, state)
 
 
 func get_description() -> String:

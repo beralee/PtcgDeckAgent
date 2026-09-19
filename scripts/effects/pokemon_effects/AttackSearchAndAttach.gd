@@ -51,6 +51,8 @@ func build_ucis_attack_interaction_steps_spec_steps(
 
 	var energy_items: Array[CardInstance] = _collect_candidate_energy_cards(player)
 	if energy_items.is_empty():
+		if search_mode == "deck_search" and not player.deck.is_empty():
+			return [build_empty_search_resolution_step("牌库中没有符合条件的基本能量")]
 		return []
 
 	var target_items: Array = _collect_attach_targets(attacker, player, false)
@@ -100,6 +102,12 @@ func build_ucis_attack_interaction_steps_spec_steps(
 	)
 	_apply_assignment_limits(step)
 	return [step]
+
+
+func build_ucis_followup_attack_interaction_steps_spec_steps(card: CardInstance, _attack: Dictionary, state: GameState, context: Dictionary) -> Array[Dictionary]:
+	if search_mode == "deck_search" and should_preview_empty_search_deck(context):
+		return [build_readonly_deck_preview_step("查看己方牌库", state.players[card.owner_index].deck)]
+	return []
 
 
 func execute_attack(

@@ -7,11 +7,17 @@ class HeadsCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(true)
 		return true
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 class TailsCoinFlipper extends CoinFlipper:
 	func flip() -> bool:
 		coin_flipped.emit(false)
 		return false
+
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
 
 
 func _load_card(index: String) -> CardData:

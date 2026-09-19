@@ -45,7 +45,7 @@ static func run_corpus(
 		"install_source": package.get("install_source"),
 	}
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, str(selection.get("archive_sha256", "")))
 	# This suite owns policy behavior, not repeated archive-cryptography timing.
 	# Admit the real signed archive once, then mint independent one-use handles
 	# from that already admitted immutable fixture. Package/catalog suites keep

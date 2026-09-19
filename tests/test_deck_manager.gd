@@ -119,18 +119,18 @@ func test_import_panel_portrait_uses_phone_sized_modal_controls() -> String:
 		assert_true(guide_text.contains("tcg.mik.moe") and guide_text.contains("574793"), "Deck import portrait guide should show the website and an example deck id"),
 		assert_true(guide_text.contains("复制") and guide_text.contains("粘贴"), "Deck import portrait guide should explain the copy and paste flow"),
 		assert_true(progress_label != null and progress_label.autowrap_mode != TextServer.AUTOWRAP_OFF, "Deck import portrait progress text should wrap instead of clipping"),
-		assert_true(url_input != null and url_input.custom_minimum_size.y >= 128.0, "Deck import portrait URL input should be a large phone touch target"),
-		assert_true(url_input != null and url_input.get_theme_font_size("font_size") >= 29, "Deck import portrait URL input text should be phone-readable"),
+		assert_true(url_input != null and url_input.custom_minimum_size.y >= 60.0, "Deck import portrait URL input should be a large phone touch target"),
+		assert_true(url_input != null and url_input.get_theme_font_size("font_size") >= 19, "Deck import portrait URL input text should be phone-readable"),
 		assert_true(url_input != null and url_input.virtual_keyboard_enabled and url_input.virtual_keyboard_show_on_focus, "Deck import URL input should rely on native mobile keyboard-on-focus behavior"),
 		assert_true(url_input != null and url_input.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_DEFAULT, "Deck import mixed URL-or-ID input should use the full keyboard so Android users can enter numeric deck IDs"),
 		assert_true(url_input != null and url_input.context_menu_enabled, "Deck import URL input should keep the native paste context menu enabled"),
 		assert_true(paste_button != null and paste_button.visible, "Deck import portrait dialog should include a one-tap paste button for phone users"),
-		assert_true(paste_button != null and paste_button.custom_minimum_size.y >= 104.0, "Deck import paste button should be phone-sized"),
+		assert_true(paste_button != null and paste_button.custom_minimum_size.y >= 48.0, "Deck import paste button should be phone-sized"),
 		assert_true(provider_button != null and provider_button.visible and provider_button.text.contains("tcg.mik.moe"), "Deck import should expose a direct card-site button so mobile users never need to type the URL"),
 		assert_true(provider_button != null and bool(provider_button.get_meta(NonBattleTouchBridgeScript.BUTTON_TOUCH_BOUND_META, false)), "Card-site action should use the HUD touch bridge"),
-		assert_true(import_button != null and import_button.custom_minimum_size.y >= 104.0, "Deck import portrait confirm button should be phone-sized"),
-		assert_true(close_button != null and close_button.custom_minimum_size.y >= 104.0, "Deck import portrait close button should be phone-sized"),
-		assert_true(import_button != null and import_button.get_theme_font_size("font_size") >= 33, "Deck import portrait button text should be phone-readable"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y >= 48.0, "Deck import portrait confirm button should be phone-sized"),
+		assert_true(close_button != null and close_button.custom_minimum_size.y >= 48.0, "Deck import portrait close button should be phone-sized"),
+		assert_true(import_button != null and import_button.get_theme_font_size("font_size") >= 16, "Deck import portrait button text should be phone-readable"),
 	])
 
 
@@ -374,6 +374,7 @@ func test_import_panel_exposes_image_import_button() -> String:
 	tree.root.add_child(scene)
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
 	scene.call("_on_import_pressed")
+	scene.call("_select_import_source", "image")
 
 	var image_button := scene.find_child("BtnImageImport", true, false) as Button
 	var paste_button := scene.find_child("BtnPasteImport", true, false) as Button
@@ -383,9 +384,9 @@ func test_import_panel_exposes_image_import_button() -> String:
 	return run_checks([
 		assert_not_null(image_button, "Import panel should expose an image import button"),
 		assert_true(image_button != null and image_button.visible, "Image import button should be visible in import mode"),
-		assert_true(image_button != null and image_button.text == "卡组图导入", "Image import action should use the unified deck-image wording"),
+		assert_true(image_button != null and image_button.text == "选择卡组图片", "Image import action should use the unified deck-image wording"),
 		assert_true(image_button != null and image_button.custom_minimum_size.y >= (paste_button.custom_minimum_size.y if paste_button != null else 0.0), "Image import button should match the touch size of nearby import buttons"),
-		assert_true(import_button != null and import_button.visible, "URL import should remain available alongside image import"),
+		assert_true(import_button != null and not import_button.visible, "Image mode hides the unrelated URL action"),
 	])
 
 
@@ -463,8 +464,8 @@ func test_import_panel_layout_restores_landscape_metrics_after_portrait() -> Str
 
 	scene.queue_free()
 	return run_checks([
-		assert_eq(roundi(box_height), 260, "Deck import panel should restore the desktop dialog height after leaving portrait"),
-		assert_true(url_input != null and url_input.custom_minimum_size.y <= 50.0, "Deck import URL input should restore compact desktop height after leaving portrait"),
+		assert_eq(roundi(box_height), 520, "Deck import panel should restore the desktop dialog height after leaving portrait"),
+		assert_true(url_input != null and url_input.custom_minimum_size.y <= 60.0, "Deck import URL input should restore compact desktop height after leaving portrait"),
 		assert_true(import_button != null and import_button.custom_minimum_size.y <= 70.0, "Deck import confirm button should restore compact desktop height after leaving portrait"),
 		assert_true(close_button != null and close_button.custom_minimum_size.y <= 70.0, "Deck import close button should restore compact desktop height after leaving portrait"),
 		assert_true(import_button != null and import_button.get_theme_font_size("font_size") <= 26, "Deck import confirm button should restore compact desktop font after leaving portrait"),
@@ -2684,7 +2685,7 @@ func test_deck_manager_open_refresh_failure_keeps_current_recommendation() -> St
 	])
 
 
-func test_import_panel_close_button_hides_dialog_while_busy() -> String:
+func test_import_panel_close_is_ignored_while_busy() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene.get_node("%ImportPanel").visible = true
 	scene._current_operation = "import"
@@ -2694,7 +2695,7 @@ func test_import_panel_close_button_hides_dialog_while_busy() -> String:
 
 	scene.queue_free()
 	return run_checks([
-		assert_false(panel_visible, "Close button should hide the import dialog even while an import is running"),
+		assert_true(panel_visible, "Import remains visible while running"),
 	])
 
 
@@ -2767,7 +2768,7 @@ func test_recommendation_import_uses_article_deck_name() -> String:
 	])
 
 
-func test_import_result_state_hides_import_button_after_completion_or_failure() -> String:
+func test_import_result_state_offers_view_on_success_and_retry_on_failure() -> String:
 	_cleanup_decks([910012])
 	var imported := _make_deck(910012, "Result State Deck")
 	var success_scene: Control = DeckManagerScene.instantiate()
@@ -2796,14 +2797,14 @@ func test_import_result_state_hides_import_button_after_completion_or_failure() 
 	failed_scene.queue_free()
 
 	return run_checks([
-		assert_false(success_button.visible, "Import button should hide after successful import"),
-		assert_true(success_button.disabled, "Import button should stay disabled in success result state"),
+		assert_true(success_button.visible and success_button.text == "查看卡组", "Successful import offers viewing the imported deck"),
+		assert_false(success_button.disabled, "View action is enabled"),
 		assert_false(success_input.editable, "Import input should lock after successful import"),
 		assert_false(success_progress.visible, "Progress bar should hide after successful import"),
 		assert_str_contains(success_text, "导入成功", "Successful import should show a direct success result"),
-		assert_false(failure_button.visible, "Import button should hide after failed import"),
-		assert_true(failure_button.disabled, "Import button should stay disabled in failure result state"),
-		assert_false(failure_input.editable, "Import input should lock after failed import"),
+		assert_true(failure_button.visible and failure_button.text == "重新导入", "Failure offers an explicit retry"),
+		assert_false(failure_button.disabled, "Retry remains enabled"),
+		assert_true(failure_input.editable, "Player can correct the failed input"),
 		assert_false(failure_progress.visible, "Progress bar should hide after failed import"),
 		assert_str_contains(failure_text, "导入失败", "Failed import should show a direct failure result"),
 	])
@@ -2866,23 +2867,18 @@ func test_import_start_defers_importer_until_busy_modal_is_drawable() -> String:
 	])
 
 
-func test_import_result_close_timeout_hides_panel_only_when_idle() -> String:
+func test_import_result_stays_visible_until_explicit_close() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
-	scene.get_node("%ImportPanel").visible = true
-	scene._current_operation = ""
-	scene._on_import_result_close_timeout()
-	var idle_hidden: bool = not scene.get_node("%ImportPanel").visible
-
-	scene.get_node("%ImportPanel").visible = true
-	scene._current_operation = "import"
-	scene._on_import_result_close_timeout()
-	var busy_visible: bool = scene.get_node("%ImportPanel").visible
-
+	scene._on_import_pressed()
+	scene._on_import_failed("Network unavailable")
+	var visible: bool = scene.get_node("%ImportPanel").visible
+	var timer_missing := scene.find_child("ImportResultCloseTimer", true, false) == null
+	scene._on_close_import()
+	var closed: bool = not scene.get_node("%ImportPanel").visible
 	scene.queue_free()
-
 	return run_checks([
-		assert_true(idle_hidden, "Import result timer should close the panel after a completed import result"),
-		assert_true(busy_visible, "Import result timer should not close the panel if another operation has started"),
+		assert_true(visible and timer_missing, "Result remains readable without an automatic dismissal timer"),
+		assert_true(closed, "Explicit close dismisses an idle result"),
 	])
 
 

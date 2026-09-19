@@ -637,9 +637,16 @@ func _valid_model_manifest(value: Dictionary) -> bool:
 	var operators: Variant = value.get("operator_profile")
 	if not operators is Dictionary or operators != {"profile_id":"ptcgai-actor-ort-cpu-v1", "opset":18, "allowed_ops":MODEL_ALLOWED_OPS}: return false
 	var tensor: Variant = value.get("tensor_profile")
-	if not tensor is Dictionary or tensor.get("profile_id") != "competitive_public_actor_i32_v1" or tensor.get("max_options") != 1024 or tensor.get("frame_width") != 24 or tensor.get("option_width") != 16: return false
+	if not tensor is Dictionary: return false
+	var tensor_hash := MODEL_TENSOR_PROFILE_SHA256
+	if tensor.get("profile_id") == "ptcgdap_local_semantic_actor_i32_v1":
+		tensor_hash = "4201D98BD567FD3036124D78977FDD0B6ECB964373F086694529AD22FDA58016"
+	elif tensor.get("profile_id") != "competitive_public_actor_i32_v1": return false
+	var canonical_tensor: Dictionary = CabtJsonTreeScript.canonicalize_artifact_json_bytes(JSON.stringify(tensor).to_utf8_buffer())
+	if not canonical_tensor.get("ok",false): return false
+	if _sha(canonical_tensor.get("bytes",PackedByteArray())) != tensor_hash: return false
 	var hashes: Variant = value.get("contract_hashes")
-	if not hashes is Dictionary or hashes != {"cabt_contract_sha256":CABT_CONTRACT_SHA256, "card_catalog_sha256":CARD_CATALOG_SHA256, "tensor_profile_sha256":MODEL_TENSOR_PROFILE_SHA256}: return false
+	if not hashes is Dictionary or hashes != {"cabt_contract_sha256":CABT_CONTRACT_SHA256, "card_catalog_sha256":CARD_CATALOG_SHA256, "tensor_profile_sha256":tensor_hash}: return false
 	var limits: Variant = value.get("resource_limits")
 	if not limits is Dictionary or limits != {"max_artifact_bytes":8388608, "max_options":1024, "decision_timeout_ms":25, "cpu_only":true}: return false
 	var provenance: Variant = value.get("provenance")

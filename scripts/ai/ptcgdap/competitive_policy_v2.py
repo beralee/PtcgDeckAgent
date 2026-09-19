@@ -2901,6 +2901,7 @@ class CompetitivePolicyV2Decision:
     error_code: str
     selected_indexes: list[int]
     audit: dict[str, Any]
+    model_frontier: dict[str, Any] | None = None
 
 
 def _index_list(value: Any, option_count: int) -> bool:
@@ -4184,7 +4185,11 @@ class CompetitivePolicyV2Runtime:
             and any(index in authority_indexes for index in selected)
         )
         audit = {**audit_payload, "audit_hash": _sha(audit_payload)}
-        return CompetitivePolicyV2Decision(True, "", list(selected), audit)
+        from .semantic_model_profile import base_model_frontier
+        model_frontier = base_model_frontier(frame=frame_value, selected=selected, tiers=tiers,
+            vetoed=vetoed, mandatory=mandatory, terminal=terminal,
+            evaluated={'selection_quotas':selection_quotas}, audit=audit)
+        return CompetitivePolicyV2Decision(True, "", list(selected), audit, model_frontier)
 
 
 __all__ = [

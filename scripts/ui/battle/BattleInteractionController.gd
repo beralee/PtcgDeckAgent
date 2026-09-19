@@ -702,7 +702,11 @@ func field_assignment_should_compact(scene: Object, interaction_data: Dictionary
 	if int(scene.get("_field_interaction_assignment_selected_source_index")) >= 0:
 		return true
 	var assignment_entries: Array = scene.get("_field_interaction_assignment_entries")
-	return not assignment_entries.is_empty()
+	# Hide the sources while choosing a target, then reopen them if another
+	# card can be assigned. Multi-Energy transfers otherwise get stuck after
+	# their first assignment with every remaining source hidden.
+	var max_assignments := int(interaction_data.get("max_select", 0))
+	return max_assignments > 0 and assignment_entries.size() >= max_assignments
 
 
 func apply_field_assignment_compact_metrics(scene: Object, compact: bool) -> void:

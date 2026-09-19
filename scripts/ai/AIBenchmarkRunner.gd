@@ -69,7 +69,9 @@ func run_benchmark_case(benchmark_case) -> Dictionary:
 	var schedule := build_match_schedule(benchmark_case)
 	var matches: Array[Dictionary] = []
 	for matchup: Dictionary in schedule:
+		print("BENCHMARK_PROGRESS: %d/%d seed=%d" % [matches.size(), schedule.size(), int(matchup.get("seed", -1))])
 		matches.append(_run_benchmark_match(benchmark_case, matchup, deck_a, deck_b))
+	print("BENCHMARK_PROGRESS: %d/%d complete" % [matches.size(), schedule.size()])
 
 	return {
 		"benchmark_case": benchmark_case.get_pairing_name(),

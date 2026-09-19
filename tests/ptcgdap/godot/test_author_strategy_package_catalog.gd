@@ -694,11 +694,11 @@ func test_local_package_install_validates_deck_writes_atomically_and_refreshes_c
 	if FileAccess.file_exists(destination):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(destination))
 	var catalog := CatalogScript.new()
-	if not catalog.has_method("install_from_local_path"):
+	if not catalog.has_method("install_from_local_path") or not catalog.has_method("install_local_bytes"):
 		catalog.free()
-		return "catalog does not expose install_from_local_path"
+		return "catalog does not expose local path and byte installation"
 	var source_path := ProjectSettings.globalize_path(INSTALLABLE_FIXTURE)
-	var first: Dictionary = catalog.call("install_from_local_path", source_path)
+	var first: Dictionary = catalog.call("install_local_bytes", FileAccess.get_file_as_bytes(source_path))
 	var second: Dictionary = catalog.call("install_from_local_path", source_path)
 	var installed_bytes := FileAccess.get_file_as_bytes(destination) if FileAccess.file_exists(destination) else PackedByteArray()
 	var source_bytes := FileAccess.get_file_as_bytes(INSTALLABLE_FIXTURE)
@@ -1003,7 +1003,7 @@ func test_local_package_remove_hides_built_in_and_reimport_restores_exact_strate
 	var report: Dictionary = catalog.scan_startup()
 	var built_in: Dictionary = {}
 	for value: Variant in report.get("metadata_records", []):
-		if value is Dictionary and value.get("package_id") == "ptcgdap.marnie.windows-local":
+		if value is Dictionary and value.get("package_id") == "dev.bodao-yongzhe.marnies-gift-box":
 			built_in = value
 			break
 	if built_in.is_empty():
@@ -1025,7 +1025,7 @@ func test_local_package_remove_hides_built_in_and_reimport_restores_exact_strate
 		return record.get("package_id") == built_in.get("package_id")
 	)
 	var source_path := ProjectSettings.globalize_path(
-		"res://data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+		"res://data/ptcgdap/author_strategy_packages/marnies-gift-box-turn-program-round05-5.21.0.ptcgai"
 	)
 	var installed: Dictionary = restarted_catalog.install_from_local_path(source_path)
 	if not bool(installed.get("ok", false)):
@@ -1081,7 +1081,7 @@ func test_invalid_removal_store_fails_delete_without_hiding_or_mutating_built_in
 	var report: Dictionary = catalog.scan_startup()
 	var built_in: Dictionary = {}
 	for value: Variant in report.get("metadata_records", []):
-		if value is Dictionary and value.get("package_id") == "ptcgdap.marnie.windows-local":
+		if value is Dictionary and value.get("package_id") == "dev.bodao-yongzhe.marnies-gift-box":
 			built_in = value
 			break
 	if built_in.is_empty():
@@ -1130,7 +1130,7 @@ func test_metadata_only_candidate_cannot_request_ready_match_handle() -> String:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	catalog.set_removal_store_path_for_tests(removal_store_path)
-	var report: Dictionary = catalog.scan_startup()
+	var report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var record: Dictionary = {}
 	for value: Variant in report.get("metadata_records", []):
 		if value is Dictionary and value.get("package_id") == "ptcgdap.marnie.windows-local":
@@ -1154,7 +1154,7 @@ func test_metadata_only_candidate_cannot_request_ready_match_handle() -> String:
 
 
 func test_ready_catalog_and_match_handle_require_the_same_fixed_release_decision() -> String:
-	var path := "res://data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+	var path := "res://tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
 	var source := FileAccess.open(path, FileAccess.READ)
 	if source == null:
 		return "Marnie candidate archive missing"

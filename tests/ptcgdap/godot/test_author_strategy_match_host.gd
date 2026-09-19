@@ -17,7 +17,7 @@ const CabtSelectionWindowScript = preload("res://scripts/ai/ptcgdap/cabt/CabtSel
 const PolicyPackageManifestScript = preload("res://scripts/ai/ptcgdap/runtime/local/PolicyPackageManifest.gd")
 
 const FIXTURE_PATH := "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp4/00-exact-mapped-shadow.ptcgai"
-const MARNIE_WINDOWS_PATH := "res://data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+const MARNIE_WINDOWS_PATH := "res://tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
 const REPLACEMENT_PATH := "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp2/01-valid_manifest_whitespace_identity.ptcgai"
 const VECTOR_PATH := "res://contracts/ptcgdap/author_strategy_match_host_conformance_vectors.json"
 const LOCAL_CONTEXT_VECTOR_PATH := "res://contracts/ptcgdap/local_uid_public_context_conformance_vectors.json"

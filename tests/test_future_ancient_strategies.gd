@@ -1721,7 +1721,7 @@ func test_raging_bolt_sada_picks_lf_sources_over_g_from_discard() -> String:
 	])
 
 
-func test_raging_bolt_bellowing_thunder_discard_early_turn_keeps_sada_fuel_grass_first() -> String:
+func test_raging_bolt_bellowing_thunder_discards_exact_lethal_grass_first() -> String:
 	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
 	if strategy == null:
 		return "DeckStrategyRagingBoltOgerpon.gd should exist"
@@ -1754,8 +1754,8 @@ func test_raging_bolt_bellowing_thunder_discard_early_turn_keeps_sada_fuel_grass
 		if c is CardInstance:
 			picked_types.append(str((c as CardInstance).card_data.energy_provides))
 	return run_checks([
-		assert_true(picked.size() == 3,
-			"极雷轰弃能：前期小奖也应额外弃能制造奥琳续航燃料，实际弃了: %d" % picked.size()),
+		assert_true(picked.size() == 2,
+			"130 HP 应弃两张能量完成击倒，并保留不必要消耗的能量，实际: %d" % picked.size()),
 		assert_true("G" in picked_types,
 			"极雷轰弃能：应优先弃草能量，实际: %s" % str(picked_types)),
 	])

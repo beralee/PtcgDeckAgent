@@ -2087,7 +2087,7 @@ func test_battle_card_view_empty_field_slots_use_soft_placeholder_effect() -> St
 	var empty_view := BattleCardViewScript.new()
 	empty_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
 	var empty_effect := empty_view.get("_empty_slot_effect") as CanvasItem
-	var art_frame := empty_view.get("_art_frame") as PanelContainer
+	var art_frame := empty_view.get("_art_frame") as Control
 	var art_style := art_frame.get_theme_stylebox("panel") as StyleBoxFlat if art_frame != null else null
 	var empty_bg := art_style.bg_color if art_style != null else Color(0, 0, 0, 1)
 	var effect_material := empty_effect.material if empty_effect != null else null

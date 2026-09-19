@@ -29,7 +29,7 @@ func build_ucis_attack_interaction_steps_spec_steps(
 	return [{
 		"id": CHOICE_STEP_ID,
 		"title": "Return this Pokemon and all attached cards to your hand?",
-		"items": ["keep", "return"],
+		"items": [false, true],
 		"labels": ["Keep in play", "Return to hand"],
 		"min_select": 1,
 		"max_select": 1,
@@ -86,7 +86,7 @@ func _replacement_step(player: PlayerState) -> Array[Dictionary]:
 
 func _return_selected(context: Dictionary) -> bool:
 	for value: Variant in context.get(CHOICE_STEP_ID, []):
-		if str(value) == "return":
+		if (typeof(value) == TYPE_BOOL and bool(value)) or str(value) == "return":
 			return true
 	return false
 

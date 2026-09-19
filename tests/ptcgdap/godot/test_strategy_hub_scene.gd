@@ -300,6 +300,7 @@ func test_strategy_marketplace_renders_three_boards_author_works_and_download_st
 		"download_available": true,
 		"installable_release": release,
 	}])
+	hub.call("select_marketplace_board_for_test", "latest")
 	var latest_text := _collect_label_and_button_text(hub.get_node("%StrategyList"))
 	var ranking_text := _collect_label_and_button_text(hub.get_node("%StrategyRankingList"))
 	var author_text := _collect_label_and_button_text(hub.get_node("%AuthorRankingList"))
@@ -308,7 +309,7 @@ func test_strategy_marketplace_renders_three_boards_author_works_and_download_st
 	var download_buttons := hub.find_children("MarketplaceDownloadButton", "Button", true, false)
 	var checks := run_checks([
 		assert_str_contains(latest_text, "测试策略"),
-		assert_str_contains(latest_text, "下载到本机"),
+		assert_str_contains(latest_text, "一键下载安装"),
 		assert_str_contains(ranking_text, "#1"),
 		assert_str_contains(ranking_text, "Kaggle 分 0.417"),
 		assert_str_contains(ranking_text, "胜率 66.7%"),
@@ -406,16 +407,16 @@ func test_continuous_ladder_renders_single_score_and_npc_ownership() -> String:
 		assert_str_contains(ranking_text, "#1"),
 		assert_str_contains(ranking_text, "厄诡椪"),
 		assert_str_contains(ranking_text, "710.11 分"),
-		assert_false(ranking_text.contains("μ")),
-		assert_false(ranking_text.contains("σ")),
+		assert_false(ranking_text.contains("\u03bc")),
+		assert_false(ranking_text.contains("\u03c3")),
 		assert_str_contains(ranking_text, "2 局"),
-		assert_str_contains(ranking_text, "开发者策略"),
-		assert_str_contains(ranking_text, "平台 NPC"),
+		assert_str_contains(ranking_text, "Beralee"),
+		assert_str_contains(ranking_text, "内置对手"),
 		assert_str_contains(ranking_text, "暂定"),
 		assert_str_contains(author_text, "Beralee"),
 		assert_str_contains(author_text, "710.11 分"),
-		assert_false(author_text.contains("μ")),
-		assert_false(author_text.contains("σ")),
+		assert_false(author_text.contains("\u03bc")),
+		assert_false(author_text.contains("\u03c3")),
 		assert_str_contains(
 			str(hub.call("workspace_status_snapshot").get("catalog", {}).get("text", "")),
 			"godot_v18_ladder_v1"
@@ -522,7 +523,7 @@ func test_continuous_ladder_rankings_drive_release_and_author_archives() -> Stri
 			or not author_text.contains("全部 2 个策略版本") \
 			or not author_text.contains("厄诡椪 1.3.0") \
 			or not author_text.contains("640.00 分") \
-			or author_text.contains("μ") or author_text.contains("σ") \
+			or author_text.contains("\u03bc") or author_text.contains("\u03c3") \
 			or imports.is_empty() or ranking_buttons.is_empty():
 		var diagnostic := "release_visible=%s replays=%d imports=%d buttons=%d\nrelease=%s\nauthor=%s" % [
 			release_download_visible, replay_downloads.size(), imports.size(), ranking_buttons.size(),
@@ -535,8 +536,8 @@ func test_continuous_ladder_rankings_drive_release_and_author_archives() -> Stri
 		assert_str_contains(release_text, "实际单局"),
 		assert_str_contains(release_text, "积分变化历史"),
 		assert_str_contains(release_text, "600.00 → 710.11 分"),
-		assert_false(release_text.contains("μ")),
-		assert_false(release_text.contains("σ")),
+		assert_false(release_text.contains("\u03bc")),
+		assert_false(release_text.contains("\u03c3")),
 		assert_str_contains(release_text, "平台NPC·测试"),
 		assert_eq(replay_downloads.size(), 1),
 		assert_eq(replay_button_initial_text, "下载录像"),
@@ -555,8 +556,8 @@ func test_continuous_ladder_rankings_drive_release_and_author_archives() -> Stri
 		assert_str_contains(author_text, "全部 2 个策略版本"),
 		assert_str_contains(author_text, "厄诡椪 1.3.0"),
 		assert_str_contains(author_text, "640.00 分"),
-		assert_false(author_text.contains("μ")),
-		assert_false(author_text.contains("σ")),
+		assert_false(author_text.contains("\u03bc")),
+		assert_false(author_text.contains("\u03c3")),
 		assert_true(imports.size() >= 1),
 		assert_true(ranking_buttons.size() >= 1),
 	])
@@ -663,10 +664,10 @@ func test_strategy_hub_uses_one_hud_workspace_at_a_time() -> String:
 		assert_eq(local_tab.get_index(), 1),
 		assert_eq(replay_tab.get_index(), 2),
 		assert_eq(settings_tab.get_index(), 3, "AI 设置必须是末尾页签"),
-		assert_eq(catalog_tab.text, "策略广场"),
-		assert_eq(local_tab.text, "本地策略"),
-		assert_eq(replay_tab.text, "对战录像"),
-		assert_eq(settings_tab.text, "AI 设置"),
+		assert_eq(catalog_tab.text, "AI天梯"),
+		assert_eq(local_tab.text, "已下载"),
+		assert_eq(replay_tab.text, "开发者"),
+		assert_eq(settings_tab.text, "DeepSeek"),
 		assert_false(local_workspace.visible),
 		assert_false(replay_workspace.visible),
 		assert_true(catalog_workspace.visible),
@@ -752,6 +753,85 @@ func test_strategy_hub_embeds_existing_ai_settings_scene_when_requested() -> Str
 	return checks
 
 
+func test_mobile_strategy_primary_flow_is_compact() -> String:
+	var hub := HubScene.instantiate()
+	hub.call("_apply_non_battle_layout", Vector2(900, 2000), "portrait")
+	hub.call("_apply_continuous_ladder_release_profile", {
+		"release": {"display_name": "测试策略", "owner_kind": "developer", "mu": 900,
+			"actual_game_count": 20, "download_available": true,
+			"installable_release": {"package_id": "test", "package_version": "1", "archive_sha256": "a".repeat(64)}},
+		"performance": {"individual_games": {"wins": 12, "losses": 8, "win_rate_micros": 600000}},
+	})
+	var checks := run_checks([
+		assert_false(hub.find_child("CatalogKicker", true, false).visible),
+		assert_false(hub.get_node("%MatchHistoryList").visible),
+		assert_false(hub.get_node("%AuthorWorksList").visible),
+		assert_false(hub.get_node("%StatusStrip").visible),
+		assert_eq(hub.get_node("%SelectedDownloadButton").text, "下载策略"),
+		assert_str_contains(hub.get_node("%ShadowStats").text, "60.0%"),
+	])
+	hub.call("_set_workspace_status", "catalog", "下载失败，请重试", true)
+	checks = run_checks([checks, assert_true(hub.get_node("%StatusStrip").visible, "Errors must remain visible")])
+	hub.free()
+	return checks
+
+
+func test_strategy_hub_mobile_readability_and_modal_import() -> String:
+	var hub := HubScene.instantiate()
+	hub.set("_skip_service_initialization_for_tests", true)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(hub)
+	await tree.process_frame
+	var overlay := hub.get_node_or_null("%StrategyDetailOverlay") as Control
+	if overlay == null:
+		hub.free()
+		return "Strategy selection must open a modal, not a panel below the catalogue"
+	hub.call("apply_non_battle_layout_for_test", Vector2(900, 2000), "portrait")
+	var checks: Array[String] = [
+		assert_false(overlay.visible),
+		assert_true((hub.get_node("%CatalogTab") as Button).get_theme_font_size("font_size") >= 40),
+		assert_true((hub.get_node("%SummaryLabel") as Label).get_theme_font_size("font_size") >= 40),
+		assert_false((hub.get_node("%DetailScroll") as ScrollContainer).is_ancestor_of(hub.get_node("%SelectedDownloadButton")), "Import stays outside scrolling detail content"),
+	]
+	for title_node: Node in hub.find_children("LocalPackageRecordLabel", "Label", true, false):
+		var title := title_node as Label
+		checks.append(assert_true(title.custom_minimum_size.y >= title.get_theme_font_size("font_size"), "Local strategy name must have a visible line instead of collapsing"))
+	for platform: String in ["Android", "Web"]:
+		hub.call("_configure_replay_platform", platform)
+		hub.call("select_workspace_for_test", "replays")
+		checks.append(assert_true((hub.get_node("%ReplayTab") as Control).visible, platform + " developer tab must remain accessible"))
+		checks.append(assert_true((hub.get_node("%ReplayWorkspace") as Control).visible, platform + " developer guide must be navigable"))
+		checks.append(assert_false(hub.find_child("LocalReplayScroll", true, false).visible, platform + " playback remains unavailable"))
+	hub.call("_show_marketplace_strategy", {"display_name": "Test strategy", "installable_release": {"package_version": "1.0"}})
+	checks.append(assert_true(overlay.visible, "Selecting a strategy must show its import modal immediately"))
+	checks.append(assert_true((hub.get_node("%SelectedDownloadButton") as Button).visible))
+	hub.call("_close_strategy_detail")
+	checks.append(assert_false(overlay.visible))
+	hub.call("select_workspace_for_test", "settings")
+	var settings := hub.get_node("%AISettingsWorkspace").get_node("AISettingsContent")
+	settings.call("_apply_embedded_workspace_layout", Vector2(850, 1600), "portrait")
+	checks.append(assert_true((settings.get_node("%EndpointInput") as LineEdit).get_theme_font_size("font_size") >= 40, "Embedded settings must also use readable portrait text"))
+	checks.append(assert_true((settings.get_node("%TimeoutInput") as SpinBox).get_line_edit().get_theme_font_size("font_size") >= 40, "SpinBox internal editor must not retain tiny default text"))
+	hub.free()
+	return run_checks(checks)
+
+
+func test_strategy_hub_safe_area_accounts_for_android_viewport_stretch() -> String:
+	var hub := HubScene.instantiate()
+	var canvas := Rect2(0, 0, 1600, 3555)
+	var physical := Rect2(0, 0, 1080, 2400)
+	var stretch := Transform2D(Vector2(1080.0 / 1600.0, 0), Vector2(0, 2400.0 / 3555.0), Vector2.ZERO)
+	var result: Rect2 = hub.content_rect_from_screen_safe_area(canvas, physical, stretch)
+	var inset: Rect2 = hub.content_rect_from_screen_safe_area(canvas, Rect2(0, 72, 1080, 2250), stretch)
+	var checks := run_checks([
+		assert_true(result.size.is_equal_approx(canvas.size), "Full-screen device safe area must fill the logical canvas"),
+		assert_true(is_equal_approx(inset.size.x, 1600.0)),
+		assert_true(inset.position.y > 100.0 and inset.end.y < canvas.end.y, "Physical cutouts must remain excluded after scaling"),
+	])
+	hub.free()
+	return checks
+
+
 func test_strategy_hub_reflows_hud_workspaces_for_portrait_and_landscape() -> String:
 	var hub := HubScene.instantiate()
 	if not hub.has_method("apply_non_battle_layout_for_test"):
@@ -770,16 +850,16 @@ func test_strategy_hub_reflows_hud_workspaces_for_portrait_and_landscape() -> St
 		assert_eq(local_columns.columns, 1),
 		assert_eq(catalog_columns.columns, 1),
 		assert_true(tabs.custom_minimum_size.y >= 56.0),
-		assert_true(library_panel != null and library_panel.custom_minimum_size.y >= 400.0),
+		assert_true(library_panel != null and library_panel.custom_minimum_size.y == 0.0),
 		assert_eq(package_scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED),
 		assert_eq(str(hub.get_meta("non_battle_layout_mode", "")), "portrait"),
 	]
 	hub.call("apply_non_battle_layout_for_test", Vector2(1600, 900), "landscape")
 	checks.append_array([
-		assert_eq(local_columns.columns, 2),
-		assert_eq(catalog_columns.columns, 2),
-		assert_true(library_panel != null and library_panel.custom_minimum_size.y >= 450.0),
-		assert_eq(package_scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO),
+		assert_eq(local_columns.columns, 1),
+		assert_eq(catalog_columns.columns, 1, "Strategy details use a modal on desktop too"),
+		assert_true(library_panel != null and library_panel.custom_minimum_size.y == 0.0),
+		assert_eq(package_scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED),
 		assert_eq(str(hub.get_meta("non_battle_layout_mode", "")), "landscape"),
 	])
 	hub.free()
@@ -820,17 +900,17 @@ func test_strategy_hub_renders_imported_packages_with_battle_availability() -> S
 		assert_not_null(record_label),
 		assert_not_null(delete_button),
 		assert_eq(delete_button.text, "删除策略"),
-		assert_eq(record_label.text, "18.0 玛俐长毛巨魔 · 本地作者 · v1.0.0"),
+		assert_eq(record_label.text, "18.0 玛俐长毛巨魔"),
 		assert_false("完整作者策略" in rendered_text, "Verbose package-shape suffixes must not remain in the visible package name"),
 		assert_str_contains(rendered_text, "本地作者"),
 		assert_str_contains(rendered_text, "已加载"),
 		assert_str_contains(rendered_text, "暂不可开战"),
 	])
 	delete_button.pressed.emit()
-	var delete_dialog := hub.get_node_or_null("%LocalPackageDeleteDialog") as ConfirmationDialog
+	var delete_dialog := hub.get_node_or_null("%LocalPackageDeleteDialog") as Control
 	result += run_checks([
 		assert_true(delete_dialog.visible, "Delete must require an explicit confirmation"),
-		assert_str_contains(delete_dialog.dialog_text, "18.0 玛俐长毛巨魔"),
+		assert_str_contains((hub.get_node("%LocalPackageDeleteMessage") as Label).text, "18.0 玛俐长毛巨魔"),
 		assert_eq(hub.get("_pending_local_package_delete_ref"), {
 			"package_id": "local.sample",
 			"package_version": "1.0.0",

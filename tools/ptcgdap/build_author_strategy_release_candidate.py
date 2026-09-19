@@ -21,7 +21,7 @@ from tools.ptcgdap.build_author_strategy_windows_local_deck_contract import (
 )
 
 
-OUTPUT = ROOT / "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+OUTPUT = ROOT / "tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
 TEST_FIXTURE_PRIVATE_KEY = bytes(range(32))
 
 
@@ -31,7 +31,7 @@ def _sha(value: bytes) -> str:
 
 def build_candidate_payloads() -> dict[str, bytes]:
     payloads = build_fixture_payloads()
-    deck_manifest = build_marnie_deck_manifest(ROOT)
+    deck_manifest = build_marnie_deck_manifest()
     deck_csv = build_marnie_deck_csv(deck_manifest)
     deck_manifest_bytes = canonical_json_v1_bytes(deck_manifest)
     manifest = json.loads(payloads["strategy_package.json"])

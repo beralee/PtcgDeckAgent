@@ -1,6 +1,14 @@
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+# The mock executables use the .NET Framework C# compiler. PowerShell 7 cannot
+# emit ConsoleApplication assemblies, so run this harness with Windows PS.
+if ($PSVersionTable.PSEdition -eq 'Core') {
+	$frameworkPowerShell = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+	& $frameworkPowerShell -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath
+	exit $LASTEXITCODE
+}
+
 function Assert-Equal {
 	param(
 		$Actual,

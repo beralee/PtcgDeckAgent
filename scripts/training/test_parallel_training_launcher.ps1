@@ -112,7 +112,8 @@ Assert-True ($launchScriptText.Contains([string]$firstLane.sigma_weights)) 'lane
 Assert-True ($launchScriptText.Contains('--sigma-mcts')) 'lane launch script should pass sigma-mcts through to train_loop.sh'
 Assert-True ($launchScriptText.Contains([string]$firstLane.sigma_mcts)) 'lane launch script should embed the lane sigma_mcts value'
 Assert-True ($launchScriptText.Contains('--project-dir')) 'lane launch script should pass the repo root through to train_loop.sh'
-Assert-True ($launchScriptText.Contains('D:\ai\code\ptcgtrain')) 'lane launch script should embed the repo root'
+$expectedRepoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+Assert-True ($launchScriptText.Contains($expectedRepoRoot)) 'lane launch script should embed the repo root'
 Assert-True ($launchScriptText.Contains('--baseline-agent-config')) 'lane launch script should pass the baseline agent config through to train_loop.sh'
 Assert-True ($launchScriptText.Contains($approvedBaseline.agent_config_path)) 'lane launch script should embed the baseline agent config path'
 Assert-True ($launchScriptText.Contains('--baseline-action-scorer')) 'lane launch script should pass the baseline action scorer through to train_loop.sh'

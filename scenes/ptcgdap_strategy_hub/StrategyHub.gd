@@ -12,17 +12,30 @@ const CONTINUOUS_LADDER_REPLAY_STORE_SCRIPT := preload(
 const MATCH_RECORD_INDEX_SCRIPT_PATH := "res://scripts/engine/MatchRecordIndex.gd"
 const BATTLE_REPLAY_LOCATOR_SCRIPT_PATH := "res://scripts/engine/BattleReplayLocator.gd"
 const LOCAL_REPLAY_REMOVAL_SCRIPT_PATH := "res://scripts/engine/LocalReplayRemovalService.gd"
+const LOCAL_PACKAGE_READ_TASK_SCRIPT := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageReadTask.gd")
 const PUBLIC_REPLAY_VIEWER_SCENE_PATH := "res://scenes/ptcgdap_public_replay/PublicReplayViewer.tscn"
 const AI_SETTINGS_SCENE_PATH := "res://scenes/settings/Settings.tscn"
 const AUTHOR_SETUP_MODEL_SCRIPT := preload("res://scripts/ui/battle/author_strategy/AuthorStrategySetupModel.gd")
+const DECK_VIEW_SCRIPT := preload("res://scripts/ui/decks/DeckViewDialog.gd")
+const DECK_MATERIALIZER_SCRIPT := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckMaterializer.gd")
+var _strategy_deck_view := DECK_VIEW_SCRIPT.new()
+var _strategy_detail_deck: DeckData = null
+var _strategy_detail_ref: Dictionary = {}
+var _strategy_deck_grid_width := -1
+var _package_preview_catalog_override: Variant = null
 const AUTHOR_WINDOWS_GATE_SCRIPT := preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
 const HUD_THEME_SCRIPT := preload("res://scripts/ui/HudTheme.gd")
 const NON_BATTLE_LAYOUT_CONTROLLER_SCRIPT := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NON_BATTLE_TOUCH_BRIDGE_SCRIPT := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const GESTURE_ROUTER_SCRIPT := preload("res://scripts/ui/non_battle/NonBattleGestureRouter.gd")
+var _gesture_router := GESTURE_ROUTER_SCRIPT.new()
 const PERFORMANCE_TRACE_ARG := "--ptcgdap-performance-trace"
 const WORKSPACE_LOCAL := "local"
 const WORKSPACE_REPLAYS := "replays"
 const WORKSPACE_CATALOG := "catalog"
 const WORKSPACE_SETTINGS := "settings"
+const DEVELOPER_PORTAL_URL := "https://ptcg.skillserver.cn/dist/developers.html"
+var _developer_portal_opener_override: Callable
 const MARKETPLACE_LATEST := "latest"
 const MARKETPLACE_STRATEGY_RANKINGS := "strategy_rankings"
 const MARKETPLACE_AUTHOR_RANKINGS := "author_rankings"
@@ -30,6 +43,8 @@ const PUBLIC_NATIVE_START_TOLERANCE_SECONDS := 5
 const LOCAL_PACKAGE_ROOT := "user://ptcgdap/author_strategy_packages"
 const NATIVE_REPLAY_ROOT := "user://match_records"
 const PUBLIC_REPLAY_ROOT := "user://ptcgdap/public_replays/live-community"
+const WORKSPACE_COLUMN_MIN_WIDTH := 420.0
+const WORKSPACE_COLUMN_GAP := 14.0
 
 var _client: Node = null
 var _replay_reader: Node = null
@@ -52,6 +67,10 @@ var _skip_service_initialization_for_tests := false
 var _startup_performance: Dictionary = {}
 var _local_package_records: Array[Dictionary] = []
 var _local_package_import_busy := false
+var _local_package_picker_pending := false
+var _local_package_import_generation := 0
+var _local_package_read_task: RefCounted = null
+var _local_package_read_task_override: RefCounted = null
 var _pending_local_package_delete_ref: Dictionary = {}
 var _package_delete_catalog_override: Variant = null
 var _package_install_catalog_override: Variant = null
@@ -63,7 +82,10 @@ var _local_native_replay_rows: Array[Dictionary] = []
 var _local_public_replay_rows: Array[Dictionary] = []
 var _active_workspace := WORKSPACE_CATALOG
 var _ai_settings_content: Control = null
-var _active_marketplace_board := MARKETPLACE_LATEST
+var _active_marketplace_board := MARKETPLACE_STRATEGY_RANKINGS
+var _detail_extra_sections: Dictionary = {}
+var _quick_install_button: Button = null
+var _quick_install_release_id := ""
 var _marketplace_cursors := {
 	MARKETPLACE_LATEST: null,
 	MARKETPLACE_STRATEGY_RANKINGS: null,
@@ -77,6 +99,9 @@ var _marketplace_download_started_usec := 0
 var _continuous_ladder_replay_download_button: Button = null
 var _continuous_ladder_replay_store_override: Variant = null
 var _non_battle_layout_controller: RefCounted = NON_BATTLE_LAYOUT_CONTROLLER_SCRIPT.new()
+var _layout_device_rect := Rect2()
+var _replays_enabled := true
+var _portrait_context: Dictionary = {}
 var _workspace_statuses := {
 	WORKSPACE_LOCAL: {"text": "本地策略包只保存在这台设备上。", "error": false},
 	WORKSPACE_REPLAYS: {"text": "完整录像会使用正式战斗场景播放。", "error": false},
@@ -89,16 +114,22 @@ func _ready() -> void:
 	var ready_started := Time.get_ticks_usec()
 	_startup_performance["ready_enter_msec"] = roundi(float(ready_started) / 1000.0)
 	_apply_hud_theme()
+	_configure_replay_platform()
+	%CloseStrategyDetailButton.pressed.connect(_close_strategy_detail)
 	_setup_workspace_navigation()
 	_connect_non_battle_layout()
 	_apply_non_battle_layout()
 	%BackButton.pressed.connect(_on_back)
 	%RefreshButton.pressed.connect(_refresh_all)
 	%ImportLocalPackageButton.pressed.connect(_on_import_local_package_pressed)
+	%QuickImportButton.pressed.connect(_on_quick_import_pressed)
+	%DetailMoreButton.toggled.connect(_on_detail_more_toggled)
+	%DeveloperPortalButton.pressed.connect(_on_developer_portal_pressed)
 	%OpenBattleSetupButton.pressed.connect(_on_open_battle_setup_pressed)
 	%LocalPackageFileDialog.file_selected.connect(_on_local_package_file_selected)
-	%LocalPackageDeleteDialog.confirmed.connect(_on_local_package_delete_confirmed)
-	%LocalPackageDeleteDialog.canceled.connect(_on_local_package_delete_canceled)
+	%LocalPackageFileDialog.canceled.connect(_on_local_package_file_canceled)
+	%LocalPackageDeleteConfirm.pressed.connect(_on_local_package_delete_confirmed)
+	%LocalPackageDeleteCancel.pressed.connect(_on_local_package_delete_canceled)
 	%LocalReplayDeleteDialog.confirmed.connect(_on_local_replay_delete_confirmed)
 	%LocalReplayDeleteDialog.canceled.connect(_on_local_replay_delete_canceled)
 	%CopyLocalPackageFolderButton.pressed.connect(
@@ -121,7 +152,7 @@ func _ready() -> void:
 	%SelectedDownloadButton.pressed.connect(
 		_on_marketplace_download_pressed.bind(%SelectedDownloadButton)
 	)
-	_select_marketplace_board(MARKETPLACE_LATEST, false)
+	_select_marketplace_board(MARKETPLACE_STRATEGY_RANKINGS, false)
 	_configure_storage_paths()
 	_bind_local_package_catalog()
 	_refresh_local_packages(false)
@@ -147,26 +178,28 @@ func _setup_workspace_navigation() -> void:
 
 func _configure_storage_paths() -> void:
 	var paths := storage_paths_snapshot()
+	var managed_storage := OS.get_name() == "Android"
 	_set_storage_path_label(
 		%LocalPackageFolderLabel,
 		"策略包文件夹",
-		str(paths.get("strategy_packages", ""))
+		"由游戏管理，可通过“导入策略包”添加文件" if managed_storage else str(paths.get("strategy_packages", ""))
 	)
 	_set_storage_path_label(
 		%NativeReplayFolderLabel,
 		"完整录像文件夹",
-		str(paths.get("native_replays", ""))
+		"由游戏管理，可在本页查看录像" if managed_storage else str(paths.get("native_replays", ""))
 	)
 	_set_storage_path_label(
 		%PublicReplayFolderLabel,
 		"公开记录文件夹",
-		str(paths.get("public_replays", ""))
+		"由游戏管理，可在本页查看记录" if managed_storage else str(paths.get("public_replays", ""))
 	)
 	for button: Button in [
 		%CopyLocalPackageFolderButton,
 		%CopyNativeReplayFolderButton,
 		%CopyPublicReplayFolderButton,
 	]:
+		button.visible = not managed_storage
 		_style_action_button(button, Color(0.30, 0.76, 0.92))
 
 
@@ -204,7 +237,9 @@ func _copy_storage_path(path_kind: String) -> void:
 
 
 func _select_workspace(workspace_id: String) -> void:
+	_gesture_router.cancel()
 	var normalized := workspace_id if workspace_id in [WORKSPACE_CATALOG, WORKSPACE_LOCAL, WORKSPACE_REPLAYS, WORKSPACE_SETTINGS] else WORKSPACE_CATALOG
+	_close_strategy_detail()
 	_active_workspace = normalized
 	%CatalogWorkspace.visible = normalized == WORKSPACE_CATALOG
 	%LocalStrategyWorkspace.visible = normalized == WORKSPACE_LOCAL
@@ -220,6 +255,7 @@ func _select_workspace(workspace_id: String) -> void:
 	if normalized == WORKSPACE_SETTINGS:
 		_ensure_ai_settings_content()
 	_restore_workspace_status(normalized)
+	_apply_mobile_presentation()
 	_reset_active_workspace_scroll()
 	if is_inside_tree():
 		call_deferred("_reset_active_workspace_scroll")
@@ -253,7 +289,7 @@ func _ensure_ai_settings_content() -> void:
 		_set_workspace_status(WORKSPACE_SETTINGS, "AI 设置页面创建失败。", true)
 		return
 	settings_content.name = "AISettingsContent"
-	settings_content.custom_minimum_size = Vector2(0.0, 680.0)
+	settings_content.custom_minimum_size = Vector2.ZERO
 	settings_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if settings_content.has_method("configure_for_strategy_hub_workspace"):
@@ -273,6 +309,11 @@ func _style_workspace_tab(button: Button, active: bool) -> void:
 	button.add_theme_stylebox_override("hover", _workspace_tab_style(active, true, false))
 	button.add_theme_stylebox_override("pressed", _workspace_tab_style(active, true, true))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if not _portrait_context.is_empty() and button.get_parent() == %WorkspaceTabs:
+		for state: String in ["normal", "hover", "pressed"]:
+			var style := button.get_theme_stylebox(state) as StyleBoxFlat
+			style.content_margin_left = 4
+			style.content_margin_right = 4
 
 
 func _workspace_tab_style(active: bool, hover: bool, pressed: bool) -> StyleBoxFlat:
@@ -301,11 +342,21 @@ func _workspace_tab_style(active: bool, hover: bool, pressed: bool) -> StyleBoxF
 
 func _apply_hud_theme() -> void:
 	HUD_THEME_SCRIPT.apply(self)
+	%LocalPackageDeletePanel.add_theme_stylebox_override("panel", HUD_THEME_SCRIPT.panel_style(
+		Color(0.018, 0.052, 0.078, 1.0), HUD_THEME_SCRIPT.ACCENT, 18
+	))
+	%LocalPackageDeleteMessage.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT)
+	%LocalPackageDeleteTitle.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT)
+	_style_action_button(%LocalPackageDeleteCancel, HUD_THEME_SCRIPT.ACCENT)
+	_style_action_button(%LocalPackageDeleteConfirm, Color(0.94, 0.34, 0.32))
 	%TopBarPanel.add_theme_stylebox_override("panel", HUD_THEME_SCRIPT.panel_style(
 		Color(0.018, 0.052, 0.078, 0.96), Color(0.28, 0.90, 1.0, 0.78), 18
 	))
 	%StatusStrip.add_theme_stylebox_override("panel", HUD_THEME_SCRIPT.panel_style(
 		Color(0.014, 0.038, 0.058, 0.94), Color(0.22, 0.68, 0.82, 0.42), 10
+	))
+	(find_child("DetailPanel", true, false) as PanelContainer).add_theme_stylebox_override("panel", HUD_THEME_SCRIPT.panel_style(
+		Color(0.018, 0.052, 0.078, 1.0), Color(0.28, 0.90, 1.0, 0.78), 18
 	))
 	for label_name: String in [
 		"HeaderSubtitle", "LibraryKicker", "ImportKicker", "BattleKicker",
@@ -322,6 +373,9 @@ func _apply_hud_theme() -> void:
 	_style_action_button(%ImportLocalPackageButton, HUD_THEME_SCRIPT.ACCENT_WARM)
 	_style_action_button(%OpenBattleSetupButton, HUD_THEME_SCRIPT.ACCENT)
 	_style_action_button(%SelectedDownloadButton, HUD_THEME_SCRIPT.ACCENT)
+	_style_primary_button(%SelectedDownloadButton)
+	_style_primary_button(%QuickImportButton)
+	_style_primary_button(%DeveloperPortalButton)
 	_style_action_button(%MarketplaceNextButton, HUD_THEME_SCRIPT.ACCENT)
 	for entry: Dictionary in [
 		{"button": %LatestBoardTab, "board": MARKETPLACE_LATEST},
@@ -345,13 +399,28 @@ func _apply_hud_theme() -> void:
 func _style_action_button(button: Button, accent: Color) -> void:
 	if button == null:
 		return
+	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, 48.0)
 	button.add_theme_stylebox_override("normal", HUD_THEME_SCRIPT.button_style(accent, false, false))
 	button.add_theme_stylebox_override("hover", HUD_THEME_SCRIPT.button_style(accent, true, false))
 	button.add_theme_stylebox_override("pressed", HUD_THEME_SCRIPT.button_style(accent, true, true))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
+func _style_primary_button(button: Button) -> void:
+	_style_action_button(button, HUD_THEME_SCRIPT.ACCENT_WARM)
+	for state: String in ["normal", "hover", "pressed"]:
+		var style := HUD_THEME_SCRIPT.button_style(HUD_THEME_SCRIPT.ACCENT_WARM, state == "hover", state == "pressed")
+		style.bg_color = Color(1.0, 0.77, 0.36) if state == "hover" else Color(0.96, 0.65, 0.24)
+		button.add_theme_stylebox_override(state, style)
+	for color_name: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		button.add_theme_color_override(color_name, Color(0.035, 0.065, 0.075))
+	button.add_theme_font_size_override("font_size", 20)
+	button.custom_minimum_size.y = 56
+
+
 func _connect_non_battle_layout() -> void:
+	if not resized.is_connected(_on_viewport_size_changed):
+		resized.connect(_on_viewport_size_changed)
 	if is_inside_tree() and not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
 		get_viewport().size_changed.connect(_on_viewport_size_changed)
 	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
@@ -362,6 +431,7 @@ func _connect_non_battle_layout() -> void:
 
 
 func _on_viewport_size_changed() -> void:
+	_gesture_router.cancel()
 	_apply_non_battle_layout()
 
 
@@ -370,59 +440,492 @@ func _on_non_battle_layout_mode_changed(_mode: String) -> void:
 
 
 func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
-	var size := viewport_size
-	if size.x <= 0.0 or size.y <= 0.0:
-		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var available_size := viewport_size
+	if available_size.x <= 0.0 or available_size.y <= 0.0:
+		available_size = size if size.x > 0.0 and size.y > 0.0 else Vector2(1600, 900)
 	var mode := forced_mode
 	if mode.is_empty():
 		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
 	var mobile_like := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
-	var context: Dictionary = _non_battle_layout_controller.build_context(size, mode, mobile_like)
+	var context: Dictionary = _non_battle_layout_controller.build_context(available_size, mode, mobile_like)
 	var portrait := bool(context.get("is_portrait", false))
+	var safe_rect := Rect2(Vector2.ZERO, available_size)
+	if viewport_size == Vector2.ZERO:
+		safe_rect = _device_content_rect(available_size)
+		_layout_device_rect = safe_rect
+	var margin := roundi(clampf(available_size.x * 0.025, 16.0, 32.0))
+	var content_width := maxf(0.0, safe_rect.size.x - margin * 2.0)
+	var single_column := portrait or content_width < WORKSPACE_COLUMN_MIN_WIDTH * 2.0 + WORKSPACE_COLUMN_GAP
+	var touch_layout := portrait or mobile_like
+	var keyboard_open := mobile_like and _active_workspace == WORKSPACE_SETTINGS and DisplayServer.virtual_keyboard_get_height() > 0
+	%TopBarPanel.visible = not keyboard_open
+	(find_child("TabBarPanel", true, false) as Control).visible = not keyboard_open
+	%StatusStrip.visible = not keyboard_open
 	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
-	%LocalStrategyColumns.columns = 1 if portrait else 2
-	%CatalogColumns.columns = 1 if portrait else 2
-	for nested_scroll_name: String in ["LocalPackageScroll", "LocalReplayScroll", "CatalogScroll", "DetailScroll"]:
+	set_meta("strategy_hub_single_column", single_column)
+	%LocalStrategyColumns.columns = 1 if single_column else 2
+	%CatalogColumns.columns = 1
+	for nested_scroll_name: String in ["LocalPackageScroll", "LocalReplayScroll", "CatalogScroll", "StrategyRankingScroll", "AuthorRankingScroll"]:
 		var nested_scroll := find_child(nested_scroll_name, true, false) as ScrollContainer
 		if nested_scroll != null:
-			nested_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if portrait else ScrollContainer.SCROLL_MODE_AUTO
-	var library_panel := find_child("PackageLibraryPanel", true, false) as Control
-	var action_panel := find_child("PackageActionPanel", true, false) as Control
-	var catalog_panel := find_child("CatalogPanel", true, false) as Control
-	var detail_panel := find_child("DetailPanel", true, false) as Control
-	if library_panel != null:
-		library_panel.custom_minimum_size.y = _portrait_package_panel_height() if portrait else 450.0
-		library_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if portrait else Control.SIZE_EXPAND_FILL
-	if action_panel != null:
-		action_panel.custom_minimum_size.y = 400.0 if portrait else 450.0
-		action_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if portrait else Control.SIZE_EXPAND_FILL
-	if catalog_panel != null:
-		catalog_panel.custom_minimum_size.y = 360.0 if portrait else 540.0
-		catalog_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if portrait else Control.SIZE_EXPAND_FILL
-	if detail_panel != null:
-		detail_panel.custom_minimum_size.y = 520.0 if portrait else 540.0
-		detail_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if portrait else Control.SIZE_EXPAND_FILL
-	var margin := roundi(float(context.get("page_margin", 24.0)))
-	%SafeArea.add_theme_constant_override("margin_left", margin)
-	%SafeArea.add_theme_constant_override("margin_top", margin)
-	%SafeArea.add_theme_constant_override("margin_right", margin)
-	%SafeArea.add_theme_constant_override("margin_bottom", margin)
-	%WorkspaceTabs.custom_minimum_size.y = clampf(float(context.get("secondary_button_height", 64.0)), 64.0, 92.0) if portrait else 52.0
-	%BackButton.custom_minimum_size = Vector2(64.0 if portrait else 104.0, 60.0 if portrait else 48.0)
-	%RefreshButton.custom_minimum_size = Vector2(64.0 if portrait else 104.0, 60.0 if portrait else 48.0)
-	%HeaderSubtitle.visible = not portrait
+			nested_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if single_column else ScrollContainer.SCROLL_MODE_AUTO
+	for panel_name: String in ["PackageLibraryPanel", "PackageActionPanel", "CatalogPanel", "ReplayPanel"]:
+		var panel := find_child(panel_name, true, false) as Control
+		if panel != null:
+			panel.custom_minimum_size.y = 0.0 if single_column else (450.0 if panel_name.begins_with("Package") else 540.0)
+			panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if single_column else Control.SIZE_EXPAND_FILL
+	%SafeArea.add_theme_constant_override("margin_left", margin + ceili(safe_rect.position.x))
+	%SafeArea.add_theme_constant_override("margin_top", margin + ceili(safe_rect.position.y))
+	%SafeArea.add_theme_constant_override("margin_right", margin + ceili(available_size.x - safe_rect.end.x))
+	%SafeArea.add_theme_constant_override("margin_bottom", margin + ceili(available_size.y - safe_rect.end.y))
+	%WorkspaceTabs.columns = 2 if content_width - 16.0 < 504.0 else 4
+	%WorkspaceTabs.custom_minimum_size.y = 64.0 if touch_layout else 52.0
+	%BackButton.custom_minimum_size = Vector2(56.0 if single_column else 104.0, 56.0 if touch_layout else 48.0)
+	%RefreshButton.custom_minimum_size = %BackButton.custom_minimum_size
+	%HeaderSubtitle.visible = not single_column
 	var title := find_child("Title", true, false) as Label
 	if title != null:
-		title.add_theme_font_size_override("font_size", 28 if portrait else 32)
+		title.add_theme_font_size_override("font_size", 24 if single_column else 32)
 	for tab: Button in [%CatalogTab, %LocalStrategyTab, %ReplayTab, %AISettingsTab]:
-		tab.add_theme_font_size_override("font_size", 18 if portrait else 16)
+		tab.add_theme_font_size_override("font_size", 18 if touch_layout else 16)
+		tab.custom_minimum_size.y = 56.0 if touch_layout else 44.0
 	for action: Button in [%ImportLocalPackageButton, %OpenBattleSetupButton]:
-		action.custom_minimum_size.y = maxf(action.custom_minimum_size.y, 64.0 if portrait else 52.0)
-	HUD_THEME_SCRIPT.apply_scrollbars_recursive(self, "touch" if portrait else "default")
+		action.custom_minimum_size.y = 64.0 if touch_layout else 52.0
+	HUD_THEME_SCRIPT.apply_scrollbars_recursive(self, "touch" if touch_layout else "default")
+	_portrait_context = context if portrait else {}
+	if portrait:
+		# Android keeps a 1600-wide logical canvas even on a portrait phone.
+		# Scale text with that canvas instead of treating logical pixels as screen pixels.
+		var text_scale := maxf(1.0, available_size.x / 1100.0)
+		for metric: String in ["body_font_size", "section_font_size", "button_font_size", "input_font_size"]:
+			_portrait_context[metric] = roundi(float(context.get(metric, 44)) * text_scale)
+		if available_size.x < 850.0:
+			for metric: String in ["body_font_size", "section_font_size", "button_font_size", "input_font_size"]:
+				_portrait_context[metric] = maxi(22 if metric == "section_font_size" else 18, roundi(float(context[metric]) * available_size.x / 850.0))
+			_portrait_context["secondary_button_height"] = maxf(44.0, float(context.secondary_button_height) * available_size.x / 850.0)
+	_apply_readable_typography(self)
+	%StatusDot.custom_minimum_size.x = %StatusDot.get_theme_font_size("font_size") * 1.1
+	if portrait:
+		for button: Button in [%BackButton, %RefreshButton]:
+			button.custom_minimum_size.x = button.get_theme_font_size("font_size") * 2.0 + 44.0
+	var dialog_width := safe_rect.size.x - margin * 2.0 if portrait else minf(safe_rect.size.x - margin * 2.0, 1040.0)
+	var dialog_side := maxf(margin, (safe_rect.size.x - dialog_width) * 0.5)
+	%DetailBounds.add_theme_constant_override("margin_left", roundi(safe_rect.position.x + dialog_side))
+	%DetailBounds.add_theme_constant_override("margin_right", roundi(available_size.x - safe_rect.end.x + dialog_side))
+	%DetailBounds.add_theme_constant_override("margin_top", roundi(safe_rect.position.y + margin))
+	%DetailBounds.add_theme_constant_override("margin_bottom", roundi(available_size.y - safe_rect.end.y + margin))
+	if portrait:
+		var sheet_height := minf(safe_rect.size.y * 0.82, float(_portrait_context.get("body_font_size", 44)) * 28.0)
+		var sheet_margin := maxf(margin, (safe_rect.size.y - sheet_height) * 0.5)
+		%DetailBounds.add_theme_constant_override("margin_top", roundi(safe_rect.position.y + sheet_margin))
+		%DetailBounds.add_theme_constant_override("margin_bottom", roundi(available_size.y - safe_rect.end.y + sheet_margin))
+	%DetailScroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_apply_mobile_presentation()
+	_strategy_deck_grid_width = -1
+	_render_strategy_deck_preview()
+	_layout_package_delete_dialog(available_size, safe_rect)
 
 
-func _portrait_package_panel_height() -> float:
-	return maxf(400.0, 160.0 + float(_local_package_records.size()) * 120.0)
+func _layout_package_delete_dialog(available_size: Vector2, safe_rect: Rect2) -> void:
+	var margin := maxf(16.0, safe_rect.size.x * 0.03)
+	%LocalPackageDeleteBounds.add_theme_constant_override("margin_left", roundi(safe_rect.position.x + margin))
+	%LocalPackageDeleteBounds.add_theme_constant_override("margin_right", roundi(available_size.x - safe_rect.end.x + margin))
+	%LocalPackageDeleteBounds.add_theme_constant_override("margin_top", roundi(safe_rect.position.y + margin))
+	%LocalPackageDeleteBounds.add_theme_constant_override("margin_bottom", roundi(available_size.y - safe_rect.end.y + margin))
+	var portrait := not _portrait_context.is_empty()
+	%LocalPackageDeletePanel.custom_minimum_size.x = maxf(240.0, minf(safe_rect.size.x - margin * 2.0, safe_rect.size.x if portrait else 720.0))
+	var body_font := int(_portrait_context.get("body_font_size", 20))
+	%LocalPackageDeleteTitle.add_theme_font_size_override("font_size", int(_portrait_context.get("section_font_size", 28)))
+	%LocalPackageDeleteMessage.add_theme_font_size_override("font_size", body_font)
+	for button: Button in [%LocalPackageDeleteCancel, %LocalPackageDeleteConfirm]:
+		button.add_theme_font_size_override("font_size", body_font)
+		button.custom_minimum_size.y = maxf(52.0, float(_portrait_context.get("secondary_button_height", 52)))
+
+
+func _apply_mobile_presentation() -> void:
+	var compact := not _portrait_context.is_empty()
+	for node_name: String in ["CatalogKicker", "CatalogTitle", "CatalogHint", "MarketplaceBoardTabs",
+		"LocalPackageHint", "ImportKicker", "ImportTitle", "ImportSummary", "ValidationHint",
+		"LocalPackageFolderRow", "ActionDivider", "BattleKicker", "BattleTitle", "BattleSummary",
+		"OpenBattleSetupButton", "ActionSpacer", "LocalSafetyNote", "DetailKicker"]:
+		var control := find_child(node_name, true, false) as Control
+		if control == null:
+			continue
+		if not control.has_meta("hub_expanded_visible"):
+			control.set_meta("hub_expanded_visible", control.visible)
+		control.visible = not compact and bool(control.get_meta("hub_expanded_visible"))
+	%CatalogTab.text = "AI天梯"
+	%LocalStrategyTab.text = "已下载" if compact else "本地策略"
+	%AISettingsTab.text = "DeepSeek"
+	for tab: Button in [%CatalogTab, %LocalStrategyTab, %ReplayTab, %AISettingsTab]:
+		_style_workspace_tab(tab, bool(tab.get_meta("hud_segment_active", false)))
+	%ImportLocalPackageButton.text = "导入策略文件" if compact else "导入本地策略包"
+	if compact:
+		%WorkspaceTabs.columns = 4
+		for control: Control in [%MatchHistoryDivider, %MatchHistoryTitle, %MatchHistoryList,
+			%AuthorWorksDivider, %AuthorWorksTitle, %AuthorWorksList, %OfficialStats, %CommunityStats]:
+			control.hide()
+		var snapshot: Dictionary = _workspace_statuses.get(_active_workspace, {})
+		%StatusStrip.visible = bool(snapshot.get("error", false))
+		%DetailStatusLabel.visible = bool(snapshot.get("error", false))
+	_update_detail_primary_action()
+	_apply_desktop_presentation()
+
+
+func _apply_desktop_presentation() -> void:
+	var desktop := _portrait_context.is_empty()
+	find_child("ReplayPanel", true, false).custom_minimum_size.y = 0
+	find_child("ReplayPanel", true, false).size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	find_child("LocalReplayScroll", true, false).vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	%QuickActions.visible = desktop and _active_workspace in [WORKSPACE_CATALOG, WORKSPACE_LOCAL]
+	%QuickImportButton.visible = desktop
+	%DiscoveryGuide.text = "天梯排名 · 见证开发者实力，下载即可挑战" if _active_workspace == WORKSPACE_CATALOG else "选择已下载的策略，开始对战"
+	# Keep service internals and file paths out of the player's main route.
+	for node_name: String in ["HeaderSubtitle", "CatalogKicker", "CatalogTitle", "CatalogHint",
+		"LocalPackageTitle", "LocalPackageHint", "ImportKicker", "ImportTitle", "ImportSummary",
+		"ValidationHint", "LocalPackageFolderRow", "ActionDivider", "BattleKicker", "BattleTitle",
+		"BattleSummary", "OpenBattleSetupButton", "ActionSpacer", "LocalSafetyNote", "DetailKicker"]:
+		find_child(node_name, true, false).hide()
+	find_child("LibraryKicker", true, false).show()
+	find_child("LibraryKicker", true, false).text = "已下载策略"
+	find_child("PackageActionPanel", true, false).visible = not desktop
+	if desktop:
+		%LocalStrategyColumns.columns = 1
+		find_child("PackageLibraryPanel", true, false).custom_minimum_size.y = 0
+		find_child("PackageLibraryPanel", true, false).size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		find_child("LocalPackageScroll", true, false).vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		find_child("CatalogPanel", true, false).custom_minimum_size.y = 0
+		find_child("CatalogPanel", true, false).size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		for scroll_name: String in ["CatalogScroll", "StrategyRankingScroll", "AuthorRankingScroll"]:
+			find_child(scroll_name, true, false).vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	for scroll_name: String in ["CatalogScroll", "StrategyRankingScroll"]:
+		var inset := StyleBoxEmpty.new()
+		inset.content_margin_right = 28 if desktop else 0
+		find_child(scroll_name, true, false).add_theme_stylebox_override("panel", inset)
+	%CatalogTab.text = "AI天梯"
+	%LocalStrategyTab.text = "已下载"
+	%AISettingsTab.text = "DeepSeek"
+	%StrategyRankingBoardTab.text = "策略排名"
+	%LatestBoardTab.text = "最新上架"
+	%AuthorRankingBoardTab.text = "作者榜"
+	%MarketplaceBoardStateLabel.hide()
+	var snapshot: Dictionary = _workspace_statuses.get(_active_workspace, {})
+	%StatusStrip.visible = bool(snapshot.get("error", false))
+	%DetailStatusLabel.visible = bool(snapshot.get("error", false))
+	if not _detail_extra_sections.is_empty():
+		for node_name: String in _detail_extra_sections:
+			find_child(node_name, true, false).visible = desktop and %DetailMoreButton.button_pressed and bool(_detail_extra_sections[node_name])
+		%DetailMoreButton.visible = desktop
+	if desktop and is_inside_tree() and %StrategyDetailOverlay.visible:
+		var bounds := _device_content_rect(size)
+		var margin := 32.0
+		if _strategy_detail_deck == null and not %DetailMoreButton.button_pressed:
+			margin = maxf(margin, (bounds.size.y - 520.0) * 0.5)
+		%DetailBounds.add_theme_constant_override("margin_top", roundi(bounds.position.y + margin))
+		%DetailBounds.add_theme_constant_override("margin_bottom", roundi(size.y - bounds.end.y + margin))
+
+
+func _collapse_detail_history() -> void:
+	_detail_extra_sections.clear()
+	for node_name: String in ["MatchHistoryDivider", "MatchHistoryTitle", "MatchHistoryList", "AuthorWorksDivider", "AuthorWorksTitle", "AuthorWorksList", "OfficialStats", "CommunityStats"]:
+		_detail_extra_sections[node_name] = find_child(node_name, true, false).visible
+	%DetailMoreButton.set_pressed_no_signal(false)
+	%DetailRoot.move_child(%DetailMoreButton, %ShadowStats.get_index() + 1)
+	_on_detail_more_toggled(false)
+
+
+func _on_detail_more_toggled(expanded: bool) -> void:
+	%DetailMoreButton.text = "收起详细战绩" if expanded else "查看战绩与积分历史"
+	_apply_desktop_presentation()
+
+
+func _update_detail_primary_action() -> void:
+	if _marketplace_download_button != null:
+		return
+	_refresh_install_action(%SelectedDownloadButton)
+
+
+func _refresh_install_action(button: Button) -> void:
+	if button == _marketplace_download_button or button == _quick_install_button:
+		return
+	var release: Dictionary = button.get_meta("continuous_ladder_installable_release", {})
+	if release.is_empty():
+		release = button.get_meta("installable_release", {})
+	button.set_meta("start_strategy_ref", {})
+	var listing: Dictionary = button.get_meta("ladder_listing", {})
+	if release.is_empty() and listing.is_empty():
+		return
+	var record := _local_package_record_for_listing(release) if not release.is_empty() else _local_package_record_for_listing(listing)
+	if not record.is_empty():
+		var admission := _local_package_admission(record)
+		var available := bool(admission.get("ok", false))
+		if available:
+			button.set_meta("start_strategy_ref", record.get("stable_ref", {}).duplicate(true))
+		button.text = ("对战" if _portrait_context.is_empty() else "开战") if available else "已安装 · 暂不可开战"
+		button.tooltip_text = ("使用本机已安装的 v%s 策略对战" % str(record.get("package_version", ""))) if available else _local_package_unavailable_text(admission)
+		button.disabled = not available
+	elif bool(button.get_meta("download_allowed", not button.disabled)):
+		button.tooltip_text = ""
+		button.text = "一键下载安装" if _portrait_context.is_empty() else "下载策略"
+		button.disabled = false
+	else:
+		button.text = "暂不可开战"
+		button.disabled = true
+
+
+func _on_quick_import_pressed() -> void:
+	_select_workspace(WORKSPACE_LOCAL)
+	_on_import_local_package_pressed()
+
+
+func _on_local_strategy_start(reference: Dictionary) -> void:
+	# Resolve again at the moment of use; a deleted/replaced package must not retain authority.
+	var record := _local_package_record_for_ref(reference)
+	if record.is_empty() or not _local_package_can_start(record):
+		_set_status(_local_package_unavailable_text(_local_package_admission(record)), true)
+		return
+	if not GameManager.set_author_strategy_selection(AUTHOR_SETUP_MODEL_SCRIPT.setup_selection_record(record)):
+		_set_status("策略选择失败，请重新选择。", true)
+		return
+	GameManager.current_mode = GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+	GameManager.goto_battle_setup(reference)
+
+
+func _configure_replay_platform(platform: String = OS.get_name()) -> void:
+	_replays_enabled = platform not in ["Android", "Web"]
+	%ReplayTab.show()
+	%ReplayTab.text = "开发者"
+	%DeveloperPortalButton.tooltip_text = DEVELOPER_PORTAL_URL
+	%DeveloperDeviceHint.visible = not _replays_enabled
+	for node_name: String in ["ReplayHeaderRow", "LocalReplayHint", "ReplayFolderRows", "ReplayDivider", "LocalReplayScroll"]:
+		find_child(node_name, true, false).visible = _replays_enabled
+	_set_catalog_legacy_replay_visible(_replays_enabled)
+	%HeaderSubtitle.text = "管理策略 · 发现公开版本" if not _replays_enabled else "管理策略 · 回看实战 · 发现公开版本"
+
+
+func _on_developer_portal_pressed() -> void:
+	var result: int = _developer_portal_opener_override.call(DEVELOPER_PORTAL_URL) if _developer_portal_opener_override.is_valid() else OS.shell_open(DEVELOPER_PORTAL_URL)
+	if result != OK:
+		_set_workspace_status(WORKSPACE_REPLAYS, "无法打开浏览器，请访问 " + DEVELOPER_PORTAL_URL, true)
+
+
+func _apply_readable_typography(node: Node) -> void:
+	# Settings owns its own responsive typography; preserve that independent layout.
+	if node == _ai_settings_content or node is Window or node == %StrategyDeckGrid:
+		return
+	if node is Label or node is Button:
+		var control := node as Control
+		if not control.has_meta("hub_base_font"):
+			control.set_meta("hub_base_font", control.get_theme_font_size("font_size"))
+			control.set_meta("hub_base_height", control.custom_minimum_size.y)
+		var base_font := int(control.get_meta("hub_base_font"))
+		var font := base_font
+		var height := float(control.get_meta("hub_base_height"))
+		if not _portrait_context.is_empty():
+			font = maxi(base_font, int(_portrait_context.get("body_font_size", 44)))
+			if node is Button:
+				height = maxf(height, float(_portrait_context.get("secondary_button_height", 104)))
+				(node as Button).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				if node.get_parent() is GridContainer:
+					control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			if node.name in ["Title", "StrategyTitle"]:
+				font = int(_portrait_context.get("section_font_size", 52))
+			if node is Label and node.name not in ["StatusDot", "LocalPackageCountLabel", "LocalReplayCountLabel"] and not node.has_meta("hub_keep_single_line"):
+				(node as Label).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		control.add_theme_font_size_override("font_size", font)
+		if node.name == "LocalPackageRecordLabel":
+			height = maxf(height, font * 1.4)
+		control.custom_minimum_size.y = height
+	for child: Node in node.get_children():
+		_apply_readable_typography(child)
+
+
+func _open_strategy_detail() -> void:
+	_gesture_router.cancel()
+	_detail_extra_sections.clear()
+	%DetailMoreButton.hide()
+	%DetailMoreButton.set_pressed_no_signal(false)
+	%SelectedDownloadButton.set_meta("start_strategy_ref", {})
+	%SelectedDownloadButton.set_meta("download_allowed", false)
+	_clear_strategy_deck_preview()
+	for node_name: String in ["StatsDivider", "StatsTitle", "OfficialStats", "ShadowStats", "CommunityStats"]:
+		find_child(node_name, true, false).show()
+	%StrategyDetailOverlay.show()
+	%DetailStatusLabel.text = ""
+	%DetailScroll.scroll_vertical = 0
+	_apply_readable_typography(%StrategyDetailOverlay)
+	if is_inside_tree():
+		%CloseStrategyDetailButton.grab_focus()
+
+
+func _close_strategy_detail() -> void:
+	_gesture_router.cancel()
+	%StrategyDetailOverlay.hide()
+	_clear_strategy_deck_preview()
+
+
+func _clear_strategy_deck_preview() -> void:
+	_strategy_detail_ref = {}
+	_strategy_detail_deck = null
+	_strategy_deck_grid_width = -1
+	%StrategyDeckSection.hide()
+	_clear_children(%StrategyDeckGrid)
+
+
+func _update_strategy_deck_preview(reference: Dictionary) -> void:
+	_clear_strategy_deck_preview()
+	_strategy_detail_ref = reference.duplicate(true)
+	var record := _local_package_record_for_ref(reference)
+	if record.is_empty():
+		return
+	%StrategyDeckSection.show()
+	%StrategyDeckTitle.text = "暂时无法读取此策略的卡组，请重新导入策略。"
+	var catalog: Variant = _package_preview_catalog_override if _package_preview_catalog_override != null else AuthorStrategyPackageCatalog
+	if catalog == null or not catalog.has_method("request_match_handle"):
+		return
+	# Read-only inspection uses the exact installed archive; it grants no battle authority.
+	var requested: Dictionary = catalog.request_match_handle(
+		str(reference.get("package_id", "")), str(reference.get("package_version", "")), str(reference.get("archive_sha256", ""))
+	)
+	if not bool(requested.get("ok", false)):
+		return
+	var materialized: Dictionary = DECK_MATERIALIZER_SCRIPT.build(requested.get("handle"))
+	if not bool(materialized.get("ok", false)):
+		return
+	_strategy_detail_deck = materialized.deck
+	%StrategyDeckTitle.text = "策略卡组 · %d 张" % _strategy_detail_deck.total_cards
+	_render_strategy_deck_preview()
+	if not %DetailScroll.resized.is_connected(_render_strategy_deck_preview):
+		%DetailScroll.resized.connect(_render_strategy_deck_preview, CONNECT_DEFERRED)
+
+
+func _render_strategy_deck_preview() -> void:
+	if _strategy_detail_deck == null:
+		return
+	var scrollbar := %DetailScroll.get_v_scroll_bar() as VScrollBar
+	var scrollbar_width := maxi(24, ceili(maxf(scrollbar.size.x, scrollbar.get_combined_minimum_size().x)) + 8)
+	var width := floori(%DetailScroll.size.x) - scrollbar_width
+	if width <= 0:
+		width = 160
+	if width == _strategy_deck_grid_width:
+		return
+	_strategy_deck_grid_width = width
+	_strategy_deck_view.populate_preview_grid(%StrategyDeckGrid, _strategy_detail_deck, width, not _portrait_context.is_empty())
+
+
+func _on_local_strategy_detail(reference: Dictionary) -> void:
+	var record := _local_package_record_for_ref(reference)
+	if record.is_empty():
+		return
+	_open_strategy_detail()
+	%StrategyTitle.text = str(record.get("display_name", "策略"))
+	%AuthorLabel.text = "作者：%s" % str(record.get("author_name", "未知"))
+	%SummaryLabel.text = str(record.get("summary", ""))
+	%ReleaseLabel.text = "已下载 · %s" % str(record.get("package_version_label", ""))
+	_set_catalog_legacy_replay_visible(false)
+	_hide_marketplace_author_works()
+	for node_name: String in ["MatchHistoryDivider", "MatchHistoryTitle", "MatchHistoryList", "StatsDivider", "StatsTitle", "OfficialStats", "ShadowStats", "CommunityStats"]:
+		find_child(node_name, true, false).hide()
+	%SelectedDownloadButton.set_meta("continuous_ladder_installable_release", {})
+	%SelectedDownloadButton.set_meta("installable_release", reference.duplicate(true))
+	%SelectedDownloadButton.set_meta("start_strategy_ref", {})
+	%SelectedDownloadButton.visible = true
+	%SelectedDownloadButton.text = "开战" if _local_package_can_start(record) else "暂不可开战"
+	%SelectedDownloadButton.disabled = not _local_package_can_start(record)
+	_update_detail_primary_action()
+	_update_strategy_deck_preview(reference)
+
+
+func _process(_delta: float) -> void:
+	if OS.has_feature("android") or OS.has_feature("ios"):
+		if _device_content_rect(size) != _layout_device_rect:
+			_apply_non_battle_layout()
+
+
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or %ReplayOverlay.visible:
+		return
+	if %LocalPackageDeleteDialog.visible:
+		if event.is_action_pressed("ui_cancel"):
+			_on_local_package_delete_canceled()
+			get_viewport().set_input_as_handled()
+			return
+		_gesture_router.handle(%LocalPackageDeleteDialog, event)
+		return
+	if _active_workspace == WORKSPACE_SETTINGS and is_instance_valid(_ai_settings_content):
+		var picker := _ai_settings_content.get("_model_picker_overlay") as Control
+		if is_instance_valid(picker) and picker.visible:
+			if event.is_action_pressed("ui_cancel"):
+				_ai_settings_content.call("_hide_settings_model_picker")
+				_gesture_router.cancel()
+				get_viewport().set_input_as_handled()
+				return
+			_gesture_router.handle(picker, event)
+			if event is InputEventMouseButton and not picker.get_global_rect().has_point(event.position):
+				get_viewport().set_input_as_handled()
+			return
+	if %StrategyDetailOverlay.visible:
+		if event.is_action_pressed("ui_cancel"):
+			_close_strategy_detail()
+			get_viewport().set_input_as_handled()
+			return
+		_gesture_router.handle(%StrategyDetailOverlay, event)
+	else:
+		_gesture_router.handle(self, event)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_node_ready() and %LocalPackageDeleteDialog.visible:
+		_on_local_package_delete_canceled()
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		_gesture_router.cancel()
+
+
+func _device_content_rect(available_size: Vector2) -> Rect2:
+	var bounds := Rect2(Vector2.ZERO, available_size)
+	if not is_inside_tree() or not (OS.has_feature("android") or OS.has_feature("ios")):
+		return bounds
+	var safe_screen := Rect2(DisplayServer.get_display_safe_area())
+	if not safe_screen.has_area():
+		safe_screen = get_screen_transform() * bounds
+	var keyboard_height := DisplayServer.virtual_keyboard_get_height()
+	if keyboard_height > 0 and _active_workspace == WORKSPACE_SETTINGS:
+		safe_screen.end.y = minf(safe_screen.end.y, DisplayServer.screen_get_size().y - keyboard_height)
+	# CanvasItem.get_screen_transform() does not include viewport stretch on Android.
+	var local_to_screen := get_viewport().get_stretch_transform() * get_screen_transform()
+	return content_rect_from_screen_safe_area(bounds, safe_screen, local_to_screen)
+
+
+static func content_rect_from_screen_safe_area(bounds: Rect2, safe_screen: Rect2, local_to_screen: Transform2D) -> Rect2:
+	var clipped := bounds.intersection(local_to_screen.affine_inverse() * safe_screen)
+	return clipped if clipped.has_area() else bounds
+
+
+func _responsive_row() -> GridContainer:
+	var row := GridContainer.new()
+	row.columns = 1
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("h_separation", 8)
+	row.add_theme_constant_override("v_separation", 8)
+	row.resized.connect(_reflow_row.bind(row))
+	row.child_entered_tree.connect(func(_child: Node) -> void: _reflow_row.call_deferred(row))
+	return row
+
+
+func _reflow_row(row: GridContainer) -> void:
+	if not is_instance_valid(row):
+		return
+	if not _portrait_context.is_empty():
+		row.columns = 2 if row.has_meta("hub_primary_actions") else 1
+		return
+	var width_needed := 0.0
+	var child_count := 0
+	for child: Node in row.get_children():
+		if child is Control and (child as Control).visible:
+			var control := child as Control
+			width_needed += maxf(control.get_combined_minimum_size().x, 240.0 if control is Label or control is Button and (control as Button).autowrap_mode != TextServer.AUTOWRAP_OFF else 0.0)
+			child_count += 1
+	row.columns = maxi(1, child_count) if row.size.x >= width_needed + maxf(0, child_count - 1) * 8.0 else 1
 
 
 func apply_non_battle_layout_for_test(viewport_size: Vector2, mode: String) -> void:
@@ -534,6 +1037,11 @@ func _record_startup_phase(name: String, started_usec: int) -> void:
 
 func _finish_startup_performance_trace(ready_started_usec: int) -> void:
 	_record_startup_phase("ready_total_msec", ready_started_usec)
+	_startup_performance["layout"] = {
+		"size": str(size), "safe_area": str(DisplayServer.get_display_safe_area()),
+		"screen_transform": str(get_screen_transform()), "device_rect": str(_layout_device_rect),
+		"window_size": str(DisplayServer.window_get_size()),
+	}
 	if PERFORMANCE_TRACE_ARG in OS.get_cmdline_user_args():
 		print("PTCGDAP_STRATEGY_HUB_STARTUP=" + JSON.stringify(_startup_performance))
 
@@ -586,6 +1094,11 @@ func _apply_local_package_catalog(report: Dictionary) -> void:
 		if value is Dictionary:
 			_local_package_records.append((value as Dictionary).duplicate(true))
 	_render_local_packages(int(view.get("diagnostic_count", 0)))
+	for button: Node in find_children("*", "Button", true, false):
+		if button.has_meta("installable_release") or button.has_meta("continuous_ladder_installable_release") or button.has_meta("ladder_listing"):
+			_refresh_install_action(button as Button)
+	if not _strategy_detail_ref.is_empty() and %StrategyDetailOverlay.visible:
+		_update_strategy_deck_preview(_strategy_detail_ref.duplicate(true))
 
 
 func _render_local_packages(diagnostic_count: int) -> void:
@@ -597,7 +1110,9 @@ func _render_local_packages(diagnostic_count: int) -> void:
 		))
 	else:
 		for record: Dictionary in _local_package_records:
-			var available := _local_package_can_start(record)
+			var admission := _local_package_admission(record)
+			var available := bool(admission.get("ok", false))
+			var unavailable_reason := AUTHOR_WINDOWS_GATE_SCRIPT.PlatformCapabilitiesScript.error_text(str(admission.get("error_code", "")))
 			var source_label := "内置 + 用户目录" if record.get("install_sources", []).size() > 1 else (
 				"用户目录" if record.get("install_source") == "user" else "内置"
 			)
@@ -609,20 +1124,23 @@ func _render_local_packages(diagnostic_count: int) -> void:
 			var content := VBoxContainer.new()
 			content.add_theme_constant_override("separation", 5)
 			card.add_child(content)
-			var header := HBoxContainer.new()
+			var header := _responsive_row()
 			header.add_theme_constant_override("separation", 10)
 			content.add_child(header)
 			var title := Label.new()
 			title.name = "LocalPackageRecordLabel"
 			title.text = str(record.get("display_label", record.get("display_name", "未命名策略")))
+			title.text = str(record.get("short_display_name", record.get("display_name", "未命名策略")))
 			title.tooltip_text = "完整名称：%s" % str(record.get("display_name", "未命名策略"))
 			title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			title.clip_text = true
-			title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			title.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 			title.add_theme_font_size_override("font_size", 18)
 			title.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT)
 			header.add_child(title)
 			var badge := Label.new()
+			badge.set_meta("hub_keep_single_line", true)
+			badge.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 			badge.text = "可对战" if available else "待就绪"
 			badge.add_theme_color_override("font_color", Color(0.05, 0.12, 0.11) if available else HUD_THEME_SCRIPT.TEXT)
 			badge.add_theme_stylebox_override("normal", _pill_style(
@@ -630,21 +1148,43 @@ func _render_local_packages(diagnostic_count: int) -> void:
 			))
 			header.add_child(badge)
 			var meta := Label.new()
-			meta.text = "卡组：%s" % str(record.get("deck_name", "未命名卡组"))
+			meta.text = "%s · %s" % [record.get("author_name", "未知作者"), record.get("deck_name", "未命名卡组")]
 			meta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			meta.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT_MUTED)
 			content.add_child(meta)
 			var readiness := Label.new()
 			readiness.text = "已加载 · %s · %s" % [
 				source_label,
-				"可在 AI 对战中开战" if available else "可选择，暂不可开战",
+				"可在 AI 对战中开战" if available else (
+					unavailable_reason if not unavailable_reason.is_empty() else "可选择，暂不可开战"
+				),
 			]
 			readiness.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			readiness.add_theme_color_override("font_color", Color(0.68, 0.98, 0.79) if available else Color(0.74, 0.86, 0.94))
 			content.add_child(readiness)
-			var actions := HBoxContainer.new()
-			actions.alignment = BoxContainer.ALIGNMENT_END
+			badge.hide()
+			readiness.visible = not available
+			if not _portrait_context.is_empty():
+				badge.hide()
+				meta.text = "%s · %s" % [record.get("author_name", "未知作者"), record.get("package_version_label", "")]
+				readiness.visible = not available
+			var actions := _responsive_row()
+			actions.set_meta("hub_primary_actions", true)
 			content.add_child(actions)
+			var start_button := Button.new()
+			start_button.name = "LocalPackageStartButton"
+			start_button.text = ("对战" if _portrait_context.is_empty() else "开战") if available else "暂不可开战"
+			start_button.disabled = not available
+			start_button.pressed.connect(_on_local_strategy_start.bind(record.get("stable_ref", {}).duplicate(true)))
+			_style_action_button(start_button, Color(0.40, 0.94, 0.68))
+			_style_primary_button(start_button)
+			actions.add_child(start_button)
+			var detail_button := Button.new()
+			detail_button.name = "LocalPackageDetailButton"
+			detail_button.text = "查看详情"
+			detail_button.pressed.connect(_on_local_strategy_detail.bind(record.get("stable_ref", {}).duplicate(true)))
+			_style_action_button(detail_button, HUD_THEME_SCRIPT.ACCENT)
+			actions.add_child(detail_button)
 			var delete_button := Button.new()
 			delete_button.name = "LocalPackageDeleteButton"
 			delete_button.text = "删除策略"
@@ -658,6 +1198,14 @@ func _render_local_packages(diagnostic_count: int) -> void:
 			)
 			_style_action_button(delete_button, Color(0.94, 0.34, 0.32))
 			actions.add_child(delete_button)
+			# Keep removal secondary and collapsed until explicitly requested.
+			delete_button.hide()
+			var more_button := Button.new()
+			more_button.name = "LocalPackageMoreButton"
+			more_button.text = "管理"
+			more_button.toggle_mode = true
+			more_button.toggled.connect(func(expanded: bool) -> void: delete_button.visible = expanded)
+			actions.add_child(more_button)
 			%LocalPackageList.add_child(card)
 	if diagnostic_count > 0:
 		%LocalPackageList.add_child(_notice_card(
@@ -674,30 +1222,61 @@ func _render_local_packages(diagnostic_count: int) -> void:
 
 
 func _local_package_can_start(record: Dictionary) -> bool:
+	return bool(_local_package_admission(record).get("ok", false))
+
+
+func _local_package_unavailable_text(admission: Dictionary) -> String:
+	var reason := AUTHOR_WINDOWS_GATE_SCRIPT.PlatformCapabilitiesScript.error_text(str(admission.get("error_code", "")))
+	return reason if not reason.is_empty() else "该策略尚未通过本地运行校验，请选择其他策略。"
+
+
+func _local_package_admission(record: Dictionary) -> Dictionary:
 	if AuthorStrategyPackageCatalog == null:
-		return false
+		return {"ok":false, "error_code":"package_catalog_unavailable"}
 	var selection := AUTHOR_SETUP_MODEL_SCRIPT.setup_selection_record(record)
-	return bool(AUTHOR_WINDOWS_GATE_SCRIPT.evaluate_selection(
+	return AUTHOR_WINDOWS_GATE_SCRIPT.evaluate_selection(
 		AuthorStrategyPackageCatalog, selection
-	).get("ok", false))
+	)
 
 
 func _on_import_local_package_pressed() -> void:
 	if _local_package_import_busy:
 		return
+	_local_package_import_generation += 1
+	_local_package_picker_pending = true
 	%LocalPackageFileDialog.popup_centered_ratio(0.82)
 
 
 func _on_local_package_file_selected(path: String) -> void:
-	if _local_package_import_busy or AuthorStrategyPackageCatalog == null:
+	if not is_inside_tree() or is_queued_for_deletion() or not _local_package_picker_pending or _local_package_import_busy:
+		return
+	_local_package_picker_pending = false
+	var catalog_owner: Variant = _package_install_catalog_override if _package_install_catalog_override != null else AuthorStrategyPackageCatalog
+	if catalog_owner == null or not catalog_owner.has_method("install_local_bytes"):
+		_set_workspace_status(WORKSPACE_LOCAL, _local_package_error_text("package_catalog_unavailable"), true)
 		return
 	_local_package_import_busy = true
 	_set_busy(true)
-	_set_workspace_status(WORKSPACE_LOCAL, "正在验证策略包格式、签名、兼容性和完整牌表…")
-	var tree := get_tree() if is_inside_tree() else null
-	if tree != null:
-		await tree.process_frame
-	var result: Dictionary = AuthorStrategyPackageCatalog.install_from_local_path(path)
+	_set_workspace_status(WORKSPACE_LOCAL, "正在读取所选策略包…")
+	_local_package_read_task = _local_package_read_task_override if _local_package_read_task_override != null else LOCAL_PACKAGE_READ_TASK_SCRIPT.new()
+	_local_package_read_task.connect("completed", _on_local_package_source_read.bind(_local_package_import_generation), CONNECT_ONE_SHOT)
+	var start_error: Error = _local_package_read_task.call("start", path)
+	if start_error != OK:
+		_cancel_local_package_capture()
+		_set_workspace_status(WORKSPACE_LOCAL, _local_package_error_text("package_file_read_failed"), true)
+
+
+func _on_local_package_source_read(captured: Dictionary, generation: int) -> void:
+	if not is_inside_tree() or is_queued_for_deletion() or generation != _local_package_import_generation or _local_package_read_task == null:
+		return
+	_local_package_read_task = null
+	var result := captured
+	if bool(captured.get("ok", false)):
+		var catalog_owner: Variant = _package_install_catalog_override if _package_install_catalog_override != null else AuthorStrategyPackageCatalog
+		_set_workspace_status(WORKSPACE_LOCAL, "正在验证策略包格式、签名、兼容性和完整牌表…")
+		# Installation, catalog validation and CardDatabase access stay on the
+		# main thread. No await separates the current-request check and install.
+		result = catalog_owner.install_local_bytes(captured.get("archive_bytes", PackedByteArray())) if catalog_owner != null else {"ok": false, "error_code": "package_catalog_unavailable"}
 	_local_package_import_busy = false
 	_set_busy(false)
 	if not bool(result.get("ok", false)):
@@ -714,6 +1293,27 @@ func _on_local_package_file_selected(path: String) -> void:
 	)
 
 
+func _on_local_package_file_canceled() -> void:
+	_cancel_local_package_capture()
+	if is_inside_tree():
+		_set_workspace_status(WORKSPACE_LOCAL, "已取消导入策略包。")
+
+
+func _cancel_local_package_capture(update_controls: bool = true) -> void:
+	_local_package_import_generation += 1
+	_local_package_picker_pending = false
+	if _local_package_read_task != null:
+		_local_package_read_task.call("cancel")
+		_local_package_read_task = null
+	_local_package_import_busy = false
+	if update_controls and is_inside_tree():
+		_set_busy(false)
+
+
+func _exit_tree() -> void:
+	_cancel_local_package_capture(false)
+
+
 func _on_local_package_delete_requested(reference: Dictionary) -> void:
 	if _local_package_import_busy:
 		return
@@ -722,25 +1322,28 @@ func _on_local_package_delete_requested(reference: Dictionary) -> void:
 		_set_workspace_status(WORKSPACE_LOCAL, "该策略已不在游戏目录中。", true)
 		return
 	_pending_local_package_delete_ref = AUTHOR_SETUP_MODEL_SCRIPT.stable_ref(record)
+	_gesture_router.cancel()
 	var display_name := str(record.get("short_display_name", record.get("display_name", "该策略")))
-	%LocalPackageDeleteDialog.dialog_text = (
+	%LocalPackageDeleteMessage.text = (
 		"确认从游戏中删除“%s”吗？\n删除后它会从 AI 对手列表中消失；重新导入同一策略可以恢复。" % display_name
 	)
+	%LocalPackageDeleteDialog.show()
+	move_child(%LocalPackageDeleteDialog, get_child_count() - 1)
 	if is_inside_tree():
-		%LocalPackageDeleteDialog.popup_centered()
-	else:
-		%LocalPackageDeleteDialog.visible = true
+		%LocalPackageDeleteCancel.grab_focus()
 
 
 func _on_local_package_delete_confirmed() -> void:
+	if _pending_local_package_delete_ref.is_empty():
+		return
+	var reference := _pending_local_package_delete_ref.duplicate(true)
+	_on_local_package_delete_canceled()
 	var catalog_owner: Variant = (
 		_package_delete_catalog_override
 		if _package_delete_catalog_override != null else AuthorStrategyPackageCatalog
 	)
 	if _local_package_import_busy or catalog_owner == null:
 		return
-	var reference := _pending_local_package_delete_ref.duplicate(true)
-	_pending_local_package_delete_ref = {}
 	var record := _local_package_record_for_ref(reference)
 	if record.is_empty():
 		_set_workspace_status(WORKSPACE_LOCAL, "策略已发生变化，请刷新后重试。", true)
@@ -751,6 +1354,8 @@ func _on_local_package_delete_confirmed() -> void:
 	var tree := get_tree() if is_inside_tree() else null
 	if tree != null:
 		await tree.process_frame
+		if not is_inside_tree():
+			return
 	var result: Dictionary = catalog_owner.remove_package(
 		str(reference.get("package_id", "")),
 		str(reference.get("package_version", "")),
@@ -780,6 +1385,31 @@ func _on_local_package_delete_confirmed() -> void:
 
 func _on_local_package_delete_canceled() -> void:
 	_pending_local_package_delete_ref = {}
+	%LocalPackageDeleteDialog.hide()
+	_gesture_router.cancel()
+	if is_inside_tree() and %LocalStrategyTab.is_visible_in_tree():
+		%LocalStrategyTab.grab_focus()
+
+
+func _local_package_record_for_listing(item: Dictionary) -> Dictionary:
+	# Offer a local opponent, not proof of byte equality with a ranked release.
+	# Prefer its listed version; a unique other local version is also playable.
+	var package_id := str(item.get("package_id", ""))
+	var version := str(item.get("package_version", ""))
+	if package_id.is_empty() or version.is_empty():
+		return {}
+	var versions: Array[Dictionary] = []
+	var matches: Array[Dictionary] = []
+	for record: Dictionary in _local_package_records:
+		if record.get("package_id") == package_id:
+			versions.append(record)
+			if record.get("package_version") == version:
+				matches.append(record)
+	if not matches.is_empty():
+		if item.has("archive_sha256"):
+			return _local_package_record_for_ref(item)
+		return matches[0].duplicate(true) if matches.size() == 1 else {}
+	return versions[0].duplicate(true) if versions.size() == 1 else {}
 
 
 func _local_package_record_for_ref(reference: Dictionary) -> Dictionary:
@@ -792,6 +1422,8 @@ func _local_package_record_for_ref(reference: Dictionary) -> Dictionary:
 func _local_package_error_text(error_code: String) -> String:
 	var messages := {
 		"package_file_missing": "没有读取到所选文件，请重新选择。",
+		"package_file_read_failed": "所选文件读取失败，请确认文件可用后重新选择。",
+		"package_import_canceled": "已取消导入策略包。",
 		"package_archive_invalid": "策略包不是有效的 .ptcgai 文件。",
 		"package_manifest_invalid": "策略包清单格式不正确。",
 		"package_integrity_invalid": "策略包完整性校验失败，未写入任何文件。",
@@ -831,6 +1463,8 @@ func _on_open_battle_setup_pressed() -> void:
 
 
 func _refresh_local_replays() -> void:
+	if not _replays_enabled:
+		return
 	var native_rows: Array = _native_match_index.list_rows() if _native_match_index != null else []
 	var public_rows: Array = []
 	var rejected_count := 0
@@ -896,6 +1530,8 @@ func _on_platform_request_completed(result: Dictionary) -> void:
 			"marketplace_package_download", "continuous_ladder_package_download"
 		]:
 			_finish_marketplace_download_button(false)
+		if operation == "continuous_ladder_release_profile":
+			_reset_quick_install("重试下载")
 		if operation == "continuous_ladder_series_replay":
 			_finish_continuous_ladder_replay_download_button(false)
 		_set_workspace_status(WORKSPACE_CATALOG, _service_error_text(str(result.get("error_code", "unknown"))), true)
@@ -1050,14 +1686,15 @@ func _apply_marketplace_strategy_rankings(
 		if not item_value is Dictionary:
 			continue
 		var item := item_value as Dictionary
-		var prefix := "#%d  Kaggle 分 %.3f · 胜率 %.1f%% · %d 场%s" % [
-			int(item.get("rank", 0)),
+		var prefix := "Kaggle 分 %.3f · 胜率 %.1f%% · %d 场%s" % [
 			float(item.get("kaggle_score_micros", 0)) / 1000000.0,
 			float(item.get("win_rate_micros", 0)) / 10000.0,
 			int(item.get("games", 0)),
 			" · 暂定" if bool(item.get("provisional", false)) else "",
 		]
-		%StrategyRankingList.add_child(_marketplace_strategy_row(item, prefix))
+		var card := _marketplace_strategy_row(item, prefix)
+		_decorate_ladder_rank(card, item)
+		%StrategyRankingList.add_child(card)
 	_set_marketplace_page_state(MARKETPLACE_STRATEGY_RANKINGS, next_cursor, items.size())
 	_set_workspace_status(
 		WORKSPACE_CATALOG,
@@ -1115,6 +1752,7 @@ func _apply_continuous_ladder_authors(items: Array, profile_id: String) -> void:
 		button.pressed.connect(_on_continuous_ladder_author_pressed.bind(button))
 		_style_strategy_button(button, false)
 		card.add_child(button)
+		_decorate_ladder_rank(card, item)
 		%AuthorRankingList.add_child(card)
 	_set_marketplace_page_state(MARKETPLACE_AUTHOR_RANKINGS, null, items.size())
 	_set_workspace_status(
@@ -1157,10 +1795,151 @@ func _continuous_ladder_release_card(item: Dictionary) -> PanelContainer:
 		author_label,
 	]
 	button.set_meta("continuous_ladder_release", item.duplicate(true))
+	if not _portrait_context.is_empty():
+		button.text = "%s\n%s · %d 局%s\n%s" % [title,
+			_format_ladder_score(float(item.get("mu", 0.0))), int(item.get("actual_game_count", 0)),
+			" · 暂定" if bool(item.get("provisional", false)) else "",
+			"内置对手" if npc else "作者 · %s" % str(item.get("author_display_name", item.get("developer_id", "未知开发者")))]
 	button.pressed.connect(_on_continuous_ladder_release_pressed.bind(button))
 	_style_strategy_button(button, false)
-	card.add_child(button)
+	if _portrait_context.is_empty():
+		button.text = "%s\n%s · %d 局%s\n%s" % [title,
+			_format_ladder_score(float(item.get("mu", 0.0))), int(item.get("actual_game_count", 0)),
+			" · 暂定" if bool(item.get("provisional", false)) else "",
+			"内置对手" if npc else "作者 · %s" % str(item.get("author_display_name", item.get("developer_id", "未知开发者")))]
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		button.add_theme_font_size_override("font_size", 20)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 20)
+		card.add_child(row)
+		row.add_child(button)
+		var actions := VBoxContainer.new()
+		actions.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(actions)
+		var primary := Button.new()
+		primary.name = "LadderDownloadButton"
+		if not npc:
+			primary.set_meta("ladder_listing", item.duplicate(true))
+			primary.set_meta("download_allowed", true)
+		primary.custom_minimum_size.x = 210
+		var installable: Variant = item.get("installable_release")
+		var downloadable: bool = not npc and bool(item.get("download_available", false)) and installable is Dictionary and not installable.is_empty()
+		if downloadable:
+			primary.set_meta("continuous_ladder_installable_release", installable.duplicate(true))
+			primary.set_meta("download_allowed", true)
+			primary.pressed.connect(_on_marketplace_download_pressed.bind(primary))
+			_refresh_install_action(primary)
+		else:
+			primary.text = "查看对手" if npc else "一键下载安装"
+			if npc:
+				primary.pressed.connect(_on_continuous_ladder_release_pressed.bind(button))
+			else:
+				primary.set_meta("ladder_quick_release_id", str(item.get("release_id", "")))
+				primary.pressed.connect(_on_ladder_quick_install.bind(primary))
+		_style_primary_button(primary)
+		_refresh_install_action(primary)
+		actions.add_child(primary)
+		var detail := Button.new()
+		detail.name = "LadderDetailButton"
+		detail.text = "查看卡组与战绩"
+		detail.pressed.connect(_on_continuous_ladder_release_pressed.bind(button))
+		actions.add_child(detail)
+	else:
+		card.add_child(button)
+	_decorate_ladder_rank(card, item)
 	return card
+
+
+func _decorate_ladder_rank(card: PanelContainer, item: Dictionary) -> void:
+	# Honor the supplied rank, including ties and pagination; never infer it from row order.
+	var rank := int(item.get("rank", 0))
+	var podium := rank >= 1 and rank <= 3
+	var accent: Color = {
+		1: Color(1.0, 0.79, 0.33),
+		2: Color(0.78, 0.87, 0.97),
+		3: Color(0.91, 0.61, 0.40),
+	}.get(rank, Color(0.43, 0.66, 0.76))
+	var style := _list_card_style(accent)
+	if podium:
+		style.bg_color = Color(0.018, 0.052, 0.076).lerp(accent, 0.09)
+		style.border_color = Color(accent, 0.78)
+		style.border_width_left = 3
+		style.shadow_color = Color(accent, 0.15)
+	card.add_theme_stylebox_override("panel", style)
+	var body := card.get_child(0)
+	card.remove_child(body)
+	var content := VBoxContainer.new()
+	content.mouse_filter = Control.MOUSE_FILTER_PASS
+	content.add_theme_constant_override("separation", 8)
+	card.add_child(content)
+	var rank_label := Label.new()
+	rank_label.name = "LadderRankLabel"
+	rank_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rank_label.text = "#%d" % rank if rank > 0 else "未排名"
+	if podium:
+		rank_label.text += " · " + {1: "榜首", 2: "第二名", 3: "第三名"}[rank]
+	rank_label.set_meta("hub_keep_single_line", true)
+	rank_label.add_theme_font_size_override("font_size", 30 if podium else 26)
+	rank_label.add_theme_color_override("font_color", accent)
+	content.add_child(rank_label)
+	content.add_child(body)
+	_apply_readable_typography(content)
+
+
+func _on_ladder_quick_install(button: Button) -> void:
+	_refresh_install_action(button)
+	if button.disabled or _marketplace_download_button != null or is_instance_valid(_quick_install_button):
+		return
+	var local_ref: Dictionary = button.get_meta("start_strategy_ref", {})
+	if not local_ref.is_empty():
+		_on_local_strategy_start(local_ref)
+		return
+	if button.has_meta("continuous_ladder_installable_release"):
+		_on_marketplace_download_pressed(button)
+		return
+	if _client == null:
+		return
+	_quick_install_button = button
+	_quick_install_release_id = str(button.get_meta("ladder_quick_release_id", ""))
+	button.disabled = true
+	button.text = "准备下载…"
+	var started: Dictionary = _client.fetch_continuous_ladder_release_profile(_quick_install_release_id)
+	if not bool(started.get("accepted", false)):
+		_reset_quick_install("重试下载")
+		_set_workspace_status(WORKSPACE_CATALOG, "下载准备失败，请重试。", true)
+
+
+func _reset_quick_install(text: String) -> void:
+	if is_instance_valid(_quick_install_button):
+		_quick_install_button.disabled = false
+		_quick_install_button.text = text
+	_quick_install_button = null
+	_quick_install_release_id = ""
+
+
+func _complete_quick_install(profile: Dictionary) -> bool:
+	if _quick_install_release_id.is_empty():
+		return false
+	var expected_id := _quick_install_release_id
+	var button := _quick_install_button
+	_reset_quick_install("一键下载安装")
+	if not is_instance_valid(button) or button.is_queued_for_deletion():
+		return true
+	var release: Dictionary = profile.get("release", {})
+	var installable: Variant = release.get("installable_release")
+	if str(release.get("release_id", "")) != expected_id or release.get("owner_kind") != "developer":
+		_set_workspace_status(WORKSPACE_CATALOG, "策略版本发生变化，请刷新后重试。", true)
+		return true
+	if not bool(release.get("download_available", false)) or not installable is Dictionary or installable.is_empty():
+		button.text = "暂无设备版"
+		button.disabled = true
+		_set_workspace_status(WORKSPACE_CATALOG, "这个策略暂未提供可下载版本，可以先查看卡组与战绩。", true)
+		return true
+	button.set_meta("continuous_ladder_installable_release", installable.duplicate(true))
+	button.set_meta("download_allowed", true)
+	_on_marketplace_download_pressed(button)
+	return true
 
 
 func _on_continuous_ladder_release_pressed(button: Button) -> void:
@@ -1188,6 +1967,7 @@ func _on_continuous_ladder_author_pressed(button: Button) -> void:
 	var developer_id := str(item.get("developer_id", ""))
 	if developer_id.is_empty():
 		return
+	_open_strategy_detail()
 	%StrategyTitle.text = "%s 的作者档案" % str(item.get(
 		"author_display_name", developer_id
 	))
@@ -1207,6 +1987,7 @@ func _on_continuous_ladder_author_pressed(button: Button) -> void:
 
 
 func _show_continuous_ladder_release_loading(item: Dictionary) -> void:
+	_open_strategy_detail()
 	_hide_marketplace_author_works()
 	%DetailKicker.text = "策略档案"
 	_set_catalog_legacy_replay_visible(false)
@@ -1229,6 +2010,8 @@ func _show_continuous_ladder_release_loading(item: Dictionary) -> void:
 
 
 func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
+	if _complete_quick_install(profile):
+		return
 	var release: Dictionary = profile.get("release", {})
 	var performance: Dictionary = profile.get("performance", {})
 	var series: Dictionary = performance.get("series", {})
@@ -1242,9 +2025,9 @@ func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
 		"作者：%s" % str(release.get("author_display_name", release.get("developer_id", "未知")))
 	)
 	%SummaryLabel.text = str(release.get("summary", ""))
-	%ReleaseLabel.text = "全榜 #%s · %s · %s%s" % [
+	%ReleaseLabel.text = "全榜 #%s · %s%s" % [
 		str(release.get("rank", "—")),
-		_format_ladder_score(float(release.get("mu", 0.0))), str(release.get("state", "")),
+		_format_ladder_score(float(release.get("mu", 0.0))),
 		" · 暂定" if bool(release.get("provisional", false)) else "",
 	]
 	%OfficialStats.text = "双局系列：%d 胜 / %d 负 / %d 平 · 系列胜率 %.1f%%" % [
@@ -1259,11 +2042,21 @@ func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
 		int(release.get("rated_series_count", 0)), int(release.get("actual_game_count", 0)),
 		"暂定" if bool(release.get("provisional", false)) else "正式",
 	]
+	if not _portrait_context.is_empty():
+		%ReleaseLabel.text = "%s%s" % [_format_ladder_score(float(release.get("mu", 0.0))),
+			" · 暂定评分" if bool(release.get("provisional", false)) else ""]
+		var sample_games := int(games.get("wins", 0)) + int(games.get("losses", 0)) + int(games.get("draws", 0))
+		%ShadowStats.text = "近期 %d 局 · 胜率 %.1f%%\n%d 胜 · %d 负 · %d 平" % [
+			sample_games, float(games.get("win_rate_micros", 0)) / 10000.0,
+			int(games.get("wins", 0)), int(games.get("losses", 0)), int(games.get("draws", 0))]
+		if release.get("owner_kind") == "platform_npc":
+			%AuthorLabel.text = "内置对手 · 可在对战准备中选择"
 	var installable: Variant = release.get("installable_release")
 	var download_available: bool = bool(release.get("download_available", false)) \
 		and installable is Dictionary
 	%SelectedDownloadButton.visible = release.get("owner_kind") == "developer"
 	%SelectedDownloadButton.disabled = not download_available
+	%SelectedDownloadButton.set_meta("download_allowed", download_available)
 	%SelectedDownloadButton.text = (
 		"一键下载并导入该策略" if download_available else "该版本暂无可下载策略包"
 	)
@@ -1272,6 +2065,7 @@ func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
 		installable.duplicate(true) if installable is Dictionary else {}
 	)
 	%SelectedDownloadButton.set_meta("installable_release", {})
+	_update_strategy_deck_preview(installable if installable is Dictionary else {})
 	var matches: Array = profile.get("recent_matches", [])
 	%MatchHistoryDivider.visible = true
 	%MatchHistoryTitle.visible = true
@@ -1297,6 +2091,7 @@ func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
 			if event_value is Dictionary:
 				%AuthorWorksList.add_child(_continuous_ladder_rating_event_row(event_value))
 	_set_workspace_status(WORKSPACE_CATALOG, "策略档案已加载：历史、对战、胜率和下载状态均已更新。")
+	_collapse_detail_history()
 
 
 func _apply_continuous_ladder_author_profile(profile: Dictionary) -> void:
@@ -1352,13 +2147,13 @@ func _continuous_ladder_match_row(item: Dictionary) -> PanelContainer:
 		str(item.get("opponent", {}).get("display_name", item.get("opponent", {}).get("release_id", "对手"))),
 		int(item.get("wins", 0)), int(item.get("losses", 0)), int(item.get("draws", 0)),
 		_format_ladder_epoch(int(item.get("completed_at_epoch", 0))),
-		" · 录像可用" if bool(item.get("replay_available", false)) else "",
+		" · 录像可用" if _replays_enabled and bool(item.get("replay_available", false)) else "",
 	]
 	content.add_child(label)
 	var series_id := str(item.get("series_id", ""))
 	var replay_path := str(item.get("replay_path", ""))
 	var expected_path := "/v1/ladder/matches/%s/replay" % series_id
-	if bool(item.get("replay_available", false)) and replay_path == expected_path:
+	if _replays_enabled and bool(item.get("replay_available", false)) and replay_path == expected_path:
 		var download := Button.new()
 		download.name = "ContinuousLadderReplayDownloadButton"
 		download.text = "下载录像"
@@ -1452,13 +2247,14 @@ func _continuous_ladder_author_release_row(item: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.name = "ContinuousLadderAuthorReleaseCard"
 	card.add_theme_stylebox_override("panel", _list_card_style(Color(0.30, 0.78, 0.94)))
-	var row := HBoxContainer.new()
+	var row := _responsive_row()
 	row.add_theme_constant_override("separation", 8)
 	card.add_child(row)
 	var info := Button.new()
 	info.name = "ContinuousLadderAuthorReleaseButton"
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.text = "%s · %s\n%s · %d 组 · 系列胜率 %.1f%%%s" % [
 		str(release.get("display_name", release.get("release_id", "策略"))),
 		str(release.get("state", "")),
@@ -1669,13 +2465,14 @@ func _marketplace_strategy_row(item: Dictionary, prefix: String) -> PanelContain
 	var card := PanelContainer.new()
 	card.name = "MarketplaceStrategyCard"
 	card.add_theme_stylebox_override("panel", _list_card_style(Color(0.30, 0.78, 0.94)))
-	var row := HBoxContainer.new()
+	var row := _responsive_row()
 	row.add_theme_constant_override("separation", 8)
 	card.add_child(row)
 	var info := Button.new()
 	info.name = "MarketplaceInfoButton"
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var author: Dictionary = item.get("author", {})
 	var author_name := str(item.get(
 		"author_display_name", author.get("display_name", "未知作者")
@@ -1687,21 +2484,25 @@ func _marketplace_strategy_row(item: Dictionary, prefix: String) -> PanelContain
 		author_name,
 		str(item.get("published_at_utc", "")).replace("T", " ").trim_suffix("Z"),
 	]
+	if _portrait_context.is_empty():
+		info.text = "%s\n%s%s" % [title, prefix + "\n" if not prefix.is_empty() else "", author_name]
 	info.set_meta("marketplace_item", item.duplicate(true))
 	info.pressed.connect(_on_marketplace_strategy_info_pressed.bind(info))
 	_style_strategy_button(info, false)
 	row.add_child(info)
 	var download := Button.new()
 	download.name = "MarketplaceDownloadButton"
-	download.custom_minimum_size = Vector2(118, 48)
+	download.custom_minimum_size = Vector2(210 if _portrait_context.is_empty() else 118, 56)
 	var available := bool(item.get("download_available", false)) \
 		and item.get("installable_release") is Dictionary
 	download.text = "下载到本机" if available else "暂无设备版"
 	download.disabled = not available
 	if available:
+		download.set_meta("download_allowed", true)
 		download.set_meta("installable_release", item.get("installable_release", {}).duplicate(true))
 		download.pressed.connect(_on_marketplace_download_pressed.bind(download))
-	_style_action_button(download, HUD_THEME_SCRIPT.ACCENT_WARM if available else HUD_THEME_SCRIPT.TEXT_MUTED)
+		_refresh_install_action(download)
+	_style_primary_button(download)
 	row.add_child(download)
 	return card
 
@@ -1730,6 +2531,7 @@ func _on_marketplace_strategy_info_pressed(button: Button) -> void:
 
 
 func _show_marketplace_strategy(item: Dictionary) -> void:
+	_open_strategy_detail()
 	_hide_marketplace_author_works()
 	%DetailKicker.text = "策略档案"
 	_set_catalog_legacy_replay_visible(true)
@@ -1754,10 +2556,15 @@ func _show_marketplace_strategy(item: Dictionary) -> void:
 	)
 	%SelectedDownloadButton.visible = true
 	%SelectedDownloadButton.disabled = release.is_empty()
+	%SelectedDownloadButton.set_meta("download_allowed", not release.is_empty())
 	%SelectedDownloadButton.text = (
 		"一键下载并安装到本机" if not release.is_empty() else "尚无可在本机运行的设备版"
 	)
 	%SelectedDownloadButton.set_meta("installable_release", release.duplicate(true))
+	%SelectedDownloadButton.set_meta("continuous_ladder_installable_release", {})
+	_update_strategy_deck_preview(release)
+	_update_detail_primary_action()
+	_collapse_detail_history()
 
 
 func _on_marketplace_author_pressed(button: Button) -> void:
@@ -1766,6 +2573,7 @@ func _on_marketplace_author_pressed(button: Button) -> void:
 	var author_id := str(button.get_meta("author_id", ""))
 	if author_id.is_empty():
 		return
+	_open_strategy_detail()
 	_set_busy(true)
 	_set_workspace_status(WORKSPACE_CATALOG, "正在读取作者最高分 5 个策略…")
 	var started: Dictionary = _client.list_marketplace_author_top_strategies(
@@ -1777,6 +2585,13 @@ func _on_marketplace_author_pressed(button: Button) -> void:
 
 
 func _on_marketplace_download_pressed(button: Button) -> void:
+	if button == null or _marketplace_download_button != null:
+		return
+	_refresh_install_action(button)
+	var start_ref: Dictionary = button.get_meta("start_strategy_ref", {}) if button != null else {}
+	if not start_ref.is_empty() and not button.disabled:
+		_on_local_strategy_start(start_ref)
+		return
 	if _client == null or button == null or button.disabled:
 		return
 	var ladder_release: Dictionary = button.get_meta(
@@ -1836,20 +2651,26 @@ func _apply_marketplace_package_download(result: Dictionary) -> void:
 	if installed.get("catalog_report") is Dictionary:
 		_apply_local_package_catalog(installed.get("catalog_report", {}))
 	_finish_marketplace_download_button(true)
+	var installed_record := _local_package_record_for_ref(result.get("expected_release", {}))
+	var admission := _local_package_admission(installed_record)
 	_set_workspace_status(
 		WORKSPACE_CATALOG,
-		"策略安装完成（%.0f ms）；现在可在本地策略和 AI 对战设置中选择。" % [
-			float(install_elapsed_usec) / 1000.0,
-		]
+		"策略安装完成，点击“开始对战”即可挑战。" if bool(admission.get("ok", false)) else (
+			"策略安装完成。" + _local_package_unavailable_text(admission)
+		)
 	)
 
 
 func _finish_marketplace_download_button(success: bool) -> void:
+	var finished_button := _marketplace_download_button
 	if _marketplace_download_button != null and is_instance_valid(_marketplace_download_button):
 		_marketplace_download_button.disabled = success
 		_marketplace_download_button.text = "已安装" if success else "重试下载"
 	_marketplace_download_button = null
 	_marketplace_download_started_usec = 0
+	if success and is_instance_valid(finished_button):
+		_refresh_install_action(finished_button)
+	_update_detail_primary_action()
 
 
 func _emit_strategy_import_timing(
@@ -1911,6 +2732,7 @@ func _on_strategy_pressed(button: Button) -> void:
 	var strategy_id := str(button.get_meta("strategy_id", ""))
 	if strategy_id.is_empty():
 		return
+	_open_strategy_detail()
 	_selected_strategy_id = strategy_id
 	for child: Node in %StrategyList.get_children():
 		if child is Button:
@@ -1924,6 +2746,7 @@ func _on_strategy_pressed(button: Button) -> void:
 
 
 func _apply_detail(detail: Dictionary) -> void:
+	_clear_strategy_deck_preview()
 	%DetailKicker.text = "策略档案"
 	_set_catalog_legacy_replay_visible(true)
 	%StrategyTitle.text = str(detail.get("display_name", detail.get("strategy_id", "策略")))
@@ -1935,6 +2758,7 @@ func _apply_detail(detail: Dictionary) -> void:
 	if not releases.is_empty() and releases[0] is Dictionary:
 		var release: Dictionary = releases[0]
 		_selected_release_id = str(release.get("release_id", ""))
+		_update_strategy_deck_preview(release.get("installable_release", release))
 		%ReleaseLabel.text = "版本 %s · %s · 本机挑战%s" % [
 			str(release.get("package_version", "?")),
 			str(release.get("release_state", "unknown")),
@@ -1958,6 +2782,7 @@ func _apply_detail(detail: Dictionary) -> void:
 
 
 func _set_catalog_legacy_replay_visible(visible: bool) -> void:
+	visible = visible and _replays_enabled
 	%ReplayDivider.visible = visible
 	%ReplayTitle.visible = visible
 	%ReplayList.visible = visible
@@ -2042,7 +2867,7 @@ func _render_local_replays(native_replays: Array, public_replays: Array, rejecte
 			label.tooltip_text = str(replay.get("match_id", ""))
 			label.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT)
 			row.add_child(label)
-			var actions := HBoxContainer.new()
+			var actions := _responsive_row()
 			actions.add_theme_constant_override("separation", 8)
 			row.add_child(actions)
 			var watch := Button.new()
@@ -2096,7 +2921,7 @@ func _render_local_replays(native_replays: Array, public_replays: Array, rejecte
 			limitation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			limitation.add_theme_color_override("font_color", Color(1.0, 0.78, 0.52))
 			row.add_child(limitation)
-			var actions := HBoxContainer.new()
+			var actions := _responsive_row()
 			actions.add_theme_constant_override("separation", 8)
 			row.add_child(actions)
 			var unavailable := Button.new()
@@ -2399,9 +3224,10 @@ func _render_replays(replays: Array) -> void:
 		card.add_child(content)
 		var label := Label.new()
 		label.text = "%s · %d 帧" % [str(replay.get("replay_id", "")), int(replay.get("frame_count", 0))]
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT)
 		content.add_child(label)
-		var row := HBoxContainer.new()
+		var row := _responsive_row()
 		row.add_theme_constant_override("separation", 7)
 		content.add_child(row)
 		var watch := Button.new()
@@ -2583,12 +3409,24 @@ func _close_replay() -> void:
 
 
 func _on_back() -> void:
+	if %LocalPackageDeleteDialog.visible:
+		_on_local_package_delete_canceled()
+		return
+	if %StrategyDetailOverlay.visible:
+		_close_strategy_detail()
+		return
+	_cancel_local_package_capture(false)
+	_reset_quick_install("一键下载安装")
 	GameManager.goto_main_menu()
 
 
 func _set_busy(busy: bool) -> void:
+	# A statistics/download response must not unlock import controls while a
+	# selected document is still being captured in the background.
+	busy = busy or _local_package_import_busy
 	%RefreshButton.disabled = busy
 	%ImportLocalPackageButton.disabled = busy
+	%QuickImportButton.disabled = busy
 	%OpenBattleSetupButton.disabled = busy
 	for node: Node in %LocalPackageList.find_children(
 		"LocalPackageDeleteButton", "Button", true, false
@@ -2613,9 +3451,14 @@ func _set_status(text: String, is_error: bool = false) -> void:
 
 
 func _set_workspace_status(workspace_id: String, text: String, is_error: bool = false) -> void:
+	if is_inside_tree():
+		call_deferred("_apply_readable_typography", self)
+	else:
+		_apply_readable_typography(self)
 	_workspace_statuses[workspace_id] = {"text": text, "error": is_error}
 	if workspace_id == _active_workspace:
 		_display_status(text, is_error)
+	_apply_mobile_presentation()
 
 
 func _restore_workspace_status(workspace_id: String) -> void:
@@ -2624,7 +3467,13 @@ func _restore_workspace_status(workspace_id: String) -> void:
 
 
 func _display_status(text: String, is_error: bool = false) -> void:
+	%StatusStrip.visible = is_error
+	%DetailStatusLabel.visible = is_error
+	if %StrategyDetailOverlay.visible:
+		%DetailStatusLabel.text = text
+		%DetailStatusLabel.modulate = Color(1.0, 0.64, 0.64) if is_error else HUD_THEME_SCRIPT.TEXT_MUTED
 	%StatusLabel.text = text
+	%StatusLabel.tooltip_text = text
 	var accent := Color(1.0, 0.42, 0.42) if is_error else Color(0.28, 0.92, 1.0)
 	%StatusLabel.modulate = Color(1.0, 0.64, 0.64) if is_error else Color(0.75, 0.92, 1.0)
 	%StatusDot.modulate = accent
@@ -2697,6 +3546,7 @@ func _pill_style(accent: Color, filled: bool) -> StyleBoxFlat:
 func _style_strategy_button(button: Button, selected: bool) -> void:
 	if button == null:
 		return
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.set_meta("hud_card_selected", selected)
 	button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12) if selected else HUD_THEME_SCRIPT.TEXT)
 	button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12) if selected else Color.WHITE)

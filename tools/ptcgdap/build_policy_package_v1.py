@@ -18,7 +18,7 @@ SCHEMA_PATH = ROOT / "contracts/ptcgdap/policy_package_v1.schema.json"
 PROFILE_PATH = ROOT / "contracts/ptcgdap/policy_package_v1_profile.json"
 MANIFEST_PATH = ROOT / "data/ptcgdap/marnie_windows_policy_package_v1.json"
 BUNDLE_PATH = ROOT / "contracts/ptcgdap/policy_package_v1_bundle.json"
-CANDIDATE_PATH = ROOT / "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+CANDIDATE_PATH = ROOT / "tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
 SEALED_D051_RELEASE_BUNDLE_CANONICAL = "8C023680073C8CD0B7A423B07B840629812B2043305EA16411765A44F7F4D1EB"
 SEALED_D051_ROLLBACK_PROFILE_CANONICAL = "01FCA4ED2B6228732AE91B5934F1A93272F92A2EC0B144E2695616C55BE7BF07"
 

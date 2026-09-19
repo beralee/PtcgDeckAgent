@@ -19,13 +19,14 @@ from tools.ptcgdap.build_dragapult_python_strategy_contract import (
     DECK_ID,
     OPPONENT_DECK_ID,
     PROFILE_ID,
+    LOCKED_SOURCE_ROOT,
     build_documents,
 )
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_DECK = ROOT / "data/bundled_user/decks/800018499.json"
-OPPONENT_DECK = ROOT / "data/bundled_user/decks/575720.json"
+SOURCE_DECK = LOCKED_SOURCE_ROOT / "data/bundled_user/decks/800018499.json"
+OPPONENT_DECK = LOCKED_SOURCE_ROOT / "data/bundled_user/decks/575720.json"
 
 
 def sha(value: bytes) -> str:
@@ -103,7 +104,7 @@ def frame(prompt_kind: str, options: list[dict[str, object]], *, sequence: int =
 class DragapultPublicStrategyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.strategy = DragapultPublicStrategy.load_default()
+        cls.strategy = DragapultPublicStrategy.load_trusted_bundle(ROOT, source_root=LOCKED_SOURCE_ROOT)
 
     def test_contract_builder_is_reproducible_and_source_locked(self) -> None:
         documents = build_documents()
@@ -266,6 +267,8 @@ class DragapultPublicStrategyTests(unittest.TestCase):
                 [
                     sys.executable,
                     "tools/ptcgdap/run_dragapult_public_strategy.py",
+                    "--source-root",
+                    str(LOCKED_SOURCE_ROOT),
                     "--request",
                     str(request_path),
                     "--response",

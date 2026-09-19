@@ -1,0 +1,58 @@
+{
+  "name": "尼多娜",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 幸福分享\n在自己的回合可以使用1次。回复自己1只宝可梦「30」HP。\n\n【无】【无】 咬住 30\n\n\n",
+  "yoren_code": "P030",
+  "set_code": "30thC",
+  "card_index": "074",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "Miki Tanaka",
+  "rarity": "C",
+  "release_date": "2026-09-15T16:00:00Z",
+  "regulation_mark": "J",
+  "effect_id": "2212a16966600c8c707bcfbfcce7cd1a",
+  "image_url": "https://tcg.mik.moe/static/img/30thC/074.png",
+  "image_local_path": "user://cards/images/30thC/074.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/30thC/074",
+  "source_set_code": "30thC",
+  "source_card_index": "074",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "D",
+  "stage": "Stage 1",
+  "hp": 90,
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "evolves_from": "尼多兰",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "咬住",
+      "text": "",
+      "cost": "CC",
+      "damage": "30",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "幸福分享",
+      "text": "在自己的回合可以使用1次。回复自己1只宝可梦「30」HP。"
+    }
+  ],
+  "energy_provides": ""
+}

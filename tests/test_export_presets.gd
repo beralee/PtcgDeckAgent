@@ -45,10 +45,10 @@ const RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS := [
 	"assets/ui/8187aae7-e467-446f-bcd8-544468eae16b.png",
 ]
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
-const EXPECTED_APP_VERSION := "0.5.6"
-const EXPECTED_BUILD_NUMBER := "56"
-const EXPECTED_WEB_VERSION := "0.5.6.0"
-const EXPECTED_WEB_BUILD_NUMBER := "560"
+const EXPECTED_APP_VERSION := "0.6.0"
+const EXPECTED_BUILD_NUMBER := "60"
+const EXPECTED_WEB_VERSION := "0.6.0.2"
+const EXPECTED_WEB_BUILD_NUMBER := "602"
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 
@@ -76,6 +76,45 @@ func test_release_version_metadata_is_consistent_across_platforms() -> String:
 		assert_eq(_extract_string_value(ios_options, "application/short_version"), EXPECTED_APP_VERSION, "iOS short version should match the release version"),
 		assert_eq(_extract_string_value(ios_options, "application/version"), EXPECTED_BUILD_NUMBER, "iOS build number should match the release build"),
 	])
+
+
+func test_macos_ad_hoc_signing_allows_bundled_native_libraries() -> String:
+	var options := _extract_preset_options_block(FileAccess.get_file_as_string(EXPORT_PRESETS_PATH), "macOS")
+	return assert_true(_extract_bool_value(options, "codesign/entitlements/disable_library_validation"), "macOS ad-hoc signing must allow the bundled GDExtension libraries")
+
+
+func test_macos_rules_release_excludes_only_its_native_model_backend() -> String:
+	var presets := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var excluded := _extract_string_value(_extract_preset_block(presets, "macOS"), "exclude_filter").split(",")
+	var checks: Array[String] = []
+	for path: String in ["scripts/ai/ptcgdap/native/ptcgai_ort_actor.gdextension", "bin/ptcgai_ort/**"]:
+		checks.append(assert_true(path in excluded, "Mac rules release must omit native backend: " + path))
+		for platform: String in ["Windows Desktop", "Android"]:
+			var other := _extract_string_value(_extract_preset_block(presets, platform), "exclude_filter").split(",")
+			checks.append(assert_false(path in other, platform + " must keep its native model backend"))
+	checks.append(assert_false("scripts/ai/ptcgdap/**" in excluded, "Mac must retain its rule strategy runtime"))
+	return run_checks(checks)
+
+
+func test_android_architectures_match_native_actor_libraries() -> String:
+	var options := _extract_preset_options_block(FileAccess.get_file_as_string(EXPORT_PRESETS_PATH), "Android")
+	var extension := ConfigFile.new()
+	var error := extension.load("res://scripts/ai/ptcgdap/native/ptcgai_ort_actor.gdextension")
+	if error != OK:
+		return "Native actor extension configuration must load"
+	var architectures := {"armeabi-v7a": "arm32", "arm64-v8a": "arm64", "x86": "x86_32", "x86_64": "x86_64"}
+	var checks: Array[String] = []
+	var enabled := 0
+	for abi: String in architectures:
+		if not _extract_bool_value(options, "architectures/" + abi):
+			continue
+		enabled += 1
+		var library := str(extension.get_value("libraries", "android." + architectures[abi], ""))
+		checks.append(assert_true(not library.is_empty(), "Android %s requires a matching native actor library" % abi))
+		if not library.is_empty():
+			checks.append(assert_true(FileAccess.file_exists(library), "Android native actor library must exist: %s" % library))
+	checks.append(assert_true(enabled > 0, "Android export must enable at least one architecture"))
+	return run_checks(checks)
 
 
 func test_web_export_includes_bundled_user_data() -> String:

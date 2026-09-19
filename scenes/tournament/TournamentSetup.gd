@@ -47,6 +47,8 @@ var _selected_tournament_format := TOURNAMENT_FORMAT_STANDARD
 var _size_button_group: ButtonGroup = ButtonGroup.new()
 var _size_radio_buttons: Array[Button] = []
 var _selected_tournament_size_index := 0
+var _opponent_source := "builtin"
+var _opponent_button_group := ButtonGroup.new()
 
 
 func _ready() -> void:
@@ -61,7 +63,7 @@ func _ready() -> void:
 	%NameLabel.text = "玩家名字"
 	%FormatLabel.text = "比赛赛制"
 	%SizeLabel.text = "比赛人数"
-	%HintLabel.text = "标准赛的 AI 只使用 18.0 及之后版本卡组；开放赛可使用全部内置卡组。设置完成后会先进入赛前总览。"
+	%HintLabel.text = "标准赛筛选 18.0 起的内置卡组；开放赛包含全部内置卡组。开发者对手使用本机已验证的策略卡组。"
 	%NameEdit.placeholder_text = "输入你的名字"
 	_ensure_random_default_player_name()
 	%BtnBack.pressed.connect(_on_back_pressed)
@@ -72,6 +74,7 @@ func _ready() -> void:
 	_load_decks()
 	_setup_format_options()
 	_setup_size_options()
+	_setup_opponent_options()
 	_refresh_round_info()
 	_clear_error()
 	call_deferred("_apply_non_battle_layout")
@@ -113,6 +116,12 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, false)
 	_last_non_battle_layout_context = context.duplicate(true)
 	var portrait := bool(context.get("is_portrait", false))
+	var setup_scroll := get_node("SetupScroll") as ScrollContainer
+	%OpponentSourceGroup.columns = 2 if portrait and size.x < 600.0 else 3
+	if portrait:
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(setup_scroll)
+	else:
+		NonBattleTouchBridgeScript.configure_visible_vertical_scroll(setup_scroll)
 	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
 	var panel := find_child("Panel", true, false) as Control
 	if panel != null:
@@ -792,6 +801,32 @@ func _setup_size_options() -> void:
 	_refresh_size_radio_buttons()
 
 
+func _setup_opponent_options() -> void:
+	var pool: Array = GameManager.TournamentAuthorPoolScript.collect(AuthorStrategyPackageCatalog)
+	_opponent_source = "mixed" if not pool.is_empty() else "builtin"
+	%OpponentHint.text = "本机可参赛策略：%d · 混合模式约一半为开发者对手" % pool.size() if not pool.is_empty() else "还没有可参赛的开发者策略，请到 AI 策略中心下载安装。"
+	for entry: Array in [["builtin", "内置"], ["mixed", "混合"], ["author", "开发者"]]:
+		var source: String = entry[0]
+		var button := Button.new()
+		button.name = "OpponentSource" + source.capitalize()
+		button.text = entry[1]
+		button.toggle_mode = true
+		button.button_group = _opponent_button_group
+		button.button_pressed = source == _opponent_source
+		button.custom_minimum_size = Vector2(0, 44)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.disabled = source != "builtin" and pool.is_empty()
+		button.pressed.connect(func() -> void:
+			_opponent_source = source
+			for choice: Button in _opponent_button_group.get_buttons():
+				_style_size_radio_button(choice, choice == button)
+			_clear_error()
+		)
+		%OpponentSourceGroup.add_child(button)
+		_style_size_radio_button(button, button.button_pressed)
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+
+
 func _setup_format_options() -> void:
 	var group := get_node_or_null("%TournamentFormatRadioGroup") as GridContainer
 	if group == null:
@@ -1077,9 +1112,8 @@ func _on_start_pressed() -> void:
 	_record_tournament_deck_usage(deck)
 	GameManager.set_tournament_selected_player_deck_id(deck.id)
 	var tournament_size: int = _selected_tournament_size()
-	GameManager.start_swiss_tournament(player_name, tournament_size, _selected_tournament_format)
-	if not GameManager.has_active_tournament():
-		_show_error("比赛初始化失败，请重新选择卡组后再试。")
+	if not GameManager.start_swiss_tournament(player_name, tournament_size, _selected_tournament_format, _opponent_source):
+		_show_error(GameManager.tournament_start_error if not GameManager.tournament_start_error.is_empty() else "比赛初始化失败，请重新选择卡组后再试。")
 		return
 	if not is_inside_tree():
 		return

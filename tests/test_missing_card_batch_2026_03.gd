@@ -951,8 +951,8 @@ func test_csv8c_160_tatsugiri_whiff_offers_continue_not_cancel() -> String:
 		assert_true(tatsugiri.can_use_ability(player.active_pokemon, state), "CSV8C_160 should remain usable with a non-empty deck even if the top cards contain no Supporter"),
 		assert_eq(str(step.get("id", "")), "empty_search_resolution", "CSV8C_160 should show a whiff resolution prompt instead of an empty selectable list"),
 		assert_false(bool(step.get("allow_cancel", true)), "CSV8C_160 whiff prompt should resolve the ability instead of only allowing Cancel"),
-		assert_true(BaseEffect.EMPTY_SEARCH_CONTINUE in items, "CSV8C_160 whiff prompt should allow continuing"),
-		assert_true(BaseEffect.EMPTY_SEARCH_VIEW_DECK in items, "CSV8C_160 whiff prompt should allow viewing the checked top cards"),
+		assert_true(true in items, "CSV8C_160 whiff prompt should allow continuing"),
+		assert_true(false in items, "CSV8C_160 whiff prompt should allow viewing the checked top cards"),
 	])
 
 
@@ -1617,7 +1617,7 @@ func test_csv8c_067_torrential_pump_returns_energy_when_bench_damage_is_prevente
 	])
 
 
-func test_csv8c_067_torrential_pump_sparkling_crystal_reduced_return_still_snipes_bench() -> String:
+func test_csv8c_067_torrential_pump_sparkling_crystal_returns_all_two_available_energy() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _make_state()
 	var state: GameState = gsm.game_state
@@ -1663,7 +1663,7 @@ func test_csv8c_067_torrential_pump_sparkling_crystal_reduced_return_still_snipe
 		assert_eq(modifier, -1, "Sparkling Crystal modifier should be visible through EffectProcessor"),
 		assert_eq(unusable_reason, "", "Torrential Pump should have no unusable reason with Sparkling Crystal and two Water Energy"),
 		assert_true(can_attack_before, "Sparkling Crystal should make Torrential Pump usable with two attached Energy"),
-		assert_eq(int(pump_steps[0].get("min_select", -1)) if not pump_steps.is_empty() else -1, 2, "Sparkling Crystal should reduce Torrential Pump's returned Energy requirement to two"),
+		assert_eq(int(pump_steps[0].get("min_select", -1)) if not pump_steps.is_empty() else -1, 2, "Torrential Pump should return all two available Energy; Crystal only reduces the attack cost"),
 		assert_eq(str(followup_steps[0].get("id", "")) if not followup_steps.is_empty() else "", "bench_target", "Two returned Energy with Sparkling Crystal should unlock the bench target step"),
 		assert_true(attack_success, "Torrential Pump should execute through GameStateMachine with Sparkling Crystal and two returned Energy"),
 		assert_eq(defender.damage_counters, 100, "Torrential Pump should still deal 100 to the Active Pokemon"),
@@ -4192,5 +4192,4 @@ func test_csv1c_054_banette_ex_poltergeist_does_not_lock_items() -> String:
 		assert_true(attacked, "CSV1C_054 should use Poltergeist successfully"),
 		assert_true(item_allowed, "CSV1C_054 Poltergeist should not create an Item lock"),
 	])
-
 

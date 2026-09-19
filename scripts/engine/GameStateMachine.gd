@@ -77,6 +77,7 @@ var _deck_order_overrides: Dictionary = {}
 var _attack_damage_knockout_slot_ids: Dictionary = {}
 var _attack_resolution_knockout_slot_ids: Dictionary = {}
 var _pending_trainer_vfx_data: Dictionary = {}
+var _prepared_attack_confusion_key := ""
 
 const MAX_SETUP_MULLIGAN_LOOPS: int = 64
 const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
@@ -253,6 +254,7 @@ func recover_pending_decision_without_input(kind: String) -> bool:
 
 
 func prepare_for_disposal() -> void:
+	_prepared_attack_confusion_key = ""
 	action_log.clear()
 	_deck_order_overrides.clear()
 	_expected_card_totals = [0, 0]
@@ -2302,6 +2304,9 @@ func attach_tool(player_index: int, tool_card: CardInstance, target_slot: Pokemo
 	var player: PlayerState = game_state.players[player_index]
 	if not tool_card in player.hand:
 		return false
+	if resolve_trainer_disruption(player_index, tool_card):
+		return true
+	game_state.shared_turn_flags.erase(_trainer_disruption_pass_key(tool_card))
 
 	player.hand.erase(tool_card)
 	target_slot.attached_tool = tool_card
@@ -2332,6 +2337,9 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 	var resolved_targets := effect_processor.sanitize_opponent_hand_trainer_targets(card, targets, game_state)
 	if not effect_processor.validate_card_effect_context(card, resolved_targets, game_state):
 		return false
+	if resolve_trainer_disruption(player_index, card):
+		return true
+	game_state.shared_turn_flags.erase(_trainer_disruption_pass_key(card))
 
 	_pending_trainer_vfx_data.clear()
 	var boss_orders_target := _selected_boss_orders_target(player_index, card, targets)
@@ -2378,6 +2386,34 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 	return true
 
 
+## Resolve Vibration Punch before any Trainer interaction reveals hidden cards.
+## A heads result survives rebuilding that declared play's interaction, then is
+## consumed by the commit entry point. Tails is a completed, discarded attempt.
+func resolve_trainer_disruption(player_index: int, card: CardInstance) -> bool:
+	if card == null or card.card_data == null or not card.card_data.is_trainer():
+		return false
+	if game_state.phase != GameState.GamePhase.MAIN or player_index != game_state.current_player_index:
+		return false
+	var player := game_state.players[player_index]
+	if card not in player.hand or int(game_state.shared_turn_flags.get("trainer_disruption:%d" % player_index, -1)) != game_state.turn_number:
+		return false
+	var key := _trainer_disruption_pass_key(card)
+	if game_state.shared_turn_flags.has(key):
+		return false
+	if effect_processor.coin_flipper.flip_with_metadata({"source": "vibration_punch", "player_index": player_index}):
+		game_state.shared_turn_flags[key] = true
+		return false
+	player.hand.erase(card)
+	card.face_up = true
+	player.discard_pile.append(card)
+	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index, {"card_name": card.card_data.name, "not_played": true, "reason": "vibration_punch_tails"}, "振动拳：反面，弃置 %s（不视作使用）" % card.card_data.display_name())
+	return true
+
+
+func _trainer_disruption_pass_key(card: CardInstance) -> String:
+	return "trainer_disruption_pass:%d:%d" % [game_state.turn_number, card.instance_id]
+
+
 func _is_team_rocket_supporter(card_data: CardData) -> bool:
 	if card_data == null or card_data.card_type != "Supporter":
 		return false
@@ -2418,6 +2454,9 @@ func play_stadium(player_index: int, card: CardInstance, targets: Array = []) ->
 	var player: PlayerState = game_state.players[player_index]
 	if not card in player.hand:
 		return false
+	if resolve_trainer_disruption(player_index, card):
+		return true
+	game_state.shared_turn_flags.erase(_trainer_disruption_pass_key(card))
 
 	# 旧竞技场放入持有者弃牌区
 	if game_state.stadium_card != null:
@@ -2693,6 +2732,61 @@ func _clear_attack_damage_tracking() -> void:
 		game_state.shared_turn_flags.erase(ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG)
 
 
+## Resolve confusion before effect steps can reveal cards or flip effect coins.
+## The final attack reuses a successful check from this exact declaration.
+func prepare_attack_interaction(player_index: int, attacker: PokemonSlot, attack_index: int, granted_attack: Dictionary = {}) -> bool:
+	if granted_attack.is_empty():
+		if not can_use_attack(player_index, attack_index) or attacker != game_state.players[player_index].active_pokemon:
+			return false
+	elif not rule_validator.can_use_granted_attack(game_state, player_index, attacker, granted_attack, effect_processor):
+		return false
+	return _resolve_attack_confusion(player_index, attacker, attack_index, granted_attack)
+
+
+func protect_committed_attack_steps(attacker: PokemonSlot, steps: Array[Dictionary]) -> void:
+	if attacker == null or attacker.get_top_card() == null or game_state == null:
+		return
+	var prefix := "%d:%d:%d:%d:" % [game_state.get_instance_id(), game_state.turn_number, attacker.get_top_card().owner_index, attacker.get_top_card().instance_id]
+	if _prepared_attack_confusion_key.begins_with(prefix):
+		for step: Dictionary in steps:
+			step["allow_cancel"] = false
+
+
+func _resolve_attack_confusion(player_index: int, attacker: PokemonSlot, attack_index: int, granted_attack: Dictionary = {}) -> bool:
+	if not attacker.status_conditions.get("confused", false):
+		return true
+	var identity := "%s#%d" % [attacker.get_card_data().get_uid(), attack_index]
+	if not granted_attack.is_empty():
+		identity = "granted:%s#%d:%s" % [granted_attack.get("original_effect_id", ""), granted_attack.get("original_attack_index", -1), granted_attack.get("name", "")]
+	var key := "%d:%d:%d:%d:%s" % [game_state.get_instance_id(), game_state.turn_number, player_index, attacker.get_top_card().instance_id, identity]
+	if _prepared_attack_confusion_key == key:
+		return true
+	var metadata := {
+		"acting_seat": player_index,
+		"source_identity": "confused_attack:%s" % identity,
+		"source_card_uid": attacker.get_card_data().get_uid(),
+		"source_attack_ordinal": attack_index,
+		"effect_phase": "confusion_check",
+	}
+	if not granted_attack.is_empty():
+		metadata["source_identity"] = "confused_granted_attack:%s" % granted_attack.get("name", "")
+		metadata["source_attack_ordinal"] = int(granted_attack.get("original_attack_index", -1))
+		metadata["effect_id"] = str(granted_attack.get("original_effect_id", ""))
+	var heads := _flip_with_random_context(metadata)
+	var reason := "confused_attack" if granted_attack.is_empty() else "confused_granted_attack"
+	_log_action(GameAction.ActionType.COIN_FLIP, player_index, {"result": heads, "reason": reason}, "混乱判定：%s" % ("正面" if heads else "反面"))
+	if heads:
+		_prepared_attack_confusion_key = key
+		return true
+	_prepared_attack_confusion_key = ""
+	_clear_attack_damage_tracking()
+	damage_calculator.apply_damage_to_slot(attacker, 30)
+	_log_action(GameAction.ActionType.DAMAGE_DEALT, player_index, {"target": attacker.get_pokemon_name(), "damage": 30}, "攻击者因混乱受到 30 点伤害")
+	_after_attack(player_index)
+	_attack_damage_knockout_slot_ids.clear()
+	return false
+
+
 func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bool:
 	_clear_attack_damage_tracking()
 	if not can_use_attack(player_index, attack_index):
@@ -2708,37 +2802,13 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 
 	var attack: Dictionary = attacker.get_card_data().attacks[attack_index]
 	var attack_name: String = str(attack.get("name", ""))
+	if not effect_processor.validate_attack_effect_context(attacker, attack_index, defender, game_state, targets, true):
+		return false
+	if not _resolve_attack_confusion(player_index, attacker, attack_index):
+		return true
 	if not effect_processor.validate_attack_effect_context(attacker, attack_index, defender, game_state, targets):
 		return false
 	var damage_before_attack := _snapshot_damage_counters()
-
-	if attacker.status_conditions.get("confused", false):
-		var flip_result: bool = _flip_with_random_context({
-			"acting_seat": player_index,
-			"source_identity": "confused_attack:%s#%d" % [
-				attacker.get_card_data().get_uid(), attack_index
-			],
-			"source_card_uid": attacker.get_card_data().get_uid(),
-			"source_attack_ordinal": attack_index,
-			"effect_phase": "confusion_check",
-		})
-		_log_action(
-			GameAction.ActionType.COIN_FLIP,
-			player_index,
-			{"result": flip_result, "reason": "confused_attack"},
-			"混乱判定：%s" % ("正面" if flip_result else "反面")
-		)
-		if not flip_result:
-			damage_calculator.apply_damage_to_slot(attacker, 30)
-			_log_action(
-				GameAction.ActionType.DAMAGE_DEALT,
-				player_index,
-				{"target": attacker.get_pokemon_name(), "damage": 30},
-				"攻击者因混乱受到 30 点伤害"
-			)
-			_after_attack(player_index)
-			_attack_damage_knockout_slot_ids.clear()
-			return true
 
 	effect_processor.execute_before_attack_damage_effects(attacker, attack_index, defender, game_state, targets)
 	var damage_cancelled := effect_processor.attack_damage_cancelled(attacker, attack_index, defender, game_state, targets)
@@ -2816,6 +2886,11 @@ func use_granted_attack(
 	var original_effect_id := str(granted_attack.get("original_effect_id", ""))
 	var original_attack_index := int(granted_attack.get("original_attack_index", -1))
 	if original_effect_id != "" and original_attack_index >= 0:
+		if not effect_processor.validate_attack_effect_context_by_id(original_effect_id, original_attack_index, attacker, defender, game_state, targets, null, true):
+			return false
+	if not _resolve_attack_confusion(player_index, attacker, -1, granted_attack):
+		return true
+	if original_effect_id != "" and original_attack_index >= 0:
 		if not effect_processor.validate_attack_effect_context_by_id(
 			original_effect_id,
 			original_attack_index,
@@ -2825,34 +2900,6 @@ func use_granted_attack(
 			targets
 		):
 			return false
-	if attacker.status_conditions.get("confused", false):
-		var flip_result: bool = _flip_with_random_context({
-			"acting_seat": player_index,
-			"source_identity": "confused_granted_attack:%s" % str(
-				granted_attack.get("name", "")
-			),
-			"source_card_uid": attacker.get_card_data().get_uid(),
-			"source_attack_ordinal": int(granted_attack.get("original_attack_index", -1)),
-			"effect_id": str(granted_attack.get("original_effect_id", "")),
-			"effect_phase": "confusion_check",
-		})
-		_log_action(
-			GameAction.ActionType.COIN_FLIP,
-			player_index,
-			{"result": flip_result, "reason": "confused_granted_attack"},
-			"混乱判定：%s" % ("正面" if flip_result else "反面")
-		)
-		if not flip_result:
-			damage_calculator.apply_damage_to_slot(attacker, 30)
-			_log_action(
-				GameAction.ActionType.DAMAGE_DEALT,
-				player_index,
-				{"target": attacker.get_pokemon_name(), "damage": 30},
-				"攻击者因混乱受到 30 点伤害"
-			)
-			_after_attack(player_index)
-			_attack_damage_knockout_slot_ids.clear()
-			return true
 
 	var damage_before_attack := _snapshot_damage_counters()
 	if original_effect_id != "" and original_attack_index >= 0:
@@ -3261,6 +3308,7 @@ func _calculate_attack_damage(
 
 ## 招式使用后的流程
 func _after_attack(player_index: int) -> void:
+	_prepared_attack_confusion_key = ""
 	_assert_card_totals("after_attack:p%d" % player_index)
 	_record_attack_resolution_knockout_candidates()
 	_mark_pending_second_attack_if_available(player_index)

@@ -1,0 +1,58 @@
+{
+  "name": "火焰鸟",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 燃烧展翼\n如果自己场上有「急冻鸟」「闪电鸟」的话，则在自己的回合可以使用1次。选择自己手牌中的1张「基本【火】能量」，附着于这只宝可梦身上。\n\n【火】【火】【无】 火焰旋涡 130\n选择这只宝可梦身上附着的2个能量，放于弃牌区。\n\n",
+  "yoren_code": "P146",
+  "set_code": "30thC",
+  "card_index": "105",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "mashu",
+  "rarity": "AR",
+  "release_date": "2026-09-15T16:00:00Z",
+  "regulation_mark": "J",
+  "effect_id": "efa2faba61d1b2cd26c7371fe79c23b0",
+  "image_url": "https://tcg.mik.moe/static/img/30thC/105.png",
+  "image_local_path": "user://cards/images/30thC/105.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/30thC/105",
+  "source_set_code": "30thC",
+  "source_card_index": "105",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "R",
+  "stage": "Basic",
+  "hp": 120,
+  "weakness_energy": "W",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "火焰旋涡",
+      "text": "选择这只宝可梦身上附着的2个能量，放于弃牌区。",
+      "cost": "RRC",
+      "damage": "130",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "燃烧展翼",
+      "text": "如果自己场上有「急冻鸟」「闪电鸟」的话，则在自己的回合可以使用1次。选择自己手牌中的1张「基本【火】能量」，附着于这只宝可梦身上。"
+    }
+  ],
+  "energy_provides": ""
+}

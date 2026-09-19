@@ -10,6 +10,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+LOCKED_SOURCE_ROOT = ROOT / "tests/ptcgdap/fixtures/locked_local_sources"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -101,7 +102,7 @@ def build_schema() -> dict[str, object]:
 
 
 def _source_deck() -> dict[str, Any]:
-    path = ROOT / SOURCE_DECK_PATH
+    path = LOCKED_SOURCE_ROOT / SOURCE_DECK_PATH
     value = load_json_strict(path)
     if (
         _sha(path.read_bytes()) != SOURCE_DECK_RAW_SHA256
@@ -128,7 +129,7 @@ def build_deck_manifest() -> dict[str, object]:
         card_index = source_row.get("card_index")
         count = source_row.get("count")
         uid = f"{set_code}_{card_index}"
-        card_path = ROOT / "data/bundled_user/cards" / f"{uid}.json"
+        card_path = LOCKED_SOURCE_ROOT / "data/bundled_user/cards" / f"{uid}.json"
         if type(set_code) is not str or type(card_index) is not str or type(count) is not int or not 1 <= count <= 60 or not UID_RE.fullmatch(uid) or uid in seen or not card_path.is_file():
             raise ValueError("Dragapult source identity drift")
         seen.add(uid)
@@ -195,13 +196,13 @@ def build_policy() -> dict[str, object]:
 
 
 def build_opponent() -> dict[str, object]:
-    path = ROOT / OPPONENT_DECK_PATH
+    path = LOCKED_SOURCE_ROOT / OPPONENT_DECK_PATH
     value = load_json_strict(path)
     if _sha(path.read_bytes()) != OPPONENT_DECK_RAW_SHA256 or _sha(canonical_json_v1_bytes(value)) != OPPONENT_DECK_CANONICAL_SHA256 or value.get("id") != OPPONENT_DECK_ID:
         raise ValueError("Rules AI opponent deck drift")
     rows = []
     for runtime_path, expected_sha in RUNTIME_ARTIFACTS.items():
-        actual = _sha((ROOT / runtime_path).read_bytes())
+        actual = _sha((LOCKED_SOURCE_ROOT / runtime_path).read_bytes())
         if actual != expected_sha:
             raise ValueError(f"Rules AI runtime drift: {runtime_path}")
         rows.append({"path": runtime_path, "raw_sha256": expected_sha})

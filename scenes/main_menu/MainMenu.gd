@@ -9,6 +9,7 @@ const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament
 const DeckCenterMetaClientScript := preload("res://scripts/network/DeckCenterMetaClient.gd")
 const DeckTrainingFeatureNoticeScript := preload("res://scripts/training/DeckTrainingFeatureNotice.gd")
 const UpdateCheckerScript := preload("res://scripts/network/UpdateChecker.gd")
+const AppUpdateDialogScript := preload("res://scripts/update/AppUpdateDialog.gd")
 const UserVisitClientScript := preload("res://scripts/network/UserVisitClient.gd")
 const MENU_VERTICAL_SHIFT := 88.0
 const MAIN_MENU_BUTTON_WIDTH := 312.0
@@ -130,6 +131,11 @@ func _ready() -> void:
 	_apply_main_menu_hud()
 	_ensure_budew_mascot()
 	_setup_version_and_updates()
+	var updater := get_node_or_null("/root/AppUpdater")
+	if updater != null:
+		updater.changed.connect(_on_app_update_state_changed)
+		_on_app_update_state_changed(updater.snapshot())
+		updater.call_deferred("confirm_healthy_startup")
 	_connect_non_battle_layout_signal()
 	call_deferred("_apply_non_battle_layout")
 	%BtnStartBattle.pressed.connect(_on_start_battle)
@@ -1758,6 +1764,7 @@ func _start_update_check(force: bool = false) -> void:
 	_update_checker.update_available.connect(_on_update_available)
 	_update_checker.no_update.connect(_on_no_update)
 	_update_checker.check_failed.connect(_on_update_check_failed)
+	_update_checker.update_info_refreshed.connect(_on_update_info_refreshed)
 	add_child(_update_checker)
 	var err: int = int(_update_checker.call("check_for_updates", force))
 	if err != OK and err != ERR_BUSY:
@@ -1825,9 +1832,25 @@ func _on_update_available(info: Dictionary) -> void:
 		_start_update_button_flash()
 	if was_manual:
 		_show_update_dialog(_available_update)
+	var updater := get_node_or_null("/root/AppUpdater")
+	if updater != null:
+		_on_app_update_state_changed(updater.snapshot())
+
+
+func _on_update_info_refreshed(info: Dictionary) -> void:
+	_available_update = info.duplicate(true)
+	var updater := get_node_or_null("/root/AppUpdater")
+	if updater != null:
+		updater.offer(info)
 
 
 func _on_no_update(info: Dictionary) -> void:
+	var updater := get_node_or_null("/root/AppUpdater")
+	if updater != null and updater.snapshot().state in ["downloading", "verifying", "ready", "installing", "updated"]:
+		_manual_update_requested = false
+		_set_manual_update_busy(false)
+		_on_app_update_state_changed(updater.snapshot())
+		return
 	var was_manual := _manual_update_requested
 	_manual_update_requested = false
 	_temp_update_preview_active = false
@@ -1860,6 +1883,10 @@ func _on_update_button_pressed() -> void:
 
 func _on_manual_update_button_pressed() -> void:
 	_hide_corner_action_label(_manual_update_button)
+	var updater := get_node_or_null("/root/AppUpdater")
+	if updater != null and updater.snapshot().state in ["downloading", "verifying", "ready", "failed", "installing"]:
+		_show_update_dialog(updater.snapshot().info)
+		return
 	_temp_update_preview_active = false
 	_manual_update_requested = true
 	_set_manual_update_busy(true)
@@ -1879,6 +1906,11 @@ func _set_manual_update_busy(busy: bool) -> void:
 
 func _show_update_status_dialog(title: String, message: String) -> void:
 	_show_hud_modal(title, message, [
+		{
+			"id": "download_update",
+			"text": "重新下载安装",
+			"primary": false,
+		},
 		{
 			"id": "close",
 			"text": "确定",
@@ -2728,26 +2760,33 @@ func _save_feedback_timestamps(timestamps: Array[int]) -> void:
 
 
 func _show_update_dialog(info: Dictionary) -> void:
-	_show_hud_modal(str(info.get("title", "发现新版本")), _format_update_dialog_text(info), [
-		{
-			"id": "ignore_update",
-			"text": "不再提醒",
-			"accent": HudThemeScript.ACCENT,
-			"primary": false,
-		},
-		{
-			"id": "close",
-			"text": "稍后",
-			"accent": HudThemeScript.ACCENT,
-			"primary": false,
-		},
-		{
-			"id": "download_update",
-			"text": "前往下载页",
-			"accent": HudThemeScript.ACCENT_WARM,
-			"primary": true,
-		},
-	], Vector2(560, 390))
+	_hide_hud_modal()
+	var dialog := AppUpdateDialogScript.new()
+	add_child(dialog)
+	_hud_modal_overlay = dialog
+	_bind_modal_input_guard(dialog)
+	dialog.ignore_requested.connect(_ignore_current_update_version)
+	dialog.dismissed.connect(func() -> void: _hud_modal_overlay = null)
+	dialog.configure(get_node_or_null("/root/AppUpdater"), info)
+	dialog.move_to_front()
+
+
+func _on_app_update_state_changed(data: Dictionary) -> void:
+	var state := str(data.get("state", "idle"))
+	if state not in ["downloading", "verifying", "ready", "failed", "installing", "updated"]:
+		return
+	var info: Dictionary = data.get("info", {})
+	if not info.is_empty():
+		_available_update = info.duplicate(true)
+	if _update_button == null:
+		_ensure_update_button()
+	if _update_button == null:
+		return
+	_stop_update_button_flash()
+	_update_button.visible = true
+	var labels := {"downloading": "正在下载更新", "verifying": "正在校验更新", "ready": "更新已就绪 · 点击安装", "failed": "更新下载失败 · 点击重试", "installing": "正在安装更新", "updated": str(data.get("message", "更新已完成"))}
+	_update_button.text = labels.get(state, "游戏更新")
+	_apply_non_battle_layout()
 
 
 func _format_update_dialog_text(info: Dictionary) -> String:
@@ -2771,13 +2810,11 @@ func _format_update_dialog_text(info: Dictionary) -> String:
 
 
 func _on_update_dialog_confirmed() -> void:
-	_open_update_download_page()
+	_show_update_dialog(_available_update)
 
 
 func _open_update_download_page() -> void:
-	var url := str(_available_update.get("download_page_url", UpdateCheckerScript.DEFAULT_DOWNLOAD_PAGE_URL))
-	if url == "":
-		url = UpdateCheckerScript.DEFAULT_DOWNLOAD_PAGE_URL
+	var url := UpdateCheckerScript.UpdateManifestScript.safe_page(_available_update.get("download_page_url", UpdateCheckerScript.DEFAULT_DOWNLOAD_PAGE_URL))
 	var err := OS.shell_open(url)
 	if err != OK:
 		print_debug("[UpdateChecker] open download page failed: %d" % err)

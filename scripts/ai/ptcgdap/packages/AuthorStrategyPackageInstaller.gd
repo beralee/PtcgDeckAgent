@@ -3,6 +3,7 @@ extends RefCounted
 
 const DeckGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckGate.gd")
 const FeatureGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
+const SourceReaderScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageSourceReader.gd")
 const BUILT_IN_ROOT := "res://data/ptcgdap/author_strategy_packages"
 const USER_ROOT := "user://ptcgdap/author_strategy_packages"
 const TEMP_PREFIX := ".ptcgdap-author-install-"
@@ -14,16 +15,25 @@ func install(catalog: Variant, loader: Variant, source_path: String) -> Dictiona
 		return _error("author_strategy_feature_disabled")
 	if catalog == null or not catalog.has_method("scan_startup") or loader == null:
 		return _error("package_catalog_unavailable")
-	var normalized_source := source_path.strip_edges()
-	if normalized_source.is_empty() or normalized_source.get_extension().to_lower() != "ptcgai":
-		return _error("package_archive_invalid")
-	if not FileAccess.file_exists(normalized_source) or _is_link(normalized_source):
-		return _error("package_file_missing")
-	var source_file := FileAccess.open(normalized_source, FileAccess.READ)
-	if source_file == null:
-		return _error("package_file_missing")
-	var archive_bytes := source_file.get_buffer(source_file.get_length())
-	source_file = null
+	var captured := SourceReaderScript.read_source(source_path)
+	if not bool(captured.get("ok", false)):
+		return _error(str(captured.get("error_code", "package_file_read_failed")))
+	return install_local_bytes(catalog, loader, captured.get("archive_bytes", PackedByteArray()))
+
+
+func install_local_bytes(
+	catalog: Variant,
+	loader: Variant,
+	archive_bytes: PackedByteArray
+) -> Dictionary:
+	if not FeatureGateScript.is_enabled():
+		return _error("author_strategy_feature_disabled")
+	if catalog == null or not catalog.has_method("scan_startup") or loader == null:
+		return _error("package_catalog_unavailable")
+	if archive_bytes.is_empty() or archive_bytes.size() > SourceReaderScript.MAX_ARCHIVE_BYTES:
+		return _error("package_resource_limit_exceeded")
+	# A local document grant permits reading bytes, not Control distribution or
+	# release authority. Keep the empty expected-release lane explicit.
 	return _install_captured_bytes(catalog, loader, archive_bytes, {})
 
 
@@ -37,7 +47,7 @@ func install_bytes(
 		return _error("author_strategy_feature_disabled")
 	if catalog == null or not catalog.has_method("scan_startup") or loader == null:
 		return _error("package_catalog_unavailable")
-	if archive_bytes.is_empty() or archive_bytes.size() > 16 * 1024 * 1024:
+	if archive_bytes.is_empty() or archive_bytes.size() > SourceReaderScript.MAX_ARCHIVE_BYTES:
 		return _error("package_resource_limit_exceeded")
 	if not _valid_expected_release(expected_release):
 		return _error("package_download_identity_invalid")
@@ -111,7 +121,7 @@ func _install_captured_bytes(
 		return _error("package_install_user_data_unavailable")
 	var destination := USER_ROOT.path_join("package-%s.ptcgai" % archive_sha.to_lower())
 	if FileAccess.file_exists(destination):
-		var destination_bytes := FileAccess.get_file_as_bytes(destination)
+		var destination_bytes := _read_owned_archive_bytes(destination)
 		if _sha(destination_bytes) == archive_sha:
 			return _finish_verified_install(
 				catalog,
@@ -133,7 +143,7 @@ func _install_captured_bytes(
 		return _error("package_install_failed")
 	temporary_file.store_buffer(archive_bytes)
 	temporary_file.close()
-	if not FileAccess.file_exists(temporary) or _sha(FileAccess.get_file_as_bytes(temporary)) != archive_sha:
+	if not FileAccess.file_exists(temporary) or _sha(_read_owned_archive_bytes(temporary)) != archive_sha:
 		_remove_owned_file(temporary)
 		return _error("package_install_failed")
 	var rename_error := DirAccess.rename_absolute(
@@ -143,7 +153,7 @@ func _install_captured_bytes(
 		_remove_owned_file(temporary)
 		return _error("package_install_failed")
 
-	var installed_bytes := FileAccess.get_file_as_bytes(destination)
+	var installed_bytes := _read_owned_archive_bytes(destination)
 	var installed: Dictionary = _inspect_captured_package(
 		loader, installed_bytes, archive_sha, control_distributed
 	)
@@ -441,7 +451,7 @@ func _find_user_remove_targets(
 		var path := USER_ROOT.path_join(filename)
 		if _is_link(path):
 			continue
-		var bytes := FileAccess.get_file_as_bytes(path)
+		var bytes := _read_owned_archive_bytes(path)
 		if bytes.is_empty() or _sha(bytes) != archive_sha:
 			continue
 		var inspected: Dictionary
@@ -596,10 +606,23 @@ func _find_user_archive_by_hash(archive_sha: String) -> String:
 		var path := USER_ROOT.path_join(filename)
 		if _is_link(path):
 			continue
-		var bytes := FileAccess.get_file_as_bytes(path)
+		var bytes := _read_owned_archive_bytes(path)
 		if not bytes.is_empty() and _sha(bytes) == archive_sha:
 			return path
 	return ""
+
+
+func _read_owned_archive_bytes(path: String) -> PackedByteArray:
+	# Internal fixed-root paths also include staging .tmp files. Their suffix is
+	# not an import signal, but resource limits still apply during every recheck.
+	if _is_link(path):
+		return PackedByteArray()
+	var stream := FileAccess.open(path, FileAccess.READ)
+	if stream == null:
+		return PackedByteArray()
+	var result := SourceReaderScript.read_stream(stream)
+	stream.close()
+	return result.get("archive_bytes", PackedByteArray())
 
 
 func _is_link(path: String) -> bool:

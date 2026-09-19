@@ -17,7 +17,7 @@ from scripts.ai.ptcgdap.source_lock import canonical_json_v1_bytes, load_json_st
 
 
 SOURCE_DECK_ID = 575479
-SOURCE_DECK_PATH = Path("data/bundled_user/decks/575479.json")
+SOURCE_DECK_PATH = Path("tests/ptcgdap/fixtures/locked_local_sources/data/bundled_user/decks/575479.json")
 SOURCE_DECK_RAW_SHA256 = "52EEDC29650D902A356E7B7775B72C6956D52DFE3D2D06C5FEDC66F7C04625C0"
 SOURCE_DECK_CANONICAL_SHA256 = "A5DDA6FF8F1C640FCFDF71436F7C7F0006FF139CEEEA4BDF16EAB41BD522818C"
 PACKAGE_ID = "ptcgdap.gholdengo-palkia-575479.windows-local"

@@ -13,6 +13,7 @@ from scripts.ai.ptcgdap.a3_live_operation_witness import (
     REQUIRED_OPERATION_FAMILIES,
     aligned_sequence_witness,
     build_public_live_operation_ledger,
+    audit_live_operation_ledger_sources,
 )
 from scripts.ai.ptcgdap.cabt_tree_hash import jcs_canonical_json_bytes
 
@@ -181,12 +182,18 @@ class A3LiveOperationWitnessTests(unittest.TestCase):
                 "contracts/ptcgdap/ucis_runtime_attestation_v1.json"
             ),
         }
-        for source_id, relative_path in public_source_paths.items():
-            self.assertEqual(
-                ledger["source_identities"][source_id],
-                hashlib.sha256((root / relative_path).read_bytes()).hexdigest().upper(),
-                source_id,
-            )
+        current_sources = {
+            source_id: hashlib.sha256((root / relative_path).read_bytes()).hexdigest().upper()
+            for source_id, relative_path in public_source_paths.items()
+        }
+        applicability = audit_live_operation_ledger_sources(ledger, current_sources)
+        self.assertEqual("requires_requalification", applicability["status"])
+        self.assertFalse(applicability["current_source_qualified"])
+        self.assertFalse(applicability["full_rule_a3_claimed"])
+        self.assertEqual(
+            sorted(key for key in current_sources if current_sources[key] != ledger["source_identities"][key]),
+            applicability["changed_source_ids"],
+        )
         private_source_paths = {
             "qualification_generator": "tools/ptcgdap/build_a3_whole_battle_operation_qualification.py",
             "official_adapter": "tools/ptcgdap/private_official_cabt_bridge.py",
@@ -204,6 +211,31 @@ class A3LiveOperationWitnessTests(unittest.TestCase):
         self.assertNotIn(r"D:\ai\code", text)
         self.assertNotIn("private-bundle-root", text)
         self.assertNotIn("CSV10C_", text)
+
+
+class TestHistoricalLedgerApplicability(unittest.TestCase):
+    def ledger(self):
+        value = {"qualification_status": "passed", "source_identities": {"public": "A" * 64, "private": "B" * 64}}
+        value["evidence_sha256"] = _hash(value)
+        return value
+
+    def test_exact_sources_retain_only_the_recorded_scope(self):
+        ledger = self.ledger()
+        result = audit_live_operation_ledger_sources(ledger, ledger["source_identities"])
+        self.assertTrue(result["current_source_qualified"])
+        self.assertFalse(result["full_rule_a3_claimed"])
+
+    def test_changed_and_unavailable_owners_require_requalification(self):
+        result = audit_live_operation_ledger_sources(self.ledger(), {"public": "C" * 64})
+        self.assertFalse(result["current_source_qualified"])
+        self.assertEqual(result["changed_source_ids"], ["public"])
+        self.assertEqual(result["unverified_source_ids"], ["private"])
+
+    def test_tampered_history_cannot_be_requalified(self):
+        ledger = self.ledger()
+        ledger["source_identities"]["public"] = "C" * 64
+        with self.assertRaises(A3LiveOperationWitnessError):
+            audit_live_operation_ledger_sources(ledger, ledger["source_identities"])
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ PROFILE_PATH = ROOT / "contracts/ptcgdap/local_policy_executor_v1_profile.json"
 MANIFEST_PATH = ROOT / "data/ptcgdap/marnie_windows_local_policy_executor_v1.json"
 BUNDLE_PATH = ROOT / "contracts/ptcgdap/local_policy_executor_v1_bundle.json"
 PARENT_MANIFEST_PATH = ROOT / "data/ptcgdap/marnie_windows_policy_package_v1.json"
-AUTHOR_ARCHIVE_PATH = ROOT / "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+AUTHOR_ARCHIVE_PATH = ROOT / "tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
 
 EXECUTOR_ID = "ptcgdap-local-policy-executor-v1"
 PARENT_CANONICAL_SHA256 = "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
@@ -245,7 +245,9 @@ def build_manifest() -> dict[str, Any]:
             "package_version": "0.1.0",
         },
         "author_package": {
-            "path": AUTHOR_ARCHIVE_PATH.relative_to(ROOT).as_posix(),
+            # Preserve the historical manifest identity; fixture storage is
+            # merely the source for reproducing those exact signed bytes.
+            "path": "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
             "archive_sha256": AUTHOR_ARCHIVE_SHA256,
             "package_id": "ptcgdap.marnie.windows-local",
             "package_version": "0.1.0",

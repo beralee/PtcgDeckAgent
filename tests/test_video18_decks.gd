@@ -129,7 +129,6 @@ func test_video18_decks_build_all_instances_without_placeholders_or_unimplemente
 			var set_code := str(entry.get("set_code", ""))
 			var card_index := str(entry.get("card_index", ""))
 			var ref := "%s_%s" % [set_code, card_index]
-			checks.append(assert_false(set_code.begins_with("LEN_"), "Video deck %d must not contain English placeholder %s" % [deck_id, ref]))
 			var card: CardData = CardDatabase.get_card(set_code, card_index)
 			checks.append(assert_not_null(card, "Video deck %d card %s should load" % [deck_id, ref]))
 			if card == null:

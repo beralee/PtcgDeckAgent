@@ -17,11 +17,11 @@ class InteractiveChoiceEffect extends BaseEffect:
 	func can_use_ability(_pokemon: PokemonSlot, _state: GameState) -> bool:
 		return true
 
-	func get_interaction_steps(_card: CardInstance, _game_state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(_card: CardInstance, _game_state: GameState) -> Array[Dictionary]:
 		return [{
 			"id": "pick_one",
 			"title": "Pick",
-			"items": ["A"],
+			"items": [true],
 			"labels": ["A"],
 			"min_select": 1,
 			"max_select": 1,
@@ -127,6 +127,10 @@ class SpyGameStateMachine extends GameStateMachine:
 		mulligan_resolve_calls += 1
 		resolved_beneficiary = beneficiary
 		resolved_draw_extra = draw_extra
+
+	func resolve_mulligan_draw_count(beneficiary: int, draw_count: int) -> bool:
+		resolve_mulligan_choice(beneficiary, draw_count > 0)
+		return true
 
 
 class SpyPrizeResolveGameStateMachine extends GameStateMachine:
@@ -1824,7 +1828,7 @@ func test_battle_scene_schedules_ai_for_mulligan_setup_prompt() -> String:
 	])
 
 
-func test_battle_scene_mulligan_bonus_prompt_is_mandatory_single_choice() -> String:
+func test_battle_scene_mulligan_bonus_prompt_requires_an_explicit_draw_count() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()
 	var gsm := SpyGameStateMachine.new()
@@ -1839,11 +1843,11 @@ func test_battle_scene_mulligan_bonus_prompt_is_mandatory_single_choice() -> Str
 	var dialog_items: Array = scene.get("_dialog_items_data")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var cancel_button := scene.get("_dialog_cancel") as Button
-	scene._handle_dialog_choice_legacy(PackedInt32Array([-1]))
+	scene._handle_dialog_choice_legacy(PackedInt32Array([2]))
 	GameManager.current_mode = previous_mode
 
 	return run_checks([
-		assert_eq(dialog_items.size(), 1, "Mulligan bonus prompt should expose only the extra-draw action"),
+		assert_eq(dialog_items.size(), 3, "Mulligan bonus prompt should offer every legal draw count from zero to two"),
 		assert_false(bool(dialog_data.get("allow_cancel", true)), "Mulligan bonus prompt should not allow cancellation"),
 		assert_true(cancel_button != null and not cancel_button.visible, "Mulligan bonus prompt should hide the cancel button"),
 		assert_eq(gsm.mulligan_resolve_calls, 1, "Mulligan bonus prompt should resolve through the GSM"),

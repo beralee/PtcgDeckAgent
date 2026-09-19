@@ -38,7 +38,7 @@ func execute_ability(
 	var player: PlayerState = state.players[top.owner_index]
 	for slot: PokemonSlot in player.get_all_pokemon():
 		if slot != null:
-			slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+			slot.heal(heal_amount, state)
 	pokemon.effects.append({
 		"type": USED_KEY,
 		"turn": state.turn_number,

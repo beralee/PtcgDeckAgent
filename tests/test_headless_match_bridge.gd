@@ -828,10 +828,12 @@ func test_bridge_accepts_modern_battle_scene_end_turn_signature() -> String:
 		"HeadlessMatchBridge should accept the BattleScene end-turn signature with action_player_index")
 
 
-func test_bootstrap_pending_setup_recovers_mulligan_prompt_from_action_log() -> String:
+func test_bootstrap_pending_setup_recovers_engine_owned_mulligan_prompt() -> String:
 	var bridge := HeadlessMatchBridgeScript.new()
 	var gsm := _make_gsm()
 	gsm.action_log.append(GameAction.create(GameAction.ActionType.MULLIGAN, 0, {}, 0, "Seeded missed mulligan prompt"))
+	gsm.set("_pending_mulligan_beneficiary_index", 1)
+	gsm.set("_mulligan_counts", [1, 0] as Array[int])
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
 	return run_checks([
@@ -904,6 +906,7 @@ func test_bridge_resolves_mulligan_extra_draw_prompt() -> String:
 	# mulligan counter that a real prompt emission always carries.
 	var mulligan_counts: Array[int] = [1, 0]
 	gsm.set("_mulligan_counts", mulligan_counts)
+	gsm.set("_pending_mulligan_beneficiary_index", 1)
 	bridge.bind(gsm)
 	bridge.set("_pending_choice", "mulligan_extra_draw")
 	bridge.set("_dialog_data", {"beneficiary": 1, "mulligan_count": 1})

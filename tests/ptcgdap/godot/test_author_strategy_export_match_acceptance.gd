@@ -10,6 +10,7 @@ const UI_WRAPPER_PATH := "res://scripts/tools/run_ptcgdap_windows_ui_match.ps1"
 
 func test_export_match_acceptance_runs_exact_package_against_rules_ai_to_terminal() -> String:
 	var report: Dictionary = AcceptanceScript.new().run(CardDatabase, {
+		"catalog_sources": preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").sources(),
 		"games": 1,
 		"seed_base": 84590,
 		"max_steps": 700,

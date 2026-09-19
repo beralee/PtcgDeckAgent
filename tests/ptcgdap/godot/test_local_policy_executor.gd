@@ -31,7 +31,7 @@ func _selection() -> Dictionary:
 
 func _handle() -> Dictionary:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var result: Dictionary = GateScript.request_match_handle(catalog, _selection(), "Windows")
 	catalog.free()
 	return result

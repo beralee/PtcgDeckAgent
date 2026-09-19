@@ -145,6 +145,8 @@ func _replace_button_row(current: BoxContainer, replacement: BoxContainer, separ
 
 
 func _render() -> void:
+	%StartError.text = GameManager.tournament_start_error
+	%StartError.visible = not %StartError.text.is_empty()
 	if not GameManager.has_active_tournament():
 		%TitleLabel.text = "比赛模式"
 		%SummaryText.text = "当前没有进行中的比赛。"
@@ -314,8 +316,8 @@ func _on_primary_pressed() -> void:
 		GameManager.goto_main_menu()
 		return
 	if not GameManager.prepare_current_tournament_battle():
-		GameManager.clear_tournament()
-		GameManager.goto_main_menu()
+		%StartError.text = GameManager.tournament_start_error
+		%StartError.visible = not %StartError.text.is_empty()
 		return
 	GameManager.goto_battle()
 

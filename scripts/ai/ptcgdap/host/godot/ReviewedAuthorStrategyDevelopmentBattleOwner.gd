@@ -8,29 +8,9 @@ const ReviewedPolicyScript = preload(
 )
 
 
-class ReviewedPublicInteractionAdapter extends RefCounted:
-	var owner: Variant = null
-
-	func _init(next_owner: Variant) -> void:
-		owner = next_owner
-
+class ReviewedPublicInteractionAdapter extends PublicInteractionAdapter:
 	func get_strategy_id() -> String:
 		return owner._reviewed_strategy_id if owner != null else ""
-
-	func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
-		return owner._pick_interaction_items(items, step, context) if owner != null else []
-
-	func should_preserve_empty_interaction_selection(step: Dictionary, context: Dictionary = {}) -> bool:
-		return owner._should_preserve_empty_interaction_selection(step, context) if owner != null else false
-
-	func pick_interaction_target_index(
-		items: Array,
-		excluded_targets: Array,
-		step: Dictionary,
-		context: Dictionary = {}
-	) -> int:
-		return owner._pick_interaction_target_index(items, excluded_targets, step, context) \
-			if owner != null else -1
 
 
 var _reviewed_frame_profile_id := ""
@@ -44,7 +24,7 @@ static func create(
 	match_id: String,
 	authority_mode: String = ExecutionGateScript.DEVELOPMENT_MODE
 ) -> Dictionary:
-	if not _competition_host_authorized():
+	if not _competition_host_authorized() and not ExecutionGateScript.player_host_available():
 		return _error("development_platform_not_authorized")
 	if (
 		handle == null
@@ -57,7 +37,7 @@ static func create(
 		or match_id.strip_edges().is_empty()
 	):
 		return _error("invalid_bind")
-	var pin_error := ExecutionGateScript.validate_handle_pins(
+	var pin_error := ExecutionGateScript.validate_player_start(
 		handle.to_public_dict(), authority_mode
 	)
 	if not pin_error.is_empty():

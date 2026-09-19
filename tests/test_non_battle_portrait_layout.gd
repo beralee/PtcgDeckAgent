@@ -654,7 +654,7 @@ func test_non_battle_touch_bridge_can_prepare_ios_web_dom_input_before_focus() -
 		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_prepare_count(), 1, "Preparing the Web editor should create exactly one native input layer"),
 		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 0, "Preparing the Web editor must not request keyboard focus outside a user gesture"),
 		assert_eq(str(payload.get("text", "")), "574793", "Prepared Web editor should mirror the Godot input value"),
-		assert_true(bridge_script.contains("version: 10") and bridge_script.contains("prepare_only") and bridge_script.contains("prepare: function"), "The browser bridge should expose a no-focus prepare path for iOS Safari"),
+		assert_true(bridge_script.contains("version: 11") and bridge_script.contains("prepare_only") and bridge_script.contains("prepare: function"), "The browser bridge should expose a no-focus prepare path for iOS Safari"),
 		assert_true(bridge_script.contains("guardNativeTap") and bridge_script.contains("'touchstart', 'pointerdown', 'mousedown', 'click'") and bridge_script.contains("event.stopPropagation()") and bridge_script.contains("if (!config.prepare_only) state.refocus()"), "Prepared iOS Web inputs should guard their native tap without repeated focus calls that can oscillate the keyboard"),
 	])
 	root.queue_free()
@@ -699,7 +699,7 @@ func test_non_battle_touch_bridge_programmatic_clear_updates_active_web_editor_a
 		assert_eq(int(changes[0]), 1, "Programmatic clear should emit exactly one text change for search filtering"),
 		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)), "Persistent search should declare native caret ownership explicitly"),
 		assert_false(bool(input.get_meta(NonBattleTouchBridgeScript.LINE_EDIT_SELECT_ALL_BOUND_META, false)), "Persistent search should reject the transient-dialog select-all policy"),
-		assert_true(bridge_script.contains("version: 10") and bridge_script.contains("setValue: function"), "The real browser proxy should support in-place value replacement while it owns keyboard focus"),
+		assert_true(bridge_script.contains("version: 11") and bridge_script.contains("setValue: function"), "The real browser proxy should support in-place value replacement while it owns keyboard focus"),
 		assert_true(bridge_script.contains("addEventListener('beforeinput'") and bridge_script.contains("addEventListener('keydown'") and bridge_script.contains("deleteText(input"), "The browser editor should capture Backspace/Delete before Godot's global Web key handler can prevent native defaults"),
 	])
 	root.queue_free()
@@ -1388,7 +1388,10 @@ func test_battle_setup_portrait_deck_button_opens_large_picker_after_reparenting
 	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	scene.position = Vector2.ZERO
 	scene.size = Vector2(1080, 2400)
-	tree.root.add_child(scene)
+	var phone_viewport := SubViewport.new()
+	phone_viewport.size = Vector2i(1080, 2400)
+	tree.root.add_child(phone_viewport)
+	phone_viewport.add_child(scene)
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	var deck1 := DeckData.new()
 	deck1.id = 950201
@@ -1420,19 +1423,29 @@ func test_battle_setup_portrait_deck_button_opens_large_picker_after_reparenting
 		assert_true(setup_deck_button != null and setup_deck_button.get_parent() == scene.find_child("LeftVBox", true, false), "Portrait deck button should stay in the full-width reparented slot"),
 		assert_true(overlay != null and overlay.visible, "Pressing the reparented portrait deck button should open the deck picker"),
 		assert_true(overlay != null and action_row != null and overlay.z_index > action_row.z_index, "Deck picker overlay should render above the fixed portrait footer"),
-		assert_true(panel != null and panel.custom_minimum_size.x >= 1000.0, "Deck picker opened from the portrait deck button should be phone-width"),
+		assert_true(panel != null and panel.size.x >= 972.0 and panel.get_global_rect().end.x <= 1080.5, "Deck picker must fill at least 90% of the real phone viewport and respect its safe margins"),
 		assert_true(panel != null and panel.custom_minimum_size.y >= 2300.0, "Deck picker opened from the portrait deck button should be phone-height"),
 		assert_true(grid != null and grid.columns == 1, "Deck picker opened from the portrait deck button should use a one-column phone list"),
 	])
 	_dispose_scene(scene)
+	phone_viewport.queue_free()
 	return result
 
 
 func test_battle_setup_portrait_deck_picker_uses_large_mobile_controls() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
+	# This layout fixture supplies its own deck catalog; do not start asynchronous production refreshes.
+	scene.set("_ready_initialized", true)
 	if not scene.has_method("_apply_non_battle_layout_for_tests"):
 		scene.queue_free()
 		return "BattleSetup should expose _apply_non_battle_layout_for_tests for portrait verification"
+	var phone_viewport := SubViewport.new()
+	phone_viewport.size = Vector2i(1080, 2400)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(phone_viewport)
+	phone_viewport.add_child(scene)
+	var previous_mode := GameManager.non_battle_layout_mode
+	GameManager.non_battle_layout_mode = "portrait"
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	var deck1 := DeckData.new()
 	deck1.id = 950101
@@ -1471,14 +1484,18 @@ func test_battle_setup_portrait_deck_picker_uses_large_mobile_controls() -> Stri
 	var first_card_button := grid.get_child(0) as Button if grid != null and grid.get_child_count() > 0 else null
 	var close_button := panel.find_child("DeckPickerCloseButton", true, false) as Button if panel != null else null
 	var scroll := panel.find_child("DeckPickerScroll", true, false) as ScrollContainer if panel != null else null
+	(scene.get("_deck_picker_overlay") as Control).show()
+	for frame in range(4):
+		await tree.process_frame
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	scene.call("_close_deck_picker")
 	var post_close_release := InputEventScreenTouch.new()
 	post_close_release.pressed = false
 	post_close_release.position = Vector2(540, 520)
 	var suppresses_release_tail := bool(scene.call("_handle_deck_picker_modal_input", post_close_release))
 	var result := run_checks([
-		assert_true(panel != null and panel.custom_minimum_size.x >= 1000.0, "Battle setup portrait deck picker should use nearly the full Android portrait width"),
-		assert_true(panel != null and panel.size.x >= 1000.0, "Battle setup portrait deck picker should explicitly lay out near full width instead of relying on desktop centering"),
+		assert_true(panel != null and panel.custom_minimum_size.x >= 972.0, "Battle setup portrait deck picker should fill at least 90% of the phone width after safe margins"),
+		assert_true(panel != null and panel.size.x >= 972.0 and panel.get_global_rect().end.x <= 1080.5, "Explicit picker bounds must stay within the phone viewport"),
 		assert_true(panel != null and panel.custom_minimum_size.y >= 2300.0, "Battle setup portrait deck picker should be a tall mobile selector instead of a desktop dialog"),
 		assert_true(setup_deck_button != null and setup_deck_button.custom_minimum_size.y >= 185.0, "Battle setup portrait selected deck button should stay large after syncing the deck name"),
 		assert_true(setup_deck_button != null and setup_deck_button.get_theme_font_size("font_size") >= 53, "Battle setup portrait selected deck button text should stay large after selecting a deck"),
@@ -1487,7 +1504,7 @@ func test_battle_setup_portrait_deck_picker_uses_large_mobile_controls() -> Stri
 		assert_true(all_tab != null and all_tab.custom_minimum_size.y >= 165.0, "Battle setup portrait deck picker tabs should be large touch targets"),
 		assert_true(recent_tab != null and recent_tab.get_theme_font_size("font_size") >= 53, "Battle setup portrait deck picker tab text should be readable on phones"),
 		assert_true(grid != null and grid.columns == 1, "Battle setup portrait deck picker should use a single-column phone list"),
-		assert_true(scroll != null and scroll.custom_minimum_size.y >= 720.0, "Battle setup portrait deck picker should reserve enough height for the deck list"),
+		assert_true(scroll != null and scroll.size.y >= 720.0, "Actual phone viewport must allocate enough list height without imposing a desktop-overflowing minimum"),
 		assert_true(first_card_button != null and first_card_button.custom_minimum_size.y >= 275.0, "Battle setup portrait deck picker deck rows should be large touch targets"),
 		assert_true(first_card_button != null and first_card_button.get_theme_font_size("font_size") >= 53, "Battle setup portrait deck picker deck names should be phone-readable"),
 		assert_true(first_card_button != null and bool(first_card_button.get_meta("_non_battle_touch_bound", false)), "Battle setup portrait deck picker dynamic deck rows should use the Android touch bridge"),
@@ -1495,6 +1512,8 @@ func test_battle_setup_portrait_deck_picker_uses_large_mobile_controls() -> Stri
 		assert_true(suppresses_release_tail, "Battle setup portrait deck picker should swallow the release tail after closing so it cannot tap the deck button underneath"),
 	])
 	scene.queue_free()
+	phone_viewport.queue_free()
+	GameManager.non_battle_layout_mode = previous_mode
 	return result
 
 

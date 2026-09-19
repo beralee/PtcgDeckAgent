@@ -1,4 +1,5 @@
 #include "ptcg_ort_actor.hpp"
+#include "ort_runtime.hpp"
 
 #include <array>
 #include <chrono>
@@ -16,6 +17,7 @@ constexpr int64_t kFrameWidth = 24;
 constexpr int64_t kMaxOptions = 1024;
 constexpr int64_t kOptionWidth = 16;
 constexpr int64_t kTimeoutMicroseconds = 25000;
+constexpr int64_t kActivationWarmupMicroseconds = 500000;
 
 struct IoSpec {
     const char *name;
@@ -64,14 +66,29 @@ std::vector<int32_t> copy_values(const PackedInt32Array &source) {
 }
 } // namespace
 
-PtcgOrtActor::PtcgOrtActor() : environment(ORT_LOGGING_LEVEL_ERROR, "ptcgai_actor") {}
+PtcgOrtActor::PtcgOrtActor() = default;
 
 void PtcgOrtActor::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("get_runtime_info"), &PtcgOrtActor::get_runtime_info);
     ClassDB::bind_method(D_METHOD("load_actor", "artifact"), &PtcgOrtActor::load_actor);
     ClassDB::bind_method(
         D_METHOD("run", "frame_i32", "frame_presence_i32", "option_i32", "option_presence_i32", "option_mask_i32"),
         &PtcgOrtActor::run
     );
+}
+
+Dictionary PtcgOrtActor::get_runtime_info() const {
+    const auto &info = ptcgai::get_ort_runtime();
+    Dictionary result;
+    result["available"] = info.available;
+    result["error_code"] = String(info.error_code.c_str());
+    result["runtime"] = "onnxruntime";
+    result["version"] = String(info.version.c_str());
+    result["execution_provider"] = "CPUExecutionProvider";
+    result["api_version"] = ORT_API_VERSION;
+    result["source_commit"] = PTCGAI_ORT_SOURCE_COMMIT;
+    result["library_loaded"] = info.library_loaded;
+    return result;
 }
 
 Dictionary PtcgOrtActor::error(const char *code) {
@@ -81,28 +98,45 @@ Dictionary PtcgOrtActor::error(const char *code) {
     return result;
 }
 
-bool PtcgOrtActor::verify_contract(std::string &failure) const {
-    return session && verify_io(*session, kInputs, true, failure) && verify_io(*session, kOutputs, false, failure);
+bool PtcgOrtActor::verify_contract(std::string &failure) {
+    if (!session || !verify_io(*session, kOutputs, false, failure)) return false;
+    if (verify_io(*session, kInputs, true, failure)) {
+        frame_width = 24; option_width = 16; failure.clear(); return true;
+    }
+    auto semantic = kInputs;
+    semantic[0].shape = {1, 128}; semantic[1].shape = {1, 128};
+    semantic[2].shape = {1, kMaxOptions, 32}; semantic[3].shape = {1, kMaxOptions, 32};
+    if (!verify_io(*session, semantic, true, failure)) return false;
+    frame_width = 128; option_width = 32; failure.clear(); return true;
 }
 
 Dictionary PtcgOrtActor::load_actor(const PackedByteArray &artifact) {
+    std::lock_guard<std::mutex> invocation_lock(invocation_mutex);
     session.reset();
     if (artifact.is_empty() || static_cast<size_t>(artifact.size()) > kMaxArtifactBytes) {
         return error("model_resource_limit_exceeded");
     }
+    const auto &runtime = ptcgai::get_ort_runtime();
+    if (!runtime.available) {
+        return error(runtime.error_code.c_str());
+    }
     try {
+        if (!environment) {
+            environment = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ptcgai_actor");
+        }
         Ort::SessionOptions options;
         options.SetIntraOpNumThreads(1);
         options.SetInterOpNumThreads(1);
         options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
         options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_BASIC);
         options.DisableMemPattern();
-        session = std::make_unique<Ort::Session>(environment, artifact.ptr(), static_cast<size_t>(artifact.size()), options);
+        session = std::make_unique<Ort::Session>(*environment, artifact.ptr(), static_cast<size_t>(artifact.size()), options);
         std::string failure;
         if (!verify_contract(failure)) {
             session.reset();
             return error(failure.c_str());
         }
+        if (!worker) worker = std::make_unique<ptcgai::InferenceWorker>();
     } catch (const Ort::Exception &) {
         session.reset();
         return error("model_unavailable");
@@ -110,9 +144,24 @@ Dictionary PtcgOrtActor::load_actor(const PackedByteArray &artifact) {
         session.reset();
         return error("model_unavailable");
     }
+    // Initialize the fixed-shape session during activation, before a public
+    // decision is pending. Synthetic zeros contain no engine/private data.
+    // Cold ORT setup/ARM translation must not consume the first decision budget.
+    PackedInt32Array frame, frame_presence, options, option_presence, mask;
+    frame.resize(frame_width); frame.fill(0);
+    frame_presence.resize(frame_width); frame_presence.fill(0);
+    options.resize(kMaxOptions * option_width); options.fill(0);
+    option_presence.resize(kMaxOptions * option_width); option_presence.fill(0);
+    mask.resize(kMaxOptions); mask.fill(1);
+    Dictionary warmup = run_unlocked(frame, frame_presence, options, option_presence, mask, kActivationWarmupMicroseconds);
+    if (!static_cast<bool>(warmup.get("ok", false))) {
+        session.reset();
+        return error("model_warmup_failed");
+    }
     Dictionary result;
     result["ok"] = true;
     result["error_code"] = "";
+    result["warmup_elapsed_us"] = warmup.get("elapsed_us", 0);
     result["runtime"] = "onnxruntime";
     result["execution_provider"] = "CPUExecutionProvider";
     return result;
@@ -125,11 +174,20 @@ Dictionary PtcgOrtActor::run(
     const PackedInt32Array &option_presence_i32,
     const PackedInt32Array &option_mask_i32
 ) {
+    std::lock_guard<std::mutex> invocation_lock(invocation_mutex);
+    return run_unlocked(frame_i32, frame_presence_i32, option_i32, option_presence_i32, option_mask_i32, kTimeoutMicroseconds);
+}
+
+Dictionary PtcgOrtActor::run_unlocked(
+    const PackedInt32Array &frame_i32, const PackedInt32Array &frame_presence_i32,
+    const PackedInt32Array &option_i32, const PackedInt32Array &option_presence_i32,
+    const PackedInt32Array &option_mask_i32, int64_t timeout_us
+) {
     if (!session) {
         return error("model_unavailable");
     }
-    if (frame_i32.size() != kFrameWidth || frame_presence_i32.size() != kFrameWidth ||
-        option_i32.size() != kMaxOptions * kOptionWidth || option_presence_i32.size() != kMaxOptions * kOptionWidth ||
+    if (frame_i32.size() != frame_width || frame_presence_i32.size() != frame_width ||
+        option_i32.size() != kMaxOptions * option_width || option_presence_i32.size() != kMaxOptions * option_width ||
         option_mask_i32.size() != kMaxOptions) {
         return error("model_tensor_profile_invalid");
     }
@@ -140,8 +198,8 @@ Dictionary PtcgOrtActor::run(
         auto option_presence = copy_values(option_presence_i32);
         auto mask = copy_values(option_mask_i32);
         Ort::MemoryInfo memory = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-        const std::array<int64_t, 2> frame_shape{1, kFrameWidth};
-        const std::array<int64_t, 3> option_shape{1, kMaxOptions, kOptionWidth};
+        const std::array<int64_t, 2> frame_shape{1, frame_width};
+        const std::array<int64_t, 3> option_shape{1, kMaxOptions, option_width};
         const std::array<int64_t, 2> mask_shape{1, kMaxOptions};
         std::array<Ort::Value, 5> inputs{
             Ort::Value::CreateTensor<int32_t>(memory, frame.data(), frame.size(), frame_shape.data(), frame_shape.size()),
@@ -154,7 +212,7 @@ Dictionary PtcgOrtActor::run(
         const std::array<const char *, 2> output_names{"option_scores", "desired_count"};
         const auto started = std::chrono::steady_clock::now();
         Ort::RunOptions run_options;
-        auto inference = std::async(std::launch::async, [&]() {
+        auto ticket = worker->submit([&]() {
             return session->Run(
                 run_options,
                 input_names.data(),
@@ -164,19 +222,37 @@ Dictionary PtcgOrtActor::run(
                 output_names.size()
             );
         });
-        if (inference.wait_for(std::chrono::microseconds(kTimeoutMicroseconds)) == std::future_status::timeout) {
+        auto &inference = ticket.completed;
+        // Scheduling has its own bounded wait. The fixed inference budget
+        // starts on the worker, not while Android creates/schedules a thread.
+        if (ticket.started.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) {
+            run_options.SetTerminate();
+            try { inference.get(); } catch (...) {}
+            return error("model_dispatch_timeout");
+        }
+        const auto kernel_started = ticket.started.get();
+        if (inference.wait_until(kernel_started + std::chrono::microseconds(timeout_us)) == std::future_status::timeout) {
+            const auto cancel_started = std::chrono::steady_clock::now();
             run_options.SetTerminate();
             try {
                 inference.get();
             } catch (...) {
                 // Cancellation is expected to surface as an ORT exception.
             }
-            return error("model_timeout");
+            Dictionary result = error("model_timeout");
+            result["elapsed_us"] = static_cast<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(cancel_started - started).count());
+            result["cancel_cleanup_us"] = static_cast<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - cancel_started).count());
+            return result;
         }
-        auto outputs = inference.get();
-        const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count();
-        if (elapsed > kTimeoutMicroseconds) {
-            return error("model_timeout");
+        auto completed = inference.get();
+        auto outputs = std::move(completed.value);
+        // Consumer wake-up time is not model execution time.
+        const auto elapsed = completed.elapsed_us;
+        if (elapsed > timeout_us) {
+            Dictionary result = error("model_timeout");
+            result["elapsed_us"] = static_cast<int64_t>(elapsed);
+            result["cancel_cleanup_us"] = 0;
+            return result;
         }
         if (outputs.size() != 2 || !outputs[0].IsTensor() || !outputs[1].IsTensor()) {
             return error("model_output_shape_invalid");
@@ -198,6 +274,7 @@ Dictionary PtcgOrtActor::run(
         result["option_scores"] = scores;
         result["desired_count"] = count_data[0];
         result["elapsed_us"] = static_cast<int64_t>(elapsed);
+        result["dispatch_us"] = static_cast<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(kernel_started - started).count());
         return result;
     } catch (const Ort::Exception &) {
         return error("model_inference_failed");

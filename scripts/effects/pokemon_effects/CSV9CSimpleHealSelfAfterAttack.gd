@@ -22,7 +22,7 @@ func execute_attack(
 ) -> void:
 	if attacker == null or not applies_to_attack_index(attack_index):
 		return
-	attacker.damage_counters = maxi(0, attacker.damage_counters - heal_amount)
+	attacker.heal(heal_amount, _state)
 
 
 func get_description() -> String:

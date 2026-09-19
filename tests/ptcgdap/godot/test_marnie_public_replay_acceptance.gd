@@ -6,6 +6,7 @@ const AcceptanceScript = preload("res://scripts/ai/ptcgdap/acceptance/MarniePubl
 
 func test_exact_marnie_live_public_owner_captures_complete_ui_only_replay() -> String:
 	var report: Dictionary = AcceptanceScript.new().run(CardDatabase, {
+		"catalog_sources": preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").sources(),
 		"seed": 84590,
 		"max_steps": 700,
 	})
@@ -44,6 +45,7 @@ func test_exact_marnie_live_public_owner_captures_complete_ui_only_replay() -> S
 
 func test_public_replay_acceptance_is_repeatable_for_same_seed_identity_scope() -> String:
 	var report: Dictionary = AcceptanceScript.new().run(CardDatabase, {
+		"catalog_sources": preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").sources(),
 		"seed": 84591,
 		"max_steps": 700,
 	})

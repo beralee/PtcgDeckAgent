@@ -44,7 +44,7 @@ def _response(
     }
 
 
-def _handle(request: object) -> dict[str, Any]:
+def _handle(request: object, source_root: Path | None = None) -> dict[str, Any]:
     request_id = ""
     observation_hash = ""
     window_id = ""
@@ -63,7 +63,7 @@ def _handle(request: object) -> dict[str, Any]:
             if type(source) is dict:
                 observation_hash = str(source.get("public_observation_hash", ""))
                 window_id = str(source.get("window_id", ""))
-        indexes = DragapultPublicStrategy.load_default().select(frame)
+        indexes = DragapultPublicStrategy.load_trusted_bundle(ROOT, source_root=source_root).select(frame)
         return _response(
             request_id,
             observation_hash,
@@ -111,12 +111,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run one isolated Dragapult public strategy window.")
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--response", type=Path, required=True)
+    parser.add_argument("--source-root", type=Path, help="Explicit source-locked baseline for historical conformance only.")
     args = parser.parse_args()
     try:
         request = load_json_strict(args.request)
     except Exception:
         request = None
-    _write_atomic(args.response, _handle(request))
+    _write_atomic(args.response, _handle(request, args.source_root))
     return 0
 
 

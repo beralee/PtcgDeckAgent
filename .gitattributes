@@ -3,3 +3,5 @@
 scripts/ai/ptcgdap/** text eol=lf
 contracts/ptcgdap/** text eol=lf
 *.ptcgai binary
+tests/ptcgdap/fixtures/locked_local_sources/data/** -text
+tests/ptcgdap/fixtures/locked_local_sources/scripts/** -text

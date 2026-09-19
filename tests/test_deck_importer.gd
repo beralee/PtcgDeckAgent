@@ -2,6 +2,44 @@
 class_name TestDeckImporter
 extends TestBase
 
+func test_static_web_export_defaults_to_control_import_api() -> String:
+	return assert_eq(DeckImporter.tcg_request_url("deck/detail", true), "https://api.ptcg.skillserver.cn/api/deck-import/tcg-mik/deck/detail", "Static Web hosting cannot execute a same-origin server handler")
+
+func test_miniapp_code_has_its_own_provider_and_stable_identity() -> String:
+	var ref := DeckImporter.parse_provider_ref("  dFJ1jZgeo_xEbSTvjj  ")
+	return run_checks([
+		assert_eq(ref.get("provider"), "miniapp", "18-character official codes must not be treated as numeric website IDs"),
+		assert_eq(ref.get("id"), "dFJ1jZgeo_xEbSTvjj", "Official codes preserve case and underscores"),
+		assert_eq(ref.get("url"), "https://tcg.mik.moe/tools/miniapp?code=dFJ1jZgeo_xEbSTvjj", "Source opens the correct export page"),
+		assert_true(int(ref.get("local_id", 0)) > 0, "Local persistence needs a positive ID"),
+	])
+
+func test_miniapp_url_and_web_gateway() -> String:
+	var raw := DeckImporter.parse_provider_ref("dFJ1jZgeo_xEbSTvjj")
+	var link := DeckImporter.parse_provider_ref("https://tcg.mik.moe/tools/miniapp?code=dFJ1jZgeo%5FxEbSTvjj")
+	return run_checks([
+		assert_eq(link, raw, "Export links and bare codes resolve identically"),
+		assert_eq(DeckImporter.tcg_request_url("deck/export-miniapp", true, "https://game.example"), "https://game.example/api/deck-import/tcg-mik/deck/export-miniapp", "Web must use the same-origin gateway"),
+		assert_eq(DeckImporter.tcg_request_url("deck/export-miniapp", false), "https://tcg.mik.moe/api/v3/deck/export-miniapp", "Native uses the documented endpoint"),
+	])
+
+func test_web_deck_journal_card_paths_cannot_escape_user_card_directory() -> String:
+	var journal = preload("res://scripts/ui/web/WebDeckJournal.gd")
+	return run_checks([
+		assert_true(journal.valid_card_filename("CSV6C_114.json"), "Printing filenames are accepted"),
+		assert_false(journal.valid_card_filename("../settings.json"), "Parent traversal rejected"),
+		assert_false(journal.valid_card_filename("C:/user.json"), "Absolute paths rejected"),
+		assert_false(journal.valid_card_filename("card.gd"), "Only card JSON is restored"),
+	])
+
+func test_browser_import_uses_same_origin_gateway_only() -> String:
+	return run_checks([
+		assert_eq(DeckImporter.tcg_request_url("deck/detail", true, "https://game.example"), "https://game.example/api/deck-import/tcg-mik/deck/detail", "Safari must avoid upstream CORS"),
+		assert_eq(DeckImporter.tcg_request_url("card/card-detail", true, "https://game.example"), "https://game.example/api/deck-import/tcg-mik/card/card-detail", "Uncached cards use the same gateway"),
+		assert_eq(DeckImporter.tcg_request_url("deck/detail", false), DeckImporter.DECK_DETAIL_URL, "Native desktop/Android keep direct requests"),
+		assert_eq(DeckImporter.tcg_request_url("../admin", true, "https://game.example"), "", "Only documented import operations are accepted"),
+	])
+
 
 func test_parse_deck_id_full_url() -> String:
 	var id := DeckImporter.parse_deck_id("https://tcg.mik.moe/decks/list/574793")

@@ -24,6 +24,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv9c_006_iron_ant_ex_mills_opponent_top_on_bench_entry() -> String:
 	var state := _make_state()

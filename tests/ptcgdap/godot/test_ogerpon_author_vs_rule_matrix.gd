@@ -144,7 +144,7 @@ func test_matrix_compact_audit_preserves_last_error_code_for_dirty_replay_diagno
 
 func test_r0_package_and_exact_deck_are_locally_discoverable() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "0.1.0"
 	)
@@ -178,7 +178,7 @@ func test_r0_package_and_exact_deck_are_locally_discoverable() -> String:
 
 func test_r1_package_is_exactly_pinned_and_locally_discoverable() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "0.2.0"
 	)
@@ -201,7 +201,7 @@ func test_r1_package_is_exactly_pinned_and_locally_discoverable() -> String:
 
 func test_r2_package_is_exactly_pinned_and_locally_discoverable() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "0.3.0"
 	)
@@ -256,7 +256,7 @@ func test_r2_package_is_exactly_pinned_and_locally_discoverable() -> String:
 
 func test_r3_package_is_exactly_pinned_and_reviewed_policy_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "0.4.0"
 	)
@@ -281,7 +281,7 @@ func test_r3_package_is_exactly_pinned_and_reviewed_policy_binds() -> String:
 
 func test_marnie_gift_box_rule_marnie_r4_is_exactly_pinned_and_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.4.0"
 	)
@@ -307,7 +307,7 @@ func test_marnie_gift_box_rule_marnie_r4_is_exactly_pinned_and_binds() -> String
 
 func test_marnie_gift_box_rule_marnie_r5_is_exactly_pinned_and_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.5.0"
 	)
@@ -333,7 +333,7 @@ func test_marnie_gift_box_rule_marnie_r5_is_exactly_pinned_and_binds() -> String
 
 func test_marnie_gift_box_rule_marnie_r6_is_exactly_pinned_and_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.6.0"
 	)
@@ -359,7 +359,7 @@ func test_marnie_gift_box_rule_marnie_r6_is_exactly_pinned_and_binds() -> String
 
 func test_marnie_gift_box_rule_marnie_r7_is_exactly_pinned_and_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.7.0"
 	)
@@ -385,7 +385,7 @@ func test_marnie_gift_box_rule_marnie_r7_is_exactly_pinned_and_binds() -> String
 
 func test_marnie_gift_box_rule_marnie_r8_is_exactly_pinned_and_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.8.0"
 	)
@@ -411,7 +411,7 @@ func test_marnie_gift_box_rule_marnie_r8_is_exactly_pinned_and_binds() -> String
 
 func test_marnie_gift_box_rule_marnie_r9_is_exactly_pinned_and_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.9.0"
 	)
@@ -437,7 +437,7 @@ func test_marnie_gift_box_rule_marnie_r9_is_exactly_pinned_and_binds() -> String
 
 func test_marnie_gift_box_damage_plan_package_stays_below_50ms_p95() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.9.0"
 	)
@@ -506,7 +506,7 @@ func test_marnie_gift_box_damage_plan_package_stays_below_50ms_p95() -> String:
 
 func test_final_package_is_exactly_pinned_and_reviewed_policy_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "1.0.0"
 	)
@@ -531,7 +531,7 @@ func test_final_package_is_exactly_pinned_and_reviewed_policy_binds() -> String:
 
 func test_supporter_r3_package_is_exactly_pinned_and_reviewed_policy_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "1.3.0"
 	)
@@ -557,7 +557,7 @@ func test_supporter_r3_package_is_exactly_pinned_and_reviewed_policy_binds() -> 
 
 func test_supporter_r4_package_is_exactly_pinned_and_reviewed_policy_binds() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "1.4.0"
 	)
@@ -584,7 +584,7 @@ func test_supporter_r4_package_is_exactly_pinned_and_reviewed_policy_binds() -> 
 func test_supporter_r4_package_is_visible_in_local_battle_setup() -> String:
 	var previous_selection: Dictionary = GameManager.get_author_strategy_selection()
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "1.4.0"
 	)
@@ -617,7 +617,7 @@ func test_supporter_r4_package_is_visible_in_local_battle_setup() -> String:
 func test_marnie_gift_box_rule_marnie_r7_is_visible_in_local_battle_setup() -> String:
 	var previous_selection: Dictionary = GameManager.get_author_strategy_selection()
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.bodao-yongzhe.marnies-gift-box", "1.7.0"
 	)
@@ -745,7 +745,7 @@ func test_contract_diagnostic_identifies_semantic_and_option_shape_drift() -> St
 
 func test_real_supporter_r4_owner_setup_frame_conforms_to_competitive_v2_contract() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "1.4.0"
 	)
@@ -800,7 +800,7 @@ func test_real_supporter_r4_owner_setup_frame_conforms_to_competitive_v2_contrac
 
 func test_assignment_target_keeps_originating_effect_source_identity() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "0.2.0"
 	)
@@ -856,7 +856,7 @@ func test_assignment_target_keeps_originating_effect_source_identity() -> String
 
 func test_assignment_source_exposes_current_attached_owner_profile() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var candidate: Dictionary = GateScript.candidate_for_package_identity(
 		"dev.beralee.v18.ogerpon-crustle-v523a", "0.2.0"
 	)

@@ -71,7 +71,7 @@ class AbilityBouquetMagic extends BaseEffect:
 			and not state.players[1 - owner].bench.is_empty()
 		)
 
-	func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		if card == null or state == null:
 			return []
 		var energies := _grass_energy(state.players[card.owner_index])
@@ -181,7 +181,7 @@ class AttackSetOpponentRemainingHP extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index == attack_index_to_match
 
-	func get_attack_interaction_steps(
+	func build_ucis_attack_interaction_steps_spec_steps(
 		card: CardInstance,
 		attack: Dictionary,
 		state: GameState

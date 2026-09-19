@@ -18,10 +18,10 @@ static func build(scenario: Dictionary) -> Dictionary:
 	# Resolve those lists identically regardless of whether a deck occupies the
 	# player or opponent seat; otherwise an older user-deck id collision can
 	# silently change the puzzle card pool.
-	var player_deck: DeckData = card_database.call("get_ai_deck", player_deck_id)
+	var player_deck: DeckData = _training_deck(card_database, player_deck_id)
 	if player_deck == null:
 		player_deck = card_database.call("get_deck", player_deck_id)
-	var opponent_deck: DeckData = card_database.call("get_ai_deck", opponent_deck_id)
+	var opponent_deck: DeckData = _training_deck(card_database, opponent_deck_id)
 	if opponent_deck == null:
 		opponent_deck = card_database.call("get_deck", opponent_deck_id)
 	if player_deck == null:
@@ -223,3 +223,10 @@ static func _take_card(pool: Array[CardInstance], card_ref: String, _player_inde
 			return card
 	errors.append("%s cannot consume card %s from frozen deck" % [path, card_ref])
 	return null
+
+
+static func _training_deck(card_database: Node, deck_id: int) -> DeckData:
+	var path := "res://data/deck_training/decks/%d.json" % deck_id
+	if FileAccess.file_exists(path):
+		return card_database.call("_load_deck_from_file", path) as DeckData
+	return card_database.call("get_ai_deck", deck_id) as DeckData

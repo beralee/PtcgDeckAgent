@@ -21,6 +21,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv8c_conkeldurr_line_is_marked_implemented() -> String:
 	var cards := [_timburr(), _gurdurr(), _conkeldurr(), _frogadier()]

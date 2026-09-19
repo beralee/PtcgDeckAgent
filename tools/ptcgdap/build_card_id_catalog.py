@@ -1746,9 +1746,16 @@ def _build_bundle(documents: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_catalog_documents(repository_root: Path, oracle_root: Path) -> dict[str, Any]:
+def build_catalog_documents(
+    repository_root: Path, oracle_root: Path, *, local_source_root: Path | None = None
+) -> dict[str, Any]:
     repository_root = repository_root.resolve(strict=True)
     oracle_root = oracle_root.resolve(strict=True)
+    # Reproduce the pinned P2 contract from its original public inputs. Live
+    # player data is validated by the runtime/materializer, not this old build.
+    local_source_root = (
+        local_source_root or repository_root / "tests/ptcgdap/fixtures/locked_local_sources"
+    ).resolve(strict=True)
 
     source_lock_path = _require_file(repository_root, PurePosixPath("docs/ptcgdap/SOURCE_LOCK.json"))
     source_lock = load_json_strict(source_lock_path)
@@ -1835,7 +1842,7 @@ def build_catalog_documents(repository_root: Path, oracle_root: Path) -> dict[st
         data=official_deck_bytes,
     )
 
-    local_deck_path = _require_file(repository_root, LOCAL_DECK_RELATIVE)
+    local_deck_path = _require_file(local_source_root, LOCAL_DECK_RELATIVE)
     local_deck_bytes = local_deck_path.read_bytes()
     local_deck = _load_local_deck(local_deck_path)
     local_deck_canonical = sha256_bytes(canonical_json_v1_bytes(local_deck))
@@ -1851,7 +1858,7 @@ def build_catalog_documents(repository_root: Path, oracle_root: Path) -> dict[st
     )
 
     bridge, local_input_records = _build_exact_bridge(
-        repository_root,
+        local_source_root,
         master,
         official_deck,
         local_deck,

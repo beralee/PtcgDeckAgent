@@ -1061,9 +1061,12 @@ class AttackLookAtOpponentPrize extends BaseEffect:
 			"title": "选择对手1张反面朝上的奖赏卡查看",
 			"items": items,
 			"labels": labels,
+			"visible_scope": "opponent_prizes_hidden",
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
+			"ucis_context_name": "TO_HAND",
+			"ucis_option_type_name": "CARD",
 		}]
 
 	func build_ucis_followup_attack_interaction_steps_spec_steps(
@@ -1261,7 +1264,7 @@ class AttackCoinFlipBonusAndHeal extends BaseEffect:
 			return
 		if coin_flipper.flip():
 			defender.damage_counters += bonus_damage
-			attacker.damage_counters = maxi(0, attacker.damage_counters - heal_amount)
+			attacker.heal(heal_amount, _state)
 
 
 class AbilitySwitchSelfFromBench extends BaseEffect:
@@ -1878,7 +1881,7 @@ class AttackHealAllOwnPokemon extends BaseEffect:
 		if attacker == null or attacker.get_top_card() == null or state == null or not applies_to_attack_index(attack_index):
 			return
 		for slot: PokemonSlot in state.players[attacker.get_top_card().owner_index].get_all_pokemon():
-			slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+			slot.heal(heal_amount, state)
 
 
 class AttackDiscardTwoEnergyThenBenchDamage extends BaseEffect:

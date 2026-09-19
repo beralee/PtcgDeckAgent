@@ -16,9 +16,11 @@ func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, _attack:
 		return []
 	var items: Array = []
 	var labels: Array[String] = []
-	for attack: Dictionary in defender.get_attacks():
+	var attacks := defender.get_attacks()
+	for attack_index: int in attacks.size():
+		var attack: Dictionary = attacks[attack_index]
 		var attack_name: String = str(attack.get("name", ""))
-		items.append(attack_name)
+		items.append({"source_slot": defender, "attack_index": attack_index})
 		labels.append(attack_name)
 	if items.is_empty():
 		return []
@@ -30,6 +32,8 @@ func build_ucis_attack_interaction_steps_spec_steps(card: CardInstance, _attack:
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": false,
+		"ucis_context_name": "ATTACK",
+		"ucis_option_type_name": "ATTACK",
 	}]
 
 
@@ -56,6 +60,16 @@ func _resolve_attack_name(defender: PokemonSlot) -> String:
 	var ctx: Dictionary = get_attack_interaction_context()
 	var selected_raw: Array = ctx.get(STEP_ID, [])
 	if not selected_raw.is_empty():
+		if selected_raw[0] is Dictionary:
+			var selected: Dictionary = selected_raw[0]
+			var selected_index: Variant = selected.get("attack_index")
+			var current_attacks := defender.get_attacks()
+			if selected.get("source_slot") != defender or typeof(selected_index) != TYPE_INT:
+				return ""
+			if selected_index < 0 or selected_index >= current_attacks.size():
+				return ""
+			return str(current_attacks[selected_index].get("name", ""))
+		# Retain name decoding for existing recorded interaction contexts.
 		var selected_name: String = str(selected_raw[0])
 		for attack: Dictionary in defender.get_attacks():
 			if str(attack.get("name", "")) == selected_name:

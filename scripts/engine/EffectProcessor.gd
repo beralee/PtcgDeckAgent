@@ -255,6 +255,22 @@ func record_effect_damage(
 			game_state_machine.call("record_effect_damage", player_index, target, damage, source_kind)
 
 
+## Attack text may deal damage without a printed damage number. Keep its
+## reactive abilities/tools, survival and public events aligned with main damage.
+func finish_attack_text_damage(attacker: PokemonSlot, target: PokemonSlot, damage: int, previous_damage: int, state: GameState, targets: Array = []) -> void:
+	if damage <= 0:
+		return
+	process_after_attack_damage(target, attacker, damage, state, targets)
+	var gsm := _get_bound_game_state_machine()
+	if gsm != null and gsm.get("game_state") == state:
+		var survived := bool(gsm.call("_apply_attack_damage_survival_tool_if_possible", attacker, target, previous_damage))
+		if not survived:
+			gsm.call("_apply_handheld_fan_if_possible", attacker, target, targets)
+	else:
+		apply_attack_damage_survival_tool(target, attacker, state, previous_damage)
+	record_effect_damage(attacker.get_top_card().owner_index, target, damage, state, "attack")
+
+
 func register_pokemon_card(card: CardData) -> void:
 	if card == null or not card.is_pokemon():
 		return
@@ -343,7 +359,8 @@ func validate_attack_effect_context(
 	attack_index: int,
 	_defender: PokemonSlot,
 	state: GameState,
-	targets: Array = []
+	targets: Array = [],
+	preflight: bool = false
 ) -> bool:
 	if attacker == null or attacker.get_top_card() == null or state == null:
 		return _record_interaction_validation_result(state, {"valid": false, "reason": "attacker is missing"})
@@ -356,7 +373,9 @@ func validate_attack_effect_context(
 		attacker,
 		_defender,
 		state,
-		targets
+		targets,
+		null,
+		preflight
 	)
 
 
@@ -370,7 +389,8 @@ func validate_attack_effect_context_by_id(
 	_defender: PokemonSlot,
 	state: GameState,
 	targets: Array = [],
-	exclude_effect_type: Variant = null
+	exclude_effect_type: Variant = null,
+	preflight: bool = false
 ) -> bool:
 	if attacker == null or attacker.get_top_card() == null or state == null:
 		return _record_interaction_validation_result(state, {"valid": false, "reason": "attacker is missing"})
@@ -378,7 +398,11 @@ func validate_attack_effect_context_by_id(
 		return _record_interaction_validation_result(state, {"valid": false, "reason": "attack index is invalid"})
 	state.shared_turn_flags["_draw_effect_processor"] = self
 	for effect: BaseEffect in _get_attack_effect_candidates_by_id(effect_id, attack_index, exclude_effect_type):
-		var result := effect.validate_attack_interaction(attacker, attack_index, targets, state)
+		# Coin-gated effects validate references without rolling during preflight.
+		# Their final selection budget is checked after the attack declaration.
+		var result: Dictionary = effect.call("validate_attack_preflight", attacker, attack_index, targets, state) \
+			if preflight and effect.has_method("validate_attack_preflight") \
+			else effect.validate_attack_interaction(attacker, attack_index, targets, state)
 		if not bool(result.get("valid", false)):
 			return _record_interaction_validation_result(state, result)
 	return _record_interaction_validation_result(state, {"valid": true})
@@ -1087,6 +1111,12 @@ func get_attacker_modifier(attacker: PokemonSlot, state: GameState, defender: Po
 	if pi == -1:
 		return 0
 	total += _get_ability_attack_modifier(attacker, state, pi, defender)
+	for source: PokemonSlot in state.players[1 - pi].get_all_pokemon():
+		if source == null or is_ability_disabled(source, state):
+			continue
+		var aura := _get_registered_pokemon_effect(source)
+		if aura != null and aura.has_method("get_opponent_attack_modifier"):
+			total += int(aura.call("get_opponent_attack_modifier", source, attacker, state, defender))
 	total += _get_tool_attack_modifier(attacker, state, defender)
 	total += _get_stadium_attack_modifier(attacker, state)
 	total += _get_energy_attack_modifier(attacker, state)
@@ -1393,12 +1423,25 @@ func get_weakness_value_override(attacker: PokemonSlot, defender: PokemonSlot, s
 		return "x1"
 	if attacker == null or defender == null or state == null:
 		return ""
+	# Explicit global auras apply from either side; existing target hooks remain owner-scoped.
+	for player: PlayerState in state.players:
+		for source: PokemonSlot in player.get_all_pokemon():
+			if source == null or is_ability_disabled(source, state):
+				continue
+			var aura := _get_registered_pokemon_effect(source)
+			if aura != null and aura.has_method("get_global_weakness_value_override"):
+				var value := str(aura.call("get_global_weakness_value_override", source, defender, state))
+				if value != "":
+					return value
 	if attacker.attached_tool != null and not is_tool_effect_suppressed(attacker, state):
 		var effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
 		if effect != null and effect.has_method("get_weakness_value_override"):
 			var tool_override := str(effect.call("get_weakness_value_override", attacker, defender, state))
 			if tool_override != "":
 				return tool_override
+	var rewrite := _get_attack_weakness_rewrite(defender, state)
+	if not rewrite.is_empty():
+		return str(rewrite.get("value", "x2"))
 	var attacker_owner := _get_owner_index(attacker)
 	if attacker_owner < 0 or attacker_owner >= state.players.size():
 		return ""
@@ -1416,6 +1459,9 @@ func get_weakness_value_override(attacker: PokemonSlot, defender: PokemonSlot, s
 func get_weakness_energy_override(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> String:
 	if attacker == null or defender == null or state == null:
 		return ""
+	var rewrite := _get_attack_weakness_rewrite(defender, state)
+	if not rewrite.is_empty():
+		return str(rewrite.get("energy", ""))
 	var attacker_owner := _get_owner_index(attacker)
 	if attacker_owner < 0 or attacker_owner >= state.players.size():
 		return ""
@@ -1487,6 +1533,16 @@ func get_effective_retreat_cost(slot: PokemonSlot, state: GameState) -> int:
 	return maxi(0, slot.get_retreat_cost() + get_retreat_cost_modifier(slot, state))
 
 
+func _get_attack_weakness_rewrite(target: PokemonSlot, state: GameState) -> Dictionary:
+	if target == null or target.get_top_card() == null or state == null:
+		return {}
+	for index in range(target.effects.size() - 1, -1, -1):
+		var marker: Dictionary = target.effects[index]
+		if marker.get("type") == "attack_weakness_rewrite" and int(marker.get("expires_turn", -1)) >= state.turn_number and int(marker.get("top_instance_id", -1)) == target.get_top_card().instance_id:
+			return marker
+	return {}
+
+
 func get_hp_modifier(slot: PokemonSlot, state: GameState = null) -> int:
 	var total: int = 0
 	if state != null:
@@ -1539,9 +1595,34 @@ func apply_attack_damage_survival_tool(
 	return bool(tool_effect.call("try_prevent_attack_knockout", defender, attacker, state, previous_damage, self))
 
 
+func can_heal_pokemon(target: PokemonSlot, state: GameState) -> bool:
+	if target == null or state == null:
+		return true
+	for player: PlayerState in state.players:
+		for source: PokemonSlot in player.get_all_pokemon():
+			if source == null or is_ability_disabled(source, state):
+				continue
+			var effect := _get_registered_pokemon_effect(source)
+			if effect != null and effect.has_method("prevents_healing") and bool(effect.call("prevents_healing", source, target, state)):
+				return false
+	return true
+
+
 func process_after_attack_damage(defender: PokemonSlot, attacker: PokemonSlot, damage: int, state: GameState, targets: Array = []) -> void:
 	if defender == null or defender.get_card_data() == null or attacker == null or damage <= 0 or state == null:
 		return
+	if defender.get_top_card().owner_index != attacker.get_top_card().owner_index:
+		var history_key := "attack_damage_received:%d" % defender.get_top_card().instance_id
+		var previous: Dictionary = state.shared_turn_flags.get(history_key, {})
+		var amount := int(previous.get("damage", 0)) if int(previous.get("turn", -1)) == state.turn_number else 0
+		state.shared_turn_flags[history_key] = {"turn": state.turn_number, "damage": amount + damage}
+	var defender_owner := defender.get_top_card().owner_index
+	for source: PokemonSlot in state.players[defender_owner].get_all_pokemon():
+		if source == null or is_ability_disabled(source, state):
+			continue
+		var aura := _get_registered_pokemon_effect(source)
+		if aura != null and aura.has_method("on_ally_damaged_by_attack"):
+			aura.call("on_ally_damaged_by_attack", source, defender, attacker, damage, state)
 	for entry: Dictionary in _get_attack_damage_reactive_effects(defender, state):
 		var effect: BaseEffect = entry.get("effect", null)
 		if effect == null:

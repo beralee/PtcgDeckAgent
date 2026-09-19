@@ -480,6 +480,8 @@ func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -
 		return _gsm.play_trainer(player_index, card, [])
 	if not effect.can_execute(card, _gsm.game_state):
 		return false
+	if _gsm.resolve_trainer_disruption(player_index, card):
+		return true
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, _gsm.game_state)
 	if steps.is_empty():
 		return _gsm.play_trainer(player_index, card, [])
@@ -490,6 +492,10 @@ func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -
 func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -> bool:
 	if _gsm == null:
 		return false
+	if not _gsm.rule_validator.can_play_stadium(_gsm.game_state, player_index, card, _gsm.effect_processor):
+		return false
+	if _gsm.resolve_trainer_disruption(player_index, card):
+		return true
 	var effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
 		return _gsm.play_stadium(player_index, card)
@@ -542,11 +548,15 @@ func _try_use_attack_with_interaction(player_index: int, slot: PokemonSlot, atta
 	var card: CardInstance = slot.get_top_card()
 	if card == null:
 		return false
+	if not _gsm.prepare_attack_interaction(player_index, slot, attack_index):
+		return true
 	var attack: Dictionary = card.card_data.attacks[attack_index]
 	var steps: Array[Dictionary] = []
 	var effects: Array[BaseEffect] = _gsm.effect_processor.get_attack_effects_for_slot(slot, attack_index)
 	for effect: BaseEffect in effects:
 		steps.append_array(effect.get_attack_interaction_steps(card, attack, _gsm.game_state))
+	# Match the battle UI: reactive choices belong to the defending player.
+	steps.append_array(_gsm.get_post_damage_defender_interaction_steps(slot, _gsm.game_state.players[1 - player_index].active_pokemon))
 	if steps.is_empty():
 		return _gsm.use_attack(player_index, attack_index)
 	_start_effect_interaction("attack", player_index, steps, card, slot, attack_index, {}, effects)
@@ -564,11 +574,14 @@ func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSl
 		_gsm.effect_processor
 	):
 		return false
+	if not _gsm.prepare_attack_interaction(player_index, slot, -1, granted_attack):
+		return true
 	var steps: Array[Dictionary] = _gsm.effect_processor.get_granted_attack_interaction_steps(
 		slot,
 		granted_attack,
 		_gsm.game_state
 	)
+	steps.append_array(_gsm.get_post_damage_defender_interaction_steps(slot, _gsm.game_state.players[1 - player_index].active_pokemon))
 	if steps.is_empty():
 		return _gsm.use_granted_attack(player_index, slot, granted_attack)
 	_start_effect_interaction("granted_attack", player_index, steps, slot.get_top_card(), slot, -1, granted_attack)
@@ -605,6 +618,8 @@ func _start_effect_interaction(
 	for step_value: Variant in compiled.get("steps", []):
 		compiled_steps.append(step_value as Dictionary)
 	steps = compiled_steps
+	if kind in ["attack", "granted_attack"] and _gsm != null:
+		_gsm.protect_committed_attack_steps(slot, steps)
 	remove_meta("ucis_interaction_error")
 	_pending_effect_kind = kind
 	_pending_effect_player_index = player_index
@@ -1050,6 +1065,8 @@ func _inject_followup_steps() -> void:
 			return
 	if followup_steps.is_empty():
 		return
+	if _pending_effect_kind in ["attack", "granted_attack"]:
+		_gsm.protect_committed_attack_steps(_pending_effect_slot, followup_steps)
 	var existing_step_ids: Dictionary = {}
 	for i: int in range(_pending_effect_step_index, _pending_effect_steps.size()):
 		var existing_id: String = str(_pending_effect_steps[i].get("id", ""))

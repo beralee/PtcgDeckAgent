@@ -12,6 +12,30 @@ const MARNIE_PACKAGE_ID := "ptcgdap.marnie.windows-local"
 const MARNIE_ARCHIVE_SHA256 := "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E"
 
 
+class MacRulesSetup extends "res://scenes/battle_setup/BattleSetup.gd":
+	func _author_strategy_admission(record: Dictionary) -> Dictionary:
+		var capabilities := AuthorStrategyWindowsExecutionGateScript.PlatformCapabilitiesScript.evaluate_device(
+			{"os":"macOS", "arch":"arm64", "version":"14.0"}, {}
+		)
+		return AuthorStrategyWindowsExecutionGateScript.PortabilityScript.evaluate(
+			record, {"runtime_kind":"reviewed_competitive_policy_v2"}, capabilities
+		)
+
+
+func test_mac_model_selection_explains_limitation_and_rules_stay_startable() -> String:
+	var scene := MacRulesSetup.new()
+	var record := {"package_schema_version":2, "policy_mode":"rules_with_model", "deck_card_id_domain":"godot_local_card_uid_v1", "deck_platform_scope":["windows"]}
+	var checks: Array[String] = [
+		assert_false(scene._author_strategy_record_can_start(record)),
+		assert_eq(scene._author_strategy_display_status_detail(record), "Mac 版暂不支持模型策略，请选择规则策略。"),
+		assert_eq(scene._author_strategy_catalog_status_detail(record), "Mac 版暂不支持模型策略，请选择规则策略。"),
+	]
+	record["policy_mode"] = "rules_only"
+	checks.append(assert_true(scene._author_strategy_record_can_start(record)))
+	scene.free()
+	return run_checks(checks)
+
+
 func _record(package_id: String, archive_sha256: String, status: String, display_name: String = "同名策略") -> Dictionary:
 	return {
 		"package_id": package_id,
@@ -182,6 +206,35 @@ func test_game_manager_author_selection_is_strict_copy_in_copy_out() -> String:
 		assert_false(second.has("ignored_payload"), "GameManager must retain only the setup record allow-list"),
 		assert_null(opponent_deck, "Author opponent deck has no authority before AS-WP4 match handle"),
 	])
+
+
+func test_strategy_hub_entry_overrides_saved_mode_and_exact_version() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_selection := GameManager.get_author_strategy_selection()
+	var scene := BattleSetupScene.instantiate()
+	scene.call("_ready")
+	var alpha := _record("pkg.alpha", HASH_A, "metadata_only")
+	var beta := _record("pkg.beta", HASH_B, "untrusted")
+	scene.call("_apply_author_strategy_catalog_report", _report([alpha, beta]))
+	scene.call("_select_mode_option", 0)
+	scene.call("_select_author_strategy_ref", SetupModelScript.stable_ref(alpha))
+	scene.call("_apply_strategy_hub_entry", SetupModelScript.stable_ref(beta))
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(900, 2000), "portrait")
+	var result := run_checks([
+		assert_eq(scene.get_node("%ModeOption").selected, 2),
+		assert_eq(scene.get("_author_strategy_selected_ref"), SetupModelScript.stable_ref(beta)),
+		assert_true(scene.get_node("%BtnStart").disabled, "Untrusted entries must not bypass execution admission"),
+		assert_false(scene.find_child("BackgroundGallery", true, false).visible),
+		assert_true(scene.find_child("QuickSetupMoreButton", true, false).visible),
+	])
+	scene.find_child("QuickSetupMoreButton", true, false).button_pressed = true
+	result += assert_true(scene.find_child("BackgroundGallery", true, false).visible, "Optional settings remain accessible")
+	scene.call("_apply_strategy_hub_entry", {"package_id": "missing", "package_version": "1.2.3", "archive_sha256": HASH_A})
+	result += assert_true(scene.get("_author_strategy_selected_ref").is_empty(), "Missing packages must not select a substitute")
+	scene.free()
+	GameManager.current_mode = previous_mode
+	GameManager.set_author_strategy_selection(previous_selection)
+	return result
 
 
 func test_scene_unifies_author_packages_into_the_ai_opponent_surface() -> String:

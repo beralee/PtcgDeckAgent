@@ -7,6 +7,9 @@ class HeadsCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(true)
 		return true
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 class TwoStageCopiedAttackEffect extends BaseEffect:
 	const FIRST_STEP_ID := "copied_contract_first"

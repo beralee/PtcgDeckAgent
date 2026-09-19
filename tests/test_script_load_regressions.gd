@@ -81,6 +81,33 @@ func test_font_bootstrap_loads_bundled_chinese_font() -> String:
 	])
 
 
+func test_font_bootstrap_batches_live_theme_updates_and_is_idempotent() -> String:
+	var bootstrap: Node = load("res://scripts/autoload/FontBootstrap.gd").new()
+	bootstrap.set("_cjk_font", bootstrap.call("_load_cjk_font"))
+	var label := Label.new()
+	label.text = "策略中心 · 中文 Latin 123 多行文本\n下载策略并开始对战"
+	(Engine.get_main_loop() as SceneTree).root.add_child(label)
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	# Deliberately replace the inherited font, as a newly loaded scene can do.
+	for key: String in bootstrap.CONTROL_FONT_KEYS:
+		label.add_theme_font_override(key, FontFile.new())
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	var notifications := [0]
+	label.theme_changed.connect(func(): notifications[0] += 1)
+	bootstrap.call("_apply_font_to_control", label)
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	var first_count: int = notifications[0]
+	bootstrap.call("_apply_font_to_control", label)
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	var second_count: int = notifications[0] - first_count
+	label.free()
+	bootstrap.free()
+	return run_checks([
+		assert_eq(first_count, 1, "one bulk font update must trigger one live reflow"),
+		assert_eq(second_count, 0, "already-installed fonts must not reflow again"),
+	])
+
+
 func test_battle_ui_coordinator_scripts_load() -> String:
 	var stadium_hud_script := load("res://scripts/ui/battle/display/BattleStadiumHudCoordinator.gd")
 	var stadium_backdrop_script := load("res://scripts/ui/battle/display/BattleStadiumBackdropCoordinator.gd")

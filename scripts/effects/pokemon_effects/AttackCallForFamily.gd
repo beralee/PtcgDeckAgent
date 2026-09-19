@@ -37,7 +37,7 @@ func build_ucis_attack_interaction_steps_spec_steps(
 		if _is_matching_basic_pokemon(deck_card):
 			items.append(deck_card)
 	if items.is_empty():
-		return []
+		return [build_empty_search_resolution_step("牌库中没有符合条件的基础宝可梦")]
 
 	var filter_str: String = "【%s】" % energy_filter if energy_filter != "" else ""
 	return [build_full_library_search_step(
@@ -50,6 +50,12 @@ func build_ucis_attack_interaction_steps_spec_steps(
 		mini(actual_max, items.size()),
 		{"allow_cancel": true}
 	)]
+
+
+func build_ucis_followup_attack_interaction_steps_spec_steps(card: CardInstance, _attack: Dictionary, state: GameState, context: Dictionary) -> Array[Dictionary]:
+	if should_preview_empty_search_deck(context):
+		return [build_readonly_deck_preview_step("查看己方牌库", state.players[card.owner_index].deck)]
+	return []
 
 
 func execute_attack(

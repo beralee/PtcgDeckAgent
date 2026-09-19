@@ -62,6 +62,21 @@ func mark_entered_play(order_stamp: int = -1) -> void:
 	top_card_order = order_stamp
 
 
+## Healing is distinct from moving damage counters, leaving play, or survival.
+# Avoid a static PokemonSlot -> GameState -> PlayerState -> PokemonSlot cycle.
+# The optional runtime context is consumed only through its shared effect port.
+func heal(amount: int, state: Variant = null) -> int:
+	if amount <= 0 or damage_counters <= 0:
+		return 0
+	if state != null:
+		var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor")
+		if processor != null and not processor.can_heal_pokemon(self, state):
+			return 0
+	var healed := mini(amount, damage_counters)
+	damage_counters -= healed
+	return healed
+
+
 func mark_top_card_changed(order_stamp: int = -1) -> void:
 	if order_stamp <= 0:
 		order_stamp = PokemonSlot.next_order_stamp()
@@ -180,6 +195,7 @@ const _BENCH_CLEAR_EFFECT_TYPES: Array[String] = [
 	"defender_action_cost_increase",
 	"retreat_lock",
 	"sweet_trap_damage_bonus",
+	"attack_weakness_rewrite",
 	"prevent_attack_damage_and_effects",
 	"ability_disabled",
 	"extra_prize",

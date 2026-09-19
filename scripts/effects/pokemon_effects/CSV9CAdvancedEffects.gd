@@ -176,7 +176,7 @@ class HydrappleExRipeningCharge extends BaseEffect:
 			return
 		player.hand.erase(energy)
 		target.attached_energy.append(energy)
-		target.damage_counters = maxi(0, target.damage_counters - 30)
+		target.heal(30, state)
 		pokemon.effects.append({"type": USED_FLAG, "turn": state.turn_number})
 
 	func _resolve_first_assignment(player: PlayerState, ctx: Dictionary) -> Dictionary:
@@ -536,7 +536,7 @@ class GholdengoSurfingTurn extends BaseEffect:
 		return [{
 			"id": STEP_ID,
 			"title": "是否将这只宝可梦和附属卡洗回自己的牌库",
-			"items": ["no", "yes"],
+			"items": [false, true],
 			"labels": ["不放回", "放回牌库"],
 			"min_select": 1,
 			"max_select": 1,
@@ -548,7 +548,7 @@ class GholdengoSurfingTurn extends BaseEffect:
 			return
 		var ctx := get_attack_interaction_context()
 		var selected: Array = ctx.get(STEP_ID, [])
-		if selected.is_empty() or str(selected[0]) != "yes":
+		if selected.is_empty() or not _is_yes(selected[0]):
 			return
 		var top := attacker.get_top_card()
 		if top == null:
@@ -556,6 +556,9 @@ class GholdengoSurfingTurn extends BaseEffect:
 		var player := state.players[top.owner_index]
 		AdvancedHelpers.return_slot_to_deck(attacker, player, state)
 		player.shuffle_deck()
+
+	func _is_yes(value: Variant) -> bool:
+		return bool(value) if typeof(value) == TYPE_BOOL else str(value) == "yes"
 
 
 class AlolanExeggutorExTropicalFrenzy extends BaseEffect:
@@ -718,6 +721,8 @@ class AlolanExeggutorExSwingingSphene extends BaseEffect:
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
+			"ucis_context_name": "COIN_HEAD",
+			"ucis_option_type_name": "NO" if result == "tails" else "YES",
 			"wait_for_coin_animation": true,
 			"force_dialog": true,
 		}

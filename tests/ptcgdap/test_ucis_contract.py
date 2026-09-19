@@ -147,7 +147,7 @@ class UcisContractTests(unittest.TestCase):
         catalog = build_ucis_catalog(ROOT)
         validate_ucis_catalog(catalog)
         closure = catalog["closure"]
-        self.assertEqual(closure["total_cards"], 797)
+        self.assertEqual(closure["total_cards"], 965)
         self.assertEqual(closure["unregistered"], 0)
         self.assertEqual(closure["legacy_author_visible"], 0)
         self.assertEqual(closure["custom_prompt_builder"], 0)
@@ -204,15 +204,15 @@ class UcisContractTests(unittest.TestCase):
         )
         self.assertEqual(attestation["document_type"], "ptcgdap_ucis_runtime_attestation_v1")
         self.assertEqual(attestation["invalid_specs"], [])
-        self.assertEqual(attestation["closure"]["total_cards"], 797)
-        self.assertEqual(attestation["closure"]["total_effects"], 730)
+        self.assertEqual(attestation["closure"]["total_cards"], 965)
+        self.assertEqual(attestation["closure"]["total_effects"], 859)
         self.assertEqual(attestation["closure"]["unregistered"], 0)
         self.assertEqual(attestation["closure"]["silent_fallback"], 0)
         self.assertEqual(
             attestation["closure"]["compiled"]
             + attestation["closure"]["automatic"]
             + attestation["closure"]["unsupported"],
-            730,
+            859,
         )
         unsupported = [row for row in attestation["cards"] if row["status"] == "unsupported"]
         self.assertTrue(all(row["unsupported_reason"] for row in unsupported))

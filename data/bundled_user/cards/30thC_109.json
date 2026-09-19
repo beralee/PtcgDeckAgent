@@ -1,0 +1,62 @@
+{
+  "name": "颤弦蝾螈",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "Fusion Strike",
+  "description": "【雷】 殴打 40\n\n\n【雷】【无】【无】 雷电伏特 150\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+  "yoren_code": "P849",
+  "set_code": "30thC",
+  "card_index": "109",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "Kazumasa Yasukuni",
+  "rarity": "AR",
+  "release_date": "2026-09-15T16:00:00Z",
+  "regulation_mark": "J",
+  "effect_id": "2210e38ce299e07646e3a1a67fc1b258",
+  "image_url": "https://tcg.mik.moe/static/img/30thC/109.png",
+  "image_local_path": "user://cards/images/30thC/109.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/30thC/109",
+  "source_set_code": "30thC",
+  "source_card_index": "109",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [
+    "Fusion Strike"
+  ],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "L",
+  "stage": "Stage 1",
+  "hp": 140,
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "evolves_from": "电音婴",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "殴打",
+      "text": "",
+      "cost": "L",
+      "damage": "40",
+      "is_vstar_power": false
+    },
+    {
+      "name": "雷电伏特",
+      "text": "在下一个自己的回合，这只宝可梦无法使用招式。",
+      "cost": "LCC",
+      "damage": "150",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [],
+  "energy_provides": ""
+}

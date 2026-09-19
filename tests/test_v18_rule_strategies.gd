@@ -978,7 +978,7 @@ func test_v18_headless_kieran_switch_resolves_the_ready_flareon_followup_target(
 	var switch_targets: Variant = target_context.get("kieran_switch_target", [])
 	return run_checks([
 		assert_false(kieran_action.is_empty(), "The headless builder should expose Kieran as a playable Supporter"),
-		assert_true(target_context.get("kieran_mode", []) == ["switch_active"], "Kieran should choose switch mode for a stranded Active and ready Flareon"),
+		assert_true(target_context.get("kieran_mode", []) == [true], "Kieran should choose switch mode for a stranded Active and ready Flareon"),
 		assert_true(switch_targets is Array and (switch_targets as Array).size() == 1 and (switch_targets as Array)[0] == flareon, "The headless builder must resolve Kieran's follow-up target to the ready Flareon"),
 	])
 

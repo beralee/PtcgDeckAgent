@@ -10,6 +10,7 @@ const DeckGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategy
 const ReleaseGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyReleaseGate.gd")
 const FeatureGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
 const InstallerScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageInstaller.gd")
+const SourceReaderScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageSourceReader.gd")
 const RemovalStoreScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageRemovalStore.gd")
 const BUILT_IN_ROOT := "res://data/ptcgdap/author_strategy_packages"
 const USER_ROOT := "user://ptcgdap/author_strategy_packages"
@@ -239,6 +240,14 @@ func install_from_local_path(source_path: String) -> Dictionary:
 	return _installer.call("install", self, _loader, source_path)
 
 
+func install_local_bytes(archive_bytes: PackedByteArray) -> Dictionary:
+	if _loader == null:
+		_loader = LoaderScript.new()
+	if _installer == null:
+		_installer = InstallerScript.new()
+	return _installer.call("install_local_bytes", self, _loader, archive_bytes)
+
+
 func install_from_bytes(
 	archive_bytes: PackedByteArray,
 	expected_release: Dictionary
@@ -336,8 +345,11 @@ func _request_match_handle(
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {"ok": false, "error_code": "package_file_missing", "handle": null}
-	var captured := file.get_buffer(file.get_length())
-	file = null
+	var capture_result := SourceReaderScript.read_stream(file)
+	file.close()
+	if not bool(capture_result.get("ok", false)):
+		return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
+	var captured: PackedByteArray = capture_result.get("archive_bytes", PackedByteArray())
 	if _sha(captured) != archive_sha256:
 		return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
 	var selected_record: Dictionary = {}
@@ -439,6 +451,10 @@ func _capture_path(path: String, install_source: String, location_id: String) ->
 		base["archive_error"] = "package_archive_invalid"
 		return base
 	var archive_size := file.get_length()
+	if archive_size > SourceReaderScript.MAX_ARCHIVE_BYTES:
+		file.close()
+		base["archive_error"] = "package_resource_limit_exceeded"
+		return base
 	var modified_time := int(FileAccess.get_modified_time(path))
 	base["archive_size"] = archive_size
 	base["archive_modified_time"] = modified_time
@@ -458,8 +474,12 @@ func _capture_path(path: String, install_source: String, location_id: String) ->
 			file.close()
 			return base
 	_last_startup_location_cache_misses += 1
-	base["archive_bytes"] = file.get_buffer(archive_size)
+	var capture_result := SourceReaderScript.read_stream(file)
 	file.close()
+	if bool(capture_result.get("ok", false)):
+		base["archive_bytes"] = capture_result.get("archive_bytes", PackedByteArray())
+	else:
+		base["archive_error"] = str(capture_result.get("error_code", "package_archive_invalid"))
 	return base
 
 

@@ -55,17 +55,21 @@ def canonical_bytes(value: Any) -> bytes:
     ).encode("utf-8")
 
 
-def tensor_profile_document() -> dict[str, Any]:
-    return {
-        "profile_id": TENSOR_PROFILE_ID,
+def tensor_profile_document(profile_id=TENSOR_PROFILE_ID) -> dict[str, Any]:
+    from .semantic_model_profile import PROFILE_ID as SEMANTIC
+    if profile_id not in (TENSOR_PROFILE_ID, SEMANTIC):
+        _raise("model_tensor_profile_invalid")
+    fw, ow = (128, 32) if profile_id == SEMANTIC else (FRAME_WIDTH, OPTION_WIDTH)
+    result = {
+        "profile_id": profile_id,
         "max_options": MAX_OPTIONS,
-        "frame_width": FRAME_WIDTH,
-        "option_width": OPTION_WIDTH,
+        "frame_width": fw,
+        "option_width": ow,
         "inputs": [
-            {"name": "frame_i32", "dtype": "int32", "shape": [1, FRAME_WIDTH]},
-            {"name": "frame_presence_i32", "dtype": "int32", "shape": [1, FRAME_WIDTH]},
-            {"name": "option_i32", "dtype": "int32", "shape": [1, MAX_OPTIONS, OPTION_WIDTH]},
-            {"name": "option_presence_i32", "dtype": "int32", "shape": [1, MAX_OPTIONS, OPTION_WIDTH]},
+            {"name": "frame_i32", "dtype": "int32", "shape": [1, fw]},
+            {"name": "frame_presence_i32", "dtype": "int32", "shape": [1, fw]},
+            {"name": "option_i32", "dtype": "int32", "shape": [1, MAX_OPTIONS, ow]},
+            {"name": "option_presence_i32", "dtype": "int32", "shape": [1, MAX_OPTIONS, ow]},
             {"name": "option_mask_i32", "dtype": "int32", "shape": [1, MAX_OPTIONS]},
         ],
         "outputs": [
@@ -76,6 +80,11 @@ def tensor_profile_document() -> dict[str, Any]:
         "unknown_uid_or_shape": "fail_closed",
         "hidden_fields": "forbidden",
     }
+
+    if profile_id == SEMANTIC:
+        result.update(input_source="competitive_public_frame_v2", uid_vocabulary="sealed_deck_sorted_max32",
+                      learning_gate="base_frontier_single_choice_v1", projection_version=1)
+    return result
 
 
 TENSOR_PROFILE_SHA256: Final = _sha(canonical_bytes(tensor_profile_document()))
@@ -89,6 +98,7 @@ def build_model_manifest(
     card_catalog_sha256: str,
     training_method: str = "bc_rl",
     source_run_id: str = "local-minimal",
+    tensor_profile_id: str = TENSOR_PROFILE_ID,
 ) -> dict[str, Any]:
     if type(actor_bytes) is not bytes or not actor_bytes or len(actor_bytes) > MODEL_MAX_BYTES:
         _raise("model_resource_limit_exceeded")
@@ -119,11 +129,11 @@ def build_model_manifest(
             "opset": 18,
             "allowed_ops": list(ALLOWED_ONNX_OPS),
         },
-        "tensor_profile": tensor_profile_document(),
+        "tensor_profile": tensor_profile_document(tensor_profile_id),
         "contract_hashes": {
             "cabt_contract_sha256": cabt_contract_sha256,
             "card_catalog_sha256": card_catalog_sha256,
-            "tensor_profile_sha256": TENSOR_PROFILE_SHA256,
+            "tensor_profile_sha256": _sha(canonical_bytes(tensor_profile_document(tensor_profile_id))),
         },
         "resource_limits": {
             "max_artifact_bytes": MODEL_MAX_BYTES,
@@ -219,7 +229,8 @@ def validate_model_manifest(
         or operators.get("allowed_ops") != list(ALLOWED_ONNX_OPS)
     ):
         _raise("model_operator_profile_invalid")
-    if value["tensor_profile"] != tensor_profile_document():
+    profile = tensor_profile_document(value["tensor_profile"].get("profile_id")) if type(value["tensor_profile"]) is dict else None
+    if value["tensor_profile"] != profile:
         _raise("model_tensor_profile_invalid")
     if (
         type(contracts) is not dict
@@ -230,7 +241,7 @@ def validate_model_manifest(
         }
         or contracts.get("cabt_contract_sha256") != cabt_contract_sha256
         or contracts.get("card_catalog_sha256") != card_catalog_sha256
-        or contracts.get("tensor_profile_sha256") != TENSOR_PROFILE_SHA256
+        or contracts.get("tensor_profile_sha256") != _sha(canonical_bytes(profile))
     ):
         _raise("model_contract_hash_mismatch")
     if (

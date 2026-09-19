@@ -7,12 +7,13 @@ const RandomEventPortScript = preload("res://scripts/engine/RandomEventPort.gd")
 ## 投币完成信号，result: true=正面, false=反面
 signal coin_flipped(result: bool)
 
-var random_event_port: RefCounted
-var _rng: RandomNumberGenerator
+var random_event_port: RefCounted = RandomEventPortScript.new()
+var _rng: RandomNumberGenerator = random_event_port.call("legacy_rng") as RandomNumberGenerator
 
 
 func _init(port: RefCounted = null) -> void:
-	random_event_port = port if port != null else RandomEventPortScript.new()
+	if port != null:
+		random_event_port = port
 	# Kept as an alias for existing deterministic benchmark seed controls. All
 	# draws still flow through RandomEventPort.
 	_rng = random_event_port.call("legacy_rng") as RandomNumberGenerator

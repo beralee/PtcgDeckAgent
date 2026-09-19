@@ -484,7 +484,22 @@ func _measure_landscape_cards(viewport_size: Vector2, center_width: float, bench
 		bench_size,
 		CARD_ASPECT
 	)
-	return measured_variant if measured_variant is Dictionary else {}
+	var measured: Dictionary = measured_variant if measured_variant is Dictionary else {}
+	if measured.is_empty():
+		return measured
+	# The VSTAR image has a minimum height independent of card size. Include its
+	# actual width before containers lay out, including on 4:3 tablet canvases.
+	var card_size: Vector2 = measured["play_card_size"]
+	var preview_size: Vector2 = measured["preview_card_size"]
+	while card_size.y > 82.0 and _estimate_landscape_center_min_width(viewport_size, card_size, preview_size, preview_size, bench_size) > center_width - LANDSCAPE_CENTER_WIDTH_SAFE_GAP:
+		card_size.y -= 1.0
+		card_size.x = roundf(card_size.y * CARD_ASPECT)
+		preview_size = Vector2(roundf(card_size.x * 0.9), roundf(card_size.y * 0.9))
+	measured["play_card_size"] = card_size
+	measured["preview_card_size"] = preview_size
+	measured["prize_slot_size"] = preview_size
+	measured["prize_panel_height"] = roundf((preview_size.y * 2.0 + 24.0) * 0.95)
+	return measured
 
 
 func _preferred_landscape_log_width(viewport_size: Vector2, preferred_log_width: float) -> float:
@@ -534,7 +549,12 @@ func _estimate_landscape_center_min_width(
 	var active_row_gap := float(clampi(int(viewport_size.x * 0.002), 2, 4))
 	var prize_width := prize_slot_size.x * 3.0 + 12.0
 	var pile_width := _as_float(_call_scene("_landscape_pile_lost_panel_width", [preview_card_size]), preview_card_size.x * 2.0 + 16.0)
-	var vstar_width := _as_float(_call_scene("_vstar_hud_width_for_height", [44.0]), roundf(44.0 * VSTAR_LOST_HUD_WIDTH_RATIO))
+	var stadium_height := roundf(clampf(viewport_size.y * 0.082, 54.0, 72.0) * (4.0 / 9.0))
+	var stadium_vpad := clampi(int(stadium_height * 0.08), 1, 3)
+	var action_height := _as_float(_call_scene("_resolve_hud_action_button_height", [stadium_height, stadium_vpad, true]), stadium_height)
+	stadium_height = maxf(stadium_height, action_height + float(stadium_vpad * 2))
+	var vstar_height := _status_panel_height(play_card_size, stadium_height)
+	var vstar_width := _as_float(_call_scene("_vstar_hud_width_for_height", [vstar_height]), roundf(vstar_height * VSTAR_LOST_HUD_WIDTH_RATIO))
 	var status_side_width := maxf(roundf(play_card_size.x * 2.6), vstar_width + roundf(play_card_size.x * 1.75))
 	var active_row_width := status_side_width * 2.0 + play_card_size.x + active_row_gap * 2.0
 	var bench_row_width := play_card_size.x * float(bench_size) + float(maxi(bench_size - 1, 0)) * float(BENCH_SLOT_GAP)
@@ -580,14 +600,18 @@ func prepare_layout(context: Dictionary) -> void:
 		_metrics_controller.call("apply_backdrop_rect", backdrop, viewport_size, 0.0)
 
 
-func apply_status_huds_beside_active(card_size: Vector2, stadium_height: float, row_gap: int) -> void:
+func _status_panel_height(card_size: Vector2, stadium_height: float) -> float:
 	var base_panel_height := clampf(
 		minf(maxf(stadium_height, card_size.y * 0.18), card_size.y * 0.36),
 		28.0,
 		44.0
 	)
 	var old_panel_height := clampf(roundf(base_panel_height * LANDSCAPE_VSTAR_LOST_HUD_HEIGHT_SCALE), 20.0, 31.0)
-	var panel_height := roundf(old_panel_height * VSTAR_HUD_HEIGHT_MULTIPLIER)
+	return roundf(old_panel_height * VSTAR_HUD_HEIGHT_MULTIPLIER)
+
+
+func apply_status_huds_beside_active(card_size: Vector2, stadium_height: float, row_gap: int) -> void:
+	var panel_height := _status_panel_height(card_size, stadium_height)
 	var gap := maxi(row_gap, 4)
 	var panel_width := _as_float(
 		_call_scene("_vstar_hud_width_for_height", [panel_height]),

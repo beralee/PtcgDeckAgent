@@ -47,6 +47,14 @@ func _ready() -> void:
 	_populate_model_options()
 	_load_config()
 	_apply_embedded_strategy_hub_chrome()
+	if _embedded_in_strategy_hub:
+		var form := get_node_or_null("VBoxContainer") as Control
+		if form != null:
+			form.minimum_size_changed.connect(_sync_embedded_content_height)
+		var workspace := get_parent() as ScrollContainer
+		if workspace != null:
+			workspace.resized.connect(_on_embedded_workspace_resized)
+			workspace.follow_focus = true
 	call_deferred("_apply_non_battle_layout")
 
 
@@ -61,7 +69,8 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _embedded_in_strategy_hub and not is_visible_in_tree():
+	# The hub owns both this form and its parent ScrollContainer as one gesture scope.
+	if _embedded_in_strategy_hub:
 		return
 	if _handle_settings_model_picker_input(event):
 		return
@@ -88,6 +97,9 @@ func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) ->
 
 
 func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	if _embedded_in_strategy_hub:
+		_apply_embedded_workspace_layout(viewport_size, forced_mode)
+		return
 	var size := viewport_size
 	if size.x <= 0.0 or size.y <= 0.0:
 		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
@@ -106,6 +118,116 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	_apply_settings_mobile_metrics(self, context, portrait)
 	_refresh_settings_model_picker_layout()
 	_sync_hud_frame_to_form()
+
+
+func _apply_embedded_workspace_layout(allocated_size: Vector2, forced_mode: String) -> void:
+	var form := get_node_or_null("VBoxContainer") as VBoxContainer
+	var form_column := find_child("FormColumn", true, false) as Control
+	var guide_column := find_child("DeepSeekGuideColumn", true, false) as Control
+	if form == null or form_column == null or guide_column == null:
+		return
+	var area := allocated_size
+	if area.x <= 0.0 or area.y <= 0.0:
+		area = (get_parent() as Control).size if get_parent() is Control else size
+	if area.x <= 0.0:
+		return
+	var mode := forced_mode
+	if mode.is_empty():
+		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
+	var compact := mode == "portrait" or area.x < 860.0
+	set_meta("non_battle_layout_mode", "portrait" if compact else "landscape")
+	_current_non_battle_layout_context = {
+		"viewport_size": area, "is_portrait": compact, "portrait_scale": 1.0,
+		"input_height": 48.0, "body_font_size": 18, "section_font_size": 22,
+		"button_font_size": 18, "section_gap": 12,
+	}
+	if mode == "portrait":
+		_current_non_battle_layout_context = _non_battle_layout_controller.build_context(area, "portrait", true)
+		var text_scale := maxf(1.0, area.x / 1100.0)
+		for metric: String in ["body_font_size", "section_font_size", "button_font_size", "input_font_size"]:
+			_current_non_battle_layout_context[metric] = roundi(float(_current_non_battle_layout_context[metric]) * text_scale)
+		if area.x < 850.0:
+			for metric: String in ["body_font_size", "section_font_size", "button_font_size", "input_font_size"]:
+				_current_non_battle_layout_context[metric] = maxi(22 if metric == "section_font_size" else 18, roundi(float(_current_non_battle_layout_context[metric]) * area.x / 850.0))
+			_current_non_battle_layout_context["input_height"] = maxf(44.0, float(_current_non_battle_layout_context.input_height) * area.x / 850.0)
+	var columns := form.get_node_or_null("EmbeddedSettingsColumns") as GridContainer
+	if columns == null:
+		columns = GridContainer.new()
+		columns.name = "EmbeddedSettingsColumns"
+		columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		columns.add_theme_constant_override("h_separation", 24)
+		columns.add_theme_constant_override("v_separation", 20)
+		form.add_child(columns)
+		form.move_child(columns, 2)
+		for column: Control in [form_column, guide_column]:
+			column.reparent(columns, false)
+		_set_runtime_owner(columns)
+	columns.columns = 1 if compact else 2
+	for column: Control in [form_column, guide_column]:
+		column.custom_minimum_size = Vector2.ZERO
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	var old_columns := form.get_node_or_null("ContentColumns") as Control
+	if old_columns != null:
+		old_columns.visible = false
+	form.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	form.offset_left = 12.0
+	form.offset_right = -12.0
+	form.offset_top = 12.0
+	form.custom_minimum_size = Vector2.ZERO
+	form.add_theme_constant_override("separation", 12)
+	_apply_embedded_metrics(form)
+	_sync_embedded_content_height()
+	_refresh_settings_model_picker_layout()
+
+
+func _apply_embedded_metrics(node: Node) -> void:
+	var metrics := _current_non_battle_layout_context
+	if node is Button:
+		var button := node as Button
+		button.custom_minimum_size = Vector2(0, float(metrics.get("secondary_button_height", 56)))
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.add_theme_font_size_override("font_size", int(metrics.get("button_font_size", 18)))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	elif node is LineEdit:
+		var input := node as LineEdit
+		input.expand_to_text_length = false
+		input.custom_minimum_size = Vector2(0, float(metrics.get("input_height", 48)))
+		input.add_theme_font_size_override("font_size", int(metrics.get("body_font_size", 18)))
+	elif node is SpinBox:
+		(node as SpinBox).custom_minimum_size = Vector2(0, float(metrics.get("input_height", 48)))
+		(node as SpinBox).get_line_edit().add_theme_font_size_override("font_size", int(metrics.get("body_font_size", 18)))
+	elif node is Label:
+		var label := node as Label
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.add_theme_font_size_override("font_size", int(metrics.get("section_font_size", 22)) if label.name in ["SectionLabel", "DeepSeekGuideTitle", "DeepSeekTroubleTitle"] else int(metrics.get("body_font_size", 18)))
+	for child: Node in node.get_children():
+		_apply_embedded_metrics(child)
+
+
+func _sync_embedded_content_height() -> void:
+	if not _embedded_in_strategy_hub:
+		return
+	var form := get_node_or_null("VBoxContainer") as Control
+	if form != null:
+		var content_height := form.get_combined_minimum_size().y
+		form.offset_bottom = form.offset_top + content_height
+		custom_minimum_size = Vector2(0, content_height + 24.0)
+
+
+func _on_embedded_workspace_resized() -> void:
+	_apply_non_battle_layout()
+	_ensure_embedded_focus_visible.call_deferred()
+
+
+func _ensure_embedded_focus_visible() -> void:
+	if not is_inside_tree():
+		return
+	var focused := get_viewport().gui_get_focus_owner()
+	var workspace := get_parent() as ScrollContainer
+	if workspace != null and focused != null and is_ancestor_of(focused):
+		workspace.ensure_control_visible(focused)
 
 
 func _apply_settings_portrait_layout(context: Dictionary) -> void:
@@ -290,6 +412,8 @@ func _settings_portrait_header_reserved_height(context: Dictionary) -> float:
 
 
 func _handle_portrait_action_footer_input(event: InputEvent) -> bool:
+	if _embedded_in_strategy_hub:
+		return false
 	if str(get_meta("non_battle_layout_mode", "")) != "portrait":
 		return false
 	var pointer_position := Vector2.ZERO
@@ -523,6 +647,11 @@ func _configure_status_label(label: Label, context: Dictionary = {}, portrait: b
 	label.max_lines_visible = 3 if portrait else 2
 	label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(15))
 	label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0) if portrait else 2)
+	if _embedded_in_strategy_hub:
+		label.custom_minimum_size = Vector2.ZERO
+		label.clip_text = false
+		label.max_lines_visible = -1
+		label.add_theme_font_size_override("font_size", 18)
 
 
 func _set_status_message(message: String, color: Color) -> void:
@@ -538,6 +667,11 @@ func _set_status_message(message: String, color: Color) -> void:
 
 func _reveal_status_message(label: Label) -> void:
 	if label == null or label.text.strip_edges() == "":
+		return
+	if _embedded_in_strategy_hub:
+		var workspace := get_parent() as ScrollContainer
+		if workspace != null and is_inside_tree():
+			workspace.ensure_control_visible.call_deferred(label)
 		return
 	if str(get_meta("non_battle_layout_mode", "")) != "portrait":
 		return
@@ -584,7 +718,7 @@ func _configure_settings_form_bounds() -> void:
 func _apply_embedded_strategy_hub_chrome() -> void:
 	if not _embedded_in_strategy_hub:
 		return
-	for chrome_name: String in ["Background", "BackgroundShade", "Title"]:
+	for chrome_name: String in ["Background", "BackgroundShade", "Title", "HudFrame"]:
 		var chrome := find_child(chrome_name, true, false) as CanvasItem
 		if chrome != null:
 			chrome.visible = false
@@ -1183,6 +1317,7 @@ func _ensure_settings_model_picker_overlay() -> void:
 	root.add_child(title)
 
 	_model_picker_scroll = ScrollContainer.new()
+	_model_picker_scroll.mouse_force_pass_scroll_events = false
 	_model_picker_scroll.name = "AISettingsModelPickerScroll"
 	_model_picker_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_model_picker_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1214,6 +1349,19 @@ func _ensure_settings_model_picker_overlay() -> void:
 func _refresh_settings_model_picker_layout() -> void:
 	if _model_picker_overlay == null or not is_instance_valid(_model_picker_overlay):
 		return
+	if _embedded_in_strategy_hub:
+		var workspace := get_parent() as ScrollContainer
+		if workspace == null:
+			return
+		_model_picker_overlay.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+		_model_picker_overlay.position = Vector2(0, workspace.scroll_vertical)
+		_model_picker_overlay.size = workspace.size
+		var embedded_panel := _model_picker_overlay.get_node("AISettingsModelPickerPanel") as Control
+		embedded_panel.custom_minimum_size = Vector2.ZERO
+		embedded_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_model_picker_scroll.custom_minimum_size.y = 0.0
+		_apply_embedded_metrics(_model_picker_overlay)
+		return
 	var viewport_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(1080, 2400))
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = Vector2(1080, 2400)
@@ -1242,11 +1390,11 @@ func _populate_settings_model_picker() -> void:
 		var button := Button.new()
 		button.name = "AISettingsModelPickerItem%d" % i
 		button.text = "%s%s" % ["[当前] " if i == selected_index else "", model_option.get_item_text(i)]
-		button.custom_minimum_size = Vector2(0.0, 148.0)
+		button.custom_minimum_size = Vector2(0.0, 56.0 if _embedded_in_strategy_hub else 148.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
 		_style_hud_button(button, HUD_ACCENT)
-		button.add_theme_font_size_override("font_size", 46)
+		button.add_theme_font_size_override("font_size", 18 if _embedded_in_strategy_hub else 46)
 		button.pressed.connect(_select_settings_model_from_picker.bind(i))
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 		_model_picker_list.add_child(button)

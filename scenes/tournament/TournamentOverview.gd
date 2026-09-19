@@ -202,6 +202,8 @@ func _replace_button_row(current: BoxContainer, replacement: BoxContainer, separ
 
 
 func _render() -> void:
+	%StartError.text = GameManager.tournament_start_error
+	%StartError.visible = not %StartError.text.is_empty()
 	%TitleLabel.text = "比赛总览"
 	%SubtitleLabel.text = "开赛前先确认参赛名单、卡组分布和本次瑞士轮轮数。"
 	%MetaTitle.text = "本次比赛"
@@ -275,6 +277,8 @@ func _ai_mode_label(ai_mode: String) -> String:
 			return "强AI"
 		"llm":
 			return "LLM"
+		"author":
+			return "开发者"
 		_:
 			return "弱AI"
 
@@ -287,5 +291,7 @@ func _on_back_pressed() -> void:
 func _on_start_round_pressed() -> void:
 	if not GameManager.prepare_current_tournament_battle():
 		_render()
+		%StartError.text = GameManager.tournament_start_error
+		%StartError.visible = not %StartError.text.is_empty()
 		return
 	GameManager.goto_battle()

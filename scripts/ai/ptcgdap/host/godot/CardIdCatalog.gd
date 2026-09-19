@@ -9,6 +9,10 @@ const MAX_SAFE_INTEGER := 9_007_199_254_740_991
 const EXPECTED_BUNDLE_ID := "ptcgdap-card-id-catalog-bundle-p2-wp2-v1"
 const EXPECTED_BUNDLE_SHA256 := "AB8CF10465F492A98DA8247A84572AECEE281D0726F7BB7B8E5DBC03A6AC70D4"
 const EXPECTED_RUNTIME_INTEGRITY_SHA256 := "B812F98BF096033E1EE6908B9A198B2357E1EA8D16CC1A05573335058B7FACD0"
+# Native Variant encoding of the same canonically verified runtime payload.
+# This is a second compile-time trust pin, not a mutable validation cache.
+# Engines with different encoding fall back to the canonical verifier below.
+const EXPECTED_RUNTIME_VARIANT_SHA256 := "AACD505F4A9DA3ED1FB193146494AC423FB4A2EAE747DE99E340C4EE637BA833"
 const EXPECTED_SOURCE_LOCK_SHA256 := "8C9BF1ABFCCF56B5EA433313D7385C60CD7B7E7A693A53E3FD98D91289E3F205"
 const EXPECTED_SOURCE_LOCK_ID := "ptcgdap-source-lock-2026-08-09-p1wp1"
 const EXPECTED_SOURCE_MANIFEST_ID := "ptcgdap-card-id-catalog-source-manifest-p2-wp2-v1"
@@ -677,6 +681,8 @@ func _runtime_digest() -> String:
 		"source_bindings": _source_bindings,
 		"source_contract_hash": _source_contract_hash,
 	}
+	if _raw_sha256(var_to_bytes(payload)) == EXPECTED_RUNTIME_VARIANT_SHA256:
+		return EXPECTED_RUNTIME_INTEGRITY_SHA256
 	var digest := _canonical_value_sha256(payload)
 	return str(digest.get("sha256", "")) if bool(digest.get("ok", false)) else ""
 

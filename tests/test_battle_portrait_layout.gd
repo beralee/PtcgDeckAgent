@@ -2707,6 +2707,8 @@ func test_android_portrait_action_huds_with_different_heights_share_same_center(
 
 
 func test_android_portrait_slot_tap_action_hud_center_does_not_drift_after_card_operations() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
 	var previous_layout: String = GameManager.battle_layout_mode
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
 	var tree := Engine.get_main_loop() as SceneTree
@@ -2823,6 +2825,7 @@ func test_android_portrait_slot_tap_action_hud_center_does_not_drift_after_card_
 		checks.append(assert_true(absf(centers[index] - centers[0]) <= 1.0, "Action HUD global center should not drift after card operations: first %.1f current %.1f heights=%s centers=%s expected=%s frames=%s scene=%s overlay=%s" % [centers[0], centers[index], str(heights), str(centers), str(expected_centers), str(frames), str(scene_rects), str(overlay_rects)]))
 
 	scene.queue_free()
+	GameManager.current_mode = previous_mode
 	GameManager.battle_layout_mode = previous_layout
 	return run_checks(checks)
 
@@ -3427,7 +3430,9 @@ func test_portrait_mulligan_prompt_uses_large_stable_text_option() -> String:
 		assert_true(second_scroll != null and second_panel != null and second_scroll.custom_minimum_size.y >= second_panel.custom_minimum_size.y, "Second portrait mulligan prompt scroll area should fit the large button"),
 		assert_true(first_box_size.x <= safe_width + 0.5 and second_box_size.x <= safe_width + 0.5, "Portrait mulligan prompt dialog should stay within the safe portrait width"),
 		assert_true(absf(first_box_size.x - second_box_size.x) <= 0.5, "Repeated portrait mulligan prompts should keep a stable width"),
-		assert_true(absf(first_box_size.y - second_box_size.y) <= 0.5, "Repeated portrait mulligan prompts should keep a stable height"),
+		assert_eq(first_panels.size(), 2, "One mulligan offers drawing zero or one card"),
+		assert_eq(second_panels.size(), 3, "Two mulligans offer drawing zero, one or two cards"),
+		assert_true(second_box_size.y >= first_box_size.y and second_box_size.y <= 844.0, "Extra draw choices must remain within the portrait viewport"),
 	])
 
 	scene.queue_free()
@@ -3863,25 +3868,11 @@ func test_landscape_layout_restores_top_actions_after_portrait() -> String:
 	var stadium_label := scene.find_child("StadiumLbl", true, false) as Label
 	var stadium_button := scene.find_child("BtnStadiumAction", true, false) as Button
 	var stadium_section_gap := float(stadium_sections.get_theme_constant("separation")) if stadium_sections != null else 0.0
-	var left_panel := scene.find_child("LeftPanel", true, false) as Control
-	var right_panel := scene.find_child("RightPanel", true, false) as Control
-	var log_panel := scene.find_child("LogPanel", true, false) as Control
-	var landscape_side_width := 0.0 if left_panel == null or not left_panel.visible else clampf(1600.0 * 0.05, 72.0, 108.0)
-	var landscape_right_width := 0.0 if right_panel == null or not right_panel.visible else landscape_side_width + 6.0
-	var landscape_log_width := 0.0 if log_panel == null or not log_panel.visible else clampf(1600.0 * 0.15, 144.0, 252.0)
-	var landscape_center_width := 1600.0 - landscape_side_width - landscape_right_width - landscape_log_width
-	var landscape_bench_spacing := float(clampi(int(1600.0 * 0.004), 4, 10))
-	var landscape_measured_variant: Variant = controller.call(
-		"measure_card_layout",
-		Vector2(1600, 900),
-		landscape_center_width,
-		landscape_bench_spacing,
-		5,
-		0.716
-	)
-	var landscape_measured: Dictionary = landscape_measured_variant if landscape_measured_variant is Dictionary else {}
-	var landscape_prize_slot_size: Vector2 = landscape_measured.get("prize_slot_size", Vector2.ZERO)
-	var landscape_preview_card_size: Vector2 = landscape_measured.get("preview_card_size", Vector2.ZERO)
+	# The landscape view also budgets the actual VSTAR texture and status columns.
+	# Compare HUD alignment against the final card size, not the initial estimate.
+	var landscape_card_size: Vector2 = scene.get("_play_card_size")
+	var landscape_preview_card_size := Vector2(roundf(landscape_card_size.x * 0.9), roundf(landscape_card_size.y * 0.9))
+	var landscape_prize_slot_size := landscape_preview_card_size
 	var expected_lost_width: float = float(scene.call("_landscape_pile_lost_panel_width", landscape_preview_card_size))
 	var expected_status_slot_width: float = float(scene.call("_landscape_status_side_column_width", my_active_card.custom_minimum_size if my_active_card != null else Vector2.ZERO, my_vstar_panel.custom_minimum_size.x if my_vstar_panel != null else 0.0))
 	var expected_stadium_left_spacer_width := roundf(landscape_prize_slot_size.x * 3.0)

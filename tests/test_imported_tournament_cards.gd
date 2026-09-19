@@ -49,6 +49,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_imported_cards_exist_and_ancient_tags_apply() -> String:
 	var checks: Array[String] = []

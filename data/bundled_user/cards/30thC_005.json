@@ -1,0 +1,58 @@
+{
+  "name": "彩粉蝶",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 指引之舞\n在自己的回合可以使用1次。抛掷1次硬币，如果为正面，则选择自己牌库中的1张宝可梦，在给对手看过之后加入手牌。并重洗牌库。\n\n【草】【无】 毒粉 60\n令对手的战斗宝可梦陷入【中毒】状态。\n\n",
+  "yoren_code": "P666",
+  "set_code": "30thC",
+  "card_index": "005",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "Jerky",
+  "rarity": "C",
+  "release_date": "2026-09-15T16:00:00Z",
+  "regulation_mark": "J",
+  "effect_id": "48e8990e5652874688fcd2ce0b8cf9e4",
+  "image_url": "https://tcg.mik.moe/static/img/30thC/005.png",
+  "image_local_path": "user://cards/images/30thC/005.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/30thC/005",
+  "source_set_code": "30thC",
+  "source_card_index": "005",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "G",
+  "stage": "Stage 2",
+  "hp": 120,
+  "weakness_energy": "R",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "粉蝶蛹",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "毒粉",
+      "text": "令对手的战斗宝可梦陷入【中毒】状态。",
+      "cost": "GC",
+      "damage": "60",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "指引之舞",
+      "text": "在自己的回合可以使用1次。抛掷1次硬币，如果为正面，则选择自己牌库中的1张宝可梦，在给对手看过之后加入手牌。并重洗牌库。"
+    }
+  ],
+  "energy_provides": ""
+}

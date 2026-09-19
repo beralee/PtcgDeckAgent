@@ -29,7 +29,7 @@ func test_exact_1_9_0_package_binds_and_materializes_the_60_card_deck() -> Strin
 		PACKAGE_ID, PACKAGE_VERSION
 	)
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var requested: Dictionary = GateScript.request_match_handle(catalog, _selection(), "Windows")
 	var handle: Variant = requested.get("handle")
 	var created: Dictionary = ReviewedPolicyScript.create(handle, "marnie-1.9.0-focused") \

@@ -2,6 +2,7 @@ class_name UpdateChecker
 extends Node
 
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
+const UpdateManifestScript := preload("res://scripts/update/AppUpdateManifest.gd")
 
 const MANIFEST_URL := "https://ptcg.skillserver.cn/dist/updates/latest.json"
 const DEFAULT_DOWNLOAD_PAGE_URL := "https://ptcg.skillserver.cn/"
@@ -13,6 +14,7 @@ const CACHE_BUST_QUERY_KEY := "_ptcg_update_check"
 signal update_available(info: Dictionary)
 signal no_update(info: Dictionary)
 signal check_failed(message: String)
+signal update_info_refreshed(info: Dictionary)
 
 var _http_request: Node = null
 var _is_checking := false
@@ -110,9 +112,10 @@ func compare_versions(left: String, right: String) -> int:
 
 
 func normalize_manifest(data: Dictionary) -> Dictionary:
-	var latest_version := _normalize_version_string(str(data.get("latest_version", data.get("version", ""))))
-	if latest_version == "":
+	var selected := UpdateManifestScript.select_release(data, current_platform_key(), UpdateManifestScript.architecture())
+	if selected.is_empty():
 		return {}
+	var latest_version: String = selected.latest_version
 
 	var info := {
 		"schema_version": int(data.get("schema_version", 1)),
@@ -121,35 +124,17 @@ func normalize_manifest(data: Dictionary) -> Dictionary:
 		"release_date": str(data.get("release_date", data.get("released_at", ""))),
 		"title": str(data.get("title", "v%s 更新" % latest_version)),
 		"summary": _normalize_summary(data.get("summary", [])),
-		"download_page_url": str(data.get("download_page_url", DEFAULT_DOWNLOAD_PAGE_URL)),
+		"download_page_url": selected.download_page_url,
+		"artifact": selected.artifact,
+		"native_update_reason": selected.native_update_reason,
 		"manifest_url": MANIFEST_URL,
 	}
-
-	var platforms: Variant = data.get("platforms", {})
-	if platforms is Dictionary:
-		var platform_key := current_platform_key()
-		var platform_data: Variant = (platforms as Dictionary).get(platform_key, {})
-		if platform_data is Dictionary:
-			var platform_page := str((platform_data as Dictionary).get("download_page_url", (platform_data as Dictionary).get("page_url", "")))
-			if platform_page != "":
-				info["download_page_url"] = platform_page
 
 	return info
 
 
 func current_platform_key() -> String:
-	var os_name := OS.get_name()
-	match os_name:
-		"Windows":
-			return "windows"
-		"macOS", "OSX":
-			return "macos"
-		"Android":
-			return "android"
-		"Linux", "FreeBSD", "NetBSD", "OpenBSD", "BSD":
-			return "linux"
-		_:
-			return os_name.to_lower()
+	return UpdateManifestScript.platform_key()
 
 
 func _ready() -> void:
@@ -164,7 +149,9 @@ func _ensure_http_request() -> void:
 	else:
 		var request := HTTPRequest.new()
 		request.timeout = 8.0
-		request.use_threads = true
+		request.body_size_limit = 256 * 1024
+		request.max_redirects = 0
+		request.use_threads = not OS.has_feature("web")
 		_http_request = request
 	if _http_request == null or not _http_request.has_signal("request_completed") or not _http_request.has_method("request"):
 		_http_request = null
@@ -196,7 +183,9 @@ func _build_manifest_request_url(force: bool = false) -> String:
 
 
 func _build_manifest_request_headers(force: bool = false) -> PackedStringArray:
-	var headers := PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version()])
+	var headers := PackedStringArray()
+	if not OS.has_feature("web"):
+		headers.append("User-Agent: PTCGDeckAgent/%s" % AppVersionScript.current_version())
 	if force:
 		headers.append("Cache-Control: no-cache, no-store, max-age=0")
 		headers.append("Pragma: no-cache")
@@ -241,6 +230,7 @@ func _on_manifest_response(result: int, response_code: int, _headers: PackedStri
 	_save_state(state)
 
 	if is_update_available(info) and (force_check or not _is_version_ignored(info, state)):
+		update_info_refreshed.emit(info.duplicate(true))
 		var latest_version := str(info.get("latest_version", ""))
 		if force_check or latest_version != _provisional_cached_update_version:
 			_emit_update_available(info, "network")

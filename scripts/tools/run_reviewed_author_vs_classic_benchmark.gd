@@ -117,7 +117,10 @@ func run_benchmark(options: Dictionary = {}) -> Dictionary:
 	var capture_developer_trace := bool(options.get("capture_developer_trace", false))
 	var selected_cases: Array = benchmark_cases(source_deck_id)
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	if options.has("catalog_sources"):
+		catalog.rebuild_from_paths_for_test(options["catalog_sources"])
+	else:
+		catalog.scan_startup()
 	var started_msec := Time.get_ticks_msec()
 	var results: Array[Dictionary] = []
 	var dirty_reasons: Array[String] = []

@@ -17,6 +17,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv5c_053_natu_three_coin_damage_uses_shared_flipper() -> String:
 	var flipper := RiggedCoinFlipper.new([true, false, true])

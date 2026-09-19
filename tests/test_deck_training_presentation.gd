@@ -558,13 +558,24 @@ func test_training_battle_overlays_restore_compact_landscape_metrics() -> String
 	return run_checks(checks)
 
 
+class TrainingHelpSpy extends DeckTrainingBattleController:
+	var help_calls := 0
+	func show_stage_goal() -> void:
+		help_calls += 1
+
+
 func test_battle_runtime_routes_training_stage_help_before_zeus_cheat() -> String:
-	var runtime_source := FileAccess.get_file_as_string("res://scenes/battle/BattleSceneRuntime.gd")
-	var compact_source := FileAccess.get_file_as_string("res://scenes/battle/BattleSceneRuntime.gd")
-	return run_checks([
-		assert_true(runtime_source.contains("_deck_training_controller.show_stage_goal()"), "Training should route the former Zeus action to stage help"),
-		assert_true(compact_source.contains("portrait_compact_text_override"), "Portrait labels should honor the training-specific compact text"),
+	var scene := (load("res://scenes/battle/BattleScene.tscn") as PackedScene).instantiate()
+	var controller := TrainingHelpSpy.new()
+	scene.set("_deck_training_controller", controller)
+	# Training help must work even before a normal battle state is available.
+	scene.call("_on_zeus_help_pressed")
+	var checks := run_checks([
+		assert_eq(controller.help_calls, 1, "Training should route the former Zeus action to stage help"),
+		assert_eq(scene.get("_pending_choice"), "", "Training help must not open the Zeus card picker"),
 	])
+	scene.free()
+	return checks
 
 
 func test_training_stage_help_uses_the_compact_portrait_label_without_changing_normal_battle_copy() -> String:

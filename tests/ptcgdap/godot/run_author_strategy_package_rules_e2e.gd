@@ -15,7 +15,7 @@ const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 
 const PINNED_SOURCE_PATHS := [
-	"res://data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
+	"res://tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
 	"res://data/bundled_user/decks/800018501.json",
 	"res://data/bundled_user/decks/575720.json",
 	"res://scripts/ai/ptcgdap/runtime/local/AuthorStrategyDevelopmentPolicy.gd",
@@ -62,7 +62,7 @@ func _run_acceptance(options: Dictionary) -> Dictionary:
 	if not deck_error.is_empty():
 		return _failed_report(options, deck_error, source_at_start)
 	var catalog := CatalogScript.new()
-	var catalog_report: Dictionary = catalog.scan_startup()
+	var catalog_report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	if not _has_exact_builtin_record(catalog_report):
 		catalog.free()
 		return _failed_report(options, "exact_builtin_candidate_missing", source_at_start)

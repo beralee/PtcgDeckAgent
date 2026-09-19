@@ -16,6 +16,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		index += 1
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func _make_state() -> GameState:
 	var state := GameState.new()

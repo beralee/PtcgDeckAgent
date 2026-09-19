@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -93,7 +94,15 @@ class _BoundedSink:
         return bytes(self._buffer)
 
 
+_ASCII_JSON_ESCAPE = re.compile(r'["\\\x00-\x1f]')
+
+
 def _canonical_string_byte_length(value: str) -> int:
+    # Public identities, hashes and field names overwhelmingly use plain ASCII.
+    # Native scans preserve the exact bounded length without a per-byte Python
+    # loop. Non-ASCII and escaped strings retain the strict I-JSON validator.
+    if value.isascii() and _ASCII_JSON_ESCAPE.search(value) is None:
+        return len(value) + 2
     length = 2  # Surrounding quotes.
     for character in value:
         codepoint = ord(character)
@@ -404,37 +413,10 @@ def _validate_tree(value: Any, limits: CabtTreeHashLimits) -> None:
 
 
 def _serialize_string(value: str, sink: _BoundedSink) -> None:
-    sink.write(b'"')
-    start = 0
-    for index, character in enumerate(value):
-        codepoint = ord(character)
-        replacement: bytes | None = None
-        if character == '"':
-            replacement = b'\\"'
-        elif character == "\\":
-            replacement = b"\\\\"
-        elif character == "\b":
-            replacement = b"\\b"
-        elif character == "\t":
-            replacement = b"\\t"
-        elif character == "\n":
-            replacement = b"\\n"
-        elif character == "\f":
-            replacement = b"\\f"
-        elif character == "\r":
-            replacement = b"\\r"
-        elif codepoint <= 0x1F:
-            replacement = f"\\u{codepoint:04x}".encode("ascii")
-
-        if replacement is not None:
-            if start < index:
-                sink.write(value[start:index].encode("utf-8"))
-            sink.write(replacement)
-            start = index + 1
-
-    if start < len(value):
-        sink.write(value[start:].encode("utf-8"))
-    sink.write(b'"')
+    # _validate_tree has already checked I-JSON Unicode and output bounds.
+    # CPython's native string encoder uses the same RFC 8785 escaping rules;
+    # retain our number encoding and UTF-16 object-key ordering below.
+    sink.write(json.encoder.encode_basestring(value).encode("utf-8"))
 
 
 def _serialize_float(value: float) -> bytes:

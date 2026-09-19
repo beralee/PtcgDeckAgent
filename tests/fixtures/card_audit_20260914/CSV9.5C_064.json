@@ -1,0 +1,88 @@
+{
+  "name": "胡地",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【超】 奇异侵入 \n令对手的战斗宝可梦陷入【混乱】状态。选择对手场上宝可梦身上放置的任意数量的伤害指示物，以任意方式转放于对手场上的宝可梦身上。\n\n【超】 精神强念 10+\n追加造成对手战斗宝可梦身上附着的能量数量×50伤害。\n\n",
+  "yorenCode": "P0065",
+  "pokemonAttr": {
+    "energyType": "P",
+    "stage": "Stage 2",
+    "hp": 140,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "D",
+      "value": "×2"
+    },
+    "resistance": {
+      "energy": "F",
+      "value": "-30"
+    },
+    "retreatCost": 1,
+    "attack": [
+      {
+        "name": "奇异侵入",
+        "text": "令对手的战斗宝可梦陷入【混乱】状态。选择对手场上宝可梦身上放置的任意数量的伤害指示物，以任意方式转放于对手场上的宝可梦身上。",
+        "cost": "P",
+        "damage": "",
+        "isVStarPower": false
+      },
+      {
+        "name": "精神强念",
+        "text": "追加造成对手战斗宝可梦身上附着的能量数量×50伤害。",
+        "cost": "P",
+        "damage": "10+",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": "勇基拉"
+  },
+  "setCode": "CSV9.5C",
+  "cardIndex": "064",
+  "setCardsNum": "",
+  "artist": "Masako Tomii",
+  "rarity": "R",
+  "releaseDate": "2026-06-11T16:00:00Z",
+  "regulationMark": "H",
+  "effectId": "b792079c0ae7abf7b11d88dbc5367419",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV9.5C",
+      "cardIndex": "064",
+      "cardName": "胡地",
+      "rarity": "R",
+      "effectId": "b792079c0ae7abf7b11d88dbc5367419",
+      "cardType": "Pokemon",
+      "yorenCode": "P0065",
+      "is": [
+        "Stage 2"
+      ],
+      "setCodeEn": "TWM",
+      "cardIndexEn": "82",
+      "nameEn": "Alakazam"
+    },
+    {
+      "setCode": "CSV8C",
+      "cardIndex": "075",
+      "cardName": "胡地",
+      "rarity": "R",
+      "effectId": "b792079c0ae7abf7b11d88dbc5367419",
+      "cardType": "Pokemon",
+      "yorenCode": "P0065",
+      "is": [
+        "Stage 2"
+      ],
+      "setCodeEn": "TWM",
+      "cardIndexEn": "82",
+      "nameEn": "Alakazam"
+    }
+  ],
+  "setCodeEn": "TWM",
+  "cardIndexEn": "82",
+  "nameEn": "Alakazam"
+}

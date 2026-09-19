@@ -611,7 +611,7 @@ func _show_retreat_energy_dialog(cp: int, active: PokemonSlot, retreat_cost: int
 			label += " (%d)" % provided
 		choice_labels.append(label)
 	_pending_choice = "retreat_energy"
-	_show_dialog("选择要弃掉的能量", choice_labels, {
+	_dialog_data = {
 		"player": cp,
 		"bench": player.bench,
 		"energy_options": energy_options,
@@ -623,7 +623,11 @@ func _show_retreat_energy_dialog(cp: int, active: PokemonSlot, retreat_cost: int
 		"card_items": energy_options,
 		"choice_labels": choice_labels,
 		"prompt_type": "retreat_energy",
-	})
+	}
+	if _is_author_player_owner_prompt(cp):
+		_maybe_run_ai()
+		return
+	_show_dialog("选择要弃掉的能量", choice_labels, _dialog_data)
 
 
 
@@ -641,6 +645,9 @@ func _show_retreat_bench_choice(cp: int, energy_discard: Array[CardInstance]) ->
 		"max_select": 1,
 		"prompt_type": "retreat_bench",
 	}
+	if _is_author_player_owner_prompt(cp):
+		_maybe_run_ai()
+		return
 	_show_field_slot_choice("选择接替撤退的备战宝可梦", player.bench, _dialog_data)
 
 

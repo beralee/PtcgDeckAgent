@@ -42,7 +42,7 @@ func _selection(row: Array) -> Dictionary:
 
 func test_reviewed_packages_are_exactly_admitted_and_discoverable() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var checks: Array[String] = []
 	for row: Array in EXPECTED:
 		var selection := _selection(row)
@@ -128,7 +128,7 @@ func _frame(row: Array) -> Dictionary:
 
 func test_reviewed_packages_execute_their_primary_current_window_macro() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var checks: Array[String] = []
 	var case_index := 0
 	for row: Array in EXECUTION_CASES:
@@ -156,7 +156,7 @@ func test_reviewed_packages_execute_their_primary_current_window_macro() -> Stri
 
 func test_reviewed_packages_bind_the_generic_engine_owner() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var checks: Array[String] = []
 	var opponent: DeckData = CardDatabase.get_deck(575720)
 	var case_index := 0
@@ -167,7 +167,12 @@ func test_reviewed_packages_bind_the_generic_engine_owner() -> String:
 			catalog, _selection(row), "Windows"
 		)
 		var gsm := GameStateMachine.new()
+		deck = AuthorStrategyDeckMaterializer.build(requested.get("handle")).get("deck")
 		gsm.start_game(deck, opponent, 0)
+		for retry: int in 128:
+			var prompt: Dictionary = gsm.get_pending_decision_snapshot()
+			if prompt.get("kind") != "mulligan_extra_draw": break
+			gsm.resolve_mulligan_draw_count(int(prompt.get("beneficiary", -1)), 0)
 		var built: Dictionary = OwnerFactoryScript.build_windows_development_author_owner(
 			requested.get("handle"), gsm, 0, "reviewed-owner-%d" % case_index
 		)
@@ -196,7 +201,7 @@ func test_reviewed_packages_bind_the_generic_engine_owner() -> String:
 
 func test_competitive_v2_package_routes_to_reviewed_engine_owner() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var row: Array = EXECUTION_CASES[3]
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog, _selection(row), "Windows"
@@ -240,10 +245,10 @@ func test_competitive_v2_package_routes_to_reviewed_engine_owner() -> String:
 
 
 func test_reviewed_packages_render_as_loaded_and_startable_in_battle_setup() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_selection: Dictionary = GameManager.get_author_strategy_selection()
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var report := {
 		"metadata_records": catalog.list_metadata_records(),
 		"ready_records": catalog.list_ready_records(),
@@ -272,11 +277,11 @@ func test_reviewed_packages_render_as_loaded_and_startable_in_battle_setup() -> 
 
 
 func test_marnies_gift_box_renders_as_loaded_and_startable_in_battle_setup() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var row: Array = EXPECTED[EXPECTED.size() - 1]
 	var previous_selection: Dictionary = GameManager.get_author_strategy_selection()
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var report := {
 		"metadata_records": catalog.list_metadata_records(),
 		"ready_records": catalog.list_ready_records(),

@@ -18,7 +18,7 @@ func execute_ability(
 	var top: CardInstance = pokemon.get_top_card()
 	if top == null:
 		return
-	pokemon.damage_counters = 0
+	pokemon.heal(pokemon.damage_counters, state)
 	state.vstar_power_used[top.owner_index] = true
 
 

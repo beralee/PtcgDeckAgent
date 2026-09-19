@@ -27,7 +27,7 @@ func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameStat
 		return [{
 			"id": "miss_fortune_continue",
 			"title": "%s\n其中没有物品卡。" % title,
-			"items": ["continue"],
+			"items": [true],
 			"labels": ["继续"],
 			"min_select": 1,
 			"max_select": 1,

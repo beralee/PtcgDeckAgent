@@ -101,7 +101,7 @@ class SlowModelActor extends RefCounted:
 	var calls := 0
 
 	func decide_development_frame(
-		_frame: Dictionary, rule_indexes: Array, _eligible_indexes: Array = []
+		_frame: Dictionary, rule_indexes: Array, _eligible_indexes: Array = [], _base_frontier: Dictionary = {}
 	) -> Dictionary:
 		calls += 1
 		OS.delay_msec(delay_msec)
@@ -126,7 +126,7 @@ func _exact_selection() -> Dictionary:
 
 func _request_exact_handle() -> Dictionary:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var result: Dictionary = GateScript.request_match_handle(catalog, _exact_selection(), "Windows")
 	catalog.free()
 	return result
@@ -143,7 +143,7 @@ func _cynthia_selection() -> Dictionary:
 
 func _request_cynthia_handle() -> Dictionary:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var result: Dictionary = GateScript.request_match_handle(
 		catalog, _cynthia_selection(), "Windows"
 	)
@@ -162,7 +162,7 @@ func _gift_box_selection() -> Dictionary:
 
 func _request_gift_box_handle() -> Dictionary:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var result: Dictionary = GateScript.request_match_handle(
 		catalog, _gift_box_selection(), "Windows"
 	)
@@ -203,7 +203,7 @@ func _rules_ai(seat: int, deck: DeckData) -> AIOpponent:
 
 func test_windows_development_gate_accepts_only_exact_builtin_marnie_archive() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var exact: Dictionary = GateScript.evaluate_selection(_exact_selection(), "Windows")
 	var wrong_sha := _exact_selection()
 	wrong_sha["archive_sha256"] = "A".repeat(64)
@@ -228,7 +228,7 @@ func test_windows_development_gate_accepts_only_exact_builtin_marnie_archive() -
 
 func test_windows_development_gate_accepts_exact_builtin_cynthia_without_promoting_trust() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var exact: Dictionary = GateScript.evaluate_selection(_cynthia_selection(), "Windows")
 	var wrong_sha := _cynthia_selection()
 	wrong_sha["archive_sha256"] = "A".repeat(64)
@@ -365,7 +365,7 @@ func test_exact_cynthia_package_owner_completes_real_rules_game_without_classic_
 
 func test_production_device_canary_is_explicit_exclusive_and_unprovisioned() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var development: Dictionary = ExecutionGateScript.evaluate_selection(
 		catalog, _exact_selection(), "Windows", PackedStringArray(), true, false
 	)
@@ -769,7 +769,7 @@ func test_live_worker_keeps_optional_model_leaf_off_the_render_thread() -> Strin
 
 
 func test_game_manager_and_battle_scene_route_exact_author_owner_without_classic_ai() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var previous_decks: Array = GameManager.selected_deck_ids.duplicate()
@@ -933,6 +933,10 @@ func test_windows_ui_acceptance_routes_rules_seat_zero_and_author_seat_one() -> 
 	seed_owner.set_forced_shuffle_seed(84309)
 	var gsm := GameStateMachine.new()
 	gsm.start_game(rules_deck, marnie, 0)
+	for retry: int in 128:
+		var prompt: Dictionary = gsm.get_pending_decision_snapshot()
+		if prompt.get("kind") != "mulligan_extra_draw": break
+		gsm.resolve_mulligan_draw_count(int(prompt.get("beneficiary", -1)), 0)
 	var author_result: Dictionary = OwnerScript.create(requested.get("handle"), gsm, 1, "windows-ui-dual-owner-route")
 	var registry := DeckStrategyRegistryScript.new()
 	var rules_result: Dictionary = BattleDecisionOwnerFactoryScript.build_windows_development_rules_owner(
@@ -1034,7 +1038,7 @@ func test_real_battle_scene_starts_exact_author_player_owner() -> String:
 	# Product navigation reaches BattleSetup after the deferred startup scan. This
 	# focused test instantiates BattleScene directly, so make that prerequisite
 	# explicit instead of racing the catalog's first-frame warm-up.
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var previous_decks: Array = GameManager.selected_deck_ids.duplicate()
@@ -1098,7 +1102,7 @@ func test_real_battle_scene_starts_exact_author_player_owner() -> String:
 
 
 func test_real_battle_scene_starts_exact_cynthia_author_owner() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var previous_decks: Array = GameManager.selected_deck_ids.duplicate()
@@ -1141,7 +1145,7 @@ func test_real_battle_scene_starts_exact_cynthia_author_owner() -> String:
 
 
 func test_real_battle_scene_starts_gift_box_from_package_csv() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var previous_decks: Array = GameManager.selected_deck_ids.duplicate()
@@ -1195,11 +1199,11 @@ func test_real_battle_scene_starts_gift_box_from_package_csv() -> String:
 
 
 func test_ai_deck_picker_open_stays_metadata_only_for_real_packages() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var catalog := CatalogScript.new()
-	var report: Dictionary = catalog.scan_startup()
+	var report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var scene := BattleSetupScene.instantiate()
 	scene.call("_ready")
 	scene.call("_apply_author_strategy_catalog_report", report, _gift_box_selection())
@@ -1239,12 +1243,12 @@ func test_ai_deck_picker_open_stays_metadata_only_for_real_packages() -> String:
 
 
 func test_battle_setup_enables_only_the_exact_windows_development_candidate() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var previous_decks: Array = GameManager.selected_deck_ids.duplicate()
 	var catalog := CatalogScript.new()
-	var report: Dictionary = catalog.scan_startup()
+	var report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var scene := BattleSetupScene.instantiate()
 	scene.call("_ready")
 	scene.call("_apply_author_strategy_catalog_report", report, _exact_selection())
@@ -1271,12 +1275,12 @@ func test_battle_setup_enables_only_the_exact_windows_development_candidate() ->
 
 
 func test_battle_setup_enables_exact_cynthia_development_candidate() -> String:
-	AuthorStrategyPackageCatalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var previous_mode: int = GameManager.current_mode
 	var previous_selection := GameManager.get_author_strategy_selection()
 	var previous_decks: Array = GameManager.selected_deck_ids.duplicate()
 	var catalog := CatalogScript.new()
-	var report: Dictionary = catalog.scan_startup()
+	var report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var scene := BattleSetupScene.instantiate()
 	scene.call("_ready")
 	scene.call("_apply_author_strategy_catalog_report", report, _cynthia_selection())
@@ -1289,7 +1293,7 @@ func test_battle_setup_enables_exact_cynthia_development_candidate() -> String:
 		assert_true(exact_allowed, "exact Cynthia package should materialize from its CSV"),
 		assert_true(exact_apply, "BattleSetup should accept the materialized Cynthia package deck"),
 		assert_false(start_button.disabled if start_button != null else true),
-		assert_eq(start_button.text if start_button != null else "", "开始 Windows 开发对战"),
+		assert_eq(start_button.text if start_button != null else "", "开始策略对战"),
 		assert_eq(GameManager.current_mode, GameManager.GameMode.VS_AUTHOR_STRATEGY_AI),
 		assert_eq(GameManager.selected_deck_ids[1], 0),
 	])

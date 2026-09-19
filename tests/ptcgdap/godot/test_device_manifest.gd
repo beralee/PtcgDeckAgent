@@ -4,7 +4,7 @@ extends TestBase
 const PACKAGE_ID := "ptcgdap.marnie.windows-local"
 const PACKAGE_VERSION := "0.1.0"
 const PACKAGE_ARCHIVE_SHA256 := "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E"
-const DEVICE_MANIFEST_CANONICAL_SHA256 := "475E6908B99CF4383C7B90A8CD588915D6B18B2B37C2A4B6E9C3F0F8BA4C9ACF"
+const DEVICE_MANIFEST_CANONICAL_SHA256 := "D6B6F0B005A1A0C2AF7AE77DC442C1092F6CE4AB01AA87C1A75F360E1D5260B3"
 
 const GateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd")
 const CatalogScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageCatalog.gd")
@@ -13,7 +13,7 @@ const DeviceManifestScript = preload("res://scripts/ai/ptcgdap/runtime/local/Dev
 
 func _handle() -> Dictionary:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var result: Dictionary = GateScript.request_match_handle(catalog, {
 		"package_id":PACKAGE_ID,
 		"package_version":PACKAGE_VERSION,

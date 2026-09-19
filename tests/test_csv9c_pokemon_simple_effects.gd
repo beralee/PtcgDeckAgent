@@ -46,6 +46,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv95c_004_006_023_effect_registry_overrides() -> String:
 	var processor := EffectProcessor.new()

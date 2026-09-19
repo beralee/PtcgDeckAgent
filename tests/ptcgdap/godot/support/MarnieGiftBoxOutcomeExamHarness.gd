@@ -29,7 +29,7 @@ static func run_corpus(corpus: Dictionary, repetitions_override: int = 0) -> Dic
 	if repetitions <= 0:
 		repetitions = maxi(1, int(corpus.get("repetitions_per_exam", 1)))
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{

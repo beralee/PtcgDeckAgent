@@ -335,6 +335,7 @@ func test_battle_setup_landscape_deck_picker_stays_inside_short_viewport() -> St
 	scene.size = viewport_size
 	scene.call("_apply_non_battle_layout_for_tests", viewport_size, "landscape")
 	scene.call("_ensure_deck_picker_overlay")
+	(scene.get("_deck_picker_overlay") as Control).show()
 	scene.call("_refresh_deck_picker")
 	scene.call("_resize_deck_picker_panel")
 	await tree.process_frame
@@ -416,7 +417,7 @@ func test_battle_setup_defers_optional_dialog_network_and_import_resources() -> 
 	])
 
 
-func test_battle_setup_landscape_does_not_show_right_scrollbar() -> String:
+func test_battle_setup_landscape_scroll_preserves_access_to_short_window_controls() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -437,8 +438,8 @@ func test_battle_setup_landscape_does_not_show_right_scrollbar() -> String:
 
 	var result := run_checks([
 		assert_true(landscape_scroll != null and landscape_scroll.visible, "Landscape setup should keep the landscape layout wrapper visible"),
-		assert_eq(landscape_scroll.vertical_scroll_mode if landscape_scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Landscape setup should fit without a native right-side scrollbar"),
-		assert_true(vbar == null or (not vbar.visible and vbar.mouse_filter == Control.MOUSE_FILTER_IGNORE), "Landscape setup should not reserve an interactive right scrollbar"),
+		assert_eq(landscape_scroll.vertical_scroll_mode if landscape_scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "Landscape setup must allow access to content that exceeds a short window"),
+		assert_true(vbar != null and vbar.mouse_filter == Control.MOUSE_FILTER_STOP, "Overflow scrollbar must remain operable"),
 		assert_true(portrait_scroll == null or not portrait_scroll.visible, "Landscape setup must not activate the portrait scroll layout"),
 		assert_true(scroll_bottom <= root_bottom + 1.0, "Landscape setup scroll wrapper should stay inside the RootVBox instead of using full window height"),
 		assert_true(action_row != null and action_row.get_parent() == right_vbox, "Landscape setup actions should live inside the right column"),

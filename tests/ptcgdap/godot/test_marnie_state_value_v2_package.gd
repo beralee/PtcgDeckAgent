@@ -49,7 +49,7 @@ func test_state_conditioned_model_is_hash_bound_and_loaded_device_locally() -> S
 		PACKAGE_ID, PACKAGE_VERSION
 	)
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var requested: Dictionary = GateScript.request_match_handle(catalog, _selection(), "Windows")
 	var handle: Variant = requested.get("handle")
 	var presentation: Dictionary = handle.presentation_snapshot() if handle != null else {}

@@ -441,6 +441,7 @@ func _select_competitive_v2(frame: Variant) -> Dictionary:
 			"matched_rule_ids": matched_rule_ids.duplicate(),
 			"macro_proposal_indexes": audit.get("ranked_indexes", []).duplicate(),
 			"base_result": audit.duplicate(true),
+			"model_frontier": decision.get("model_frontier", {}).duplicate(true),
 		},
 	}
 

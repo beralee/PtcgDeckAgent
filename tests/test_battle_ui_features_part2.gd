@@ -4524,10 +4524,11 @@ func test_battle_scene_nest_ball_without_target_can_preview_deck_then_consume() 
 	var preview_items: Array = preview_dialog_data.get("card_items", [])
 	var utility_row: HBoxContainer = battle_scene.get("_dialog_utility_row")
 
-	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+	var close_button := utility_row.get_child(0) as Button if utility_row.get_child_count() == 1 else null
+	if close_button != null: close_button.pressed.emit()
 
 	return run_checks([
-		assert_true(bool((battle_scene.get("_dialog_overlay") as Panel).visible) or nest_ball in player.discard_pile, "Nest Ball should open a resolution flow instead of being blocked outright"),
+		assert_true(bool((battle_scene.get("_dialog_overlay") as Panel).visible) or nest_ball in player.discard_pile, "Nest Ball resolution failed: first=%s preview=%s pending=%s hand=%s discard=%s" % [first_step_title, preview_title, battle_scene.get("_pending_choice"), nest_ball in player.hand, nest_ball in player.discard_pile]),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "After closing the deck preview, the trainer interaction should finish cleanly"),
 		assert_str_contains(first_step_title, "没有", "Nest Ball whiff dialog should explain that the deck has no valid Pokemon"),
 		assert_eq(first_dialog_items.size(), 2, "Nest Ball whiff dialog should offer continue and preview options"),

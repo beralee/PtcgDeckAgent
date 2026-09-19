@@ -1311,14 +1311,18 @@ const CANDIDATES := [
 	},
 ]
 const FeatureGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
+const PlatformCapabilitiesScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyPlatformCapabilities.gd")
 
 
 static func evaluate_selection(selection: Dictionary, platform_name: String = "") -> Dictionary:
 	if not FeatureGateScript.is_enabled():
 		return _error("author_strategy_feature_disabled")
 	var platform := platform_name if not platform_name.is_empty() else OS.get_name()
-	if platform != "Windows":
+	if platform != OS.get_name():
 		return _error("development_platform_not_authorized")
+	var capabilities := PlatformCapabilitiesScript.inspect(platform)
+	if not bool(capabilities.get("rules_available")):
+		return _error(str(capabilities.get("error_code")))
 	var candidate := candidate_for_selection(selection)
 	if candidate.is_empty():
 		return _error("development_candidate_not_authorized")

@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-14",
+  "scope": "Windows x86_64 and native Android x86_64 emulator; production owners/resolver/engine via HeadlessMatchBridge",
+  "device": "Medium_Phone_API_36.1 emulator-5554",
+  "physical_arm_device_qualified": false,
+  "cabt_engine_parity_claimed": false,
+  "source_manifest_sha256": "BDBFB344EF2573B84012F06FA47205B6445540E50E2D65729CF3463430C9C6B6",
+  "diagnostic_apk_sha256": "0FC83A950F237FFED6C30D5E1E72CAA9361F8EC67E6F6BFD4D04D489A743A969",
+  "windows_export_sha256": "B4D3D46BDEDB5EE3B0BB79B542FE526602D75614B6C795CE114430D6D5FD50A0",
+  "player_apk": {
+    "apkSha256": "1E093E9D8A0BEBA4470B7BAB948E38E30A01472491DCB6FC73AA5F670AB78080",
+    "diagnosticOnly": false,
+    "androidAbi": "x86_64",
+    "sourceManifestSha256": "BDBFB344EF2573B84012F06FA47205B6445540E50E2D65729CF3463430C9C6B6"
+  },
+  "normal_player_strategy_center_install": {
+    "already_installed": false,
+    "archive_sha256": "4D2CF64BAC2F2A44870473A9ECF11D452D7DBF22ACE515B9E9EE806F91FB57C1",
+    "catalog_discoverable": true,
+    "catalog_refresh_usec": 9663,
+    "document_type": "ptcgdap_strategy_import_timing_v1",
+    "download_and_install_elapsed_usec": 1813779,
+    "error_code": "",
+    "identity_resolution_usec": 87,
+    "install_elapsed_usec": 1577706,
+    "ok": true,
+    "package_id": "dev.e719.marnies-gift-box-v2",
+    "package_version": "0.3.0",
+    "release_id": "release-4d2cf64bac2f2a44870473a9ecf11d452d7dbf22",
+    "schema_version": 1
+  },
+  "paired_matches": 12,
+  "total_games": 24,
+  "public_windows_per_platform": 636,
+  "native_model_inferences_per_platform": 217,
+  "rules_policy_failures": 0,
+  "stale_results": 0,
+  "invalid_outputs": 0,
+  "engine_rejections": 0,
+  "same_window_fallbacks": 0,
+  "expected_model_fixture_guards": {
+    "model_unknown_uid": 4,
+    "model_desired_count_invalid": 5
+  },
+  "tests": {
+    "review_detector": 10,
+    "model_trace": 5,
+    "external_port_integration": 19,
+    "platform_capabilities": 4,
+    "platform_rollback": 1,
+    "worker_interaction_lifecycle": 3
+  },
+  "runs": [
+    {
+      "ok": true,
+      "package_sha256": "4D2CF64BAC2F2A44870473A9ECF11D452D7DBF22ACE515B9E9EE806F91FB57C1",
+      "platforms": [
+        "Android",
+        "Windows"
+      ],
+      "matches": [
+        {
+          "seed": 84590,
+          "seat": 0,
+          "windows": 56,
+          "winner": 0,
+          "steps": 103,
+          "model_successes": 0,
+          "model_diagnostics": {}
+        },
+        {
+          "seed": 84590,
+          "seat": 1,
+          "windows": 81,
+          "winner": 0,
+          "steps": 129,
+          "model_successes": 0,
+          "model_diagnostics": {}
+        },
+        {
+          "seed": 84591,
+          "seat": 0,
+          "windows": 67,
+          "winner": 1,
+          "steps": 97,
+          "model_successes": 0,
+          "model_diagnostics": {}
+        },
+        {
+          "seed": 84591,
+          "seat": 1,
+          "windows": 69,
+          "winner": 1,
+          "steps": 111,
+          "model_successes": 0,
+          "model_diagnostics": {}
+        },
+        {
+          "seed": 84592,
+          "seat": 0,
+          "windows": 56,
+          "winner": 0,
+          "steps": 101,
+          "model_successes": 0,
+          "model_diagnostics": {}
+        },
+        {
+          "seed": 84592,
+          "seat": 1,
+          "windows": 30,
+          "winner": 0,
+          "steps": 54,
+          "model_successes": 0,
+          "model_diagnostics": {}
+        }
+      ],
+      "ignored_fields": [
+        "host.latency_usec"
+      ],
+      "run_id": "20260914-022431-b404d2e8",
+      "offline": true,
+      "smoke_checks_per_platform": 12,
+      "post_exit_crash_gate": "passed",
+      "comparison_sha256": "A9F5CDC38762EC4E6005951626641DF705892BA0F1B1A530120086550E59F0EB"
+    },
+    {
+      "ok": true,
+      "package_sha256": "17B6DFE95383C65A067283BB16FC09FE83128C0D6E73E13B7D969ADC016DF704",
+      "platforms": [
+        "Android",
+        "Windows"
+      ],
+      "matches": [
+        {
+          "seed": 84590,
+          "seat": 0,
+          "windows": 58,
+          "winner": 1,
+          "steps": 109,
+          "model_successes": 48,
+          "model_diagnostics": {
+            "model_bypassed_empty_rule_result": 4,
+            "model_bypassed_mandatory": 5,
+            "model_unknown_uid": 1
+          }
+        },
+        {
+          "seed": 84590,
+          "seat": 1,
+          "windows": 93,
+          "winner": 0,
+          "steps": 168,
+          "model_successes": 72,
+          "model_diagnostics": {
+            "model_bypassed_empty_rule_result": 13,
+            "model_bypassed_mandatory": 4,
+            "model_desired_count_invalid": 2,
+            "model_unknown_uid": 2
+          }
+        },
+        {
+          "seed": 84591,
+          "seat": 0,
+          "windows": 34,
+          "winner": 1,
+          "steps": 68,
+          "model_successes": 26,
+          "model_diagnostics": {
+            "model_bypassed_empty_rule_result": 3,
+            "model_bypassed_mandatory": 4,
+            "model_desired_count_invalid": 1
+          }
+        },
+        {
+          "seed": 84591,
+          "seat": 1,
+          "windows": 19,
+          "winner": 1,
+          "steps": 25,
+          "model_successes": 16,
+          "model_diagnostics": {
+            "model_bypassed_empty_rule_result": 1,
+            "model_bypassed_mandatory": 2
+          }
+        },
+        {
+          "seed": 84592,
+          "seat": 0,
+          "windows": 42,
+          "winner": 1,
+          "steps": 82,
+          "model_successes": 33,
+          "model_diagnostics": {
+            "model_bypassed_empty_rule_result": 4,
+            "model_bypassed_mandatory": 4,
+            "model_unknown_uid": 1
+          }
+        },
+        {
+          "seed": 84592,
+          "seat": 1,
+          "windows": 31,
+          "winner": 0,
+          "steps": 56,
+          "model_successes": 22,
+          "model_diagnostics": {
+            "model_bypassed_empty_rule_result": 3,
+            "model_bypassed_mandatory": 4,
+            "model_desired_count_invalid": 2
+          }
+        }
+      ],
+      "ignored_fields": [
+        "host.latency_usec"
+      ],
+      "run_id": "20260914-022645-0e6ae12b",
+      "offline": true,
+      "smoke_checks_per_platform": 12,
+      "post_exit_crash_gate": "passed",
+      "comparison_sha256": "80ED35CA9D0EB87FFEB273DEBD94526F9F40D92280C1FC68218EBB161FC9733F"
+    }
+  ],
+  "normal_player_ui": {
+    "strategy_center_download_verified": true,
+    "exact_author_and_version_in_battle_setup": true,
+    "ai_first_turn_completed": true,
+    "human_turn_reached": 2,
+    "screenshots": {
+      "native-download-before.png": "67F344D5936CE2B245DA5DA57DBA8A45822C33B2A1D7C960D645E77313857C73",
+      "native-download-after.png": "A3B50AEDEE59598A0167986EEB2D19F3F14E525D8ED0B08F125B3DD273646EE7",
+      "native-battle-setup.png": "A529B89B46A60D3D326EDAAAF8A85520945BD8E16C8EB32F5B59105EEB410456",
+      "native-after-ai-turn.png": "D901BF9C8F95EE3FEB5597359881D6B9B34538A74F537F64600A5E576F64D571",
+      "release-strategy-ready.png": "D43628CB77005CA75FED131F4B3B6CA9DAD041DFDE559976498B78B0CF87C8DB",
+      "release-battle-setup.png": "7102DF06F69CEB67A7C76963446D5654E84B60130E1981101E90723E8DA1ED25",
+      "release-after-ai-turn.png": "D229BC17EDBE9584184121B3AC01106DAD379F3D3C1E9D8D7573FD77CCA5D106"
+    },
+    "original_download_player_apk_sha256": "58E2258D5F31921E085CAB50CA23BF83FF7773FE7F21A6F9A8E9188E9EA67DF5",
+    "final_player_apk_sha256": "1E093E9D8A0BEBA4470B7BAB948E38E30A01472491DCB6FC73AA5F670AB78080",
+    "final_player_retains_download_and_battle_setup": true,
+    "final_player_ai_first_turn_completed": true,
+    "final_player_human_turn_reached": 2,
+    "final_player_graceful_match_and_application_exit": true,
+    "final_player_post_exit_runtime_and_resource_gate": "passed",
+    "final_player_log_sha256": "F84AD04EF5FD069C63097EAE9B5EFAFD51290F41E05B951C91C9FED434A1B7D2"
+  }
+}

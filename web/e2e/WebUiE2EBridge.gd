@@ -11,6 +11,7 @@ const BRIDGE_NAME := "__PTCG_TEST__"
 var _callback: Variant = null
 var _installed: bool = false
 var _last_touch_event: Dictionary = {}
+var _author_strategy_probe: Dictionary = {}
 
 
 func _ready() -> void:
@@ -148,8 +149,41 @@ func _execute_command(command: String, payload: Dictionary) -> Dictionary:
 			return {"done": true, "ok": true, "value": _text_input_diagnostics(str(payload.get("id", "")))}
 		"settings_api_key_probe":
 			return {"done": true, "ok": true, "value": _settings_api_key_probe(str(payload.get("expected", "")))}
+		"saved_deck_probe":
+			var deck := CardDatabase.get_deck(int(payload.get("id", 0)))
+			return {"done": true, "ok": true, "value": deck.to_dict() if deck != null else {}}
+		"start_author_strategy_probe":
+			if not _author_strategy_probe.is_empty() and not _author_strategy_probe.get("done", false):
+				return {"done":true, "ok":false, "error":"probe already running"}
+			_author_strategy_probe = {"done":false}
+			_run_author_strategy_probe.call_deferred(str(payload.get("package_id", "")), str(payload.get("version", "")))
+			return {"done":true, "ok":true, "value":{}}
+		"prepare_author_download_fixture":
+			# Isolated test-profile setup: hide bundled copies via the same product
+			# removal API so the scenario must really download its pinned version.
+			AuthorStrategyPackageCatalog.scan_startup()
+			for record: Dictionary in AuthorStrategyPackageCatalog.list_metadata_records():
+				if record.get("package_id") == payload.get("package_id"):
+					var removed: Dictionary = AuthorStrategyPackageCatalog.remove_package(record.package_id, record.package_version, record.archive_sha256)
+					if not removed.get("ok", false):
+						return {"done":true, "ok":false, "error":removed.get("error_code")}
+			return {"done":true, "ok":true, "value":{}}
+		"author_strategy_probe":
+			return {"done":true, "ok":true, "value":_author_strategy_probe.duplicate(true)}
+		"author_battle_probe":
+			var scene := get_tree().current_scene
+			var owner: Variant = _property_or(scene, "_author_player_owner", null)
+			return {"done":true, "ok":true, "value":{
+				"start_error":_property_or(scene, "_author_runtime_start_error_code", ""),
+				"audit":owner.audit_snapshot() if owner != null else {},
+			}}
 		_:
 			return {"done": true, "ok": false, "error": "unsupported command: %s" % command}
+
+
+func _run_author_strategy_probe(package_id: String, version: String) -> void:
+	var probe: RefCounted = load("res://web/e2e/AuthorStrategyWebProbe.gd").new()
+	_author_strategy_probe = await probe.run(get_tree(), package_id, version)
 
 
 func _snapshot() -> Dictionary:
@@ -557,6 +591,9 @@ func _control_snapshot(control: Control) -> Dictionary:
 		snapshot["text"] = (control as Label).text
 	elif control is BaseButton:
 		snapshot["text"] = (control as BaseButton).text
+	if control is ScrollContainer:
+		snapshot["scroll_vertical"] = control.scroll_vertical
+		snapshot["scroll_max"] = control.get_v_scroll_bar().max_value - control.get_v_scroll_bar().page
 	return snapshot
 
 

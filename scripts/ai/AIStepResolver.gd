@@ -864,7 +864,7 @@ func _build_assignment_source_plan(
 	plan_key: String = "",
 	existing_assignments: Array = []
 ) -> Dictionary:
-	var uses_external_port := _uses_external_decision_port()
+	var uses_external_port := _uses_sequential_interaction_windows()
 	if uses_external_port and not plan_key.is_empty() and _external_assignment_plans.has(plan_key):
 		var stored_plan: Dictionary = _external_assignment_plans[plan_key]
 		var source_refs: Array = stored_plan.get("source_refs", [])
@@ -1074,7 +1074,9 @@ func _assign_sources_to_targets(
 	return assignments_made
 
 
-func _uses_external_decision_port() -> bool:
+func _uses_sequential_interaction_windows() -> bool:
+	if deck_strategy != null and deck_strategy.has_method("uses_sequential_interaction_windows"):
+		return bool(deck_strategy.call("uses_sequential_interaction_windows"))
 	return (
 		deck_strategy != null
 		and deck_strategy.has_method("uses_external_decision_port")

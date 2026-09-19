@@ -176,7 +176,7 @@ class _Contracts:
     opponent_uids: frozenset[str]
 
 
-def _load_contracts(root: Path) -> _Contracts:
+def _load_contracts(root: Path, source_root: Path) -> _Contracts:
     try:
         bundle = load_json_strict(root / "contracts/ptcgdap/dragapult_python_strategy_bundle.json")
         if _sha(canonical_json_v1_bytes(bundle)) != EXPECTED_BUNDLE_SHA256:
@@ -235,7 +235,7 @@ def _load_contracts(root: Path) -> _Contracts:
         if len(own_uids) != 24 or not all(_uid(value) for value in own_uids):
             raise DragapultPublicStrategyError("contract_error")
 
-        opponent_path = root / str(opponent.get("deck_path", ""))
+        opponent_path = source_root / str(opponent.get("deck_path", ""))
         opponent_deck = load_json_strict(opponent_path)
         if (
             _sha(opponent_path.read_bytes()) != opponent.get("deck_raw_sha256")
@@ -257,7 +257,7 @@ def _load_contracts(root: Path) -> _Contracts:
         for row in runtime_rows:
             if type(row) is not dict or set(row) != {"path", "raw_sha256"} or _UPPER_SHA_RE.fullmatch(str(row["raw_sha256"])) is None:
                 raise DragapultPublicStrategyError("contract_error")
-            if _sha((root / row["path"]).read_bytes()) != row["raw_sha256"]:
+            if _sha((source_root / row["path"]).read_bytes()) != row["raw_sha256"]:
                 raise DragapultPublicStrategyError("contract_error")
         return _Contracts(_freeze(documents), own_uids | opponent_uids, own_uids, opponent_uids)
     except DragapultPublicStrategyError:
@@ -430,9 +430,13 @@ class DragapultPublicStrategy:
         return cls.load_trusted_bundle(DEFAULT_ROOT)
 
     @classmethod
-    def load_trusted_bundle(cls, repository_root: Path) -> "DragapultPublicStrategy":
+    def load_trusted_bundle(
+        cls, repository_root: Path, *, source_root: Path | None = None
+    ) -> "DragapultPublicStrategy":
         root = Path(repository_root).resolve()
-        contracts = _load_contracts(root)
+        # Historical conformance can explicitly supply immutable source inputs;
+        # ordinary callers still verify the live repository and fail on drift.
+        contracts = _load_contracts(root, root if source_root is None else source_root.resolve())
         value = object.__new__(cls)
         object.__setattr__(value, "_contracts", contracts)
         object.__setattr__(value, "_root", root)

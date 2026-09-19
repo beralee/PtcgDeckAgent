@@ -54,12 +54,13 @@ func test_benchmark_parse_args_can_enable_public_developer_trace() -> String:
 
 func test_run_requested_benchmark_lane() -> String:
 	var options := {
+		"catalog_sources": preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").sources(),
 		"source_deck_id": 800018509,
 		"games_per_deck": 2,
 		"seed_base": 91000,
 		"max_steps": 700,
 	}
-	var output_path := "res://artifacts/deck_training/raging_v2_requested.json"
+	var output_path := "user://test_evidence/raging_v2_requested.json"
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--benchmark-games="):
 			options["games_per_deck"] = int(arg.get_slice("=", 1))
@@ -72,6 +73,7 @@ func test_run_requested_benchmark_lane() -> String:
 		elif arg == "--benchmark-capture-developer-trace":
 			options["capture_developer_trace"] = true
 	var report: Dictionary = BenchmarkScript.new().run_benchmark(options)
+	DirAccess.make_dir_recursive_absolute(output_path.get_base_dir())
 	var file := FileAccess.open(output_path, FileAccess.WRITE)
 	if file == null:
 		return "benchmark report write failed: %s" % FileAccess.get_open_error()
@@ -86,7 +88,7 @@ func test_run_requested_benchmark_lane() -> String:
 
 func test_each_package_binds_to_both_seats_of_its_exact_mirror_deck() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var checks: Array[String] = []
 	for case: Dictionary in BenchmarkScript.benchmark_cases():
 		var deck: DeckData = CardDatabase.get_ai_deck(int(case.get("source_deck_id")))

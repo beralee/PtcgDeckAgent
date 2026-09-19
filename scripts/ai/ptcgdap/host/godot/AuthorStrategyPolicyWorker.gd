@@ -76,7 +76,8 @@ func _run_select(
 				"decide_development_frame",
 				frame,
 				indexes,
-				_model_frontier_from_response(response, indexes, frame.get("options", []).size())
+				_model_frontier_from_response(response, indexes, frame.get("options", []).size()),
+				response.get("decision_audit",{}).get("model_frontier",{})
 			)
 	return completed
 

@@ -352,7 +352,7 @@ class AttackLookTopOptionalDiscard extends BaseEffect:
 		return [{
 			"id": STEP_ID,
 			"title": "Look at the top card of your deck. You may discard it.",
-			"items": ["keep", "discard"],
+			"items": [false, true],
 			"labels": ["Keep on top", "Discard"],
 			"card_items": [top_card],
 			"private_to_player": card.owner_index,
@@ -368,7 +368,7 @@ class AttackLookTopOptionalDiscard extends BaseEffect:
 		if player.deck.is_empty():
 			return
 		var raw: Array = get_attack_interaction_context().get(STEP_ID, [])
-		if not raw.is_empty() and str(raw[0]) == "discard":
+		if not raw.is_empty() and _is_true_or_token(raw[0], "discard"):
 			var discarded: CardInstance = player.deck.pop_front()
 			discarded.face_up = true
 			player.discard_pile.append(discarded)
@@ -380,6 +380,9 @@ class AttackLookTopOptionalDiscard extends BaseEffect:
 			if card.card_data.attacks[index] == attack:
 				return index
 		return -1
+
+	func _is_true_or_token(value: Variant, token: String) -> bool:
+		return bool(value) if typeof(value) == TYPE_BOOL else str(value) == token
 
 
 class AbilityEvolveAttachNamedEnergyFromDiscard extends BaseEffect:
@@ -872,7 +875,7 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 		return [{
 			"id": STEP_ID,
 			"title": "You may return this Pokemon to your hand",
-			"items": ["return"],
+			"items": [true],
 			"labels": ["Return this Pokemon"],
 			"min_select": 0,
 			"max_select": 1,
@@ -895,7 +898,7 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 			if not (raw[0] is PokemonSlot) or raw[0] not in player.bench:
 				return
 			replacement = raw[0]
-		elif str(raw[0]) != "return":
+		elif not _is_true_or_return(raw[0]):
 			return
 		var was_active := player.active_pokemon == attacker
 		if was_active and not _remove_active_and_promote(
@@ -931,6 +934,9 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 			if card.card_data.attacks[index] == attack:
 				return index
 		return -1
+
+	func _is_true_or_return(value: Variant) -> bool:
+		return bool(value) if typeof(value) == TYPE_BOOL else str(value) == "return"
 
 
 class AttackDelayedDiscardEndOpponentTurn extends BaseEffect:
@@ -1495,7 +1501,7 @@ class AbilityActiveHealHandEnergyAttachmentTarget extends BaseEffect:
 		var owner := source.get_top_card().owner_index
 		if player_index != owner or state.players[owner].active_pokemon != source or target not in state.players[owner].get_all_pokemon():
 			return
-		target.damage_counters = maxi(0, target.damage_counters - heal_amount)
+		target.heal(heal_amount, state)
 
 
 class AttackDiscardSelectedSelfEnergy extends BaseEffect:
@@ -2350,7 +2356,7 @@ class EffectHealSelectedPokemonDiscardEnergy extends BaseEffect:
 		var slot: PokemonSlot = selected.get("target", null)
 		if energy == null or slot == null:
 			return
-		slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+		slot.heal(heal_amount, state)
 		slot.attached_energy.erase(energy)
 		player.discard_card(energy)
 
@@ -2491,7 +2497,7 @@ class EffectHealActiveNamedTeam extends BaseEffect:
 			return
 		var active := state.players[card.owner_index].active_pokemon
 		var amount := named_heal if _matches(active.get_card_data()) else normal_heal
-		active.damage_counters = maxi(0, active.damage_counters - amount)
+		active.heal(amount, state)
 
 	func _matches(card: CardData) -> bool:
 		if card == null:
@@ -2614,6 +2620,8 @@ class EffectHiddenPrizeHandSwap extends BaseEffect:
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,
+			"ucis_context_name": "TO_HAND",
+			"ucis_option_type_name": "CARD",
 		}, {
 			"id": HAND_STEP_ID,
 			"title": "Choose 1 opponent hand card without looking at its face",
@@ -2635,7 +2643,7 @@ class EffectHiddenPrizeHandSwap extends BaseEffect:
 		return [{
 			"id": SWAP_STEP_ID,
 			"title": "Look at the selected cards. Swap them?",
-			"items": ["keep", "swap"],
+			"items": [false, true],
 			"labels": ["Do not swap", "Swap the selected cards"],
 			"card_items": [prize, hand],
 			"private_to_player": card.owner_index,
@@ -2657,7 +2665,7 @@ class EffectHiddenPrizeHandSwap extends BaseEffect:
 		var prize_card: CardInstance = selected.get("prize", null)
 		var swap := false
 		for raw: Variant in context.get(SWAP_STEP_ID, []):
-			if str(raw) == "swap":
+			if (typeof(raw) == TYPE_BOOL and bool(raw)) or str(raw) == "swap":
 				swap = true
 				break
 		if swap:

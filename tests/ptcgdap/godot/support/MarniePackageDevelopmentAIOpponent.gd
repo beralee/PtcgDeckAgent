@@ -139,7 +139,12 @@ func _build_option(index: int, item: Variant, forced_kind: String) -> Dictionary
 	var kind := str(option.get("kind", ""))
 	option["option_type_raw"] = _option_type_raw(kind)
 	option["option_card_uid"] = option.get("target_uid") if kind == "evolve" else option.get("card_uid")
+	var card: CardInstance = item if item is CardInstance else item.get("card") if item is Dictionary else item.get_top_card() if item is PokemonSlot else null
+	var serial := _serial_for_card(card)
+	option["card_serial"] = serial if serial >= 0 else null
 	option["option_player_index"] = player_index
+	for key: String in ["option_number", "energy_type_raw", "energy_count", "special_condition_type"]:
+		if not option.has(key): option[key] = null
 	return option
 
 

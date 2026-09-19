@@ -24,6 +24,10 @@
 - [x] Interface and cross-runtime conformance are reported separately.
 - [x] Engine parity claims are scoped and evidence-backed.
 - [x] Rollback paths remain explicit.
+- [x] Native Android x86_64 emulator and Windows exports pass twelve paired
+  full matches with exact package/public-window/model-adjudication comparison.
+- [x] Local regression tooling preserves failure evidence and searchable
+  decision review, checks native ABI/dependencies, and detects shutdown crashes.
 - [ ] Complete the remaining product-approved Android device acceptance gate.
 
 ## Confidential infrastructure split

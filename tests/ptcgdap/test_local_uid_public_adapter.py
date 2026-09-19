@@ -24,7 +24,7 @@ from tests.ptcgdap.test_public_base_policy import policy_owners
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CANDIDATE = ROOT / "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+CANDIDATE = ROOT / "tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
 LOCAL_DOMAIN = "godot_local_card_uid_v1"
 LOCAL_CONTEXT_VECTORS = ROOT / "contracts/ptcgdap/local_uid_public_context_conformance_vectors.json"
 

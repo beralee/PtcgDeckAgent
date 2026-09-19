@@ -24,7 +24,7 @@ func _rules_ai(seat: int, deck: DeckData) -> AIOpponent:
 
 func _request_exact_handle() -> Dictionary:
 	var catalog := CatalogScript.new()
-	var report: Dictionary = catalog.scan_startup()
+	var report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var exact_record := {}
 	for value: Variant in report.get("metadata_records", []):
 		if (

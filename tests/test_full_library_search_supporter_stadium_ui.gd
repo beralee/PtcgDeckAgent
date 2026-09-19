@@ -13,6 +13,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func _make_state_with_deck(deck_cards: Array[CardInstance]) -> GameState:
 	CardInstance.reset_id_counter()

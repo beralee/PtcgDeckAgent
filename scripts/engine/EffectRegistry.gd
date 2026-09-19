@@ -8,6 +8,7 @@ extends RefCounted
 
 static var _effect_script_cache: Dictionary = {}
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
+const AlakazamWoChienEffects = preload("res://scripts/effects/pokemon_effects/AlakazamWoChienEffects.gd")
 const CSV10CEffects = preload("res://scripts/effects/CSV10CEffects.gd")
 const CSV10C101To200Registry = preload("res://scripts/engine/CSV10C101To200Registry.gd")
 const AbilityDustFieldEffect = preload("res://scripts/effects/pokemon_effects/AbilityDustField.gd")
@@ -438,6 +439,7 @@ static func register_all(processor: EffectProcessor) -> void:
 	_register_csv9c_effect_aliases(processor)
 	CSV10C101To200Registry.register_fixed(processor)
 	_register_csv10c_201_to_287(processor)
+	preload("res://scripts/engine/ThirtiethDeluxeRegistry.gd").register_fixed(processor)
 
 
 static func _register_csv10c_201_to_287(processor: EffectProcessor) -> void:
@@ -498,6 +500,8 @@ static func register_pokemon_card(processor: EffectProcessor, card: CardData) ->
 
 	_register_pokemon_effect_overrides(processor, eid)
 	CSV10C101To200Registry.register_pokemon_card(processor, card)
+	preload("res://scripts/engine/ThirtiethCelebrationRegistry.gd").register_pokemon_card(processor, card)
+	preload("res://scripts/engine/ThirtiethDeluxeRegistry.gd").register_pokemon_card(processor, card)
 
 
 static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: int) -> void:
@@ -514,6 +518,14 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"b792079c0ae7abf7b11d88dbc5367419": # CSV9.5C_064 Alakazam (also CSV8C_075)
+			processor.replace_attack_effects(effect_id, [
+				EffectApplyStatus.new("confused", false, 0),
+				AlakazamWoChienEffects.StrangeHacking.new(processor),
+				AlakazamWoChienEffects.Psychic.new(processor),
+			])
+		"f7bd711194afce054b19b61b5d3fd510": # CSVL2C_013 Wo-Chien ex (also CSV3C_015)
+			processor.replace_attack_effects(effect_id, [AlakazamWoChienEffects.CovetousIvy.new()])
 		"b7337b94bb9779b843cf7c00f703119a": # CSV4C_032 Tapu Koko ex
 			processor.replace_attack_effects(effect_id, [
 				TcgMikRequestedCards20260829Effects.TapuKokoRevengeImpact.new(90, 0),
@@ -1336,7 +1348,7 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			# Sob's retreat lock to Torrential Pump (or to Ogerpon itself).
 			processor.replace_attack_effects(effect_id, [
 				_instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]),
-				_instantiate_effect(AttackReturnEnergyThenBenchDamageEffect, [120, 1]),
+				_instantiate_effect(AttackReturnEnergyThenBenchDamageEffect, [120, 1, 3, processor]),
 			])
 		"4f25f668ee0ab45c68f6954324c73003":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityPreventDamageFromAttackersWithAbilitiesEffect))
@@ -1657,6 +1669,8 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("8f655fea1f90164bfbccb7a95c223e17", EffectLostVacuum.new())
 	# 高级球
 	processor.register_effect("a337ed34a45e63c6d21d98c3d8e0cb6e", EffectUltraBall.new())
+	# 30thC 102 Poke Pad: non-Rule Box Pokemon only.
+	processor.register_effect("b0754293ea1611bb9f931f02060ceb3b", EffectPokePad.new())
 	# 朋友手册
 	processor.register_effect("a47d5a8ed00e14a2146fc511745d23b5", EffectPalPad.new())
 	processor.register_effect("15b5bf0cc2edae9b9cd0bc24389ad355", _instantiate_effect(EffectMirageGateEffect))

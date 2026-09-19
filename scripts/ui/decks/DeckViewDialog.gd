@@ -33,6 +33,31 @@ var _texture_cache: Dictionary = {}
 var _failed_texture_paths: Dictionary = {}
 
 
+func populate_preview_grid(grid: GridContainer, deck: DeckData, available_width: float, portrait: bool = false) -> void:
+	for child: Node in grid.get_children():
+		grid.remove_child(child)
+		child.queue_free()
+	if deck == null:
+		return
+	var width := maxf(160.0, available_width)
+	var columns := clampi(int(width / 116.0), 2, 8)
+	if portrait:
+		columns = 4 if width >= 300.0 else 2
+	var gap := maxi(4, roundi(width * 0.008))
+	var tile_width := maxi(64, floori((width - gap * (columns - 1)) / columns))
+	grid.columns = columns
+	grid.add_theme_constant_override("h_separation", gap)
+	grid.add_theme_constant_override("v_separation", gap)
+	for entry: Dictionary in _unique_deck_view_entries(deck.cards):
+		var tile := _create_view_tile_with_cache(
+			str(entry.get("name", "?")), str(entry.get("set_code", "")), str(entry.get("card_index", "")),
+			tile_width, roundi(tile_width * 1.4), maxi(11, roundi(tile_width * 0.13)), int(entry.get("count", 0)), null, portrait
+		)
+		# The surrounding details scroll owns dragging; tiles are read-only.
+		tile.mouse_filter = Control.MOUSE_FILTER_PASS
+		grid.add_child(tile)
+
+
 func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -> void:
 	if host == null or deck == null:
 		return

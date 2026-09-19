@@ -58,7 +58,7 @@ from tools.ptcgdap.build_author_strategy_package import (  # noqa: E402
 
 DEFAULT_TEMPLATE_PACKAGE = (
     ROOT
-    / "data/ptcgdap/author_strategy_packages"
+    / "tests/ptcgdap/fixtures/legacy_author_strategy_packages"
     / "ptcgdap-author-strategy-release-candidate.ptcgai"
 )
 CONTRACT_ROOT = ROOT / "contracts/ptcgdap"

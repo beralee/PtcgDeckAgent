@@ -24,6 +24,9 @@ class FixedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv95c_128_129_are_bundled_with_images() -> String:
 	var db := CardDatabaseScript.new()

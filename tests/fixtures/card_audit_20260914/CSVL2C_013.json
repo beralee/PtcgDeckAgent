@@ -1,0 +1,135 @@
+{
+  "name": "古简蜗ex",
+  "cardType": "Pokemon",
+  "mechanic": "ex",
+  "label": null,
+  "description": "【草】【草】【无】 贪欲藤蔓 \n给对手的1只备战宝可梦，造成对手已经获得的奖赏卡张数×60伤害。[备战宝可梦不计算弱点、抗性。]\n\n【草】【草】【草】【无】 森林燃烧 220\n\n\n",
+  "yorenCode": "Y1273",
+  "pokemonAttr": {
+    "energyType": "G",
+    "stage": "Basic",
+    "hp": 230,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "R",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 4,
+    "attack": [
+      {
+        "name": "贪欲藤蔓",
+        "text": "给对手的1只备战宝可梦，造成对手已经获得的奖赏卡张数×60伤害。[备战宝可梦不计算弱点、抗性。]",
+        "cost": "GGC",
+        "damage": "",
+        "isVStarPower": false
+      },
+      {
+        "name": "森林燃烧",
+        "text": "",
+        "cost": "GGGC",
+        "damage": "220",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": ""
+  },
+  "setCode": "CSVL2C",
+  "cardIndex": "013",
+  "setCardsNum": "",
+  "artist": "5ban Graphics",
+  "rarity": "无标记",
+  "releaseDate": "2025-11-06T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "f7bd711194afce054b19b61b5d3fd510",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSVL2C",
+      "cardIndex": "013",
+      "cardName": "古简蜗ex",
+      "rarity": "无标记",
+      "effectId": "f7bd711194afce054b19b61b5d3fd510",
+      "cardType": "Pokemon",
+      "yorenCode": "Y1273",
+      "is": [
+        "ex",
+        "Basic"
+      ],
+      "setCodeEn": "PAL",
+      "cardIndexEn": "27",
+      "nameEn": "Wo-Chien ex"
+    },
+    {
+      "setCode": "CSVL2C",
+      "cardIndex": "129",
+      "cardName": "古简蜗ex",
+      "rarity": "无标记",
+      "effectId": "f7bd711194afce054b19b61b5d3fd510",
+      "cardType": "Pokemon",
+      "yorenCode": "Y1273",
+      "is": [
+        "ex",
+        "Basic"
+      ],
+      "setCodeEn": "PAL",
+      "cardIndexEn": "27",
+      "nameEn": "Wo-Chien ex"
+    },
+    {
+      "setCode": "CSV3C",
+      "cardIndex": "015",
+      "cardName": "古简蜗ex",
+      "rarity": "RR",
+      "effectId": "f7bd711194afce054b19b61b5d3fd510",
+      "cardType": "Pokemon",
+      "yorenCode": "Y1273",
+      "is": [
+        "ex",
+        "Basic"
+      ],
+      "setCodeEn": "PAL",
+      "cardIndexEn": "27",
+      "nameEn": "Wo-Chien ex"
+    },
+    {
+      "setCode": "CSV3C",
+      "cardIndex": "140",
+      "cardName": "古简蜗ex",
+      "rarity": "SR",
+      "effectId": "f7bd711194afce054b19b61b5d3fd510",
+      "cardType": "Pokemon",
+      "yorenCode": "Y1273",
+      "is": [
+        "ex",
+        "Basic"
+      ],
+      "setCodeEn": "PAL",
+      "cardIndexEn": "27",
+      "nameEn": "Wo-Chien ex"
+    },
+    {
+      "setCode": "CSV3C",
+      "cardIndex": "154",
+      "cardName": "古简蜗ex",
+      "rarity": "SAR",
+      "effectId": "f7bd711194afce054b19b61b5d3fd510",
+      "cardType": "Pokemon",
+      "yorenCode": "Y1273",
+      "is": [
+        "ex",
+        "Basic"
+      ],
+      "setCodeEn": "PAL",
+      "cardIndexEn": "27",
+      "nameEn": "Wo-Chien ex"
+    }
+  ],
+  "setCodeEn": "PAL",
+  "cardIndexEn": "27",
+  "nameEn": "Wo-Chien ex"
+}

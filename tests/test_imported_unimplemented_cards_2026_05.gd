@@ -15,6 +15,9 @@ class CountingHeadsCoinFlipper:
 		coin_flipped.emit(true)
 		return true
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func _make_state() -> GameState:
 	var state := GameState.new()

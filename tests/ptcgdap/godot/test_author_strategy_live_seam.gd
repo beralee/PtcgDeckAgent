@@ -19,7 +19,7 @@ const CardDataScript = preload("res://scripts/data/CardData.gd")
 const CardInstanceScript = preload("res://scripts/data/CardInstance.gd")
 const FIXTURE_PATH := "res://tests/ptcgdap/fixtures/author_strategy_packages/as_wp4/00-exact-mapped-shadow.ptcgai"
 const MARNIE_PACKAGE_PATH := (
-	"res://data/ptcgdap/author_strategy_packages/"
+	"res://tests/ptcgdap/fixtures/legacy_author_strategy_packages/"
 	+ "ptcgdap-author-strategy-release-candidate.ptcgai"
 )
 const CARD_PATH := "res://data/bundled_user/cards/LEN_DRI_134.json"

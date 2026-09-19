@@ -25,6 +25,8 @@ static func is_opponent_abilities_disabled(
 	checking_player_index: int,
 	before_order: int = -1
 ) -> bool:
+	if state == null or state.players.size() != 2 or checking_player_index not in [0, 1]:
+		return false
 	# 对手玩家索引
 	var opp_index: int = 1 - checking_player_index
 	var opponent: PlayerState = state.players[opp_index]

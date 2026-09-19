@@ -1,0 +1,58 @@
+{
+  "name": "皮卡丘",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 孤寂视线\n只要这只宝可梦在战斗场上，对手战斗宝可梦所使用的招式的伤害「-20」。\n\n【雷】【无】 皮卡球 20\n\n\n",
+  "yoren_code": "P025",
+  "set_code": "30thC",
+  "card_index": "022",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "sowsow",
+  "rarity": "无标记",
+  "release_date": "2026-09-15T16:00:00Z",
+  "regulation_mark": "J",
+  "effect_id": "cf9419068cb1df6aec5ad050d16039fb",
+  "image_url": "https://tcg.mik.moe/static/img/30thC/022.png",
+  "image_local_path": "user://cards/images/30thC/022.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/30thC/022",
+  "source_set_code": "30thC",
+  "source_card_index": "022",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "L",
+  "stage": "Basic",
+  "hp": 60,
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "皮卡球",
+      "text": "",
+      "cost": "LC",
+      "damage": "20",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "孤寂视线",
+      "text": "只要这只宝可梦在战斗场上，对手战斗宝可梦所使用的招式的伤害「-20」。"
+    }
+  ],
+  "energy_provides": ""
+}

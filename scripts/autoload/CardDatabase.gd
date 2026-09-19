@@ -129,6 +129,8 @@ func _ready() -> void:
 	_ensure_directories()
 	_load_effect_aliases()
 	_seed_bundled_user_data(true)
+	if WebDeckJournal.available():
+		WebDeckJournal.restore()
 	call_deferred("_start_bundled_seed_target_audit")
 
 
@@ -1160,7 +1162,11 @@ func _save_card_to_file(card: CardData) -> void:
 # === 卡组操作 ===
 
 ## 保存卡组
+const WebDeckJournal := preload("res://scripts/ui/web/WebDeckJournal.gd")
+var last_deck_save_persistent := true
+
 func save_deck(deck: DeckData) -> void:
+	last_deck_save_persistent = false
 	_ensure_directories()
 	var path := DECKS_DIR + "%d.json" % deck.id
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -1170,6 +1176,17 @@ func save_deck(deck: DeckData) -> void:
 	deck.updated_at = _current_deck_edit_timestamp()
 	file.store_string(JSON.stringify(deck.to_dict(), "\t"))
 	file.close()
+	last_deck_save_persistent = true
+	if WebDeckJournal.available():
+		var extra_cards := {}
+		for entry: Dictionary in deck.cards:
+			var filename := "%s_%s.json" % [entry.get("set_code", ""), entry.get("card_index", "")]
+			if not WebDeckJournal.valid_card_filename(filename) or FileAccess.file_exists(BUNDLED_USER_DIR + "cards/" + filename):
+				continue
+			var card_path := CARDS_DIR + filename
+			if FileAccess.file_exists(card_path):
+				extra_cards[filename] = JSON.parse_string(FileAccess.get_file_as_string(card_path))
+		last_deck_save_persistent = WebDeckJournal.store(deck.to_dict(), extra_cards)
 	_deck_cache[deck.id] = deck
 	_mark_deck_sort_cache_dirty()
 	decks_changed.emit()
@@ -1210,6 +1227,8 @@ func delete_ai_deck(deck_id: int) -> void:
 
 ## 删除卡组
 func delete_deck(deck_id: int) -> void:
+	if WebDeckJournal.available():
+		WebDeckJournal.erase(deck_id)
 	var path := DECKS_DIR + "%d.json" % deck_id
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)

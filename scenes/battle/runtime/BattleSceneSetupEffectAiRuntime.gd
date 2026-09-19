@@ -94,6 +94,7 @@ func _start_battle() -> void:
 		if not bool(requested.get("ok", false)):
 			_author_runtime_start_error_code = str(requested.get("error_code", "package_integrity_invalid"))
 			_runtime_log("author_development_start_rejected", _author_runtime_start_error_code)
+			GameManager.recover_tournament_battle_start_failure(_author_runtime_start_error_code)
 			return
 		author_handle = requested.get("handle")
 		if author_handle != null and author_handle.has_method("presentation_snapshot"):
@@ -106,6 +107,7 @@ func _start_battle() -> void:
 		if not bool(materialized.get("ok", false)):
 			_author_runtime_start_error_code = str(materialized.get("error_code", "package_deck_materialization_failed"))
 			_runtime_log("author_package_deck_rejected", _author_runtime_start_error_code)
+			GameManager.recover_tournament_battle_start_failure(_author_runtime_start_error_code)
 			return
 		deck2_data = materialized.get("deck") as DeckData
 		_author_strategy_author_name = str(author_presentation.get("author_name", "")).strip_edges()
@@ -114,6 +116,7 @@ func _start_battle() -> void:
 		deck2_data = GameManager.resolve_selected_battle_deck(1)
 	if deck1_data == null or deck2_data == null:
 		_log("未找到已选择的卡组数据。")
+		GameManager.recover_tournament_battle_start_failure("selected_deck_missing")
 		return
 	_runtime_log(
 		"start_battle",
@@ -159,6 +162,7 @@ func _start_battle() -> void:
 		if not bool(owner_result.get("ok", false)):
 			_author_runtime_start_error_code = str(owner_result.get("error_code", "invalid_bind"))
 			_runtime_log("author_development_owner_rejected", _author_runtime_start_error_code)
+			GameManager.recover_tournament_battle_start_failure(_author_runtime_start_error_code)
 			return
 		_author_player_owner = owner_result.get("owner")
 		var policy_execution_profile := OS.get_environment(
@@ -1695,6 +1699,9 @@ func _try_use_attack_with_interaction(
 	var card: CardInstance = slot.get_top_card()
 	if card == null:
 		return
+	if not _gsm.prepare_attack_interaction(player_index, slot, attack_index):
+		_refresh_ui_after_successful_action(true, player_index, "attack")
+		return
 	var attack: Dictionary = card.card_data.attacks[attack_index]
 	var steps: Array[Dictionary] = []
 	var effects: Array[BaseEffect] = _gsm.effect_processor.get_attack_effects_for_slot(slot, attack_index)
@@ -1727,6 +1734,9 @@ func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSl
 		return
 	var card: CardInstance = slot.get_top_card()
 	if card == null:
+		return
+	if not _gsm.prepare_attack_interaction(player_index, slot, -1, granted_attack):
+		_refresh_ui_after_successful_action(true, player_index, "attack")
 		return
 	var steps: Array[Dictionary] = _gsm.effect_processor.get_granted_attack_interaction_steps(
 		slot,

@@ -55,7 +55,7 @@ func execute_attack(
 	if target == null and not get_attack_interaction_context().has(STEP_ID) and not candidates.is_empty():
 		target = candidates[0]
 	if target != null:
-		target.damage_counters = maxi(0, target.damage_counters - heal_amount)
+		target.heal(heal_amount, state)
 
 
 func _damaged_own_pokemon(player: PlayerState) -> Array[PokemonSlot]:

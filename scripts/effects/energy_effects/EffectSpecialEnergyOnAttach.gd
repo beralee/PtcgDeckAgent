@@ -22,7 +22,7 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 
 	if heal_amount > 0 and player.active_pokemon != null:
 		var slot: PokemonSlot = player.active_pokemon
-		slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+		slot.heal(heal_amount, state)
 
 	if draw_count > 0:
 		_draw_cards_with_log(state, pi, draw_count, card, "energy")

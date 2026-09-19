@@ -35,9 +35,9 @@ func execute(_card: CardInstance, _targets: Array, state: GameState) -> void:
 
 	# 治疗
 	if heal_all:
-		slot.damage_counters = 0
+		slot.heal(slot.damage_counters, state)
 	else:
-		slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+		slot.heal(heal_amount, state)
 
 
 func get_description() -> String:

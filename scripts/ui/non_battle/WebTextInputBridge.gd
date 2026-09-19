@@ -13,6 +13,25 @@ static var _test_request_count := 0
 static var _test_prepare_count := 0
 static var _test_last_payload: Dictionary = {}
 static var _last_cancel_reason: String = ""
+static var _last_geometry := ""
+
+
+static func refresh_active_geometry() -> void:
+	if not is_web_runtime() or _test_force_web:
+		return
+	var control := _active_control()
+	if control == null:
+		return
+	if not _target_is_editable(control):
+		cancel_active("field_hidden")
+		return
+	var payload := _payload_for_control(control)
+	payload.erase("text")
+	var geometry := JSON.stringify(payload)
+	if geometry == _last_geometry:
+		return
+	_last_geometry = geometry
+	JavaScriptBridge.eval("window.__ptcgDeckAgentTextInput?.updateGeometry(%s);" % geometry, true)
 
 
 static func set_test_force_web(enabled: bool) -> void:
@@ -123,6 +142,7 @@ static func prepare(control: Control) -> bool:
 	if control == null or not is_web_runtime():
 		return false
 	_last_cancel_reason = ""
+	_last_geometry = ""
 	var target := _target_text_control(control)
 	if target == null or not _target_is_editable(target):
 		return false
@@ -284,7 +304,7 @@ static func _ensure_javascript_bridge() -> bool:
 static func _install_script() -> String:
 	return """
 (function() {
-  if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.version === 10) return;
+  if (window.__ptcgDeckAgentTextInput && window.__ptcgDeckAgentTextInput.version === 11) return;
   function callback(event, value, id) {
     if (typeof window.__ptcgDeckAgentTextInputCallback === 'function') {
       window.__ptcgDeckAgentTextInputCallback(JSON.stringify({ event: event, value: value || '', id: id || 0 }));
@@ -337,6 +357,7 @@ static func _install_script() -> String:
     state.input = input;
     state.id = config.id || 0;
     state.createdCount += 1;
+    state.suspendCanvasIme();
     return input;
   }
   function placeInput(input, config) {
@@ -379,7 +400,7 @@ static func _install_script() -> String:
     return true;
   }
   window.__ptcgDeckAgentTextInput = {
-    version: 10,
+    version: 11,
     input: null,
     id: 0,
     keepAliveUntil: 0,
@@ -396,6 +417,25 @@ static func _install_script() -> String:
     activeBeforeInputHandler: null,
     activeKeydownHandler: null,
     activeFocusGuards: [],
+    canvasImeState: [],
+    suspendCanvasIme: function() {
+      this.restoreCanvasIme();
+      // The engine's hidden IME retries focus every 100 ms. Make only that
+      // editor inert while the real DOM field owns native composition.
+      this.canvasImeState = Array.from(document.querySelectorAll('div.ime')).map(function(editor) {
+        var saved = { editor: editor, inert: editor.inert, visibility: editor.style.visibility };
+        editor.inert = true;
+        editor.style.visibility = 'hidden';
+        return saved;
+      });
+    },
+    restoreCanvasIme: function() {
+      this.canvasImeState.forEach(function(saved) {
+        saved.editor.inert = saved.inert;
+        saved.editor.style.visibility = saved.visibility;
+      });
+      this.canvasImeState = [];
+    },
     prepare: function(config) {
       this.prepareCount += 1;
       config = config || {};
@@ -411,6 +451,11 @@ static func _install_script() -> String:
         placeInput(input, config);
       var reposition = function() {
         if (state.input === input) placeInput(input, config);
+      };
+      state.updateGeometry = function(geometry) {
+        if (state.input !== input || geometry.id !== id) return;
+        Object.assign(config, geometry);
+        reposition();
       };
       var visualViewport = window.visualViewport || null;
       window.addEventListener('resize', reposition);
@@ -483,6 +528,7 @@ static func _install_script() -> String:
 		setTimeout(function() {
 		  if (!window.__ptcgDeckAgentTextInput || window.__ptcgDeckAgentTextInput.input !== input || !input.parentNode) return;
 		  if (document.activeElement === input) return;
+		  state.restoreCanvasIme();
 		  callback('commit', input.value, id);
 		  if (typeof state.cleanupPosition === 'function') state.cleanupPosition();
 		  input.parentNode.removeChild(input);
@@ -500,7 +546,8 @@ static func _install_script() -> String:
         if (!config.multiline && event.key === 'Enter') {
           event.preventDefault();
           state.keepAliveUntil = 0;
-          callback('commit', input.value, id);
+          state.restoreCanvasIme();
+		  callback('commit', input.value, id);
           input.blur();
         }
         if (event.key === 'Escape') {
@@ -543,6 +590,7 @@ static func _install_script() -> String:
       return true;
     },
     close: function() {
+      this.restoreCanvasIme();
       var input = this.input;
       this.input = null;
       this.id = 0;

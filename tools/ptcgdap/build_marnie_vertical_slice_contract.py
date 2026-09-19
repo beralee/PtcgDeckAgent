@@ -343,7 +343,7 @@ def _source_manifest(oracle_root: Path) -> dict[str, Any]:
             }
         )
     local_paths = (
-        (ROOT / "data/bundled_user/decks/800018501.json", "local_deck_800018501"),
+        (ROOT / "tests/ptcgdap/fixtures/locked_local_sources/data/bundled_user/decks/800018501.json", "local_deck_800018501"),
         (ROOT / "contracts/ptcgdap/card_id_catalog_bundle.json", "p2_card_id_catalog_bundle"),
         (ROOT / "contracts/ptcgdap/card_id_catalog_source_manifest.json", "p2_card_id_source_manifest"),
         (ROOT / "data/ptcgdap/card_id_catalog/official_card_attack_master_v1.json", "p2_official_card_attack_master"),
@@ -351,7 +351,7 @@ def _source_manifest(oracle_root: Path) -> dict[str, Any]:
         (ROOT / "artifacts/ptcgdap/p4_wp6/manifest.json", "p4_wp6_parent_manifest"),
         (ROOT / "docs/ptcgdap/SOURCE_LOCK.json", "ptcgdap_source_lock"),
     )
-    inputs.extend(_manifest_entry(path, role, "ptcgdap") for path, role in local_paths)
+    inputs.extend(_manifest_entry(path, role, "ptcgdap", "data/bundled_user/decks/800018501.json" if role == "local_deck_800018501" else None) for path, role in local_paths)
     return {
         "schema_version": 1,
         "artifact_id": "ptcgdap-marnie-vertical-slice-source-manifest-p5-wp1-v1",
@@ -371,7 +371,7 @@ def _documents(oracle_root: Path) -> dict[str, Any]:
     official_ids = _deck_ids(official_bytes)
     master = load_json_strict(ROOT / "data/ptcgdap/card_id_catalog/official_card_attack_master_v1.json")
     bridge = load_json_strict(ROOT / "data/ptcgdap/card_id_catalog/marnie_exact_print_bridge_v1.json")
-    local_deck = load_json_strict(ROOT / "data/bundled_user/decks/800018501.json")
+    local_deck = load_json_strict(ROOT / "tests/ptcgdap/fixtures/locked_local_sources/data/bundled_user/decks/800018501.json")
     master_by_id = {row["official_card_id"]: row for row in master["cards"]}
     bridge_by_id = {row["official_card_id"]: row for row in bridge["entries"]}
     bridge_by_local = {(row["local_printing"]["set_code"], row["local_printing"]["card_index"]): row for row in bridge["entries"]}
@@ -434,7 +434,7 @@ def _documents(oracle_root: Path) -> dict[str, Any]:
         "artifact_id": "ptcgdap-marnie-local-deck-manifest-v1",
         "deck_id": 800018501,
         "deck_identity": "godot:800018501:" + sha256_bytes(canonical_json_v1_bytes(local_deck["cards"]))[:16].lower(),
-        "source_deck_raw_sha256": sha256_bytes((ROOT / "data/bundled_user/decks/800018501.json").read_bytes()),
+        "source_deck_raw_sha256": sha256_bytes((ROOT / "tests/ptcgdap/fixtures/locked_local_sources/data/bundled_user/decks/800018501.json").read_bytes()),
         "source_deck_canonical_sha256": sha256_bytes(canonical_json_v1_bytes(local_deck)),
         "card_count": local_total,
         "unique_printing_count": len(local_rows),

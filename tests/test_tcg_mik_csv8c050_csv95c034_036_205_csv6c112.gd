@@ -28,6 +28,9 @@ class RiggedCoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_batch_cards_are_bundled_with_images_and_source_metadata() -> String:
 	CardImplementationStatus.clear_cache()

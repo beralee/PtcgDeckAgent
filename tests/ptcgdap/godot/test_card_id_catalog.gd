@@ -27,6 +27,15 @@ const PAYLOAD_FILES := [
 ]
 
 
+func test_repeated_integrity_checks_do_not_recanonicalize_the_entire_catalog() -> String:
+	var catalog: Variant = CardIdCatalogScript.load_default()
+	var started := Time.get_ticks_msec()
+	for check_index: int in 20:
+		if not catalog.validate_integrity(): return "Trusted catalog became invalid"
+	var elapsed := Time.get_ticks_msec() - started
+	return assert_true(elapsed < 2000, "20 catalog guards took %d ms; nested prompt validation must not repeatedly serialize thousands of cards in GDScript" % elapsed)
+
+
 func test_default_catalog_requires_the_fixed_compile_time_bundle_anchor() -> String:
 	var catalog: Variant = CardIdCatalogScript.load_default()
 	return run_checks([

@@ -16,7 +16,7 @@ const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 
 const PINNED_SOURCE_PATHS := [
-	"res://data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
+	"res://tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
 	"res://data/bundled_user/decks/800018501.json",
 	"res://data/bundled_user/decks/575720.json",
 	"res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd",
@@ -71,7 +71,7 @@ func _run_acceptance(options: Dictionary) -> Dictionary:
 	if marnie == null or rules_deck == null:
 		return _failed_report(games, "deck_load_failed", source_at_start)
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var totals := {
 		"policy_calls": 0,
 		"policy_successes": 0,

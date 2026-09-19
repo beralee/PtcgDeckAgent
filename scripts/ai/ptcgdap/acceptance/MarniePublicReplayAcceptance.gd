@@ -33,7 +33,10 @@ func run(card_database: Node, options: Dictionary = {}) -> Dictionary:
 		return _failed(seed, str(contract_loaded.get("error_code", "contract_load_failed")))
 	var contract_owner: Variant = contract_loaded.get("owner")
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	if options.has("catalog_sources"):
+		catalog.rebuild_from_paths_for_test(options["catalog_sources"])
+	else:
+		catalog.scan_startup()
 	var requested: Dictionary = GateScript.request_match_handle(catalog, _exact_selection(), "Windows")
 	var seed_owner := PlayerState.new()
 	seed_owner.set_forced_shuffle_seed(seed)

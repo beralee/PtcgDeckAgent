@@ -29,6 +29,9 @@ class RiggedCoinFlipper:
 		coin_flipped.emit(value)
 		return value
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_tcg_mik_imported_cards_are_seeded_and_register_expected_effects() -> String:
 	CardImplementationStatus.clear_cache()

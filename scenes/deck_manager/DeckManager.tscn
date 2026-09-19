@@ -179,47 +179,53 @@ offset_bottom = 130.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="ImportPanel/ImportBox"]
+[node name="ImportScroll" type="ScrollContainer" parent="ImportPanel/ImportBox"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="VBox" type="VBoxContainer" parent="ImportPanel/ImportBox/ImportScroll"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TitleLabel" type="Label" parent="ImportPanel/ImportBox/VBox"]
+[node name="TitleLabel" type="Label" parent="ImportPanel/ImportBox/ImportScroll/VBox"]
 layout_mode = 2
 text = "导入卡组"
 horizontal_alignment = 1
 
-[node name="HintLabel" type="Label" parent="ImportPanel/ImportBox/VBox"]
+[node name="HintLabel" type="Label" parent="ImportPanel/ImportBox/ImportScroll/VBox"]
 layout_mode = 2
-text = "请输入 tcg.mik.moe 卡组链接或卡组 ID。"
+text = "选择导入来源，再粘贴卡组信息。"
+autowrap_mode = 3
 
-[node name="UrlInput" type="LineEdit" parent="ImportPanel/ImportBox/VBox"]
+[node name="UrlInput" type="LineEdit" parent="ImportPanel/ImportBox/ImportScroll/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "https://tcg.mik.moe/decks/list/574793"
 
-[node name="ProgressLabel" type="Label" parent="ImportPanel/ImportBox/VBox"]
+[node name="ProgressLabel" type="Label" parent="ImportPanel/ImportBox/ImportScroll/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = ""
 horizontal_alignment = 1
 
-[node name="ProgressBar" type="ProgressBar" parent="ImportPanel/ImportBox/VBox"]
+[node name="ProgressBar" type="ProgressBar" parent="ImportPanel/ImportBox/ImportScroll/VBox"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 
-[node name="BtnRow" type="HBoxContainer" parent="ImportPanel/ImportBox/VBox"]
+[node name="BtnRow" type="HBoxContainer" parent="ImportPanel/ImportBox/ImportScroll/VBox"]
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 20
 
-[node name="BtnDoImport" type="Button" parent="ImportPanel/ImportBox/VBox/BtnRow"]
+[node name="BtnDoImport" type="Button" parent="ImportPanel/ImportBox/ImportScroll/VBox/BtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(120, 35)
 text = "导入"
 
-[node name="BtnCloseImport" type="Button" parent="ImportPanel/ImportBox/VBox/BtnRow"]
+[node name="BtnCloseImport" type="Button" parent="ImportPanel/ImportBox/ImportScroll/VBox/BtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(120, 35)

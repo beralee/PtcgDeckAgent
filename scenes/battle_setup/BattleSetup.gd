@@ -146,6 +146,8 @@ var _startup_input_shield_until_msec: int = 0
 var _author_strategy_records: Array[Dictionary] = []
 var _author_strategy_selected_ref: Dictionary = {}
 var _startup_performance: Dictionary = {}
+var _from_strategy_hub := false
+var _quick_setup_more: Button = null
 
 
 func _ready() -> void:
@@ -222,6 +224,7 @@ func _ready() -> void:
 	data_started = Time.get_ticks_usec()
 	_load_settings()
 	_restore_returned_setup_context()
+	_apply_strategy_hub_entry(GameManager.consume_battle_setup_strategy())
 	_refresh_ai_ui_visibility()
 	_startup_performance["settings_restore_msec"] = roundi(float(Time.get_ticks_usec() - data_started) / 1000.0)
 	_apply_non_battle_layout()
@@ -233,6 +236,17 @@ func _ready() -> void:
 	_startup_performance["ready_total_msec"] = roundi(float(Time.get_ticks_usec() - ready_started) / 1000.0)
 	if PERFORMANCE_TRACE_ARG in OS.get_cmdline_user_args():
 		print("PTCGDAP_BATTLE_SETUP_STARTUP=" + JSON.stringify(_startup_performance))
+
+
+func _apply_strategy_hub_entry(reference: Dictionary) -> void:
+	if reference.is_empty():
+		return
+	_from_strategy_hub = true
+	# An explicit strategy launch takes priority over the previous session's mode.
+	_select_mode_option(2)
+	_refresh_deck_options()
+	_select_author_strategy_ref(reference)
+	_refresh_ai_ui_visibility()
 
 
 func startup_performance_snapshot() -> Dictionary:
@@ -352,6 +366,36 @@ func _ensure_startup_input_shield() -> void:
 	_startup_input_shield.visible = true
 	_startup_input_shield.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_raise_startup_input_shield()
+
+
+func _apply_quick_strategy_setup() -> void:
+	if not _from_strategy_hub:
+		return
+	var compact := bool(_current_non_battle_layout_context.get("is_portrait", false))
+	if _quick_setup_more == null:
+		_quick_setup_more = Button.new()
+		_quick_setup_more.name = "QuickSetupMoreButton"
+		_quick_setup_more.text = "更多设置"
+		_quick_setup_more.toggle_mode = true
+		var section := find_child("LeftVBox", true, false)
+		section.add_child(_quick_setup_more)
+		_quick_setup_more.toggled.connect(func(expanded: bool) -> void:
+			_quick_setup_more.text = "收起更多设置" if expanded else "更多设置"
+			_apply_quick_strategy_setup()
+		)
+	_quick_setup_more.visible = compact
+	_quick_setup_more.custom_minimum_size.y = float(_current_non_battle_layout_context.get("secondary_button_height", 104))
+	_quick_setup_more.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("button_font_size", 44)))
+	var expanded := not compact or _quick_setup_more.button_pressed
+	for node_name: String in ["ModeLabel", "ModeSegment", "BackgroundLabel", "BackgroundGallery",
+		"BattleEffectsLabel", "BattleEffectsSegment", "BattleLayoutLabel", "BattleLayoutSegment",
+		"AdvancedSectionTitle", "BgmSpacer", "BgmLabel", "BgmOption", "BgmVolumeRow", "BgmHint", "BgmActionsRow"]:
+		var control := find_child(node_name, true, false) as Control
+		if control != null:
+			control.visible = expanded
+	var details := find_child("AuthorStrategyDetailsLabel", true, false) as Control
+	if details != null:
+		details.visible = expanded or not _author_strategy_start_allowed()
 
 
 func _raise_startup_input_shield() -> void:
@@ -532,6 +576,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	_refresh_layout_dependent_controls_after_non_battle_layout()
 	_sync_strategy_discussion_button_state()
 	_raise_startup_input_shield()
+	_apply_quick_strategy_setup()
 
 
 func _refresh_layout_dependent_controls_after_non_battle_layout() -> void:
@@ -1854,13 +1899,16 @@ func _author_strategy_start_allowed() -> bool:
 
 
 func _author_strategy_record_can_start(record: Dictionary) -> bool:
+	return bool(_author_strategy_admission(record).get("ok", false))
+
+
+func _author_strategy_admission(record: Dictionary) -> Dictionary:
 	if record.is_empty():
-		return false
-	var admitted: Dictionary = AuthorStrategyWindowsExecutionGateScript.evaluate_selection(
+		return {"ok": false, "error_code": "selection_missing"}
+	return AuthorStrategyWindowsExecutionGateScript.evaluate_selection(
 		AuthorStrategyPackageCatalog,
 		AuthorStrategySetupModelScript.setup_selection_record(record)
 	)
-	return bool(admitted.get("ok", false))
 
 
 func _materialize_author_strategy_deck(record: Dictionary) -> Dictionary:
@@ -1885,12 +1933,12 @@ func _materialize_author_strategy_deck(record: Dictionary) -> Dictionary:
 func _author_strategy_catalog_status_detail(record: Dictionary) -> String:
 	if record.is_empty():
 		return "当前不能开始对战。"
-	var admitted: Dictionary = AuthorStrategyWindowsExecutionGateScript.evaluate_selection(
-		AuthorStrategyPackageCatalog,
-		AuthorStrategySetupModelScript.setup_selection_record(record)
-	)
+	var admitted := _author_strategy_admission(record)
 	if bool(admitted.get("ok", false)):
-		return "已通过当前 Windows 执行门；选择后会从包内 CSV 重新验证并生成对战牌组。"
+		return "已通过当前设备执行检查；选择后会从包内 CSV 重新验证并生成对战牌组。"
+	var reason := AuthorStrategyWindowsExecutionGateScript.PlatformCapabilitiesScript.error_text(str(admitted.get("error_code", "")))
+	if not reason.is_empty():
+		return reason
 	return "%s 已加载并可选择，但当前执行门未放行。" % str(
 		record.get("status_detail", "当前不能开始对战。")
 	)
@@ -1901,8 +1949,12 @@ func _author_strategy_display_status_label(record: Dictionary) -> String:
 
 
 func _author_strategy_display_status_detail(record: Dictionary) -> String:
-	if _author_strategy_record_can_start(record):
-		return "已通过当前 Windows 执行门；开始对战时仍会重新验证完整策略包。"
+	var admitted := _author_strategy_admission(record)
+	if bool(admitted.get("ok", false)):
+		return "已通过当前设备执行检查；开始对战时仍会重新验证完整策略包。"
+	var reason := AuthorStrategyWindowsExecutionGateScript.PlatformCapabilitiesScript.error_text(str(admitted.get("error_code", "")))
+	if not reason.is_empty():
+		return reason
 	return "%s 已加载并可选择，但当前执行门未放行。" % str(
 		record.get("status_detail", "当前不能开始对战。")
 	)
@@ -1992,7 +2044,7 @@ func _refresh_author_strategy_mode_visibility() -> void:
 			if development_allowed and AuthorStrategyWindowsExecutionGateScript.is_device_canary_requested():
 				start_button.text = "开始 Windows 设备验收"
 			else:
-				start_button.text = "开始 Windows 开发对战" if development_allowed else "当前策略包不可运行"
+				start_button.text = "开始策略对战" if development_allowed else "当前策略包不可运行"
 		else:
 			start_button.text = "开始对战"
 
@@ -4124,7 +4176,7 @@ func _deck_picker_layout_context() -> Dictionary:
 	var context := _current_non_battle_layout_context.duplicate(true)
 	var size: Vector2 = context.get("viewport_size", Vector2.ZERO)
 	if is_inside_tree():
-		var live_size := get_viewport_rect().size
+		var live_size := get_rect().size
 		if live_size.x > 0.0 and live_size.y > 0.0:
 			size = live_size
 	if size.x <= 0.0 or size.y <= 0.0:

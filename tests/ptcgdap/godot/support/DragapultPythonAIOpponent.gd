@@ -436,6 +436,8 @@ func _invoke_python(frame: Dictionary) -> Dictionary:
 		_python_executable,
 		PackedStringArray([
 			ProjectSettings.globalize_path(PYTHON_SCRIPT_PATH),
+			"--source-root",
+			ProjectSettings.globalize_path("res://tests/ptcgdap/fixtures/locked_local_sources"),
 			"--request",
 			request_path,
 			"--response",

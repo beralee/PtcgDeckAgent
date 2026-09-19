@@ -21,8 +21,11 @@ func test_exact_garganacl_rare_candy_identity_reaches_exact_nacli() -> String:
 	player.hand.assign([garganacl, candy])
 	var effect: RefCounted = RARE_CANDY_SCRIPT.new()
 	var steps: Array[Dictionary] = effect.call("get_interaction_steps", candy, state)
-	var stage2_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
-	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var stage2_items: Array = []
+	var target_items: Array = []
+	for pair: Dictionary in steps[0].get("items", []) if not steps.is_empty() else []:
+		stage2_items.append(pair.get("card"))
+		target_items.append(pair.get("target_slot"))
 	var can_execute := bool(effect.call("can_execute", candy, state))
 	effect.call("execute", candy, [{
 		"stage2_card": [garganacl],

@@ -50,7 +50,7 @@ func test_builtin_weighted_candidate_stays_test_fixture_only() -> String:
 	var loader := PackageLoaderScript.new()
 	var contract: Dictionary = loader.contract_report()
 	var result: Dictionary = loader.inspect_match_bytes(
-		_read("res://data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai")
+		_read("res://tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai")
 	)
 	return run_checks([
 		assert_true(bool(contract.get("ok", false)), str(contract)),

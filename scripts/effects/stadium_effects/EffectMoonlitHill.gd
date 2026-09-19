@@ -45,7 +45,7 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	player.remove_from_hand(energy)
 	player.discard_card(energy)
 	for slot: PokemonSlot in player.get_all_pokemon():
-		slot.damage_counters = maxi(0, slot.damage_counters - 30)
+		slot.heal(30, state)
 
 
 func _get_basic_psychic_energy(player: PlayerState) -> Array:

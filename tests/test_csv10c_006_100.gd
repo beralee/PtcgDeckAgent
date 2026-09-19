@@ -8,10 +8,18 @@ class AlwaysHeads extends CoinFlipper:
 		coin_flipped.emit(true)
 		return true
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
+
 class AlwaysTails extends CoinFlipper:
 	func flip() -> bool:
 		coin_flipped.emit(false)
 		return false
+
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 const BATCH_006_010 := ["CSV10C_006", "CSV10C_007", "CSV10C_008", "CSV10C_009", "CSV10C_010"]
 const BATCH_011_015 := ["CSV10C_011", "CSV10C_012", "CSV10C_013", "CSV10C_014", "CSV10C_015"]

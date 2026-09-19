@@ -12,15 +12,15 @@ func execute(_card: CardInstance, _targets: Array, state: GameState) -> void:
 	if state == null or heal_amount <= 0:
 		return
 	for player: PlayerState in state.players:
-		_heal_slot(player.active_pokemon)
+		_heal_slot(player.active_pokemon, state)
 		for slot: PokemonSlot in player.bench:
-			_heal_slot(slot)
+			_heal_slot(slot, state)
 
 
-func _heal_slot(slot: PokemonSlot) -> void:
+func _heal_slot(slot: PokemonSlot, state: GameState) -> void:
 	if slot == null:
 		return
-	slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+	slot.heal(heal_amount, state)
 
 
 func get_description() -> String:

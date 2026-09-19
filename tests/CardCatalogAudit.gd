@@ -378,6 +378,8 @@ func _read_text_file(path: String) -> String:
 func _make_fixture() -> GameStateMachine:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
+	# Match the live GSM context used by energy providers and interaction plans.
+	gsm.game_state.shared_turn_flags["_draw_effect_processor"] = gsm.effect_processor
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 	gsm.game_state.turn_number = 2

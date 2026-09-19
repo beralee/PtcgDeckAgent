@@ -147,7 +147,7 @@ func _build_pins() -> Dictionary:
 		"package_id": _metadata.get("package_id"),
 		"package_version": _metadata.get("package_version"),
 		"package_document_type": _metadata.get("package_document_type", "strategy_package_v1"),
-		"package_schema_version": _metadata.get("package_schema_version", 1),
+		"package_schema_version": _metadata.get("package_schema_version", 2 if _metadata.get("package_document_type") == "strategy_package_v2" else 1),
 		"archive_sha256": _metadata.get("archive_sha256"),
 		"manifest_sha256": _metadata.get("manifest_sha256"),
 		"manifest_canonical_sha256": _metadata.get("manifest_canonical_sha256"),

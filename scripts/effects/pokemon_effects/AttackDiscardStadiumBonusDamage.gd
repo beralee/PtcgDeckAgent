@@ -27,7 +27,7 @@ func build_ucis_attack_interaction_steps_spec_steps(
 	return [{
 		"id": STEP_ID,
 		"title": "是否弃置场上的竞技场并追加%d伤害？" % damage_bonus,
-		"items": ["keep", "discard"],
+		"items": [false, true],
 		"labels": ["保留竞技场", "弃置竞技场"],
 		"min_select": 1,
 		"max_select": 1,
@@ -36,9 +36,7 @@ func build_ucis_attack_interaction_steps_spec_steps(
 
 
 func get_damage_bonus(_attacker: PokemonSlot, _state: GameState) -> int:
-	var ctx: Dictionary = get_attack_interaction_context()
-	var selected_raw: Array = ctx.get(STEP_ID, [])
-	if not selected_raw.is_empty() and str(selected_raw[0]) == "discard":
+	if _selected_discard():
 		return damage_bonus
 	return 0
 
@@ -51,9 +49,7 @@ func execute_attack(
 ) -> void:
 	if not applies_to_attack_index(attack_index) or state.stadium_card == null:
 		return
-	var ctx: Dictionary = get_attack_interaction_context()
-	var selected_raw: Array = ctx.get(STEP_ID, [])
-	if selected_raw.is_empty() or str(selected_raw[0]) != "discard":
+	if not _selected_discard():
 		return
 	var owner_index: int = state.stadium_owner_index
 	if owner_index >= 0 and owner_index < state.players.size():
@@ -64,3 +60,10 @@ func execute_attack(
 
 func get_description() -> String:
 	return "You may discard the Stadium in play. If you do, this attack does more damage."
+
+
+func _selected_discard() -> bool:
+	var selected_raw: Array = get_attack_interaction_context().get(STEP_ID, [])
+	if selected_raw.is_empty():
+		return false
+	return bool(selected_raw[0]) if typeof(selected_raw[0]) == TYPE_BOOL else str(selected_raw[0]) == "discard"

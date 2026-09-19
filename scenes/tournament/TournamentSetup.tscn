@@ -34,7 +34,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.05, 0.07, 0.1, 0.32)
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="SetupScroll" type="ScrollContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -42,127 +42,151 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="Center"]
+follow_focus = true
+horizontal_scroll_mode = 0
+
+[node name="Center" type="CenterContainer" parent="SetupScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Panel" type="PanelContainer" parent="SetupScroll/Center"]
 layout_mode = 2
 custom_minimum_size = Vector2(720, 720)
 
-[node name="Margin" type="MarginContainer" parent="Center/Panel"]
+[node name="Margin" type="MarginContainer" parent="SetupScroll/Center/Panel"]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 28
 
-[node name="VBox" type="VBoxContainer" parent="Center/Panel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="SetupScroll/Center/Panel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="TitleLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="TitleLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
 text = "比赛设置"
 horizontal_alignment = 1
 
-[node name="DeckLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="DeckLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
 text = "玩家卡组"
 
-[node name="DeckOption" type="OptionButton" parent="Center/Panel/Margin/VBox"]
+[node name="DeckOption" type="OptionButton" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 
-[node name="DeckPickerButton" type="Button" parent="Center/Panel/Margin/VBox"]
+[node name="DeckPickerButton" type="Button" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 58)
 text = "选择卡组"
 clip_text = true
 
-[node name="SelectedDeckLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="SelectedDeckLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.89, 0.96, 1)
 text = "已选择："
 autowrap_mode = 2
 
-[node name="NameLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="NameLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
 text = "玩家名字"
 
-[node name="NameEdit" type="LineEdit" parent="Center/Panel/Margin/VBox"]
+[node name="NameEdit" type="LineEdit" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 42)
 placeholder_text = "输入你的名字"
 
-[node name="FormatLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="FormatLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
 text = "比赛赛制"
 
-[node name="TournamentFormatRadioGroup" type="GridContainer" parent="Center/Panel/Margin/VBox"]
+[node name="TournamentFormatRadioGroup" type="GridContainer" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 columns = 2
 
-[node name="SizeLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="OpponentLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
+layout_mode = 2
+text = "参赛对手"
+
+[node name="OpponentSourceGroup" type="GridContainer" parent="SetupScroll/Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 10
+columns = 3
+
+[node name="OpponentHint" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="SizeLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
 text = "比赛人数"
 
-[node name="TournamentSizeRadioGroup" type="GridContainer" parent="Center/Panel/Margin/VBox"]
+[node name="TournamentSizeRadioGroup" type="GridContainer" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 columns = 4
 
-[node name="RoundInfoLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="RoundInfoLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.89, 0.96, 1)
 text = "预计轮数："
 
-[node name="HintLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="HintLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.89, 0.96, 1)
 text = "下一步会进入赛前总览页面，先查看参赛名单、卡组分布和本次瑞士轮轮数，再正式开始第一轮。"
 autowrap_mode = 2
 
-[node name="ErrorLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="ErrorLabel" type="Label" parent="SetupScroll/Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.28, 0.28, 1)
 text = "请输入玩家名字"
+autowrap_mode = 2
 
-[node name="Spacer" type="Control" parent="Center/Panel/Margin/VBox"]
+[node name="Spacer" type="Control" parent="SetupScroll/Center/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 
-[node name="ButtonRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+[node name="ButtonRow" type="HBoxContainer" parent="SetupScroll/Center/Panel/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="BtnBack" type="Button" parent="Center/Panel/Margin/VBox/ButtonRow"]
+[node name="BtnBack" type="Button" parent="SetupScroll/Center/Panel/Margin/VBox/ButtonRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 44)
 text = "返回"
 
-[node name="BtnStart" type="Button" parent="Center/Panel/Margin/VBox/ButtonRow"]
+[node name="BtnStart" type="Button" parent="SetupScroll/Center/Panel/Margin/VBox/ButtonRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

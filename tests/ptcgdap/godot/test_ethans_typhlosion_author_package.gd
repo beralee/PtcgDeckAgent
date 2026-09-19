@@ -76,7 +76,7 @@ func test_r10_exact_identity_is_admitted_and_byte_drift_is_denied() -> String:
 
 func test_r0_package_materializes_the_exact_deck_and_binds_the_reviewed_owner() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog)
 	var requested: Dictionary = GateScript.request_match_handle(catalog, _selection(), "Windows")
 	var handle: Variant = requested.get("handle")
 	var deck: DeckData = CardDatabase.get_ai_deck(800018880)
@@ -125,7 +125,7 @@ func test_final_r5_is_visible_selectable_and_startable_in_battle_setup() -> Stri
 	var previous_mode: int = GameManager.current_mode
 	var previous_selected_deck_ids: Array = GameManager.selected_deck_ids.duplicate()
 	var previous_selection := GameManager.get_author_strategy_selection()
-	var report: Dictionary = AuthorStrategyPackageCatalog.scan_startup()
+	var report: Dictionary = preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(AuthorStrategyPackageCatalog)
 	var scene := BattleSetupScene.instantiate()
 	scene.call("_ready")
 	scene.call("_apply_author_strategy_catalog_report", report)

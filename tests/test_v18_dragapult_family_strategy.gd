@@ -475,7 +475,7 @@ func test_dragapult_dusknoir_uses_real_radiant_alakazam_move_steps() -> String:
 		assert_eq(str(steps[2].get("id", "")), "counter_count", "Painful Spoons should choose how many counters to move"),
 		assert_eq(source_pick, [donor], "Painful Spoons should preserve an exact prize and move surplus damage from the safe donor"),
 		assert_eq(target_pick, [exact_target], "Painful Spoons should move damage onto the exact twenty-damage prize"),
-		assert_eq(count_pick, [2], "Painful Spoons should move both counters when twenty damage converts the prize"),
+		assert_eq(count_pick, [{"number": 2}], "Painful Spoons should move both counters when twenty damage converts the prize"),
 	])
 
 

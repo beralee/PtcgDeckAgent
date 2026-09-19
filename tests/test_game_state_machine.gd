@@ -40,6 +40,10 @@ class CountingCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(next_result)
 		return next_result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
+
 ## 创建包含 60 张基础宝可梦的测试卡组数据
 func _make_test_deck_data(deck_id: int) -> DeckData:
 	var deck := DeckData.new()

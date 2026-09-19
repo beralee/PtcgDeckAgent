@@ -95,7 +95,7 @@ func validate_card_interaction(card: CardInstance, targets: Array, state: GameSt
 		return validate_context_selection(
 			context,
 			"empty_search_resolution",
-			[EMPTY_SEARCH_CONTINUE, EMPTY_SEARCH_VIEW_DECK],
+			[true, false, EMPTY_SEARCH_CONTINUE, EMPTY_SEARCH_VIEW_DECK],
 			1,
 			1
 		)

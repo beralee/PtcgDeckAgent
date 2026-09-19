@@ -157,6 +157,8 @@ var tournament_selected_player_deck_id: int = -1
 var current_tournament: RefCounted = null
 var battle_player_display_names: Array[String] = ["", ""]
 var tournament_battle_in_progress: bool = false
+var tournament_start_error: String = ""
+const TournamentAuthorPoolScript = preload("res://scripts/tournament/TournamentAuthorStrategyPool.gd")
 var suppress_scene_navigation_for_tests: bool = false
 var last_requested_scene_path: String = ""
 var _touch_button_bridge_candidate: Button = null
@@ -1110,8 +1112,18 @@ func goto_deck_manager() -> void:
 
 
 ## 切换到对战设置
-func goto_battle_setup() -> void:
+var _pending_battle_setup_strategy: Dictionary = {}
+
+
+func goto_battle_setup(strategy_ref: Dictionary = {}) -> void:
+	_pending_battle_setup_strategy = strategy_ref.duplicate(true)
 	goto_scene(SCENE_BATTLE_SETUP)
+
+
+func consume_battle_setup_strategy() -> Dictionary:
+	var reference := _pending_battle_setup_strategy.duplicate(true)
+	_pending_battle_setup_strategy.clear()
+	return reference
 
 
 ## 切换到对战场景
@@ -1775,9 +1787,19 @@ func set_tournament_selected_player_deck_id(deck_id: int) -> void:
 	tournament_selected_player_deck_id = deck_id
 
 
-func start_swiss_tournament(player_name: String, tournament_size: int, tournament_format: String = "standard") -> void:
+func start_swiss_tournament(player_name: String, tournament_size: int, tournament_format: String = "standard", opponent_source: String = "builtin") -> bool:
+	tournament_start_error = ""
+	if opponent_source not in ["builtin", "mixed", "author"]:
+		tournament_start_error = "请选择有效的参赛对手类型。"
+		return false
 	if tournament_selected_player_deck_id <= 0:
-		return
+		return false
+	var author_pool: Array[Dictionary] = []
+	if opponent_source in ["mixed", "author"]:
+		author_pool = TournamentAuthorPoolScript.collect(AuthorStrategyPackageCatalog)
+		if author_pool.is_empty():
+			tournament_start_error = "本机没有可参赛的开发者策略，请先在 AI 策略中心下载安装，或选择内置对手。"
+			return false
 	var tournament := SwissTournamentScript.new()
 	tournament.setup(
 		player_name,
@@ -1785,12 +1807,15 @@ func start_swiss_tournament(player_name: String, tournament_size: int, tournamen
 		tournament_size,
 		0,
 		is_battle_review_ai_ready_for_llm_opponents(),
-		tournament_format
+		tournament_format,
+		author_pool,
+		opponent_source
 	)
 	current_tournament = tournament
 	tournament_battle_in_progress = false
 	clear_battle_player_display_names()
 	_persist_tournament_state()
+	return true
 
 
 func has_active_tournament() -> bool:
@@ -1809,6 +1834,7 @@ func mark_current_battle_as_non_tournament() -> void:
 
 
 func clear_tournament() -> void:
+	tournament_start_error = ""
 	current_tournament = null
 	tournament_selected_player_deck_id = -1
 	tournament_battle_in_progress = false
@@ -1824,8 +1850,11 @@ func discard_tournament_keep_selected_deck() -> void:
 
 
 func prepare_current_tournament_battle() -> bool:
+	tournament_start_error = ""
 	if current_tournament == null:
 		return false
+	if tournament_battle_in_progress:
+		return true
 	var pairing: Dictionary = current_tournament.prepare_next_round()
 	if pairing.is_empty():
 		return false
@@ -1833,6 +1862,15 @@ func prepare_current_tournament_battle() -> bool:
 	var opponent_id := int(pairing.get("player_b_id", -1))
 	if int(pairing.get("player_a_id", -1)) != player_id:
 		opponent_id = int(pairing.get("player_a_id", -1))
+	var opponent_mode := str(current_tournament.participant_ai_mode(opponent_id))
+	var author_selection: Dictionary = {}
+	if opponent_mode == "author":
+		author_selection = current_tournament.participant_author_selection(opponent_id)
+		var checked := TournamentAuthorPoolScript.resolve(AuthorStrategyPackageCatalog, author_selection)
+		if not checked.get("ok", false):
+			tournament_start_error = "本轮开发者策略不可用：%s v%s。请在 AI 策略中心恢复该版本后重试；赛程已保留。\n原因：%s" % [author_selection.get("display_name_snapshot", "未知策略"), author_selection.get("package_version", "?"), checked.get("error_code", "package_unavailable")]
+			_persist_tournament_state()
+			return false
 	selected_deck_ids = [
 		int(current_tournament.player_deck_id),
 		int(current_tournament.participant_deck_id(opponent_id)),
@@ -1844,6 +1882,12 @@ func prepare_current_tournament_battle() -> bool:
 	current_mode = GameMode.VS_AI
 	first_player_choice = -1
 	reset_ai_selection()
+	reset_author_strategy_selection()
+	if opponent_mode == "author":
+		if not set_author_strategy_selection(author_selection):
+			tournament_start_error = "参赛策略引用无效，请恢复该策略后重试。"
+			return false
+		current_mode = GameMode.VS_AUTHOR_STRATEGY_AI
 	# Tournament opponents should use their own deck-local rule strategy.
 	# Do not inherit the manual AI strategy variant selected in BattleSetup
 	# (for example the Raging Bolt LLM variant) across modes.
@@ -1874,6 +1918,18 @@ func finalize_current_tournament_battle(winner_index: int, reason: String) -> Di
 	clear_battle_player_display_names()
 	_persist_tournament_state()
 	return summary
+
+
+func recover_tournament_battle_start_failure(error_code: String) -> void:
+	if not is_tournament_battle_active(): return
+	tournament_battle_in_progress = false
+	tournament_start_error = "本轮对战未能启动，请恢复参赛卡组或策略后重试；赛程已保留。\n原因：" + error_code
+	clear_battle_player_display_names()
+	_persist_tournament_state()
+	if current_tournament.last_round_summary.is_empty():
+		goto_tournament_overview()
+	else:
+		goto_tournament_standings()
 
 
 func forfeit_current_tournament_battle(reason: String = "技术负（中途退出）") -> Dictionary:

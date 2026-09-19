@@ -6,17 +6,9 @@ const CYNTHIA_PROFILE_ID := "ptcgdap-cynthia-garchomp-package-development-frame-
 const CYNTHIA_STRATEGY_ID := "ptcgdap.cynthia-garchomp.18.0.package-local-v1"
 
 
-class CynthiaPublicInteractionAdapter extends RefCounted:
-	var owner: Variant = null
-
-	func _init(next_owner: Variant) -> void:
-		owner = next_owner
-
+class CynthiaPublicInteractionAdapter extends PublicInteractionAdapter:
 	func get_strategy_id() -> String:
 		return CYNTHIA_STRATEGY_ID
-
-	func pick_interaction_items(items: Array, step: Dictionary, _context: Dictionary = {}) -> Array:
-		return owner._pick_interaction_items(items, step) if owner != null else []
 
 
 static func create(
@@ -26,7 +18,7 @@ static func create(
 	match_id: String,
 	authority_mode: String = ExecutionGateScript.DEVELOPMENT_MODE
 ) -> Dictionary:
-	if OS.get_name() != "Windows":
+	if not ExecutionGateScript.player_host_available():
 		return _error("development_platform_not_authorized")
 	if (
 		handle == null
@@ -39,7 +31,7 @@ static func create(
 		or match_id.strip_edges().is_empty()
 	):
 		return _error("invalid_bind")
-	var pin_error := ExecutionGateScript.validate_handle_pins(handle.to_public_dict(), authority_mode)
+	var pin_error := ExecutionGateScript.validate_player_start(handle.to_public_dict(), authority_mode)
 	if not pin_error.is_empty():
 		return _error(pin_error)
 	var owner := new()

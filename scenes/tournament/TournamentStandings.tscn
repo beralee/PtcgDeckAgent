@@ -118,6 +118,13 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 320)
 editable = false
 
+[node name="StartError" type="Label" parent="Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.65, 0.4, 1)
+autowrap_mode = 2
+
 [node name="ButtonRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 16

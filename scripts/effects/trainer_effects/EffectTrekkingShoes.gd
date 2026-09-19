@@ -14,7 +14,7 @@ func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameStat
 	return [{
 		"id": "trekking_choice",
 		"title": "健行鞋：查看牌库顶的卡",
-		"items": ["take", "discard"],
+		"items": [false, true],
 		"labels": [top_card.card_data.name],
 		"min_select": 1,
 		"max_select": 1,
@@ -39,7 +39,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var selected_raw: Array = ctx.get("trekking_choice", [])
 	var choice: String = "take"
 	if not selected_raw.is_empty():
-		choice = str(selected_raw[0])
+		choice = "discard" if _is_discard_choice(selected_raw[0]) else "take"
 
 	if choice == "discard":
 		top_card.face_up = true
@@ -53,3 +53,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 func get_description() -> String:
 	return "查看自己牌库顶的 1 张卡。你可以将那张卡加入手牌；若不加入，则将其丢弃并抽 1 张牌。"
+
+
+func _is_discard_choice(value: Variant) -> bool:
+	return bool(value) if typeof(value) == TYPE_BOOL else str(value) == "discard"

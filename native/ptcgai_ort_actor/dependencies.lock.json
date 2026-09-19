@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "godot_version": "4.6.1",
+  "godot_cpp_commit": "58d1de720b8ffe9f8ffcdfe3a85148582cfd2e74",
+  "onnxruntime_source_commit": "8c546c37b43caaca1fa25db430dab94b901cf277",
+  "onnxruntime_c_api_version": 26,
+  "windows_runtime_product_version": "1.26.20260508.3.8c546c3",
+  "windows_runtime_sha256": "b2ba7ca16e0e4fe71ad5148744ab885a2f5809e52a0c3de4d9ba3853a03977f9",
+  "android_ndk_version": "28.2.13676358",
+  "android_extension_min_api": 24,
+  "android_model_min_api": 29,
+  "macos_extension_min_x86_64": "10.12",
+  "macos_extension_min_arm64": "11.0",
+  "macos_model_min": "13.3",
+  "max_build_jobs": 4
+}

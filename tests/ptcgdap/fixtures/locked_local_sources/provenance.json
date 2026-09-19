@@ -1,0 +1,365 @@
+{
+  "purpose": "Source-locked historical contract reproduction. These public Git inputs are distinct from current player card data.",
+  "inputs": [
+    {
+      "path": "data/bundled_user/cards/CSV10C_007.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "263A67D2387331C3FC8519B05893DE9E1BD963A51C0D84A67C10770CF03F9C9F"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_008.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "42EAF26F4A6EC452DEF7E82FCC2208D17896E59796F972C51ECB438AD4F7ED80"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_146.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "4CE7694E86F97D77AEEBA690E61027B811C472051BCB65FA3780FB5ED918F505"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_147.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "58CFA92FB6434F6837E6A20BC4C14DC445020A1616A765490821E31BF5E9B045"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_148.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "01F439FB05A93FC770D808BBF7B3CEBCB38003667DD512182E06C161F4A697C1"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_207.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "5FD01B81CADEB4E3B30AED08840B72DEB0AFB4FD10C94181CBBE208B6B86B3F9"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_216.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "89667ED44F5535C1A55D5D52D70EDF952EF15F69DBBBF1BEDB3E813A28D43042"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_079.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "2E514E9816950E528C17A5BCA269A1C99772781AA006A1B56D19AEA07F815984"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_109.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "B0B7B33DFA5D0177DB8E6028FBC7F4D409C2CAA11EEC1195EB456DA8570275F7"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_112.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "A961F90A6B016DF1953B96F8E236D127D03852258BF5DB1C1A6AAC35BBB908D6"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_121.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "79F19B4691E8F8A817F5FB3EC17F5D91601EC2AEA55EDC8078B0D4445C777762"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_123.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "D2C6EA63CD41A998DB8E781CFCD3FF8B5854238ED19365334097B4BB756CA9C0"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_127.json",
+      "source_commit": "47750cdb747c11f278fcbed9eeffec519193daad",
+      "line_endings": "crlf",
+      "raw_sha256": "F2B7D5BAF7005C82C834DB48B06564055A470BE2F967E336052C77F026306806"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV2C_113.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "CC6FF8200AFE5567F32B399AE13D447104396AD68F77BA82B2A32BCCF3494D55"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV2C_127.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "E50DAADB602B9DCD7264CDCBB3C46CDC60D7530D07B42D5139D2D9DEE96CC1A5"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV3C_123.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "A3FD12456E9991925DA4D21A42E6B5BB472C64F31833D9149C8305F9C81E17F6"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV5C_119.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "278FFB780F3F9E6A6736D4C3D75D854EF388A5899763FA0E3F857EDD8EEB1902"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV5C_120.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "64D5C7E213B2DA79E5D4B67D5ECC041C75A67CB1670253E51827055C1092BC9A"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV6C_114.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "5F086E6492A5AFDD4A668A06616D166C56AE401BC79866AFF3F6BD3BE0477CDA"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV6C_125.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "36A589A7B02ED1353AE1A3200BB70C124F61B917A22E8059D7236897A0DD4F93"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV7C_059.json",
+      "source_commit": "68ddbca90a0ba64d2b354ad7f9c34b6a731bce0c",
+      "line_endings": "crlf",
+      "raw_sha256": "042936F1770BD8B9B9A06EDFA28DE212CA04A0D5022E1EB8B915F705323B2499"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV7C_177.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "1D3C1D8C97B6FC1ED177B9BCE21896AB3B97F6CCEC004E52DC1FDAAEF80AA98A"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV7C_185.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "9FB9C6CC6E75C9D187A0FAA7C1670C2772BB4F690B8F0539F0DC93E855D31CD2"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV7C_203.json",
+      "source_commit": "06ec60ec18f624ebbfe49fb1be2c4c7fd40f6b62",
+      "line_endings": "crlf",
+      "raw_sha256": "3157BDEC42189CBB468E71B45CB0C0AD03E32C24DE72028B58C6798BC56A01E3"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_094.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "9EEDD84B0FDA69DFBED0A32C0321C2E4B9A8A4B6C905D22F3EB8FEBBAB56C2A1"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_135.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "D8A5D264E79015D4D16C5E9639B18308D9F4B8298FADADF3FC8E4DF364C23FE7"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_157.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "8CFCD71A90387295DA44FBFC8C36D29191AC9DB14E632EDEC759FE8CCC2EA46C"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_158.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "4694B0B9FDE1EB14D471126FB754DFB40E7BDAB9A4E4F638F8F0C07E1647A414"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_159.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "C175E577B4E1AE7D2713ABBEC473CDEA5375A69BBBABADA4163204BE299AF56E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_172.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "025128712CB0513FFFADC1700CD1F0507BD2DDD6963BB27843AF21B8AC6D0124"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_173.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "4FF6B61A942B6D7023AC4FEB149E701ACCC70F556F0F53B8CBD69227E26FE3EE"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_176.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "4740F33F8DA0BB6E8977A8811A899D0C6BACBE4A85BCC48B57E2CBA098288565"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_183.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "713F2B15DED2F144E562667A5B7AC853E6770DDA3616934882664BF67D9AA457"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_203.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "C8BA3F30BD1847F8012376A1BF32E2ED0D8EA7D028886FC0119FBCA8DA9968B9"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV9.5C_004.json",
+      "source_commit": "a385a152bfd3fd42ceca648d5cdc5efca69b993e",
+      "line_endings": "crlf",
+      "raw_sha256": "20609F805C051F9CA5D4CEB8AB3FA75F23E34D735B5687B06FBFD95C7E8E013A"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV9.5C_043.json",
+      "source_commit": "68ddbca90a0ba64d2b354ad7f9c34b6a731bce0c",
+      "line_endings": "crlf",
+      "raw_sha256": "1A474A15B3731D30D5C45E039FB4DB1A838C22DC65E25B3C52AECBC62DB5B5F3"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV9C_078.json",
+      "source_commit": "156517358ed7ebea965401fff6c658bfe155bccb",
+      "line_endings": "crlf",
+      "raw_sha256": "A2B97B850ED020FBE0CE68EF5C6E4ADD25383DFCDE8FC74224A6CACE32CF7C2E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVE1C_DAR.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "B86CF49A7890C45951CDB80C87BC75F0392812C5370DA66866FCC979DC79CAB2"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVE1C_FIR.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "0A43CCFFCE7E89CCAB9F66D2AD82D972958A6231616F06FBEEE0B77BB24A394E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVE1C_PSY.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "6F49343EBC7C3B4BF3AD3299A24D0379721CD6E1BB4E6B6B230EF0CEA546E705"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVH1C_035.json",
+      "source_commit": "47750cdb747c11f278fcbed9eeffec519193daad",
+      "line_endings": "crlf",
+      "raw_sha256": "653487C3AF751D4EF17CBD5E6DFC77641938E1697695786C8426D72B0079F2F4"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVH1C_043.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "BFA7B7008FA9342837764A762AF73504A3320897F305E48617B34E1162695786"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVH1C_045.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "687FBE4400FF799FCBF889245D76779A0E7BFD69B21ACDDB80439C8E28D74B11"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVH1aC_023.json",
+      "source_commit": "a47374f46ae6772f4d0a49edd64b4a3da526c599",
+      "line_endings": "crlf",
+      "raw_sha256": "99BA9B7B2FECC55BCF4B7C1B8511B43B5147BCFF5351402BB9366BB50273B154"
+    },
+    {
+      "path": "data/bundled_user/cards/LEN_DRI_134.json",
+      "source_commit": "68ddbca90a0ba64d2b354ad7f9c34b6a731bce0c",
+      "line_endings": "crlf",
+      "raw_sha256": "7A09714B9835766BF5BAC71C0D2FEC1735E908D97980E3E06FBDBCE39B1D27E2"
+    },
+    {
+      "path": "data/bundled_user/cards/LEN_DRI_135.json",
+      "source_commit": "68ddbca90a0ba64d2b354ad7f9c34b6a731bce0c",
+      "line_endings": "crlf",
+      "raw_sha256": "1BD94CB5EAC1EA0021F423A07A23508059E4BCEAB288B90620D71B51F63706C4"
+    },
+    {
+      "path": "data/bundled_user/cards/LEN_DRI_136.json",
+      "source_commit": "68ddbca90a0ba64d2b354ad7f9c34b6a731bce0c",
+      "line_endings": "crlf",
+      "raw_sha256": "5EFA9B7F30F3ADA7DF097D68A6D7851553E9C3E5490406239DA2434406716D3C"
+    },
+    {
+      "path": "data/bundled_user/cards/LEN_DRI_169.json",
+      "source_commit": "68ddbca90a0ba64d2b354ad7f9c34b6a731bce0c",
+      "line_endings": "crlf",
+      "raw_sha256": "486CEC705A0DAB6D855C938CF43291ECBCFD36C646F105D129F5E549B8BD3642"
+    },
+    {
+      "path": "data/bundled_user/decks/575479.json",
+      "source_commit": "f2ace8a0c2b2443890bd899119503eb3a404a854",
+      "line_endings": "crlf",
+      "raw_sha256": "52EEDC29650D902A356E7B7775B72C6956D52DFE3D2D06C5FEDC66F7C04625C0"
+    },
+    {
+      "path": "data/bundled_user/decks/575720.json",
+      "source_commit": "23f7e9f59427924e94fecb7d30254daaa16db945",
+      "line_endings": "crlf",
+      "raw_sha256": "F6EE202C9FEEC256A865648066E818646F98B07227008B359CA40921864896D1"
+    },
+    {
+      "path": "data/bundled_user/decks/800018499.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "9BC21DCC24F4C9F0E1E9F0F6888E96FA821F7D6BF4E10AB7E78D2E8AE27DB1E0"
+    },
+    {
+      "path": "data/bundled_user/decks/800018501.json",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "8E28C31BE70AB2971EAED9AAB8C6A2D7A3412A95E0E335A702C1F13D547B805F"
+    },
+    {
+      "path": "scripts/ai/AIBenchmarkRunner.gd",
+      "source_commit": "3534d22b28d2895d5de5bf12cd35836d686714aa",
+      "line_endings": "crlf",
+      "raw_sha256": "55A771DD934F41351169B3F5ED62E84200A226E5B52AC9E06A4E4A2648E7A69D"
+    },
+    {
+      "path": "scripts/ai/AILegalActionBuilder.gd",
+      "source_commit": "d7c694fb3afd26a1154f86c145112e6deaae5a40",
+      "line_endings": "crlf",
+      "raw_sha256": "67631B187D4C8823E3BBD399FC4AFA28FEE127B42921A876F21084134DFAADB5"
+    },
+    {
+      "path": "scripts/ai/AIOpponent.gd",
+      "source_commit": "3534d22b28d2895d5de5bf12cd35836d686714aa",
+      "line_endings": "crlf",
+      "raw_sha256": "00077ED32713BA6E2108D55B0B653CBFE332757AD829ED605E2DDE1201A00130"
+    },
+    {
+      "path": "scripts/ai/AIStepResolver.gd",
+      "source_commit": "225f0076238dbaf4980654751815f926e3bab547",
+      "line_endings": "crlf",
+      "raw_sha256": "2D9E1F29D2E5A0DAA4AAC95D853D182012B0846F7FE02C8400CC5540797B574A"
+    },
+    {
+      "path": "scripts/ai/DeckStrategyMiraidon.gd",
+      "source_commit": "9d676ce2c583d826758d81acb1d62a4e9d3e812c",
+      "line_endings": "crlf",
+      "raw_sha256": "1ACA0F5D88870D2B49A3A433E8F3BF74A263950774B61E7D45B791B24E9B584F"
+    },
+    {
+      "path": "scripts/ai/DeckStrategyRegistry.gd",
+      "source_commit": "225f0076238dbaf4980654751815f926e3bab547",
+      "line_endings": "crlf",
+      "raw_sha256": "88D38F966B0703884C6440D7EC8176F73E4337327FFC6012D656D1285BA448E5"
+    },
+    {
+      "path": "scripts/ai/HeadlessMatchBridge.gd",
+      "source_commit": "225f0076238dbaf4980654751815f926e3bab547",
+      "line_endings": "crlf",
+      "raw_sha256": "17FAFF5AA410EC8452521E7A57777993B8E2A2D0CF236496CDD0570E5C17EC92"
+    },
+    {
+      "path": "scripts/engine/GameStateMachine.gd",
+      "source_commit": "225f0076238dbaf4980654751815f926e3bab547",
+      "line_endings": "crlf",
+      "raw_sha256": "338EC3EAFAC21905C958582272BEBCDC76374E059E810A71ED2659970E52EAAC"
+    }
+  ]
+}

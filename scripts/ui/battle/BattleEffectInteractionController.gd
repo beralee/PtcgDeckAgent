@@ -36,6 +36,9 @@ func start_effect_interaction(
 	for step_value: Variant in compiled.get("steps", []):
 		compiled_steps.append(step_value as Dictionary)
 	steps = compiled_steps
+	var gsm: Variant = scene.get("_gsm")
+	if kind in ["attack", "granted_attack"] and gsm is GameStateMachine:
+		gsm.protect_committed_attack_steps(slot, steps)
 	scene.remove_meta("ucis_interaction_error")
 	var interaction_generation := int(scene.get_meta(EFFECT_GENERATION_META, 0)) + 1
 	scene.set_meta(EFFECT_GENERATION_META, interaction_generation)
@@ -547,6 +550,8 @@ func inject_followup_steps(scene: Object) -> void:
 	)
 	if followup_steps.is_empty():
 		return
+	if pending_effect_kind in ["attack", "granted_attack"] and gsm is GameStateMachine:
+		gsm.protect_committed_attack_steps(scene.get("_pending_effect_slot"), followup_steps)
 	var pending_effect_step_index: int = int(scene.get("_pending_effect_step_index"))
 	var pending_effect_steps: Array[Dictionary] = scene.get("_pending_effect_steps")
 	var existing_step_ids: Dictionary = {}

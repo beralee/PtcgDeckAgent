@@ -27,7 +27,10 @@ func run(card_database: Node, options: Dictionary = {}) -> Dictionary:
 		return _failed_report(games, seed_base, max_steps, "deck_load_failed")
 
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	if options.has("catalog_sources"):
+		catalog.rebuild_from_paths_for_test(options["catalog_sources"])
+	else:
+		catalog.scan_startup()
 	var totals := {
 		"policy_calls": 0,
 		"policy_successes": 0,

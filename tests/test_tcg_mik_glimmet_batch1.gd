@@ -50,6 +50,9 @@ class RiggedCoinFlipper:
 		flip_count += 1
 		return results.pop_front() if not results.is_empty() else false
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func _load_card(uid: String) -> CardData:
 	var path := "res://data/bundled_user/cards/%s.json" % uid

@@ -7,6 +7,7 @@ extends RefCounted
 const AUTHORITY_MODE := "control_distributed_player"
 const INSTALL_SOURCE := "user"
 const CARD_ID_DOMAIN := "godot_local_card_uid_v1"
+const PlatformCapabilitiesScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyPlatformCapabilities.gd")
 const RUNTIME_KINDS := [
 	"reviewed_restricted_ir_v1",
 	"reviewed_competitive_policy_v2",
@@ -28,8 +29,11 @@ static func evaluate_selection(
 	if not FeatureGateScript.is_enabled():
 		return _error("author_strategy_feature_disabled")
 	var platform := platform_name if not platform_name.is_empty() else OS.get_name()
-	if platform != "Windows":
+	if platform != OS.get_name():
 		return _error("control_distributed_platform_not_authorized")
+	var capabilities := PlatformCapabilitiesScript.inspect(platform)
+	if not bool(capabilities.get("rules_available")):
+		return _error(str(capabilities.get("error_code")))
 	var record := _record_for_selection(catalog, selection)
 	if record.is_empty() or not _valid_record(record):
 		return _error("control_distributed_package_not_ready")

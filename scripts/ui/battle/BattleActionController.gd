@@ -120,6 +120,9 @@ func try_play_trainer_with_interaction(scene: Object, player_index: int, card: C
 	if not effect.can_execute(card, gsm.game_state):
 		_show_invalid_card_hint(scene, card, gsm.effect_processor.get_effect_unusable_reason(card, gsm.game_state), "trainer")
 		return
+	if gsm.resolve_trainer_disruption(player_index, card):
+		scene.call("_refresh_ui_after_successful_action", false, player_index)
+		return
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, gsm.game_state)
 	if steps.is_empty():
 		if not gsm.play_trainer(player_index, card, []):
@@ -144,6 +147,9 @@ func try_play_stadium_with_interaction(scene: Object, player_index: int, card: C
 			gsm.rule_validator.get_play_stadium_unusable_reason(gsm.game_state, player_index, card, gsm.effect_processor),
 			"stadium"
 		)
+		return
+	if gsm.resolve_trainer_disruption(player_index, card):
+		scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:

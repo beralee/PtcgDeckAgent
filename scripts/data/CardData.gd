@@ -149,6 +149,11 @@ static func get_image_candidate_paths(card_set_code: String, card_idx: String, p
 	var bundled_path := build_bundled_image_path(card_set_code, card_idx)
 	if bundled_path != "" and bundled_path not in candidates:
 		candidates.append(bundled_path)
+	# The pre-existing 30THC photo bundle owns this directory's spelling.
+	# Preserve API printing identity (30thC), including on case-sensitive exports.
+	if card_set_code == "30thC":
+		candidates.append(build_local_image_path("30THC", card_idx))
+		candidates.append(build_bundled_image_path("30THC", card_idx))
 	return candidates
 
 

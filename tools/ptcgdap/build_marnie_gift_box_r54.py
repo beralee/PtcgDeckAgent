@@ -25,7 +25,7 @@ from tools.ptcgdap.build_author_strategy_package import (  # noqa: E402
 
 BASE = (
     ROOT
-    / "data/ptcgdap/author_strategy_packages"
+    / "tests/ptcgdap/fixtures/legacy_author_strategy_packages"
     / "marnies-gift-box-rule-marnie-r53-5.13.0.ptcgai"
 )
 OUTPUT = (

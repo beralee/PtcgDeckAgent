@@ -33,7 +33,6 @@ const HUD_CARD_BORDER := Color(0.48, 0.72, 1.0, 0.78)
 const HUD_RECOMMENDATION_BORDER := Color(1.0, 0.76, 0.30, 0.96)
 const HUD_SECONDARY := Color(0.50, 0.80, 1.0, 1.0)
 const HUD_RENAME := Color(0.72, 0.64, 1.0, 1.0)
-const IMPORT_RESULT_AUTO_CLOSE_SECONDS := 1.4
 const DECK_ACTION_HUD_CLOSE_INPUT_QUARANTINE_MSEC := 320
 const REMOTE_RECOMMENDATION_PREFETCH_STEPS := 0
 const DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE := 40
@@ -53,7 +52,6 @@ const RECOMMENDATION_DESKTOP_MIN_HEIGHT := 478.0
 const RECOMMENDATION_MOBILE_SHARE_PREVIEW_SIZE := Vector2(184.0, 306.0)
 const RECOMMENDATION_DESKTOP_PREVIEW_SIZE := Vector2(600.0, 450.0)
 const TCG_MIK_HOME_URL := "https://tcg.mik.moe/"
-const IMPORT_DECK_GUIDE_TEXT := "导入步骤：\n1. 点击下方“打开卡牌网站”，进入你想玩的卡组页面。\n2. 复制浏览器地址栏里的完整链接，例如 https://tcg.mik.moe/decks/list/574793。\n3. 回到这里，点击下面的输入框并粘贴链接；也可以只输入末尾数字 ID，例如 574793。\n4. 点“导入卡组”，等待卡组和卡图同步完成。"
 const IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META := "_import_modal_previous_mouse_filter"
 const DECK_ACTION_HUD_PREVIOUS_MOUSE_FILTER_META := "_deck_action_hud_previous_mouse_filter"
 const IMPORT_URL_FOCUS_REQUESTED_META := "_import_url_focus_requested"
@@ -98,6 +96,7 @@ var _active_image_sync_job_id := ""
 var _current_operation: String = ""
 var _panel_mode: String = "import"
 var _pending_import_start_url := ""
+var _web_gesture_router := preload("res://scripts/ui/non_battle/NonBattleGestureRouter.gd").new()
 var _pending_import_deck: DeckData = null
 var _pending_import_errors: PackedStringArray = PackedStringArray()
 var _pending_import_deck_name_override := ""
@@ -156,7 +155,7 @@ var _recommendation_poster_queued_recommendation: Dictionary = {}
 var _recommendation_poster_download_key := ""
 var _recommendation_poster_download_button: Button = null
 var _recommendation_poster_saving := false
-var _import_result_close_timer: Timer = null
+var _import_panel_ui := preload("res://scripts/ui/decks/DeckImportPanel.gd").new()
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _current_non_battle_layout_context: Dictionary = {}
 var _test_web_runtime_override := false
@@ -234,11 +233,31 @@ func _setup_local_deck_search_input() -> void:
 
 
 func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT]:
+		_web_gesture_router.cancel()
 	if what == NOTIFICATION_RESIZED:
+		_web_gesture_router.cancel()
 		_apply_non_battle_layout()
 
 
+func _cancel_transient_platform_input(_reason: String) -> void:
+	_web_gesture_router.cancel()
+
+
+func _process(_delta: float) -> void:
+	if _is_deck_manager_web_runtime():
+		NonBattleTouchBridgeScript.WebTextInputBridgeScript.refresh_active_geometry()
+
+
 func _input(event: InputEvent) -> void:
+	if _is_deck_manager_web_runtime():
+		if _is_deck_action_hud_dialog_visible():
+			_web_gesture_router.handle(_deck_action_hud_overlay, event)
+		elif _is_import_panel_visible():
+			_web_gesture_router.handle(%ImportPanel, event)
+		else:
+			_web_gesture_router.handle(self, event)
+		return
 	if _should_suppress_deck_action_hud_close_input(event):
 		return
 	if _is_deck_action_hud_dialog_visible():
@@ -351,8 +370,8 @@ func _ensure_import_provider_button() -> Button:
 	var existing := find_child("BtnOpenTcgMik", true, false) as Button
 	if existing != null:
 		return existing
-	var vbox := get_node_or_null("ImportPanel/ImportBox/VBox") as VBoxContainer
-	var hint_label := get_node_or_null("ImportPanel/ImportBox/VBox/HintLabel") as Label
+	var vbox := get_node_or_null("ImportPanel/ImportBox/ImportScroll/VBox") as VBoxContainer
+	var hint_label := get_node_or_null("ImportPanel/ImportBox/ImportScroll/VBox/HintLabel") as Label
 	if vbox == null or hint_label == null or hint_label.get_parent() != vbox:
 		return null
 	var provider_button := Button.new()
@@ -410,7 +429,7 @@ func _configure_import_feedback_line_edit(input: LineEdit, keyboard_type: int = 
 
 
 func _configure_import_url_line_edit(input: LineEdit) -> void:
-	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if _is_deck_manager_web_runtime() else LineEdit.KEYBOARD_TYPE_DEFAULT
+	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if _is_deck_manager_web_runtime() and _import_panel_ui.source != "miniapp" else LineEdit.KEYBOARD_TYPE_DEFAULT
 	_configure_import_feedback_line_edit(input, keyboard_type)
 
 
@@ -606,133 +625,16 @@ func _control_rect_with_layout_fallback(control: Control) -> Rect2:
 	return Rect2(control.global_position, fallback_size)
 
 
+func _ensure_import_panel_ui() -> void:
+	_ensure_import_paste_button()
+	_ensure_import_image_button()
+	_ensure_import_provider_button()
+	_import_panel_ui.setup(self)
+
+
 func _apply_import_panel_layout(context: Dictionary, portrait: bool, viewport_size: Vector2) -> void:
-	var import_panel := get_node_or_null("%ImportPanel") as Control
-	var import_bg := find_child("ImportBg", true, false) as Control
-	var import_box := find_child("ImportBox", true, false) as PanelContainer
-	if import_panel != null:
-		import_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-		import_panel.z_as_relative = false
-		import_panel.z_index = 1000
-		import_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	if import_bg != null:
-		import_bg.mouse_filter = Control.MOUSE_FILTER_STOP
-		import_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	if import_box == null:
-		return
-	import_box.mouse_filter = Control.MOUSE_FILTER_STOP
-	var vbox := import_box.get_node_or_null("VBox") as VBoxContainer
-	var title_label := import_box.get_node_or_null("VBox/TitleLabel") as Label
-	var hint_label := import_box.get_node_or_null("VBox/HintLabel") as Label
-	var progress_label := get_node_or_null("%ProgressLabel") as Label
-	var progress_bar := get_node_or_null("%ProgressBar") as ProgressBar
-	var url_input := get_node_or_null("%UrlInput") as LineEdit
-	var button_row := import_box.get_node_or_null("VBox/BtnRow") as HBoxContainer
-	var paste_button := _ensure_import_paste_button()
-	var image_import_button := _ensure_import_image_button()
-	var provider_button := _ensure_import_provider_button()
-	var import_button := get_node_or_null("%BtnDoImport") as Button
-	var close_button := get_node_or_null("%BtnCloseImport") as Button
-	if hint_label != null:
-		hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	if progress_label != null:
-		progress_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	if url_input != null:
-		_configure_import_url_line_edit(url_input)
-	if not portrait:
-		import_box.anchor_left = 0.5
-		import_box.anchor_top = 0.5
-		import_box.anchor_right = 0.5
-		import_box.anchor_bottom = 0.5
-		import_box.custom_minimum_size = Vector2(500, 260)
-		import_box.offset_left = -250.0
-		import_box.offset_right = 250.0
-		import_box.offset_top = -130.0
-		import_box.offset_bottom = 130.0
-		if vbox != null:
-			vbox.add_theme_constant_override("separation", 10)
-		if hint_label != null:
-			hint_label.custom_minimum_size.y = 0.0
-			hint_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
-		if progress_label != null:
-			progress_label.custom_minimum_size.y = 0.0
-			progress_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
-		if url_input != null:
-			url_input.custom_minimum_size = Vector2(0.0, 38.0)
-			url_input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
-		if progress_bar != null:
-			progress_bar.custom_minimum_size.y = 0.0
-		if provider_button != null:
-			provider_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			provider_button.custom_minimum_size.y = HUD_BUTTON_COMPACT_MIN_HEIGHT
-			provider_button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE))
-		if button_row != null:
-			button_row.add_theme_constant_override("separation", 20)
-		for button: Button in [paste_button, image_import_button, import_button, close_button]:
-			if button == null:
-				continue
-			button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			button.custom_minimum_size.y = HUD_BUTTON_MIN_HEIGHT
-			button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(HUD_BUTTON_FONT_SIZE))
-		return
-
-	var margin := float(context.get("page_margin", 24.0))
-	var input_height := float(context.get("input_height", 98.0))
-	var box_width := maxf(320.0, viewport_size.x - margin * 2.0)
-	var box_height := maxf(560.0, viewport_size.y - margin * 2.0)
-	import_box.anchor_left = 0.0
-	import_box.anchor_top = 0.0
-	import_box.anchor_right = 1.0
-	import_box.anchor_bottom = 1.0
-	import_box.custom_minimum_size = Vector2(box_width, box_height)
-	import_box.offset_left = margin
-	import_box.offset_right = -margin
-	import_box.offset_top = margin
-	import_box.offset_bottom = -margin
-
-	var section_gap := int(context.get("section_gap", 22))
-	var title_font := int(context.get("title_font_size", 44))
-	var body_font := int(context.get("body_font_size", 27))
-	var input_font := int(context.get("input_font_size", 29))
-	var button_font := int(context.get("button_font_size", 33))
-	var button_height := maxf(float(context.get("secondary_button_height", 104.0)), input_height)
-	var portrait_input_height := maxf(input_height * 1.32, 128.0)
-	if vbox != null:
-		vbox.add_theme_constant_override("separation", section_gap)
-		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	if title_label != null:
-		title_label.add_theme_font_size_override("font_size", title_font)
-	if hint_label != null:
-		hint_label.add_theme_font_size_override("font_size", body_font)
-		hint_label.custom_minimum_size.y = maxf(hint_label.custom_minimum_size.y, float(body_font) * 9.2)
-		hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		hint_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	if progress_label != null:
-		progress_label.add_theme_font_size_override("font_size", body_font)
-		progress_label.custom_minimum_size.y = maxf(progress_label.custom_minimum_size.y, float(body_font) * 2.0)
-	if url_input != null:
-		url_input.custom_minimum_size = Vector2(maxf(260.0, box_width - margin), maxf(url_input.custom_minimum_size.y, portrait_input_height))
-		url_input.add_theme_font_size_override("font_size", input_font)
-		url_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_configure_import_url_line_edit(url_input)
-	if progress_bar != null:
-		progress_bar.custom_minimum_size.y = maxf(progress_bar.custom_minimum_size.y, input_height * 0.36)
-	if provider_button != null:
-		provider_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		provider_button.custom_minimum_size.y = maxf(provider_button.custom_minimum_size.y, button_height)
-		provider_button.add_theme_font_size_override("font_size", button_font)
-		NonBattleTouchBridgeScript.bind_button_touch(provider_button)
-	if button_row != null:
-		button_row.add_theme_constant_override("separation", maxi(16, roundi(float(section_gap) * 0.78)))
-	for button: Button in [paste_button, image_import_button, import_button, close_button]:
-		if button == null:
-			continue
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
-		button.add_theme_font_size_override("font_size", button_font)
-		NonBattleTouchBridgeScript.bind_button_touch(button)
+	_ensure_import_panel_ui()
+	_import_panel_ui.apply_layout(context, portrait, viewport_size)
 
 
 func _apply_deck_manager_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
@@ -3361,16 +3263,11 @@ func _create_deck_item(deck: DeckData) -> Control:
 func _on_import_pressed() -> void:
 	if _current_operation != "":
 		return
-	_cancel_import_result_auto_close()
 	_pending_import_deck_name_override = ""
 	_panel_mode = "import"
-	_configure_operation_panel()
-	%UrlInput.text = ""
-	%UrlInput.editable = true
-	%ProgressLabel.text = ""
+	_ensure_import_panel_ui()
+	_import_panel_ui.reset()
 	%ProgressBar.visible = false
-	%BtnDoImport.visible = true
-	%BtnDoImport.disabled = false
 	_show_import_panel()
 
 
@@ -3591,7 +3488,8 @@ func _clear_share_poster_save_state() -> void:
 func _on_image_import_pressed() -> void:
 	if _current_operation != "":
 		return
-	_cancel_import_result_auto_close()
+	_ensure_import_panel_ui()
+	_import_panel_ui.select_source("image")
 	_current_operation = "share_image_import"
 	_set_operation_busy(true)
 	_show_import_panel()
@@ -3850,7 +3748,6 @@ func _build_bundled_recommendation_deck(recommendation: Dictionary) -> DeckData:
 func _start_embedded_recommendation_import(deck: DeckData, import_url: String) -> void:
 	if deck == null or _current_operation != "":
 		return
-	_cancel_import_result_auto_close()
 	_pending_import_deck_name_override = ""
 	_current_operation = "import"
 	_panel_mode = "import"
@@ -3883,7 +3780,8 @@ func _on_recommendation_read_pressed(recommendation: Dictionary) -> void:
 
 
 func _on_close_import() -> void:
-	_cancel_import_result_auto_close()
+	if _current_operation != "":
+		return
 	_hide_import_panel()
 
 
@@ -3906,13 +3804,18 @@ func _focus_import_url_input() -> void:
 
 
 func _on_paste_import_url() -> void:
+	if _import_panel_ui.state == "success":
+		_on_import_pressed()
+		return
+	if _current_operation != "":
+		return
 	if _panel_mode != "import":
 		return
 	if _is_deck_manager_web_runtime():
 		var url_input := get_node_or_null("%UrlInput") as LineEdit
 		if url_input != null and url_input.editable:
 			NonBattleTouchBridgeScript.request_web_text_input(url_input)
-			%ProgressLabel.text = "请直接输入卡组链接或数字 ID；也可以长按输入框，使用浏览器的粘贴菜单。"
+			%ProgressLabel.text = "可直接输入，或长按输入框使用浏览器的粘贴菜单。"
 		return
 	var clipboard_text := ""
 	if DisplayServer.get_name() != "headless":
@@ -3930,32 +3833,40 @@ func _apply_import_paste_text(text: String) -> void:
 		return
 	var clipboard_text := text.strip_edges()
 	if clipboard_text == "":
-		%ProgressLabel.text = "剪贴板为空。请先在浏览器复制 tcg.mik.moe 卡组链接，或直接输入末尾数字 ID。"
+		%ProgressLabel.text = "剪贴板为空。请先复制卡组链接或官方小程序卡组 ID。"
 		return
 	url_input.text = clipboard_text
+	_ensure_import_panel_ui()
+	_import_panel_ui._on_text_changed(clipboard_text)
 	url_input.caret_column = url_input.text.length()
 	%ProgressLabel.text = "已粘贴剪贴板内容，确认无误后点击“导入卡组”。"
 	_focus_import_url_input()
 
 
 func _on_do_import() -> void:
-	if _panel_mode != "import":
+	if _panel_mode != "import" or _current_operation != "":
 		return
-
-	var url: String = %UrlInput.text.strip_edges()
-	if url.is_empty():
-		%ProgressLabel.text = "请输入卡组链接或卡组 ID。"
+	if _import_panel_ui.state == "success" and _import_panel_ui.completed_deck != null:
+		_hide_import_panel()
+		_on_view_deck(_import_panel_ui.completed_deck)
 		return
-
-	_start_import_from_url(url, "正在导入卡组...")
+	var text: String = %UrlInput.text.strip_edges()
+	var ref := DeckImporter.parse_provider_ref(text)
+	var provider := str(ref.get("provider", ""))
+	if provider == "" or (provider == "tcg_mik" and int(ref.get("id", 0)) <= 0):
+		_ensure_import_panel_ui()
+		_import_panel_ui.show_error("请输入 18 位小程序卡组 ID，保留原有大小写、下划线和短横线。" if _import_panel_ui.source == "miniapp" else "请输入有效的卡组网站链接、数字编号或 18 位小程序卡组 ID。")
+		return
+	_start_import_from_url(text, "正在读取官方小程序卡组…" if provider == "miniapp" else "正在读取卡组…")
 
 
 func _start_import_from_url(url: String, progress_text: String, deck_name_override: String = "") -> void:
 	if _current_operation != "":
 		return
 
-	_cancel_import_result_auto_close()
 	_pending_import_deck_name_override = deck_name_override.strip_edges()
+	_ensure_import_panel_ui()
+	_import_panel_ui.select_source("miniapp" if DeckImporter.parse_provider_ref(url).get("provider") == "miniapp" else "website", true)
 	_current_operation = "import"
 	_panel_mode = "import"
 	_configure_operation_panel()
@@ -4010,7 +3921,6 @@ func _on_sync_images_pressed() -> void:
 	if _current_operation != "":
 		return
 
-	_cancel_import_result_auto_close()
 	_panel_mode = "sync_images"
 	_configure_operation_panel()
 	_show_import_panel()
@@ -4083,6 +3993,13 @@ func _on_import_completed(deck: DeckData, errors: PackedStringArray) -> void:
 
 func _finalize_import_save(deck: DeckData, errors: PackedStringArray) -> void:
 	_save_deck_incrementally(deck)
+	if _is_deck_manager_web_runtime():
+		%ProgressLabel.text = "正在保存到浏览器…"
+		if not CardDatabase.last_deck_save_persistent:
+			_current_operation = ""
+			_set_operation_busy(false)
+			_show_import_result("卡组已导入当前会话，但浏览器未能保存。请勿关闭页面，检查浏览器是否允许网站存储。")
+			return
 	_current_operation = ""
 	_pending_import_deck_name_override = ""
 	_set_operation_busy(false)
@@ -4091,10 +4008,11 @@ func _finalize_import_save(deck: DeckData, errors: PackedStringArray) -> void:
 	if errors.is_empty():
 		result_message = "导入成功：%s（%d 张卡）" % [deck.deck_name, deck.total_cards]
 	else:
-		result_message = "导入成功，包含 %d 条警告" % errors.size()
+		result_message = "导入成功：%s（%d 张卡）\n%d 条提示：\n%s" % [deck.deck_name, deck.total_cards, errors.size(), "\n".join(errors)]
 		for err: String in errors:
 			push_warning("导入警告：%s" % err)
-	_show_import_result(result_message)
+	_ensure_import_panel_ui()
+	_import_panel_ui.show_success(deck, result_message)
 
 
 func _has_duplicate_deck_name(deck_name: String, ignored_deck_id: int = -1) -> bool:
@@ -4844,39 +4762,8 @@ func _on_import_failed(error_message: String) -> void:
 
 
 func _show_import_result(message: String) -> void:
-	%ProgressBar.visible = false
-	%UrlInput.editable = false
-	%BtnDoImport.visible = false
-	%BtnDoImport.disabled = true
-	%ProgressLabel.text = message
-	_schedule_import_result_auto_close()
-
-
-func _schedule_import_result_auto_close() -> void:
-	if not is_inside_tree():
-		return
-	_ensure_import_result_close_timer()
-	_import_result_close_timer.start(IMPORT_RESULT_AUTO_CLOSE_SECONDS)
-
-
-func _ensure_import_result_close_timer() -> void:
-	if _import_result_close_timer != null and is_instance_valid(_import_result_close_timer):
-		return
-	_import_result_close_timer = Timer.new()
-	_import_result_close_timer.name = "ImportResultCloseTimer"
-	_import_result_close_timer.one_shot = true
-	_import_result_close_timer.timeout.connect(_on_import_result_close_timeout)
-	add_child(_import_result_close_timer)
-
-
-func _cancel_import_result_auto_close() -> void:
-	if _import_result_close_timer != null and is_instance_valid(_import_result_close_timer):
-		_import_result_close_timer.stop()
-
-
-func _on_import_result_close_timeout() -> void:
-	if _current_operation == "":
-		_hide_import_panel()
+	_ensure_import_panel_ui()
+	_import_panel_ui.show_error(message)
 
 
 func _on_image_sync_progress(job_id: String, current: int, total: int) -> void:
@@ -5274,49 +5161,17 @@ func _on_back_pressed() -> void:
 
 
 func _configure_operation_panel() -> void:
-	var title_label: Label = $ImportPanel/ImportBox/VBox/TitleLabel
-	var hint_label: Label = $ImportPanel/ImportBox/VBox/HintLabel
-	var paste_button := _ensure_import_paste_button()
-	var image_import_button := _ensure_import_image_button()
-	var provider_button := _ensure_import_provider_button()
+	_ensure_import_panel_ui()
+	_import_panel_ui.render()
 
-	if _panel_mode == "sync_images":
-		title_label.text = "同步卡图"
-		hint_label.visible = false
-		%UrlInput.visible = false
-		%BtnDoImport.visible = false
-		if paste_button != null:
-			paste_button.visible = false
-		if image_import_button != null:
-			image_import_button.visible = false
-		if provider_button != null:
-			provider_button.visible = false
-	else:
-		title_label.text = "导入卡组"
-		hint_label.visible = true
-		%UrlInput.visible = true
-		%BtnDoImport.visible = true
-		if paste_button != null:
-			paste_button.visible = true
-		if image_import_button != null:
-			image_import_button.visible = true
-		if provider_button != null:
-			provider_button.visible = true
 
-	%BtnCloseImport.text = "关闭"
-	if _panel_mode == "import":
-		title_label.text = "导入卡组"
-		hint_label.text = IMPORT_DECK_GUIDE_TEXT
-		%UrlInput.placeholder_text = "粘贴卡组链接或输入数字 ID，例如 574793"
-		if paste_button != null:
-			paste_button.text = "输入 / 粘贴" if _is_deck_manager_web_runtime() else "粘贴链接"
-		if image_import_button != null:
-			image_import_button.text = "卡组图导入"
-		%BtnDoImport.text = "导入卡组"
-	%BtnCloseImport.text = "关闭"
+func _select_import_source(source: String) -> void:
+	_ensure_import_panel_ui()
+	_import_panel_ui.select_source(source)
 
 
 func _set_operation_busy(busy: bool) -> void:
+	_configure_operation_panel()
 	%BtnNewDeck.disabled = busy
 	%BtnImport.disabled = busy
 	%BtnSyncImages.disabled = busy

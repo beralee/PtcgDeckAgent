@@ -27,6 +27,30 @@ class SequenceCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
+
+class UnexpectedRandomPort extends RefCounted:
+	var calls := 0
+	func coin(_metadata: Dictionary) -> bool:
+		calls += 1
+		return true
+
+
+func test_fixed_coin_sequence_covers_metadata_and_grouped_draws() -> String:
+	var flipper := SequenceCoinFlipper.new([false, true, false])
+	var port := UnexpectedRandomPort.new()
+	flipper.random_event_port = port
+	var single := flipper.flip_with_metadata({"source": "burn_checkup"})
+	var grouped := flipper.flip_multiple_with_metadata(2, {"source": "attack"})
+	return run_checks([
+		assert_eq(single, false),
+		assert_eq(grouped, [true, false]),
+		assert_eq(flipper.index, 3),
+		assert_eq(port.calls, 0, "fixed test coin sequences must not escape to random draws"),
+	])
+
 
 func test_imported_cards_register_expected_effect_entries() -> String:
 	var gsm := _make_gsm()

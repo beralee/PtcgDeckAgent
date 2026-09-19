@@ -19,6 +19,9 @@ class SequenceCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_registry_injects_processor_coin_flipper_into_cyllene() -> String:
 	var flipper := SequenceCoinFlipper.new([true, false])

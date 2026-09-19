@@ -462,7 +462,7 @@ func _update_player_controls() -> void:
 	if play_pause != null:
 		play_pause.disabled = not loaded or int(view.get("frame_count", 0)) <= 1
 		if _is_playing:
-			play_pause.text = "⏸ 暂停"
+			play_pause.text = "暂停"
 			play_pause.set_meta("portrait_compact_text_override", "暂停")
 		elif loaded and not bool(view.get("can_next", false)):
 			play_pause.text = "↻ 重头播放"

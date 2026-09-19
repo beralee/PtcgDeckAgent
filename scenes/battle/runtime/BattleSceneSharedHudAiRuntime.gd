@@ -791,6 +791,8 @@ func _is_ai_turn_ready() -> bool:
 		if _is_ui_blocking_ai():
 			return false
 		return _get_effect_interaction_prompt_player_index() == int(owner.player_index)
+	if _pending_choice in ["retreat_energy", "retreat_bench"]:
+		return _is_ai_retreat_prompt() and not _is_ui_blocking_ai()
 	return bool(owner.call("should_control_turn", _gsm.game_state, _is_ui_blocking_ai()))
 
 
@@ -977,6 +979,7 @@ func _is_ui_blocking_ai() -> bool:
 		or _is_ai_send_out_prompt()
 		or _is_ai_heavy_baton_prompt()
 		or _is_ai_exp_share_prompt()
+		or _is_ai_retreat_prompt()
 	)
 	return (
 		(_deck_training_controller != null and _deck_training_controller.is_modal_open())
@@ -997,6 +1000,7 @@ func _is_ui_blocking_ai() -> bool:
 				or _is_ai_send_out_prompt()
 				or _is_ai_heavy_baton_prompt()
 				or _is_ai_exp_share_prompt()
+				or _is_ai_retreat_prompt()
 			)
 		)
 	)
@@ -1050,7 +1054,7 @@ func _development_ui_prompt_player_index() -> int:
 		return int(_pending_choice.split("_")[-1])
 	if _pending_choice == "take_prize":
 		return _pending_prize_player_index
-	if _pending_choice in ["send_out", "heavy_baton_target", "exp_share_target"]:
+	if _pending_choice in ["send_out", "heavy_baton_target", "exp_share_target", "retreat_energy", "retreat_bench"]:
 		return int(_dialog_data.get("player", -1))
 	if _pending_choice == "effect_interaction":
 		return _get_effect_interaction_prompt_player_index()
@@ -1069,6 +1073,13 @@ func _is_runtime_ai_player(player_index: int) -> bool:
 func _is_author_player_owner_prompt(player_index: int) -> bool:
 	return GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI \
 		and _is_runtime_ai_player(player_index)
+
+
+func _is_ai_retreat_prompt() -> bool:
+	return (
+		_pending_choice in ["retreat_energy", "retreat_bench"]
+		and _is_author_player_owner_prompt(int(_dialog_data.get("player", -1)))
+	)
 
 
 

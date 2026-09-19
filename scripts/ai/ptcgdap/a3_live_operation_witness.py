@@ -269,9 +269,41 @@ def build_public_live_operation_ledger(
     return ledger
 
 
+def audit_live_operation_ledger_sources(
+    ledger: Mapping[str, Any], current_source_identities: Mapping[str, str]
+) -> dict[str, Any]:
+    """Revalidate applicability without rewriting a historical qualification.
+
+    A past pass is not evidence for changed or unavailable source owners. The
+    public checkout cannot silently certify private owners it cannot inspect.
+    """
+    payload = dict(ledger)
+    evidence_hash = payload.pop("evidence_sha256", None)
+    if evidence_hash != _hash(payload):
+        raise A3LiveOperationWitnessError("a3_live_witness_evidence_integrity_invalid")
+    recorded = payload.get("source_identities")
+    if not isinstance(recorded, Mapping) or not recorded:
+        raise A3LiveOperationWitnessError("a3_live_witness_ledger_identity_invalid")
+    missing = sorted(set(recorded) - set(current_source_identities))
+    changed = sorted(
+        key for key in recorded
+        if key in current_source_identities and recorded[key] != current_source_identities[key]
+    )
+    applicable = not missing and not changed and ledger.get("qualification_status") == "passed"
+    return {
+        "status": "applicable" if applicable else "requires_requalification",
+        "current_source_qualified": applicable,
+        "changed_source_ids": changed,
+        "unverified_source_ids": missing,
+        "historical_evidence_sha256": evidence_hash,
+        "full_rule_a3_claimed": False,
+    }
+
+
 __all__ = [
     "A3LiveOperationWitnessError", "LiveDecision",
     "REQUIRED_OPERATION_FAMILIES", "aligned_sequence_witness",
     "aligned_window_witness", "build_public_live_operation_ledger",
     "collect_live_decisions",
+    "audit_live_operation_ledger_sources",
 ]

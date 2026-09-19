@@ -58,7 +58,7 @@ func test_r55_transaction_architecture_preserves_all_current_r54_decisions() -> 
 
 func test_r55_same_turn_transaction_rebinds_evolution_disruption_energy_then_attack() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -158,7 +158,7 @@ func test_r55_same_turn_transaction_rebinds_evolution_disruption_energy_then_att
 
 func test_r55_real_window_generates_non_authoritative_whole_turn_shadow() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -231,7 +231,7 @@ func test_r55_real_window_generates_non_authoritative_whole_turn_shadow() -> Str
 
 func test_r55_survival_phase_benches_useful_reserve_but_never_late_budew() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -357,7 +357,7 @@ func test_r55_survival_phase_benches_useful_reserve_but_never_late_budew() -> St
 
 func test_r55_zero_damage_wall_is_one_devolution_transaction() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -535,7 +535,7 @@ func test_r55_zero_damage_wall_is_one_devolution_transaction() -> String:
 
 func test_r55_low_hp_munkidori_moves_its_own_damage_before_commit() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -605,7 +605,7 @@ func test_r55_low_hp_munkidori_moves_its_own_damage_before_commit() -> String:
 
 func test_r55_search_stage_builds_two_safe_tm_evolution_targets_without_budew() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -709,7 +709,7 @@ func test_r55_search_stage_builds_two_safe_tm_evolution_targets_without_budew() 
 
 func test_r55_tm_evolution_transaction_requires_two_safe_targets_before_commit() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -935,7 +935,7 @@ func test_r55_tm_evolution_transaction_requires_two_safe_targets_before_commit()
 
 func test_r55_spikemuth_completes_backup_grimmsnarl_before_turn_commit() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1039,7 +1039,7 @@ func test_r55_spikemuth_completes_backup_grimmsnarl_before_turn_commit() -> Stri
 
 func test_r55_low_hp_munkidori_retreat_transaction_requires_rescue_board_window() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1126,7 +1126,7 @@ func test_r55_low_hp_munkidori_retreat_transaction_requires_rescue_board_window(
 
 func test_r55_search_owned_tm_chains_fund_active_before_evolution_or_devolution() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1419,7 +1419,7 @@ func test_r55_search_owned_tm_chains_fund_active_before_evolution_or_devolution(
 
 func test_r55_send_out_preserves_the_only_morgrem_evolution_bridge() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1488,7 +1488,7 @@ func test_r55_send_out_preserves_the_only_morgrem_evolution_bridge() -> String:
 
 func test_r55_counter_catcher_opens_the_wall_then_commits_the_attack() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1598,7 +1598,7 @@ func test_r55_counter_catcher_opens_the_wall_then_commits_the_attack() -> String
 
 func test_r55_arven_item_search_completes_live_morgrem_before_munkidori_energy() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1664,7 +1664,7 @@ func test_r55_arven_item_search_completes_live_morgrem_before_munkidori_energy()
 
 func test_r55_existing_poffin_line_is_not_hijacked_by_search_owned_transaction() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1760,7 +1760,7 @@ func test_r55_existing_poffin_line_is_not_hijacked_by_search_owned_transaction()
 
 func test_r55_early_search_transaction_waits_for_free_artazon_development() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1821,7 +1821,7 @@ func test_r55_early_search_transaction_waits_for_free_artazon_development() -> S
 
 func test_r55_opening_budew_keeps_the_manual_attachment() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1890,7 +1890,7 @@ func test_r55_opening_budew_keeps_the_manual_attachment() -> String:
 
 func test_r55_arven_tm_evolution_search_is_not_globally_rejected_with_developed_board() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -1958,7 +1958,7 @@ func test_r55_arven_tm_evolution_search_is_not_globally_rejected_with_developed_
 
 func test_r55_early_item_lock_handoff_protects_the_only_ready_grimmsnarl() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -2052,7 +2052,7 @@ func test_r55_early_item_lock_handoff_protects_the_only_ready_grimmsnarl() -> St
 
 func test_r55_search_owned_devolution_waits_for_public_wall_damage() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -2149,7 +2149,7 @@ func test_r55_search_owned_devolution_waits_for_public_wall_damage() -> String:
 
 func test_r55_early_tm_search_waits_for_free_board_development() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{
@@ -2255,7 +2255,7 @@ func test_r55_early_tm_search_waits_for_free_board_development() -> String:
 
 func test_r55_late_sendout_munkidori_does_not_require_attack_ready() -> String:
 	var catalog := CatalogScript.new()
-	catalog.scan_startup()
+	preload("res://tests/ptcgdap/godot/support/LegacyAuthorStrategyFixtures.gd").populate(catalog, PACKAGE_SHA256)
 	var requested: Dictionary = GateScript.request_match_handle(
 		catalog,
 		{

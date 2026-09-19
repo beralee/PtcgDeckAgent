@@ -90,7 +90,9 @@ func setup(
 	next_tournament_size: int,
 	seed: int = 0,
 	enable_llm_opponents: bool = false,
-	next_tournament_format: String = FORMAT_STANDARD
+	next_tournament_format: String = FORMAT_STANDARD,
+	author_pool: Array = [],
+	opponent_source: String = "builtin"
 ) -> void:
 	player_name = next_player_name.strip_edges()
 	if player_name == "":
@@ -111,7 +113,7 @@ func setup(
 		_rng.seed = seed
 	else:
 		_rng.randomize()
-	_build_field()
+	_build_field(author_pool, opponent_source)
 
 
 func rounds_for_size(size: int) -> int:
@@ -239,6 +241,8 @@ func get_llm_deck_pool() -> Array[int]:
 
 
 func participant_deck_name(participant_id: int) -> String:
+	if participant_ai_mode(participant_id) == "author":
+		return str(_participant_by_id(participant_id).get("author_deck_name", "开发者卡组"))
 	var deck_id := participant_deck_id(participant_id)
 	var deck := CardDatabase.get_ai_deck(deck_id)
 	if deck == null:
@@ -275,17 +279,17 @@ func get_deck_distribution() -> Array[Dictionary]:
 	var counts := {}
 	for participant: Dictionary in participants:
 		var deck_id := int(participant.get("deck_id", 0))
-		counts[deck_id] = int(counts.get(deck_id, 0)) + 1
+		var key := str(deck_id)
+		if str(participant.get("ai_mode", "")) == "author":
+			var selection: Dictionary = participant.get("author_strategy_selection", {})
+			key = "%s@%s#%s" % [selection.get("package_id", ""), selection.get("package_version", ""), selection.get("archive_sha256", "")]
+		if not counts.has(key):
+			counts[key] = {"deck_id": deck_id, "deck_name": participant_deck_name(int(participant.id)), "count": 0}
+		counts[key]["count"] += 1
 	var distribution: Array[Dictionary] = []
-	for deck_id_variant: Variant in counts.keys():
-		var deck_id := int(deck_id_variant)
-		var count := int(counts.get(deck_id, 0))
-		distribution.append({
-			"deck_id": deck_id,
-			"deck_name": participant_deck_name(_participant_id_for_deck(deck_id)),
-			"count": count,
-			"share": float(count) / float(maxi(1, participants.size())),
-		})
+	for entry: Dictionary in counts.values():
+		entry["share"] = float(entry.count) / float(maxi(1, participants.size()))
+		distribution.append(entry)
 	distribution.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var count_a := int(a.get("count", 0))
 		var count_b := int(b.get("count", 0))
@@ -352,20 +356,44 @@ func restore_state(data: Dictionary) -> void:
 		_rng.state = int(data.get("rng_state", _rng.state))
 
 
-func _build_field() -> void:
+func participant_author_selection(participant_id: int) -> Dictionary:
+	return _participant_by_id(participant_id).get("author_strategy_selection", {}).duplicate(true)
+
+
+func _build_field(author_pool: Array = [], opponent_source: String = "builtin") -> void:
 	var used_names := {}
 	participants.append(_make_participant(player_participant_id, player_name, player_deck_id, true))
 	used_names[player_name] = true
 	var ai_deck_pool := get_ai_deck_pool_for_format(tournament_format)
-	if ai_deck_pool.is_empty():
+	if ai_deck_pool.is_empty() and (author_pool.is_empty() or opponent_source == "builtin"):
 		push_error("SwissTournament: no AI decks available for tournament format %s" % tournament_format)
 		return
 	var llm_deck_pool := _llm_deck_pool_from_ai_pool(ai_deck_pool)
 	var llm_pool_available := not llm_deck_pool.is_empty()
 	var llm_inserted := false
+	# Shuffle a copy once, then cycle to represent packages evenly. Persist only
+	# exact references and presentation text, never a handle or runtime object.
+	var author_order := author_pool.duplicate(true)
+	for index: int in range(author_order.size() - 1, 0, -1):
+		var swap_index := _rng.randi_range(0, index)
+		var entry: Variant = author_order[index]
+		author_order[index] = author_order[swap_index]
+		author_order[swap_index] = entry
+	var author_index := 0
 	for i: int in range(1, tournament_size):
 		var next_name := _generate_unique_name(used_names)
-		var next_ai_mode := _roll_ai_mode(i, llm_inserted, llm_pool_available)
+		if not author_order.is_empty() and opponent_source != "builtin" and (opponent_source == "author" or ai_deck_pool.is_empty() or i % 2 == 1):
+			var author: Dictionary = author_order[author_index % author_order.size()]
+			author_index += 1
+			var participant := _make_participant(i, next_name, 0, false, "author")
+			participant["author_strategy_selection"] = author.selection.duplicate(true)
+			participant["author_deck_name"] = str(author.get("deck_name", "开发者卡组"))
+			participants.append(participant)
+			continue
+		# In a mixed field the final odd slot belongs to an author package;
+		# retain the existing guarantee on the last available built-in slot.
+		var mode_slot := tournament_size - 1 if opponent_source == "mixed" and not author_order.is_empty() and i == tournament_size - 2 else i
+		var next_ai_mode := _roll_ai_mode(mode_slot, llm_inserted, llm_pool_available)
 		var next_deck_id := _roll_llm_deck_id(llm_deck_pool) if next_ai_mode == "llm" else int(ai_deck_pool[_rng.randi_range(0, ai_deck_pool.size() - 1)])
 		if next_ai_mode == "llm":
 			llm_inserted = true
@@ -537,6 +565,10 @@ func _simulate_match(a_id: int, b_id: int) -> Dictionary:
 	var b := _participant_by_id(b_id)
 	var a_mode := str(a.get("ai_mode", "weak"))
 	var b_mode := str(b.get("ai_mode", "weak"))
+	# Background tables remain simulated. Unknown author strength must not be
+	# treated as weak AI or inherit a fabricated ladder rating.
+	if a_mode == "author" or b_mode == "author":
+		return {"winner_id": a_id if _rng.randf() < 0.5 else b_id}
 	if a_mode == "llm" or b_mode == "llm":
 		var llm_id := a_id if a_mode == "llm" else b_id
 		var opponent_mode := b_mode if a_mode == "llm" else a_mode

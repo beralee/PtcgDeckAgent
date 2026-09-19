@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "天际线",
+			"text": "只要这只宝可梦在场上，自己所有【基础】宝可梦【撤退】所需能量，全部消除。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "takuyoa",
+	"attacks": [
+		{
+			"cost": "PPC",
+			"damage": "200",
+			"is_vstar_power": false,
+			"name": "无限之刃",
+			"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+		}
+	],
+	"card_index": "078",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 天际线\n只要这只宝可梦在场上，自己所有【基础】宝可梦【撤退】所需能量，全部消除。\n\n【超】【超】【无】 无限之刃 200\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n\n",
+	"effect_id": "f8c2715403e3f4ea9783c46be2de832b",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 210,
+	"image_local_path": "user://cards/images/CSV9C/078.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/078.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "拉帝亚斯ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "Y1506"
+}

@@ -1,0 +1,181 @@
+{
+  "source_commit": "8cef569a84ee19fb3d58c7e23246e9265ab112c7",
+  "purpose": "Immutable historical contract fixtures; not shipped or discovered by the player catalog.",
+  "archives": [
+    {
+      "path": "ethans-typhlosion-r0-0.1.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ethans-typhlosion-r0-0.1.0.ptcgai",
+      "sha256": "FDECBD7FE2C2F2DA9D890150E166498AE2F607BCDC19F393C16873DB2346B0EA"
+    },
+    {
+      "path": "ethans-typhlosion-r10-0.11.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ethans-typhlosion-r10-0.11.0.ptcgai",
+      "sha256": "302CA76AEF1F4B918121B5CC06522B92B3A40248F06EF3890E629C27AA7C880C"
+    },
+    {
+      "path": "ethans-typhlosion-r5-0.6.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ethans-typhlosion-r5-0.6.0.ptcgai",
+      "sha256": "26AD9CCCB2EA848AEA0D1A8D38DFDA0BE544E341D91A1E863654A4A28921F1FD"
+    },
+    {
+      "path": "marnies-gift-box-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-1.0.0.ptcgai",
+      "sha256": "2E21FA1B9EFB1BE38A18C4B4DFA95EFAF5CBD87C3AD3A667E1CD5341D2C93EAC"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r10-2.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r10-2.0.0.ptcgai",
+      "sha256": "EFCE59B1D80F65B2BDA90EEF4784AF6676664B8109755BB9AAA6E6A669690875"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r15-2.5.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r15-2.5.0.ptcgai",
+      "sha256": "833CFAF414CD08D4E7A56A2D3C2D9C53846F3247F32BACDF5C92FDFB26820A88"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r4-1.4.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r4-1.4.0.ptcgai",
+      "sha256": "B928603BE61DBF0BF54FBB632C021E8C2D24A5557518EEE720072FB2DF67483F"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r43-5.3.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r43-5.3.0.ptcgai",
+      "sha256": "863EE8C8FA093B67863C5C60754A3BF4DF9796C7557084191A0C2A581E94A3A3"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r44-5.4.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r44-5.4.0.ptcgai",
+      "sha256": "F6CACECBF1FDDED6BFE2A530EBA56B2CE765CEA17D935D22E7BACCEC6F002E9E"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r45-5.5.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r45-5.5.0.ptcgai",
+      "sha256": "02567FC8512A191DC3AC47437C5042D7D108818F8FABA96B5A60221A0081D518"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r46-5.6.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r46-5.6.0.ptcgai",
+      "sha256": "2AFC960ABDAC8A2DA27EA15A94741CDEA5767E293191344FB55C8815DB1DEA2D"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r5-1.5.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r5-1.5.0.ptcgai",
+      "sha256": "A3251FA20C82F30E11D8A59710C15388231345C874A071804CF2643EB5FF1EC7"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r53-5.13.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r53-5.13.0.ptcgai",
+      "sha256": "E7539DB5639B236365A801476F685C22BD45B10F3E9C09A46960EBC60063EBED"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r54-5.14.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r54-5.14.0.ptcgai",
+      "sha256": "E0F575511DD29CBBBC5ABD9354BB67C78010DFC7C7CA8BD90E196630AD1A21B4"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r55-5.15.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r55-5.15.0.ptcgai",
+      "sha256": "D669C1C756A5D6AD8CAA36A6A91EE7FB6D031A2A00CF9ACC896080E725A6B4ED"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r6-1.6.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r6-1.6.0.ptcgai",
+      "sha256": "1F82B0F2FECC4BA78917A92C0F06DC5719468E469018BE210A3E3B4CCE1FD1D2"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r7-1.7.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r7-1.7.0.ptcgai",
+      "sha256": "4074CB811924CF3C2EBA98B5A3ED67E78CBA1E233221FB2D13801D86FD7D80E5"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r8-1.8.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r8-1.8.0.ptcgai",
+      "sha256": "209FA7EDF7321A142F1B8A25E44667D44E49AF728E799AFF112716951E72DFD1"
+    },
+    {
+      "path": "marnies-gift-box-rule-marnie-r9-1.9.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-rule-marnie-r9-1.9.0.ptcgai",
+      "sha256": "BDC7C0969D6F4A4F5CC94C480E3CE2C19F4C2542AB1902C16DEC51AE1333DB20"
+    },
+    {
+      "path": "marnies-gift-box-state-value-v2-5.34.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-state-value-v2-5.34.0.ptcgai",
+      "sha256": "32D20501F9AB036B9DA245557753EE1245CA6085F5CC982C4768CCBFB7A3FCD6"
+    },
+    {
+      "path": "marnies-gift-box-state-value-v2-5.37.1.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/marnies-gift-box-state-value-v2-5.37.1.ptcgai",
+      "sha256": "83F9E82671927B5E37A895CCB6B5A46D1C294D88BE343B0B7EF81C5EACB98079"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-1.0.0.ptcgai",
+      "sha256": "9531F683F2AB9E0138D8054D3E3813D7378F9F6E5F7F8CAF9C428C3FCAFF8D9F"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-r0-0.1.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-r0-0.1.0.ptcgai",
+      "sha256": "6BA5D78C7790212692B821354623FE10A36EF0A6C222BA2C4D61B09261CC310E"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-r1-0.2.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-r1-0.2.0.ptcgai",
+      "sha256": "A2E61810BD2B91915EFFDDB73EBE0B27DD64BEDF3BE0125F4B1172C00A53A3E1"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-r2-0.3.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-r2-0.3.0.ptcgai",
+      "sha256": "A759D05AFAC27AAA41CC8C5D9EC2740AA89D5D5BA7DD69A0769FC5722A2CC468"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-r3-0.4.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-r3-0.4.0.ptcgai",
+      "sha256": "A2C84D69C4F5A69D78E0821B9CE4E404953FF7138EE450C36DA651CE3E8E9423"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-supporter-r3-1.3.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-supporter-r3-1.3.0.ptcgai",
+      "sha256": "B813433007BCC1A516376D2C95E4911999B4B4B5A804BD5EE1329799280C40CA"
+    },
+    {
+      "path": "ogerpon-crustle-v523a-supporter-r4-1.4.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ogerpon-crustle-v523a-supporter-r4-1.4.0.ptcgai",
+      "sha256": "3B4E78A16EB2C238CD9CFB29CA29B8CF44E0D7D99822CA9C1ECD90A2651DFFB8"
+    },
+    {
+      "path": "ptcgdap-author-strategy-release-candidate.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai",
+      "sha256": "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E"
+    },
+    {
+      "path": "ptcgdap-cynthia-garchomp-development-candidate.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/ptcgdap-cynthia-garchomp-development-candidate.ptcgai",
+      "sha256": "3059C308904B323AF5CA10B1956EF8BB35F77A1174CF0AD0258F1A70A128FF06"
+    },
+    {
+      "path": "reviewed-marnie-grimmsnarl-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/reviewed-marnie-grimmsnarl-1.0.0.ptcgai",
+      "sha256": "60D0DBFED01230D524A3FFB173C152B0A1F4FDF2E6926614DBABB9ED57ED6316"
+    },
+    {
+      "path": "reviewed-no-balloon-gardevoir-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/reviewed-no-balloon-gardevoir-1.0.0.ptcgai",
+      "sha256": "FC2245D12044CE0ED92E877ACDA006A2DBD6F406FAE2573363D1C2EB7A69FB90"
+    },
+    {
+      "path": "reviewed-ns-zoroark-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/reviewed-ns-zoroark-1.0.0.ptcgai",
+      "sha256": "5ADE7B78A3F43E2537CE8E35FE73E1C63927C1EA0D15963EA5D98EC53664FBD0"
+    },
+    {
+      "path": "reviewed-pure-dragapult-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/reviewed-pure-dragapult-1.0.0.ptcgai",
+      "sha256": "8CCA6A11C6F04D3267187112112244057ABCCB3073898BBE7027B264AE68D0D9"
+    },
+    {
+      "path": "reviewed-raging-bolt-ogerpon-1.0.0.ptcgai",
+      "source_path": "data/ptcgdap/author_strategy_packages/reviewed-raging-bolt-ogerpon-1.0.0.ptcgai",
+      "sha256": "5DEEC95080A537B9BF10B4744050A2C53690486B057E556FBC11E3F55BEDA57A"
+    }
+  ]
+}

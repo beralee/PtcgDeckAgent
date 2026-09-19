@@ -203,9 +203,12 @@ class CountingCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 class NullHeadlessTargetsEffect extends BaseEffect:
-	func get_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
+	func build_ucis_interaction_steps_spec_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 		var filler := CardData.new()
 		filler.name = "Only Card"
 		filler.card_type = "Item"
@@ -850,8 +853,9 @@ func test_builder_uses_charizard_strategy_for_rare_candy_pairing() -> String:
 	var steps: Array[Dictionary] = EffectRareCandyScript.new().get_interaction_steps(rare_candy, gsm.game_state)
 	var targets: Variant = builder._build_headless_targets_from_steps(gsm, 0, 0, steps)
 	var ctx: Dictionary = {} if not (targets is Array) or (targets as Array).is_empty() else (targets as Array)[0]
-	var selected_stage2: Array = ctx.get("stage2_card", [])
-	var selected_target: Array = ctx.get("target_pokemon", [])
+	var pairs: Array = ctx.get("rare_candy_evolve", [])
+	var selected_stage2: Array = [pairs[0].get("card")] if not pairs.is_empty() else []
+	var selected_target: Array = [pairs[0].get("target_slot")] if not pairs.is_empty() else []
 	var stage2_name := "" if selected_stage2.is_empty() else str((selected_stage2[0] as CardInstance).card_data.name)
 	var target_name := "" if selected_target.is_empty() else str((selected_target[0] as PokemonSlot).get_pokemon_name())
 	return run_checks([
@@ -880,8 +884,9 @@ func test_builder_filters_generic_rare_candy_target_for_baxcalibur() -> String:
 	var steps: Array[Dictionary] = EffectRareCandyScript.new().get_interaction_steps(rare_candy, gsm.game_state)
 	var targets: Variant = builder._build_headless_targets_from_steps(gsm, 0, 0, steps)
 	var ctx: Dictionary = {} if not (targets is Array) or (targets as Array).is_empty() else (targets as Array)[0]
-	var selected_stage2: Array = ctx.get("stage2_card", [])
-	var selected_target: Array = ctx.get("target_pokemon", [])
+	var pairs: Array = ctx.get("rare_candy_evolve", [])
+	var selected_stage2: Array = [pairs[0].get("card")] if not pairs.is_empty() else []
+	var selected_target: Array = [pairs[0].get("target_slot")] if not pairs.is_empty() else []
 	var stage2_name := "" if selected_stage2.is_empty() else str((selected_stage2[0] as CardInstance).card_data.name)
 	var target_name := "" if selected_target.is_empty() else str((selected_target[0] as PokemonSlot).get_pokemon_name())
 

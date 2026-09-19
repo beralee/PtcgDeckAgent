@@ -54,6 +54,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(result)
 		return result
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_len_svi_85_kirlia_psychic_counts_opponent_active_energy() -> String:
 	var card: CardData = CardDatabase.get_card("LEN_SVI", "85")
@@ -144,8 +147,11 @@ func test_naic2025_gardevoir_rare_candy_pairs_chinese_stage2_with_english_stage1
 	var effect = EffectRareCandyScript.new()
 	var can_execute := effect.can_execute(direct_rare, direct_state) if direct_rare != null else false
 	var steps: Array[Dictionary] = effect.get_interaction_steps(direct_rare, direct_state) if direct_rare != null else []
-	var stage2_items: Array = steps[0].get("items", []) if steps.size() > 0 else []
-	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var stage2_items: Array = []
+	var target_items: Array = []
+	for pair: Dictionary in steps[0].get("items", []) if not steps.is_empty() else []:
+		stage2_items.append(pair.get("card"))
+		target_items.append(pair.get("target_slot"))
 	if direct_rare != null and direct_gardevoir != null:
 		effect.execute(direct_rare, [{
 			"stage2_card": [direct_gardevoir],
@@ -172,8 +178,9 @@ func test_naic2025_gardevoir_rare_candy_pairs_chinese_stage2_with_english_stage1
 			break
 	var ai_targets: Array = ai_action.get("targets", []) if not ai_action.is_empty() else []
 	var ai_ctx: Dictionary = ai_targets[0] if not ai_targets.is_empty() and ai_targets[0] is Dictionary else {}
-	var ai_stage2: Array = ai_ctx.get("stage2_card", [])
-	var ai_target: Array = ai_ctx.get("target_pokemon", [])
+	var ai_pairs: Array = ai_ctx.get("rare_candy_evolve", [])
+	var ai_stage2: Array = [ai_pairs[0].get("card")] if not ai_pairs.is_empty() else []
+	var ai_target: Array = [ai_pairs[0].get("target_slot")] if not ai_pairs.is_empty() else []
 
 	return run_checks([
 		assert_not_null(ralts, "CSV2C_053 Ralts should load for Rare Candy"),

@@ -6,9 +6,17 @@ reloadable = false
 
 [libraries]
 
-windows.release.x86_64 = "res://bin/ptcgai_ort/ptcgai_ort.windows.template_release.x86_64.dll"
-windows.debug.x86_64 = "res://bin/ptcgai_ort/ptcgai_ort.windows.template_release.x86_64.dll"
-macos.release.arm64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.arm64.dylib"
-macos.release.x86_64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.x86_64.dylib"
-macos.debug.arm64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.arm64.dylib"
-macos.debug.x86_64 = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.x86_64.dylib"
+windows.release.x86_64 = "res://bin/ptcgai_ort/ptcgai_ort.windows.template_release.x86_64.v4.dll"
+windows.debug.x86_64 = "res://bin/ptcgai_ort/ptcgai_ort.windows.template_release.x86_64.v4.dll"
+macos = "res://bin/ptcgai_ort/libptcgai_ort.macos.template_release.universal.dylib"
+android.arm64 = "res://bin/ptcgai_ort/libptcgai_ort.android.template_release.arm64.so"
+android.x86_64 = "res://bin/ptcgai_ort/android-x86_64/libptcgai_ort.android.template_release.x86_64.so"
+
+[dependencies]
+
+windows.x86_64 = {"res://bin/ptcgai_ort/onnxruntime.dll": ""}
+macos = {"res://bin/ptcgai_ort/libonnxruntime.dylib": "Contents/Frameworks"}
+; Godot's standard APK already owns libc++_shared.so. Exporting it twice breaks signing.
+android.arm64 = {"res://bin/ptcgai_ort/libonnxruntime.so": ""}
+android.x86_64 = {"res://bin/ptcgai_ort/android-x86_64/libonnxruntime.so": ""}
+

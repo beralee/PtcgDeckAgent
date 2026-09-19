@@ -71,7 +71,7 @@ class AuthorStrategyReleaseGateTests(unittest.TestCase):
         self.assertEqual(1, report["active_production_key_count"])
         self.assertFalse(report["test_fixture_key_execution_trusted"])
         handle = loader.load_path(
-            ROOT / "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+            ROOT / "tests/ptcgdap/fixtures/legacy_author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
         )
         self.assertEqual("test_fixture_trusted", handle.signature_status)
         self.assertEqual("test_fixture_only", handle.signature_scope)

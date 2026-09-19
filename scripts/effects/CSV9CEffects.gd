@@ -634,7 +634,7 @@ class AttackHealSelf:
 
 	func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index: int, _state: GameState) -> void:
 		if attacker != null and applies_to_attack_index(attack_index):
-			attacker.damage_counters = maxi(0, attacker.damage_counters - heal_amount)
+			attacker.heal(heal_amount, _state)
 
 
 class AttackHealOwnPokemon:
@@ -679,7 +679,7 @@ class AttackHealOwnPokemon:
 					target = slot
 					break
 		if target != null:
-			target.damage_counters = maxi(0, target.damage_counters - heal_amount)
+			target.heal(heal_amount, state)
 
 	func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 		if attack.has("_override_attack_index"):
@@ -1252,6 +1252,8 @@ class AttackBasicPokemonKnockoutCoin:
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
+			"ucis_context_name": "COIN_HEAD",
+			"ucis_option_type_name": "NO" if result == "tails" else "YES",
 			"wait_for_coin_animation": true,
 			"force_dialog": true,
 		}
@@ -1558,7 +1560,14 @@ class AttackSlowkingInspiration:
 		if source_card.card_data == null:
 			return interaction_validation_error("copied attack source is invalid")
 		var owner := int(attacker.get_top_card().owner_index) if attacker.get_top_card() != null else -1
-		if owner < 0 or owner >= state.players.size() or state.players[owner].deck.is_empty() or state.players[owner].deck[0] != source_card:
+		if owner < 0 or owner >= state.players.size():
+			return interaction_validation_error("copied attack owner is invalid")
+		# The before-damage hook has already consumed this exact, validated reveal.
+		# Do not revalidate its pre-payment zone (or the copied attack's paid costs).
+		var pending: Variant = state.shared_turn_flags.get(_pending_option_key(attacker), {})
+		if pending is Dictionary and not pending.is_empty() and pending == option and source_card in state.players[owner].discard_pile:
+			return interaction_validation_ok()
+		if state.players[owner].deck.is_empty() or state.players[owner].deck[0] != source_card:
 			return interaction_validation_error("copied attack source is no longer on top of the deck")
 		var copied_index := int(option.get("attack_index", -1))
 		if copied_index < 0 or copied_index >= source_card.card_data.attacks.size():
@@ -1672,6 +1681,11 @@ class AttackSlowkingInspiration:
 		if owner < 0 or owner >= state.players.size():
 			return {}
 		var player := state.players[owner]
+		var pending_key := _pending_option_key(attacker)
+		if state.shared_turn_flags.has(pending_key):
+			return state.shared_turn_flags[pending_key]
+		# An empty result still consumes the one reveal allowed by this attack.
+		state.shared_turn_flags[pending_key] = {}
 		if player.deck.is_empty():
 			return {}
 		var top_card: CardInstance = player.deck.pop_front()
@@ -1682,6 +1696,8 @@ class AttackSlowkingInspiration:
 			return {}
 		if option.is_empty() or option.get("source_card", null) != top_card:
 			var fallback_index := _best_attack_index(top_card.card_data)
+			if fallback_index < 0:
+				return {}
 			option = {
 				"source_card": top_card,
 				"attack_index": fallback_index,
@@ -1768,9 +1784,11 @@ class AttackSlowkingInspiration:
 		}
 
 	func _best_attack_index(cd: CardData) -> int:
-		var best_index := 0
+		var best_index := -1
 		var best_damage := -1
 		for i: int in cd.attacks.size():
+			if bool(cd.attacks[i].get("is_vstar_power", false)):
+				continue
 			var damage := DamageCalculator.new().parse_damage(str(cd.attacks[i].get("damage", "")))
 			if damage > best_damage:
 				best_damage = damage
@@ -1912,7 +1930,7 @@ class AbilityAttachEnergyFromHandHeal:
 		player.hand.erase(source)
 		source.face_up = true
 		target.attached_energy.append(source)
-		target.damage_counters = maxi(0, target.damage_counters - heal_amount)
+		target.heal(heal_amount, state)
 		pokemon.mark_ability_used(state.turn_number)
 
 	func _resolve_assignment(player: PlayerState, pokemon: PokemonSlot, ctx: Dictionary) -> Dictionary:

@@ -7,5 +7,5 @@ func discard_at_end_of_turn(slot: PokemonSlot, _state: GameState) -> bool:
 		return false
 	if slot.get_remaining_hp() > 30:
 		return false
-	slot.damage_counters = maxi(0, slot.damage_counters - 120)
+	slot.heal(120, _state)
 	return true

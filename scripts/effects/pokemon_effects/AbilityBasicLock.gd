@@ -23,6 +23,8 @@ static func is_basic_abilities_disabled(
 	checking_slot: PokemonSlot = null,
 	before_order: int = -1
 ) -> bool:
+	if state == null or state.players.size() != 2:
+		return false
 	# 检查双方战斗场
 	for pi: int in 2:
 		var active: PokemonSlot = state.players[pi].active_pokemon

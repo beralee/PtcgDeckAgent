@@ -26,6 +26,7 @@ from tools.ptcgdap.build_author_strategy_windows_local_deck_contract import (
     ARTIFACT_PATHS,
     CARD_ID_DOMAIN,
     PROFILE_ID,
+    LOCKED_SOURCE_ROOT,
     build_contract_documents,
     build_marnie_deck_csv,
     build_marnie_deck_manifest,
@@ -33,7 +34,7 @@ from tools.ptcgdap.build_author_strategy_windows_local_deck_contract import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_DECK = ROOT / "data/bundled_user/decks/800018501.json"
+SOURCE_DECK = LOCKED_SOURCE_ROOT / "data/bundled_user/decks/800018501.json"
 
 
 def sha(value: bytes) -> str:
@@ -66,7 +67,7 @@ class AuthorStrategyWindowsLocalDeckTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_marnie_180_source_becomes_exact_60_card_local_uid_manifest(self) -> None:
-        manifest = build_marnie_deck_manifest(ROOT)
+        manifest = build_marnie_deck_manifest()
         csv_bytes = build_marnie_deck_csv(manifest)
         self.assertEqual("deck_manifest_windows_local_v1", manifest["document_type"])
         self.assertEqual(CARD_ID_DOMAIN, manifest["card_id_domain"])
@@ -86,7 +87,7 @@ class AuthorStrategyWindowsLocalDeckTests(unittest.TestCase):
         self.assertNotIn("official_card_id", json.dumps(manifest, sort_keys=True))
         self.assertEqual("local_card_uid,count", csv_bytes.decode("ascii").splitlines()[0])
         for entry in manifest["cards"]:
-            source = ROOT / "data/bundled_user/cards" / f"{entry['local_card_uid']}.json"
+            source = LOCKED_SOURCE_ROOT / "data/bundled_user/cards" / f"{entry['local_card_uid']}.json"
             card = load_json_strict(source)
             self.assertEqual(sha(source.read_bytes()), entry["source_raw_sha256"])
             self.assertEqual(sha(canonical_json_v1_bytes(card)), entry["source_canonical_sha256"])
@@ -109,7 +110,7 @@ class AuthorStrategyWindowsLocalDeckTests(unittest.TestCase):
         self.assertTrue(all("local_card_uid" in row for row in local))
         self.assertTrue(all("official_card_id" not in row for row in local))
         self.assertEqual(
-            [entry["local_card_uid"] for entry in build_marnie_deck_manifest(ROOT)["cards"]],
+            [entry["local_card_uid"] for entry in build_marnie_deck_manifest()["cards"]],
             [entry["local_card_uid"] for entry in local],
         )
         host = PtcgDAPAuthorMatchHost.create(handle, "marnie-local-domain-shadow")

@@ -20,7 +20,7 @@ func process_pokemon_check(
 		return
 	for slot: PokemonSlot in state.players[owner_index].get_all_pokemon():
 		if slot != null and slot.damage_counters > 0:
-			slot.damage_counters = maxi(0, slot.damage_counters - heal_amount)
+			slot.heal(heal_amount, state)
 
 
 func get_description() -> String:

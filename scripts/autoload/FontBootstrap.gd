@@ -50,7 +50,7 @@ func _load_cjk_font() -> Font:
 
 func _on_node_added(node: Node) -> void:
 	if node is Control:
-		_apply_font_to_control.call_deferred(node)
+		_apply_font_to_control(node)
 
 
 func _apply_font_to_existing_controls() -> void:
@@ -75,5 +75,15 @@ func _apply_font_to_control(control_obj: Variant) -> void:
 	if not (control_obj is Control):
 		return
 	var control := control_obj as Control
+	var missing_keys: Array[String] = []
 	for key: String in CONTROL_FONT_KEYS:
+		if not control.has_theme_font_override(key) or control.get_theme_font(key) != _cjk_font:
+			missing_keys.append(key)
+	if missing_keys.is_empty():
+		return
+	# Install before _ready/layout and notify once. Reapplying six overrides
+	# deferred used to reshape live labels six times for every added control.
+	control.begin_bulk_theme_override()
+	for key: String in missing_keys:
 		control.add_theme_font_override(key, _cjk_font)
+	control.end_bulk_theme_override()

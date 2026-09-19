@@ -152,11 +152,11 @@ var _empty_slot_material: ShaderMaterial = null
 
 var _outer_margin: MarginContainer
 var _aspect_container: AspectRatioContainer
-var _art_frame: PanelContainer
+var _art_frame: Panel
 
 var _empty_slot_effect: ColorRect
 var _texture_rect: TextureRect
-var _missing_art_panel: PanelContainer
+var _missing_art_panel: Panel
 var _placeholder: Label
 var _top_left_badge: Label
 var _top_right_badge: Label
@@ -444,7 +444,9 @@ func _build_ui() -> void:
 	_aspect_container.stretch_mode = AspectRatioContainer.STRETCH_FIT
 	_outer_margin.add_child(_aspect_container)
 
-	_art_frame = PanelContainer.new()
+	# Artwork and its overlays fill the aspect frame; overlay text must not
+	# contribute a minimum size that expands the owning battlefield container.
+	_art_frame = Panel.new()
 	_make_passthrough(_art_frame)
 	_art_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_art_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -465,7 +467,9 @@ func _build_ui() -> void:
 	_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_art_frame.add_child(_texture_rect)
 
-	_missing_art_panel = PanelContainer.new()
+	# A missing image must not let wrapped fallback text resize a field slot.
+	_missing_art_panel = Panel.new()
+	_missing_art_panel.clip_contents = true
 	_make_passthrough(_missing_art_panel)
 	_missing_art_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_art_frame.add_child(_missing_art_panel)
@@ -639,12 +643,16 @@ func _build_ui() -> void:
 	_title_label = Label.new()
 	_make_passthrough(_title_label)
 	_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_title_label.max_lines_visible = 2
+	_title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_title_label.add_theme_font_size_override("font_size", 11)
 	info_vbox.add_child(_title_label)
 
 	_subtitle_label = Label.new()
 	_make_passthrough(_subtitle_label)
 	_subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_subtitle_label.max_lines_visible = 1
+	_subtitle_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_subtitle_label.add_theme_font_size_override("font_size", 9)
 	_subtitle_label.modulate = Color(0.92, 0.92, 0.92)
 	info_vbox.add_child(_subtitle_label)

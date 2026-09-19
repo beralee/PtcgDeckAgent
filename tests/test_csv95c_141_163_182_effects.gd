@@ -269,7 +269,7 @@ func test_csv95c_182_aokis_skill_ai_allows_hidden_search_whiff() -> String:
 		assert_false(action.is_empty(), "AI legal action builder should enumerate Aoki's Skill when the hidden search can whiff"),
 		assert_false(bool(action.get("requires_interaction", true)), "AI should auto-resolve the empty-search confirmation"),
 		assert_eq(empty_resolution.size(), 1, "AI should synthesize an empty-search resolution target"),
-		assert_eq(str(empty_resolution[0]), BaseEffect.EMPTY_SEARCH_CONTINUE, "AI should continue when no legal hidden-search targets exist"),
+		assert_eq(empty_resolution[0], true, "AI should continue when no legal hidden-search targets exist"),
 	])
 
 

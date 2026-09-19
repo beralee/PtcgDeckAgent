@@ -6,6 +6,9 @@ class AlwaysHeads extends CoinFlipper:
 	func flip() -> bool:
 		return true
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func test_csv10c_196_to_200_registry_contract() -> String:
 	var processor := EffectProcessor.new(AlwaysHeads.new())

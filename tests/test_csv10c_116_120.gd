@@ -7,6 +7,9 @@ class RiggedCoinFlipper extends CoinFlipper:
 		coin_flipped.emit(true)
 		return true
 
+	func flip_with_metadata(_metadata: Dictionary) -> bool:
+		return flip()
+
 
 func _load_card(index: String) -> CardData:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/CSV10C_%s.json" % index))

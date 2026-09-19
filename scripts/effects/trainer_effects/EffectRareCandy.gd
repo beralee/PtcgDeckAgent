@@ -4,6 +4,20 @@ class_name EffectRareCandy
 extends BaseEffect
 
 const STAGE_ONE_BASIC_NAME_OVERRIDES := {
+	"粉蝶蛹": ["粉蝶虫", "Scatterbug"],
+	"Spewpa": ["粉蝶虫", "Scatterbug"],
+	"灯火幽灵": ["烛光灵", "Litwick"],
+	"Lampent": ["烛光灵", "Litwick"],
+	"科斯莫姆": ["科斯莫古", "Cosmog"],
+	"Cosmoem": ["科斯莫古", "Cosmog"],
+	"蓝蟾蜍": ["圆蝌蚪", "Tympole"],
+	"Palpitoad": ["圆蝌蚪", "Tympole"],
+	"鬼斯通": ["鬼斯", "Gastly"],
+	"Haunter": ["鬼斯", "Gastly"],
+	"甲壳龙": ["宝贝龙", "Bagon"],
+	"Shelgon": ["宝贝龙", "Bagon"],
+	"鳞甲龙": ["心鳞宝", "Jangmo-o"],
+	"Hakamo-o": ["心鳞宝", "Jangmo-o"],
 	"比比鸟": ["波波", "Pidgey"],
 	"呱头蛙": ["呱呱泡蛙", "Froakie"],
 	"冻脊龙": ["凉脊龙", "Frigibax"],

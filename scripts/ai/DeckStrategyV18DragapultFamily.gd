@@ -377,7 +377,7 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 	if _interaction_uses_effect(context, RADIANT_ALAKAZAM_EFFECT_ID):
 		if step_id == ALAKAZAM_COUNTER_STEP:
 			for item: Variant in items:
-				if int(item) == 2:
+				if _counter_option_number(item) == 2:
 					return [item]
 		if step_id in [ALAKAZAM_SOURCE_STEP, ALAKAZAM_TARGET_STEP]:
 			return _pick_ranked_interaction_items(items, step, context, 1)
@@ -430,7 +430,7 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 	var alakazam_interaction := _interaction_uses_effect(context, RADIANT_ALAKAZAM_EFFECT_ID)
 	var chi_yu_interaction := _interaction_uses_effect(context, CHI_YU_EFFECT_ID)
 	if alakazam_interaction and step_id == ALAKAZAM_COUNTER_STEP:
-		return float(int(item)) * 1000.0
+		return float(_counter_option_number(item)) * 1000.0
 	if item is CardInstance:
 		var card := item as CardInstance
 		if _deck_id == BLAZIKEN_DRAGAPULT_DECK_ID \
@@ -1877,3 +1877,7 @@ func _display_name(item: Variant) -> String:
 	if data == null:
 		return ""
 	return str(data.name_en) if str(data.name_en) != "" else str(data.name)
+
+
+func _counter_option_number(item: Variant) -> int:
+	return int(item.get("number", 0)) if item is Dictionary else int(item) if item is int or item is float else 0

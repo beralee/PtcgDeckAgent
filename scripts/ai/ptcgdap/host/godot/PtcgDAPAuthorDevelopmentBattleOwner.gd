@@ -46,6 +46,9 @@ class PublicInteractionAdapter extends RefCounted:
 	func uses_external_decision_port() -> bool:
 		return owner.uses_external_decision_port() if owner != null else false
 
+	func uses_sequential_interaction_windows() -> bool:
+		return owner.uses_sequential_interaction_windows() if owner != null else false
+
 	func pick_interaction_target_index(
 		items: Array,
 		excluded_targets: Array,
@@ -104,6 +107,7 @@ var _authority_mode := ExecutionGateScript.DEVELOPMENT_MODE
 var _developer_trace_enabled := false
 var _developer_decision_records: Array[Dictionary] = []
 var _developer_trace_dropped_records := 0
+var _projector_artifact_sha256 := ""
 var _confirmed_effect_activation_keys: Dictionary = {}
 var _tracked_public_entity_slots: Array[Dictionary] = []
 var _model_actor: Variant = null
@@ -129,7 +133,7 @@ static func create(
 	match_id: String,
 	authority_mode: String = ExecutionGateScript.DEVELOPMENT_MODE
 ) -> Dictionary:
-	if not _competition_host_authorized():
+	if not _competition_host_authorized() and not ExecutionGateScript.player_host_available():
 		return _error("development_platform_not_authorized")
 	if (
 		handle == null
@@ -142,7 +146,7 @@ static func create(
 		or match_id.strip_edges().is_empty()
 	):
 		return _error("invalid_bind")
-	var pin_error := ExecutionGateScript.validate_handle_pins(
+	var pin_error := ExecutionGateScript.validate_player_start(
 		handle.to_public_dict(), authority_mode
 	)
 	if not pin_error.is_empty():
@@ -353,6 +357,10 @@ func _bind_model(handle: Variant) -> Dictionary:
 	if not bool(created.get("ok", false)) or created.get("owner") == null:
 		return _error(str(created.get("error_code", "package_model_relation_invalid")))
 	_model_actor = created.get("owner")
+	var initialization_error: String = _model_actor.initialization_error()
+	if not initialization_error.is_empty() and OS.get_name() != "Linux":
+		_model_actor = null
+		return _error(initialization_error)
 	return {"ok": true, "error_code": ""}
 
 
@@ -405,6 +413,7 @@ func configure_policy_execution_profile(requested_profile: String) -> bool:
 		return false
 	if normalized == POLICY_EXECUTION_WORKER and _external_decision_port != null:
 		return false
+	normalized = ExecutionGateScript.PlatformCapabilitiesScript.resolve_policy_execution_profile(normalized)
 	_policy_execution_profile = normalized
 	if normalized == POLICY_EXECUTION_WORKER and _policy_worker == null:
 		_policy_worker = PolicyWorkerScript.new()
@@ -1074,6 +1083,15 @@ func _pick_interaction_items(items: Array, step: Dictionary, _context: Dictionar
 		return []
 	var minimum := clampi(int(step.get("min_select", 1)), 0, items.size())
 	var maximum := clampi(int(step.get("max_select", maxi(1, minimum))), minimum, items.size())
+	# Hidden prize positions are deliberately indistinguishable to frozen public
+	# policies. Keep this choice in Base, just like ordinary prize taking. The
+	# reviewed A3 private-research port may receive the position-only shape below.
+	if (
+		str(step.get("visible_scope", "")) == "opponent_prizes_hidden"
+		and _uses_competitive_policy_v2()
+		and _external_decision_port == null
+	):
+		return items.slice(0, minimum)
 	var prompt_kind := _prompt_kind_for_step(step)
 	var option_context := _context.duplicate(true)
 	var raw_semantics := _select_raw_semantics_for_step(step, prompt_kind, false)
@@ -1086,6 +1104,9 @@ func _pick_interaction_items(items: Array, step: Dictionary, _context: Dictionar
 		option_context["cabt_option_type_raw"] = ucis_option_type
 	elif prompt_kind == "discard":
 		option_context["cabt_option_type_raw"] = 3
+	if str(step.get("visible_scope", "")) == "opponent_prizes_hidden":
+		option_context["option_area_raw"] = 6
+		option_context["option_player_index"] = 1 - player_index
 	if not option_context.get("source_card") is CardInstance:
 		var pending_card: Variant = option_context.get("pending_effect_card")
 		if pending_card is CardInstance:
@@ -1125,6 +1146,12 @@ func has_pending_external_decision() -> bool:
 
 func uses_external_decision_port() -> bool:
 	return _external_decision_port != null
+
+
+func uses_sequential_interaction_windows() -> bool:
+	# A source selection is accepted once; each target is a fresh window. Keep
+	# that lifecycle identical for synchronous, worker and research consumers.
+	return true
 
 
 func external_decision_failure_code() -> String:
@@ -1274,7 +1301,7 @@ func _select_items(
 								}
 						else:
 							model_decision = _model_actor.decide_development_frame(
-								frame, validated, model_frontier
+								frame, validated, model_frontier, response.get("decision_audit",{}).get("model_frontier",{})
 							)
 						var model_code := str(model_decision.get("diagnostic_code", ""))
 						if bool(model_decision.get("model_used", false)):
@@ -1496,6 +1523,67 @@ func _uses_competitive_policy_v2() -> bool:
 	)
 
 
+func _developer_model_evidence(frame: Dictionary, response: Dictionary) -> Dictionary:
+	# Diagnostic evidence only. Reuse the runtime projector and authority helper;
+	# never reconstruct a broader candidate set from ranked policy preferences.
+	if _model_actor == null:
+		return {"status": "unavailable", "error_code": "model_trace_actor_unavailable"}
+	var options: Variant = frame.get("options")
+	var reported: Variant = response.get("selected_indexes")
+	if not options is Array or not reported is Array or reported.is_empty():
+		return {"status": "unavailable", "error_code": "model_trace_rule_indexes_invalid"}
+	var checked: Array = []
+	for value: Variant in reported:
+		if typeof(value) != TYPE_INT or value < 0 or value >= options.size() or value in checked:
+			return {"status": "unavailable", "error_code": "model_trace_rule_indexes_invalid"}
+		checked.append(value)
+	var projected: Dictionary = _model_actor.SemanticInput.project(frame, _model_actor._allowed_uids)
+	if not bool(projected.get("ok", false)):
+		return {"status": "unavailable", "error_code": str(projected.get("error_code", "model_public_frame_invalid"))}
+	var frontier: Array = response.get("decision_audit",{}).get("model_frontier",{}).get("indexes",checked)
+	var frontier_rows: Array = []
+	for index: int in frontier:
+		frontier_rows.append(projected.current_index_to_row[index])
+	return {
+		"status": "captured",
+		"profile_id": "ptcgdap-semantic-model-input-v1",
+		"tensor_profile_id": "ptcgdap_local_semantic_actor_i32_v1",
+		"semantic_projector_sha256": _script_artifact_sha256("res://scripts/ai/ptcgdap/host/godot/SemanticModelInput.gd"),
+		"projector_sha256": _model_projector_artifact_sha256(),
+		"frame_i32": Array(projected.frame_i32),
+		"frame_presence_i32": Array(projected.frame_presence_i32),
+		"option_i32": Array(projected.option_i32.slice(0, options.size() * 32)),
+		"option_presence_i32": Array(projected.option_presence_i32.slice(0, options.size() * 32)),
+		"option_mask_i32": Array(projected.option_mask_i32.slice(0, options.size())),
+		"row_to_current_index": projected.row_to_current_index.duplicate(),
+		"semantic_keys": projected.semantic_keys.duplicate(),
+		"frontier_indexes": Array(frontier),
+		"base_frontier": response.get("decision_audit",{}).get("model_frontier",{}).duplicate(true),
+		"frontier_rows": frontier_rows,
+		"authority": "diagnostic_only",
+	}
+
+
+func _model_projector_artifact_sha256() -> String:
+	if _projector_artifact_sha256.is_empty():
+		_projector_artifact_sha256 = _script_artifact_sha256(
+			"res://scripts/ai/ptcgdap/host/godot/PtcgDAPModelActor.gd"
+		)
+	return _projector_artifact_sha256
+
+
+static func _script_artifact_sha256(source_path: String) -> String:
+	# Exported scripts are compiled and the .gd path is a ResourceLoader remap.
+	# Hash the actual local artifact instead of silently recording an empty hash.
+	if FileAccess.file_exists(source_path):
+		return FileAccess.get_sha256(source_path)
+	var remap := ConfigFile.new()
+	if remap.load(source_path + ".remap") != OK:
+		return ""
+	var artifact_path := str(remap.get_value("remap", "path", ""))
+	return FileAccess.get_sha256(artifact_path) if FileAccess.file_exists(artifact_path) else ""
+
+
 func _queue_developer_decision(
 	frame: Dictionary,
 	response: Dictionary,
@@ -1542,6 +1630,13 @@ func _queue_developer_decision(
 			matched_rule_ids.append(str(value))
 	var base_result: Dictionary = decision_audit.get("base_result", {}).duplicate(true) \
 		if decision_audit.get("base_result") is Dictionary else {}
+	# Preserve the host-owned model adjudication separately from the original
+	# rules proposal. Only stable public diagnostics enter the trace.
+	var model_decision: Dictionary = {}
+	if decision_audit.get("model") is Dictionary:
+		for key: String in ["invoked", "diagnostic_code", "fallback_indexes", "selected_indexes", "model_manifest_sha256", "model_artifact_sha256"]:
+			model_decision[key] = decision_audit.model.get(key)
+		model_decision = model_decision.duplicate(true)
 	var accepted_fingerprints: Array = []
 	for value: Variant in accepted_indexes:
 		var index := int(value)
@@ -1568,6 +1663,10 @@ func _queue_developer_decision(
 		},
 		"host": {
 			"status": host_status,
+			"model_decision": model_decision,
+			"model_input_evidence": _developer_model_evidence(frame, response) \
+				if host_status == "accepted" and not fallback_used and error_code.is_empty() \
+				else {"status": "unavailable", "error_code": "model_trace_host_not_accepted"},
 			"accepted_indexes": accepted_indexes.duplicate(true),
 			"accepted_option_fingerprints": accepted_fingerprints,
 			"fallback_used": fallback_used,
@@ -1774,20 +1873,25 @@ func _make_option(
 	var raw_option_type := _resolved_option_type_raw(
 		kind, action, card, source_slot, interaction_context
 	)
+	if option_number == null and raw_option_type == 0 and typeof(item) == TYPE_INT:
+		option_number = int(item)
 	var energy_type_raw: Variant = action.get("energy_type_raw") \
 		if typeof(action.get("energy_type_raw")) == TYPE_INT else null
 	if energy_type_raw == null and raw_option_type == 6:
-		energy_type_raw = _energy_type_raw_from_action(action, source_slot)
+		energy_type_raw = _energy_type_raw_from_option(action, source_slot, card)
 	var energy_count: Variant = action.get("energy_count") \
 		if typeof(action.get("energy_count")) == TYPE_INT else null
 	if energy_count == null and raw_option_type == 6:
 		energy_count = int(action.get("count", 1))
 	var special_condition_type: Variant = action.get("special_condition_type") \
 		if typeof(action.get("special_condition_type")) == TYPE_INT else null
+	if special_condition_type == null and raw_option_type == 16 and typeof(item) == TYPE_INT:
+		special_condition_type = int(item)
 	var option_area_raw: Variant = interaction_context.get("option_area_raw") \
 		if typeof(interaction_context.get("option_area_raw")) == TYPE_INT else null
 	var option_area_index: Variant = item \
-		if kind == "take_prize" and typeof(item) == TYPE_INT else null
+		if option_area_raw != null and typeof(item) == TYPE_INT else null
+	var option_player_index: int = int(interaction_context.get("option_player_index", player_index))
 	var option_card_uid: Variant = card_uid
 	var option_card_serial: Variant = _serial_for_card(card) if card != null else null
 	# OptionType.CARD names the candidate represented by this option.  During a
@@ -1818,7 +1922,7 @@ func _make_option(
 			"tags": tags,
 			"option_type_raw": raw_option_type,
 			"option_card_uid": target_uid if kind == "evolve" else option_card_uid,
-			"option_player_index": player_index,
+			"option_player_index": option_player_index,
 			"energy_type_raw": energy_type_raw,
 			"energy_count": energy_count,
 			"special_condition_type": special_condition_type,
@@ -1872,7 +1976,7 @@ func _make_option(
 		"pending_assignment_count": int(target_profile.get("pending_assignment_count", 0)),
 		"tags": tags,
 		"option_type_raw": raw_option_type,
-		"option_player_index": player_index,
+		"option_player_index": option_player_index,
 	}
 	# The private A3 research port has a separate, explicitly reviewed position
 	# shape. Frozen data-only Competitive v2 packages do not receive these keys.
@@ -2322,6 +2426,12 @@ func close_match() -> void:
 		_policy_worker.close()
 	_policy_worker = null
 	_pending_policy_context.clear()
+	# RefCounted does not collect the owner -> adapter -> owner cycle. Revoke
+	# retained adapters after the worker is joined, then release the resolver.
+	if _interaction_adapter != null:
+		_interaction_adapter.set("owner", null)
+	_interaction_adapter = null
+	_step_resolver = null
 	if _policy != null and _policy.has_method("close"):
 		_policy.close()
 	if _serial_registry != null:
@@ -2739,9 +2849,10 @@ static func _resolved_option_type_raw(
 		var attached_type := _attached_card_option_type(card)
 		return attached_type if attached_type in [4, 5] else 3
 	if select_type == 4:
-		# ENERGY options refer to an in-play Pokemon plus an energy type/count,
-		# not a physical Energy card. Missing source/value fields remain visible
-		# as an invalid frame and therefore fail closed in the policy/projector.
+		# ENERGY options always expose an energy type/count. Most refer to an
+		# in-play Pokemon, while deck searches such as Crispin also carry the
+		# physical candidate card. Missing source/value fields remain visible as
+		# an invalid frame and therefore fail closed in the policy/projector.
 		return 6
 	if select_type == 5:
 		return 15
@@ -2768,16 +2879,35 @@ static func _attached_card_option_type(card: CardInstance) -> int:
 	return 3
 
 
-static func _energy_type_raw_from_action(action: Dictionary, source_slot: PokemonSlot) -> Variant:
+static func _energy_type_raw_from_option(
+	action: Dictionary,
+	source_slot: PokemonSlot,
+	candidate_card: CardInstance
+) -> Variant:
 	var energy_type := str(action.get("energy_type", ""))
 	if energy_type.is_empty() and action.get("energy") is CardInstance:
-		var energy_card: CardInstance = action.get("energy") as CardInstance
-		if energy_card.card_data != null:
-			energy_type = energy_card.card_data.energy_provides
+		energy_type = _energy_type_from_card(action.get("energy") as CardInstance)
+	if energy_type.is_empty() and candidate_card != null:
+		energy_type = _energy_type_from_card(candidate_card)
 	if energy_type.is_empty() and source_slot != null and not source_slot.attached_energy.is_empty():
-		var first_energy: CardInstance = source_slot.attached_energy[0]
-		if first_energy != null and first_energy.card_data != null:
-			energy_type = first_energy.card_data.energy_provides
+		energy_type = _energy_type_from_card(source_slot.attached_energy[0])
+	return _energy_type_string_to_raw(energy_type)
+
+
+static func _energy_type_from_card(card: CardInstance) -> String:
+	if card == null or card.card_data == null:
+		return ""
+	# A source card may be the originating Pokemon, whose energy_type is its
+	# own attribute rather than the type of a selected or attached Energy.
+	if card.card_data.card_type not in ["Basic Energy", "Special Energy", "Energy"]:
+		return ""
+	var energy_provides := str(card.card_data.energy_provides).strip_edges()
+	if not energy_provides.is_empty():
+		return energy_provides
+	return str(card.card_data.energy_type).strip_edges()
+
+
+static func _energy_type_string_to_raw(energy_type: String) -> Variant:
 	match energy_type.to_upper():
 		"C", "COLORLESS": return 0
 		"G", "GRASS": return 1

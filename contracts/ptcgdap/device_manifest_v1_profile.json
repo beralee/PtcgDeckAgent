@@ -16,7 +16,7 @@
     "architecture": "arm64-v8a"
   },
   "parent_contracts": {
-    "local_policy_executor_canonical_sha256": "0B8FB2A551429CBAFFF7DD0B9DFACEC3FFF76AA867A8B1BC666F540875489BA7",
+    "local_policy_executor_canonical_sha256": "C912A6BFC38C0D7097FF10E31B196FCBCEB3DF654E4746D6EDA3535D66865C32",
     "rollback_policy_package_canonical_sha256": "3243ABD7937B3F53D8E5D7A887FC90BFBDF9A4D94E4030A3A9BE194C82370FFC"
   },
   "approval_boundary": {

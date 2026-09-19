@@ -4,8 +4,10 @@ extends Node
 
 ## API 基地址
 const API_BASE := "https://tcg.mik.moe"
+const WEB_IMPORT_API_BASE := "https://api.ptcg.skillserver.cn"
 const DECK_DETAIL_URL := API_BASE + "/api/v3/deck/detail"
 const CARD_DETAIL_URL := API_BASE + "/api/v3/card/card-detail"
+const MINIAPP_SOURCE := preload("res://scripts/network/MiniappDeckSource.gd")
 const CARD_IMAGE_CACHE_SERVICE := preload("res://scripts/card_images/CardImageCacheService.gd")
 const LIMITLESS_CARD_PARSER := preload("res://scripts/network/LimitlessCardParser.gd")
 const LIMITLESS_CARD_RESOLVER := preload("res://scripts/network/LimitlessCardResolver.gd")
@@ -22,6 +24,25 @@ var _http_request: HTTPRequest = null
 var _image_downloader = null
 var _pending_deck: DeckData = null
 var _pending_import_errors: PackedStringArray = PackedStringArray()
+
+
+static func tcg_request_url(operation: String, web_runtime: bool, origin: String = "") -> String:
+	if operation not in ["deck/detail", "deck/export-miniapp", "card/card-detail"]:
+		return ""
+	if not web_runtime:
+		return API_BASE + "/api/v3/" + operation
+	var gateway_base := origin.strip_edges() if not origin.strip_edges().is_empty() else WEB_IMPORT_API_BASE
+	return gateway_base.trim_suffix("/") + "/api/deck-import/tcg-mik/" + operation
+
+
+func _tcg_request_url(operation: String) -> String:
+	var web_runtime := _is_web_runtime_for_context()
+	var origin := ""
+	if web_runtime:
+		origin = WEB_IMPORT_API_BASE
+		if ProjectSettings.has_setting("ptcgdap/deck_import/base_url"):
+			origin = str(ProjectSettings.get_setting_with_override("ptcgdap/deck_import/base_url"))
+	return tcg_request_url(operation, web_runtime, origin)
 
 
 static func request_headers_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> PackedStringArray:
@@ -54,6 +75,9 @@ static func _is_web_runtime_for_context(os_name: String = "", feature_flags: Dic
 
 static func parse_provider_ref(input: String) -> Dictionary:
 	var text := input.strip_edges()
+	var miniapp := MINIAPP_SOURCE.provider_ref(text)
+	if not miniapp.is_empty():
+		return miniapp
 	if text.is_valid_int():
 		var deck_id := int(text)
 		return {
@@ -114,6 +138,7 @@ static func generated_limitless_card_has_source_collision(existing: CardData, ge
 func _ready() -> void:
 	_http_request = HTTPRequest.new()
 	_http_request.timeout = 15.0
+	_http_request.body_size_limit = 3 * 1024 * 1024
 	add_child(_http_request)
 
 	_image_downloader = CARD_IMAGE_CACHE_SERVICE.new()
@@ -140,13 +165,17 @@ static func parse_deck_id(url: String) -> int:
 func import_deck(url_or_id: String) -> void:
 	var ref := parse_provider_ref(url_or_id)
 	var provider := str(ref.get("provider", ""))
+	if provider == "miniapp":
+		import_progress.emit(0, 1, "正在读取官方小程序卡组…")
+		_fetch_miniapp_deck(str(ref["id"]))
+		return
 	if provider == "limitless":
 		import_progress.emit(0, 1, "Fetching Limitless deck data...")
 		_fetch_limitless_deck_detail(ref)
 		return
 
 	if provider != "tcg_mik":
-		import_failed.emit("Unsupported deck URL or deck ID")
+		import_failed.emit("请输入卡组网站链接、数字编号或官方小程序的 18 位卡组 ID。")
 		return
 
 	var deck_id := int(ref.get("id", -1))
@@ -154,8 +183,35 @@ func import_deck(url_or_id: String) -> void:
 		import_failed.emit("Unable to parse deck ID from tcg.mik.moe deck URL")
 		return
 
-	import_progress.emit(0, 1, "Fetching deck data...")
+	import_progress.emit(0, 1, "正在读取卡组…")
 	_fetch_deck_detail(deck_id)
+
+
+func _fetch_miniapp_deck(code: String) -> void:
+	var callback := _on_miniapp_deck_response.bind(code)
+	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
+	var err := _http_request.request(_tcg_request_url("deck/export-miniapp"), request_headers_for_runtime(), HTTPClient.METHOD_POST, JSON.stringify({"deckCode": code}))
+	if err != OK:
+		_http_request.request_completed.disconnect(callback)
+		import_failed.emit("无法连接小程序卡组服务，请检查网络后重试。")
+
+
+func _on_miniapp_deck_response(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, code: String) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS:
+		import_failed.emit("读取小程序卡组超时或网络中断，请检查网络后重试。")
+		return
+	if response_code != 200:
+		if _is_web_runtime_for_context() and response_code in [404, 405]:
+			import_failed.emit("当前网页版尚未启用小程序导入接口，请使用桌面版或联系站点管理员。")
+		else:
+			import_failed.emit("小程序卡组服务暂时不可用（HTTP %d），请稍后重试。" % response_code)
+		return
+	var parsed := MINIAPP_SOURCE.decode_response(body, code, CardDatabase.get_all_decks())
+	if not bool(parsed.get("ok", false)):
+		import_failed.emit(str(parsed.get("error", "无法读取卡组。")))
+		return
+	var deck: DeckData = parsed["deck"]
+	_fetch_cards_sequentially(deck, deck.get_card_keys(), 0, deck.validate())
 
 
 ## 获取卡组详情
@@ -350,7 +406,7 @@ func _fetch_deck_detail(deck_id: int) -> void:
 
 	var callback := _on_deck_detail_response.bind(deck_id)
 	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
-	var err := _http_request.request(DECK_DETAIL_URL, headers, HTTPClient.METHOD_POST, body)
+	var err := _http_request.request(_tcg_request_url("deck/detail"), headers, HTTPClient.METHOD_POST, body)
 	if err != OK:
 		if _http_request.request_completed.is_connected(callback):
 			_http_request.request_completed.disconnect(callback)
@@ -363,6 +419,9 @@ func _on_deck_detail_response(result: int, response_code: int, _headers: PackedS
 		return
 
 	if response_code != 200:
+		if _is_web_runtime_for_context() and response_code in [404, 405]:
+			import_failed.emit("网页卡组导入服务尚未配置，请联系站点管理员启用卡组导入接口。")
+			return
 		import_failed.emit("服务器返回错误 (HTTP %d)" % response_code)
 		return
 
@@ -414,7 +473,7 @@ func _fetch_cards_sequentially(deck: DeckData, keys: Array[Dictionary], index: i
 
 	var callback := _on_card_detail_response.bind(deck, keys, index, errors, set_code, card_index)
 	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
-	var err := _http_request.request(CARD_DETAIL_URL, headers, HTTPClient.METHOD_POST, body)
+	var err := _http_request.request(_tcg_request_url("card/card-detail"), headers, HTTPClient.METHOD_POST, body)
 	if err != OK:
 		if _http_request.request_completed.is_connected(callback):
 			_http_request.request_completed.disconnect(callback)
@@ -429,14 +488,17 @@ func _on_card_detail_response(
 ) -> void:
 	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
 		var json := JSON.new()
-		if json.parse(body.get_string_from_utf8()) == OK:
+		if json.parse(body.get_string_from_utf8()) == OK and json.data is Dictionary:
 			var resp: Dictionary = json.data
 			if resp.get("code", 0) == 200:
 				var data_raw: Variant = resp.get("data")
 				var card_json: Dictionary = data_raw if data_raw is Dictionary else {}
-				var card_data := CardData.from_api_json(card_json)
-				CardDatabase.cache_card(card_data)
-				_try_register_duplicate_effect_alias(card_data)
+				if card_json.get("setCode") != set_code or card_json.get("cardIndex") != card_index:
+					errors.append("卡牌 %s/%s 返回的版本不一致，未缓存" % [set_code, card_index])
+				else:
+					var card_data := CardData.from_api_json(card_json)
+					CardDatabase.cache_card(card_data)
+					_try_register_duplicate_effect_alias(card_data)
 			else:
 				errors.append("获取卡牌 %s/%s 失败: %s" % [set_code, card_index, resp.get("msg", "")])
 		else:
@@ -460,14 +522,19 @@ func _try_register_duplicate_effect_alias(card: CardData) -> void:
 
 func _start_image_sync(deck: DeckData, errors: PackedStringArray) -> void:
 	var cards_to_sync: Array[CardData] = []
+	var missing := PackedStringArray()
 	for key: Dictionary in deck.get_card_keys():
 		var set_code: String = key.get("set_code", "")
 		var card_index: String = key.get("card_index", "")
 		var card := CardDatabase.get_card(set_code, card_index)
 		if card == null:
+			missing.append("%s/%s" % [set_code, card_index])
 			errors.append("卡牌 %s/%s 未缓存，跳过卡图同步" % [set_code, card_index])
 			continue
 		cards_to_sync.append(card)
+	if deck.source_provider == "miniapp" and not missing.is_empty():
+		import_failed.emit("%d 种卡牌详情未能获取，卡组尚未保存。请重试。\n%s" % [missing.size(), "、".join(missing)])
+		return
 
 	if cards_to_sync.is_empty():
 		import_progress.emit(deck.cards.size(), deck.cards.size(), "导入完成!")

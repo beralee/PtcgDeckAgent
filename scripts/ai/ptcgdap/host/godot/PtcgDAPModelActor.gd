@@ -1,6 +1,7 @@
 extends RefCounted
 
 const CabtJsonTreeScript = preload("res://scripts/ai/ptcgdap/cabt/CabtJsonTree.gd")
+const SemanticInput = preload("res://scripts/ai/ptcgdap/host/godot/SemanticModelInput.gd")
 const MAX_OPTIONS := 1024
 const FRAME_WIDTH := 24
 const OPTION_WIDTH := 16
@@ -22,6 +23,7 @@ const CLOCK_FIELDS := ["turn", "turn_action_count", "remaining_overage_time", "a
 const FLAG_FIELDS := ["first_player", "result", "supporter_played", "stadium_played", "energy_attached", "retreated"]
 const FORBIDDEN_KEYS := ["private_state", "raw_private_hash", "token_free_callback_hash", "search_begin_input", "session", "callback", "binding", "ticket", "command", "object_ref", "pokemon_entity_serial", "credentials", "deck_order", "face_down_prizes", "rng"]
 
+var _tensor_profile_id := "competitive_public_actor_i32_v1"
 var _policy_mode := "rules_only"
 var _native: Variant = null
 var _load_error := ""
@@ -39,6 +41,8 @@ static func create(handle: Variant) -> Dictionary:
 	var script: GDScript = load("res://scripts/ai/ptcgdap/host/godot/PtcgDAPModelActor.gd")
 	var owner: RefCounted = script.new()
 	owner._policy_mode = str(payloads.get("policy_mode", "rules_only"))
+	if payloads.get("model_manifest") is Dictionary:
+		owner._tensor_profile_id = str(payloads.model_manifest.tensor_profile.profile_id)
 	owner._model_manifest_sha256 = payloads.get("model_manifest_sha256")
 	owner._model_artifact_sha256 = payloads.get("model_artifact_sha256")
 	for row: Variant in handle.local_deck_snapshot():
@@ -55,7 +59,27 @@ static func create(handle: Variant) -> Dictionary:
 	return {"ok": true, "error_code": "", "owner": owner}
 
 
+static func preflight_error(handle: Variant) -> String:
+	if handle == null or not handle.has_method("model_payloads"):
+		return "package_model_relation_invalid"
+	var payloads: Dictionary = handle.model_payloads()
+	if not bool(payloads.get("ok", false)):
+		return str(payloads.get("error_code", "package_model_relation_invalid"))
+	if payloads.get("policy_mode", "rules_only") == "rules_only":
+		return ""
+	var created := create(handle)
+	if not bool(created.get("ok", false)) or created.get("owner") == null:
+		return str(created.get("error_code", "package_model_relation_invalid"))
+	return str(created.get("owner").initialization_error())
+
+
+func initialization_error() -> String:
+	return _load_error
+
+
 func decide(context: Variant, local_context: Variant, prompt: Dictionary, rule_indexes: Array) -> Dictionary:
+	if _tensor_profile_id == SemanticInput.PROFILE_ID:
+		return _fallback(rule_indexes, "model_bypassed_input_lane", false)
 	if _policy_mode != "rules_with_model":
 		return _fallback(rule_indexes, "", false)
 	if not _load_error.is_empty() or _native == null:
@@ -129,6 +153,7 @@ func decide_development_frame(
 	frame: Dictionary,
 	rule_indexes: Array,
 	eligible_indexes: Array = [],
+	base_frontier: Dictionary = {},
 ) -> Dictionary:
 	# The full battle owner already ran legality, mandatory/terminal handling,
 	# Competitive IR, hard guards and vetoes. Its returned indexes are therefore
@@ -149,7 +174,24 @@ func decide_development_frame(
 		"setup_bench", "take_prize", "send_out",
 	]:
 		return _fallback(rule_indexes, "model_bypassed_mandatory", false)
+	if _tensor_profile_id == SemanticInput.PROFILE_ID:
+		if base_frontier.get("profile_id") != "ptcgdap-base-model-frontier-v1" or base_frontier.get("window_id") != frame.source.window_id or base_frontier.get("public_observation_hash") != frame.source.public_observation_hash:
+			return _fallback(rule_indexes,"model_authority_input_invalid",false)
+		if not base_frontier.get("enabled",false):
+			return _fallback(rule_indexes,"model_bypassed_"+str(base_frontier.get("reason","base")),false)
+		if frame.select_semantics.min_count != 1 or frame.select_semantics.max_count != 1 or not base_frontier.get("indexes") is Array:
+			return _fallback(rule_indexes,"model_authority_input_invalid",false)
+		model_frontier=base_frontier.indexes
+		if model_frontier.size()<2 or rule_indexes.size()!=1 or rule_indexes[0] not in model_frontier:
+			return _fallback(rule_indexes,"model_authority_input_invalid",false)
+		var seen_indexes := {}
+		for candidate: Variant in model_frontier:
+			if typeof(candidate) != TYPE_INT or candidate < 0 or candidate >= frame.options.size() or seen_indexes.has(candidate):
+				return _fallback(rule_indexes,"model_authority_input_invalid",false)
+			seen_indexes[candidate] = true
 	var tensorized := _tensorize_development_frame(frame)
+	if _tensor_profile_id == SemanticInput.PROFILE_ID and tensorized.get("error_code") in ["model_unknown_uid","model_unknown_option_shape"]:
+		return _fallback(rule_indexes,"model_bypassed_unsupported_public_semantics",false)
 	if not bool(tensorized.get("ok", false)):
 		return _fallback(
 			rule_indexes,
@@ -216,6 +258,8 @@ func decide_development_frame(
 
 
 func _tensorize_development_frame(frame: Dictionary) -> Dictionary:
+	if _tensor_profile_id == SemanticInput.PROFILE_ID:
+		return SemanticInput.project(frame,_allowed_uids)
 	if _contains_forbidden(frame):
 		return _error("model_hidden_field")
 	var state: Variant = frame.get("public_state")
@@ -417,16 +461,27 @@ static func _semantic_key(raw: Dictionary, uid: Variant) -> String:
 	var canonical: Dictionary = CabtJsonTreeScript.canonicalize_artifact_json_bytes(JSON.stringify({"local_card_uid":uid, "option":raw}).to_utf8_buffer())
 	if not bool(canonical.get("ok", false)): return ""
 	var context := HashingContext.new(); context.start(HashingContext.HASH_SHA256)
-	context.update("PTCGDAP\u0000MODEL_OPTION_V1\u0000".to_utf8_buffer()); context.update(canonical.get("bytes", PackedByteArray()))
+	_update_hash_domain(context, "MODEL_OPTION_V1")
+	context.update(canonical.get("bytes", PackedByteArray()))
 	return context.finish().hex_encode().to_upper()
 
 
 static func _uid_feature(uid: String) -> int:
 	var context := HashingContext.new(); context.start(HashingContext.HASH_SHA256)
-	context.update("PTCGDAP\u0000MODEL_UID_V1\u0000".to_utf8_buffer()); context.update(uid.to_ascii_buffer())
+	_update_hash_domain(context, "MODEL_UID_V1")
+	context.update(uid.to_ascii_buffer())
 	var bytes := context.finish()
 	var value := (int(bytes[0]) << 24) | (int(bytes[1]) << 16) | (int(bytes[2]) << 8) | int(bytes[3])
 	return value - 4294967296 if value >= 2147483648 else value
+
+
+static func _update_hash_domain(context: HashingContext, domain: String) -> void:
+	# Godot strings replace embedded NUL with U+FFFD. Hash the wire separator
+	# as a byte so feature IDs and semantic keys match the Python tensorizer.
+	context.update("PTCGDAP".to_ascii_buffer())
+	context.update(PackedByteArray([0]))
+	context.update(domain.to_ascii_buffer())
+	context.update(PackedByteArray([0]))
 
 
 static func _row_sort_key(values: PackedInt32Array, presence: PackedInt32Array, semantic_key: String) -> String:
