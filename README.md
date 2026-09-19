@@ -201,6 +201,14 @@ tools/       策略包、验证、证据和开发辅助工具
 2. 运行 `res://scenes/main_menu/MainMenu.tscn`。
 3. 从“AI 对战”选择内置或已加载策略，或进入卡组管理与赛事模式。
 
+macOS 从源码启动时，先运行以下开发工具。它会完成资源导入再打开游戏，并在本机缺少可选模型库时跳过该扩展，避免拉取新代码后只显示空白战场：
+
+```bash
+python3 scripts/tools/run_macos_game.py
+```
+
+默认使用 `/Applications/Godot.app`，可通过 `--godot /实际路径/Godot` 指定 Godot 4.6.x；`--import-only` 仅修复导入缓存。不要在更新代码后跳过导入直接使用 `Godot --path .`。本机生成的 `.gdignore` 不随 Git 同步；构建好两份 Mac 模型库后，工具会移除自己生成的标记，模型能力仍按项目配置判断。普通玩家直接打开导出的 `.app`，无需 Python。
+
 ### 常用测试
 
 ```powershell

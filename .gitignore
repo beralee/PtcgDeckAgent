@@ -73,3 +73,6 @@ deploy/ptcgdap-platform/
 
 # Local native extension build tree (runtime copies live under bin/ptcgai_ort).
 native/ptcgai_ort_actor/build/
+
+# Machine-local Mac source launcher marker; never disable other platforms in Git.
+/scripts/ai/ptcgdap/native/.gdignore
