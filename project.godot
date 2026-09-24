@@ -40,6 +40,7 @@ window/stretch/aspect="expand"
 window/handheld/orientation=6
 window/size/window_width=1600
 window/size/window_height=900
+window/dpi/allow_hidpi=true
 
 [editor_plugins]
 

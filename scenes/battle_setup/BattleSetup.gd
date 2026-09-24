@@ -565,6 +565,24 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
 	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	if OS.get_name() == "Windows" and not is_mobile and not _is_battle_setup_web_runtime() and mode == "landscape" and size.x < 1100.0:
+		# Reuse the stacked, scrollable layout without inheriting phone-sized controls.
+		context["is_portrait"] = true
+		context["resolved_mode"] = "portrait"
+		context["portrait_scale"] = 1.0
+		context["content_width"] = maxf(320.0, size.x - 48.0)
+		context["page_margin"] = 24.0
+		context["title_font_size"] = 32
+		context["section_font_size"] = 18
+		context["body_font_size"] = 15
+		context["meta_font_size"] = 13
+		context["button_font_size"] = 18
+		context["input_font_size"] = 15
+		context["primary_button_height"] = 52.0
+		context["secondary_button_height"] = 44.0
+		context["input_height"] = 38.0
+		context["list_item_min_height"] = 76.0
+		context["section_gap"] = 10
 	var portrait := bool(context.get("is_portrait", false))
 	_current_non_battle_layout_context = context.duplicate(true)
 	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))

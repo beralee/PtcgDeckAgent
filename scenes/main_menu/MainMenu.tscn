@@ -68,6 +68,12 @@ layout_mode = 2
 custom_minimum_size = Vector2(250, 45)
 text = "AI 策略中心"
 
+[node name="BtnDisplaySettings" type="Button" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(250, 45)
+text = "显示设置"
+
 [node name="BtnQuit" type="Button" parent="VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2

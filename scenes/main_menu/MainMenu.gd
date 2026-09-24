@@ -143,6 +143,8 @@ func _ready() -> void:
 	%BtnDeckManager.pressed.connect(_on_deck_manager)
 	%BtnBattleReplay.pressed.connect(_on_deck_training)
 	%BtnStrategyHub.pressed.connect(_on_strategy_hub)
+	%BtnDisplaySettings.visible = OS.get_name() == "Windows" and DisplayServer.get_name() != "headless"
+	%BtnDisplaySettings.pressed.connect(_show_display_settings)
 	%BtnQuit.pressed.connect(_on_quit)
 
 
@@ -447,7 +449,7 @@ func _apply_main_menu_frame_metrics(context: Dictionary, portrait: bool) -> void
 	menu.add_theme_constant_override("separation", separation)
 	if portrait:
 		var viewport_size: Vector2 = context.get("viewport_size", Vector2(1080, 2400))
-		var button_count := 6.0
+		var button_count := 7.0 if %BtnDisplaySettings.visible else 6.0
 		var group_height := button_height * button_count + float(separation) * (button_count - 1.0)
 		var menu_center_y := viewport_size.y * 0.595 + button_height * PORTRAIT_MENU_BUTTON_DOWN_SHIFT
 		var viewport_center_y := viewport_size.y * 0.5
@@ -458,9 +460,9 @@ func _apply_main_menu_frame_metrics(context: Dictionary, portrait: bool) -> void
 	else:
 		menu.offset_left = -170.0
 		menu.offset_right = 170.0
-		menu.offset_top = -175.0 + MENU_VERTICAL_SHIFT
-		menu.offset_bottom = 175.0 + MENU_VERTICAL_SHIFT
-	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnStrategyHub", "BtnQuit"]:
+		menu.offset_top = -210.0 + MENU_VERTICAL_SHIFT if %BtnDisplaySettings.visible else -175.0 + MENU_VERTICAL_SHIFT
+		menu.offset_bottom = 210.0 + MENU_VERTICAL_SHIFT if %BtnDisplaySettings.visible else 175.0 + MENU_VERTICAL_SHIFT
+	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnStrategyHub", "BtnDisplaySettings", "BtnQuit"]:
 		var button := get_node_or_null("%" + button_name) as Button
 		if button == null:
 			continue
@@ -2004,6 +2006,71 @@ func _format_about_text() -> String:
 		"",
 		"如果你是相关权利方并认为项目内容需要调整，请通过项目仓库联系维护者。"
 	]))
+
+
+func _show_display_settings() -> void:
+	var controller := GameManager.get_desktop_display_controller() if GameManager != null else null
+	if controller == null:
+		return
+	_hide_hud_modal()
+	_hud_modal_overlay = Control.new()
+	_hud_modal_overlay.name = HUD_MODAL_OVERLAY_NAME
+	_hud_modal_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_bind_modal_input_guard(_hud_modal_overlay)
+	add_child(_hud_modal_overlay)
+	var shade := ColorRect.new()
+	shade.color = Color(0.0, 0.012, 0.024, 0.7)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_bind_modal_input_guard(shade)
+	_hud_modal_overlay.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hud_modal_overlay.add_child(center)
+	_hud_modal_panel = PanelContainer.new()
+	_hud_modal_panel.name = "HudModalPanel"
+	_hud_modal_panel.custom_minimum_size = Vector2(380, 0)
+	_hud_modal_panel.add_theme_stylebox_override("panel", _feedback_panel_style())
+	_bind_modal_input_guard(_hud_modal_panel)
+	center.add_child(_hud_modal_panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 16)
+	_hud_modal_panel.add_child(content)
+	var title := Label.new()
+	title.text = "显示设置"
+	title.add_theme_font_size_override("font_size", 22)
+	content.add_child(title)
+	var hint := Label.new()
+	hint.text = "界面大小（即时生效）"
+	hint.add_theme_font_size_override("font_size", 16)
+	content.add_child(hint)
+	var choices := OptionButton.new()
+	choices.name = "DisplayScaleChoices"
+	for percent: int in [80, 100, 125, 150]:
+		choices.add_item("%d%%" % percent, percent)
+		if controller.user_scale_percent == percent:
+			choices.select(choices.item_count - 1)
+	choices.item_selected.connect(func(index: int) -> void: controller.set_user_scale(choices.get_item_id(index)))
+	content.add_child(choices)
+	var info := Label.new()
+	info.text = "自动参考 Windows 显示缩放；可按个人习惯微调。"
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_theme_font_size_override("font_size", 14)
+	content.add_child(info)
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation", 12)
+	content.add_child(actions)
+	var reset := _create_feedback_action_button("恢复自动默认", HudThemeScript.ACCENT, Vector2(150, 42))
+	reset.pressed.connect(func() -> void:
+		controller.restore_default()
+		choices.select(1)
+	)
+	actions.add_child(reset)
+	var close := _create_feedback_action_button("完成", HudThemeScript.ACCENT, Vector2(100, 42))
+	close.pressed.connect(_hide_hud_modal)
+	actions.add_child(close)
+	_hud_modal_overlay.move_to_front()
 
 
 func _show_hud_modal(title: String, message: String, actions: Array, preferred_size: Vector2 = Vector2(520, 300), body_bbcode: bool = false) -> void:
