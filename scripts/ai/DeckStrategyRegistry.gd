@@ -160,6 +160,8 @@ const _STRATEGY_ORDER: Array[String] = [
 	"miraidon",
 ]
 
+static var _signature_names_by_strategy_id: Dictionary = {}
+
 
 func detect_strategy_id_for_player(player: PlayerState) -> String:
 	if player == null:
@@ -279,11 +281,11 @@ func _best_strategy_id_for_visible_names(visible_names: Dictionary) -> String:
 				best_match_count = gardevoir_match_count
 				best_strategy_id = strategy_id
 			continue
-		var strategy = create_strategy_by_id(strategy_id)
-		if strategy == null or not strategy.has_method("get_signature_names"):
-			continue
+		if not _signature_names_by_strategy_id.has(strategy_id):
+			var strategy = create_strategy_by_id(strategy_id)
+			_signature_names_by_strategy_id[strategy_id] = strategy.get_signature_names() if strategy != null and strategy.has_method("get_signature_names") else []
 		var match_count := 0
-		for signature_name: String in strategy.get_signature_names():
+		for signature_name: String in _signature_names_by_strategy_id[strategy_id]:
 			if visible_names.has(signature_name):
 				match_count += 1
 		if match_count > best_match_count:

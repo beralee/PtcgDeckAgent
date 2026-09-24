@@ -40,6 +40,40 @@ func _events_of_kind(events: Array, kind: String) -> Array[Dictionary]:
 	return result
 
 
+func test_match_decks_keep_distinct_card_ids_for_visual_snapshots() -> String:
+	var cache: Dictionary = CardDatabase.get("_card_cache")
+	var uid := "VISUAL_ID_TEST_001"
+	cache[uid] = _card("Visual ID Test", 0).card_data
+	var deck := DeckData.new()
+	deck.cards = [{"set_code": "VISUAL_ID_TEST", "card_index": "001", "count": 1}]
+	var gsm := GameStateMachine.new()
+	gsm.start_game(deck, deck, 0, false, true)
+	var player_card: CardInstance = gsm.game_state.players[0].deck[0]
+	var opponent_card: CardInstance = gsm.game_state.players[1].deck[0]
+	var snapshot: Dictionary = SnapshotScript.capture(gsm.game_state)
+	var locations: Dictionary = snapshot.get("card_locations", {})
+	gsm.game_state.players[0].deck.erase(player_card)
+	gsm.game_state.players[0].hand.append(player_card)
+	var after: Dictionary = SnapshotScript.capture(gsm.game_state)
+	var draw_action := GameAction.create(GameAction.ActionType.DRAW_CARD, 0, {
+		"count": 1,
+		"card_instance_ids": [player_card.instance_id],
+	}, 1, "draw")
+	var transfers := _events_of_kind(BuilderScript.build(snapshot, after, draw_action, 0), "zone_transfer")
+	var draw_event: Dictionary = transfers[0] if transfers.size() == 1 else {}
+	var result := run_checks([
+		assert_true(player_card.instance_id != opponent_card.instance_id, "Both match decks must use distinct card IDs"),
+		assert_eq(locations.size(), 2, "The visual snapshot must retain both players' cards"),
+		assert_eq(str(locations.get(player_card.instance_id, "")), "p0.deck", "The player's card must stay in their deck"),
+		assert_eq(str(locations.get(opponent_card.instance_id, "")), "p1.deck", "The opponent's card must stay in their deck"),
+		assert_eq(transfers.size(), 1, "One player draw must animate exactly one card"),
+		assert_eq(draw_event.get("card_instance_ids", []), [player_card.instance_id], "The draw animation must contain only the drawn card"),
+		assert_eq(str(draw_event.get("target_zone", "")), "p0.hand", "The draw animation must target the player's hand"),
+	])
+	cache.erase(uid)
+	return result
+
+
 func test_snapshot_captures_every_visual_zone_and_slot_state_without_copying_full_card_data() -> String:
 	var state := _state()
 	var player := state.players[0]

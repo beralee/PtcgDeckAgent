@@ -321,6 +321,7 @@ func start_game(
 	defer_setup_until_owner_bound: bool = false
 ) -> void:
 	PokemonSlot.reset_order_stamp_counter()
+	CardInstance.reset_id_counter()
 	game_state = GameState.new()
 	action_log.clear()
 	_pending_trainer_vfx_data.clear()
@@ -468,7 +469,6 @@ func _build_deck(player_index: int, deck_data: DeckData) -> void:
 	if card_database == null:
 		push_error("GameStateMachine: CardDatabase autoload unavailable while building deck")
 		return
-	CardInstance.reset_id_counter()
 	for entry: Dictionary in deck_data.cards:
 		var set_code: String = entry.get("set_code", "")
 		var card_index: String = entry.get("card_index", "")

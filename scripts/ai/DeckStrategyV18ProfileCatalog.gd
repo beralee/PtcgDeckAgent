@@ -3,6 +3,10 @@ extends RefCounted
 
 const PROFILE_VERSION := 14
 
+static var _profiles_by_deck_id: Dictionary = {}
+static var _profiles_by_strategy_id: Dictionary = {}
+static var _profile_index_ready := false
+
 const STRONG_ORDER_HINTS := {
 	18000230: {
 		"opening_cards": [
@@ -340,21 +344,30 @@ static func all_profiles() -> Array[Dictionary]:
 
 
 static func get_profile_for_deck(deck_id: int) -> Dictionary:
-	for profile: Dictionary in all_profiles():
-		if int(profile.get("deck_id", 0)) == deck_id:
-			return profile.duplicate(true)
-	return {}
+	_ensure_profile_index()
+	var profile: Dictionary = _profiles_by_deck_id.get(deck_id, {})
+	return profile.duplicate(true)
 
 
 static func get_profile_for_strategy(strategy_id: String) -> Dictionary:
-	for profile: Dictionary in all_profiles():
-		if str(profile.get("strategy_id", "")) == strategy_id:
-			return profile.duplicate(true)
-	return {}
+	_ensure_profile_index()
+	var profile: Dictionary = _profiles_by_strategy_id.get(strategy_id, {})
+	return profile.duplicate(true)
 
 
 static func strategy_id_for_deck(deck_id: int) -> String:
-	return str(get_profile_for_deck(deck_id).get("strategy_id", ""))
+	_ensure_profile_index()
+	var profile: Dictionary = _profiles_by_deck_id.get(deck_id, {})
+	return str(profile.get("strategy_id", ""))
+
+
+static func _ensure_profile_index() -> void:
+	if _profile_index_ready:
+		return
+	for profile: Dictionary in all_profiles():
+		_profiles_by_deck_id[int(profile.get("deck_id", 0))] = profile
+		_profiles_by_strategy_id[str(profile.get("strategy_id", ""))] = profile
+	_profile_index_ready = true
 
 
 static func has_strategy_id(strategy_id: String) -> bool:

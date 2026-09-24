@@ -199,6 +199,24 @@ static func get_profile_for_deck(deck_id: int, include_override: bool = true) ->
 	return profile
 
 
+static func setup_variant_metadata_for_deck(deck_id: int) -> Dictionary:
+	if deck_id not in ALL_DECK_IDS:
+		return {}
+	var base_strategy_id := RuleProfileCatalogScript.strategy_id_for_deck(deck_id)
+	if base_strategy_id == "":
+		return {}
+	var slug := str((_PILOTS[deck_id] as Dictionary).get("slug", "")) if _PILOTS.has(deck_id) else base_strategy_id.trim_prefix("v18_%d_" % deck_id)
+	var promotion_status := str(BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.get(deck_id, "experimental"))
+	return {
+		"base_strategy_id": base_strategy_id,
+		"strategy_id": ContractsScript.strategy_id(deck_id, slug),
+		"runtime_kind": ContractsScript.RUNTIME_KIND,
+		"battle_setup_available": BATTLE_SETUP_RELEASE_STATUS_BY_DECK_ID.has(deck_id),
+		"promotion_status": promotion_status,
+		"experimental": promotion_status.contains("experimental"),
+	}
+
+
 static func _default_profile_delta(rule_profile: Dictionary) -> Dictionary:
 	var strategy_id := str(rule_profile.get("strategy_id", ""))
 	var deck_id := int(rule_profile.get("deck_id", 0))
