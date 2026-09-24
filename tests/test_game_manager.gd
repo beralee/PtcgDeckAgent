@@ -569,14 +569,14 @@ func test_desktop_window_resize_preserves_user_expanded_modes() -> String:
 	var manager: Node = _load_game_manager_script().new()
 
 	return run_checks([
-		assert_false(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_WINDOWED)), "Configured desktop sizing should still apply to regular windowed mode"),
+		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_WINDOWED)), "Windows windowed sizing must survive page changes"),
 		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_MAXIMIZED)), "Windows title-bar maximize should survive non-battle page changes"),
 		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_FULLSCREEN)), "Fullscreen should survive non-battle page changes"),
 		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)), "Exclusive fullscreen should survive non-battle page changes"),
 	])
 
 
-func test_desktop_render_resolution_caps_high_density_windows() -> String:
+func test_desktop_render_resolution_keeps_high_density_windows_native() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var cap := Vector2i(1920, 1080)
 
@@ -585,7 +585,7 @@ func test_desktop_render_resolution_caps_high_density_windows() -> String:
 		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(2560, 1440), cap), Vector2i(1920, 1080), "1440p desktop windows should also cap to a 1080p internal render target"),
 		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(1920, 1080), cap), Vector2i(1920, 1080), "1080p desktop windows should not be downscaled"),
 		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(1600, 900), cap), Vector2i(1600, 900), "Default 1600x900 windows should keep their native render size"),
-		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160))), "Windows 4K should enable the desktop render cap"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160))), "Windows 4K UI must render natively"),
 		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Linux", {}, "", Vector2i(2560, 1440))), "Linux 1440p should enable the desktop render cap"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "macOS", {}, "", Vector2i(2512, 1413))), "macOS Retina windows should render UI text natively instead of upscaling a 1080p viewport"),
 		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "OSX", {}, "", Vector2i(2512, 1413))), "Older macOS platform names should keep Retina-native canvas text"),

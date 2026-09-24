@@ -6,12 +6,14 @@ const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/No
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const UiRuntimeProfileResolverScript := preload("res://scripts/ui/runtime/UiRuntimeProfileResolver.gd")
 const BrowserLifecycleBridgeScript := preload("res://scripts/ui/web/BrowserLifecycleBridge.gd")
+const DesktopDisplayControllerScript := preload("res://scripts/ui/runtime/DesktopDisplayController.gd")
 const WebUiFeatureGateScript := preload("res://scripts/ui/web/WebUiFeatureGate.gd")
 const AuthorStrategyWindowsExecutionGateScript := preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
 const AuthorStrategyFeatureGateScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
 const AuthorStrategyDeckMaterializerScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckMaterializer.gd")
 
 signal non_battle_layout_mode_changed(mode: String)
+signal display_metrics_changed
 
 ## 游戏模式
 enum GameMode {
@@ -168,12 +170,18 @@ var _navigation_prewarm_resources: Dictionary = {}
 var _pending_scene_change_path: String = ""
 var _pending_scene_change_token: int = 0
 var _applying_desktop_render_resolution_cap: bool = false
+var _desktop_display_controller: Node = null
 var _battle_setup_startup_input_shield_until_msec: int = 0
 var _battle_setup_startup_input_shield_duration_msec: int = 0
 var _battle_setup_startup_input_shield_reason: String = ""
 
 
 func _ready() -> void:
+	if OS.get_name() == "Windows" and DisplayServer.get_name() != "headless":
+		_desktop_display_controller = DesktopDisplayControllerScript.new()
+		add_child(_desktop_display_controller)
+		_desktop_display_controller.display_metrics_changed.connect(_on_display_metrics_changed)
+		_desktop_display_controller.initialize(get_tree().root)
 	refresh_ui_runtime_profile()
 	_ensure_browser_lifecycle_bridge()
 	_ensure_web_ui_e2e_bridge()
@@ -197,6 +205,15 @@ func _connect_desktop_render_resolution_cap() -> void:
 func _on_root_window_size_changed() -> void:
 	refresh_ui_runtime_profile()
 	apply_desktop_render_resolution_cap()
+
+
+func _on_display_metrics_changed() -> void:
+	refresh_ui_runtime_profile()
+	display_metrics_changed.emit()
+
+
+func get_desktop_display_controller() -> Node:
+	return _desktop_display_controller
 
 
 func refresh_ui_runtime_profile(viewport_size: Vector2 = Vector2.ZERO, user_agent: String = "") -> UiRuntimeProfile:
@@ -297,12 +314,14 @@ func _on_browser_runtime_error_received(error_kind: String, payload: Dictionary)
 
 
 func _ensure_desktop_window_size() -> void:
+	if OS.get_name() == "Windows":
+		return
 	if DisplayServer.get_name() == "headless":
 		return
 	if _is_web_runtime():
 		return
 	var current_mode := DisplayServer.window_get_mode()
-	if _should_preserve_user_desktop_window_mode(current_mode):
+	if current_mode != DisplayServer.WINDOW_MODE_WINDOWED and _should_preserve_user_desktop_window_mode(current_mode):
 		apply_desktop_render_resolution_cap()
 		return
 	if _should_maximize_desktop_window(OS.get_name()):
@@ -429,10 +448,12 @@ func _apply_handheld_battle_orientation(mode: String) -> void:
 
 
 func _apply_desktop_battle_window_shape(mode: String) -> void:
+	if OS.get_name() == "Windows":
+		return
 	if mode == BATTLE_LAYOUT_AUTO:
 		return
 	var current_mode := DisplayServer.window_get_mode()
-	if _should_preserve_user_desktop_window_mode(current_mode):
+	if current_mode != DisplayServer.WINDOW_MODE_WINDOWED and _should_preserve_user_desktop_window_mode(current_mode):
 		apply_desktop_render_resolution_cap()
 		return
 	if _should_maximize_desktop_window(OS.get_name()):
@@ -467,6 +488,8 @@ func _configured_desktop_window_size() -> Vector2i:
 
 
 func apply_desktop_render_resolution_cap(window_size: Vector2i = Vector2i.ZERO) -> void:
+	if OS.get_name() == "Windows":
+		return
 	if _applying_desktop_render_resolution_cap:
 		return
 	if DisplayServer.get_name() == "headless":
@@ -515,6 +538,8 @@ func _should_apply_desktop_render_resolution_cap(
 	if _is_web_runtime(os_name, feature_flags, display_server_name):
 		return false
 	if _is_mobile_runtime_for_context(os_name, feature_flags):
+		return false
+	if os_name.strip_edges().to_lower() == "windows":
 		return false
 	# Retina exports already render at the backing-store density. Capping the
 	# logical window to a 1080p Viewport rasterizes text and then scales that
@@ -625,6 +650,7 @@ func _should_maximize_desktop_window(os_name: String) -> bool:
 
 func _should_preserve_user_desktop_window_mode(mode: int) -> bool:
 	return mode in [
+		DisplayServer.WINDOW_MODE_WINDOWED,
 		DisplayServer.WINDOW_MODE_FULLSCREEN,
 		DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN,
 		DisplayServer.WINDOW_MODE_MAXIMIZED,

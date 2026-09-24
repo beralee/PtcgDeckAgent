@@ -1243,6 +1243,22 @@ func test_battle_setup_portrait_layout_stacks_columns_and_keeps_battle_default_p
 	return result
 
 
+func test_windows_narrow_setup_stacks_without_phone_sized_text() -> String:
+	var scene: Control = BattleSetupScene.instantiate()
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1000, 700), "landscape")
+	var stack := scene.find_child("PortraitSetupStack", true, false) as VBoxContainer
+	var start_button := scene.find_child("BtnStart", true, false) as Button
+	var context: Dictionary = scene.get("_current_non_battle_layout_context")
+	var result := run_checks([
+		assert_not_null(stack, "A narrow desktop setup should use the scrollable single column"),
+		assert_eq(int(context.get("body_font_size", 0)), 15, "Desktop text must not inherit the phone font size"),
+		assert_true(start_button != null and start_button.get_theme_font_size("font_size") <= 20, "Desktop buttons should retain desktop font metrics"),
+	])
+	scene.queue_free()
+	return result
+
+
 func test_battle_setup_portrait_ai_mode_refresh_keeps_dynamic_controls_touch_sized() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
 	if not scene.has_method("_apply_non_battle_layout_for_tests"):
