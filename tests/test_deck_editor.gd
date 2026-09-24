@@ -444,6 +444,47 @@ func test_pool_card_tile_queues_deferred_texture_load() -> String:
 	])
 
 
+func test_card_tile_images_are_downsampled_without_upscaling() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var large_image := Image.create_empty(800, 1120, false, Image.FORMAT_RGBA8)
+	editor.call("_downsample_card_tile_image", large_image)
+	var small_image := Image.create_empty(80, 112, false, Image.FORMAT_RGBA8)
+	editor.call("_downsample_card_tile_image", small_image)
+	var result := run_checks([
+		assert_eq(large_image.get_size(), Vector2i(160, 224), "Pool tile textures should fit the display-sized image budget"),
+		assert_eq(small_image.get_size(), Vector2i(80, 112), "Small source images should not be enlarged"),
+	])
+	editor.free()
+	return result
+
+
+func test_bundled_card_tile_load_uses_thumbnail_resolution() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var texture := editor.call("_load_card_texture", "151C", "035") as Texture2D
+	var result := run_checks([
+		assert_not_null(texture, "Bundled card art should load in the editor"),
+		assert_true(texture != null and texture.get_width() <= 160 and texture.get_height() <= 224, "Bundled art must be downsized before creating its GPU texture"),
+	])
+	editor.free()
+	return result
+
+
+func test_card_tile_texture_cache_evicts_old_entries() -> String:
+	var editor: Control = DeckEditorScript.new()
+	for index in range(128):
+		editor.call("_remember_card_tile_texture", "card_%d" % index, PlaceholderTexture2D.new())
+	editor.call("_cached_card_tile_texture", "card_0")
+	editor.call("_remember_card_tile_texture", "card_128", PlaceholderTexture2D.new())
+	var cache: Dictionary = editor.get("_texture_cache")
+	var result := run_checks([
+		assert_eq(cache.size(), 128, "Editor image cache should stay bounded across card categories"),
+		assert_true(cache.has("card_0"), "Recently used card image should remain cached"),
+		assert_false(cache.has("card_1"), "Least recently used card image should be evicted"),
+	])
+	editor.free()
+	return result
+
+
 func test_deck_editor_portrait_hides_scrollbars_and_keeps_touch_drag() -> String:
 	var previous_emulate: bool = bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
