@@ -39,6 +39,9 @@ const CARD_IMAGE_HEIGHT_RATIO := 1.4
 const CARD_MIN_WIDTH := 72
 const CARD_GRID_LAYOUT_REFRESH_PASSES := 4
 const DEFERRED_TILE_TEXTURES_PER_FRAME := 6
+const CARD_TILE_TEXTURE_MAX_WIDTH := 160
+const CARD_TILE_TEXTURE_MAX_HEIGHT := 224
+const CARD_TILE_TEXTURE_CACHE_LIMIT := 128
 const CATEGORY_TAB_HEIGHT := 54
 const CATEGORY_TAB_FONT_SIZE := 18
 const CATEGORY_TAB_GAP := 8
@@ -148,6 +151,7 @@ var _deck_discussion_dialog: AcceptDialog = null
 
 ## 纹理缓存
 var _texture_cache: Dictionary = {}
+var _texture_cache_order: Array[String] = []
 var _failed_texture_paths: Dictionary = {}
 var _card_detail_overlay: Panel = null
 var _card_detail_box: PanelContainer = null
@@ -1819,8 +1823,9 @@ func _load_card_texture(set_code: String, card_index: String) -> Texture2D:
 	if file_path == "":
 		return null
 
-	if _texture_cache.has(file_path):
-		return _texture_cache[file_path]
+	var cached_texture := _cached_card_tile_texture(file_path)
+	if cached_texture != null:
+		return cached_texture
 	if _failed_texture_paths.has(file_path):
 		return null
 
@@ -1835,9 +1840,40 @@ func _load_card_texture(set_code: String, card_index: String) -> Texture2D:
 		_failed_texture_paths[file_path] = true
 		return null
 
+	_downsample_card_tile_image(image)
 	var texture := ImageTexture.create_from_image(image)
-	_texture_cache[file_path] = texture
+	_remember_card_tile_texture(file_path, texture)
 	return texture
+
+
+func _downsample_card_tile_image(image: Image) -> void:
+	var scale := minf(
+		float(CARD_TILE_TEXTURE_MAX_WIDTH) / float(image.get_width()),
+		float(CARD_TILE_TEXTURE_MAX_HEIGHT) / float(image.get_height())
+	)
+	if scale >= 1.0:
+		return
+	image.resize(
+		maxi(1, roundi(float(image.get_width()) * scale)),
+		maxi(1, roundi(float(image.get_height()) * scale)),
+		Image.INTERPOLATE_BILINEAR
+	)
+
+
+func _cached_card_tile_texture(file_path: String) -> Texture2D:
+	if not _texture_cache.has(file_path):
+		return null
+	_texture_cache_order.erase(file_path)
+	_texture_cache_order.append(file_path)
+	return _texture_cache[file_path] as Texture2D
+
+
+func _remember_card_tile_texture(file_path: String, texture: Texture2D) -> void:
+	_texture_cache[file_path] = texture
+	_texture_cache_order.erase(file_path)
+	_texture_cache_order.append(file_path)
+	while _texture_cache_order.size() > CARD_TILE_TEXTURE_CACHE_LIMIT:
+		_texture_cache.erase(_texture_cache_order.pop_front())
 
 
 func _load_image_from_buffer(image: Image, image_bytes: PackedByteArray) -> int:
