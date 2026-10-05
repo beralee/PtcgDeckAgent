@@ -123,7 +123,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_right = 40
 
-[node name="DeckList" type="VBoxContainer" parent="MarginContainer/VBox/DeckScroll/DeckScrollMargin"]
+[node name="DeckList" type="GridContainer" parent="MarginContainer/VBox/DeckScroll/DeckScrollMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -133,6 +133,7 @@ theme_override_constants/separation = 8
 unique_name_in_owner = true
 layout_mode = 2
 text = "暂无卡组，可以新建基础卡组或导入现有卡组。"
+autowrap_mode = 3
 horizontal_alignment = 1
 vertical_alignment = 1
 

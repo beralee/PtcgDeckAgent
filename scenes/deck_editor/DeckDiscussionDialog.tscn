@@ -2,13 +2,9 @@
 
 [ext_resource type="Script" path="res://scenes/deck_editor/DeckDiscussionDialog.gd" id="1"]
 
-[node name="DeckDiscussionDialog" type="AcceptDialog"]
-borderless = true
-exclusive = false
-transient = false
-initial_position = 1
-size = Vector2i(980, 760)
-min_size = Vector2i(820, 620)
+[node name="DeckDiscussionDialog" type="Control"]
+visible = false
+dialog_size = Vector2(980, 760)
 title = ""
 script = ExtResource("1")
 

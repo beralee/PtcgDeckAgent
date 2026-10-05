@@ -147,6 +147,7 @@ static func _normalize_record(source: Dictionary) -> Dictionary:
 		"short_display_name": short_display_name,
 		"author_name": author_name,
 		"package_version_label": version_label,
+		"runtime_compatibility": source.get("runtime_compatibility", {}).duplicate(true) if source.get("runtime_compatibility") is Dictionary else {},
 		"display_label": "%s · %s · %s" % [
 			short_display_name,
 			_ellipsize(author_name, MAX_SHORT_AUTHOR_NAME_LENGTH),

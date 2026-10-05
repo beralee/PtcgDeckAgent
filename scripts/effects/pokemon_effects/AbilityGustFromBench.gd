@@ -76,8 +76,9 @@ func execute_ability(
 		player.discard_pile.append(card)
 	for card: CardInstance in pokemon.attached_energy:
 		player.discard_pile.append(card)
-	if pokemon.attached_tool != null:
-		player.discard_pile.append(pokemon.attached_tool)
+	for tool: CardInstance in pokemon.get_attached_tools():
+		player.discard_pile.append(tool)
+	pokemon.attached_tool = null
 
 	pokemon.effects.append({
 		"type": USED_KEY,

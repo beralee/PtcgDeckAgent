@@ -1,0 +1,217 @@
+[
+  {
+    "scenario": "low_space",
+    "passed": true,
+    "report": {
+      "case": "low_space",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "low_space | available |  | 下载完成后，由你决定何时安装。",
+        "low_space | failed | storage | 存储空间不足，请清理空间后重新下载。当前游戏和本地数据不受影响。"
+      ],
+      "issue": "storage",
+      "message": "存储空间不足，请清理空间后重新下载。当前游戏和本地数据不受影响。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "missing",
+    "passed": true,
+    "report": {
+      "case": "missing",
+      "history": [
+        " | idle |  | ",
+        "missing | available |  | 下载完成后，由你决定何时安装。",
+        "missing | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "missing | failed | download_0_http_404 | 下载未完成，可能是网络中断或下载地址暂时不可用。请重新下载，半包不会用于安装。"
+      ],
+      "issue": "download_0_http_404",
+      "message": "下载未完成，可能是网络中断或下载地址暂时不可用。请重新下载，半包不会用于安装。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "stall",
+    "passed": true,
+    "report": {
+      "case": "stall",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "stall | available |  | 下载完成后，由你决定何时安装。",
+        "stall | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "stall | failed | network_timeout | 下载连接已中断，请检查网络后重试。"
+      ],
+      "issue": "network_timeout",
+      "message": "下载连接已中断，请检查网络后重试。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "truncated",
+    "passed": true,
+    "report": {
+      "case": "truncated",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "truncated | available |  | 下载完成后，由你决定何时安装。",
+        "truncated | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "truncated | failed |  | 下载文件不完整，请重新下载。"
+      ],
+      "issue": "",
+      "message": "下载文件不完整，请重新下载。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "drop",
+    "passed": true,
+    "report": {
+      "case": "drop",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "drop | available |  | 下载完成后，由你决定何时安装。",
+        "drop | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "drop | failed | download_4_http_0 | 下载未完成，可能是网络中断或下载地址暂时不可用。请重新下载，半包不会用于安装。"
+      ],
+      "issue": "download_4_http_0",
+      "message": "下载未完成，可能是网络中断或下载地址暂时不可用。请重新下载，半包不会用于安装。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "corrupt",
+    "passed": true,
+    "report": {
+      "case": "corrupt",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "corrupt | available |  | 下载完成后，由你决定何时安装。",
+        "corrupt | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "corrupt | verifying |  | 正在校验更新文件…",
+        "corrupt | failed |  | 更新文件校验未通过，已阻止安装。请重新下载。"
+      ],
+      "issue": "",
+      "message": "更新文件校验未通过，已阻止安装。请重新下载。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "invalid",
+    "passed": true,
+    "report": {
+      "case": "invalid",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "invalid | available |  | 下载完成后，由你决定何时安装。",
+        "invalid | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "invalid | verifying |  | 正在校验更新文件…",
+        "invalid | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+        "invalid | verifying |  | 正在校验更新文件…",
+        "invalid | installing |  | 正在准备安装，请稍候。",
+        "invalid | failed | failed_package_invalid | 下载的文件不是可安装的 Android 安装包，已阻止安装。请重新下载或使用官网入口。"
+      ],
+      "issue": "failed_package_invalid",
+      "message": "下载的文件不是可安装的 Android 安装包，已阻止安装。请重新下载或使用官网入口。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "deleted",
+    "passed": true,
+    "report": {
+      "case": "deleted",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "deleted | available |  | 下载完成后，由你决定何时安装。",
+        "deleted | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "deleted | verifying |  | 正在校验更新文件…",
+        "deleted | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+        "deleted | failed |  | 下载文件不完整，请重新下载。"
+      ],
+      "issue": "",
+      "message": "下载文件不完整，请重新下载。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "wrong_build",
+    "passed": true,
+    "report": {
+      "case": "wrong_build",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "wrong_build | available |  | 下载完成后，由你决定何时安装。",
+        "wrong_build | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "wrong_build | verifying |  | 正在校验更新文件…",
+        "wrong_build | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+        "wrong_build | verifying |  | 正在校验更新文件…",
+        "wrong_build | installing |  | 正在准备安装，请稍候。",
+        "wrong_build | failed | failed_version | 安装包版本不符合本次更新，已阻止安装。请重新检查更新。"
+      ],
+      "issue": "failed_version",
+      "message": "安装包版本不符合本次更新，已阻止安装。请重新检查更新。",
+      "preserved": "created-in-1.0.0",
+      "state": "failed",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "process_death_mid_download",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。"
+      ],
+      "issue": "",
+      "message": "上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+      "preserved": "created-in-1.0.0",
+      "state": "cancelled",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "recovery_good_download",
+    "passed": true,
+    "report": {
+      "case": "good",
+      "history": [
+        " | cancelled |  | 上次下载未完成，可重新下载。未完成的文件不会用于安装。",
+        " | idle |  | 请选择验证场景。",
+        "good | available |  | 下载完成后，由你决定何时安装。",
+        "good | downloading |  | 正在下载，可以关闭此窗口继续游戏。",
+        "good | verifying |  | 正在校验更新文件…",
+        "good | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。"
+      ],
+      "issue": "",
+      "message": "更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+      "preserved": "created-in-1.0.0",
+      "state": "ready",
+      "version": "1.0.0"
+    }
+  }
+]

@@ -6,6 +6,9 @@ const PACKAGE_PATH := "res://data/ptcgdap/author_strategy_packages/ptcgdap-autho
 
 
 func _initialize() -> void:
+	if "--player-release" in OS.get_cmdline_user_args():
+		_inspect_player_release()
+		return
 	var gate := ReleaseGateScript.new()
 	var release: Dictionary = gate.audit_snapshot()
 	var required_paths: Array[String] = gate.required_export_paths()
@@ -39,6 +42,38 @@ func _initialize() -> void:
 		"weights_present": package.get("payloads", {}).has("policy/weights.bin"),
 	}
 	print("PTCGDAP_EXPORT_INVENTORY=" + JSON.stringify(report))
+	quit(0 if accepted else 1)
+
+
+func _inspect_player_release() -> void:
+	var gate := ReleaseGateScript.new()
+	var required: Array[String] = gate.required_export_paths()
+	required.erase(PACKAGE_PATH.trim_prefix("res://"))
+	required.append("data/ptcgdap/author_strategy_catalog_cache.json")
+	var packages: Array[Dictionary] = []
+	var loader := PackageLoaderScript.new()
+	var package_root := "res://data/ptcgdap/author_strategy_packages/"
+	for name: String in DirAccess.get_files_at(package_root):
+		if not name.ends_with(".ptcgai"):
+			continue
+		var path := package_root + name
+		required.append(path.trim_prefix("res://"))
+		var bytes := _read(path)
+		var inspected: Dictionary = loader.inspect_match_bytes(bytes)
+		packages.append({"path": path, "bytes": bytes.size(), "sha256": _sha(bytes),
+			"accepted": bool(inspected.get("ok", false)), "error_code": inspected.get("error_code", "")})
+	var missing: Array[String] = []
+	for relative: String in required:
+		var path := "res://" + relative
+		if not FileAccess.file_exists(path) and not (path.ends_with(".gd") and FileAccess.file_exists(path.trim_suffix(".gd") + ".gdc")):
+			missing.append(relative)
+	var accepted := not packages.is_empty() and missing.is_empty() and bool(gate.audit_snapshot().get("contract_ok", false))
+	for package: Dictionary in packages:
+		accepted = accepted and bool(package.accepted)
+	print("PTCGDAP_EXPORT_INVENTORY=" + JSON.stringify({"document_type": "player_export_runtime_probe_v1",
+		"schema_version": 1, "accepted": accepted, "missing_paths": missing,
+		"required_path_count": required.size(), "packages": packages,
+		"grants_release_authority": false}))
 	quit(0 if accepted else 1)
 
 

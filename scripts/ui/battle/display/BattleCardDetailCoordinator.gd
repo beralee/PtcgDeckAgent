@@ -442,11 +442,9 @@ func show_pokemon_slot_detail(slot: PokemonSlot) -> void:
 	if inst == null or inst.card_data == null:
 		return
 	show_card_instance_detail(inst)
-	var lines := detail_lines(inst.card_data)
-	var resource_lines := pokemon_slot_resource_detail_lines(slot)
-	if not resource_lines.is_empty():
-		lines.append("")
-		lines.append_array(resource_lines)
+	var lines := pokemon_slot_resource_detail_lines(slot)
+	lines.append("")
+	lines.append_array(detail_lines(inst.card_data))
 	var detail_content := _get_scene_var("_detail_content") as RichTextLabel
 	if detail_content != null:
 		detail_content.text = "[color=#dceff8]%s[/color]" % "\n".join(lines)
@@ -462,15 +460,22 @@ func pokemon_slot_resource_detail_lines(slot: PokemonSlot) -> Array[String]:
 	var lines: Array[String] = []
 	if slot == null:
 		return lines
-	var tool_name := card_instance_display_name(slot.attached_tool)
+	var tool_names: Array[String] = []
+	for tool: CardInstance in slot.get_attached_tools():
+		tool_names.append(card_instance_display_name(tool))
+	var tool_name := "、".join(tool_names)
 	var energy_summary := pokemon_slot_attached_energy_summary(slot)
-	if tool_name == "" and energy_summary == "":
-		return lines
-	lines.append("[b]附加信息[/b]")
-	if tool_name != "":
-		lines.append("道具：%s" % tool_name)
-	if energy_summary != "":
-		lines.append("能量：%s" % energy_summary)
+	var status: Dictionary = _scene.call("_build_battle_status",slot) if _scene != null and _scene.has_method("_build_battle_status") else {}
+	lines.append("[b]当前场上状态[/b]")
+	lines.append("HP：%d / %d　伤害：%d" % [status.get("hp_current",slot.get_remaining_hp()),status.get("hp_max",slot.get_max_hp()),slot.damage_counters])
+	lines.append("能量：%s" % (energy_summary if energy_summary != "" else "无"))
+	lines.append("道具：%s" % (tool_name if tool_name != "" else "无"))
+	var names := {"poisoned":"中毒","burned":"灼伤","asleep":"睡眠","paralyzed":"麻痹","confused":"混乱"}
+	var conditions: Array[String] = []
+	for key: String in names:
+		if slot.status_conditions.get(key,false): conditions.append(names[key])
+	lines.append("状态：%s" % ("、".join(conditions) if not conditions.is_empty() else "正常"))
+	if bool(status.get("ability_used_this_turn",false)): lines.append("本回合已使用特性")
 	return lines
 
 
@@ -586,6 +591,12 @@ func play_card_detail_open_animation() -> void:
 	if detail_reveal_tween != null:
 		detail_reveal_tween.kill()
 		_set_scene_var("_detail_reveal_tween", null)
+	# The 3D arena already replaces the hover card with a reading modal. Fading
+	# only the contents leaves a dark blank frame and looks like a flash.
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(_scene):
+		detail_box.modulate = Color.WHITE
+		detail_box.scale = Vector2.ONE
+		return
 	detail_box.pivot_offset = detail_box.size * 0.5
 	detail_box.modulate = Color(1, 1, 1, 0)
 	detail_box.scale = Vector2(0.94, 0.94)

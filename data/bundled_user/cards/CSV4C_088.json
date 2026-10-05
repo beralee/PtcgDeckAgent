@@ -1,0 +1,58 @@
+{
+	"name": "普隆隆姆ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "特性: 调试\n这只宝可梦身上可以最多放4张「宝可梦道具」。（当这个特性失效时，自己将「宝可梦道具」放于弃牌区，直到还剩1张为止。）\n\n【钢】【钢】【无】 疯狂漂移 170\n在下一个对手的回合，这只宝可梦所受到的招式的伤害「-30」。\n\n",
+	"yoren_code": "Y1312",
+	"set_code": "CSV4C",
+	"card_index": "088",
+	"set_code_en": "OBF",
+	"card_index_en": "156",
+	"name_en": "Revavroom ex",
+	"name_zh": "",
+	"artist": "takuyoa",
+	"rarity": "RR",
+	"release_date": "2025-07-17T16:00:00Z",
+	"regulation_mark": "G",
+	"effect_id": "ab8223ccdd32e7042b64196017d4d6db",
+	"image_url": "https://tcg.mik.moe/static/img/CSV4C/088.png",
+	"image_local_path": "user://cards/images/CSV4C/088.png",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/cards/CSV4C/088",
+	"source_set_code": "CSV4C",
+	"source_card_index": "088",
+	"source_language": "zh-CN",
+	"source_prints": [],
+	"source_imported_at": 0,
+	"source_parser_version": 1,
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "M",
+	"stage": "Stage 1",
+	"hp": 280,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"evolves_from": "噗隆隆",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "疯狂漂移",
+			"text": "在下一个对手的回合，这只宝可梦所受到的招式的伤害「-30」。",
+			"cost": "MMC",
+			"damage": "170",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "调试",
+			"text": "这只宝可梦身上可以最多放4张「宝可梦道具」。（当这个特性失效时，自己将「宝可梦道具」放于弃牌区，直到还剩1张为止。）"
+		}
+	],
+	"energy_provides": ""
+}

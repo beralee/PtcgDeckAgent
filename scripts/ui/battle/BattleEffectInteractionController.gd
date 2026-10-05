@@ -3,6 +3,7 @@ extends RefCounted
 
 const UiInteractionSessionScript := preload("res://scripts/ui/interactions/UiInteractionSession.gd")
 const UcisCompilerScript := preload("res://scripts/engine/ucis/UcisInteractionCompiler.gd")
+const EvolutionChoices := preload("res://scripts/ui/battle/BattleEvolutionChoicePresenter.gd")
 
 const EFFECT_GENERATION_META := "pending_effect_interaction_generation"
 const EFFECT_RESPONSE_META := "effect_interaction_response"
@@ -247,6 +248,13 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 			show_next_effect_interaction_step(scene)
 		)
 		return
+	if EvolutionChoices.all_evolution_choices(step.get("items", [])) and int(step.get("max_select", 1)) == 1:
+		# Project the existing EVOLVE options into source/board controls. Keep the
+		# authoritative step intact for UCIS, AI and the final index submission.
+		scene.set("_pending_choice", "effect_interaction")
+		scene.call("_show_field_assignment_interaction", EvolutionChoices.field_step(scene, step))
+		hide_ai_owned_effect_step_ui(scene, chooser_player)
+		return
 	if effect_step_uses_counter_distribution_ui(scene, step):
 		scene.set("_pending_choice", "effect_interaction")
 		scene.call(
@@ -375,6 +383,38 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		dialog_data["utility_actions"] = step.get("utility_actions", [])
 	scene.call("_show_dialog", _step_title(scene, step), labels, dialog_data)
 	hide_ai_owned_effect_step_ui(scene, chooser_player)
+
+
+func commit_evolution_assignment(scene: Object, assignments: Array[Dictionary], presentation: Dictionary) -> void:
+	var steps: Array = scene.get("_pending_effect_steps")
+	var step_index := int(scene.get("_pending_effect_step_index"))
+	if step_index < 0 or step_index >= steps.size():
+		return
+	var step: Dictionary = steps[step_index]
+	if (
+		int(presentation.get("interaction_generation", -1)) != int(scene.get_meta(EFFECT_GENERATION_META, 0))
+		or int(presentation.get("interaction_step_index", -1)) != step_index
+		or str(presentation.get("interaction_step_id", "")) != str(step.get("id", "step_%d" % step_index))
+	):
+		_reject_effect_choice(scene, "stale evolution presentation")
+		return
+	if assignments.size() != 1:
+		_reject_effect_choice(scene, "evolution requires one card/target pair")
+		return
+	# Resolve exact instances against the current frontier, never display order,
+	# names, or a cached option index from the earlier source click.
+	var option_index := EvolutionChoices.option_index(step.get("items", []), assignments[0].get("source"), assignments[0].get("target"))
+	if option_index < 0:
+		_reject_effect_choice(scene, "evolution pair is outside the current frontier")
+		return
+	scene.set_meta(EFFECT_RESPONSE_META, {
+		"generation": presentation.interaction_generation,
+		"step_index": step_index,
+		"step_id": presentation.interaction_step_id,
+		"intent": BaseEffect.INTERACTION_INTENT_SELECT,
+		"source": "field_evolution",
+	})
+	handle_effect_interaction_choice(scene, PackedInt32Array([option_index]))
 
 
 func validate_effect_step_choice(
@@ -739,6 +779,8 @@ func _finish_effect_interaction(scene: Object) -> void:
 			success = gsm.use_granted_attack(pending_effect_player_index, pending_effect_slot, pending_effect_attack_data, [pending_effect_context])
 		"bench_limit_cleanup":
 			success = gsm.enforce_current_bench_limits("bench_limit_cleanup", pending_effect_player_index, "", -1, [pending_effect_context])
+		"tool_limit_cleanup":
+			success = gsm.resolve_tool_limit_cleanup(pending_effect_player_index, [pending_effect_context])
 		"powerglass_end_turn":
 			success = gsm.resolve_powerglass_end_turn_choice(pending_effect_player_index, [pending_effect_context])
 		"amulet_of_hope_knockout":

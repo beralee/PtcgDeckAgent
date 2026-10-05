@@ -2,6 +2,56 @@ class_name TestCardCatalogIndex
 extends TestBase
 
 const CardCatalogIndexScript := preload("res://scripts/card_catalog/CardCatalogIndex.gd")
+const SearchRecordScript := preload("res://scripts/card_catalog/CardCatalogSearchRecord.gd")
+
+
+func test_search_projection_preserves_evolution_without_materializing_sets() -> String:
+	var catalog := CardCatalogIndexScript.new()
+	var entry := catalog.get_entry("151C", "036")
+	var card := CardData.from_dict(SearchRecordScript.to_minimal_card_dict(entry))
+	return run_checks([
+		assert_eq(str(entry.get("evolves_from", "")), "皮皮", "Catalog search must retain the printed evolution source"),
+		assert_eq(card.evolves_from, "皮皮", "Minimal UI cards must retain the printed evolution source"),
+		assert_eq(catalog.materialized_set_count_for_tests(), 0, "Evolution metadata must not force full set loading"),
+	])
+
+
+func test_generated_catalog_shards_have_unique_paths_and_exact_index_uid_closure() -> String:
+	var root := "res://data/card_catalog"
+	var fixture_root := OS.get_environment("PTCG_TEST_CATALOG_ROOT")
+	if not fixture_root.is_empty(): root = fixture_root
+	var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(root.path_join("catalog_manifest.json")))
+	var index: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(root.path_join("index.json")))
+	var checks: Array[String] = []
+	var paths := {}
+	var cards_by_path := {}
+	var payload_uids := {}
+	var evolution_by_uid := {}
+	for shard: Dictionary in manifest.get("sets", []):
+		var path := str(shard.path)
+		checks.append(assert_false(paths.has(path.to_lower()), "Generated shard paths must also be unique on Windows: " + path))
+		paths[path.to_lower()] = true
+		var text := FileAccess.get_file_as_string(root.path_join(path))
+		checks.append(assert_eq(text.sha256_text(), str(shard.sha256), "Every manifest shard hash must describe the actual bytes: " + path))
+		var payload: Dictionary = JSON.parse_string(text)
+		checks.append(assert_eq(payload.cards.size(), int(shard.card_count), "Every shard count must match its actual cards: " + path))
+		var shard_uids := {}
+		for card: Dictionary in payload.cards:
+			var uid := str(card.set_code) + "_" + str(card.card_index)
+			checks.append(assert_false(payload_uids.has(uid), "Exact printing must appear in only one shard: " + uid))
+			payload_uids[uid] = true
+			evolution_by_uid[uid] = str(card.get("evolves_from", ""))
+			shard_uids[uid] = true
+		cards_by_path[path] = shard_uids
+	var index_uids := {}
+	for entry: Dictionary in index.cards:
+		var uid := str(entry.uid)
+		index_uids[uid] = true
+		checks.append(assert_eq(str(entry.get("evolves_from", "")), str(evolution_by_uid.get(uid, "")), "Search evolution source must match its full printing: " + uid))
+		checks.append(assert_true(cards_by_path.get(str(entry.set_file), {}).has(uid), "Every exact index UID must have full data in its designated shard: " + uid))
+	checks.append(assert_eq(payload_uids, index_uids, "Index and full card payloads must describe exactly the same printing set"))
+	checks.append(assert_eq(payload_uids.size(), int(manifest.card_count), "Manifest total must match unique full card records"))
+	return run_checks(checks)
 
 
 func test_default_catalog_loads_and_searches_without_materializing_sets() -> String:
@@ -97,13 +147,13 @@ func test_newer_remote_catalog_cache_overrides_bundled_and_bad_remote_rolls_back
 	])
 
 
-func test_legacy_remote_catalog_without_tera_search_schema_falls_back() -> String:
+func test_legacy_remote_catalog_without_evolution_search_schema_falls_back() -> String:
 	var bundled_root := "res://.godot_test_user/catalog_schema_bundled"
 	var user_root := "res://.godot_test_user/catalog_schema_user"
 	_remove_dir_recursive(bundled_root)
 	_remove_dir_recursive(user_root)
-	_write_catalog_fixture(bundled_root, "catalog_manifest.json", "1.0.0", "Bundled Card", true, 2)
-	_write_catalog_fixture(user_root, "remote_manifest.json", "2.0.0", "Legacy Remote", true, 1)
+	_write_catalog_fixture(bundled_root, "catalog_manifest.json", "1.0.0", "Bundled Card", true, 3)
+	_write_catalog_fixture(user_root, "remote_manifest.json", "2.0.0", "Legacy Remote", true, 2)
 
 	var catalog := CardCatalogIndexScript.new(bundled_root, user_root)
 	var card: CardData = catalog.get_card_data("TCAT", "001")
@@ -111,12 +161,12 @@ func test_legacy_remote_catalog_without_tera_search_schema_falls_back() -> Strin
 	_remove_dir_recursive(bundled_root)
 	_remove_dir_recursive(user_root)
 	return run_checks([
-		assert_eq(catalog.get_active_root_for_tests(), bundled_root, "A remote catalog without Tera search metadata must be ignored"),
+		assert_eq(catalog.get_active_root_for_tests(), bundled_root, "A remote catalog without evolution search metadata must be ignored"),
 		assert_eq(str(card.name if card != null else ""), "Bundled Card", "Schema fallback should keep the bundled card searchable"),
 	])
 
 
-func _write_catalog_fixture(root: String, manifest_name: String, version: String, card_name: String, valid_index: bool, schema_version: int = 2) -> void:
+func _write_catalog_fixture(root: String, manifest_name: String, version: String, card_name: String, valid_index: bool, schema_version: int = 3) -> void:
 	_make_dir_recursive(root.path_join("sets"))
 	var card_dict := {
 		"name": card_name,

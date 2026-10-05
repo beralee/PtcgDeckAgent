@@ -1,0 +1,333 @@
+{
+  "schema": "ptcgdap.android_battle_input_animation.v1",
+  "date": "2026-09-26",
+  "scope": "Godot presentation and input; constructed actual BattleScene with Android input profile, viewport dispatch and real tweens",
+  "runtime": "Godot 4.6.1 Windows headless",
+  "android_device_verified": false,
+  "android_emulator_verified": false,
+  "apk_exported": false,
+  "published": false,
+  "validation": [
+    {
+      "stage": "Input and animation changes before the scene-exit cleanup amendment",
+      "report": ".godot_test_user/presentation_regression_final/report.json",
+      "suite_count": 19,
+      "totals": {
+        "total": 637,
+        "passed": 637,
+        "failed": 0,
+        "skipped": 0
+      },
+      "isolation": "process-and-userdata-per-suite",
+      "completed_at": "2026-09-26T04:41:07.623364+00:00",
+      "suites": [
+        {
+          "name": "AISelfKnockoutPrizeDialog",
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "AndroidPortraitEnergyInteractionRegressions",
+          "passed": 8,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleDisplayController",
+          "passed": 17,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleDisplayCoordinator",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleEffectsSetting",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleHandSurfaceReconciliation",
+          "passed": 16,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleModalEndTurnInputIsolation",
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattlePointerInputRouter",
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattlePointerSurfaceController",
+          "passed": 10,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattlePortraitLayout",
+          "passed": 107,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattlePresentationIsolation",
+          "passed": 19,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleUIFeatures",
+          "passed": 116,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleUIFeaturesPart2",
+          "passed": 92,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleUIFeaturesPart3",
+          "passed": 84,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleUIFeaturesPart4",
+          "passed": 99,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleUIFeaturesPart5",
+          "passed": 15,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleVisualAnimationPlans",
+          "passed": 7,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "IosWebHudTouchAdapter",
+          "passed": 19,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "SwitchingTicketAnimation",
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "exit_resource_warning_suites": [
+        "BattleHandSurfaceReconciliation",
+        "BattlePortraitLayout",
+        "BattlePresentationIsolation",
+        "BattleUIFeaturesPart2",
+        "BattleUIFeaturesPart3",
+        "BattleUIFeaturesPart4",
+        "IosWebHudTouchAdapter"
+      ]
+    },
+    {
+      "stage": "Final source including scene-exit cleanup",
+      "report": ".godot_test_user/presentation_final_lifecycle/report.json",
+      "suite_count": 4,
+      "totals": {
+        "total": 33,
+        "passed": 33,
+        "failed": 0,
+        "skipped": 0
+      },
+      "isolation": "process-and-userdata-per-suite",
+      "completed_at": "2026-09-26T04:44:09.526465+00:00",
+      "suites": [
+        {
+          "name": "BattleEffectsSetting",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattlePresentationIsolation",
+          "passed": 20,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "BattleSceneLifecycle",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "name": "SwitchingTicketAnimation",
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "exit_resource_warning_suites": [
+        "BattlePresentationIsolation"
+      ]
+    }
+  ],
+  "counts_note": "Validation stages overlap; do not add their totals as independent cases.",
+  "red_evidence": [
+    {
+      "report": ".godot_test_user/presentation_isolation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_cancelled_prize_touch_does_not_take_a_card",
+      "message": "Android touch cancellation is not prize confirmation | 期望 0，实际 1"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_draw_confirm_owns_tail_after_synchronous_completion",
+      "message": "Confirmation echo remains owned after overlay is hidden"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_forced_draw_completion_clears_views_and_queued_work",
+      "message": "Recovery cannot restart an obsolete queued draw | Recovery must release stale card views | 期望 0，实际 1"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_prize_commit_owns_android_echo_after_dialog_closes",
+      "message": "Unlabelled Android echo must not open LOST after prize dialog closes | Prize gesture owns its mouse release"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_queued_draw_keeps_exact_cards_after_zone_changes",
+      "message": "Queued animation must preserve the exact second draw, not consult a later hand or changed log | 期望 [CardInstance#53: Second draw]，实际 [CardInstance#52: First draw] | Reveal identity is a presentation-local copy | 期望 [53]，实际 [52]"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_rotated_hud_hit_test_has_one_coordinate_space",
+      "message": "Unrotated ghost rectangle must not intercept prize taps"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_red_hud/0001-BattlePresentationIsolation/result.json",
+      "test": "test_draw_overlay_blocks_both_direct_hud_entry_points",
+      "message": "Draw confirmation must never open underlying LOST | Draw confirmation must never open underlying discard"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_android_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_draw_confirm_owns_tail_after_synchronous_completion",
+      "message": "Confirmation echo remains owned after overlay is hidden"
+    },
+    {
+      "report": ".godot_test_user/presentation_isolation_android_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_prize_commit_owns_android_echo_after_dialog_closes",
+      "message": "Unlabelled Android echo must not open LOST after prize dialog closes | Prize gesture owns its mouse release"
+    },
+    {
+      "report": ".godot_test_user/presentation_animation_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_recovered_prize_animation_cannot_rebind_a_reused_slot",
+      "message": "A recovered prize flip cannot repaint a reused slot with an old card | 期望 [CardInstance#8: Replacement prize]，实际 [CardInstance#1: Prize A] | Retired prize animation callbacks must not complete a later presentation | 期望 0，实际 1"
+    },
+    {
+      "report": ".godot_test_user/presentation_prize_lock_red/0001-BattlePresentationIsolation/result.json",
+      "test": "test_prize_animation_blocks_background_actions_until_completion",
+      "message": "Closing the last prize dialog must not clear the still-running presentation lock | Background actions cannot execute during the prize flip"
+    },
+    {
+      "report": ".godot_test_user/presentation_scene_exit_red2/0001-BattlePresentationIsolation/result.json",
+      "test": "test_leaving_battle_during_draw_releases_animation_controller",
+      "message": "Leaving battle must release the animation owner and its callbacks"
+    }
+  ],
+  "changes": [
+    {
+      "path": "scenes/battle/BattleCardView.gd",
+      "baseline_sha256": "baa29a80b3a4cc1e23f0e437b8a5dcc8b3788bfcf95e36c3658b44818a2a7a8b",
+      "final_sha256": "8138d9fe96ddc5ef05ff6e681afe5ca2e4decf3524b6eaaf9f8e1baaab061774"
+    },
+    {
+      "path": "scenes/battle/BattleSceneRuntime.gd",
+      "baseline_sha256": "b8f364adee538850ea9e6717ae7d4f63bd092f7e3b5491630467a502f43b1843",
+      "final_sha256": "80ce0425fb0e0abb81af06567cf6f748550efb12b738494ccbad126ba5106dad"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneBoardActionRuntime.gd",
+      "baseline_sha256": "9c94107acf0beff3fb9c83fc9518f3cdce625bb6a0db6c57d897243711e7e083",
+      "final_sha256": "7748b8c6b832d8ffe2d1959b99d8af95cb927eed2252031e23034a13e9590e0e"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneBrowserPointerRuntime.gd",
+      "baseline_sha256": "b8da3a2a2655cfea1aa7d3e32a52a4f9cff9e37545f6648004fcb7875aaa1215",
+      "final_sha256": "3a31d2c5b8e2e2909b7f1575499f2fac10dcb6126cfc02227e1b0e4d49657deb"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd",
+      "baseline_sha256": "ff3b9af128d1facbb9f4f157987c9970b1dedcf8de0fe591dc9db69ddb58984f",
+      "final_sha256": "193517a69f60bd0e356809706c3aeadcb5f84b8efe55660e0b243768fbe37d34"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneSetupEffectAiRuntime.gd",
+      "baseline_sha256": "3cb3de9df580799067e5856e776ef6c78916e66f1922d39a3b6aff42c716f9c6",
+      "final_sha256": "de06c867a57738374b0633b2f6550c4cf15240853718c3c54d44d1e99d473be9"
+    },
+    {
+      "path": "scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd",
+      "baseline_sha256": "bfb6090cd3e568985fa25589664ed89735d8e8bc89313a22758bcdd591726a52",
+      "final_sha256": "26b1a182e2c3d853c456bb0e14af5c429be01d9aa7eda71e2e75fa1a436aa01a"
+    },
+    {
+      "path": "scripts/ui/battle/BattleDrawRevealController.gd",
+      "baseline_sha256": "904956e235d63dc1e5a5a3e743cf51f21fd41f3581ad313e4ba252c692abe420",
+      "final_sha256": "3228d26769dd2c6eb9e1090e0d0be43255e56306276ebf309cfc1733c0b6315b"
+    },
+    {
+      "path": "scripts/ui/battle/interactions/BattlePointerInputRouter.gd",
+      "baseline_sha256": "61a31b0c95c6a76b0cca5a406ec8e8dddd1895d90f63fa3dc35f042816cd38db",
+      "final_sha256": "7fa6bcd78d9649284d9c0fdaf9f7041b5bf17f474f00de9909e8eb40aa6c21fd"
+    },
+    {
+      "path": "scripts/ui/battle/interactions/BattlePointerSurfaceController.gd",
+      "baseline_sha256": "865c564ccffc7330cf97f26465e73847d0ab602c1a7846f663778d08e027307a",
+      "final_sha256": "f4a960b430dd5395aa07846a495df97e5019ddcb914e5314d98092a8906567fb"
+    },
+    {
+      "path": "scripts/ui/battle/interactions/IosWebHudTouchAdapter.gd",
+      "baseline_sha256": "f0ba480b94acd90c7267dccc3c34b25dc7fce216d821ef4fe57154c1ee8ffffb",
+      "final_sha256": "4c5eb7df853e6a86731507cb7cef0580fe9e48f2ba9a8a9ed44fecae1f224343"
+    },
+    {
+      "path": "tests/test_battle_ui_features_part2.gd",
+      "baseline_sha256": "a7212d273c65eb3beeeb084a0b387f5a9fa39f29184f78638278726b0728b55f",
+      "final_sha256": "0a5b9b508523514e4d6c4aa2db1002772d31aba94fd796e37684c6a694d8f010"
+    },
+    {
+      "path": "tests/test_battle_presentation_isolation.gd",
+      "baseline_sha256": null,
+      "final_sha256": "d4eec1a4f203490a11c2e60949b145318cbc5f004c919323f726b6602b4cd047"
+    }
+  ],
+  "rollback": {
+    "patch": ".tmp/battle_presentation_baseline_20260926/task_changes.patch",
+    "reverse_apply_check_passed": true,
+    "preserves_preexisting_worktree_changes": true
+  },
+  "boundaries": [
+    "No card-rule or deck-order changes",
+    "No external oracle or private-cloud edits",
+    "No CABT or strategy-strength promotion",
+    "Existing UI exit resource warnings remain; animation controller release is tested independently"
+  ]
+}

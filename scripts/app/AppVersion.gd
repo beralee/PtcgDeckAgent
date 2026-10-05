@@ -1,11 +1,11 @@
 extends RefCounted
 
-const VERSION := "0.6.0"
-const DISPLAY_VERSION := "v0.6.0"
-const BUILD_NUMBER := 60
-const WEB_VERSION := "0.6.0.2"
-const WEB_DISPLAY_VERSION := "v0.6.0.2"
-const WEB_BUILD_NUMBER := 602
+const VERSION := "0.6.5"
+const DISPLAY_VERSION := "v0.6.5"
+const BUILD_NUMBER := 65
+const WEB_VERSION := "0.6.5"
+const WEB_DISPLAY_VERSION := "v0.6.5"
+const WEB_BUILD_NUMBER := 650
 const CHANNEL := "stable"
 
 

@@ -1,0 +1,209 @@
+{
+	"cues": [
+		{
+			"id": 1,
+			"mood": "跃跃欲试",
+			"priority": 20,
+			"prizes_taken": 0,
+			"step": 4,
+			"subject": "",
+			"trigger": "opening",
+			"turn": 1
+		},
+		{
+			"id": 2,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"step": 13,
+			"subject": "小哀怨",
+			"trigger": "attack_call",
+			"turn": 2
+		},
+		{
+			"id": 3,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"step": 23,
+			"subject": "龙之头击",
+			"trigger": "attack_call",
+			"turn": 4
+		},
+		{
+			"id": 4,
+			"mood": "来劲了",
+			"priority": 45,
+			"prizes_taken": 0,
+			"step": 34,
+			"subject": "多龙巴鲁托ex",
+			"trigger": "ace_arrival",
+			"turn": 6
+		},
+		{
+			"id": 5,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"step": 71,
+			"subject": "幻影潜袭",
+			"trigger": "attack_call",
+			"turn": 8
+		},
+		{
+			"id": 6,
+			"mood": "小得意",
+			"priority": 80,
+			"prizes_taken": 2,
+			"step": 74,
+			"subject": "幻影潜袭",
+			"trigger": "prize_burst",
+			"turn": 9
+		},
+		{
+			"id": 7,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"step": 97,
+			"subject": "幻影潜袭",
+			"trigger": "attack_call",
+			"turn": 10
+		},
+		{
+			"id": 8,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"step": 114,
+			"subject": "幻影潜袭",
+			"trigger": "attack_call",
+			"turn": 12
+		},
+		{
+			"id": 9,
+			"mood": "开心",
+			"priority": 100,
+			"prizes_taken": 2,
+			"step": 117,
+			"subject": "",
+			"trigger": "victory",
+			"turn": 12
+		}
+	],
+	"failures": [],
+	"frames": 81,
+	"mock_calls": 3,
+	"paid_calls": 0,
+	"passed": true,
+	"spoken": [
+		{
+			"id": 1,
+			"mood": "跃跃欲试",
+			"priority": 20,
+			"prizes_taken": 0,
+			"source": "local_bank",
+			"step": 4,
+			"subject": "",
+			"text": "我先坐直，今天争取少下一点臭棋。",
+			"trigger": "opening",
+			"turn": 1
+		},
+		{
+			"id": 2,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"source": "model_bank",
+			"step": 13,
+			"subject": "小哀怨",
+			"text": "我可要出招了，小哀怨！气势先给自己补上。",
+			"trigger": "attack_call",
+			"turn": 2
+		},
+		{
+			"id": 3,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"source": "model_bank",
+			"step": 23,
+			"subject": "龙之头击",
+			"text": "轮到我了，龙之头击！先允许我摆个帅姿势。",
+			"trigger": "attack_call",
+			"turn": 4
+		},
+		{
+			"id": 4,
+			"mood": "来劲了",
+			"priority": 45,
+			"prizes_taken": 0,
+			"source": "model_bank",
+			"step": 34,
+			"subject": "多龙巴鲁托ex",
+			"text": "我的多龙巴鲁托ex登场！先别夸，我这人经不起表扬。",
+			"trigger": "ace_arrival",
+			"turn": 6
+		},
+		{
+			"id": 5,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"source": "model_bank",
+			"step": 71,
+			"subject": "幻影潜袭",
+			"text": "我可要出招了，幻影潜袭！气势先给自己补上。",
+			"trigger": "attack_call",
+			"turn": 8
+		},
+		{
+			"id": 6,
+			"mood": "小得意",
+			"priority": 80,
+			"prizes_taken": 2,
+			"source": "model_bank",
+			"step": 74,
+			"subject": "幻影潜袭",
+			"text": "2张奖赏真到手了！我现在可以小得意一下吧？",
+			"trigger": "prize_burst",
+			"turn": 9
+		},
+		{
+			"id": 7,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"source": "model_bank",
+			"step": 97,
+			"subject": "幻影潜袭",
+			"text": "轮到我了，幻影潜袭！先允许我摆个帅姿势。",
+			"trigger": "attack_call",
+			"turn": 10
+		},
+		{
+			"id": 8,
+			"mood": "认真起来",
+			"priority": 40,
+			"prizes_taken": 0,
+			"source": "model_bank",
+			"step": 114,
+			"subject": "幻影潜袭",
+			"text": "我可要出招了，幻影潜袭！气势先给自己补上。",
+			"trigger": "attack_call",
+			"turn": 12
+		},
+		{
+			"id": 9,
+			"mood": "开心",
+			"priority": 100,
+			"prizes_taken": 2,
+			"source": "model_bank",
+			"step": 117,
+			"subject": "",
+			"text": "这局我拿下了！臭棋偶尔不登场，我自己都有点惊喜。",
+			"trigger": "victory",
+			"turn": 12
+		}
+	]
+}

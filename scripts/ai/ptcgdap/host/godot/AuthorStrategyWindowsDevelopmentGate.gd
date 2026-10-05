@@ -15,6 +15,30 @@ const CYNTHIA_PACKAGE_VERSION := "0.1.0"
 const CYNTHIA_ARCHIVE_SHA256 := "3059C308904B323AF5CA10B1956EF8BB35F77A1174CF0AD0258F1A70A128FF06"
 const CYNTHIA_SOURCE_DECK_ID := 800018543
 const CANDIDATES := [
+	# Reviewed local development packages; exact bytes, user import, Windows only.
+	# Qualification: docs/ptcgdap/strategy-runtime-compatibility.md
+	{
+		"package_id": "dev.dragapult-dusknoir",
+		"package_version": "0.29.0",
+		"archive_sha256": "AD8396CA9C9D15058A9507D4D2CA450636E638CE4298B12902D232C515531629",
+		"install_source": "user", "supported_platforms": ["Windows"],
+		"source_deck_id": 675701, "unique_printing_count": 27,
+		"adapter_rule_count": 393,
+		"strategy_id": "dev.dragapult-dusknoir.v0.29.0",
+		"frame_profile_id": "ptcgdap-competitive-public-frame-v2",
+		"runtime_kind": "reviewed_competitive_policy_v2",
+	},
+	{
+		"package_id": "dev.dragapult-dusknoir",
+		"package_version": "0.23.0",
+		"archive_sha256": "5CB6E610DBC98F770BC545101EE2387FF2F25F6DA8442BBC419FEFE84A09DA20",
+		"install_source": "user", "supported_platforms": ["Windows"],
+		"source_deck_id": 675701, "unique_printing_count": 27,
+		"adapter_rule_count": 404,
+		"strategy_id": "dev.dragapult-dusknoir.v0.23.0",
+		"frame_profile_id": "ptcgdap-competitive-public-frame-v2",
+		"runtime_kind": "reviewed_competitive_policy_v2",
+	},
 	{
 		"package_id": PACKAGE_ID,
 		"package_version": PACKAGE_VERSION,
@@ -1326,6 +1350,8 @@ static func evaluate_selection(selection: Dictionary, platform_name: String = ""
 	var candidate := candidate_for_selection(selection)
 	if candidate.is_empty():
 		return _error("development_candidate_not_authorized")
+	if candidate.has("supported_platforms") and platform not in candidate.supported_platforms:
+		return _error("development_platform_not_authorized")
 	return {
 		"ok": true,
 		"error_code": "",
@@ -1386,6 +1412,7 @@ static func validate_handle_pins(pins: Dictionary) -> String:
 	var candidate := candidate_for_pins(pins)
 	if (
 		candidate.is_empty()
+		or (candidate.has("supported_platforms") and OS.get_name() not in candidate.supported_platforms)
 		or pins.get("source_deck_id") != candidate.get("source_deck_id")
 		or pins.get("deck_card_id_domain") != CARD_ID_DOMAIN
 		or pins.get("deck_platform_scope") != ["windows"]

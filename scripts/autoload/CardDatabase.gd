@@ -18,9 +18,12 @@ const BUNDLED_SEED_CONTENT_REVISION := BUNDLED_USER_DIR + "_seed_content_sha256.
 const BUNDLED_SEED_COMPLETION := "user://.bundled_seed_completion_v1.json"
 const BUNDLED_SEED_PIPELINE_REVISION := 1
 const EFFECT_ALIASES_PATH := CARDS_DIR + "effect_aliases.json"
+# Bundle/manifest/AI scope and actual picker coverage are guarded by
+# tests/test_bundled_deck_catalog.gd; see AGENTS.md when adding a deck.
 const SUPPORTED_AI_DECK_IDS: Array[int] = [
 	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 	646600,
+	675700, 675701, 675703, 675834, 675892, 675893, 675899,
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 	1750002,
 	18000230, 18000625,
@@ -69,6 +72,9 @@ const BUNDLED_LIMITLESS_DISPLAY_REFRESH_DECK_IDS := {
 	800018509: true,
 }
 const BUNDLED_DECK_CARD_REPLACEMENTS := {
+	675700: {
+		"CSV6C_032": "CSV9.5C_043",
+	},
 	800018498: {
 		"CSV2C_054": "CS6.5C_030",
 	},
@@ -893,6 +899,8 @@ func _card_json_uid_from_file(path: String) -> String:
 
 
 func has_card(set_code: String, card_index: String) -> bool:
+	if not preload("res://scripts/card_content/ContentPaths.gd").card("%s_%s" % [set_code, card_index]).is_empty():
+		return true
 	var uid := "%s_%s" % [set_code, card_index]
 	if _card_cache.has(uid):
 		return true
@@ -906,8 +914,20 @@ func has_card(set_code: String, card_index: String) -> bool:
 
 
 ## 获取卡牌数据（先查内存，再查文件）
+var _content_card_cache: Dictionary = {}
+
 func get_card(set_code: String, card_index: String) -> CardData:
 	var uid := "%s_%s" % [set_code, card_index]
+	# Signed official sources own these UIDs for the entire process. Legacy
+	# user imports remain on disk, but cannot shadow a published correction.
+	var content: Dictionary = preload("res://scripts/card_content/ContentPaths.gd").card(uid)
+	if not content.is_empty():
+		if _content_card_cache.has(uid): return _content_card_cache[uid]
+		var source_path := BUNDLED_CARDS_DIR + uid + ".json"
+		if FileAccess.get_sha256(source_path) != str(content.get("source_sha256", "")): return null
+		var official := _load_card_from_file(source_path)
+		if official != null: _content_card_cache[uid] = official
+		return official
 
 	# 内存缓存
 	if _card_cache.has(uid):
@@ -945,8 +965,15 @@ func get_all_materialized_cards() -> Array[CardData]:
 func get_all_cards() -> Array[CardData]:
 	var result: Array[CardData] = []
 	var seen := {}
+	for uid: String in preload("res://scripts/card_content/ContentPaths.gd").card_uids():
+		var separator := uid.rfind("_")
+		var official := get_card(uid.substr(0, separator), uid.substr(separator + 1))
+		if official != null:
+			result.append(official)
+			seen[uid] = true
 
 	for uid: Variant in _card_cache.keys():
+		if seen.has(uid): continue
 		var card: CardData = _card_cache[uid]
 		if card == null:
 			continue
@@ -1161,6 +1188,22 @@ func _save_card_to_file(card: CardData) -> void:
 
 # === 卡组操作 ===
 
+## 编辑保存前的数量校验；ACE SPEC 标记来自完整卡牌数据，而非精简卡组条目。
+func validate_deck(deck: DeckData) -> PackedStringArray:
+	var errors := deck.validate()
+	var ace_spec_count := 0
+	for entry: Dictionary in deck.cards:
+		var card := get_card(str(entry.get("set_code", "")), str(entry.get("card_index", "")))
+		if card == null:
+			errors.append("缺少「%s」的卡牌数据，无法校验，请重新导入卡组" % str(entry.get("name", "")))
+			continue
+		if card.is_ace_spec():
+			ace_spec_count += int(entry.get("count", 0))
+	if ace_spec_count > 1:
+		errors.append("ACE SPEC 卡合计为 %d 张，超过上限 1 张" % ace_spec_count)
+	return errors
+
+
 ## 保存卡组
 const WebDeckJournal := preload("res://scripts/ui/web/WebDeckJournal.gd")
 var last_deck_save_persistent := true
@@ -1277,7 +1320,7 @@ func get_all_ai_decks() -> Array[DeckData]:
 			var deck: DeckData = _ai_deck_cache.get(deck_id)
 			if deck != null:
 				result.append(deck)
-		result.sort_custom(Callable(self, "_compare_ai_decks_by_created_time_desc"))
+		result.sort_custom(compare_ai_decks_by_import_time_desc)
 		_sorted_ai_deck_cache = result
 		_sorted_ai_deck_cache_dirty = false
 	return _sorted_ai_deck_cache.duplicate()
@@ -1309,19 +1352,9 @@ func get_ai_deck_strength_priority(deck: DeckData) -> int:
 	return V18_AI_DECK_STRENGTH_ORDER_IDS.size() - order_index
 
 
-func _compare_ai_decks_by_created_time_desc(a: DeckData, b: DeckData) -> bool:
-	var a_strength_priority := get_ai_deck_strength_priority(a)
-	var b_strength_priority := get_ai_deck_strength_priority(b)
-	if a_strength_priority != b_strength_priority:
-		return a_strength_priority > b_strength_priority
-	var a_version_priority := get_ai_deck_version_priority(a)
-	var b_version_priority := get_ai_deck_version_priority(b)
-	if a_version_priority != b_version_priority:
-		return a_version_priority > b_version_priority
-	var a_release := _generated_ai_deck_release_key(a)
-	var b_release := _generated_ai_deck_release_key(b)
-	if a_release != b_release:
-		return a_release > b_release
+## Shared by the AI catalog and BattleSetup. Bundled import dates, not player
+## edits, benchmark ranks or release-name prefixes, determine discovery order.
+func compare_ai_decks_by_import_time_desc(a: DeckData, b: DeckData) -> bool:
 	var a_import := str(a.import_date) if a != null else ""
 	var b_import := str(b.import_date) if b != null else ""
 	if a_import == b_import:
@@ -1414,20 +1447,6 @@ func _canonicalize_signature_value(value: Variant) -> Variant:
 			normalized_array.append(_canonicalize_signature_value(item))
 		return normalized_array
 	return value
-
-
-func _generated_ai_deck_release_key(deck: DeckData) -> int:
-	var deck_id := int(deck.id) if deck != null else 0
-	var deck_name := str(deck.deck_name) if deck != null else ""
-	if deck_name.begins_with("18.0"):
-		return 180
-	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
-		return 175
-	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
-		return 170
-	if deck_id < 1000000:
-		return 0
-	return int(floor(float(deck_id) / 100000.0))
 
 
 ## 从文件系统加载所有卡组

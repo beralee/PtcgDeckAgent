@@ -59,7 +59,7 @@ func play_detected_swap(scene: Object, before_snapshot: Dictionary, after_snapsh
 
 
 func play_detected_field_movement(scene: Object, before_snapshot: Dictionary, after_snapshot: Dictionary) -> bool:
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return false
 	var movement := detect_active_field_movement(before_snapshot, after_snapshot)
 	if movement.is_empty():
@@ -69,7 +69,7 @@ func play_detected_field_movement(scene: Object, before_snapshot: Dictionary, af
 
 
 func play_swap(scene: Object, movement: Dictionary) -> void:
-	if scene == null or movement.is_empty() or not bool(GameManager.battle_effects_enabled):
+	if scene == null or movement.is_empty() or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return
 	var overlay := _ensure_overlay(scene)
 	if overlay == null:

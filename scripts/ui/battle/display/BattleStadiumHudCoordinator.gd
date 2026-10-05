@@ -199,6 +199,13 @@ func set_legacy_stadium_hud_visible(visible: bool) -> void:
 
 
 func refresh_stadium_card_hud(gs: GameState, current_player: int, is_my_turn: bool) -> void:
+	# The arena presents the public stadium on its own table and routes inspection
+	# to the shared action owner. A legacy card here floats above the 3D toolbar.
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(_scene):
+		for property_name: StringName in [&"_stadium_card_view", &"_stadium_card_overlay"]:
+			var legacy := _get(property_name) as Control
+			if is_instance_valid(legacy): legacy.hide()
+		return
 	var stadium_label := _get("_stadium_lbl") as Label
 	if stadium_label == null:
 		stadium_label = _find("StadiumLbl", true, false) as Label

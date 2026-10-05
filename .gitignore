@@ -32,6 +32,7 @@ battle_review_api.json
 logs/
 .ptcgdap-local/
 artifacts/*
+!artifacts/.gdignore
 !artifacts/deck_training/
 artifacts/deck_training/*
 !artifacts/deck_training/.gdignore
@@ -76,3 +77,15 @@ native/ptcgai_ort_actor/build/
 
 # Machine-local Mac source launcher marker; never disable other platforms in Git.
 /scripts/ai/ptcgdap/native/.gdignore
+
+# Reproducible local Android updater validation builds.
+/output/android-update-lab/
+
+# Generated exports are not source inputs for diagnostic snapshots.
+/.tmp/
+/output/**/*.apk
+/output/**/*.exe
+/output/**/*.dll
+/output/**/*.zip
+/output/**/*.pck
+/output/**/*.wasm

@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 from .cabt_tree_hash import public_observation_hash
+from .public_gust_forecast import inputs as gust_inputs
 
 
 REGISTRY_PATH = Path(__file__).resolve().parents[3] / "contracts" / "ptcgdap" / "public_damage_capability_registry_v1.json"
@@ -145,7 +146,10 @@ class PublicDamagePlanner:
         frame: Any,
         damage_plans: Any,
         registry: PublicDamageCapabilityRegistry,
+        *, reviewed_gust: bool = False,
     ) -> dict[str, Any]:
+        if type(reviewed_gust) is not bool:
+            return _error("invalid_damage_forecast_profile")
         if _contains_private(frame) or _contains_private(damage_plans):
             return _error("private_damage_plan_input")
         if type(frame) is not dict or not registry.validate_integrity():
@@ -274,12 +278,16 @@ class PublicDamagePlanner:
             ),
             default=0,
         )
+        if reviewed_gust:
+            gust_attacks, gust_targets, gust_typed = gust_inputs(frame, registry._document["cards"])
+        else:
+            gust_attacks, gust_targets, gust_typed = attack_options, {s["entity_serial"] for s in opponent.get("bench", [])}, False
         gust_target_metrics: dict[str, dict[str, Any]] = {}
         for target in opponent.get("bench", []):
             if type(target) is not dict or not _safe_int(target.get("entity_serial")):
                 continue
             target_damage = 0
-            for option in attack_options:
+            for option in gust_attacks if target["entity_serial"] in gust_targets else []:
                 rebound = copy.deepcopy(option)
                 rebound["projected_damage"] = None
                 target_damage = max(
@@ -300,6 +308,13 @@ class PublicDamagePlanner:
         for metrics in gust_target_metrics.values():
             if not best_gust_target or _target_sort_key(metrics) < _target_sort_key(best_gust_target):
                 best_gust_target = metrics
+        if gust_typed:
+            for option in frame.get("options", []):
+                if option.get("source_uid") not in ("30thDC_039", "CSV6C_114"):
+                    continue
+                metrics = gust_target_metrics.get(str(option.get("target_entity_serial")))
+                if metrics is not None:
+                    option_metrics[str(option["index"])] = copy.deepcopy(metrics)
         facts = {
             "damage.movable_counter_count": transferable,
             "damage.available_mover_count": available_movers,
@@ -643,6 +658,11 @@ class SemanticTransactionJournal:
         error = _transaction_error(definitions)
         if error:
             return self._result(False, error, "reject", error, self._state)
+        if type(damage_result) is dict and not damage_result.get("accepted") \
+                and damage_result.get("error_code") == "unknown_damage_card_uid":
+            event = "abort" if self._state else "idle"
+            self.clear()
+            return self._result(True, "", event, "unknown_damage_card_uid", {})
         if type(damage_result) is not dict or not damage_result.get("accepted"):
             return self._result(False, "damage_plan_unavailable", "reject", "damage_plan_unavailable", self._state)
         turn = int(frame.get("public_state", {}).get("turn_number", 0))

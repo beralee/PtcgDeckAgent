@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "version": "0.6.2",
+  "generated_at": "2026-09-28T01:25:31.553263+00:00",
+  "scope": "Automatic Android/Web 3D media exclusion and portrait battle setup footer input correction",
+  "published": false,
+  "all_platform_release_accepted": false,
+  "previous_audit": "evidence/ptcgdap/release_v062_20260928.json",
+  "packages": [
+    {
+      "name": "PtcgDeckAgent-win.zip",
+      "platform": "windows-x86_64",
+      "bytes": 244357059,
+      "sha256": "96e67286ddec2d2bf55ceab81b11315fed4cff6774d2c2b02845187016faab27"
+    },
+    {
+      "name": "ptcgdeckagent-mac.zip",
+      "platform": "macos-x86_64-arm64",
+      "bytes": 268359625,
+      "sha256": "0fe3b9321e03cc47ee3b7dd784bc5c3d4f4d55de4b80de694df9beca3aac25c8"
+    },
+    {
+      "name": "ptcgdeckagent-android.apk",
+      "platform": "android-arm64",
+      "bytes": 287026543,
+      "sha256": "5997206a2e6eefb047459b81b0cff777327051f3ac9ba13de2c8a9fad861a752"
+    }
+  ],
+  "size_reduction": [
+    {
+      "name": "ptcgdeckagent-android.apk",
+      "before_bytes": 296328493,
+      "after_bytes": 287026543,
+      "saved_bytes": 9301950,
+      "saved_percent": 3.1391,
+      "sha256": "5997206a2e6eefb047459b81b0cff777327051f3ac9ba13de2c8a9fad861a752"
+    },
+    {
+      "name": "Web PCK",
+      "before_bytes": 228351252,
+      "after_bytes": 212273728,
+      "saved_bytes": 16077524,
+      "saved_percent": 7.0407,
+      "sha256": "e16ac2598843585f304390c0ff9c11080d17309d3ad3492453a88e59afcf5a76"
+    }
+  ],
+  "godot": {
+    "status": "passed",
+    "suite_count": 708,
+    "totals": {
+      "total": 7540,
+      "passed": 7540,
+      "failed": 0,
+      "skipped": 0
+    },
+    "missing_suites": []
+  },
+  "targeted_godot": {
+    "distinct_suites": 12,
+    "passed": 287,
+    "failed": 0
+  },
+  "python_export_tests": {
+    "passed": 18,
+    "new_tests": 8
+  },
+  "primary_browser": {
+    "status": "passed",
+    "total": 96,
+    "passed": 52,
+    "failed": 0,
+    "skipped": 0,
+    "not_applicable": 44
+  },
+  "final_source_browser": {
+    "status": "passed",
+    "total": 18,
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "not_applicable": 1
+  },
+  "chromium_rotation": {
+    "startTime": "2026-09-28T01:19:05.517Z",
+    "duration": 46267.692,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "windows_ui": {
+    "generated_at": "2026-09-28T01:14:02.9833483Z",
+    "executable": "D:\\ai\\code\\PtcgDAP\\.tmp\\ptcgdap_device_release\\v062_trim_final\\PtcgDeckAgent.exe",
+    "client_size": "1600x900",
+    "navigation_difference": 0.2384,
+    "minimum_navigation_difference": 0.08,
+    "round_trip_difference": 0.0022,
+    "maximum_round_trip_difference": 0.12,
+    "screenshots": {
+      "main": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\windows_final_ui\\main.png",
+      "settings": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\windows_final_ui\\settings.png",
+      "main_return": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\windows_final_ui\\main_return.png"
+    },
+    "runtime_failure_markers": "",
+    "passed": true
+  },
+  "android_ui": {
+    "generated_at": "2026-09-28T01:17:09.0570878Z",
+    "device_size": "1080x2400",
+    "pid": "5526",
+    "focus": "  mCurrentFocus=Window{24aa732 u0 com.example.ptcgdeckagent/com.godot.game.GodotAppLauncher}\n  mFocusedApp=ActivityRecord{100319596 u0 com.example.ptcgdeckagent/com.godot.game.GodotAppLauncher t85}",
+    "navigation_difference": 0.2374,
+    "deepseek_workspace_active": true,
+    "minimum_navigation_difference": 0.08,
+    "round_trip_difference": 0.003,
+    "maximum_round_trip_difference": 0.12,
+    "screenshots": {
+      "main": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\android_final_ui2\\main.png",
+      "settings": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\android_final_ui2\\settings.png",
+      "main_return": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\android_final_ui2\\main_return.png"
+    },
+    "crash_markers": "",
+    "passed": true
+  },
+  "android_battle": {
+    "passed": true,
+    "verification": "ADB real input and visually inspected screenshots",
+    "device": "Android emulator 1080x2400 (host OpenGL; not physical ARM)",
+    "apk_sha256": "5997206a2e6eefb047459b81b0cff777327051f3ac9ba13de2c8a9fad861a752",
+    "checks": [
+      "2D background gallery rendered",
+      "fixed portrait footer starts match at the position previously consumed by the overlapping volume slider",
+      "choose active Pokemon",
+      "complete optional Bench choice",
+      "2D board/cards render at turn 1"
+    ],
+    "screenshots": [
+      "android-setup-final.png",
+      "android-battle-final.png",
+      "android-selection-final.png",
+      "android-turn-final.png"
+    ],
+    "runtime_errors": [],
+    "log": "android-battle-final-logcat.log"
+  },
+  "android_2d_assets": {
+    "schema_version": 1,
+    "passed": true,
+    "member_count": 5425,
+    "arena_import_targets_checked": 21,
+    "required_2d_resource_count": 49,
+    "forbidden_members": [],
+    "missing_resources": [],
+    "archive": "D:\\ai\\code\\PtcgDAP\\.tmp\\ptcgdap_device_release\\v062_trim_final\\PtcgDeckAgent.apk",
+    "bytes": 287026543,
+    "sha256": "5997206a2e6eefb047459b81b0cff777327051f3ac9ba13de2c8a9fad861a752"
+  },
+  "web_2d_assets": {
+    "schema_version": 1,
+    "passed": true,
+    "member_count": 5420,
+    "arena_import_targets_checked": 21,
+    "required_2d_resource_count": 49,
+    "forbidden_members": [],
+    "missing_resources": [],
+    "archive": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\web_release_final\\web\\v0_6_2\\PtcgDeckAgent.pck",
+    "bytes": 212273728,
+    "sha256": "e16ac2598843585f304390c0ff9c11080d17309d3ad3492453a88e59afcf5a76"
+  },
+  "android_native_inventory_accepted": true,
+  "website": {
+    "tests_passed": 43,
+    "build_passed": true,
+    "hashes_match": true
+  },
+  "limitations": [
+    "Prior four Windows WebKit rotation-rendering failures remain unresolved; stock Godot reproduces them.",
+    "Native macOS/iPhone/iPad and physical ARM/16-KiB Android acceptance unavailable."
+  ],
+  "evidence_root": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim",
+  "rollback_root": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_trim\\previous"
+}

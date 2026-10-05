@@ -3,6 +3,7 @@ extends RefCounted
 
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const EvolutionChoices := preload("res://scripts/ui/battle/BattleEvolutionChoicePresenter.gd")
 
 const FIELD_INTERACTION_CONFIRM_ACCENT := Color(1.0, 0.62, 0.28, 1.0)
 const FIELD_INTERACTION_SECONDARY_ACCENT := Color(0.36, 0.86, 1.0, 1.0)
@@ -387,12 +388,17 @@ func field_interaction_card_size(scene: Object) -> Vector2:
 	if play_card_size.y <= 0.0:
 		play_card_size = Vector2(109, 152)
 	var portrait_active := scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
-	if not portrait_active:
-		return play_card_size
-	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
-	if dialog_card_size.y <= 0.0:
-		return play_card_size
-	return Vector2(maxf(play_card_size.x, dialog_card_size.x), maxf(play_card_size.y, dialog_card_size.y))
+	var card_size := play_card_size
+	if portrait_active:
+		var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+		if dialog_card_size.y > 0.0:
+			card_size = Vector2(maxf(play_card_size.x, dialog_card_size.x), maxf(play_card_size.y, dialog_card_size.y))
+	var interaction_data: Dictionary = scene.get("_field_interaction_data")
+	if bool(interaction_data.get("evolution_frontier", false)) and card_size.x > 0.0:
+		# Same-name printings need readable artwork and badges even on a short
+		# landscape screen, where normal hand cards shrink to thumbnail size.
+		card_size *= maxf(1.0, 140.0 / card_size.x)
+	return card_size
 
 
 func reset_field_interaction_row_metrics(scene: Object) -> void:
@@ -411,6 +417,14 @@ func reset_field_interaction_row_metrics(scene: Object) -> void:
 
 func is_field_interaction_active(scene: Object) -> bool:
 	return str(scene.get("_field_interaction_mode")) != ""
+
+
+func should_present_field_interaction(scene: Object) -> bool:
+	# AI uses the same live counter/target state, but only the current human
+	# chooser should see or operate its presentation. Never clear AI state here.
+	return is_field_interaction_active(scene) and not (
+		scene.has_method("_is_ai_effect_prompt") and bool(scene.call("_is_ai_effect_prompt"))
+	)
 
 
 func field_interaction_target_owner(_scene: Object, slot: PokemonSlot) -> int:
@@ -474,10 +488,6 @@ func show_field_slot_choice(scene: Object, title: String, items: Array, data: Di
 	scene.set("_field_interaction_data", interaction_data)
 	apply_field_interaction_position(scene, resolve_field_interaction_position(scene, items))
 	rebuild_field_slot_index_map(scene, items)
-	var overlay: Control = scene.get("_field_interaction_overlay")
-	if overlay != null:
-		raise_field_interaction_overlay(scene)
-		overlay.visible = true
 	refresh_field_interaction_status(scene)
 	scene.call("_record_battle_event", {
 		"event_type": "choice_context",
@@ -496,19 +506,22 @@ func show_field_assignment_interaction(scene: Object, step: Dictionary) -> void:
 	ensure_field_interaction_panel(scene)
 	update_field_interaction_panel_metrics(scene)
 	hide_field_interaction(scene)
+	# The new picker owns the next gesture. A hand press whose release was
+	# interrupted must not keep routing its mouse events into the old scroller.
+	# Card dialogs already release this capture when they open.
+	if scene.has_method("_clear_hand_drag_click_suppression"):
+		scene.call("_clear_hand_drag_click_suppression", "show_field_assignment")
 	if scene.has_method("_clear_modal_slot_time_guard_for_field_choice"):
 		scene.call("_clear_modal_slot_time_guard_for_field_choice", "field_assignment")
 	if scene.has_method("_clear_field_assignment_source_followup_choice_guard"):
 		scene.call("_clear_field_assignment_source_followup_choice_guard")
 	scene.set("_field_interaction_mode", "assignment")
 	scene.set("_field_interaction_data", step.duplicate(true))
+	if bool(step.get("evolution_frontier", false)):
+		update_field_interaction_panel_metrics(scene)
 	apply_field_interaction_position(scene, resolve_field_interaction_position(scene, step.get("target_items", [])))
 	rebuild_field_slot_index_map(scene, step.get("target_items", []))
 	build_field_assignment_source_cards(scene)
-	var overlay: Control = scene.get("_field_interaction_overlay")
-	if overlay != null:
-		raise_field_interaction_overlay(scene)
-		overlay.visible = true
 	refresh_field_interaction_status(scene)
 	scene.call("_record_battle_event", {
 		"event_type": "choice_context",
@@ -1031,6 +1044,9 @@ func add_field_assignment_source_card(
 	source_view.set_meta("field_assignment_source_index", source_index)
 	source_view.set_meta("field_assignment_source_disabled", disabled)
 	row.add_child(source_view)
+	var interaction_data: Dictionary = scene.get("_field_interaction_data")
+	if bool(interaction_data.get("evolution_frontier", false)) and source_item is CardInstance:
+		EvolutionChoices.configure_source(source_view, source_item)
 
 
 func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void:
@@ -1176,6 +1192,10 @@ func refresh_field_interaction_status(scene: Object) -> void:
 		hide_field_interaction(scene)
 		return
 	var overlay: Control = scene.get("_field_interaction_overlay")
+	if not should_present_field_interaction(scene):
+		if overlay != null:
+			overlay.hide()
+		return
 	if overlay != null:
 		raise_field_interaction_overlay(scene)
 		overlay.visible = true
@@ -1203,6 +1223,10 @@ func refresh_field_interaction_status(scene: Object) -> void:
 	var clear_button: Button = scene.get("_field_interaction_clear_btn")
 	var cancel_button: Button = scene.get("_field_interaction_cancel_btn")
 	var confirm_button: Button = scene.get("_field_interaction_confirm_btn")
+	if clear_button != null:
+		clear_button.text = "清除"
+	if confirm_button != null:
+		confirm_button.text = "确认"
 
 	if mode == "slot_select":
 		var min_select: int = int(interaction_data.get("min_select", 1))
@@ -1287,6 +1311,8 @@ func refresh_field_interaction_status(scene: Object) -> void:
 	if confirm_button != null:
 		confirm_button.visible = true
 		confirm_button.disabled = assignment_entries.size() < min_assignments
+	if bool(interaction_data.get("evolution_frontier", false)):
+		EvolutionChoices.refresh_field_state(scene, interaction_data)
 	_apply_scene_popup_text_metrics(scene)
 
 
@@ -1461,6 +1487,9 @@ func finalize_field_assignment_selection(scene: Object) -> void:
 		if assignment_variant is Dictionary:
 			stored_assignments.append((assignment_variant as Dictionary).duplicate())
 	hide_field_interaction(scene)
+	if bool(interaction_data.get("evolution_frontier", false)):
+		scene.get("_battle_effect_interaction_controller").call("commit_evolution_assignment", scene, stored_assignments, interaction_data)
+		return
 	scene.call("_commit_effect_assignment_selection", stored_assignments)
 
 
@@ -1478,10 +1507,6 @@ func show_field_counter_distribution(scene: Object, step: Dictionary) -> void:
 	apply_field_interaction_position(scene, resolve_field_interaction_position(scene, step.get("target_items", [])))
 	rebuild_field_slot_index_map(scene, step.get("target_items", []))
 	_build_counter_distribution_buttons(scene)
-	var overlay: Control = scene.get("_field_interaction_overlay")
-	if overlay != null:
-		raise_field_interaction_overlay(scene)
-		overlay.visible = true
 	refresh_field_interaction_status(scene)
 	scene.call("_record_battle_event", {
 		"event_type": "choice_context",

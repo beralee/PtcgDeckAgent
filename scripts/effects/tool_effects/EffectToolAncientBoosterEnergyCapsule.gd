@@ -23,9 +23,7 @@ func prevents_special_status(slot: PokemonSlot, state: GameState = null, _status
 
 
 static func protects(slot: PokemonSlot, state: GameState = null) -> bool:
-	if slot == null or slot.attached_tool == null or slot.attached_tool.card_data == null:
-		return false
-	if slot.attached_tool.card_data.effect_id != EFFECT_ID:
+	if slot == null or slot.find_tool_by_effect_id(EFFECT_ID) == null:
 		return false
 	if _is_tool_suppressed(slot, state):
 		return false
@@ -38,7 +36,7 @@ func _applies_to(slot: PokemonSlot, state: GameState = null) -> bool:
 
 
 static func _is_tool_suppressed(slot: PokemonSlot, state: GameState = null) -> bool:
-	if slot == null or slot.attached_tool == null or state == null:
+	if slot == null or slot.find_tool_by_effect_id(EFFECT_ID) == null or state == null:
 		return false
 	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
 	if processor != null and processor.has_method("is_tool_effect_suppressed"):

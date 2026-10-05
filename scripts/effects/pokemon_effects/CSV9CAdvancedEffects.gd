@@ -384,7 +384,7 @@ class GenesectAceCanceller extends BaseEffect:
 		if source == null or card == null or card.card_data == null or state == null:
 			return false
 		var top := source.get_top_card()
-		if top == null or source.attached_tool == null:
+		if top == null or source.get_attached_tools().is_empty():
 			return false
 		if player_index != 1 - top.owner_index:
 			return false

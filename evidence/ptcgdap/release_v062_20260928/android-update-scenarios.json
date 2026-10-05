@@ -1,0 +1,82 @@
+[
+  {
+    "scenario": "low_space",
+    "passed": true
+  },
+  {
+    "scenario": "missing",
+    "passed": true
+  },
+  {
+    "scenario": "truncated",
+    "passed": true
+  },
+  {
+    "scenario": "drop",
+    "passed": true
+  },
+  {
+    "scenario": "corrupt",
+    "passed": true
+  },
+  {
+    "scenario": "invalid",
+    "passed": true
+  },
+  {
+    "scenario": "deleted",
+    "passed": true
+  },
+  {
+    "scenario": "wrong_build",
+    "passed": true
+  },
+  {
+    "scenario": "stalled_system_download_can_cancel",
+    "passed": true
+  },
+  {
+    "scenario": "recovery_good_download",
+    "passed": true
+  },
+  {
+    "scenario": "notification_progress_after_process_exit",
+    "passed": true
+  },
+  {
+    "scenario": "reopen_attaches_same_system_task",
+    "passed": true
+  },
+  {
+    "scenario": "network_loss_waits_then_resumes_same_task",
+    "passed": true
+  },
+  {
+    "scenario": "explicit_cancel_removes_system_task",
+    "passed": true
+  },
+  {
+    "scenario": "download_completes_with_game_closed",
+    "passed": true
+  },
+  {
+    "scenario": "completion_tap_verifies_before_install",
+    "passed": true
+  },
+  {
+    "scenario": "permission_denied_then_retry",
+    "passed": true
+  },
+  {
+    "scenario": "system_cancel_then_retry",
+    "passed": true
+  },
+  {
+    "scenario": "process_death_during_confirmation",
+    "passed": true
+  },
+  {
+    "scenario": "real_A_to_B_upgrade_preserves_data",
+    "passed": true
+  }
+]

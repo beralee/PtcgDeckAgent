@@ -1376,19 +1376,16 @@ func _run_exp_share_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 		if energy_variant is CardInstance:
 			selected_energy = energy_variant
 			break
+	_clear_consumed_prompt(battle_scene)
 	if gsm.resolve_exp_share_choice(player_index_exp, best_slot, selected_energy):
-		var current_dialog_data: Dictionary = battle_scene.get("_dialog_data")
-		if (
-			str(battle_scene.get("_pending_choice")) == "exp_share_target"
-			and int(current_dialog_data.get("player", -1)) == player_index_exp
-			and current_dialog_data.get("source_slot", null) == dialog_data.get("source_slot", null)
-		):
-			_clear_consumed_prompt(battle_scene)
 		if battle_scene.has_method("_refresh_ui_after_successful_action"):
 			battle_scene.call("_refresh_ui_after_successful_action", false, player_index)
 		elif battle_scene.has_method("_refresh_ui"):
 			battle_scene.call("_refresh_ui")
 		return true
+	if str(battle_scene.get("_pending_choice")) == "":
+		battle_scene.set("_pending_choice", "exp_share_target")
+		battle_scene.set("_dialog_data", dialog_data)
 	return false
 
 

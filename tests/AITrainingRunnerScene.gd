@@ -51,7 +51,7 @@ func _ready() -> void:
 	var suite_report := await SharedSuiteRunnerScript.run_suites(suites, selected_suites, "PTCG Train AI/Training Tests")
 	print(suite_report.get("output", ""))
 	if DisplayServer.get_name() == "headless":
-		get_tree().quit(1 if int(suite_report.get("failed", 0)) > 0 else 0)
+		get_tree().quit(int(suite_report.get("exit_code", 1)))
 
 
 func run_matchup_sweep(options: Dictionary) -> Dictionary:

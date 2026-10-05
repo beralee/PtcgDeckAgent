@@ -1,0 +1,86 @@
+[
+  {
+    "scenario": "permission_denied_then_retry",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | verifying |  | 正在校验更新文件…",
+        " | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+        " | verifying |  | 正在校验更新文件…",
+        " | installing |  | 正在准备安装，请稍候。",
+        " | permission_required |  | 请在系统页面允许此游戏安装更新，然后返回游戏；也可以取消安装继续游戏。",
+        " | ready | permission_denied | 尚未获得安装权限。点击安装后，允许此来源安装应用；也可继续使用当前版本。"
+      ],
+      "issue": "permission_denied",
+      "message": "尚未获得安装权限。点击安装后，允许此来源安装应用；也可继续使用当前版本。",
+      "preserved": "created-in-1.0.0",
+      "state": "ready",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "system_cancel_then_retry",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | verifying |  | 正在校验更新文件…",
+        " | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+        " | verifying |  | 正在校验更新文件…",
+        " | installing |  | 正在准备安装，请稍候。",
+        " | permission_required |  | 请在系统页面允许此游戏安装更新，然后返回游戏；也可以取消安装继续游戏。",
+        " | ready | permission_denied | 尚未获得安装权限。点击安装后，允许此来源安装应用；也可继续使用当前版本。",
+        " | verifying | permission_denied | 正在校验更新文件…",
+        " | installing | permission_denied | 正在准备安装，请稍候。",
+        " | permission_required | permission_denied | 请在系统页面允许此游戏安装更新，然后返回游戏；也可以取消安装继续游戏。",
+        " | installing | permission_denied | 已获得权限，正在准备安装，请稍候。",
+        " | awaiting_install | permission_denied | 请确认 Android 系统安装提示。未弹出提示时，可以取消本次安装再重试。",
+        " | ready | cancelled | 本次安装已取消，当前版本仍可使用。可以再次安装。"
+      ],
+      "issue": "cancelled",
+      "message": "本次安装已取消，当前版本仍可使用。可以再次安装。",
+      "preserved": "created-in-1.0.0",
+      "state": "ready",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "process_death_during_confirmation",
+    "passed": true,
+    "report": {
+      "app": {
+        "case": "",
+        "history": [
+          " | verifying |  | 正在校验更新文件…",
+          " | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。"
+        ],
+        "issue": "",
+        "message": "更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+        "preserved": "created-in-1.0.0",
+        "state": "ready",
+        "version": "1.0.0"
+      },
+      "native": {
+        "session": "-1",
+        "token": "",
+        "status": "cancelled_restart"
+      }
+    }
+  },
+  {
+    "scenario": "real_A_to_B_upgrade_preserves_data",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | updated |  | 已更新至 验证版 1.0.1。"
+      ],
+      "issue": "",
+      "message": "已更新至 验证版 1.0.1。",
+      "preserved": "created-in-1.0.0",
+      "state": "updated",
+      "version": "1.0.1"
+    }
+  }
+]

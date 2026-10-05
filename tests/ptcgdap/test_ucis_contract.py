@@ -10,6 +10,18 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def bundled_card_identities() -> dict[str, str]:
+    """Use the shipped source set, so adding cards cannot leave a stale denominator."""
+    identities = {}
+    for path in (ROOT / "data/bundled_user/cards").glob("*.json"):
+        card = json.loads(path.read_text(encoding="utf-8-sig"))
+        uid = f"{card['set_code']}_{card['card_index']}"
+        if uid in identities:
+            raise AssertionError(f"duplicate bundled card UID: {uid}")
+        identities[uid] = card["effect_id"]
+    return identities
+
+
 class UcisContractTests(unittest.TestCase):
     def test_registry_is_source_bound_and_covers_every_official_wire_atom(self) -> None:
         from scripts.ai.ptcgdap.ucis import UcisRegistry
@@ -147,7 +159,12 @@ class UcisContractTests(unittest.TestCase):
         catalog = build_ucis_catalog(ROOT)
         validate_ucis_catalog(catalog)
         closure = catalog["closure"]
-        self.assertEqual(closure["total_cards"], 965)
+        source_cards = bundled_card_identities()
+        self.assertEqual(closure["total_cards"], len(source_cards))
+        self.assertEqual(
+            {row["card_uid"]: row["effect_id"] for row in catalog["cards"]},
+            source_cards,
+        )
         self.assertEqual(closure["unregistered"], 0)
         self.assertEqual(closure["legacy_author_visible"], 0)
         self.assertEqual(closure["custom_prompt_builder"], 0)
@@ -204,15 +221,20 @@ class UcisContractTests(unittest.TestCase):
         )
         self.assertEqual(attestation["document_type"], "ptcgdap_ucis_runtime_attestation_v1")
         self.assertEqual(attestation["invalid_specs"], [])
-        self.assertEqual(attestation["closure"]["total_cards"], 965)
-        self.assertEqual(attestation["closure"]["total_effects"], 859)
+        source_cards = bundled_card_identities()
+        self.assertEqual(attestation["closure"]["total_cards"], len(source_cards))
+        self.assertEqual(attestation["closure"]["total_effects"], len(set(source_cards.values())))
+        self.assertEqual(
+            {row["card_uid"]: row["effect_id"] for row in attestation["cards"]},
+            source_cards,
+        )
         self.assertEqual(attestation["closure"]["unregistered"], 0)
         self.assertEqual(attestation["closure"]["silent_fallback"], 0)
         self.assertEqual(
             attestation["closure"]["compiled"]
             + attestation["closure"]["automatic"]
             + attestation["closure"]["unsupported"],
-            859,
+            len(set(source_cards.values())),
         )
         unsupported = [row for row in attestation["cards"] if row["status"] == "unsupported"]
         self.assertTrue(all(row["unsupported_reason"] for row in unsupported))

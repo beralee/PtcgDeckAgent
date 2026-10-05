@@ -6,6 +6,58 @@ const VALID_FIXTURE_PATH := "res://tests/fixtures/suite_runner_valid_fixture.gd"
 const ABSTRACT_FIXTURE_PATH := "res://tests/fixtures/suite_runner_abstract_fixture.gd"
 
 
+func test_skip_is_visible_and_cannot_mask_assertions_or_invalid_tests() -> String:
+	var suites: Array[Dictionary] = [{"name": "ResultFixture", "path": "res://tests/fixtures/suite_runner_result_fixture.gd"}]
+	var report := await SharedSuiteRunnerScript.run_suites(suites)
+	return run_checks([
+		assert_eq(report.passed, 0),
+		assert_eq(report.failed, 3),
+		assert_eq(report.skipped, 1),
+		assert_eq(report.exit_code, 1),
+	])
+
+
+func test_all_skipped_and_unmatched_method_filters_are_not_success() -> String:
+	var suites: Array[Dictionary] = [{"name": "ResultFixture", "path": "res://tests/fixtures/suite_runner_result_fixture.gd"}]
+	var skipped := await SharedSuiteRunnerScript.run_suites(suites, {}, "Skip fixture", {"test_filter": "test_explicit_skip"})
+	var unmatched := await SharedSuiteRunnerScript.run_suites(suites, {}, "Bad filter", {"test_filter": "no_such_test"})
+	return run_checks([
+		assert_eq(skipped.skipped, 1),
+		assert_eq(skipped.passed, 0),
+		assert_eq(skipped.exit_code, 2),
+		assert_eq(unmatched.failed, 1),
+	])
+
+
+func test_empty_selection_cannot_report_success() -> String:
+	var report := await SharedSuiteRunnerScript.run_suites([], {}, "Empty discovery")
+	return assert_gt(int(report.get("failed", 0)), 0, "Running no suites must fail closed")
+
+
+func test_unknown_selected_suite_is_not_silently_ignored() -> String:
+	var suites: Array[Dictionary] = [{"name": "RunnerValidFixture", "path": VALID_FIXTURE_PATH}]
+	var report := await SharedSuiteRunnerScript.run_suites(suites, {"runnervalidfixture": true, "misspelled": true})
+	return run_checks([
+		assert_gt(int(report.get("failed", 0)), 0, "Even a partially matched selection must reject unknown names"),
+		assert_str_contains(str(report.get("output", "")), "misspelled"),
+	])
+
+
+func test_duplicate_suite_identity_fails_before_execution() -> String:
+	var suites: Array[Dictionary] = [
+		{"name": "RunnerValidFixture", "path": VALID_FIXTURE_PATH},
+		{"name": "RunnerValidFixture", "path": VALID_FIXTURE_PATH},
+	]
+	var report := await SharedSuiteRunnerScript.run_suites(suites)
+	return assert_gt(int(report.get("failed", 0)), 0, "Duplicate registration must not inflate coverage")
+
+
+func test_discarded_assertion_failure_cannot_become_a_pass() -> String:
+	var suites: Array[Dictionary] = [{"name": "IgnoredAssertion", "path": "res://tests/fixtures/suite_runner_ignored_assertion_fixture.gd"}]
+	var report := await SharedSuiteRunnerScript.run_suites(suites)
+	return assert_eq(int(report.get("failed", 0)), 1, "Ignoring an assertion's return value must still fail the test")
+
+
 func test_script_error_gate_captures_only_script_errors_and_drains() -> String:
 	var gate := SharedSuiteRunnerScript.ScriptErrorGate.new()
 	var backtraces: Array[ScriptBacktrace] = []

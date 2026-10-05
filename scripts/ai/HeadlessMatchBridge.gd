@@ -28,6 +28,7 @@ var _pending_effect_slot: PokemonSlot = null
 var _pending_effect_ability_index: int = -1
 var _pending_effect_attack_data: Dictionary = {}
 var _pending_effect_attack_effects: Array[BaseEffect] = []
+var _effect_interaction_generation := 0
 
 ## 场地交互状态（AIStepResolver 读取）
 var _field_interaction_mode: String = ""
@@ -161,6 +162,10 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 			_dialog_data = {"player": int(data.get("player", -1))}
 		"bench_limit_cleanup":
 			_resolve_bench_limit_cleanup(data)
+		"tool_limit_cleanup":
+			# A commit may emit this while its previous interaction is still
+			# unwinding. Rebind the mandatory prompt after resetting that context.
+			if _pending_effect_kind == "": _resume_tool_limit_cleanup()
 		"powerglass_end_turn":
 			var steps: Array[Dictionary] = []
 			for raw_step: Variant in data.get("steps", []):
@@ -182,6 +187,15 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 		_:
 			_pending_choice = choice_type
 			_dialog_data = data.duplicate(true)
+
+
+func _resume_tool_limit_cleanup() -> void:
+	if _gsm == null: return
+	var pending := _gsm.get_pending_decision_snapshot()
+	if str(pending.get("kind", "")) != "tool_limit_cleanup": return
+	var steps: Array[Dictionary] = []
+	for step: Dictionary in pending.steps: steps.append(step)
+	_start_effect_interaction("tool_limit_cleanup", int(pending.player), steps, pending.card, pending.slot)
 
 
 func _resolve_bench_limit_cleanup(data: Dictionary) -> void:
@@ -621,6 +635,7 @@ func _start_effect_interaction(
 	if kind in ["attack", "granted_attack"] and _gsm != null:
 		_gsm.protect_committed_attack_steps(slot, steps)
 	remove_meta("ucis_interaction_error")
+	_effect_interaction_generation += 1
 	_pending_effect_kind = kind
 	_pending_effect_player_index = player_index
 	_pending_effect_card = card
@@ -640,6 +655,7 @@ func _show_next_effect_interaction_step() -> void:
 	## 所有步骤完成 -> 执行效果
 	if _pending_effect_step_index >= _pending_effect_steps.size():
 		var success := false
+		var commit_generation := _effect_interaction_generation
 		var commit_kind := _pending_effect_kind
 		var commit_player_index := _pending_effect_player_index
 		var commit_card_uid := ""
@@ -688,6 +704,8 @@ func _show_next_effect_interaction_step() -> void:
 					_pending_effect_player_index,
 					[_pending_effect_context]
 				)
+			"tool_limit_cleanup":
+				success = _gsm.resolve_tool_limit_cleanup(_pending_effect_player_index, [_pending_effect_context])
 		if success:
 			remove_meta("last_effect_commit_failure")
 		else:
@@ -700,7 +718,11 @@ func _show_next_effect_interaction_step() -> void:
 					if _gsm != null and _gsm.effect_processor != null else ""
 				),
 			})
-		_reset_effect_interaction()
+		# A commit can synchronously create another interaction (for example the
+		# next physical Powerglass). Retire only the window we actually consumed.
+		if commit_generation == _effect_interaction_generation:
+			_reset_effect_interaction()
+			_resume_tool_limit_cleanup()
 		return
 	## 还有步骤未完成 -> 设置 pending_choice 等待 AI 解决
 	_pending_choice = "effect_interaction"

@@ -1470,7 +1470,7 @@ func test_battle_scene_rare_candy_uses_one_canonical_evolution_frontier() -> Str
 	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0]))
 
 	return run_checks([
-		assert_eq(first_field_mode, "", "Rare Candy's compound evolution options should use the dialog UI"),
+		assert_eq(first_field_mode, "assignment", "Rare Candy projects compound options into the source/field picker"),
 		assert_eq(int(metadata.get("context_raw", -1)), 37, "Rare Candy must expose the official EVOLVE context"),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "One accepted EVOLVE option should complete the interaction"),
 		assert_eq(basic.pokemon_stack.size(), 2, "The selected EVOLVE option should bind both the Stage 2 card and legal target"),

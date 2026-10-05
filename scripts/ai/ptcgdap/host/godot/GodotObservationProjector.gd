@@ -615,14 +615,14 @@ func _capture_engine_pokemon(
 			return energy_result
 		energies.append(energy_result.get("value"))
 		checks += 1
-	var tool: Variant = null
-	if slot.attached_tool != null:
+	var tools: Array = []
+	for attached_tool: CardInstance in slot.get_attached_tools():
 		var tool_result := _capture_engine_card(
-			slot.attached_tool, -1, false, registry, generation, source_documents, context
+			attached_tool, -1, false, registry, generation, source_documents, context
 		)
 		if not bool(tool_result.get("ok", false)):
 			return tool_result
-		tool = tool_result.get("value")
+		tools.append(tool_result.get("value"))
 		checks += 1
 	var status_keys := ["poisoned", "burned", "asleep", "paralyzed", "confused"]
 	if not _exact_dictionary_keys(slot.status_conditions, status_keys):
@@ -640,7 +640,8 @@ func _capture_engine_pokemon(
 		"value": {
 			"stack": stack,
 			"attached_energy": energies,
-			"tool": tool,
+			"tool": tools[0] if not tools.is_empty() else null,
+			"tools": tools,
 			"hp": hp,
 			"max_hp": max_hp,
 			"appear_this_turn": slot.turn_played == turn_number or slot.turn_evolved == turn_number,
@@ -1133,6 +1134,8 @@ func _validate_player(player: Variant, owner: int, acting: int, authority: Dicti
 
 func _validate_pokemon(pokemon: Variant, owner: int, authority: Dictionary) -> Dictionary:
 	var keys := ["stack", "attached_energy", "tool", "hp", "max_hp", "appear_this_turn", "status"]
+	if pokemon is Dictionary and pokemon.has("tools"):
+		keys.append("tools")
 	if not _exact_dictionary_keys(pokemon, keys):
 		return _failure("invalid_state")
 	if not pokemon.get("stack") is Array or pokemon.get("stack").is_empty() or pokemon.get("stack").size() > 3:
@@ -1161,8 +1164,17 @@ func _validate_pokemon(pokemon: Variant, owner: int, authority: Dictionary) -> D
 		if not energy_error.is_empty():
 			return _failure(energy_error)
 		checks += 1
-	if pokemon.get("tool") != null:
-		var tool_error := _register_card(pokemon.get("tool"), -1, authority)
+	var tools: Array = []
+	if pokemon.has("tools"):
+		if not pokemon.get("tools") is Array or pokemon.get("tools").size() > 4:
+			return _failure("invalid_state")
+		tools = pokemon.get("tools")
+		if pokemon.get("tool") != (tools[0] if not tools.is_empty() else null):
+			return _failure("invalid_state")
+	elif pokemon.get("tool") != null:
+		tools.append(pokemon.get("tool"))
+	for tool: Variant in tools:
+		var tool_error := _register_card(tool, -1, authority)
 		if not tool_error.is_empty():
 			return _failure(tool_error)
 		checks += 1
@@ -1358,7 +1370,10 @@ func _wire_pokemon(source: Dictionary) -> Dictionary:
 		energies.append(card.get("energy_type"))
 		energy_cards.append(_wire_card(card))
 	var tools := []
-	if source.get("tool") != null:
+	if source.has("tools"):
+		for tool: Dictionary in source.get("tools"):
+			tools.append(_wire_card(tool))
+	elif source.get("tool") != null:
 		tools.append(_wire_card(source.get("tool")))
 	var pre_evolution := []
 	for index: int in range(stack.size() - 1):

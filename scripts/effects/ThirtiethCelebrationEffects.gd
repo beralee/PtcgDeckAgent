@@ -273,9 +273,9 @@ class AttackKnockOff extends BaseEffect:
 		var processor: EffectProcessor = state.shared_turn_flags.get("_draw_effect_processor")
 		if not applies_to_attack_index(index) or defender == null or processor.is_attack_effect_prevented_by_defender_ability(attacker, defender, state):
 			return
-		if defender.attached_tool != null:
-			state.players[defender.get_top_card().owner_index].discard_card(defender.attached_tool)
-			defender.attached_tool = null
+		for tool: CardInstance in defender.get_attached_tools():
+			state.players[defender.get_top_card().owner_index].discard_card(tool)
+		defender.attached_tool = null
 
 
 class AttackFestivity extends BaseEffect:
@@ -459,7 +459,7 @@ class AttackToolBonus extends BaseEffect:
 		bind_default_attack_index(0)
 
 	func get_damage_bonus(attacker: PokemonSlot, _state: GameState) -> int:
-		return 40 if attacker.attached_tool != null else 0
+		return 40 if not attacker.get_attached_tools().is_empty() else 0
 
 
 class AbilityLifeConstraint extends BaseEffect:

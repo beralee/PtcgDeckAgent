@@ -579,6 +579,11 @@ func _apply_landscape_log_panel_width(log_panel: Control, log_width: float) -> v
 
 
 func prepare_layout(context: Dictionary) -> void:
+	# Portrait explicitly sizes modal roots and their centering containers.
+	# Restore their anchors even while hidden, before the next dialog opens.
+	for node: Node in _scene.find_children("*", "Control", true, false):
+		if bool(node.get_meta("portrait_modal_full_rect_child", false)):
+			(node as Control).set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_call_scene("_restore_portrait_popup_text_metrics")
 	_call_scene("_restore_portrait_scrollbar_metrics")
 	_call_scene("_close_portrait_prize_dialog")

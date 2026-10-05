@@ -1,0 +1,5988 @@
+{
+  "document_type": "public_tournament_card_audit",
+  "retrieved_on": "2026-10-04",
+  "series_id": 59,
+  "source_url": "https://tcg.mik.moe/tournaments/series/59?page=2",
+  "series_name": "2026城市赛第四赛季",
+  "date_filter": "2026-09-16 < date <= 2026-10-04",
+  "listing_pages": 2,
+  "listing_page_size": 100,
+  "all_series_tournaments": 143,
+  "ended_tournaments": 61,
+  "rank_rows": 976,
+  "deck_occurrences": 2854,
+  "unique_decks": 2357,
+  "unique_source_printings": 507,
+  "frozen_baseline": {
+    "data_missing": 95,
+    "registration_missing_within_missing_data": 63,
+    "catalog_only": [
+      {
+        "uid": "CSV4C_015",
+        "name": "九尾",
+        "loaded": true,
+        "registration_missing": false
+      }
+    ],
+    "same_printing_aliases": [
+      {
+        "source_uid": "30thC_057",
+        "local_uid": "30THC_057",
+        "match": "same_printing_case_insensitive_filename"
+      }
+    ]
+  },
+  "integrated_light_registration": {
+    "catalog_only": 0,
+    "light_registration_pass": 507,
+    "load_missing": 0,
+    "per_attack_gap": 0,
+    "status_unimplemented": 0,
+    "total": 507
+  },
+  "image_format_note": "Source image hashes describe the original PNG responses. Release assets are lossless WebP encoded with an exact decoded-pixel equality check; source PNG captures are retained separately.",
+  "deployment_status": "Control 86, signed content 2026.10.04.1, Windows 0.6.4 and Android 0.6.4 build 64 are published. Anonymous verification of all 1085 content objects, exact installable-client download hashes, final update feed, and the actual HTTPS frozen-client restart/card-effect acceptance passed. This public survey is not a private deployment receipt.",
+  "cards": [
+    {
+      "uid": "151C_084",
+      "name": "嘟嘟",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/151C/084",
+      "source_raw_sha256": "8f7d5fbf7ea5444914dbca855ce5daafb9d62319b701b7537eb71a2b9d47de5c",
+      "source_image_sha256": "104da558fd20409757f309f3565252fdf7c29f8d056f5ee2af2718215a1ecdaf"
+    },
+    {
+      "uid": "151C_085",
+      "name": "嘟嘟利",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/151C/085",
+      "source_raw_sha256": "71ef2472c326a795aa3c656ad75b49d50917d51e9a673de4ba253776502e555f",
+      "source_image_sha256": "d60e38261304d838bf0316f50c0b5f72a35d6c61702f3a6bedace0833fc7c32c"
+    },
+    {
+      "uid": "30thP_002",
+      "name": "小火龙",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/30thP/002",
+      "source_raw_sha256": "61c83a1a94559f53fea80f519e5a224d50d28669fa96f000636832d1335b60bb",
+      "source_image_sha256": "e592423105d70d0231a986d7d6d0f10b2b18ff49f782f37da0632a9e263b653f"
+    },
+    {
+      "uid": "30thP_022",
+      "name": "敲音猴",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/30thP/022",
+      "source_raw_sha256": "538e6ca63d35f27065cfeedd0ec29b9b297bd153c693e2f5a82fa81fee1813d5",
+      "source_image_sha256": "70806430593327764f349128f165a637242aadf532df90dda15bfc3f821e38e7"
+    },
+    {
+      "uid": "CSV1C_015",
+      "name": "奥利纽",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/015",
+      "source_raw_sha256": "45db318eac775e1927bc22f9c4bef87f630603de73aed013236b55a3106ae476",
+      "source_image_sha256": "382630d6e4ea642d399c6f17fbd1d458758600751da029b6f4d32a8aba0030d4"
+    },
+    {
+      "uid": "CSV1C_017",
+      "name": "原野水母",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/017",
+      "source_raw_sha256": "670acce08d0bd35a793c3f2c89bb128b24a98dfde3346baab099dd5a479ec781",
+      "source_image_sha256": "040efbe573b183375909379612886a4c37d404f91db24f4a6f73c251335bfed0"
+    },
+    {
+      "uid": "CSV1C_029",
+      "name": "呆呆兽",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/029",
+      "source_raw_sha256": "405eed4ba43303b07f54337d9ce81cbbcfd0cbc74f3aacb0cdb412ce23068edc",
+      "source_image_sha256": "4a5ad9a6250c3d722cb11df968102a1184806cc59b3257c248d29f1f625ca086"
+    },
+    {
+      "uid": "CSV1C_044",
+      "name": "自爆磁怪ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/044",
+      "source_raw_sha256": "ee81b223e69a40774926bc450f52115e1e3cb8c61f82c920a76205c813f29ad2",
+      "source_image_sha256": "3535aad775a19d0ad28d1638bbfbe80e62881fa055b22e59cfa855452b3057a3"
+    },
+    {
+      "uid": "CSV1C_071",
+      "name": "弃世猴",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/071",
+      "source_raw_sha256": "69bdeb373f456a65ed79fdb74340a1005e80a85fc667f3a2f2bf3665a7268d48",
+      "source_image_sha256": "49b14b4bac548afb532ffa333bf55d74b4626e26fe2df94d44624a8c8136934e"
+    },
+    {
+      "uid": "CSV1C_097",
+      "name": "普隆隆姆",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/097",
+      "source_raw_sha256": "2a14ebda55d5b4bfea4e4fa27e15ea8f3885bd845dd9b6db75a375ad2be50047",
+      "source_image_sha256": "75f9ccf553e11fb380d659f33dbd88d866ebfd609f33545fa22f201297fb882a"
+    },
+    {
+      "uid": "CSV1C_119",
+      "name": "坂木的领导力",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/119",
+      "source_raw_sha256": "e8dc11b774adcf6b779995459282f6a589e9ee68007b7eadde48ae0e70921525",
+      "source_image_sha256": "2a713dcb92c17dd0b017cd17a09f9af64aed9882ed3f9db5368ac8b37c168b5f"
+    },
+    {
+      "uid": "CSV1C_125",
+      "name": "米莫莎",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/125",
+      "source_raw_sha256": "acf1a216a069c55d56b7270f97687ba0285254bc63964c80bdf5b1ef0244d937",
+      "source_image_sha256": "7e92b87f216b30e07220f05c317d2e668f3566c3821f76116245307f8298f7ed"
+    },
+    {
+      "uid": "CSV2C_061",
+      "name": "随风球",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV2C/061",
+      "source_raw_sha256": "bba1e6f1dfae1e784f05dd8f300e1bb87cb25f58fead818110c2258c7c6040bc",
+      "source_image_sha256": "43fe2ff86c28468ca27731cacc00b1424ce283afc33a24270f42f8626c1a40da"
+    },
+    {
+      "uid": "CSV2C_099",
+      "name": "大王铜象ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV2C/099",
+      "source_raw_sha256": "30c9ace5880fec3a7cc098bdfb5299ca68c9fe944a1a2eb96fe8b520ce3c01c2",
+      "source_image_sha256": "a5569daad203272a7087d6c4e015651349c2125139a2c6ba9e721665de681e31"
+    },
+    {
+      "uid": "CSV2C_122",
+      "name": "萨瓦罗",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV2C/122",
+      "source_raw_sha256": "22cb9963634c90f1ee67702d9b6ff973d33ecebbff8681fc1b25db007fdc4ee5",
+      "source_image_sha256": "e737918b8592726b47e2138d14a5e2274cafaa5b56b9d334cf114ded64e616a1"
+    },
+    {
+      "uid": "CSV3C_004",
+      "name": "榛果球",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/004",
+      "source_raw_sha256": "c8e6d4160b23c2e0cf7945f6f847af37c76edccfa9757f4a99b9258946a71c11",
+      "source_image_sha256": "f20a51d08fdd6d2a4482d0bf4ead33a631f6181f6ed17096c1d2eb32e5002200"
+    },
+    {
+      "uid": "CSV3C_005",
+      "name": "佛烈托斯ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/005",
+      "source_raw_sha256": "8f8c0637ff700cb17fd80702a19eef8ecd7cf25045496713a8fcd84f864b4434",
+      "source_image_sha256": "015ce144de9d468718ddbb39538867edc01dbac3114929303be7471faf0ecbc8"
+    },
+    {
+      "uid": "CSV3C_015",
+      "name": "古简蜗ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/015",
+      "source_raw_sha256": "92ab09d41a94ef74d6b1e8de823cfb64263f8b9dd4da407f775732293084753c",
+      "source_image_sha256": "a39d3486f89177d40c9c5d06444f3a88580b1dde4761c81483e734289eb5edf1"
+    },
+    {
+      "uid": "CSV3C_029",
+      "name": "炭小侍",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/029",
+      "source_raw_sha256": "2fceb986f1538ac5dfdac06d6742c7f8e535c6d8a2050228a810a7e0f16e38be",
+      "source_image_sha256": "da6d481375c3d40531a961ebdacf493190bee3fc85865510643f1fc8756a906c"
+    },
+    {
+      "uid": "CSV3C_080",
+      "name": "古鼎鹿ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/080",
+      "source_raw_sha256": "9116c9259fd2a64f865074b0272e595e03446f77f220926e4db612a08d8e53b3",
+      "source_image_sha256": "2fae1d113a2373eb1560a073932a85aa9bfd929492e5e904e9082940798b87a4"
+    },
+    {
+      "uid": "CSV3C_082",
+      "name": "玛狃拉",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/082",
+      "source_raw_sha256": "b549cb023f576722632f7b839cba50936a77668ca1a012f4364c8ad10bb1f09d",
+      "source_image_sha256": "bf7c80cf973fa103a4361c4821c3a473632a83c457b1b26d17932f4270105fa5"
+    },
+    {
+      "uid": "CSV3C_089",
+      "name": "铜镜怪",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/089",
+      "source_raw_sha256": "23b9d5357b5f442b2e727f37070628953dd3e2d5dae6fa87fb20cd965fd62678",
+      "source_image_sha256": "aab7db1c62f4ca0ebace264c1f2c93123bfbb408b171d9ce0e293f57ba1a58ea"
+    },
+    {
+      "uid": "CSV3C_096",
+      "name": "麒麟奇",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/096",
+      "source_raw_sha256": "78dd6a2669bc83030fb7f82f3fd7e3250d85993e4db6626c7a624f525c5bec88",
+      "source_image_sha256": "2c046f3ca22f1b31a5405aefaf0a6d02664f3a65c70e05a3601ccf4205aae02b"
+    },
+    {
+      "uid": "CSV3C_098",
+      "name": "土龙弟弟",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/098",
+      "source_raw_sha256": "7227042ebea92657527d50b2d6e5a33335a1dea3db525915ccc25e15b785ad76",
+      "source_image_sha256": "f0ab78cf34d70fad5b24ad769e7309b639e7cebfe2cffb0c135e600645081863"
+    },
+    {
+      "uid": "CSV3C_120",
+      "name": "复仇拳箱",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/120",
+      "source_raw_sha256": "cb34a8596a7daa62d106448e4af69550b953a6055c899633077c0057c2d54a47",
+      "source_image_sha256": "c612c971d9f266f8f29bf06e01f0c032ac99d71b5831c5b369ac3e806d8eaa1e"
+    },
+    {
+      "uid": "CSV3C_128",
+      "name": "灾祸荒野",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/128",
+      "source_raw_sha256": "d075b1bbe74e76f6df1ac74046c9c1bd99711165b3dc6eafb569b2896312cb27",
+      "source_image_sha256": "7d5ff31eab1b8c0364b475a9eb211234c9a8fb3697c36414ceb91ae2a77e2455"
+    },
+    {
+      "uid": "CSV4C_001",
+      "name": "飞天螳螂",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/001",
+      "source_raw_sha256": "36b511e17e1a28d06e236fffbe6e1d6385d3584f9777a2acbd0fb5975d3296ef",
+      "source_image_sha256": "507958a6818356c7b60c27a6baf9d9ce3c0d05b5bb259ad2ac4595fb020f5157"
+    },
+    {
+      "uid": "CSV4C_045",
+      "name": "波克比",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/045",
+      "source_raw_sha256": "191acfb5fd8e27093efdbb85529a18ab38fa0689f2787cf5c3ba86b8d6af90c5",
+      "source_image_sha256": "b8f27ca4bc285f2a1653f7b4125bd081551342963296140c060cf8753d53681b"
+    },
+    {
+      "uid": "CSV4C_046",
+      "name": "波克基古",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/046",
+      "source_raw_sha256": "3fa56f523f6429413ab74302e300c18c8302ea97f98ac7b979333612a38b1231",
+      "source_image_sha256": "19361663d7f0303ddf3da7feeebbb95467705504d82a000d766034160b1d2108"
+    },
+    {
+      "uid": "CSV4C_073",
+      "name": "盐石垒",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/073",
+      "source_raw_sha256": "8fc73640468580647da749b247089324aa81aca8248fa8a22a432c43c816c602",
+      "source_image_sha256": "281e2c1820e728e76a91a2cc3a10c96be08b28236fa298588b2a60477a67abb6"
+    },
+    {
+      "uid": "CSV4C_076",
+      "name": "月亮伊布",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/076",
+      "source_raw_sha256": "2d22d48f672b6e30230a33d27d29542d5cb70843ed62d9f8bb0f5938b0d26a7b",
+      "source_image_sha256": "52a73f31b7cc65187a98ba79c29e8aec4dca9a5304ffa690c55033e18ead02f8"
+    },
+    {
+      "uid": "CSV4C_085",
+      "name": "坚盾剑怪",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/085",
+      "source_raw_sha256": "c2d7ddf63b297db262cf979e62c739ff3db8cb79f9589976ccbeee8ce7754878",
+      "source_image_sha256": "2ee4583f126356faa9905b049878ca87705562868f1d591066553ba4847dbeed"
+    },
+    {
+      "uid": "CSV4C_088",
+      "name": "普隆隆姆ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/088",
+      "source_raw_sha256": "745080fbbf99fb7f7b01f58fcdc661d208cc0dbbdd988c3264d8a36d233b3aab",
+      "source_image_sha256": "d24e01c72b748d1091dc4017dcc0e9f9a3eb0a580e102a7e29e053c1291dde39"
+    },
+    {
+      "uid": "CSV4C_100",
+      "name": "比比鸟",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/100",
+      "source_raw_sha256": "176a8cebcabbb87c337b8afb43d1c263074c8b65763a7680977af89a804293ed",
+      "source_image_sha256": "0fabfb49322940e9d4b6ab52b3a683bd43779605270b95a1f23edcde6ca5c3b3"
+    },
+    {
+      "uid": "CSV4C_103",
+      "name": "伊布",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/103",
+      "source_raw_sha256": "e950568fc89f36cb4685f0d33bd9be64aba4889591846bf7a19683b972d427ba",
+      "source_image_sha256": "b2d3aa4cf80164640feffaacc9255905752c4df539551b17238ab77e29d3c3bb"
+    },
+    {
+      "uid": "CSV4C_120",
+      "name": "招式学习器 暗中奇袭",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/120",
+      "source_raw_sha256": "aace6b1eec2399f4337469cf7e2bdecfab66bf731650699758f3eedb0050f8cd",
+      "source_image_sha256": "77cfc75b3fc01899148916346d9c223bbfd3b785cd79ca1285c25deea806abd9"
+    },
+    {
+      "uid": "CSV4C_122",
+      "name": "辛俐",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/122",
+      "source_raw_sha256": "c23819260f973854ca355ee6fc89840d67e4700af01e7e6955f4e40fed11ef25",
+      "source_image_sha256": "07b624a913496fd9a814969bac367a4ed807667793c67ee802819be4e6f7db71"
+    },
+    {
+      "uid": "CSV4C_127",
+      "name": "海滩场地",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/127",
+      "source_raw_sha256": "1ed4faf8a95aea87027cd57bbac51fe7c468f3690c023fdd3a104865742a3555",
+      "source_image_sha256": "7dff42ab7999abeecbc2193c822701ee9a872e2d79b51a09ee503b91579bc34e"
+    },
+    {
+      "uid": "CSV4C_128",
+      "name": "练习室",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/128",
+      "source_raw_sha256": "f3ac95d95685f439c4f3b14f54a337791ce92103d32ae946d5ab1245989c6e53",
+      "source_image_sha256": "25d8676e78dd75bda0aad4a27ddc901aab3089a3764ea3b39090cbdc6ffe7747"
+    },
+    {
+      "uid": "CSV5C_008",
+      "name": "原野水母",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/008",
+      "source_raw_sha256": "4303ad9d3e65bf93b1a1a75be169427176bf945bce5425a16988a1d087a66f70",
+      "source_image_sha256": "426bdd56bce244d436dbd55398614c925007575a806e6a0b69240a6164f612db"
+    },
+    {
+      "uid": "CSV5C_011",
+      "name": "热辣娃",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/011",
+      "source_raw_sha256": "2669df9eae3c65735460dec3ad201965b1fd4c809f4ffe1cea095cd47356bf52",
+      "source_image_sha256": "9383fb801f3607b41d037698500711320f10548373e8797511977a0477ed5b64"
+    },
+    {
+      "uid": "CSV5C_012",
+      "name": "狠辣椒ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/012",
+      "source_raw_sha256": "217bab6ccce8aa3ac8d1361d7629b70c3e7f7e91040204e1ceec40600cc2b0a0",
+      "source_image_sha256": "f5347aba03a490bf45198bcd65f63ca90e4a20d3091337bdce8de7466084425a"
+    },
+    {
+      "uid": "CSV5C_020",
+      "name": "炭小侍",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/020",
+      "source_raw_sha256": "54f68b632013ba9ebc13c92858aa87da022fc37a16bfd771c957c3ac8dcb9340",
+      "source_image_sha256": "3bdc8852e51d742e5a65f0e9d3c23600098aabcf4b35c4aa23fec2755ec1daba"
+    },
+    {
+      "uid": "CSV5C_021",
+      "name": "红莲铠骑ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/021",
+      "source_raw_sha256": "ac3d19303269418ad10f93780871f66d2a9bac7d11530deb34302f361bc6346a",
+      "source_image_sha256": "6b356de9ce96641f24d35687c889745b14cd94a9a6f22c5b414185381135ee09"
+    },
+    {
+      "uid": "CSV5C_029",
+      "name": "小球飞鱼",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/029",
+      "source_raw_sha256": "153a52d8f5433eecc10d9ba316bce3f8f35888c7c47c5a2fcbdb8e28a454b81f",
+      "source_image_sha256": "29d0743b3fbf415cfeaa67fb7cbf46b370c809826aa42ff1a5672354fd7efbe2"
+    },
+    {
+      "uid": "CSV5C_129",
+      "name": "医疗能量",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/129",
+      "source_raw_sha256": "e8590fde2f169a52a3f9d81b0bda44075558febf95dfec565fd0c2e7ec1889ab",
+      "source_image_sha256": "b8af1f86a460721d6139087ed4367625b82544f4cbf85f5e6ace6ae4a2de5e00"
+    },
+    {
+      "uid": "CSV6C_015",
+      "name": "超能艳鸵ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/015",
+      "source_raw_sha256": "489dc7414367e3e02b530b1ffc4d657382d909496327e7631c0a4d7a483c05c0",
+      "source_image_sha256": "67b3604026f2a927c700672b09f66c19594bb7973caa72599d6b5bb967018fa7"
+    },
+    {
+      "uid": "CSV6C_030",
+      "name": "丑丑鱼",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/030",
+      "source_raw_sha256": "258ee89f72307575050af65c833dfea34b99b12a731f04d9444a8a9c2e299b5c",
+      "source_image_sha256": "df2fad26060b0607db53442b2f9d87cc808834958e930f8f24f26d0fd1d6bdf7"
+    },
+    {
+      "uid": "CSV6C_043",
+      "name": "古剑豹",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/043",
+      "source_raw_sha256": "bcffdd5f9b7139ce062a474c639615867ce32b865696f32748546cfdad367ab5",
+      "source_image_sha256": "24334d2baf38a1b287ef1366358a06d2aff83f260ee0ab1ca542e58bf8f37266"
+    },
+    {
+      "uid": "CSV6C_060",
+      "name": "飘飘雏",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/060",
+      "source_raw_sha256": "bf5616c134575e884661a8aaf04120ff22b5711806fc17100e075b4d3844d3c0",
+      "source_image_sha256": "c06889cf03defa1738763472d96562a2b2e7842b2e771cbba999df5b49259714"
+    },
+    {
+      "uid": "CSV6C_066",
+      "name": "铁武者ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/066",
+      "source_raw_sha256": "ded8bcce1f8d7ee1aadd1c06b0bae96f68f5bb4563970890fef6709011bed02a",
+      "source_image_sha256": "d106230cf0f38dc9b7ce5836f0ba94c2f653e8677e41c686cb8f7ab394df1f88"
+    },
+    {
+      "uid": "CSV6C_067",
+      "name": "大岩蛇",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/067",
+      "source_raw_sha256": "9884ac25285046cc12534f070f4af4e7e8533896759719f0d935a67b7c04dd07",
+      "source_image_sha256": "adf246f8144d4f3b4f88e26b320a0c1e917b7236367b8b3dacdac9962fbcc5d3"
+    },
+    {
+      "uid": "CSV6C_083",
+      "name": "沙铁皮ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/083",
+      "source_raw_sha256": "3656f3a0b7c5e8f19f9faee181718920294e99d728186ebc5b4543f4436fc7d4",
+      "source_image_sha256": "156cb9b810ef018a241328534eb22b888486504b866f84e3a9ca8061129df85b"
+    },
+    {
+      "uid": "CSV6C_097",
+      "name": "大钢蛇",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/097",
+      "source_raw_sha256": "33c337b92f0c7c2c7c2fddf115ab954d6b6728e6388695a0c8c689dfda2c927a",
+      "source_image_sha256": "d49ee81cb47a73d14b723ef691a3b604fa750e40ff9ea7174bec9395a29f4f4f"
+    },
+    {
+      "uid": "CSV7C_050",
+      "name": "古玉鱼",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/050",
+      "source_raw_sha256": "9bcf9e24791e8964f7d78cb3b8c932340f3e56c225dca29ece3d11982adc9f4d",
+      "source_image_sha256": "92662a1fe21b932421448ba358d1f6c95aa0509ecfa71fedca6b1a3078bd7be2"
+    },
+    {
+      "uid": "CSV7C_071",
+      "name": "海豚侠",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/071",
+      "source_raw_sha256": "9fd0095668a7471b732ac08a4b6d692997bd52454c3c5be9856af213e87bc299",
+      "source_image_sha256": "aed59fc213f9ca16dac4862e61e330e8ae04edb605bd93cf757080736464939d"
+    },
+    {
+      "uid": "CSV7C_094",
+      "name": "铜镜怪",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/094",
+      "source_raw_sha256": "5890d645106d9cdf6795400c0039d850fc9c921ec1f9521cc31a6d6fb2f3bd78",
+      "source_image_sha256": "3548041bc670b95064fbce7d97a231f13ae4e6e1ad043e9f093b27bc63c7e77c"
+    },
+    {
+      "uid": "CSV7C_095",
+      "name": "青铜钟",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/095",
+      "source_raw_sha256": "ba3d3e59abc74ac7cde951c3a4fa8c0ad032c8c5e5234f17bfc28bd3df326a30",
+      "source_image_sha256": "0f075d82a0275ac7147da5022f5ffcfc1a33127649e5b49e939f90c6ad8034df"
+    },
+    {
+      "uid": "CSV7C_112",
+      "name": "幼基拉斯",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/112",
+      "source_raw_sha256": "4b2beab8255e8607f890cae54431686d5afa39c5e2e7bea364008c8e0ffa8c65",
+      "source_image_sha256": "74afbad4aa4911e17c82f635a7c928394892dc944e45b38cb7a470e9c559c1ec"
+    },
+    {
+      "uid": "CSV7C_113",
+      "name": "沙基拉斯",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/113",
+      "source_raw_sha256": "8414c4f7a9f470c1e235a8b272d8396e8a157f17b7b4197a6c5bbfb40cda1486",
+      "source_image_sha256": "069249daae02eab5ed3db6be7f220bd5cd727a324dd7ffd5df0925ecf76a14b7"
+    },
+    {
+      "uid": "CSV7C_133",
+      "name": "古鼎鹿",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/133",
+      "source_raw_sha256": "430fb9d1b377c381bcc83c576b10e0dd884a5519971ca06a55eabcbf5d17dec5",
+      "source_image_sha256": "6409dce9ff371db80542ba9205b7132c52a7e75f5f4d63ad3746c60bbecf65ba"
+    },
+    {
+      "uid": "CSV7C_157",
+      "name": "伊布",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0,
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/157",
+      "source_raw_sha256": "a031b4c6790f256da3d10290c2c3ef03f9c9971d8981633a34c908086f07afbf",
+      "source_image_sha256": "be7a502dd0488046d7d3b45c7612086ebd8ae855000599dd8bcabef40a74f341"
+    },
+    {
+      "uid": "CSV7C_198",
+      "name": "白露的真心",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/198",
+      "source_raw_sha256": "7d2829c46c5b733c3ef07b956154847c68a757ed8832398784900a94c8077242",
+      "source_image_sha256": "de3fb7b2cce1c9e5e1dd1350162f596797edb74f0decc24b32cc505e7f2ee1fc"
+    },
+    {
+      "uid": "CSV7C_199",
+      "name": "松叶的信心",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/199",
+      "source_raw_sha256": "5b618be8af039c57796baedfd65cc5231188351bf5641058da99ffc7ccde73bd",
+      "source_image_sha256": "22112e3ddb02913ab3a951525ebd815f3c1cab510130490901c1e138bc95a1cd"
+    },
+    {
+      "uid": "CSV8C_026",
+      "name": "来悲粗茶",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/026",
+      "source_raw_sha256": "02c24cae0b53143b01344de5d48a31c1dcccbb55df2840dbec8845b608040625",
+      "source_image_sha256": "3126d02ecb97e3fd9f0c458cc9c33185cb1705636ed869276c7283b84454215b"
+    },
+    {
+      "uid": "CSV8C_039",
+      "name": "炭小侍",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        1
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/039",
+      "source_raw_sha256": "8e0683a3a253b2a693e801a67f9512be0957ac8d7c6fdb88729835bbd1329ccf",
+      "source_image_sha256": "79fd368906b61d7a6688c3e1ce24d09071fbe503bc21c0d63d911b158827b5c1"
+    },
+    {
+      "uid": "CSV8C_043",
+      "name": "厄诡椪 火灶面具ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/043",
+      "source_raw_sha256": "47bf17130b668ab71a7522065c50f85e2ad988eb90f4d9dc55e49020222b66b3",
+      "source_image_sha256": "327956de01fddf64924165f58e3c5126dac51daa9284b649dc53edf79ebcc5f3"
+    },
+    {
+      "uid": "CSV8C_063",
+      "name": "海豚侠",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/063",
+      "source_raw_sha256": "8256a3ef912d6288febec1daa07163c53e021d6c3f1ef872f3e92cf5e1f85860",
+      "source_image_sha256": "25002c7706642f10c66e9ce98aae6447821b2ba441634e98b285d13355706265"
+    },
+    {
+      "uid": "CSV8C_064",
+      "name": "海豚侠ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/064",
+      "source_raw_sha256": "5896243f5510c2f711f40607b11483d6b09eb55656d8679202d3778a68111e20",
+      "source_image_sha256": "170d3d7436285e377e2e437f4cb062707f76b696d40585ecac6182edb6a4195e"
+    },
+    {
+      "uid": "CSV8C_092",
+      "name": "飘飘雏",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/092",
+      "source_raw_sha256": "d8ecab6c1ec33c37265f0f6cd65573504d6e552127275232ba290095cf8a131f",
+      "source_image_sha256": "77f8c884a75f06ef713edd903adf960df5a43bb45171eb294fac94c284d72aaf"
+    },
+    {
+      "uid": "CSV8C_120",
+      "name": "够赞狗",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/120",
+      "source_raw_sha256": "e751027ffe8e52cf6ee889a5598a63b24347fbfd0f9ee2176bf9b72963351d1d",
+      "source_image_sha256": "889c350f194c14b78acc56fb811bb10aa2d253ea2fab968defb5637c8683aac7"
+    },
+    {
+      "uid": "CSV8C_147",
+      "name": "铜象",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/147",
+      "source_raw_sha256": "bd1ed2c940a60db532a83a9e7963240e9dd9b96c8fb40ac17c0a6f5c921657ef",
+      "source_image_sha256": "25fdc21bd0927c3545700a63662f439ca0bf0aa57e567ea8d124134095228cfd"
+    },
+    {
+      "uid": "CSV8C_155",
+      "name": "啃果虫",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/155",
+      "source_raw_sha256": "7f437504562f9aa2e971a93ba1c25face0d6027a7c1a222903d50d272478a70b",
+      "source_image_sha256": "d7aa60209d43ac064fc95446c737f87db6ad32c4d3d802d691ab19a494f99675"
+    },
+    {
+      "uid": "CSV8C_166",
+      "name": "伊布",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/166",
+      "source_raw_sha256": "346a8f40e5d5a713cc25769dc3fa635be0bc20e3aa8d4c5d82fd72c5dbec19d3",
+      "source_image_sha256": "df37bdb3897a0bb7dc390561c6b038dc1f645605a6195d843a478a4239032c0f"
+    },
+    {
+      "uid": "CSV8C_174",
+      "name": "鬼之假面",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/174",
+      "source_raw_sha256": "3df8ea3dbce416ae20addd74f4aac281f94aa3dc08d004b809bc73637ce35f41",
+      "source_image_sha256": "4ee8d52dde1a5802690264906776a99d9f3e244cf4448f93162f3b176db42d28"
+    },
+    {
+      "uid": "CSV8C_178",
+      "name": "危险光线",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/178",
+      "source_raw_sha256": "24de9011cae318dd1b133799f69fcd2a39774dc7bb265ef162f481856f8dc2ea",
+      "source_image_sha256": "01fc234d54dc512b16a6fd9c203de246e353baa8c92d92ae0d2a2ee0d8ef7842"
+    },
+    {
+      "uid": "CSV8C_179",
+      "name": "妨碍书信",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/179",
+      "source_raw_sha256": "9c070428cd917d7b7b87d7471f11640ba1c18f2c7e7e8b12c1c37316ff28d6bf",
+      "source_image_sha256": "8c6c94133f8f235bf7703dd509dde35b17021cc800591ea612d4eb57e58ce1d9"
+    },
+    {
+      "uid": "CSV8C_180",
+      "name": "宝可生机剂A",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/180",
+      "source_raw_sha256": "16578a2acf9b6c384be559444f21fcc197a56b29f263523ff4624eb4a42a60ff",
+      "source_image_sha256": "58c29f2e74c2244f6e98b526a937025765f604984984fd35531a5da83156e078"
+    },
+    {
+      "uid": "CSV8C_202",
+      "name": "公民馆",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/202",
+      "source_raw_sha256": "04bc06ee3c6380187d3127a768cd9d61d4adc127e76401fab5952b7261989805",
+      "source_image_sha256": "a07946393f38e0a2800097f95da100c354dd3b2ebbec242323fff71302b9d062"
+    },
+    {
+      "uid": "CSV8C_204",
+      "name": "中立中心",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/204",
+      "source_raw_sha256": "c2d28761e5134ce6fb654e87a3c34756706003cf0b6617fe5b397981281f9238",
+      "source_image_sha256": "2c91950e6dc3c91bb4f18b2ea02cfb7fe6a993565a0d92f8e850ddcc39c9e143"
+    },
+    {
+      "uid": "CSV9.5C_105",
+      "name": "狃拉",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV9.5C/105",
+      "source_raw_sha256": "a92b15604e2cb2b3466caff1a1450aa4722f3c5ca9b57f9002fb4eaf9b1e1630",
+      "source_image_sha256": "87299d6a50c4ab929283075dc8cb338eec5adbe960cb0f6ca900cb6ea8fe8037"
+    },
+    {
+      "uid": "CSV9.5C_120",
+      "name": "铜镜怪",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV9.5C/120",
+      "source_raw_sha256": "01d1289d7ef70044c901a98bd9da6a3a6e597006d5c0cdd1b120dea4aa9715f6",
+      "source_image_sha256": "ea1d20a52742aaa8a018191d22d6a1bebd4f4f3ace357d086e3a0793350281e2"
+    },
+    {
+      "uid": "CSV9C_019",
+      "name": "斯魔茶",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/019",
+      "source_raw_sha256": "492defa775a09c42d806beeb1e2be598a1317303ccf70c69977244a2a6e16908",
+      "source_image_sha256": "e7620e5d349a8a0c01a8c8c2f189089be7f044aed6324f5dce7693070f047a2b"
+    },
+    {
+      "uid": "CSV9C_091",
+      "name": "咚咚鼠",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/091",
+      "source_raw_sha256": "2aee023700c8e131470d2d2088cde889d841836e3404505422bbe2f2cc6866db",
+      "source_image_sha256": "e8275558bdffe6f5ddf62d94de63f9e59b64315be1690a00435ebe1b9f9d8c1c"
+    },
+    {
+      "uid": "CSV9C_137",
+      "name": "铝钢桥龙",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/137",
+      "source_raw_sha256": "6566510fc773fb0dc61f2fd621c9b7b94c32d380ce71b39d8030fc8d0dc288c8",
+      "source_image_sha256": "9679a7ddfb19c288c5095b85d048c01c13c07f33f31f3900e27eab873203b1fd"
+    },
+    {
+      "uid": "CSV9C_140",
+      "name": "噗隆隆",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/140",
+      "source_raw_sha256": "a105149c9fa7b6ebdcb6a9a3997b8d254b018a859fa2184d4c129fb116f69f21",
+      "source_image_sha256": "d79a160e2b5a5b27bab48a16100511a1f7fee05e11065268e1dcc974d988b80a"
+    },
+    {
+      "uid": "CSV9C_179",
+      "name": "推理套装",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/179",
+      "source_raw_sha256": "d195bc65cce326b50743badd21dacf4fd70976824f59096af72c51f159a718ed",
+      "source_image_sha256": "385eecef936ff3efc68a670873058661959089e1c1388823dfe4b1b223d60760"
+    },
+    {
+      "uid": "CSV9C_197",
+      "name": "杜若",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/197",
+      "source_raw_sha256": "fcebb890b4af17fed64f71ace10c377081b712800a2ec44b148f9106e98eab94",
+      "source_image_sha256": "925765ad409ecdd9625c421235249c7db7db4fb2241675b58779e924e269f9e0"
+    },
+    {
+      "uid": "CSVH3aC_005",
+      "name": "下石鸟ex",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSVH3aC/005",
+      "source_raw_sha256": "d5b9668d45a1ca9bae7cce4d4bf118408c0a03eb8c3f6a1b7d9b6165b17b9112",
+      "source_image_sha256": "896ffb04d452dd0e5108fb3df643f8528b8dfcbb9bb32c0159e1362e095e4cd8"
+    },
+    {
+      "uid": "CSVH5eC_027",
+      "name": "诅咒娃娃",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSVH5eC/027",
+      "source_raw_sha256": "7ffb9c9b1bb1c52f98eed7ddf5f6a01222242e32fd0507d2abbaa1dad853a8b4",
+      "source_image_sha256": "36d73ce4d2c77bfd8d0ba83496fce1de7d6495a16b93d055dd3f3b81967ad817"
+    },
+    {
+      "uid": "CSVL2C_007",
+      "name": "原野水母",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/CSVL2C/007",
+      "source_raw_sha256": "2b370bc6c342555db31a7576199284f63514ef487adf67e3880ed3a321358734",
+      "source_image_sha256": "c6e9fc4b9e11622c155e62dc391b079e81718fb2d60a6e975add5312a6407a62"
+    },
+    {
+      "uid": "CSVNC_015",
+      "name": "金鱼王",
+      "previous_data_missing": true,
+      "previous_registration_missing": false,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/CSVNC/015",
+      "source_raw_sha256": "df10a6e73781a7a1d3a6dfe6da0a833778340f6212628645157bd9c80e02b332",
+      "source_image_sha256": "89dbd2787116d20fb57364f6a4af0717828ffbe82767459a81009580ad8d1789"
+    },
+    {
+      "uid": "SVP_047",
+      "name": "普隆隆姆",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/SVP/047",
+      "source_raw_sha256": "9242047d00c2715aa241d1309ca0ca8433bbf411b65a92692d38ee21a3dfac0d",
+      "source_image_sha256": "20ef48cf2b6b1c4581c10123485470be6b1029eca68e71c0586d4e9c727e35a5"
+    },
+    {
+      "uid": "SVP_100",
+      "name": "火恐龙",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [
+        0
+      ],
+      "source_url": "https://tcg.mik.moe/cards/SVP/100",
+      "source_raw_sha256": "a94ae4461904f9a5a86541b68b4ebf78210a0c5fe08898f6a5de7e931235c608",
+      "source_image_sha256": "4524aa9acb9a65a81a617583ec80c3b3872086550830271e4d713b50365e0bdb"
+    },
+    {
+      "uid": "SVP_341",
+      "name": "宝可梦中心的姐姐",
+      "previous_data_missing": true,
+      "previous_registration_missing": true,
+      "previous_attack_registration_gaps": [],
+      "source_url": "https://tcg.mik.moe/cards/SVP/341",
+      "source_raw_sha256": "690581a513d4235c24730615e691a0ce7272d98dfb47dc5dfb978b502499c791",
+      "source_image_sha256": "364d7990a896628959bf19e3c624882f54d4c9e111b25e99df26b899495431b1"
+    }
+  ],
+  "tournaments": [
+    {
+      "tournament_id": 3580,
+      "name": "2026城市赛第四赛季 - 赛高卡牌成都店",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3580",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_119",
+          "name": "坂木的领导力",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            675709
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            675704
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            675708
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV8C_178",
+          "name": "危险光线",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            675709
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/178"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3581,
+      "name": "2026城市赛第四赛季 - 御之家",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3581",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3582,
+      "name": "2026城市赛第四赛季 - 钛晶宝可梦中心",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3582",
+      "missing_printings": [
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            675838
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3583,
+      "name": "2026城市赛第四赛季 - 津都卡牌PTCG吉利大厦",
+      "date": "2026-09-19",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 94,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3583",
+      "missing_printings": [
+        {
+          "uid": "CSV6C_083",
+          "name": "沙铁皮ex",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            676082
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/083"
+        },
+        {
+          "uid": "CSV7C_050",
+          "name": "古玉鱼",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            676120
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/050"
+        },
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            676069
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            676077
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV8C_202",
+          "name": "公民馆",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            676077
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/202"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            676063
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3586,
+      "name": "2026城市赛第四赛季 - 艾瑞芭蒂潮玩吧广州奥园城市天地店",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3586",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_097",
+          "name": "普隆隆姆",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            676824
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            676827
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            676817
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        },
+        {
+          "uid": "CSV8C_026",
+          "name": "来悲粗茶",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            676817
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/026"
+        },
+        {
+          "uid": "CSV9C_019",
+          "name": "斯魔茶",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            676817
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/019"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            676824
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3587,
+      "name": "2026城市赛第四赛季 - 静电森林",
+      "date": "2026-09-19",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 87,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3587",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            676251
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            5,
+            10
+          ],
+          "deck_ids": [
+            676272,
+            676295
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            676270
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV7C_050",
+          "name": "古玉鱼",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            676300
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/050"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            676290
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            5,
+            14
+          ],
+          "deck_ids": [
+            676270,
+            676321
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            676306
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3588,
+      "name": "2026城市赛第四赛季 - 超牌重庆龙湖时代天街店",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3588",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            676606
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3591,
+      "name": "2026城市赛第四赛季 - JayJ冒险者公会",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3591",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3592,
+      "name": "2026城市赛第四赛季 - KS卡牌俱乐部",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3592",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_127",
+          "name": "海滩场地",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            675894
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/127"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3593,
+      "name": "2026城市赛第四赛季 - 晖宸卡牌",
+      "date": "2026-09-19",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 90,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3593",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            676458
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            676446
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            676463
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            3,
+            10,
+            11
+          ],
+          "deck_ids": [
+            676386,
+            676426,
+            676434
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            3,
+            5,
+            10,
+            11
+          ],
+          "deck_ids": [
+            676386,
+            676398,
+            676426,
+            676434
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3594,
+      "name": "2026城市赛第四赛季 - JumpToys",
+      "date": "2026-09-19",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 93,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3594",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_017",
+          "name": "原野水母",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            677037
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+        },
+        {
+          "uid": "CSV1C_097",
+          "name": "普隆隆姆",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            677105
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+        },
+        {
+          "uid": "CSV1C_119",
+          "name": "坂木的领导力",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            677027
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+        },
+        {
+          "uid": "CSV4C_073",
+          "name": "盐石垒",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            677079
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/073"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            14,
+            6,
+            9
+          ],
+          "deck_ids": [
+            677093,
+            677052,
+            677067
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            677037
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            677091
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            14,
+            15,
+            6,
+            8,
+            9
+          ],
+          "deck_ids": [
+            677093,
+            677101,
+            677052,
+            677063,
+            677067
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_091",
+          "name": "咚咚鼠",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            677079
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/091"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            677105
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        },
+        {
+          "uid": "CSVL2C_007",
+          "name": "原野水母",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            677037
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVL2C/007"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            677087
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3608,
+      "name": "2026城市赛第四赛季 - 元牌意Metacard长沙店",
+      "date": "2026-09-19",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 93,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3608",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            677540
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV2C_061",
+          "name": "随风球",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            677540
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV2C/061"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            677570
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV3C_128",
+          "name": "灾祸荒野",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677548
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/128"
+        },
+        {
+          "uid": "CSV4C_085",
+          "name": "坚盾剑怪",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            677561
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/085"
+        },
+        {
+          "uid": "CSV4C_088",
+          "name": "普隆隆姆ex",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677488
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/088"
+        },
+        {
+          "uid": "CSV4C_122",
+          "name": "辛俐",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            677479
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/122"
+        },
+        {
+          "uid": "CSV5C_029",
+          "name": "小球飞鱼",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677488
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/029"
+        },
+        {
+          "uid": "CSV7C_198",
+          "name": "白露的真心",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677488
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/198"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            677491
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_178",
+          "name": "危险光线",
+          "ranks": [
+            9,
+            10
+          ],
+          "deck_ids": [
+            677539,
+            677490
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/178"
+        },
+        {
+          "uid": "CSV8C_202",
+          "name": "公民馆",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            677506
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/202"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677488
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677545
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        },
+        {
+          "uid": "SVP_047",
+          "name": "普隆隆姆",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677488
+          ],
+          "source_url": "https://tcg.mik.moe/cards/SVP/047"
+        },
+        {
+          "uid": "SVP_341",
+          "name": "宝可梦中心的姐姐",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677488
+          ],
+          "source_url": "https://tcg.mik.moe/cards/SVP/341"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3640,
+      "name": "2026城市赛第四赛季 - M7",
+      "date": "2026-09-19",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 13,
+      "missing_deck_ranks": [
+        6,
+        12,
+        14
+      ],
+      "source_url": "https://tcg.mik.moe/tournaments/3640",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_076",
+          "name": "月亮伊布",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            677223
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/076"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3585,
+      "name": "2026城市赛第四赛季 - 宝可梦官方卡牌道馆上海五角场轻身鳕",
+      "date": "2026-09-23",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 84,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3585",
+      "missing_printings": [
+        {
+          "uid": "30thP_002",
+          "name": "小火龙",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            677604
+          ],
+          "source_url": "https://tcg.mik.moe/cards/30thP/002"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            10,
+            11,
+            13
+          ],
+          "deck_ids": [
+            677644,
+            677647,
+            677657
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            5,
+            16
+          ],
+          "deck_ids": [
+            677621,
+            677667
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            677669
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            5,
+            16
+          ],
+          "deck_ids": [
+            677621,
+            677667
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            677662
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3589,
+      "name": "2026城市赛第四赛季 - 宝可梦官方卡牌道馆北京西红门大岩蛇",
+      "date": "2026-09-23",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 79,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3589",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            677742
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV1C_071",
+          "name": "弃世猴",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            677742
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/071"
+        },
+        {
+          "uid": "CSV1C_119",
+          "name": "坂木的领导力",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            677744
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            677730
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV3C_128",
+          "name": "灾祸荒野",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            677755
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/128"
+        },
+        {
+          "uid": "CSV4C_073",
+          "name": "盐石垒",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            677746
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/073"
+        },
+        {
+          "uid": "CSV6C_067",
+          "name": "大岩蛇",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            677202
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/067"
+        },
+        {
+          "uid": "CSV6C_097",
+          "name": "大钢蛇",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            677202
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/097"
+        },
+        {
+          "uid": "CSV7C_050",
+          "name": "古玉鱼",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            676300
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/050"
+        },
+        {
+          "uid": "CSV8C_178",
+          "name": "危险光线",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            677755
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/178"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            3,
+            7,
+            10
+          ],
+          "deck_ids": [
+            677101,
+            677731,
+            677745
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_091",
+          "name": "咚咚鼠",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            677746
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/091"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3602,
+      "name": "2026城市赛第四赛季 - 口袋卡牌",
+      "date": "2026-09-25",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 88,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3602",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_125",
+          "name": "米莫莎",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680322
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/125"
+        },
+        {
+          "uid": "CSV3C_080",
+          "name": "古鼎鹿ex",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            680315
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/080"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            677570
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV3C_120",
+          "name": "复仇拳箱",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680325
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/120"
+        },
+        {
+          "uid": "CSV4C_001",
+          "name": "飞天螳螂",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            680296
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/001"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            680274
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            676386
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV7C_112",
+          "name": "幼基拉斯",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            680313
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/112"
+        },
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            680315
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680325
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            676386
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV8C_202",
+          "name": "公民馆",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            680303
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/202"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            680302
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3606,
+      "name": "2026城市赛第四赛季 - P9卡牌广州越秀分店",
+      "date": "2026-09-25",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 88,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3606",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_017",
+          "name": "原野水母",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            680024
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+        },
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            5,
+            14
+          ],
+          "deck_ids": [
+            680008,
+            680041
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV1C_097",
+          "name": "普隆隆姆",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680048
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            3,
+            15
+          ],
+          "deck_ids": [
+            679293,
+            680047
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            680020
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            678722
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680048
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            3,
+            11
+          ],
+          "deck_ids": [
+            680000,
+            680030
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3607,
+      "name": "2026城市赛第四赛季 - 武斗道场",
+      "date": "2026-09-25",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3607",
+      "missing_printings": [
+        {
+          "uid": "CSV6C_067",
+          "name": "大岩蛇",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            677818
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/067"
+        },
+        {
+          "uid": "CSV6C_097",
+          "name": "大钢蛇",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            677818
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/097"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3615,
+      "name": "2026城市赛第四赛季 - 一起桌游吧",
+      "date": "2026-09-25",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 94,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3615",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_089",
+          "name": "铜镜怪",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            680423
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/089"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            2,
+            15
+          ],
+          "deck_ids": [
+            680419,
+            680468
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            677093
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV7C_095",
+          "name": "青铜钟",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            680423
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/095"
+        },
+        {
+          "uid": "CSV7C_157",
+          "name": "伊布",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            680456
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/157"
+        },
+        {
+          "uid": "CSV8C_155",
+          "name": "啃果虫",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            680457
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/155"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            13,
+            15,
+            16
+          ],
+          "deck_ids": [
+            677093,
+            680467,
+            680472
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9.5C_120",
+          "name": "铜镜怪",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            680423
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9.5C/120"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            10,
+            11,
+            12
+          ],
+          "deck_ids": [
+            676306,
+            680455,
+            680457
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3624,
+      "name": "2026城市赛第四赛季 - CTCClub宝山店",
+      "date": "2026-09-25",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3624",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            680705
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            680700
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            680706
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            680706
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3596,
+      "name": "2026城市赛第四赛季 - 小窝桌游",
+      "date": "2026-09-26",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 91,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3596",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_017",
+          "name": "原野水母",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            681096
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681071
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            6,
+            7
+          ],
+          "deck_ids": [
+            681057,
+            681061
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            2,
+            14,
+            16
+          ],
+          "deck_ids": [
+            676386,
+            681100
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV8C_174",
+          "name": "鬼之假面",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            681092
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/174"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            2,
+            14,
+            13,
+            16
+          ],
+          "deck_ids": [
+            676386,
+            681086,
+            681100
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3600,
+      "name": "2026城市赛第四赛季 - 宝可梦官方卡牌道馆重庆大坪火箭雀",
+      "date": "2026-09-26",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 90,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3600",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_015",
+          "name": "古简蜗ex",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            681246
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/015"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            3,
+            5,
+            7,
+            12,
+            16
+          ],
+          "deck_ids": [
+            681253,
+            681261,
+            681271,
+            681291,
+            681312
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV3C_128",
+          "name": "灾祸荒野",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681280
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/128"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            681266
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            681259
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        },
+        {
+          "uid": "CSV8C_120",
+          "name": "够赞狗",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681279
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/120"
+        },
+        {
+          "uid": "CSV8C_179",
+          "name": "妨碍书信",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681281
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/179"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            681304
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3603,
+      "name": "2026城市赛第四赛季 - 宝可梦官方卡牌道馆青岛",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3603",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            678117
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3610,
+      "name": "2026城市赛第四赛季 - RXD集换式卡牌对战道馆",
+      "date": "2026-09-26",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 88,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3610",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            3,
+            10
+          ],
+          "deck_ids": [
+            681374,
+            681402
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            14,
+            15
+          ],
+          "deck_ids": [
+            681420,
+            681425
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            681390
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681401
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            7,
+            8,
+            11
+          ],
+          "deck_ids": [
+            681390,
+            681394,
+            681405
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            681398
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        },
+        {
+          "uid": "SVP_100",
+          "name": "火恐龙",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            681425
+          ],
+          "source_url": "https://tcg.mik.moe/cards/SVP/100"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3611,
+      "name": "2026城市赛第四赛季 - 依间宝藏屋",
+      "date": "2026-09-26",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 89,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3611",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_119",
+          "name": "坂木的领导力",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            680941
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+        },
+        {
+          "uid": "CSV3C_029",
+          "name": "炭小侍",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            680930
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/029"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            680984
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            680922
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV6C_066",
+          "name": "铁武者ex",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            680934
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/066"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            1,
+            9,
+            15
+          ],
+          "deck_ids": [
+            680922,
+            680961,
+            680989
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "SVP_341",
+          "name": "宝可梦中心的姐姐",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            680951
+          ],
+          "source_url": "https://tcg.mik.moe/cards/SVP/341"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3612,
+      "name": "2026城市赛第四赛季 - HPTOYS",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3612",
+      "missing_printings": [
+        {
+          "uid": "CSV7C_050",
+          "name": "古玉鱼",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            677990
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/050"
+        },
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            677994
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3613,
+      "name": "2026城市赛第四赛季 - 宝可梦官方卡牌道馆深圳龙华虫电宝",
+      "date": "2026-09-26",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 90,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3613",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            681768
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            681794
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            681004
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_020",
+          "name": "炭小侍",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            679902
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/020"
+        },
+        {
+          "uid": "CSV8C_043",
+          "name": "厄诡椪 火灶面具ex",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            679902
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/043"
+        },
+        {
+          "uid": "CSV8C_155",
+          "name": "啃果虫",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            681805
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/155"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            681004
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_137",
+          "name": "铝钢桥龙",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            681754
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/137"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            10,
+            15
+          ],
+          "deck_ids": [
+            681787,
+            681805
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3616,
+      "name": "2026城市赛第四赛季 - 常楽屋",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3616",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_082",
+          "name": "玛狃拉",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            681181
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/082"
+        },
+        {
+          "uid": "CSV4C_045",
+          "name": "波克比",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            681185
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/045"
+        },
+        {
+          "uid": "CSV4C_046",
+          "name": "波克基古",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            681185
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/046"
+        },
+        {
+          "uid": "CSV7C_071",
+          "name": "海豚侠",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            681181
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/071"
+        },
+        {
+          "uid": "CSV8C_063",
+          "name": "海豚侠",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            681181
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/063"
+        },
+        {
+          "uid": "CSV8C_064",
+          "name": "海豚侠ex",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            681181
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/064"
+        },
+        {
+          "uid": "CSV9.5C_105",
+          "name": "狃拉",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            681181
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9.5C/105"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3620,
+      "name": "2026城市赛第四赛季 - 横空潮玩",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3620",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            7,
+            14
+          ],
+          "deck_ids": [
+            678440,
+            678446
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_076",
+          "name": "月亮伊布",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            678447
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/076"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            678439
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV8C_204",
+          "name": "中立中心",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            678440
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/204"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3621,
+      "name": "2026城市赛第四赛季 - 游好道馆",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3621",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3626,
+      "name": "2026城市赛第四赛季 - 球闪小屋",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3626",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3629,
+      "name": "2026城市赛第四赛季 - 剑客桌游NesT卡牌屋",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3629",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3630,
+      "name": "2026城市赛第四赛季 - 赛高卡牌乌鲁木齐店",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3630",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3633,
+      "name": "2026城市赛第四赛季 - 智卡堂",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3633",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            679400
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV9C_197",
+          "name": "杜若",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            679396
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/197"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3636,
+      "name": "2026城市赛第四赛季 - 宝可梦官方卡牌道馆宁波",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3636",
+      "missing_printings": [
+        {
+          "uid": "CSV8C_202",
+          "name": "公民馆",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            679503
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/202"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3639,
+      "name": "2026城市赛第四赛季 - 星游卡牌西宸天街店",
+      "date": "2026-09-26",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3639",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            679567
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            679563
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            675815
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3595,
+      "name": "2026城市赛第四赛季 - 森林战棋",
+      "date": "2026-09-27",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 82,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3595",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            679814
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            5,
+            11,
+            15
+          ],
+          "deck_ids": [
+            679804,
+            679806,
+            679833,
+            679845
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            10,
+            6
+          ],
+          "deck_ids": [
+            676714,
+            679811
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            8,
+            9
+          ],
+          "deck_ids": [
+            679819,
+            679825
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV6C_066",
+          "name": "铁武者ex",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            679842
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/066"
+        },
+        {
+          "uid": "CSV8C_120",
+          "name": "够赞狗",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            679845
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/120"
+        },
+        {
+          "uid": "CSV8C_166",
+          "name": "伊布",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            679832
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/166"
+        },
+        {
+          "uid": "CSV8C_178",
+          "name": "危险光线",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            679809
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/178"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            8,
+            9
+          ],
+          "deck_ids": [
+            679819,
+            679825
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_179",
+          "name": "推理套装",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            679839
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/179"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            7,
+            16
+          ],
+          "deck_ids": [
+            679817,
+            679848
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3614,
+      "name": "2026城市赛第四赛季 - 果核TCG",
+      "date": "2026-09-27",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 90,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3614",
+      "missing_printings": [
+        {
+          "uid": "30thP_022",
+          "name": "敲音猴",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            678204
+          ],
+          "source_url": "https://tcg.mik.moe/cards/30thP/022"
+        },
+        {
+          "uid": "CSV1C_119",
+          "name": "坂木的领导力",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            678245
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            1,
+            5,
+            14
+          ],
+          "deck_ids": [
+            678171,
+            678193,
+            678235
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            1,
+            2
+          ],
+          "deck_ids": [
+            678170,
+            678176
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            678188
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            678205
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        },
+        {
+          "uid": "CSV6C_015",
+          "name": "超能艳鸵ex",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            678234
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/015"
+        },
+        {
+          "uid": "CSV6C_060",
+          "name": "飘飘雏",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            678234
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/060"
+        },
+        {
+          "uid": "CSV8C_026",
+          "name": "来悲粗茶",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            678205
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/026"
+        },
+        {
+          "uid": "CSV8C_178",
+          "name": "危险光线",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            678245
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/178"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            3,
+            4
+          ],
+          "deck_ids": [
+            678185,
+            678188
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_019",
+          "name": "斯魔茶",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            678205
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/019"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            1,
+            7
+          ],
+          "deck_ids": [
+            678173,
+            678204
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3617,
+      "name": "2026城市赛第四赛季 - 卓卡潮品DrawCard",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3617",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681619
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3619,
+      "name": "2026城市赛第四赛季 - 竞卡天地",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3619",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            678343
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV8C_174",
+          "name": "鬼之假面",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            678355
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/174"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            678342
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3622,
+      "name": "2026城市赛第四赛季 - 猫箱卡牌研究社江泰店",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3622",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            678641
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3632,
+      "name": "2026城市赛第四赛季 - 赤饱潮玩卡牌",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3632",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3634,
+      "name": "2026城市赛第四赛季 - 谜藏卡牌",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3634",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            679523
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3635,
+      "name": "2026城市赛第四赛季 - 广州市越秀区真信玩具店",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3635",
+      "missing_printings": [
+        {
+          "uid": "CSV4C_103",
+          "name": "伊布",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            680844
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/103"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3637,
+      "name": "2026城市赛第四赛季 - 口袋部落",
+      "date": "2026-09-27",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3637",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_017",
+          "name": "原野水母",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            680131
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680133
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            680131
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3598,
+      "name": "2026城市赛第四赛季 - CTCClub徐汇店",
+      "date": "2026-10-01",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 80,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3598",
+      "missing_printings": [
+        {
+          "uid": "151C_084",
+          "name": "嘟嘟",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            682202
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/084"
+        },
+        {
+          "uid": "151C_085",
+          "name": "嘟嘟利",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            682202
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/085"
+        },
+        {
+          "uid": "CSV1C_015",
+          "name": "奥利纽",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            682210
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/015"
+        },
+        {
+          "uid": "CSV1C_119",
+          "name": "坂木的领导力",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            682224
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            2,
+            5,
+            10
+          ],
+          "deck_ids": [
+            682196,
+            679293,
+            682224
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682206
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_021",
+          "name": "红莲铠骑ex",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            682246
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/021"
+        },
+        {
+          "uid": "CSV6C_015",
+          "name": "超能艳鸵ex",
+          "ranks": [
+            2,
+            10
+          ],
+          "deck_ids": [
+            682198,
+            682228
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/015"
+        },
+        {
+          "uid": "CSV6C_060",
+          "name": "飘飘雏",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            682198
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/060"
+        },
+        {
+          "uid": "CSV8C_039",
+          "name": "炭小侍",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            682246
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/039"
+        },
+        {
+          "uid": "CSV8C_092",
+          "name": "飘飘雏",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            682228
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/092"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            4,
+            6
+          ],
+          "deck_ids": [
+            682206,
+            682215
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_197",
+          "name": "杜若",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            682210
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/197"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682205
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3599,
+      "name": "2026城市赛第四赛季 - 浪险桌游卡牌",
+      "date": "2026-10-01",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 86,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3599",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_097",
+          "name": "普隆隆姆",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            682045
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682068
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            676714
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            10,
+            15
+          ],
+          "deck_ids": [
+            682063,
+            682083
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682041
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            2,
+            8,
+            10,
+            15
+          ],
+          "deck_ids": [
+            682035,
+            682056,
+            682063,
+            682083
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV8C_202",
+          "name": "公民馆",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            682052
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/202"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            682045
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3604,
+      "name": "2026城市赛第四赛季 - 沈阳新蜂卡牌",
+      "date": "2026-10-01",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 92,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3604",
+      "missing_printings": [
+        {
+          "uid": "151C_084",
+          "name": "嘟嘟",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            682426
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/084"
+        },
+        {
+          "uid": "151C_085",
+          "name": "嘟嘟利",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            682426
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/085"
+        },
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            682456
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV2C_061",
+          "name": "随风球",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            682456
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV2C/061"
+        },
+        {
+          "uid": "CSV3C_004",
+          "name": "榛果球",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682471
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/004"
+        },
+        {
+          "uid": "CSV3C_005",
+          "name": "佛烈托斯ex",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682471
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/005"
+        },
+        {
+          "uid": "CSV3C_015",
+          "name": "古简蜗ex",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682471
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/015"
+        },
+        {
+          "uid": "CSV3C_096",
+          "name": "麒麟奇",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            682449
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/096"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            680255
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            1,
+            5,
+            8
+          ],
+          "deck_ids": [
+            682429,
+            682444,
+            681794
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            4,
+            12
+          ],
+          "deck_ids": [
+            682439,
+            682479
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_011",
+          "name": "热辣娃",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682471
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/011"
+        },
+        {
+          "uid": "CSV5C_012",
+          "name": "狠辣椒ex",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682471
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/012"
+        },
+        {
+          "uid": "CSV6C_030",
+          "name": "丑丑鱼",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            682449
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/030"
+        },
+        {
+          "uid": "CSV7C_094",
+          "name": "铜镜怪",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            682449
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/094"
+        },
+        {
+          "uid": "CSV7C_095",
+          "name": "青铜钟",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            682449
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/095"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            682443
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682439
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            680252
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3605,
+      "name": "2026城市赛第四赛季 - 竞卡kyou店",
+      "date": "2026-10-01",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 90,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3605",
+      "missing_printings": [
+        {
+          "uid": "CSV2C_122",
+          "name": "萨瓦罗",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682679
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV2C/122"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            682691
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            682649
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_120",
+          "name": "招式学习器 暗中奇袭",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            682667
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/120"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            6,
+            16
+          ],
+          "deck_ids": [
+            682667,
+            676386
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV5C_129",
+          "name": "医疗能量",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682679
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/129"
+        },
+        {
+          "uid": "CSV6C_067",
+          "name": "大岩蛇",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682677
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/067"
+        },
+        {
+          "uid": "CSV6C_097",
+          "name": "大钢蛇",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682677
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/097"
+        },
+        {
+          "uid": "CSV7C_112",
+          "name": "幼基拉斯",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682676
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/112"
+        },
+        {
+          "uid": "CSV7C_113",
+          "name": "沙基拉斯",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682676
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/113"
+        },
+        {
+          "uid": "CSV7C_198",
+          "name": "白露的真心",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682679
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/198"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            6,
+            9,
+            16
+          ],
+          "deck_ids": [
+            682667,
+            682679,
+            676386
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV8C_204",
+          "name": "中立中心",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682676
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/204"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            676063
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        },
+        {
+          "uid": "SVP_341",
+          "name": "宝可梦中心的姐姐",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            682679
+          ],
+          "source_url": "https://tcg.mik.moe/cards/SVP/341"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3609,
+      "name": "2026城市赛第四赛季 - 等离子俱乐部",
+      "date": "2026-10-01",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 89,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3609",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_017",
+          "name": "原野水母",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            675942
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681908
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV5C_008",
+          "name": "原野水母",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            681933
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+        },
+        {
+          "uid": "CSV6C_043",
+          "name": "古剑豹",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            681895
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/043"
+        },
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            677994
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        },
+        {
+          "uid": "CSV8C_174",
+          "name": "鬼之假面",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            681927
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/174"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            2,
+            3,
+            8,
+            12
+          ],
+          "deck_ids": [
+            681881,
+            681885,
+            681902,
+            681918
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            681904
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3623,
+      "name": "2026城市赛第四赛季 - 藏宝卡牌",
+      "date": "2026-10-01",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3623",
+      "missing_printings": [
+        {
+          "uid": "CSV1C_044",
+          "name": "自爆磁怪ex",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            682317
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/044"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            682314
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3631,
+      "name": "2026城市赛第四赛季 - 沧渊道馆",
+      "date": "2026-10-01",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3631",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3597,
+      "name": "2026城市赛第四赛季 - 游好道馆",
+      "date": "2026-10-02",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 91,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3597",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            4,
+            10,
+            14
+          ],
+          "deck_ids": [
+            683549,
+            683560,
+            676606
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_076",
+          "name": "月亮伊布",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            683578
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/076"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            10,
+            15
+          ],
+          "deck_ids": [
+            680922,
+            683577
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            10,
+            15
+          ],
+          "deck_ids": [
+            680922,
+            683577
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            676063
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3601,
+      "name": "2026城市赛第四赛季 - 1001TCG",
+      "date": "2026-10-02",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 92,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3601",
+      "missing_printings": [
+        {
+          "uid": "151C_084",
+          "name": "嘟嘟",
+          "ranks": [
+            1,
+            7
+          ],
+          "deck_ids": [
+            682976,
+            683004
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/084"
+        },
+        {
+          "uid": "151C_085",
+          "name": "嘟嘟利",
+          "ranks": [
+            1,
+            7
+          ],
+          "deck_ids": [
+            682976,
+            683004
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/085"
+        },
+        {
+          "uid": "30thP_022",
+          "name": "敲音猴",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682993
+          ],
+          "source_url": "https://tcg.mik.moe/cards/30thP/022"
+        },
+        {
+          "uid": "CSV1C_017",
+          "name": "原野水母",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            682988
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+        },
+        {
+          "uid": "CSV1C_071",
+          "name": "弃世猴",
+          "ranks": [
+            14
+          ],
+          "deck_ids": [
+            683037
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/071"
+        },
+        {
+          "uid": "CSV1C_097",
+          "name": "普隆隆姆",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            683048
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+        },
+        {
+          "uid": "CSV2C_099",
+          "name": "大王铜象ex",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            683021
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV2C/099"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682989
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV3C_120",
+          "name": "复仇拳箱",
+          "ranks": [
+            9
+          ],
+          "deck_ids": [
+            683012
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/120"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            12,
+            13
+          ],
+          "deck_ids": [
+            683027,
+            683031
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_127",
+          "name": "海滩场地",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            683042
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/127"
+        },
+        {
+          "uid": "CSV5C_020",
+          "name": "炭小侍",
+          "ranks": [
+            1,
+            2
+          ],
+          "deck_ids": [
+            682979,
+            682984
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV5C/020"
+        },
+        {
+          "uid": "CSV8C_147",
+          "name": "铜象",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            683021
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/147"
+        },
+        {
+          "uid": "CSV8C_155",
+          "name": "啃果虫",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            682993
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/155"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            1,
+            8
+          ],
+          "deck_ids": [
+            682977,
+            683010
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            16
+          ],
+          "deck_ids": [
+            683048
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        },
+        {
+          "uid": "CSVH3aC_005",
+          "name": "下石鸟ex",
+          "ranks": [
+            15
+          ],
+          "deck_ids": [
+            683042
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVH3aC/005"
+        },
+        {
+          "uid": "CSVL2C_007",
+          "name": "原野水母",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            682988
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVL2C/007"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            4,
+            9
+          ],
+          "deck_ids": [
+            682993,
+            683016
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3618,
+      "name": "2026城市赛第四赛季 - 林香香文化埌西店",
+      "date": "2026-10-02",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3618",
+      "missing_printings": []
+    },
+    {
+      "tournament_id": 3625,
+      "name": "2026城市赛第四赛季 - 金卡卡",
+      "date": "2026-10-02",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3625",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            684019
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3627,
+      "name": "2026城市赛第四赛季 - ActionCardClub",
+      "date": "2026-10-02",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3627",
+      "missing_printings": [
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            682823
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            1
+          ],
+          "deck_ids": [
+            682819
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3628,
+      "name": "2026城市赛第四赛季 - 梦回伊甸岗顶店",
+      "date": "2026-10-02",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3628",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            683813
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_127",
+          "name": "海滩场地",
+          "ranks": [
+            13
+          ],
+          "deck_ids": [
+            683814
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/127"
+        },
+        {
+          "uid": "CSV8C_039",
+          "name": "炭小侍",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            683811
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/039"
+        },
+        {
+          "uid": "CSV8C_043",
+          "name": "厄诡椪 火灶面具ex",
+          "ranks": [
+            8
+          ],
+          "deck_ids": [
+            683811
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/043"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3644,
+      "name": "2026城市赛第四赛季 - ETM卡藏屋",
+      "date": "2026-10-03",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 78,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3644",
+      "missing_printings": [
+        {
+          "uid": "151C_084",
+          "name": "嘟嘟",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            682202
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/084"
+        },
+        {
+          "uid": "151C_085",
+          "name": "嘟嘟利",
+          "ranks": [
+            3
+          ],
+          "deck_ids": [
+            682202
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/085"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            6,
+            14,
+            16
+          ],
+          "deck_ids": [
+            683366,
+            683388,
+            683393
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV4C_100",
+          "name": "比比鸟",
+          "ranks": [
+            12
+          ],
+          "deck_ids": [
+            683381
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+        },
+        {
+          "uid": "CSV4C_128",
+          "name": "练习室",
+          "ranks": [
+            7
+          ],
+          "deck_ids": [
+            683370
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+        },
+        {
+          "uid": "CSV7C_133",
+          "name": "古鼎鹿",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            683367
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            4,
+            9
+          ],
+          "deck_ids": [
+            683358,
+            683374
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV8C_180",
+          "name": "宝可生机剂A",
+          "ranks": [
+            7,
+            11
+          ],
+          "deck_ids": [
+            683370,
+            683377
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+        },
+        {
+          "uid": "CSVH5eC_027",
+          "name": "诅咒娃娃",
+          "ranks": [
+            4
+          ],
+          "deck_ids": [
+            683360
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVH5eC/027"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3677,
+      "name": "2026城市赛第四赛季 - 宝库卡牌",
+      "date": "2026-10-03",
+      "is_team": true,
+      "ranks": 16,
+      "decks": 89,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3677",
+      "missing_printings": [
+        {
+          "uid": "151C_084",
+          "name": "嘟嘟",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682976
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/084"
+        },
+        {
+          "uid": "151C_085",
+          "name": "嘟嘟利",
+          "ranks": [
+            11
+          ],
+          "deck_ids": [
+            682976
+          ],
+          "source_url": "https://tcg.mik.moe/cards/151C/085"
+        },
+        {
+          "uid": "CSV1C_029",
+          "name": "呆呆兽",
+          "ranks": [
+            6
+          ],
+          "deck_ids": [
+            684234
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+        },
+        {
+          "uid": "CSV1C_097",
+          "name": "普隆隆姆",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            682045
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+        },
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            6,
+            16
+          ],
+          "deck_ids": [
+            684231,
+            684270,
+            684272
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        },
+        {
+          "uid": "CSV6C_015",
+          "name": "超能艳鸵ex",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            684221
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/015"
+        },
+        {
+          "uid": "CSV6C_060",
+          "name": "飘飘雏",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            684221
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV6C/060"
+        },
+        {
+          "uid": "CSV7C_050",
+          "name": "古玉鱼",
+          "ranks": [
+            5
+          ],
+          "deck_ids": [
+            684229
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/050"
+        },
+        {
+          "uid": "CSV7C_199",
+          "name": "松叶的信心",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            684221
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+        },
+        {
+          "uid": "CSV9C_140",
+          "name": "噗隆隆",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            682045
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+        },
+        {
+          "uid": "CSVNC_015",
+          "name": "金鱼王",
+          "ranks": [
+            2
+          ],
+          "deck_ids": [
+            684218
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+        }
+      ]
+    },
+    {
+      "tournament_id": 3679,
+      "name": "2026城市赛第四赛季 - Super速普酷潮",
+      "date": "2026-10-03",
+      "is_team": false,
+      "ranks": 16,
+      "decks": 16,
+      "missing_deck_ranks": [],
+      "source_url": "https://tcg.mik.moe/tournaments/3679",
+      "missing_printings": [
+        {
+          "uid": "CSV3C_098",
+          "name": "土龙弟弟",
+          "ranks": [
+            10
+          ],
+          "deck_ids": [
+            681718
+          ],
+          "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+        }
+      ]
+    }
+  ],
+  "not_completed_or_unpublished_tournaments": [
+    {
+      "id": 3662,
+      "name": "2026城市赛第四赛季 - 宙斯卡牌",
+      "endDate": "2026-10-04T00:00:00Z",
+      "status": "ongoing",
+      "location": "天津",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3676,
+      "name": "2026城市赛第四赛季 - 南天门卡牌",
+      "endDate": "2026-10-04T00:00:00Z",
+      "status": "ongoing",
+      "location": "南京",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3652,
+      "name": "2026城市赛第四赛季 - 北京卡拉河",
+      "endDate": "2026-10-04T00:00:00Z",
+      "status": "ongoing",
+      "location": "北京",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Expanded"
+    },
+    {
+      "id": 3643,
+      "name": "2026城市赛第四赛季 - 万卡通TCG卡牌俱乐部",
+      "endDate": "2026-10-04T00:00:00Z",
+      "status": "ongoing",
+      "location": "苏州",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": true,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3651,
+      "name": "2026城市赛第四赛季 - Jin伊卫动漫模玩",
+      "endDate": "2026-10-04T00:00:00Z",
+      "status": "ongoing",
+      "location": "上海",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": true,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3661,
+      "name": "2026城市赛第四赛季 - 喵喵卡屋",
+      "endDate": "2026-10-04T00:00:00Z",
+      "status": "ongoing",
+      "location": "福州",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": true,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3680,
+      "name": "2026城市赛第四赛季 - 小猪潮玩",
+      "endDate": "2026-10-03T00:00:00Z",
+      "status": "ongoing",
+      "location": "常州",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3681,
+      "name": "2026城市赛第四赛季 - 纸片喵桌游卡牌",
+      "endDate": "2026-10-03T00:00:00Z",
+      "status": "ongoing",
+      "location": "广州",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3682,
+      "name": "2026城市赛第四赛季 - 不要宅TCG卡牌集换俱乐部",
+      "endDate": "2026-10-03T00:00:00Z",
+      "status": "ongoing",
+      "location": "西安",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3674,
+      "name": "2026城市赛第四赛季 - 纸糖喵",
+      "endDate": "2026-10-03T00:00:00Z",
+      "status": "ongoing",
+      "location": "济南",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": true,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3683,
+      "name": "2026城市赛第四赛季 - 肥肥卡牌",
+      "endDate": "2026-10-03T00:00:00Z",
+      "status": "ongoing",
+      "location": "温州",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": true,
+      "regulation": "Standard"
+    },
+    {
+      "id": 3638,
+      "name": "2026城市赛第四赛季 - 满乐时卡",
+      "endDate": "2026-09-26T00:00:00Z",
+      "status": "upcoming",
+      "location": "南昌",
+      "type": "City",
+      "division": "Master",
+      "participantCount": 0,
+      "isQual": false,
+      "isTeam": false,
+      "regulation": "Standard"
+    }
+  ],
+  "unfinished_tournament_rank_requests": [
+    {
+      "id": 3662,
+      "name": "2026城市赛第四赛季 - 宙斯卡牌",
+      "endDate": "2026-10-04T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3662",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3662,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:56.844291+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3676,
+      "name": "2026城市赛第四赛季 - 南天门卡牌",
+      "endDate": "2026-10-04T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3676",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3676,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:56.762112+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3652,
+      "name": "2026城市赛第四赛季 - 北京卡拉河",
+      "endDate": "2026-10-04T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3652",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3652,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:56.705405+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3643,
+      "name": "2026城市赛第四赛季 - 万卡通TCG卡牌俱乐部",
+      "endDate": "2026-10-04T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": true,
+      "source_url": "https://tcg.mik.moe/tournaments/3643",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3643,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:56.759759+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3651,
+      "name": "2026城市赛第四赛季 - Jin伊卫动漫模玩",
+      "endDate": "2026-10-04T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": true,
+      "source_url": "https://tcg.mik.moe/tournaments/3651",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3651,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:57.664823+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3661,
+      "name": "2026城市赛第四赛季 - 喵喵卡屋",
+      "endDate": "2026-10-04T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": true,
+      "source_url": "https://tcg.mik.moe/tournaments/3661",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3661,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:57.894708+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3680,
+      "name": "2026城市赛第四赛季 - 小猪潮玩",
+      "endDate": "2026-10-03T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3680",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3680,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:57.704122+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3681,
+      "name": "2026城市赛第四赛季 - 纸片喵桌游卡牌",
+      "endDate": "2026-10-03T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3681",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3681,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:57.748933+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3682,
+      "name": "2026城市赛第四赛季 - 不要宅TCG卡牌集换俱乐部",
+      "endDate": "2026-10-03T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3682",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3682,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:58.586384+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3674,
+      "name": "2026城市赛第四赛季 - 纸糖喵",
+      "endDate": "2026-10-03T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": true,
+      "source_url": "https://tcg.mik.moe/tournaments/3674",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3674,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:58.610781+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3683,
+      "name": "2026城市赛第四赛季 - 肥肥卡牌",
+      "endDate": "2026-10-03T00:00:00Z",
+      "listing_status": "ongoing",
+      "is_team": true,
+      "source_url": "https://tcg.mik.moe/tournaments/3683",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3683,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:58.713189+00:00",
+      "final_standings_confirmed": false
+    },
+    {
+      "id": 3638,
+      "name": "2026城市赛第四赛季 - 满乐时卡",
+      "endDate": "2026-09-26T00:00:00Z",
+      "listing_status": "upcoming",
+      "is_team": false,
+      "source_url": "https://tcg.mik.moe/tournaments/3638",
+      "request_url": "https://tcg.mik.moe/api/v3/tournament/rank-individual",
+      "request_body": {
+        "tournamentId": 3638,
+        "page": 1,
+        "pageSize": 16
+      },
+      "http_status": 200,
+      "response_code": 400,
+      "response_msg": "赛事未结束",
+      "response_rank_rows": 0,
+      "response_item_num": null,
+      "top16_deck_ids": [],
+      "response_sha256": "f690b8dd630137151a11105f1326153475e617452365eafcf28ff9c1715c1c62",
+      "checked_at_utc": "2026-10-03T17:16:58.851258+00:00",
+      "final_standings_confirmed": false
+    }
+  ]
+}

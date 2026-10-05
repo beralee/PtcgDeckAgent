@@ -328,7 +328,7 @@ func test_ai_picker_distinguishes_loaded_from_currently_executable() -> String:
 		assert_eq(scene.call("_author_strategy_display_status_label", executable), "已加载 · 可开战"),
 		assert_str_contains(str(scene.call("_author_strategy_display_status_detail", executable)), "重新验证"),
 		assert_eq(scene.call("_author_strategy_display_status_label", selectable_only), "已加载 · 暂不可开战"),
-		assert_str_contains(str(scene.call("_author_strategy_display_status_detail", selectable_only)), "当前执行门未放行"),
+		assert_str_contains(str(scene.call("_author_strategy_display_status_detail", selectable_only)), "尚未登记此版本的开战许可"),
 	])
 	scene.free()
 	return result

@@ -1,0 +1,63 @@
+{
+  "name": "圆蝌蚪",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【水】 螺旋之尾 10\n抛掷1次硬币如果为正面，则选择对手战斗宝可梦身上附着的1个能量，放于弃牌区。\n\n",
+  "yorenCode": "P535",
+  "pokemonAttr": {
+    "energyType": "W",
+    "stage": "Basic",
+    "hp": 70,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "L",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 1,
+    "attack": [
+      {
+        "name": "螺旋之尾",
+        "text": "抛掷1次硬币如果为正面，则选择对手战斗宝可梦身上附着的1个能量，放于弃牌区。",
+        "cost": "W",
+        "damage": "10",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": ""
+  },
+  "setCode": "CSV5C",
+  "cardIndex": "031",
+  "setCardsNum": "",
+  "artist": "OKUBO",
+  "rarity": "C",
+  "releaseDate": "2025-09-11T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "435265b51152d54ad3de46c253757ffb",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV5C",
+      "cardIndex": "031",
+      "cardName": "圆蝌蚪",
+      "rarity": "C",
+      "effectId": "435265b51152d54ad3de46c253757ffb",
+      "cardType": "Pokemon",
+      "yorenCode": "P535",
+      "is": [
+        "Basic"
+      ],
+      "setCodeEn": "OBF",
+      "cardIndexEn": "50",
+      "nameEn": "Tympole"
+    }
+  ],
+  "setCodeEn": "OBF",
+  "cardIndexEn": "50",
+  "nameEn": "Tympole"
+}

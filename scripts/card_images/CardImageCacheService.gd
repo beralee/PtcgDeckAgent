@@ -79,6 +79,7 @@ static func cache_budget_bytes_for_runtime(os_name: String = "", feature_flags: 
 
 
 static func is_trusted_image_url(url: String) -> bool:
+	if preload("res://scripts/card_content/ContentPaths.gd").trusted_url(url): return true
 	var parts := _parse_https_url(url)
 	if parts.is_empty():
 		return false
@@ -126,6 +127,11 @@ func set_card_database(card_database: Object) -> void:
 
 func get_status(set_code: String, card_index: String) -> String:
 	var uid := _uid(set_code, card_index)
+	var content: Dictionary = preload("res://scripts/card_content/ContentPaths.gd").card(uid)
+	if content.get("image") is Dictionary:
+		if get_local_path_if_ready(set_code, card_index) != "": return STATUS_READY
+		var cached := str(_status_by_uid.get(uid, STATUS_MISSING))
+		return STATUS_MISSING if cached == STATUS_READY else cached
 	if _status_by_uid.has(uid):
 		return str(_status_by_uid[uid])
 	var entry := _manifest_entry(uid)
@@ -141,6 +147,16 @@ func get_status(set_code: String, card_index: String) -> String:
 
 func get_local_path_if_ready(set_code: String, card_index: String) -> String:
 	var uid := _uid(set_code, card_index)
+	var content: Dictionary = preload("res://scripts/card_content/ContentPaths.gd").card(uid)
+	if content.get("image") is Dictionary:
+		var path: String = preload("res://scripts/card_content/ContentPaths.gd").image_path(uid)
+		if preload("res://scripts/card_content/ContentManifest.gd").object_valid(path, content.image) and CardData.is_valid_card_image_file(path): return path
+		# Reuse a bundled image only when its exact bytes match the new release.
+		var bundled := CardData.build_bundled_image_path(set_code, card_index)
+		if preload("res://scripts/card_content/ContentManifest.gd").object_valid(bundled, content.image):
+			DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
+			if DirAccess.copy_absolute(bundled, ProjectSettings.globalize_path(path)) == OK: return path
+		return ""
 	var entry := _manifest_entry(uid)
 	var preferred := str(entry.get("local_path", CardData.build_local_image_path(set_code, card_index)))
 	var resolved := CardData.resolve_existing_image_path(CardData.get_image_candidate_paths(set_code, card_index, preferred))
@@ -394,6 +410,8 @@ func _start_request(item: Dictionary) -> void:
 		return
 	var request := HTTPRequest.new()
 	request.timeout = DEFAULT_TIMEOUT_SECONDS
+	request.body_size_limit = MAX_IMAGE_BYTES
+	if preload("res://scripts/card_content/ContentPaths.gd").trusted_url(card.image_url): request.max_redirects = 0
 	add_child(request)
 	_status_by_uid[uid] = STATUS_DOWNLOADING
 	_active[request.get_instance_id()] = item
@@ -451,6 +469,9 @@ func _save_image_bytes(card: CardData, bytes: PackedByteArray) -> int:
 		return ERR_INVALID_PARAMETER
 	if bytes.is_empty() or bytes.size() > MAX_IMAGE_BYTES:
 		return ERR_INVALID_DATA
+	var content: Dictionary = preload("res://scripts/card_content/ContentPaths.gd").card(card.get_uid())
+	if content.get("image") is Dictionary:
+		if bytes.size() != int(content.image.size) or _sha256_hex(bytes) != str(content.image.sha256): return ERR_FILE_CORRUPT
 	if not CardData.has_supported_image_signature(bytes):
 		return ERR_INVALID_DATA
 	var decoded := _decode_image(bytes)

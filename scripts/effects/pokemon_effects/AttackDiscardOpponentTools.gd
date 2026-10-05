@@ -56,10 +56,10 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index
 				break
 	for tool_card: CardInstance in selected:
 		for slot: PokemonSlot in opponent.get_all_pokemon():
-			if slot.attached_tool == tool_card:
+			if tool_card in slot.get_attached_tools():
 				if slot in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_effect(slot, attacker, state):
 					break
-				slot.attached_tool = null
+				slot.remove_attached_tool(tool_card)
 				opponent.discard_card(tool_card)
 				break
 
@@ -67,13 +67,12 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index
 func _get_attached_tools(player: PlayerState) -> Array:
 	var result: Array = []
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if slot.attached_tool != null:
-			result.append(slot.attached_tool)
+		result.append_array(slot.get_attached_tools())
 	return result
 
 
 func _tool_holder_name(player: PlayerState, tool_card: CardInstance) -> String:
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if slot.attached_tool == tool_card:
+		if tool_card in slot.get_attached_tools():
 			return slot.get_pokemon_name()
 	return ""

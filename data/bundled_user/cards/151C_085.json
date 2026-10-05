@@ -1,0 +1,58 @@
+{
+	"name": "嘟嘟利",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "特性: 暴走抽取\n在自己的回合可以使用1次。给这只宝可梦身上放置1个伤害指示物。然后，从自己牌库上方抽取1张卡牌。\n\n【无】 愤怒之喙 10+\n追加造成这只宝可梦身上放置的伤害指示物数量×30伤害。\n\n",
+	"yoren_code": "P085",
+	"set_code": "151C",
+	"card_index": "085",
+	"set_code_en": "MEW",
+	"card_index_en": "85",
+	"name_en": "Dodrio",
+	"name_zh": "",
+	"artist": "Anesaki Dynamic",
+	"rarity": "R",
+	"release_date": "2025-01-16T16:00:00Z",
+	"regulation_mark": "G",
+	"effect_id": "3c059ab293ff488fdfe4b1b8282053b2",
+	"image_url": "https://tcg.mik.moe/static/img/151C/085.png",
+	"image_local_path": "user://cards/images/151C/085.png",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/cards/151C/085",
+	"source_set_code": "151C",
+	"source_card_index": "085",
+	"source_language": "zh-CN",
+	"source_prints": [],
+	"source_imported_at": 0,
+	"source_parser_version": 1,
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "C",
+	"stage": "Stage 1",
+	"hp": 100,
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"evolves_from": "嘟嘟",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "愤怒之喙",
+			"text": "追加造成这只宝可梦身上放置的伤害指示物数量×30伤害。",
+			"cost": "C",
+			"damage": "10+",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "暴走抽取",
+			"text": "在自己的回合可以使用1次。给这只宝可梦身上放置1个伤害指示物。然后，从自己牌库上方抽取1张卡牌。"
+		}
+	],
+	"energy_provides": ""
+}

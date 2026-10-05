@@ -237,6 +237,8 @@ func get_evolve_unusable_reason(
 		return "没有选择要用于进化的宝可梦。"
 	if not evolution.card_data.is_pokemon():
 		return "选择的卡不是宝可梦，不能用于进化。"
+	if effect_processor != null and effect_processor.prevents_card_from_hand(player_index, evolution, state):
+		return effect_processor.get_card_from_hand_block_reason(player_index, evolution, state)
 	if not EvolutionEntryRestriction.allows(evolution.card_data, "normal_hand_evolution"):
 		return "%s 只能通过其指定特性的效果放于场上。" % evolution.card_data.name
 	var top_card: CardInstance = slot.get_top_card()
@@ -659,6 +661,8 @@ func get_play_basic_to_bench_unusable_reason(
 		return "只能在主要阶段把基础宝可梦放到备战区。"
 	if card == null or card.card_data == null:
 		return "没有选择要放置的宝可梦。"
+	if effect_processor != null and effect_processor.prevents_card_from_hand(player_index, card, state):
+		return effect_processor.get_card_from_hand_block_reason(player_index, card, state)
 	var hand_play_effect: BaseEffect = null
 	if effect_processor != null:
 		hand_play_effect = effect_processor.get_effect(card.card_data.effect_id)
@@ -711,8 +715,9 @@ func get_attach_tool_unusable_reason(
 	if effect_processor != null and tool_card != null and effect_processor.has_method("can_attach_tool_to_slot"):
 		if not bool(effect_processor.call("can_attach_tool_to_slot", slot, tool_card, state)):
 			return "这张宝可梦道具不能附着到这个目标。"
-	if slot.attached_tool != null:
-		return "这只宝可梦已经附着了宝可梦道具。通常每只宝可梦只能附着 1 张道具。"
+	var tool_limit := effect_processor.get_tool_limit(slot, state) if effect_processor != null else 1
+	if slot.attached_tools.size() >= tool_limit:
+		return "这只宝可梦已达到可附着的道具上限（%d张）。" % tool_limit
 	return ""
 
 

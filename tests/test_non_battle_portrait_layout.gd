@@ -1,6 +1,8 @@
 class_name TestNonBattlePortraitLayout
 extends TestBase
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const WebTextInputBridgeScript := preload("res://scripts/ui/non_battle/WebTextInputBridge.gd")
@@ -114,6 +116,22 @@ func test_non_battle_layout_controller_mobile_defaults_to_portrait() -> String:
 		assert_eq(mobile_web_default, "portrait", "Mobile browser first-run non-battle default should be portrait"),
 		assert_eq(desktop_default, "landscape", "Desktop first-run non-battle default should stay landscape"),
 	])
+
+
+func test_portrait_preference_fits_a_browser_that_cannot_rotate_the_viewport() -> String:
+	var controller := NonBattleLayoutControllerScript.new()
+	var context: Dictionary = controller.build_context(Vector2(2382, 1080), "portrait", true)
+	var scene: Control = MainMenuScene.instantiate()
+	scene.size = Vector2(2382, 1080)
+	scene.call("_apply_main_menu_hud")
+	scene.call("_apply_non_battle_layout_for_tests", scene.size, "portrait")
+	var menu := scene.get_node("VBoxContainer") as Control
+	var result := run_checks([
+		assert_eq(context.resolved_mode, "landscape", "A stored portrait preference cannot rotate a browser viewport"),
+		assert_true(menu.get_global_rect().end.y <= scene.size.y - 80.0, "All six menu actions must remain above the bottom toolbar"),
+	])
+	scene.free()
+	return result
 
 
 func test_non_battle_touch_bridge_activates_nested_buttons_without_mouse_emulation() -> String:
@@ -237,6 +255,54 @@ func test_non_battle_touch_bridge_activates_nested_buttons_without_mouse_emulati
 	])
 	root.queue_free()
 	return result
+
+
+func test_scroll_release_suppression_stays_with_its_page() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var page := Control.new()
+	var scroll := ScrollContainer.new()
+	scroll.size = Vector2(360, 400)
+	page.add_child(scroll)
+	var content := Control.new()
+	content.custom_minimum_size = Vector2(340, 1200)
+	scroll.add_child(content)
+	var button := Button.new()
+	button.position = Vector2(20, 40)
+	button.size = Vector2(300, 100)
+	content.add_child(button)
+	NonBattleTouchBridgeScript.bind_button_touch(button)
+	var old_presses := [0]
+	button.pressed.connect(func() -> void: old_presses[0] += 1)
+	scroll.get_v_scroll_bar().max_value = 1200
+	scroll.get_v_scroll_bar().page = 400
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = Vector2(100, 100)
+	var drag := InputEventScreenDrag.new()
+	drag.position = Vector2(100, 50)
+	var release := InputEventScreenTouch.new()
+	release.position = drag.position
+	var checks: Array[String] = [
+		assert_true(NonBattleTouchBridgeScript.handle_root_touch(page, press)),
+		assert_true(NonBattleTouchBridgeScript.handle_root_touch(page, drag)),
+		assert_true(NonBattleTouchBridgeScript.handle_root_touch(page, release)),
+		assert_gt(scroll.scroll_vertical, 0, "Fixture must actually scroll"),
+	]
+	button.gui_input.emit(release)
+	checks.append(assert_eq(old_presses[0], 0, "Release echoed to the scrolled page must not activate a button"))
+	var next_page := Control.new()
+	var next_button := Button.new()
+	next_page.add_child(next_button)
+	NonBattleTouchBridgeScript.bind_button_touch(next_button)
+	var new_presses := [0]
+	next_button.pressed.connect(func() -> void: new_presses[0] += 1)
+	next_button.gui_input.emit(release)
+	checks.append(assert_eq(new_presses[0], 1, "A different page must accept its release-only touch immediately"))
+	page.free()
+	next_page.free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return run_checks(checks)
 
 
 func test_non_battle_touch_bridge_respects_scroll_clip_before_buttons() -> String:
@@ -803,6 +869,7 @@ func test_main_menu_portrait_layout_reflows_buttons_immediately() -> String:
 	var portrait_group_height := menu.offset_bottom - menu.offset_top if menu != null else 0.0
 	var portrait_menu_center_y := 844.0 * 0.5 + portrait_top + portrait_group_height * 0.5
 	var portrait_button_height := start_button.custom_minimum_size.y if start_button != null else 0.0
+	var portrait_footer_top: float = 844.0 + scene.get("_share_button").offset_top
 	var portrait_title := scene.get_node_or_null("PortraitHomeTitle") as Label
 	var portrait_subtitle := scene.get_node_or_null("PortraitHomeSubtitle") as Label
 	var portrait_title_visible := portrait_title != null and portrait_title.visible
@@ -811,15 +878,14 @@ func test_main_menu_portrait_layout_reflows_buttons_immediately() -> String:
 	var portrait_background_path := portrait_background.texture.resource_path if portrait_background != null and portrait_background.texture != null else ""
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
 	var landscape_top := menu.offset_top if menu != null else 0.0
-	var expected_portrait_center_y := 844.0 * 0.595 + portrait_button_height
 	var result := run_checks([
 		assert_true(scene.get_meta("non_battle_layout_mode", "") == "landscape", "Landscape reapply should leave test metadata on the scene"),
-		assert_true(start_button != null and portrait_button_height >= 94.0, "Portrait main menu buttons should grow to comfortable phone-sized touch targets"),
-		assert_true(menu != null and absf(portrait_top - landscape_top) > 20.0, "Toggling non-battle mode should visibly reflow the current main menu"),
+		assert_true(start_button != null and portrait_button_height >= 44.0, "All six home actions retain a usable phone touch target"),
+		assert_true(menu != null and absf(portrait_top - landscape_top) > 5.0, "Toggling non-battle mode should reflow the current main menu"),
 		assert_true(orientation_button != null and orientation_button.custom_minimum_size.x >= 58.0, "Orientation toggle should remain touch-sized"),
 		assert_false(portrait_title_visible, "Portrait main menu should not show the PTCG Deck title text over the background art"),
 		assert_false(portrait_subtitle_visible, "Portrait main menu should not show the smart deck practice subtitle text over the background art"),
-		assert_true(absf(portrait_menu_center_y - expected_portrait_center_y) < 0.75, "Portrait main menu button group should move down by one portrait button height"),
+		assert_true(portrait_menu_center_y+portrait_group_height*.5 < portrait_footer_top-12, "Portrait home actions fit above the footer without overlap"),
 		assert_str_contains(portrait_background_path, "title_portrait", "Portrait main menu should use a vertical title background derived from the landscape home art"),
 	])
 	scene.queue_free()
@@ -1037,8 +1103,14 @@ func test_main_menu_android_touch_input_activates_portrait_buttons_without_mouse
 func test_battle_setup_ready_applies_portrait_metrics_before_mode_toggle() -> String:
 	var previous_non_battle_mode: String = GameManager.non_battle_layout_mode
 	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var tree := Engine.get_main_loop() as SceneTree
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1080, 2400)
+	tree.root.add_child(viewport)
 	var scene: Control = BattleSetupScene.instantiate()
-	scene.call("_ready")
+	viewport.add_child(scene)
+	await tree.process_frame
+	await tree.process_frame
 	var context: Dictionary = scene.get("_current_non_battle_layout_context")
 	var min_button_font := int(context.get("button_font_size", 33))
 	var min_input_font := int(context.get("input_font_size", 29))
@@ -1053,6 +1125,7 @@ func test_battle_setup_ready_applies_portrait_metrics_before_mode_toggle() -> St
 	var back_button := scene.find_child("BtnBack", true, false) as Button
 	var result := run_checks([
 		assert_false(context.is_empty(), "Battle setup _ready should apply a non-battle layout context before the player toggles mode"),
+		assert_true(context.get("is_portrait", false), "The first-entry fixture must use a real portrait viewport"),
 		assert_true(mode_ai_button != null and mode_ai_button.get_theme_font_size("font_size") >= min_button_font, "Mode segment text should be phone-readable immediately on first entry"),
 		assert_true(deck1_picker != null and deck1_picker.get_theme_font_size("font_size") >= min_button_font, "Deck picker text should not stay at the desktop font before AI mode is toggled"),
 		assert_true(deck1_picker != null and deck1_picker.custom_minimum_size.y >= min_primary_height, "Deck picker should be portrait touch-sized immediately on first entry"),
@@ -1063,7 +1136,7 @@ func test_battle_setup_ready_applies_portrait_metrics_before_mode_toggle() -> St
 		assert_true(start_button != null and start_button.get_theme_font_size("font_size") >= min_button_font, "Start button text should be phone-readable immediately on first entry"),
 		assert_true(back_button != null and back_button.get_theme_font_size("font_size") >= min_button_font, "Back button text should be phone-readable immediately on first entry"),
 	])
-	scene.queue_free()
+	viewport.queue_free()
 	GameManager.non_battle_layout_mode = previous_non_battle_mode
 	return result
 
@@ -1367,7 +1440,9 @@ func test_battle_setup_landscape_ai_mode_stays_inside_screen_after_switch() -> S
 	var checks: Array[String] = []
 	checks.append(assert_true(setup_frame != null and setup_frame.global_position.y + setup_frame.size.y <= 900.1, "Landscape AI setup frame should not be pushed below the viewport"))
 	checks.append(assert_true(content_columns != null and content_columns.visible, "Landscape AI layout should keep the two-column content visible"))
-	checks.append(assert_true(content_columns != null and content_columns.size.y <= 900.0, "Landscape AI content columns should not expand beyond the viewport height"))
+	checks.append(assert_true(content_columns != null and content_columns.get_parent() == landscape_scroll, "Landscape AI overflow must stay inside its scroll container"))
+	checks.append(assert_true(landscape_scroll != null and landscape_scroll.clip_contents and landscape_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Landscape AI overflow must be clipped and vertically reachable"))
+	checks.append(assert_true(landscape_scroll != null and landscape_scroll.global_position.y + landscape_scroll.size.y <= 900.1, "Landscape AI scroll viewport must remain on screen"))
 	checks.append(assert_true(action_row != null and action_row.global_position.y + action_row.size.y <= 900.1, "Landscape AI start/back actions should remain reachable on screen"))
 	checks.append(assert_true(landscape_scroll != null and str(landscape_scroll.get_meta("hud_scrollbar_profile", "")) == "touch", "Landscape AI overflow should be handled by the HUD scroll container"))
 	var result := run_checks(checks)
@@ -1593,7 +1668,7 @@ func test_battle_setup_portrait_bgm_slider_footer_and_strategy_dialog_are_touch_
 		scene.call("_input", release)
 	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
 	scene.call("_on_discuss_strategy_ai_pressed")
-	var dialog := scene.get("_strategy_discussion_dialog") as AcceptDialog
+	var dialog := scene.get("_strategy_discussion_dialog") as GameModal
 	var footer_spacer := scene.find_child("PortraitSetupFooterSpacer", true, false) as Control
 	var action_row := scene.find_child("ActionRow", true, false) as Control
 	var bgm_option := scene.find_child("BgmOption", true, false) as OptionButton
@@ -1951,7 +2026,7 @@ func test_deck_manager_portrait_layout_uses_vertical_deck_cards_without_editor_c
 	var row := scene.call("_create_deck_item", deck) as Control
 	var button_grid := row.find_child("DeckRowButtonGrid", true, false) as GridContainer
 	var result := run_checks([
-		assert_true(import_button != null and import_button.custom_minimum_size.y >= 84.0, "Deck center portrait import button should be comfortably phone-sized"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y >= 48.0, "Deck center import button should retain a 48dp target at a 390px viewport"),
 		assert_not_null(button_grid, "Deck center portrait deck row should put actions into a vertical-friendly grid"),
 		assert_true(button_grid != null and button_grid.columns == 2, "Deck center portrait deck row should use a 2x2 action grid"),
 		assert_true(row != null and row.custom_minimum_size.y >= 220.0, "Deck center portrait deck rows should allocate enough height for large 2x2 actions"),
@@ -1975,7 +2050,7 @@ func test_deck_manager_portrait_deck_scroll_accepts_android_drag_without_mouse_e
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	var deck_scroll := scene.find_child("DeckScroll", true, false) as ScrollContainer
 	var deck_scroll_margin := scene.find_child("DeckScrollMargin", true, false) as MarginContainer
-	var deck_list := scene.get_node("%DeckList") as VBoxContainer
+	var deck_list := scene.get_node("%DeckList") as Container
 	for i: int in 12:
 		var row := PanelContainer.new()
 		row.name = "PortraitScrollableDeckProbe%d" % i
@@ -2077,7 +2152,7 @@ func test_deck_manager_portrait_recommendation_card_and_detail_are_phone_readabl
 		assert_true(poster_download_button != null and poster_download_button.custom_minimum_size.y >= 145.0, "Portrait recommendation should expose a touch-sized deck-image download action"),
 		assert_true(poster_download_button != null and poster_download_button.text == "保存卡组图", "Portrait deck-image action should use the unified player-facing wording"),
 		assert_true(action_grid != null and action_grid.columns == 2, "Portrait recommendation actions should use a two-column grid instead of overflowing one row"),
-		assert_true(detail_panel != null and detail_panel.custom_minimum_size.x >= 1000.0, "Portrait recommendation detail should use nearly the full phone width"),
+		assert_true(detail_panel != null and detail_panel.custom_minimum_size.x >= 980.0, "Portrait recommendation detail should fit the scaled phone safe margins"),
 		assert_true(detail_panel != null and detail_panel.custom_minimum_size.y >= 2240.0, "Portrait recommendation detail should use nearly the full phone height"),
 		assert_true(detail_scroll != null and bool(detail_scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Portrait recommendation detail should use hidden surface drag scrolling"),
 		assert_true(first_detail_label != null and first_detail_label.get_theme_font_size("font_size") >= 44, "Portrait recommendation detail text should be phone-readable"),

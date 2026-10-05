@@ -1,0 +1,258 @@
+{
+	"cards": [
+		{
+			"card_index": "129",
+			"card_type": "Special Energy",
+			"count": 4,
+			"effect_id": "1323733f19cc04e54090b39bc1a393b8",
+			"name": "喷射能量",
+			"name_en": "Jet Energy",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "191",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "1b5fc2ed2bce98ef93457881c05354e2",
+			"name": "暗码迷的解读",
+			"name_en": "Ciphermaniac's Codebreaking",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "160",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1ceeba6dac51ccc19833c5a513fe3fc6",
+			"name": "米立龙",
+			"name_en": "Tatsugiri",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "053",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "2317be04afe1bd94899a29fe09b84d96",
+			"name": "天然雀",
+			"name_en": "Natu",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "031",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "26d4511ab7a84d662387e992b44f130a",
+			"name": "呆呆兽",
+			"name_en": "Slowpoke",
+			"set_code": "CSV9.5C"
+		},
+		{
+			"card_index": "099",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "293b8c882a550600a395e3c82b58f833",
+			"name": "弃世猴",
+			"name_en": "Annihilape",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "147",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "35449fa64a627725e9f3129b6596b2a7",
+			"name": "酋雷姆",
+			"name_en": "Kyurem",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "PSY",
+			"card_type": "Basic Energy",
+			"count": 6,
+			"effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+			"name": "基本超能量",
+			"name_en": "Psychic Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "072",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "59d3af627f14b4a65ab4d589f6cb52db",
+			"name": "呆呆王",
+			"name_en": "Slowking",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "077",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "794c8875529dca289781ae3fd80462de",
+			"name": "捷拉奥拉",
+			"name_en": "Zeraora",
+			"set_code": "CSV10C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "898ff379e73790978b8bdf6dfafc511f",
+			"name": "修建老匠",
+			"name_en": "Conkeldurr",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
+			"name": "博士的研究",
+			"name_en": "Professor's Research",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "102",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "b0754293ea1611bb9f931f02060ceb3b",
+			"name": "宝可平板",
+			"name_en": "Poké Pad",
+			"set_code": "30thC"
+		},
+		{
+			"card_index": "193",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "b79ddb9a6aab6d346f6a1f71b7fcd3de",
+			"name": "水莲的照顾",
+			"name_en": "Lana's Aid",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "054",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "bcd9644ea935ce567829f4a76756059b",
+			"name": "天然鸟",
+			"name_en": "Xatu",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "109",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+			"name": "厉害钓竿",
+			"name_en": "Super Rod",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "036",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "cae24aba46134427b6c27356344dab57",
+			"name": "皮可西",
+			"name_en": "Clefable",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "128",
+			"card_type": "Special Energy",
+			"count": 1,
+			"effect_id": "cbadb3473273c14cf667d495d44d111b",
+			"name": "逆转能量",
+			"name_en": "Reversal Energy",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "040",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "d57b61102355e6a0407d0aeb4db9477d",
+			"name": "莉莉艾的决心",
+			"name_en": "Lillie's Determination",
+			"set_code": "30thDC"
+		},
+		{
+			"card_index": "149",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "d5ab8efe3bcad6f39e9a434ae6d8de7a",
+			"name": "雷吉奇卡斯",
+			"name_en": "Regigigas",
+			"set_code": "CSV9.5C"
+		},
+		{
+			"card_index": "205",
+			"card_type": "Stadium",
+			"count": 4,
+			"effect_id": "e75fad9484071647f96e9f41beeb4a99",
+			"name": "夜间学院",
+			"name_en": "Academy at Night",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "176",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e92a86246f44351d023bd4fa271089aa",
+			"name": "秘密箱",
+			"name_en": "Secret Box",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		}
+	],
+	"deck_code": "auckE83nCrJgwW_6dx",
+	"deck_name": "18.5 呆呆王",
+	"id": 675834,
+	"import_date": "2026-09-19T21:31:58",
+	"source_id": "675834",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/decks/list/675834",
+	"strategy": "",
+	"total_cards": 60,
+	"updated_at": 1789824719401,
+	"variant_name": "18.5 呆呆王"
+}

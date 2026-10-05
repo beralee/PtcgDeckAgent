@@ -12,7 +12,7 @@ module.exports = defineConfig({
   fullyParallel: false,
   retries: 0,
   workers: 1,
-  reporter: [['list'], ['html', { outputFolder: path.join(artifactDir, 'report'), open: 'never' }]],
+  reporter: [['list'], ['json', { outputFile: path.join(artifactDir, 'results.json') }], ['html', { outputFolder: path.join(artifactDir, 'report'), open: 'never' }]],
   outputDir: path.join(artifactDir, 'results'),
   use: {
     actionTimeout: 15000,

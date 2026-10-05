@@ -1,0 +1,18 @@
+{
+  "version": "arena-v6",
+  "date": "2026-09-27",
+  "files": [
+    {
+      "path": "art/arena3d/product-v6/grove_table.blend",
+      "bytes": 17383053,
+      "sha256": "33CF70F6511250A38DE8C7F31EB631433BB3B80987E985B798589E47CE472D21"
+    },
+    {
+      "path": "assets/arena3d/product-v6/grove_table.glb",
+      "bytes": 20759148,
+      "sha256": "79E3948B9803C6AD5BF19D73699E936965E0C9C43E55F4ABE05A2460255B11E1"
+    }
+  ],
+  "sources": "assets/arena3d/product-v3/asset-sources.json",
+  "reused_module": "assets/arena3d/product-v5/reward_cradle.glb"
+}

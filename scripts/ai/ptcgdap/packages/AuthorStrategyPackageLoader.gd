@@ -1,10 +1,13 @@
 extends RefCounted
+const RuntimeCompatibility = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyRuntimeCompatibility.gd")
 
 const ZipScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageZip.gd")
 const Ed25519Script = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageEd25519.gd")
 const CabtJsonTreeScript = preload("res://scripts/ai/ptcgdap/cabt/CabtJsonTree.gd")
 const AuthorStrategyReleaseGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyReleaseGate.gd")
-const CompetitivePolicyV2Script = preload("res://scripts/ai/ptcgdap/public/CompetitivePolicyV2.gd")
+# Metadata/contract loading does not execute a policy. Compile only when a
+# package is actually inspected; cached startup catalogs need no policy graph.
+const COMPETITIVE_POLICY_SCRIPT_PATH := "res://scripts/ai/ptcgdap/public/CompetitivePolicyV2.gd"
 
 const PROFILE_ID := "ptcgdap-author-strategy-package-v1"
 const BUNDLE_ID := "ptcgdap-author-strategy-package-as-wp1-v1"
@@ -24,11 +27,11 @@ const CONTRACT_PATHS := {
 }
 const COMPETITIVE_POLICY_V2_PROFILE_ID := "ptcgdap-competitive-policy-v2"
 const COMPETITIVE_POLICY_V2_BUNDLE_ID := "ptcgdap-competitive-policy-v2-as2-wp1"
-const COMPETITIVE_POLICY_V2_EXPECTED_BUNDLE_CANONICAL_SHA256 := "5F87E10C6C87B5CE71CBB2ACE2C31A5FA39C49C95F84F0D7983DEC86DCA2F3C3"
+const COMPETITIVE_POLICY_V2_EXPECTED_BUNDLE_CANONICAL_SHA256 := "7E2952CC8A08DBD66DA44E71B6BD8640C0BD7B3219D6BF0B44F6B2529B3162DD"
 const COMPETITIVE_POLICY_V2_EXPECTED_ARTIFACT_CANONICAL_SHA256 := {
-	"schema": "4A8E21D90A0B6EF1921BDC123BB58C0297F57EEACF8490F44EC0B46E8E60B910",
-	"profile": "46FC76FFD292FDA0A9F4F4221EA14C8F7DFC2462163733E42876EAA7CFE63677",
-	"vectors": "42BEB7D514686600F255E06BB76AF4440A08294D845C8D9CE4A7966C28701F7E",
+	"schema": "DAC448BCF83D2DC28CD6B5AB15643279B03452037C5284B7DEE484ACCA8D335B",
+	"profile": "DEBD9D61AFA8AE1266058B6F436281AACB84FDF4C725CF640ECEB603E69177A7",
+	"vectors": "6F0E7BD829532E06D92CA68CEB5FDA3C3A2AD0A3AEC3D45E0948B9A5C20353C8",
 }
 const COMPETITIVE_POLICY_V2_CONTRACT_PATHS := {
 	"schema": "res://contracts/ptcgdap/competitive_policy_v2.schema.json",
@@ -107,6 +110,34 @@ var _limits: Dictionary = {}
 var _trust_store: Dictionary = {}
 var _release_gate: RefCounted = null
 var _integrity_error := ""
+var _prepared_signature_digest := ""
+var _prepared_documents: Dictionary = {}
+
+func prewarm_archive(archive_bytes: PackedByteArray, verify_signature: bool = true) -> void:
+	# This is a mathematical signature proof, never admission. The subsequent
+	# full inspection still checks current trust, every file hash and all schemas.
+	if not _integrity_error.is_empty():
+		return
+	var archive: Dictionary = ZipScript.read(archive_bytes, _limits)
+	if not bool(archive.get("ok", false)):
+		return
+	var members: Dictionary = archive.get("members", {})
+	# Only strict byte parsing is prepared. Schema/compatibility checks and
+	# policy compilation still run in the ordinary main-thread inspection.
+	for path: String in members:
+		if path.ends_with(".json") and _prepared_documents.size() < 16:
+			var bytes: PackedByteArray = members[path]
+			var parsed := _parse_document_bytes(bytes)
+			if bool(parsed.get("ok", false)):
+				_prepared_documents[_sha(bytes)] = parsed
+	if not verify_signature:
+		return
+	if not members.has("strategy_package.json") or not members.has("signature.json") or not members.has("files.sha256.json"):
+		return
+	var manifest := _strict_document(members["strategy_package.json"], "strategy_package", "package_manifest_invalid")
+	var signature := _strict_document(members["signature.json"], "signature", "package_manifest_invalid")
+	if bool(manifest.get("ok", false)) and bool(signature.get("ok", false)):
+		_verify_signature(manifest.get("value", {}), signature.get("value", {}), members)
 
 
 func _init() -> void:
@@ -474,6 +505,8 @@ func _validate_members(
 	var deck_policy := _verify_deck_and_policy(manifest, members)
 	if not bool(deck_policy.get("ok", false)):
 		return deck_policy
+	var adapter_document := _strict_document(members["policy/adapter.json"], "adapter", "package_policy_unsupported")
+	var runtime_check := RuntimeCompatibility.inspect(adapter_document.get("value", {}))
 	var optional := _verify_optional_relations(manifest, members)
 	if not bool(optional.get("ok", false)):
 		return optional
@@ -522,6 +555,9 @@ func _validate_members(
 		"deck_platform_scope": startup_deck_manifest.get("platform_scope", []).duplicate(true) if startup_deck_manifest.get("platform_scope", []) is Array else [],
 		"deck_card_count": startup_deck_manifest.get("card_count"),
 	}
+	var runtime_detail: Dictionary = runtime_check.get("runtime_compatibility", {})
+	if not runtime_detail.get("required_profiles", []).is_empty():
+		metadata["runtime_compatibility"] = {"minimum_client_version": runtime_detail.minimum_client_version, "minimum_client_build": runtime_detail.minimum_client_build, "required_profiles": runtime_detail.required_profiles}
 	if execution_trusted or control_distributed:
 		metadata["signature_key_id"] = signature.get("key_id")
 		metadata["signature_scope"] = signature_key.get("scope")
@@ -547,6 +583,22 @@ func _validate_members(
 
 
 func _strict_document(value: PackedByteArray, kind: String, code: String) -> Dictionary:
+	var digest := _sha(value)
+	var parsed: Dictionary = _prepared_documents.get(digest, {})
+	if parsed.is_empty():
+		parsed = _parse_document_bytes(value)
+	if not bool(parsed.get("ok", false)):
+		return _error(code)
+	var document: Dictionary = parsed.get("value", {}).duplicate(true)
+	if kind == "adapter":
+		var runtime_check := RuntimeCompatibility.inspect(document)
+		if not runtime_check.get("ok", false): return runtime_check
+	if not _validate_document_shape(document, kind):
+		return _error(code)
+	return {"ok": true, "error_code": "", "value": document, "canonical_bytes": parsed.get("canonical_bytes", PackedByteArray())}
+
+
+func _parse_document_bytes(value: PackedByteArray) -> Dictionary:
 	var parsed: Dictionary = CabtJsonTreeScript.canonicalize_artifact_json_bytes(value, {
 		"max_input_bytes": int(_limits.get("max_json_bytes", 0)),
 		"max_output_bytes": int(_limits.get("max_json_bytes", 0)),
@@ -554,11 +606,11 @@ func _strict_document(value: PackedByteArray, kind: String, code: String) -> Dic
 		"max_nodes": 100000,
 	})
 	if not bool(parsed.get("ok", false)):
-		return _error(code)
+		return _error("package_manifest_invalid")
 	var document: Variant = JSON.parse_string(str(parsed.get("text", "")))
 	document = _coerce_integral_numbers(document)
-	if not document is Dictionary or not _validate_document_shape(document, kind):
-		return _error(code)
+	if not document is Dictionary:
+		return _error("package_manifest_invalid")
 	return {"ok": true, "error_code": "", "value": document, "canonical_bytes": parsed.get("bytes", PackedByteArray())}
 
 
@@ -641,6 +693,8 @@ func _valid_model_manifest(value: Dictionary) -> bool:
 	var tensor_hash := MODEL_TENSOR_PROFILE_SHA256
 	if tensor.get("profile_id") == "ptcgdap_local_semantic_actor_i32_v1":
 		tensor_hash = "4201D98BD567FD3036124D78977FDD0B6ECB964373F086694529AD22FDA58016"
+	elif tensor.get("profile_id") == "ptcgdap_local_semantic_actor_i32_v2":
+		tensor_hash = "857415B7512B046E8DD0D27CA5B46CA3EF7F604ED247E2C668BA96168099B958"
 	elif tensor.get("profile_id") != "competitive_public_actor_i32_v1": return false
 	var canonical_tensor: Dictionary = CabtJsonTreeScript.canonicalize_artifact_json_bytes(JSON.stringify(tensor).to_utf8_buffer())
 	if not canonical_tensor.get("ok",false): return false
@@ -723,7 +777,7 @@ func _valid_adapter_shape(value: Dictionary) -> bool:
 		var allowed_uids := _competitive_v2_candidate_uids(value)
 		if allowed_uids.is_empty():
 			return false
-		return bool(CompetitivePolicyV2Script.compile_local_uid(value, allowed_uids).get("accepted", false))
+		return bool(load(COMPETITIVE_POLICY_SCRIPT_PATH).compile_local_uid(value, allowed_uids).get("accepted", false))
 	if not _exact_keys(value, ["schema_version", "adapter_id", "adapter_version", "rules"]) or value.get("schema_version") != 1 or not _valid_id(value.get("adapter_id")) or typeof(value.get("adapter_version")) != TYPE_INT or int(value.get("adapter_version")) < 1 or int(value.get("adapter_version")) > MAX_SAFE_INTEGER or not value.get("rules") is Array or value.get("rules").size() > 256: return false
 	for rule in value.get("rules"):
 		if not rule is Dictionary: return false
@@ -798,8 +852,14 @@ func _verify_signature(
 		return _error("package_signature_untrusted")
 	var public_key := Marshalls.base64_to_raw(str(key.get("public_key_base64", "")))
 	var raw_signature := Marshalls.base64_to_raw(str(signature.get("signature_base64", "")))
-	if public_key.size() != 32 or raw_signature.size() != 64 or not Ed25519Script.verify(public_key, signed_bytes, raw_signature):
+	if public_key.size() != 32 or raw_signature.size() != 64:
 		return _error("package_signature_untrusted")
+	var proof_bytes := public_key + raw_signature + signed_bytes
+	var proof_digest := _sha(proof_bytes)
+	if proof_digest != _prepared_signature_digest:
+		if not Ed25519Script.verify(public_key, signed_bytes, raw_signature):
+			return _error("package_signature_untrusted")
+		_prepared_signature_digest = proof_digest
 	return {"ok": true, "error_code": "", "key": key.duplicate(true)}
 
 
@@ -935,7 +995,7 @@ func _public_adapter_valid(document: Dictionary, deck: Dictionary) -> bool:
 		if local_uids.size() != int(deck.get("unique_card_count", 0)): return false
 	if document.get("schema_version") == 2:
 		return local_domain and bool(
-			CompetitivePolicyV2Script.compile_local_uid(document, local_uids.keys()).get("accepted", false)
+			load(COMPETITIVE_POLICY_SCRIPT_PATH).compile_local_uid(document, local_uids.keys()).get("accepted", false)
 		)
 	if document.get("schema_version") != 1:
 		return false

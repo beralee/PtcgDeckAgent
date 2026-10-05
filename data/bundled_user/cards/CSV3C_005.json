@@ -1,0 +1,58 @@
+{
+	"name": "佛烈托斯ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "特性: 爆裂能量\n在自己的回合可以使用1次，如果使用了，则令这只宝可梦【昏厥】。选择自己牌库中最多5张「基本【草】能量」，以任意方式附着于自己的宝可梦身上。并重洗牌库。\n\n【草】【草】 防守压制 120\n在下一个对手的回合，这只宝可梦所受到的招式的伤害「-30」。\n\n",
+	"yoren_code": "Y1272",
+	"set_code": "CSV3C",
+	"card_index": "005",
+	"set_code_en": "PAF",
+	"card_index_en": "2",
+	"name_en": "Forretress ex",
+	"name_zh": "",
+	"artist": "5ban Graphics",
+	"rarity": "RR",
+	"release_date": "2025-05-15T16:00:00Z",
+	"regulation_mark": "G",
+	"effect_id": "1d232492f05784c869bd73a62bd1e484",
+	"image_url": "https://tcg.mik.moe/static/img/CSV3C/005.png",
+	"image_local_path": "user://cards/images/CSV3C/005.png",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/cards/CSV3C/005",
+	"source_set_code": "CSV3C",
+	"source_card_index": "005",
+	"source_language": "zh-CN",
+	"source_prints": [],
+	"source_imported_at": 0,
+	"source_parser_version": 1,
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "G",
+	"stage": "Stage 1",
+	"hp": 270,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"evolves_from": "榛果球",
+	"ancient_trait": "Tera",
+	"attacks": [
+		{
+			"name": "防守压制",
+			"text": "在下一个对手的回合，这只宝可梦所受到的招式的伤害「-30」。",
+			"cost": "GG",
+			"damage": "120",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "爆裂能量",
+			"text": "在自己的回合可以使用1次，如果使用了，则令这只宝可梦【昏厥】。选择自己牌库中最多5张「基本【草】能量」，以任意方式附着于自己的宝可梦身上。并重洗牌库。"
+		}
+	],
+	"energy_provides": ""
+}

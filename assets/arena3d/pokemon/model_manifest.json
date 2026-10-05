@@ -1,0 +1,104 @@
+{
+  "revision": 2,
+  "authoring": "Original sculpted Blender surfaces and articulated components; Godot procedural action clips",
+  "models": [
+    {
+      "species": "dragapult",
+      "triangles": 20188,
+      "mesh_parts": 47,
+      "bytes": 478552,
+      "revision": 2
+    },
+    {
+      "species": "charizard",
+      "triangles": 37170,
+      "mesh_parts": 106,
+      "bytes": 805448,
+      "revision": 2
+    },
+    {
+      "species": "munkidori",
+      "triangles": 39356,
+      "mesh_parts": 88,
+      "bytes": 806736,
+      "revision": 2
+    },
+    {
+      "species": "ceruledge",
+      "triangles": 13516,
+      "mesh_parts": 51,
+      "bytes": 349644,
+      "revision": 2
+    },
+    {
+      "species": "terapagos",
+      "triangles": 21516,
+      "mesh_parts": 98,
+      "bytes": 547232,
+      "revision": 2
+    },
+    {
+      "species": "grimmsnarl",
+      "triangles": 46466,
+      "mesh_parts": 75,
+      "bytes": 811540,
+      "revision": 2
+    },
+    {
+      "species": "zoroark",
+      "triangles": 46450,
+      "mesh_parts": 83,
+      "bytes": 792172,
+      "revision": 2
+    },
+    {
+      "species": "archaludon",
+      "triangles": 3320,
+      "mesh_parts": 37,
+      "bytes": 131320,
+      "revision": 2
+    },
+    {
+      "species": "ho_oh",
+      "triangles": 53816,
+      "mesh_parts": 118,
+      "bytes": 966172,
+      "revision": 2
+    },
+    {
+      "species": "budew",
+      "triangles": 21032,
+      "mesh_parts": 28,
+      "bytes": 436712,
+      "revision": 2
+    },
+    {
+      "species": "garchomp",
+      "triangles": 21884,
+      "mesh_parts": 54,
+      "bytes": 526764,
+      "revision": 2
+    },
+    {
+      "species": "raging_bolt",
+      "triangles": 35490,
+      "mesh_parts": 74,
+      "bytes": 805244,
+      "revision": 2
+    },
+    {
+      "species": "pikachu_tera",
+      "triangles": 24560,
+      "mesh_parts": 55,
+      "bytes": 706596,
+      "revision": 2
+    },
+    {
+      "species": "gardevoir",
+      "triangles": 39544,
+      "mesh_parts": 45,
+      "bytes": 738496,
+      "revision": 2
+    }
+  ]
+}

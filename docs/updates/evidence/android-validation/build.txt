@@ -1,0 +1,5 @@
+import-b: exit 0
+export-b: exit 0
+import-a: exit 0
+export-a: exit 0
+Ready: D:\ai\code\PtcgDAP\output\android-update-lab\Install-A-first.apk

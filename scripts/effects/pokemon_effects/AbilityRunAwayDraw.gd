@@ -88,9 +88,9 @@ func execute_ability(
 	for card: CardInstance in pokemon.attached_energy:
 		card.face_up = false
 		player.deck.append(card)
-	if pokemon.attached_tool != null:
-		pokemon.attached_tool.face_up = false
-		player.deck.append(pokemon.attached_tool)
+	for tool: CardInstance in pokemon.get_attached_tools():
+		tool.face_up = false
+		player.deck.append(tool)
 
 	pokemon.pokemon_stack.clear()
 	pokemon.attached_energy.clear()

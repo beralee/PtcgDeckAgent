@@ -118,6 +118,7 @@ class SpyGameStateMachine extends GameStateMachine:
 	var mulligan_resolve_calls: int = 0
 	var resolved_beneficiary: int = -1
 	var resolved_draw_extra: bool = false
+	var resolved_draw_count: int = -1
 
 	func retreat(_player_index: int, _energy_to_discard: Array[CardInstance], _bench_target: PokemonSlot) -> bool:
 		retreat_calls += 1
@@ -129,6 +130,7 @@ class SpyGameStateMachine extends GameStateMachine:
 		resolved_draw_extra = draw_extra
 
 	func resolve_mulligan_draw_count(beneficiary: int, draw_count: int) -> bool:
+		resolved_draw_count = draw_count
 		resolve_mulligan_choice(beneficiary, draw_count > 0)
 		return true
 
@@ -1805,7 +1807,7 @@ func test_ai_opponent_ignores_human_owned_mulligan_bonus_draw_prompt() -> String
 	])
 
 
-func test_battle_scene_schedules_ai_for_mulligan_setup_prompt() -> String:
+func test_battle_scene_automatically_grants_ai_mulligan_bonus_without_a_dialog() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()
 	var gsm := SpyGameStateMachine.new()
@@ -1815,20 +1817,18 @@ func test_battle_scene_schedules_ai_for_mulligan_setup_prompt() -> String:
 	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
 	GameManager.current_mode = GameManager.GameMode.VS_AI
 	scene.set("_gsm", gsm)
+	scene.get("_dialog_overlay").visible = false
 	scene._on_player_choice_required("mulligan_extra_draw", {"beneficiary": 1, "mulligan_count": 1})
-	var scheduled_after_prompt: bool = scene.get("_ai_step_scheduled")
-	scene._run_ai_step()
 	GameManager.current_mode = previous_mode
 	return run_checks([
-		assert_true(scene.get("_dialog_overlay").visible, "Mulligan prompt should show the dialog overlay"),
-		assert_true(scheduled_after_prompt, "BattleScene should schedule AI for its mulligan setup prompt"),
-		assert_eq(gsm.mulligan_resolve_calls, 1, "BattleScene should drive the AI mulligan choice through the real scheduling path"),
+		assert_false(scene.get("_dialog_overlay").visible, "Automatic bonus must not open a choice dialog"),
+		assert_eq(gsm.mulligan_resolve_calls, 1, "AI bonus must resolve once without waiting for an AI step"),
 		assert_eq(gsm.resolved_beneficiary, 1, "BattleScene should pass the mulligan beneficiary through unchanged"),
-		assert_true(gsm.resolved_draw_extra, "Baseline AI should still accept the mulligan bonus draw"),
+		assert_eq(gsm.resolved_draw_count, 1, "The AI must receive its full bonus"),
 	])
 
 
-func test_battle_scene_mulligan_bonus_prompt_requires_an_explicit_draw_count() -> String:
+func test_battle_scene_automatically_grants_human_mulligan_bonus_without_clicks() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()
 	var gsm := SpyGameStateMachine.new()
@@ -1839,20 +1839,16 @@ func test_battle_scene_mulligan_bonus_prompt_requires_an_explicit_draw_count() -
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
 	scene.set("_gsm", gsm)
 
+	scene.get("_dialog_overlay").visible = false
 	scene._on_player_choice_required("mulligan_extra_draw", {"beneficiary": 0, "mulligan_count": 2})
-	var dialog_items: Array = scene.get("_dialog_items_data")
-	var dialog_data: Dictionary = scene.get("_dialog_data")
-	var cancel_button := scene.get("_dialog_cancel") as Button
-	scene._handle_dialog_choice_legacy(PackedInt32Array([2]))
 	GameManager.current_mode = previous_mode
 
 	return run_checks([
-		assert_eq(dialog_items.size(), 3, "Mulligan bonus prompt should offer every legal draw count from zero to two"),
-		assert_false(bool(dialog_data.get("allow_cancel", true)), "Mulligan bonus prompt should not allow cancellation"),
-		assert_true(cancel_button != null and not cancel_button.visible, "Mulligan bonus prompt should hide the cancel button"),
-		assert_eq(gsm.mulligan_resolve_calls, 1, "Mulligan bonus prompt should resolve through the GSM"),
+		assert_false(scene.get("_dialog_overlay").visible, "No zero/one/two-card options should be displayed"),
+		assert_eq(gsm.mulligan_resolve_calls, 1, "Human bonus must resolve without a button click"),
 		assert_eq(gsm.resolved_beneficiary, 0, "Mulligan bonus prompt should keep the configured beneficiary"),
-		assert_true(gsm.resolved_draw_extra, "Mulligan bonus prompt should always draw the extra card"),
+		assert_eq(gsm.resolved_draw_count, 2, "Two mulligans must automatically grant two cards"),
+		assert_eq(str(scene.get("_pending_choice")), "", "Information must not leave a pending human decision"),
 	])
 
 

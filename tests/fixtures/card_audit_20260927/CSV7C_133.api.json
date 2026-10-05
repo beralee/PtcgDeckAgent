@@ -1,0 +1,70 @@
+{
+  "name": "古鼎鹿",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【斗】 大地龟裂 30\n如果场上有竞技场的话，则给对手所有的备战宝可梦，也各造成30伤害，将那张竞技场放于弃牌区。[备战宝可梦不计算弱点、抗性。]\n\n【斗】【斗】【无】 头突 110\n\n\n",
+  "yorenCode": "P1003",
+  "pokemonAttr": {
+    "energyType": "F",
+    "stage": "Basic",
+    "hp": 140,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "G",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 3,
+    "attack": [
+      {
+        "name": "大地龟裂",
+        "text": "如果场上有竞技场的话，则给对手所有的备战宝可梦，也各造成30伤害，将那张竞技场放于弃牌区。[备战宝可梦不计算弱点、抗性。]",
+        "cost": "F",
+        "damage": "30",
+        "isVStarPower": false
+      },
+      {
+        "name": "头突",
+        "text": "",
+        "cost": "FFC",
+        "damage": "110",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": ""
+  },
+  "setCode": "CSV7C",
+  "cardIndex": "133",
+  "setCardsNum": "",
+  "artist": "Anesaki Dynamic",
+  "rarity": "R",
+  "releaseDate": "2026-01-15T16:00:00Z",
+  "regulationMark": "H",
+  "effectId": "5ed8053b43211ace08218c99208ab742",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV7C",
+      "cardIndex": "133",
+      "cardName": "古鼎鹿",
+      "rarity": "R",
+      "effectId": "5ed8053b43211ace08218c99208ab742",
+      "cardType": "Pokemon",
+      "yorenCode": "P1003",
+      "is": [
+        "Basic"
+      ],
+      "setCodeEn": "TWM",
+      "cardIndexEn": "110",
+      "nameEn": "Ting-Lu"
+    }
+  ],
+  "setCodeEn": "TWM",
+  "cardIndexEn": "110",
+  "nameEn": "Ting-Lu"
+}

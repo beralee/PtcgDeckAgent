@@ -220,7 +220,7 @@ func test_tablet_landscape_end_turn_and_hand_fit_real_viewports() -> String:
 
 
 func test_landscape_deck_delete_closes_dialog_and_preserves_other_rows() -> String:
-	# Match the existing portrait deletion regression with the native dialog path.
+	# Desktop and touch layouts now share the same in-game confirmation owner.
 	var fixtures := preload("res://tests/test_deck_delete_feedback_regressions.gd").new()
 	var removed_id := 99180918
 	var survivor_id := 99180919
@@ -233,14 +233,17 @@ func test_landscape_deck_delete_closes_dialog_and_preserves_other_rows() -> Stri
 	tree.root.add_child(scene)
 	await tree.process_frame
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 800), "landscape")
+	# Settle the breakpoint's deferred rebuild before checking row identity.
+	await tree.process_frame
+	await tree.process_frame
 	var deck_list := scene.get_node("%DeckList")
 	var survivor_before: Control = fixtures._deck_row_with_id(deck_list, survivor_id)
 	scene.call("_on_delete_deck", CardDatabase.get_deck(removed_id))
-	var dialogs := scene.find_children("*", "ConfirmationDialog", true, false)
-	var checks: Array[String] = [assert_eq(dialogs.size(), 1, "Landscape deletion must show its confirmation dialog")]
-	if not dialogs.is_empty():
-		var dialog := dialogs[0] as ConfirmationDialog
-		dialog.confirmed.emit()
+	var dialog := scene.get("_deck_action_hud_overlay") as Control
+	var confirm := scene.find_child("DeleteDeckConfirmButton", true, false) as Button
+	var checks: Array[String] = [assert_true(dialog != null and dialog.is_visible_in_tree() and confirm != null, "Landscape deletion must show its confirmation dialog")]
+	if dialog != null and confirm != null:
+		confirm.pressed.emit()
 		checks.append(assert_false(dialog.visible, "Confirmation must close inside the callback"))
 		checks.append(assert_true(CardDatabase.has_deck(removed_id), "Deletion must wait until the input callback finishes"))
 		await tree.process_frame

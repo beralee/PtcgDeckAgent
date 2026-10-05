@@ -91,6 +91,17 @@ func test_text_diagram_box_drawing_codepoints_are_allowed() -> String:
 	])
 
 
+func test_card_rarity_stars_are_text_not_encoding_damage() -> String:
+	return run_checks([
+		assert_eq(_check_line_codepoints("res://tests/fixtures/card.json", 1, '"rarity": "★★☆"'), "", "Card rarity stars are valid Unicode text"),
+		assert_eq(_check_line_codepoints("res://docs/validation.md", 1, "✓ ✅ café 中文"), "", "Documentation symbols and multilingual text are not encoding damage"),
+		assert_false(_is_allowed_codepoint(0xFFFD), "Replacement characters must still fail the encoding audit"),
+		assert_false(_is_allowed_codepoint(0), "NUL characters must still fail the encoding audit"),
+		assert_false(_is_allowed_codepoint(0xD800), "Unpaired surrogates are not Unicode scalar values"),
+		assert_false(_is_allowed_codepoint(0xFFFF), "Noncharacters are not source text"),
+	])
+
+
 func _collect_targets(path: String, out: Array[String]) -> void:
 	if FileAccess.file_exists(path):
 		if _is_allowed_target(path):
@@ -205,32 +216,14 @@ func _check_line_codepoints(path: String, line_number: int, line: String) -> Str
 
 
 func _is_allowed_codepoint(codepoint: int) -> bool:
-	if codepoint == 9:
+	# Audit damaged text, not a handpicked font repertoire. Card rarity and
+	# documentation legitimately contain symbols outside the old block list.
+	if codepoint in [9, 13]:
 		return true
-	if codepoint == 13:
-		return true
-	if codepoint >= 32 and codepoint <= 126:
-		return true
-	if codepoint >= 0x00A0 and codepoint <= 0x00FF:
-		return true
-	if codepoint >= 0x2000 and codepoint <= 0x206F:
-		return true
-	if codepoint >= 0x2190 and codepoint <= 0x22FF:
-		return true
-	if codepoint >= 0x2500 and codepoint <= 0x257F:
-		return true
-	if codepoint >= 0x25A0 and codepoint <= 0x25FF:
-		return true
-	if codepoint >= 0x3000 and codepoint <= 0x303F:
-		return true
-	if codepoint >= 0x3040 and codepoint <= 0x30FF:
-		return true
-	if codepoint >= 0x3400 and codepoint <= 0x4DBF:
-		return true
-	if codepoint >= 0x4E00 and codepoint <= 0x9FFF:
-		return true
-	if codepoint >= 0xFF00 and codepoint <= 0xFFEF:
-		return true
-	if codepoint >= 0xE000 and codepoint <= 0xF8FF:
-		return true
-	return false
+	if codepoint < 32 or codepoint > 0x10FFFF or (codepoint >= 0x7F and codepoint <= 0x9F):
+		return false
+	if codepoint == 0xFFFD or (codepoint >= 0xD800 and codepoint <= 0xDFFF):
+		return false
+	if (codepoint >= 0xFDD0 and codepoint <= 0xFDEF) or (codepoint & 0xFFFF) >= 0xFFFE:
+		return false
+	return true

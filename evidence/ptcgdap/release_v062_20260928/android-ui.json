@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-09-27T19:38:07.1016692Z",
+  "device_size": "1080x2400",
+  "pid": "6823",
+  "focus": "  mCurrentFocus=Window{54a7811 u0 com.example.ptcgdeckagent/com.godot.game.GodotAppLauncher}\n  mFocusedApp=ActivityRecord{241621273 u0 com.example.ptcgdeckagent/com.godot.game.GodotAppLauncher t80}",
+  "navigation_difference": 0.2381,
+  "deepseek_workspace_active": true,
+  "minimum_navigation_difference": 0.08,
+  "round_trip_difference": 0.0016,
+  "maximum_round_trip_difference": 0.12,
+  "screenshots": {
+    "main": ".tmp\\v062_release\\android_rotation_final_ui2\\main.png",
+    "settings": ".tmp\\v062_release\\android_rotation_final_ui2\\settings.png",
+    "main_return": ".tmp\\v062_release\\android_rotation_final_ui2\\main_return.png"
+  },
+  "crash_markers": "",
+  "passed": true
+}

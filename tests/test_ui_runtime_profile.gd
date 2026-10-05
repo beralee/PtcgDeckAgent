@@ -4,6 +4,11 @@ extends TestBase
 const Profile := preload("res://scripts/ui/runtime/UiRuntimeProfile.gd")
 const Resolver := preload("res://scripts/ui/runtime/UiRuntimeProfileResolver.gd")
 
+func test_mobile_export_pins_compatibility_renderer() -> String:
+	# Godot's built-in .mobile override otherwise selects Vulkan even when
+	# the base project explicitly chooses the compatibility renderer.
+	return assert_eq(str(ProjectSettings.get_setting("rendering/renderer/rendering_method.mobile", "")), "gl_compatibility", "Native mobile must use the shipped 2D compatibility renderer")
+
 
 func test_runtime_profile_distinguishes_web_mobile_from_native_android() -> String:
 	var native_android: UiRuntimeProfile = Resolver.resolve(

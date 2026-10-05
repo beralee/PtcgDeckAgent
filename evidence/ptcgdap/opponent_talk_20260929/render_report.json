@@ -1,0 +1,111 @@
+{
+	"checks": [
+		{
+			"name": "default_off_creates_no_agent",
+			"passed": true
+		},
+		{
+			"name": "binds_gsm_after_async_author_strategy_startup",
+			"passed": true
+		},
+		{
+			"name": "personality_prepared_once_off_the_game_clock",
+			"passed": true
+		},
+		{
+			"name": "sub_agent_model_bank_validated",
+			"passed": true
+		},
+		{
+			"name": "network_reply_cannot_invent_a_live_reaction",
+			"passed": true
+		},
+		{
+			"name": "real_attack_submitted_through_interaction_owner",
+			"passed": true
+		},
+		{
+			"name": "real_engine_resolves_180_damage_without_waiting_for_model",
+			"passed": true
+		},
+		{
+			"name": "committed_attack_immediately_has_first_person_shout",
+			"passed": true
+		},
+		{
+			"name": "mock_generated_personality_reaches_live_bubble",
+			"passed": true
+		},
+		{
+			"name": "shout_binds_the_actual_attack_name",
+			"passed": true
+		},
+		{
+			"name": "bubble_body_does_not_intercept_board_input",
+			"passed": true
+		},
+		{
+			"name": "wide_caption_does_not_cover_board",
+			"passed": true
+		},
+		{
+			"name": "wide_caption_does_not_cover_hand",
+			"passed": true
+		},
+		{
+			"name": "wide_button_target",
+			"passed": true
+		},
+		{
+			"name": "portrait_caption_does_not_cover_board",
+			"passed": true
+		},
+		{
+			"name": "portrait_caption_does_not_cover_hand",
+			"passed": true
+		},
+		{
+			"name": "portrait_button_target",
+			"passed": true
+		},
+		{
+			"name": "mouse_history_uses_in_game_modal",
+			"passed": true
+		},
+		{
+			"name": "raw_touch_history_without_mouse_emulation",
+			"passed": true
+		},
+		{
+			"name": "keyboard_mute_cancels_agent",
+			"passed": true
+		},
+		{
+			"name": "mute_restores_board_space",
+			"passed": true
+		},
+		{
+			"name": "2d_with_opt_in_allocates_no_agent",
+			"passed": true
+		},
+		{
+			"name": "setup_enables_toggle_for_3d",
+			"passed": true
+		},
+		{
+			"name": "setup_toggle_persists_opt_in",
+			"passed": true
+		},
+		{
+			"name": "setup_raw_touch_toggles_once",
+			"passed": true
+		},
+		{
+			"name": "setup_disables_toggle_for_2d",
+			"passed": true
+		}
+	],
+	"paid_requests": 0,
+	"passed": true,
+	"transport": "sub_agent_authored_fixture"
+}

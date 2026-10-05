@@ -133,6 +133,7 @@ class ScaryBigBrother:
 
 	const TARGET_STEP_ID := "opponent_pokemon"
 	const ENERGY_STEP_ID := "special_energy"
+	const TOOL_STEP_ID := "opponent_tool"
 
 	func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 		var targets := _eligible_targets(card, state)
@@ -154,13 +155,17 @@ class ScaryBigBrother:
 		var target := _selected_target(card, state, resolved_context)
 		if target == null:
 			return []
+		var steps: Array[Dictionary] = []
+		var tools: Array = target.get_attached_tools()
+		if tools.size() > 1:
+			steps.append({"id": TOOL_STEP_ID, "title": "选择1张宝可梦道具放于弃牌区", "items": tools, "labels": tools.map(func(tool: CardInstance) -> String: return tool.card_data.name), "min_select": 1, "max_select": 1, "allow_cancel": false})
 		var energy := _special_energy(target)
 		if energy.is_empty():
-			return []
+			return steps
 		var labels: Array[String] = []
 		for attached: CardInstance in energy:
 			labels.append(attached.card_data.name if attached.card_data != null else "")
-		var steps: Array[Dictionary] = [{
+		steps.append({
 			"id": ENERGY_STEP_ID,
 			"title": "选择要放入弃牌区的1张特殊能量",
 			"items": energy,
@@ -169,7 +174,7 @@ class ScaryBigBrother:
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
-		}]
+		})
 		return steps
 
 	func can_execute(card: CardInstance, state: GameState) -> bool:
@@ -184,10 +189,17 @@ class ScaryBigBrother:
 		if target == null:
 			return
 		var opponent := state.players[1 - card.owner_index]
-		if target.attached_tool != null:
-			var tool := target.attached_tool
-			target.attached_tool = null
-			opponent.discard_card(tool)
+		var tools := target.get_attached_tools()
+		var selected_tool: CardInstance = null
+		for raw: Variant in context.get(TOOL_STEP_ID, []):
+			if raw is CardInstance and raw in tools:
+				selected_tool = raw
+				break
+		if selected_tool == null and not context.has(TOOL_STEP_ID) and not tools.is_empty():
+			selected_tool = tools[0]
+		if selected_tool != null:
+			target.remove_attached_tool(selected_tool)
+			opponent.discard_card(selected_tool)
 		var available := _special_energy(target)
 		var chosen: CardInstance = null
 		for raw: Variant in context.get(ENERGY_STEP_ID, []):
@@ -205,7 +217,7 @@ class ScaryBigBrother:
 		if card == null or state == null:
 			return result
 		for slot: PokemonSlot in state.players[1 - card.owner_index].get_all_pokemon():
-			if slot == null or (slot.attached_tool == null and _special_energy(slot).is_empty()):
+			if slot == null or (slot.get_attached_tools().is_empty() and _special_energy(slot).is_empty()):
 				continue
 			var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
 			if processor != null and processor.has_method("is_protected_from_opponent_hand_trainer_effect"):
@@ -693,9 +705,9 @@ class MistysPsyduckStrollJump:
 		for energy: CardInstance in pokemon.attached_energy:
 			energy.face_up = true
 			player.discard_pile.append(energy)
-		if pokemon.attached_tool != null:
-			pokemon.attached_tool.face_up = true
-			player.discard_pile.append(pokemon.attached_tool)
+		for tool: CardInstance in pokemon.get_attached_tools():
+			tool.face_up = true
+			player.discard_pile.append(tool)
 		player.bench.erase(pokemon)
 		pokemon.pokemon_stack.clear()
 		pokemon.attached_energy.clear()
@@ -1218,8 +1230,7 @@ class AttackOwnFieldToolCountDamage extends BaseEffect:
 		var player := state.players[attacker.get_top_card().owner_index]
 		var tool_count := 0
 		for slot: PokemonSlot in player.get_all_pokemon():
-			if slot.attached_tool != null:
-				tool_count += 1
+			tool_count += slot.get_attached_tools().size()
 		# The printed damage already contributes one `damage_per_tool` through
 		# DamageCalculator (for example, "30x" parses as 30). Offset that
 		# baseline so zero attached Tools correctly deals zero damage.
@@ -2013,9 +2024,9 @@ class AbilityMistysPsyduckSkipJump extends BaseEffect:
 		for energy: CardInstance in pokemon.attached_energy:
 			energy.face_up = true
 			player.discard_pile.append(energy)
-		if pokemon.attached_tool != null:
-			pokemon.attached_tool.face_up = true
-			player.discard_pile.append(pokemon.attached_tool)
+		for tool: CardInstance in pokemon.get_attached_tools():
+			tool.face_up = true
+			player.discard_pile.append(tool)
 		pokemon.attached_energy.clear()
 		pokemon.attached_tool = null
 		pokemon.pokemon_stack.clear()
@@ -2544,18 +2555,21 @@ class AttackDiscardOpponentToolThenParalyze extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match < 0 or attack_index == attack_index_to_match
 
-	func execute_attack(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
-		if attacker == null or defender == null or defender.get_top_card() == null or state == null or not applies_to_attack_index(attack_index) or defender.attached_tool == null:
+	func before_attack_damage(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
+		if attacker == null or defender == null or defender.get_top_card() == null or state == null or not applies_to_attack_index(attack_index) or defender.get_attached_tools().is_empty():
 			return
 		var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
 		if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
 			if bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, defender, state)):
 				return
-		var tool := defender.attached_tool
-		defender.attached_tool = null
-		tool.face_up = true
-		state.players[defender.get_top_card().owner_index].discard_pile.append(tool)
+		for tool: CardInstance in defender.get_attached_tools():
+			defender.remove_attached_tool(tool)
+			tool.face_up = true
+			state.players[defender.get_top_card().owner_index].discard_pile.append(tool)
 		_apply_special_status(defender, "paralyzed", state)
+
+	func execute_attack(_attacker: PokemonSlot, _defender: PokemonSlot, _attack_index: int, _state: GameState) -> void:
+		pass
 
 
 class AttackDiscardAllEnergyDamageBenchedEx extends BaseEffect:

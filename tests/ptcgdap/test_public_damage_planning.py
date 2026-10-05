@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import unittest
 
 from scripts.ai.ptcgdap.public_damage_planning import (
@@ -324,6 +325,35 @@ def _policy() -> dict[str, object]:
 
 
 class PublicDamagePlanningTests(unittest.TestCase):
+    def test_registry_covers_current_catalog_and_generated_source(self) -> None:
+        from tools.ptcgdap.build_public_damage_capability_registry import build_registry, OUTPUT
+        saved = json.loads(OUTPUT.read_bytes())
+        generated = build_registry()
+        self.assertEqual(set(saved["cards"]), set(generated["cards"]), "damage_registry_catalog_gap")
+        self.assertEqual(saved, generated, "damage_registry_source_drift")
+
+    def test_anniversary_bench_is_known_but_unknown_and_hidden_still_fail(self) -> None:
+        registry = PublicDamageCapabilityRegistry.load_default()
+        frame = _frame()
+        frame["public_state"]["opponent"]["bench"].append(
+            _slot(910, 911, "30thC_060", remaining_hp=70, max_hp=70, prize_value=1))
+        for reverse in (False, True):
+            current = copy.deepcopy(frame)
+            if reverse:
+                current["options"].reverse()
+                for index, option in enumerate(current["options"]):
+                    option["index"] = index
+            result = PublicDamagePlanner.calculate(current, _damage_plans(), registry)
+            self.assertTrue(result["accepted"], result["error_code"])
+            unknown = copy.deepcopy(current)
+            unknown["public_state"]["opponent"]["bench"][-1]["local_card_uid"] = "UNKNOWN_999"
+            rejected = PublicDamagePlanner.calculate(unknown, _damage_plans(), registry)
+            self.assertEqual(rejected["error_code"], "unknown_damage_card_uid")
+            hidden = copy.deepcopy(current)
+            hidden["private_state"] = {"deck_order": [OGERPON]}
+            self.assertEqual(PublicDamagePlanner.calculate(hidden, _damage_plans(), registry)["error_code"],
+                             "private_damage_plan_input")
+
     def test_ready_bench_heal_is_public_response_risk_but_unready_heal_is_not(self) -> None:
         registry = PublicDamageCapabilityRegistry.load_default()
         self.assertIn("attack.bench_heal.v1", registry.card(LEAFEON_EX)["capability_ids"])

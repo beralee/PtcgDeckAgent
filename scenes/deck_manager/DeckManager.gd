@@ -1,5 +1,9 @@
 extends Control
 
+const CenterTheme := preload("res://scripts/ui/decks/DeckCenterTheme.gd")
+const CenterView := preload("res://scripts/ui/decks/DeckCenterView.gd")
+var _center_ui: RefCounted = null
+
 const CARD_IMAGE_CACHE_SERVICE := preload("res://scripts/card_images/CardImageCacheService.gd")
 const DeckSuggestionClientScript := preload("res://scripts/network/DeckSuggestionClient.gd")
 const DeckCenterMetaClientScript := preload("res://scripts/network/DeckCenterMetaClient.gd")
@@ -23,22 +27,25 @@ const VIEW_GRID_COLUMNS := 6
 const RENAME_DIALOG_SIZE := Vector2i(460, 300)
 const COMMUNITY_DATA_PATH := "res://community/data/community-data.json"
 const WEB_RECOMMENDATION_SNAPSHOT_PATH := "res://data/deck_recommendations_web.json"
-const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
-const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
-const HUD_DANGER := Color(1.0, 0.28, 0.22, 1.0)
-const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
-const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
-const HUD_FRAME_BORDER := Color(0.76, 0.90, 1.0, 0.96)
-const HUD_CARD_BORDER := Color(0.48, 0.72, 1.0, 0.78)
-const HUD_RECOMMENDATION_BORDER := Color(1.0, 0.76, 0.30, 0.96)
-const HUD_SECONDARY := Color(0.50, 0.80, 1.0, 1.0)
-const HUD_RENAME := Color(0.72, 0.64, 1.0, 1.0)
+const HUD_ACCENT := CenterTheme.BLUE
+const HUD_ACCENT_WARM := CenterTheme.ACCENT
+const HUD_DANGER := CenterTheme.DANGER
+const HUD_TEXT := CenterTheme.TEXT
+const HUD_TEXT_MUTED := CenterTheme.MUTED
+const HUD_FRAME_BORDER := CenterTheme.LINE
+const HUD_CARD_BORDER := CenterTheme.LINE
+const HUD_RECOMMENDATION_BORDER := CenterTheme.DISCOVERY_LINE
+const HUD_SECONDARY := CenterTheme.MUTED
+const HUD_RENAME := CenterTheme.VIOLET
 const DECK_ACTION_HUD_CLOSE_INPUT_QUARANTINE_MSEC := 320
 const REMOTE_RECOMMENDATION_PREFETCH_STEPS := 0
 const DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE := 40
 const RECOMMENDATION_DETAIL_SCROLLBAR_RIGHT_CLEARANCE := 34
 const HUD_BUTTON_FONT_SIZE := 23
 const HUD_BUTTON_COMPACT_FONT_SIZE := 21
+const WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT := "web_portrait_deck_edit"
+const WEB_PORTRAIT_DECK_EDIT_TITLE := "\u8bf7\u5148\u6a2a\u5c4f"
+const WEB_PORTRAIT_DECK_EDIT_MESSAGE := "\u6d4f\u89c8\u5668\u7248\u5361\u7ec4\u7f16\u8f91\u5668\u9700\u8981\u6a2a\u5c4f\u7a7a\u95f4\u3002\u8bf7\u5148\u5c06\u624b\u673a\u6a2a\u8fc7\u6765\uff08\u5fc5\u8981\u65f6\u5173\u95ed\u7cfb\u7edf\u65cb\u8f6c\u9501\uff09\uff0c\u786e\u8ba4\u540e\u518d\u8fdb\u5165\u5361\u7ec4\u7f16\u8f91\u3002"
 const HUD_BUTTON_MIN_HEIGHT := 63.0
 const HUD_BUTTON_COMPACT_MIN_HEIGHT := 57.0
 const HUD_BUTTON_TEXT_HORIZONTAL_PADDING := 34.0
@@ -57,9 +64,6 @@ const DECK_ACTION_HUD_PREVIOUS_MOUSE_FILTER_META := "_deck_action_hud_previous_m
 const IMPORT_URL_FOCUS_REQUESTED_META := "_import_url_focus_requested"
 const DECK_ACTION_HUD_DIALOG_NAME := "DeckActionHudDialog"
 const STARTER_DECK_HUD_CONTEXT := "starter_deck_builder"
-const WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT := "web_portrait_deck_edit"
-const WEB_PORTRAIT_DECK_EDIT_TITLE := "\u8bf7\u5148\u6a2a\u5c4f"
-const WEB_PORTRAIT_DECK_EDIT_MESSAGE := "\u6d4f\u89c8\u5668\u7248\u5361\u7ec4\u7f16\u8f91\u5668\u9700\u8981\u6a2a\u5c4f\u7a7a\u95f4\u3002\u8bf7\u5148\u5c06\u624b\u673a\u6a2a\u8fc7\u6765\uff08\u5fc5\u8981\u65f6\u5173\u95ed\u7cfb\u7edf\u65cb\u8f6c\u9501\uff09\uff0c\u786e\u8ba4\u540e\u518d\u8fdb\u5165\u5361\u7ec4\u7f16\u8f91\u3002"
 const LOCAL_DECK_EMPTY_TEXT := "\u6682\u65e0\u672c\u5730\u5361\u7ec4\uff0c\u53ef\u4ee5\u65b0\u5efa\u57fa\u7840\u5361\u7ec4\u6216\u5bfc\u5165\u73b0\u6709\u5361\u7ec4\u3002"
 const LOCAL_DECK_SEARCH_EMPTY_TEXT := "\u672a\u627e\u5230\u5339\u914d\u7684\u672c\u5730\u5361\u7ec4"
 
@@ -91,6 +95,8 @@ var _share_poster_prepared_image: Image = null
 var _share_poster_prepared_deck_id := -1
 var _share_poster_prepared_author := ""
 var _share_poster_prepare_serial := 0
+var _share_poster_user_variant := ""
+var _share_poster_preview: TextureRect = null
 var _image_syncer = null
 var _active_image_sync_job_id := ""
 var _current_operation: String = ""
@@ -100,7 +106,7 @@ var _web_gesture_router := preload("res://scripts/ui/non_battle/NonBattleGesture
 var _pending_import_deck: DeckData = null
 var _pending_import_errors: PackedStringArray = PackedStringArray()
 var _pending_import_deck_name_override := ""
-var _rename_dialog: AcceptDialog = null
+var _rename_dialog: Control = null
 var _rename_input: LineEdit = null
 var _rename_error_label: Label = null
 var _rename_confirm_button: Button = null
@@ -189,6 +195,8 @@ func _ready() -> void:
 	_ensure_import_provider_button()
 	_setup_import_panel_input_guards()
 
+	_center_ui = CenterView.new()
+	_center_ui.setup(self)
 	CardDatabase.decks_changed.connect(_on_decks_changed)
 	_refresh_deck_list()
 
@@ -235,6 +243,8 @@ func _setup_local_deck_search_input() -> void:
 func _notification(what: int) -> void:
 	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT]:
 		_web_gesture_router.cancel()
+		if _center_ui != null:
+			_center_ui.cancel_discovery_input()
 	if what == NOTIFICATION_RESIZED:
 		_web_gesture_router.cancel()
 		_apply_non_battle_layout()
@@ -242,6 +252,8 @@ func _notification(what: int) -> void:
 
 func _cancel_transient_platform_input(_reason: String) -> void:
 	_web_gesture_router.cancel()
+	if _center_ui != null:
+		_center_ui.cancel_discovery_input()
 
 
 func _process(_delta: float) -> void:
@@ -250,6 +262,21 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if preload("res://scripts/ui/GameModalDialog.gd").active_for(self) != null:
+		return
+	if _is_deck_action_hud_dialog_visible() and event.is_action_pressed("ui_cancel") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		if _deck_action_hud_context == "rename":
+			_on_rename_close_requested()
+		else:
+			_close_deck_action_hud_dialog()
+		return
+	if _should_suppress_deck_action_hud_close_input(event):
+		return
+	if _center_ui != null:
+		if _center_ui.handle_input(event):
+			get_viewport().set_input_as_handled()
+		return
 	if _is_deck_manager_web_runtime():
 		if _is_deck_action_hud_dialog_visible():
 			_web_gesture_router.handle(_deck_action_hud_overlay, event)
@@ -526,29 +553,39 @@ func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) ->
 	_apply_non_battle_layout(viewport_size, mode)
 
 
+func _center_layout_profile(viewport_size: Vector2 = Vector2.ZERO) -> Dictionary:
+	return CenterTheme.for_control(self, viewport_size)
+
+
 func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
-	var size := viewport_size
-	if size.x <= 0.0 or size.y <= 0.0:
-		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
-	var mode := forced_mode
-	if mode == "":
-		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
-	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
-	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
-	var portrait := bool(context.get("is_portrait", false))
-	_current_non_battle_layout_context = context.duplicate(true)
-	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
-	var margin := get_node_or_null("MarginContainer") as MarginContainer
-	if margin != null:
-		var value := int(context.get("page_margin", 24.0))
-		margin.add_theme_constant_override("margin_left", value)
-		margin.add_theme_constant_override("margin_top", value)
-		margin.add_theme_constant_override("margin_right", value)
-		margin.add_theme_constant_override("margin_bottom", value)
-	_apply_deck_manager_mobile_metrics(self, context, portrait)
-	_apply_deck_manager_header_layout(context, portrait)
-	_apply_import_panel_layout(context, portrait, size)
+	var profile := _center_layout_profile(viewport_size)
+	var scale: float = profile.scale
+	var portrait: bool = profile.portrait
+	if forced_mode != "":
+		portrait = forced_mode == "portrait"
+	_current_non_battle_layout_context = {
+		"is_portrait": portrait, "resolved_mode": "portrait" if portrait else "landscape",
+		"viewport_size": profile.size, "portrait_scale": scale, "page_margin": profile.margin,
+		"section_gap": roundi(12 * scale), "secondary_button_height": 48 * scale,
+		"input_height": 48 * scale, "input_font_size": roundi(16 * scale),
+		"button_font_size": roundi(16 * scale), "body_font_size": roundi(16 * scale),
+		"title_font_size": roundi(24 * scale), "section_font_size": roundi(18 * scale),
+		"meta_font_size": roundi(13 * scale), "list_item_min_height": 140 * scale,
+	}
+	set_meta("non_battle_layout_mode", "portrait" if portrait else "landscape")
 	_apply_deck_center_scroll_clearance()
+	_apply_import_panel_layout(_current_non_battle_layout_context, portrait, profile.size)
+	if _center_ui != null:
+		_center_ui.apply_layout(viewport_size)
+		_reflow_deck_action_hud_dialog()
+		if is_instance_valid(_recommendation_detail_overlay):
+			var previous_scroll := _recommendation_detail_overlay.find_child("RecommendationDetailScroll", true, false) as ScrollContainer
+			var scroll_position := previous_scroll.scroll_vertical if previous_scroll != null else 0
+			var recommendation: Dictionary = _recommendation_detail_overlay.get_meta("recommendation", {})
+			_show_recommendation_article_dialog(recommendation)
+			var next_scroll := _recommendation_detail_overlay.find_child("RecommendationDetailScroll", true, false) as ScrollContainer
+			next_scroll.set_deferred("scroll_vertical", scroll_position)
+
 
 
 func _handle_import_panel_modal_input_for_tests(event: InputEvent) -> bool:
@@ -811,16 +848,9 @@ func _style_hud_labels_recursive(node: Node) -> void:
 		_style_hud_labels_recursive(child)
 
 
-func _hud_panel_style(fill: Color, border: Color, radius: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(radius)
-	style.shadow_color = Color(border.r, border.g, border.b, 0.34)
-	style.shadow_size = 14
-	style.set_content_margin_all(10)
-	return style
+func _hud_panel_style(_fill: Color, border: Color, radius: int) -> StyleBoxFlat:
+	return CenterTheme.box(CenterTheme.SURFACE, CenterTheme.DANGER if border == HUD_DANGER else CenterTheme.LINE, mini(radius, 14), 12)
+
 
 
 func _hud_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBoxFlat:
@@ -844,21 +874,10 @@ func _hud_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBoxFla
 	return style
 
 
-func _style_hud_button(button: Button, accent: Color, compact: bool = false) -> void:
-	var font_size := HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE if compact else HUD_BUTTON_FONT_SIZE)
-	var min_height := HUD_BUTTON_COMPACT_MIN_HEIGHT if compact else HUD_BUTTON_MIN_HEIGHT
-	var min_width := _hud_button_min_width_for_text(button.text, font_size)
-	button.custom_minimum_size = Vector2(maxf(button.custom_minimum_size.x, min_width), maxf(button.custom_minimum_size.y, min_height))
-	button.add_theme_font_size_override("font_size", font_size)
-	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
-	button.add_theme_color_override("font_disabled_color", Color(0.44, 0.50, 0.56, 1.0))
-	button.add_theme_stylebox_override("normal", _hud_button_style(accent, false, false))
-	button.add_theme_stylebox_override("hover", _hud_button_style(accent, true, false))
-	button.add_theme_stylebox_override("pressed", _hud_button_style(accent, true, true))
-	button.add_theme_stylebox_override("disabled", _hud_button_style(Color(0.26, 0.31, 0.36, 1.0), false, false))
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+func _style_hud_button(button: Button, accent: Color, _compact: bool = false) -> void:
+	var scale: float = _center_layout_profile().scale
+	CenterTheme.button(button, scale, accent == HUD_ACCENT_WARM, accent == HUD_DANGER)
+
 
 
 func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
@@ -875,6 +894,9 @@ func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
+	if _center_ui != null:
+		CenterTheme.input(input, float(_center_layout_profile().scale), bool(input.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)))
+		return
 	if bool(input.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)):
 		NonBattleTouchBridgeScript.configure_persistent_native_line_edit(input, LineEdit.KEYBOARD_TYPE_DEFAULT)
 	else:
@@ -888,18 +910,8 @@ func _style_hud_line_edit(input: LineEdit) -> void:
 
 
 func _hud_input_style(hover: bool) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.015, 0.035, 0.055, 0.88)
-	if hover:
-		style.bg_color = Color(0.025, 0.075, 0.105, 0.94)
-	style.border_color = Color(0.23, 0.78, 1.0, 0.70 if hover else 0.42)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 12
-	style.content_margin_right = 12
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
-	return style
+	return CenterTheme.box(CenterTheme.BG, CenterTheme.ACCENT if hover else CenterTheme.LINE, 9, 10)
+
 
 
 func _setup_deck_recommendations() -> void:
@@ -1130,7 +1142,7 @@ func _as_dictionary(value: Variant) -> Dictionary:
 
 
 func _ensure_recommendation_section() -> void:
-	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list_container := get_node_or_null("%DeckList") as Container
 	if deck_list_container == null:
 		return
 	if _recommendation_section != null and is_instance_valid(_recommendation_section):
@@ -1151,6 +1163,7 @@ func _ensure_recommendation_section() -> void:
 	_recommendation_status_label = Label.new()
 	_recommendation_status_label.name = "RecommendationStatusLabel"
 	_recommendation_status_label.text = ""
+	_recommendation_status_label.visible = false
 	_recommendation_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_recommendation_status_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
 	_recommendation_status_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
@@ -1160,6 +1173,13 @@ func _ensure_recommendation_section() -> void:
 func _refresh_recommendation_cards() -> void:
 	_ensure_recommendation_section()
 	if _recommendation_section == null or _recommendation_feed == null:
+		return
+
+	if _center_ui != null and not _current_recommendation.is_empty():
+		_recommendation_section.visible = true
+		_center_ui.refresh_discovery(_current_recommendation, _recommendation_feed)
+		if _recommendation_matches_deck_center_latest(_current_recommendation):
+			_mark_deck_center_recommendation_badge_seen(false)
 		return
 
 	for child: Node in _recommendation_feed.get_children():
@@ -1179,7 +1199,7 @@ func _refresh_recommendation_cards() -> void:
 
 	var should_mark_recommendation_badge_seen := _recommendation_matches_deck_center_latest(_current_recommendation)
 	_recommendation_feed.add_child(_create_recommendation_feed_card(_current_recommendation))
-	if not _is_deck_manager_portrait_layout() and is_inside_tree() and DisplayServer.get_name() != "headless":
+	if _center_ui == null and not _is_deck_manager_portrait_layout() and is_inside_tree() and DisplayServer.get_name() != "headless":
 		call_deferred("_request_recommendation_poster", _current_recommendation.duplicate(true))
 	if should_mark_recommendation_badge_seen:
 		_mark_deck_center_recommendation_badge_seen(false)
@@ -1207,6 +1227,8 @@ func _create_recommendation_placeholder() -> PanelContainer:
 
 
 func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContainer:
+	if _center_ui != null:
+		return _center_ui.recommendation_card(recommendation)
 	var portrait := _is_deck_manager_portrait_layout()
 	var desktop_overview := not portrait and _deck_image_variant() == DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW
 	var context := _current_non_battle_layout_context
@@ -1468,6 +1490,8 @@ func _is_deck_manager_web_runtime() -> bool:
 
 
 func _deck_image_variant() -> String:
+	if _share_poster_user_variant != "":
+		return _share_poster_user_variant
 	if _test_deck_image_variant_override != "":
 		return _test_deck_image_variant_override
 	if _test_web_runtime_override:
@@ -1507,16 +1531,16 @@ func _recommendation_poster_preview_size() -> Vector2:
 	return RECOMMENDATION_DESKTOP_PREVIEW_SIZE if _deck_image_variant() == DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW else RECOMMENDATION_MOBILE_SHARE_PREVIEW_SIZE
 
 
-func _should_confirm_web_portrait_deck_edit() -> bool:
-	return _is_deck_manager_portrait_layout() and _is_deck_manager_web_runtime()
-
-
 func _deck_manager_portrait_scale() -> float:
 	return float(_current_non_battle_layout_context.get("portrait_scale", 1.0)) if _is_deck_manager_portrait_layout() else 1.0
 
 
 func _apply_recommendation_button_mobile_metrics(button: Button) -> void:
 	if button == null:
+		return
+	if _center_ui != null:
+		button.custom_minimum_size.y = 48 * float(_center_layout_profile().scale)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		return
 	NonBattleTouchBridgeScript.bind_button_touch(button)
 	if not _is_deck_manager_portrait_layout():
@@ -1540,10 +1564,12 @@ func _ensure_recommendation_poster_importer() -> void:
 
 func _recommendation_poster_key(recommendation: Dictionary) -> String:
 	var item_id := str(recommendation.get("id", "")).strip_edges()
-	if item_id != "":
-		return item_id
 	var deck_id := int(recommendation.get("deck_id", 0))
-	return "deck-%d" % deck_id if deck_id > 0 else ""
+	if item_id == "" and deck_id > 0:
+		item_id = "deck-%d" % deck_id
+	if item_id != "" and _center_ui != null:
+		item_id += "::" + _recommendation_poster_variant(recommendation)
+	return item_id
 
 
 func _recommendation_poster_cache_dir() -> String:
@@ -1554,7 +1580,7 @@ func _recommendation_poster_disk_cache_fingerprint(recommendation: Dictionary) -
 	var source := _as_dictionary(recommendation.get("source", {}))
 	var parts := PackedStringArray([
 		RECOMMENDATION_POSTER_RENDER_REVISION,
-		_deck_image_variant(),
+		_recommendation_poster_variant(recommendation),
 		str(recommendation.get("id", "")).strip_edges(),
 		str(recommendation.get("deck_id", 0)),
 		str(recommendation.get("deck_name", "")).strip_edges(),
@@ -1595,7 +1621,7 @@ func _load_recommendation_poster_disk_cache(recommendation: Dictionary) -> bool:
 	var image := Image.new()
 	if image.load(path) != OK or image.is_empty():
 		return false
-	if _deck_image_variant() == DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW and image.get_size() != DeckPosterComposerScript.DESKTOP_OVERVIEW_OUTPUT_SIZE:
+	if _recommendation_poster_variant(recommendation) == DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW and image.get_size() != DeckPosterComposerScript.DESKTOP_OVERVIEW_OUTPUT_SIZE:
 		return false
 	var deck := _resolve_recommendation_poster_deck(recommendation)
 	var texture := ImageTexture.create_from_image(image)
@@ -1628,6 +1654,8 @@ func _request_recommendation_poster(recommendation: Dictionary) -> void:
 	if normalized.is_empty():
 		_fail_recommendation_poster_download("推荐数据不完整，无法生成卡组图。")
 		return
+	# Carry the requested aspect through async imports/composition and rotation.
+	normalized["_poster_variant"] = _recommendation_poster_variant(recommendation)
 	var key := _recommendation_poster_key(normalized)
 	if key == "":
 		_fail_recommendation_poster_download("推荐缺少稳定标识，无法生成卡组图。")
@@ -1758,7 +1786,7 @@ func _compose_recommendation_poster(recommendation: Dictionary, deck: DeckData) 
 		_fail_recommendation_poster_download("推荐牌表不可用，无法生成卡组图。")
 		return
 	var result: Dictionary = await DeckPosterComposerScript.compose_for_variant(
-		_deck_image_variant(),
+		_recommendation_poster_variant(recommendation),
 		deck,
 		_recommendation_poster_author(recommendation),
 		"",
@@ -1823,6 +1851,9 @@ func _touch_recommendation_poster_cache_key(key: String) -> void:
 
 
 func _apply_recommendation_poster_to_visible_card(key: String) -> void:
+	if _center_ui != null:
+		_center_ui.apply_discovery_poster(key)
+		return
 	var preview := find_child("RecommendationPosterPreview", true, false) as TextureRect
 	if preview == null or str(preview.get_meta("recommendation_key", "")) != key:
 		return
@@ -2088,6 +2119,7 @@ func _set_recommendation_status(message: String) -> void:
 	if _recommendation_status_label == null or not is_instance_valid(_recommendation_status_label):
 		return
 	_recommendation_status_label.text = message
+	_recommendation_status_label.visible = not message.is_empty() and not (_center_ui != null and message.begins_with("已加载"))
 
 
 func _on_recommendation_next_pressed() -> void:
@@ -2651,6 +2683,9 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 
 	var overlay := Control.new()
 	overlay.name = "RecommendationDetailOverlay"
+	overlay.set_meta("deck_center_modal", true)
+	overlay.z_index = 2700
+	overlay.set_meta("recommendation", normalized)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_recommendation_detail_overlay = overlay
@@ -2665,7 +2700,7 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var margin := MarginContainer.new()
 	margin.name = "RecommendationDetailMargin"
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var margin_value := roundi(24.0 * portrait_scale) if portrait else 24
+	var margin_value := roundi(float(_center_layout_profile().margin))
 	margin.offset_left = margin_value
 	margin.offset_top = margin_value
 	margin.offset_right = -margin_value
@@ -2685,7 +2720,7 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	margin.add_child(panel)
 
 	var outer := VBoxContainer.new()
-	outer.add_theme_constant_override("separation", int(context.get("section_gap", 12)) if portrait else 12)
+	outer.add_theme_constant_override("separation", int(context.get("section_gap", 12)))
 	panel.add_child(outer)
 
 	var header := HBoxContainer.new()
@@ -2698,15 +2733,15 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 
 	var deck_name := Label.new()
 	deck_name.text = str(normalized.get("deck_name", "推荐卡组"))
-	deck_name.autowrap_mode = TextServer.AUTOWRAP_WORD
-	deck_name.add_theme_font_size_override("font_size", int(context.get("title_font_size", 24)) if portrait else HudThemeScript.scaled_font_size(24))
+	deck_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	deck_name.add_theme_font_size_override("font_size", int(context.get("title_font_size", 24)))
 	deck_name.add_theme_color_override("font_color", HUD_TEXT)
 	title_box.add_child(deck_name)
 
 	var meta := Label.new()
 	meta.text = _recommendation_source_text(normalized)
-	meta.autowrap_mode = TextServer.AUTOWRAP_WORD
-	meta.add_theme_font_size_override("font_size", int(context.get("meta_font_size", 14)) if portrait else HudThemeScript.scaled_font_size(14))
+	meta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	meta.add_theme_font_size_override("font_size", int(context.get("meta_font_size", 14)))
 	meta.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	title_box.add_child(meta)
 
@@ -2718,6 +2753,8 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	HudThemeScript.style_scroll_container(scroll, "auto")
 	if portrait:
 		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	if _center_ui != null:
+		CenterTheme.scroll(scroll)
 	outer.add_child(scroll)
 
 	var content_margin := MarginContainer.new()
@@ -2729,13 +2766,13 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var content := VBoxContainer.new()
 	content.name = "RecommendationDetailContent"
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", int(context.get("section_gap", 12)) if portrait else 12)
+	content.add_theme_constant_override("separation", int(context.get("section_gap", 12)))
 	content_margin.add_child(content)
 
 	var title := Label.new()
 	title.text = str(normalized.get("title", normalized.get("deck_name", "推荐卡组")))
-	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	title.add_theme_font_size_override("font_size", int(context.get("section_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(18))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.add_theme_font_size_override("font_size", int(context.get("section_font_size", 18)))
 	title.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0, 1.0))
 	content.add_child(title)
 
@@ -2823,23 +2860,21 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 
 
 func _create_recommendation_detail_heading(text: String) -> Label:
-	var portrait := _is_deck_manager_portrait_layout()
 	var context := _current_non_battle_layout_context
 	var label := Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.add_theme_font_size_override("font_size", int(context.get("section_font_size", 17)) if portrait else HudThemeScript.scaled_font_size(17))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", int(context.get("section_font_size", 17)))
 	label.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	return label
 
 
 func _create_recommendation_detail_paragraph(text: String, color: Color) -> Label:
-	var portrait := _is_deck_manager_portrait_layout()
 	var context := _current_non_battle_layout_context
 	var label := Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)))
 	label.add_theme_color_override("font_color", color)
 	return label
 
@@ -2851,6 +2886,7 @@ func _on_recommendation_detail_import_pressed(recommendation: Dictionary) -> voi
 
 func _close_recommendation_detail_overlay() -> void:
 	if _recommendation_detail_overlay != null and is_instance_valid(_recommendation_detail_overlay):
+		_recommendation_detail_overlay.hide()
 		_recommendation_detail_overlay.queue_free()
 	_recommendation_detail_overlay = null
 
@@ -2907,7 +2943,7 @@ func _refresh_deck_list() -> void:
 	var render_generation := _deck_list_render_generation
 	_pending_deck_list_render.clear()
 	_pending_deck_list_render_index = 0
-	var deck_list_container: VBoxContainer = %DeckList
+	var deck_list_container: Container = %DeckList
 	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
 	var previous_scroll := deck_scroll.scroll_vertical if deck_scroll != null else 0
 	_refresh_recommendation_cards()
@@ -2928,7 +2964,7 @@ func _refresh_deck_list() -> void:
 func _append_deck_list_render_batch(generation: int, render_all: bool = false) -> void:
 	if generation != _deck_list_render_generation:
 		return
-	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list_container := get_node_or_null("%DeckList") as Container
 	if deck_list_container == null:
 		return
 	var batch_end := _pending_deck_list_render.size() if render_all else mini(
@@ -3030,7 +3066,7 @@ func _flush_full_deck_list_refresh() -> void:
 func _upsert_deck_row(deck: DeckData) -> void:
 	if deck == null:
 		return
-	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list_container := get_node_or_null("%DeckList") as Container
 	if deck_list_container == null:
 		return
 	for child: Node in deck_list_container.get_children():
@@ -3044,7 +3080,7 @@ func _upsert_deck_row(deck: DeckData) -> void:
 
 
 func _reorder_deck_rows() -> void:
-	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list_container := get_node_or_null("%DeckList") as Container
 	if deck_list_container == null:
 		return
 	var target_index := 0
@@ -3077,7 +3113,7 @@ func _remove_deck_row(deck_id: int) -> void:
 			_pending_deck_list_render.remove_at(index)
 			if index < _pending_deck_list_render_index:
 				_pending_deck_list_render_index = maxi(0, _pending_deck_list_render_index - 1)
-	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list_container := get_node_or_null("%DeckList") as Container
 	if deck_list_container == null:
 		return
 	for child: Node in deck_list_container.get_children():
@@ -3094,7 +3130,11 @@ func _on_local_deck_search_changed(new_text: String) -> void:
 	_update_local_deck_search_clear_state(new_text)
 	_apply_local_deck_search_filter()
 	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
-	if deck_scroll != null:
+	var search_input := get_node_or_null("%DeckSearchInput") as LineEdit
+	# On touch devices this scroll owns discovery, search and results together.
+	# Resetting it while typing moves the focused DOM editor and clear button
+	# outside the viewport. Only reset a separate desktop results scroller.
+	if deck_scroll != null and (search_input == null or not deck_scroll.is_ancestor_of(search_input)):
 		deck_scroll.scroll_vertical = 0
 
 
@@ -3119,7 +3159,7 @@ func _on_local_deck_search_clear_pressed() -> void:
 
 
 func _apply_local_deck_search_filter() -> void:
-	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list_container := get_node_or_null("%DeckList") as Container
 	var empty_label := get_node_or_null("%EmptyLabel") as Label
 	if deck_list_container == null or empty_label == null:
 		return
@@ -3129,13 +3169,15 @@ func _apply_local_deck_search_filter() -> void:
 		if not child.has_meta("deck_id"):
 			continue
 		local_deck_count += 1
-		var matches := _deck_name_matches_search(str(child.get_meta("deck_name", "")), _local_deck_search_query)
+		var matches := _deck_name_matches_search(str(child.get_meta("search_text", child.get_meta("deck_name", ""))), _local_deck_search_query)
 		if child is Control:
 			(child as Control).visible = matches
 		if matches:
 			matching_deck_count += 1
 	empty_label.text = LOCAL_DECK_SEARCH_EMPTY_TEXT if local_deck_count > 0 and not _local_deck_search_query.is_empty() else LOCAL_DECK_EMPTY_TEXT
 	empty_label.visible = local_deck_count == 0 or matching_deck_count == 0
+	if _center_ui != null:
+		_center_ui.update_count(matching_deck_count, local_deck_count)
 
 
 func _deck_name_matches_search(deck_name: String, query: String) -> bool:
@@ -3165,6 +3207,8 @@ func _normalize_local_deck_search_text(text: String) -> String:
 
 
 func _create_deck_item(deck: DeckData) -> Control:
+	if _center_ui != null:
+		return _center_ui.create_deck_item(deck)
 	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
 	var context := _current_non_battle_layout_context
 	var gap := int(context.get("section_gap", 12)) if portrait else 12
@@ -3274,9 +3318,9 @@ func _on_import_pressed() -> void:
 func _on_share_deck_poster(deck: DeckData) -> void:
 	if deck == null or _current_operation != "":
 		return
-	var desktop_overview := _deck_image_variant() == DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW
-	var dialog_title := "生成卡组总览图" if desktop_overview else "生成卡组图"
-	var dialog_copy := "生成 4:3 横向总览图，完整展示卡组构成。" if desktop_overview else "填写署名后保存。主视觉、配色和版式会根据卡组自动生成。"
+	var desktop_overview := not _is_deck_manager_portrait_layout() if _center_ui != null else _deck_image_variant() == DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW
+	var dialog_title := "分享卡组"
+	var dialog_copy := "选择图片版式，填写署名后保存。竖版图片支持扫码导入。"
 	var shell := _create_deck_action_hud_shell(dialog_title, dialog_copy, Vector2(720.0, 520.0), "share_poster")
 	var content := shell.get("content") as VBoxContainer
 	var footer := shell.get("footer") as HBoxContainer
@@ -3306,7 +3350,30 @@ func _on_share_deck_poster(deck: DeckData) -> void:
 	var save_button := _create_deck_action_hud_button("保存卡组图", HUD_RENAME, "DeckSharePosterSaveButton")
 	save_button.pressed.connect(_on_share_poster_save_pressed.bind(deck, author_input, status_label, save_button))
 	footer.add_child(save_button)
-	if _is_deck_manager_web_runtime():
+	if _center_ui != null:
+		_share_poster_user_variant = DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW if desktop_overview else DeckPosterComposerScript.VARIANT_MOBILE_SHARE
+		var formats := HBoxContainer.new()
+		formats.name = "DeckShareFormatChoices"
+		content.add_child(formats)
+		content.move_child(formats, 1)
+		for spec: Array in [["横版总览", DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW], ["竖版分享", DeckPosterComposerScript.VARIANT_MOBILE_SHARE]]:
+			var format_button := CenterTheme.action(str(spec[0]), Callable(), float(_center_layout_profile().scale))
+			format_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			format_button.toggle_mode = true
+			format_button.set_pressed_no_signal(_share_poster_user_variant == str(spec[1]))
+			format_button.pressed.connect(func():
+				_share_poster_user_variant = str(spec[1])
+				for other: Button in formats.get_children():
+					other.set_pressed_no_signal(other == format_button)
+				_queue_web_share_poster_preparation(deck, author_input, status_label, save_button, false))
+			formats.add_child(format_button)
+		_share_poster_preview = TextureRect.new()
+		_share_poster_preview.name = "DeckShareImagePreview"
+		_share_poster_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_share_poster_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_share_poster_preview.custom_minimum_size.y = 190 * float(_center_layout_profile().scale)
+		content.add_child(_share_poster_preview)
+	if _is_deck_manager_web_runtime() or _center_ui != null:
 		author_input.text_changed.connect(_on_web_share_poster_author_changed.bind(deck, author_input, status_label, save_button))
 		_queue_web_share_poster_preparation(deck, author_input, status_label, save_button, false)
 
@@ -3315,7 +3382,7 @@ func _on_share_poster_save_pressed(deck: DeckData, author_input: LineEdit, statu
 	if deck == null:
 		return
 	var author := author_input.text.strip_edges() if author_input != null else ""
-	if _is_deck_manager_web_runtime():
+	if _is_deck_manager_web_runtime() or _center_ui != null:
 		if _share_poster_prepared_image == null \
 				or _share_poster_prepared_deck_id != deck.id \
 				or _share_poster_prepared_author != author:
@@ -3420,6 +3487,8 @@ func _prepare_web_share_poster(
 		save_button.disabled = false
 		return
 	_share_poster_prepared_image = result.get("image", null) as Image
+	if is_instance_valid(_share_poster_preview) and _share_poster_prepared_image != null:
+		_share_poster_preview.texture = ImageTexture.create_from_image(_share_poster_prepared_image)
 	_share_poster_prepared_deck_id = deck.id
 	_share_poster_prepared_author = author
 	status_label.text = "卡组图已就绪。"
@@ -3844,6 +3913,9 @@ func _apply_import_paste_text(text: String) -> void:
 
 
 func _on_do_import() -> void:
+	if _import_panel_ui.state == "preview":
+		_import_panel_ui.confirm_preview()
+		return
 	if _panel_mode != "import" or _current_operation != "":
 		return
 	if _import_panel_ui.state == "success" and _import_panel_ui.completed_deck != null:
@@ -3982,6 +4054,12 @@ func _on_import_progress(current: int, total: int, message: String) -> void:
 
 func _on_import_completed(deck: DeckData, errors: PackedStringArray) -> void:
 	_apply_pending_import_deck_name_override(deck)
+	if _center_ui != null:
+		_current_operation = ""
+		_set_operation_busy(false)
+		_ensure_import_panel_ui()
+		_import_panel_ui.show_preview(deck, errors)
+		return
 	if _has_duplicate_deck_name(deck.deck_name, deck.id):
 		_pending_import_deck = deck
 		_pending_import_errors = PackedStringArray(errors)
@@ -3993,13 +4071,11 @@ func _on_import_completed(deck: DeckData, errors: PackedStringArray) -> void:
 
 func _finalize_import_save(deck: DeckData, errors: PackedStringArray) -> void:
 	_save_deck_incrementally(deck)
-	if _is_deck_manager_web_runtime():
-		%ProgressLabel.text = "正在保存到浏览器…"
-		if not CardDatabase.last_deck_save_persistent:
-			_current_operation = ""
-			_set_operation_busy(false)
-			_show_import_result("卡组已导入当前会话，但浏览器未能保存。请勿关闭页面，检查浏览器是否允许网站存储。")
-			return
+	if not CardDatabase.last_deck_save_persistent:
+		_current_operation = ""
+		_set_operation_busy(false)
+		%ProgressLabel.text = "保存失败，牌表仍保留在此页。请检查存储权限或空间，再重试。"
+		return
 	_current_operation = ""
 	_pending_import_deck_name_override = ""
 	_set_operation_busy(false)
@@ -4058,6 +4134,10 @@ func _close_deck_action_hud_dialog(context_filter: String = "") -> void:
 	if context_filter != "" and _deck_action_hud_context != context_filter:
 		return
 	var closed_context := _deck_action_hud_context
+	if closed_context == "share_poster":
+		_share_poster_user_variant = ""
+		_share_poster_preview = null
+		_share_poster_prepare_serial += 1
 	var closing_overlay := _deck_action_hud_overlay
 	if closing_overlay != null and is_instance_valid(closing_overlay):
 		_release_deck_action_hud_focus(closing_overlay)
@@ -4093,17 +4173,15 @@ func _release_deck_action_hud_focus(overlay: Control) -> void:
 
 
 func _deck_action_hud_dialog_size(preferred_size: Vector2, fill_viewport_height: bool = false) -> Vector2:
-	var context := _current_non_battle_layout_context
-	var viewport_size: Vector2 = context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(390, 844))
-	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
-		viewport_size = Vector2(390, 844)
-	var margin := float(context.get("page_margin", 24.0))
-	var safe_height := maxf(340.0, viewport_size.y - margin * 2.0)
-	if not _is_deck_manager_portrait_layout():
-		return Vector2(preferred_size.x, safe_height if fill_viewport_height else preferred_size.y)
-	var width := maxf(320.0, viewport_size.x - margin * 2.0)
-	var height := safe_height if fill_viewport_height else clampf(preferred_size.y, 340.0, safe_height)
-	return Vector2(width, height)
+	var profile := _center_layout_profile()
+	var viewport_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", profile.size)
+	var scale: float = profile.scale
+	var margin: float = profile.margin
+	var width := minf(preferred_size.x * scale, viewport_size.x - margin * 2)
+	var height := viewport_size.y - margin * 2
+	if not fill_viewport_height:
+		height = minf(height, preferred_size.y * scale)
+	return Vector2(maxf(240, width), maxf(160, height))
 
 
 func _create_deck_action_hud_shell(
@@ -4114,101 +4192,81 @@ func _create_deck_action_hud_shell(
 	fill_viewport_height: bool = false
 ) -> Dictionary:
 	_close_deck_action_hud_dialog()
-
-	_deck_action_hud_overlay = Control.new()
-	_deck_action_hud_overlay.name = DECK_ACTION_HUD_DIALOG_NAME
-	_deck_action_hud_overlay.layout_mode = 1
-	_deck_action_hud_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_deck_action_hud_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	_deck_action_hud_overlay.z_as_relative = false
-	_deck_action_hud_overlay.z_index = 2600
-	add_child(_deck_action_hud_overlay)
-	_deck_action_hud_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_set_deck_action_hud_background_controls_blocked(true)
-
-	var shade := ColorRect.new()
-	shade.name = "DeckActionHudShade"
-	shade.layout_mode = 1
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.0, 0.012, 0.024, 0.62)
-	shade.mouse_filter = Control.MOUSE_FILTER_STOP
-	_deck_action_hud_overlay.add_child(shade)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var center := CenterContainer.new()
-	center.name = "DeckActionHudCenter"
-	center.layout_mode = 1
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_deck_action_hud_overlay.add_child(center)
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	_deck_action_hud_panel = PanelContainer.new()
+	var modal := preload("res://scripts/ui/GameModalDialog.gd").new()
+	modal.name = DECK_ACTION_HUD_DIALOG_NAME
+	modal.title = title
+	modal.get_title_label().name = "DeckActionHudTitle"
+	modal.get_title_label().text = title
+	modal.get_scroll().name = "DeckActionHudScroll"
+	modal.scale_content = false
+	modal.dialog_size = _deck_action_hud_dialog_size(preferred_size, fill_viewport_height)
+	modal.get_ok_button().hide()
+	_deck_action_hud_overlay = modal
+	_deck_action_hud_panel = modal.get_panel()
 	_deck_action_hud_panel.name = "DeckActionHudPanel"
-	_deck_action_hud_panel.custom_minimum_size = _deck_action_hud_dialog_size(preferred_size, fill_viewport_height)
-	_deck_action_hud_panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.025, 0.055, 0.085, 0.98), HUD_FRAME_BORDER, 22))
-	center.add_child(_deck_action_hud_panel)
-
-	var root := VBoxContainer.new()
-	root.name = "DeckActionHudRoot"
-	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_theme_constant_override("separation", int(_current_non_battle_layout_context.get("section_gap", 22)))
-	_deck_action_hud_panel.add_child(root)
-
-	var title_label := Label.new()
-	title_label.name = "DeckActionHudTitle"
-	title_label.text = title
-	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("title_font_size", 40)))
-	title_label.add_theme_color_override("font_color", HUD_TEXT)
-	title_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.74, 1.0, 0.58))
-	title_label.add_theme_constant_override("shadow_offset_y", 2)
-	root.add_child(title_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.name = "DeckActionHudScroll"
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var scroll_min_height := 150.0 if fill_viewport_height else maxf(150.0, _deck_action_hud_panel.custom_minimum_size.y - 190.0)
-	scroll.custom_minimum_size = Vector2(0.0, scroll_min_height)
-	HudThemeScript.style_scroll_container(scroll)
-	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
-	root.add_child(scroll)
-
+	_deck_action_hud_panel.set_meta("preferred_size", preferred_size)
+	_deck_action_hud_panel.set_meta("fill_height", fill_viewport_height)
+	_deck_action_hud_panel.set_meta("layout_scale", float(_center_layout_profile().scale))
+	_deck_action_hud_panel.custom_minimum_size = modal.dialog_size if not is_inside_tree() else Vector2.ZERO
+	_deck_action_hud_context = context
 	var content := VBoxContainer.new()
 	content.name = "DeckActionHudContent"
-	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.custom_minimum_size = Vector2(maxf(260.0, _deck_action_hud_panel.custom_minimum_size.x - 52.0), 0.0)
-	content.add_theme_constant_override("separation", int(_current_non_battle_layout_context.get("section_gap", 22)))
-	scroll.add_child(content)
-
-	var message := Label.new()
+	content.add_theme_constant_override("separation", int(_current_non_battle_layout_context.get("section_gap", 16)))
+	modal.add_content(content)
+	var message := CenterTheme.label(message_text, int(_current_non_battle_layout_context.get("body_font_size", 17)), CenterTheme.MUTED)
 	message.name = "DeckActionHudMessage"
-	message.text = message_text
 	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	message.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("body_font_size", 27)))
-	message.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	content.add_child(message)
+	modal.canceled.connect(func() -> void:
+		if context == "rename":
+			_on_rename_close_requested()
+		else:
+			_close_deck_action_hud_dialog(context)
+	)
+	add_child(modal)
+	_set_deck_action_hud_background_controls_blocked(true)
+	if is_inside_tree():
+		modal.popup_centered()
+	else:
+		modal.show()
+	return {"overlay": modal, "panel": _deck_action_hud_panel,
+		"root": modal.get_column(), "scroll": modal.get_scroll(),
+		"content": content, "footer": modal.get_footer()}
 
-	var footer := HBoxContainer.new()
-	footer.name = "DeckActionHudFooter"
-	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.alignment = BoxContainer.ALIGNMENT_END
-	footer.add_theme_constant_override("separation", maxi(14, int(_current_non_battle_layout_context.get("section_gap", 22)) / 2))
-	root.add_child(footer)
 
-	_deck_action_hud_context = context
-	_deck_action_hud_overlay.move_to_front()
-	return {
-		"overlay": _deck_action_hud_overlay,
-		"panel": _deck_action_hud_panel,
-		"root": root,
-		"scroll": scroll,
-		"content": content,
-		"footer": footer,
-	}
+func _reflow_deck_action_hud_dialog() -> void:
+	if not is_instance_valid(_deck_action_hud_panel):
+		return
+	var scale: float = _current_non_battle_layout_context.get("portrait_scale", 1.0)
+	var old_scale := float(_deck_action_hud_panel.get_meta("layout_scale", scale))
+	_scale_deck_modal_content(_deck_action_hud_panel, scale / old_scale, scale)
+	_deck_action_hud_panel.set_meta("layout_scale", scale)
+	_deck_action_hud_overlay.dialog_size = _deck_action_hud_dialog_size(
+		_deck_action_hud_panel.get_meta("preferred_size", Vector2(720, 520)),
+		bool(_deck_action_hud_panel.get_meta("fill_height", false)))
+	_deck_action_hud_overlay.call("_layout")
+	for key: String in ["energy_type", "axis", "pace"]:
+		var grid := _deck_action_hud_panel.find_child("StarterChoices_" + key, true, false) as GridContainer
+		if grid != null:
+			grid.columns = (3 if key == "energy_type" else 2) if _is_deck_manager_portrait_layout() else (6 if key == "energy_type" else (4 if key == "axis" else 3))
+
+
+func _scale_deck_modal_content(node: Node, ratio: float, scale: float) -> void:
+	if node is Control:
+		var control := node as Control
+		control.custom_minimum_size *= ratio
+		if control.has_theme_font_size_override("font_size"):
+			control.add_theme_font_size_override("font_size", roundi(control.get_theme_font_size("font_size") * ratio))
+		if control is Button:
+			var normal := control.get_theme_stylebox("normal") as StyleBoxFlat
+			CenterTheme.button(control, scale, normal != null and normal.bg_color == CenterTheme.ACCENT, control.get_theme_color("font_color") == CenterTheme.DANGER)
+		elif control is LineEdit:
+			CenterTheme.input(control, scale, bool(control.get_meta(NonBattleTouchBridgeScript.PERSISTENT_TEXT_INPUT_META, false)))
+		for metric: String in ["separation", "h_separation", "v_separation"]:
+			if control.has_theme_constant_override(metric):
+				control.add_theme_constant_override(metric, roundi(control.get_theme_constant(metric) * ratio))
+	for child: Node in node.get_children():
+		_scale_deck_modal_content(child, ratio, scale)
 
 
 func _create_deck_action_hud_button(text: String, accent: Color, node_name: String = "") -> Button:
@@ -4266,6 +4324,8 @@ func _show_starter_deck_builder() -> void:
 		"font_size",
 		int(_current_non_battle_layout_context.get("input_font_size", 29)) if _is_deck_manager_portrait_layout() else HudThemeScript.scaled_font_size(20)
 	)
+	if _center_ui != null:
+		CenterTheme.input(_starter_deck_name_input, float(_center_layout_profile().scale))
 	_starter_deck_name_input.text_changed.connect(_on_starter_deck_name_changed)
 	content.add_child(_starter_deck_name_input)
 
@@ -4302,6 +4362,9 @@ func _show_starter_deck_builder() -> void:
 	)
 	_starter_deck_preview_label.add_theme_color_override("font_color", HUD_TEXT)
 	_starter_deck_preview_label.custom_minimum_size.y = 92.0 if not _is_deck_manager_portrait_layout() else 150.0
+	if _center_ui != null:
+		_starter_deck_preview_label.custom_minimum_size.y = 0
+		_starter_deck_preview_label.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.body_font_size))
 	content.add_child(_starter_deck_preview_label)
 
 	var cancel_button := _create_deck_action_hud_button("取消", HUD_SECONDARY, "StarterDeckCancelButton")
@@ -4326,7 +4389,10 @@ func _add_starter_section_label(parent: VBoxContainer, text: String) -> void:
 
 func _create_starter_choice_grid(choice_key: String, options: Array[Dictionary], columns: int, name_prefix: String) -> GridContainer:
 	var grid := GridContainer.new()
+	grid.name = "StarterChoices_" + choice_key
 	grid.columns = maxi(1, columns)
+	if _center_ui != null and _is_deck_manager_portrait_layout() and choice_key == "energy_type":
+		grid.columns = 3
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
@@ -4350,6 +4416,8 @@ func _create_starter_choice_grid(choice_key: String, options: Array[Dictionary],
 		else:
 			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, HUD_BUTTON_COMPACT_MIN_HEIGHT)
 			button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE))
+		if _center_ui != null:
+			CenterTheme.button(button, float(_center_layout_profile().scale))
 		button.set_meta("starter_choice_key", choice_key)
 		button.set_meta("starter_choice_id", option_id)
 		button.toggled.connect(_on_starter_deck_choice_toggled.bind(choice_key, option_id))
@@ -4437,7 +4505,7 @@ func _on_create_starter_deck() -> void:
 
 
 func _show_rename_hud_dialog(initial_name: String, title: String, message_text: String) -> void:
-	var shell := _create_deck_action_hud_shell(title, message_text, Vector2(520.0, 520.0), "rename")
+	var shell := _create_deck_action_hud_shell(title, message_text, Vector2(520.0, 380.0), "rename")
 	var content := shell.get("content") as VBoxContainer
 	var footer := shell.get("footer") as HBoxContainer
 	if content == null or footer == null:
@@ -4448,6 +4516,7 @@ func _show_rename_hud_dialog(initial_name: String, title: String, message_text: 
 	_rename_input.name = "DeckRenameInput"
 	_rename_input.text = initial_name
 	_rename_input.text_changed.connect(_on_rename_text_changed)
+	_rename_input.text_submitted.connect(func(_text: String) -> void: _on_confirm_rename())
 	_rename_input.virtual_keyboard_enabled = true
 	_rename_input.virtual_keyboard_show_on_focus = true
 	_style_hud_line_edit(_rename_input)
@@ -4478,6 +4547,7 @@ func _show_rename_hud_dialog(initial_name: String, title: String, message_text: 
 	_rename_confirm_button = _create_deck_action_hud_button("\u786e\u8ba4", HUD_ACCENT_WARM, "DeckRenameConfirmButton")
 	_rename_confirm_button.pressed.connect(_on_confirm_rename)
 	footer.add_child(_rename_confirm_button)
+	_deck_action_hud_overlay.call_deferred("_layout")
 
 	_on_rename_text_changed(initial_name)
 	if _is_deck_manager_web_runtime():
@@ -4511,7 +4581,7 @@ func _show_import_rename_dialog(initial_name: String) -> void:
 
 
 func _prepare_web_rename_input() -> bool:
-	if not _is_deck_manager_web_runtime() or _rename_context != "import":
+	if not _is_deck_manager_web_runtime():
 		return false
 	if _rename_input == null or not _rename_input.editable or not _rename_input.visible:
 		return false
@@ -4530,148 +4600,17 @@ func _on_cancel_import_rename() -> void:
 	_hide_import_panel()
 
 
-func _show_rename_dialog(initial_name: String, title: String, message_text: String, ignored_deck_id: int, prefer_hud_dialog: bool = false) -> void:
+func _show_rename_dialog(initial_name: String, title: String, message_text: String, ignored_deck_id: int, _prefer_hud_dialog: bool = false) -> void:
 	_close_rename_dialog(false)
-
 	_rename_ignore_deck_id = ignored_deck_id
-	if prefer_hud_dialog and _is_deck_manager_portrait_layout():
-		_show_rename_hud_dialog(initial_name, title, message_text)
-		return
-
-	_rename_dialog = AcceptDialog.new()
-	_rename_dialog.title = title
-	_rename_dialog.ok_button_text = "\u786e\u8ba4"
-	_rename_dialog.dialog_hide_on_ok = false
-	_rename_dialog.close_requested.connect(_on_rename_close_requested)
-	_rename_dialog.confirmed.connect(_on_confirm_rename)
-	var dialog_size := _rename_dialog_size_for_current_layout()
-	_rename_dialog.min_size = dialog_size
-	_rename_dialog.size = dialog_size
-
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(dialog_size.x - 40, 120)
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	HudThemeScript.style_scroll_container(scroll)
-	_rename_dialog.add_child(scroll)
-
-	var content := VBoxContainer.new()
-	content.custom_minimum_size = Vector2(dialog_size.x - 60, 0)
-	content.add_theme_constant_override("separation", 8)
-	scroll.add_child(content)
-
-	var message := Label.new()
-	message.text = message_text
-	message.autowrap_mode = TextServer.AUTOWRAP_WORD
-	content.add_child(message)
-
-	_rename_input = LineEdit.new()
-	_rename_input.name = "DeckRenameInput"
-	_rename_input.text = initial_name
-	_rename_input.text_changed.connect(_on_rename_text_changed)
-	content.add_child(_rename_input)
-
-	_rename_clear_button = Button.new()
-	_rename_clear_button.name = "DeckRenameClearButton"
-	_rename_clear_button.text = "清除"
-	_rename_clear_button.pressed.connect(_on_clear_rename_input)
-	content.add_child(_rename_clear_button)
-
-	_rename_error_label = Label.new()
-	_rename_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_rename_error_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
-	content.add_child(_rename_error_label)
-
-	add_child(_rename_dialog)
-	_rename_confirm_button = _rename_dialog.get_ok_button()
-	if _rename_confirm_button != null:
-		_style_hud_button(_rename_confirm_button, HUD_ACCENT_WARM)
-	_apply_rename_dialog_layout(scroll, content, message)
-	_on_rename_text_changed(initial_name)
-
-	if is_inside_tree():
-		_popup_rename_dialog_centered()
-
-
-func _rename_dialog_size_for_current_layout() -> Vector2i:
-	if not _is_deck_manager_portrait_layout():
-		return RENAME_DIALOG_SIZE
-	var context := _current_non_battle_layout_context
-	var viewport_size: Vector2 = context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(390, 844))
-	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
-		viewport_size = Vector2(390, 844)
-	var margin := float(context.get("page_margin", 24.0))
-	var input_height := float(context.get("input_height", 98.0))
-	var width := minf(maxf(float(context.get("content_width", viewport_size.x - margin * 2.0)), 320.0), maxf(320.0, viewport_size.x - margin * 2.0))
-	var height := minf(maxf(440.0, input_height * 4.7), maxf(440.0, viewport_size.y - margin * 2.0))
-	return Vector2i(roundi(width), roundi(height))
-
-
-func _apply_rename_dialog_layout(scroll: ScrollContainer, content: VBoxContainer, message: Label) -> void:
-	if _rename_dialog == null:
-		return
-	var dialog_size := _rename_dialog_size_for_current_layout()
-	_rename_dialog.min_size = dialog_size
-	_rename_dialog.size = dialog_size
-	if not _is_deck_manager_portrait_layout():
-		if scroll != null:
-			scroll.custom_minimum_size = Vector2(dialog_size.x - 40, 120)
-			HudThemeScript.style_scroll_container(scroll)
-		if content != null:
-			content.custom_minimum_size = Vector2(dialog_size.x - 60, 0)
-		if _rename_clear_button != null:
-			_style_hud_button(_rename_clear_button, HUD_SECONDARY)
-			NonBattleTouchBridgeScript.bind_button_touch(_rename_clear_button)
-		return
-	var context := _current_non_battle_layout_context
-	var body_font := int(context.get("body_font_size", 27))
-	var input_font := int(context.get("input_font_size", 29))
-	var button_font := int(context.get("button_font_size", 33))
-	var input_height := float(context.get("input_height", 98.0))
-	var button_height := maxf(float(context.get("secondary_button_height", 104.0)), input_height)
-	var gap := int(context.get("section_gap", 22))
-	if scroll != null:
-		scroll.custom_minimum_size = Vector2(maxf(260.0, float(dialog_size.x) - 32.0), maxf(230.0, float(dialog_size.y) - button_height - 92.0))
-		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		HudThemeScript.style_scroll_container(scroll)
-		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
-	if content != null:
-		content.custom_minimum_size = Vector2(maxf(240.0, float(dialog_size.x) - 52.0), 0.0)
-		content.add_theme_constant_override("separation", gap)
-	if message != null:
-		message.add_theme_font_size_override("font_size", body_font)
-		message.autowrap_mode = TextServer.AUTOWRAP_WORD
-	if _rename_error_label != null:
-		_rename_error_label.add_theme_font_size_override("font_size", body_font)
-		_rename_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	if _rename_input != null:
-		_style_hud_line_edit(_rename_input)
-		_rename_input.custom_minimum_size.y = maxf(_rename_input.custom_minimum_size.y, input_height)
-		_rename_input.add_theme_font_size_override("font_size", input_font)
-		NonBattleTouchBridgeScript.configure_native_line_edit(_rename_input)
-	if _rename_clear_button != null:
-		_style_hud_button(_rename_clear_button, HUD_SECONDARY)
-		_rename_clear_button.custom_minimum_size.y = maxf(_rename_clear_button.custom_minimum_size.y, button_height)
-		_rename_clear_button.add_theme_font_size_override("font_size", button_font)
-		NonBattleTouchBridgeScript.bind_button_touch(_rename_clear_button)
-	if _rename_confirm_button != null:
-		_rename_confirm_button.custom_minimum_size.y = maxf(_rename_confirm_button.custom_minimum_size.y, button_height)
-		_rename_confirm_button.add_theme_font_size_override("font_size", button_font)
-		NonBattleTouchBridgeScript.bind_button_touch(_rename_confirm_button)
-
-
-func _popup_rename_dialog_centered() -> void:
-	if _rename_dialog == null or not is_instance_valid(_rename_dialog):
-		return
-	_rename_dialog.popup_centered(_rename_dialog_size_for_current_layout())
+	_show_rename_hud_dialog(initial_name, title, message_text)
 
 
 func _on_clear_rename_input() -> void:
 	if _rename_input == null:
 		return
-	_rename_input.text = ""
+	NonBattleTouchBridgeScript.replace_text_input_value(_rename_input, "", true)
 	_on_rename_text_changed("")
-	if _rename_input.is_inside_tree():
-		_rename_input.grab_focus()
 
 
 func _on_rename_text_changed(new_text: String) -> void:
@@ -4711,10 +4650,8 @@ func _on_confirm_rename() -> void:
 
 func _on_rename_close_requested() -> void:
 	if _rename_forced:
-		if _rename_dialog != null and is_instance_valid(_rename_dialog) and is_inside_tree():
-			_popup_rename_dialog_centered()
+		_on_cancel_import_rename()
 		return
-
 	_close_rename_dialog()
 
 
@@ -4806,29 +4743,6 @@ func _on_image_sync_failed(error_message: String) -> void:
 	%ProgressLabel.text = "同步失败：%s" % error_message
 
 
-func _show_web_portrait_deck_edit_prompt(deck_id: int) -> void:
-	var shell := _create_deck_action_hud_shell(
-		WEB_PORTRAIT_DECK_EDIT_TITLE,
-		WEB_PORTRAIT_DECK_EDIT_MESSAGE,
-		Vector2(560.0, 390.0),
-		WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT
-	)
-	var footer := shell.get("footer") as HBoxContainer
-	if footer == null:
-		return
-	var cancel_button := _create_deck_action_hud_button("\u53d6\u6d88", HUD_SECONDARY, "WebDeckEditCancelButton")
-	cancel_button.pressed.connect(func() -> void:
-		_close_deck_action_hud_dialog(WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT)
-	)
-	footer.add_child(cancel_button)
-	var continue_button := _create_deck_action_hud_button("\u5df2\u6a2a\u5c4f\uff0c\u7ee7\u7eed", HUD_ACCENT_WARM, "WebDeckEditContinueButton")
-	continue_button.pressed.connect(func() -> void:
-		_close_deck_action_hud_dialog(WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT)
-		GameManager.goto_deck_editor(deck_id)
-	)
-	footer.add_child(continue_button)
-
-
 func _on_edit_deck(deck: DeckData) -> void:
 	if deck == null:
 		return
@@ -4841,7 +4755,10 @@ func _on_edit_deck(deck: DeckData) -> void:
 func _on_view_deck(deck: DeckData) -> void:
 	if _image_syncer != null:
 		_image_syncer.ensure_deck_images(deck, {"priority": 3, "reason": "view_deck"})
-	_deck_view_dialog.call("show_deck", self, deck, _image_syncer)
+	if _center_ui != null:
+		_center_ui.show_detail(deck)
+	else:
+		_deck_view_dialog.call("show_deck", self, deck, _image_syncer)
 
 
 const VIEW_CATEGORY_ORDER: Dictionary = {
@@ -4922,127 +4839,7 @@ func _on_view_tile_input(event: InputEvent, set_code: String, card_index: String
 
 
 func _show_card_detail(card: CardData) -> void:
-	var dialog := AcceptDialog.new()
-	dialog.title = card.display_name()
-	dialog.ok_button_text = "关闭"
-	dialog.size = Vector2i(500, 480)
-
-	var scroll := ScrollContainer.new()
-	scroll.anchors_preset = Control.PRESET_FULL_RECT
-	scroll.offset_left = 8
-	scroll.offset_top = 8
-	scroll.offset_right = -8
-	scroll.offset_bottom = -8
-	HudThemeScript.style_scroll_container(scroll)
-	dialog.add_child(scroll)
-
-	var content := VBoxContainer.new()
-	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 6)
-	scroll.add_child(content)
-
-	var header := Label.new()
-	header.text = card.display_name()
-	header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
-	content.add_child(header)
-
-	var meta_parts: PackedStringArray = []
-	meta_parts.append(card.card_type)
-	if card.mechanic != "":
-		meta_parts.append(card.mechanic)
-	if card.set_code != "":
-		meta_parts.append("%s %s" % [card.set_code, card.card_index])
-	if card.rarity != "":
-		meta_parts.append(card.rarity)
-	var meta_label := Label.new()
-	meta_label.text = " | ".join(meta_parts)
-	meta_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	content.add_child(meta_label)
-
-	if card.is_pokemon():
-		_add_detail_separator(content)
-		var stat_parts: PackedStringArray = []
-		stat_parts.append("HP %d" % card.hp)
-		stat_parts.append("属性: %s" % _energy_display(card.energy_type))
-		stat_parts.append("阶段: %s" % card.stage)
-		stat_parts.append("撤退: %d" % card.retreat_cost)
-		var stat_label := Label.new()
-		stat_label.text = " | ".join(stat_parts)
-		content.add_child(stat_label)
-
-		if card.evolves_from != "":
-			var evo_label := Label.new()
-			evo_label.text = "从 %s 进化" % card.evolves_from
-			content.add_child(evo_label)
-
-		var weakness_text := ""
-		if card.weakness_energy != "":
-			weakness_text = "弱点: %s %s" % [_energy_display(card.weakness_energy), card.weakness_value]
-		var resist_text := ""
-		if card.resistance_energy != "":
-			resist_text = "抗性: %s %s" % [_energy_display(card.resistance_energy), card.resistance_value]
-		if weakness_text != "" or resist_text != "":
-			var wr_label := Label.new()
-			wr_label.text = "  ".join([weakness_text, resist_text]).strip_edges()
-			content.add_child(wr_label)
-
-		for ab: Dictionary in card.abilities:
-			_add_detail_separator(content)
-			var ab_title := Label.new()
-			ab_title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3))
-			ab_title.text = "特性: %s" % CardData.dictionary_display_name(ab)
-			content.add_child(ab_title)
-			var ab_display_text := CardData.dictionary_display_text(ab)
-			if ab_display_text != "":
-				var ab_text := Label.new()
-				ab_text.text = ab_display_text
-				ab_text.autowrap_mode = TextServer.AUTOWRAP_WORD
-				content.add_child(ab_text)
-
-		for atk: Dictionary in card.attacks:
-			_add_detail_separator(content)
-			var cost_str: String = str(atk.get("cost", ""))
-			var dmg_str: String = str(atk.get("damage", ""))
-			var atk_header := Label.new()
-			var parts: PackedStringArray = []
-			if cost_str != "":
-				parts.append("[%s]" % cost_str)
-			parts.append(CardData.dictionary_display_name(atk))
-			if dmg_str != "":
-				parts.append(dmg_str)
-			atk_header.text = " ".join(parts)
-			atk_header.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
-			content.add_child(atk_header)
-			var atk_display_text := CardData.dictionary_display_text(atk)
-			if atk_display_text != "":
-				var atk_text := Label.new()
-				atk_text.text = atk_display_text
-				atk_text.autowrap_mode = TextServer.AUTOWRAP_WORD
-				content.add_child(atk_text)
-
-	if card.description != "":
-		_add_detail_separator(content)
-		var desc := Label.new()
-		desc.text = card.description
-		desc.autowrap_mode = TextServer.AUTOWRAP_WORD
-		content.add_child(desc)
-
-	if card.effect_id != "":
-		_add_detail_separator(content)
-		var eid := Label.new()
-		eid.text = "效果ID: %s" % card.effect_id
-		eid.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-		content.add_child(eid)
-
-	if card.name_en != "":
-		var en_label := Label.new()
-		en_label.text = "英文名: %s" % card.name_en
-		en_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-		content.add_child(en_label)
-
-	add_child(dialog)
-	dialog.popup_centered()
-	dialog.confirmed.connect(dialog.queue_free)
+	preload("res://scripts/ui/decks/DeckCardDetails.gd").show_card(self, card)
 
 
 func _add_detail_separator(container: VBoxContainer) -> void:
@@ -5093,7 +4890,7 @@ func _load_image_from_buffer(image: Image, image_bytes: PackedByteArray) -> int:
 
 func _show_delete_deck_hud_dialog(deck: DeckData) -> void:
 	var message := "\u786e\u5b9a\u8981\u5220\u9664\u5361\u7ec4\u201c%s\u201d\u5417\uff1f" % deck.deck_name
-	var shell := _create_deck_action_hud_shell("\u786e\u8ba4\u5220\u9664", message, Vector2(520.0, 390.0), "delete")
+	var shell := _create_deck_action_hud_shell("\u786e\u8ba4\u5220\u9664", message, Vector2(520.0, 260.0), "delete")
 	var footer := shell.get("footer") as HBoxContainer
 	if footer == null:
 		return
@@ -5109,30 +4906,11 @@ func _show_delete_deck_hud_dialog(deck: DeckData) -> void:
 		_schedule_deck_delete(deck.id)
 	)
 	footer.add_child(delete_button)
+	_deck_action_hud_overlay.call_deferred("_layout")
 
 
 func _on_delete_deck(deck: DeckData) -> void:
-	if _is_deck_manager_portrait_layout():
-		_show_delete_deck_hud_dialog(deck)
-		return
-
-	var confirm := ConfirmationDialog.new()
-	confirm.title = "确认删除"
-	confirm.dialog_text = "确定要删除卡组“%s”吗？" % deck.deck_name
-	confirm.ok_button_text = "删除"
-	confirm.cancel_button_text = "取消"
-	confirm.confirmed.connect(func() -> void:
-		confirm.get_ok_button().disabled = true
-		confirm.hide()
-		confirm.queue_free()
-		_schedule_deck_delete(deck.id)
-	)
-	confirm.canceled.connect(confirm.queue_free)
-	add_child(confirm)
-	_style_hud_button(confirm.get_ok_button(), HUD_DANGER)
-	_style_hud_button(confirm.get_cancel_button(), HUD_SECONDARY)
-	if is_inside_tree():
-		confirm.popup_centered()
+	_show_delete_deck_hud_dialog(deck)
 
 
 func _schedule_deck_delete(deck_id: int) -> void:
@@ -5177,3 +4955,38 @@ func _set_operation_busy(busy: bool) -> void:
 	%BtnSyncImages.disabled = busy
 	%BtnBack.disabled = busy
 	_refresh_recommendation_cards()
+
+
+func _should_confirm_web_portrait_deck_edit() -> bool:
+	return _is_deck_manager_portrait_layout() and _is_deck_manager_web_runtime()
+
+
+func _show_web_portrait_deck_edit_prompt(deck_id: int) -> void:
+	var shell := _create_deck_action_hud_shell(
+		WEB_PORTRAIT_DECK_EDIT_TITLE,
+		WEB_PORTRAIT_DECK_EDIT_MESSAGE,
+		Vector2(560.0, 390.0),
+		WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT
+	)
+	var footer := shell.get("footer") as HBoxContainer
+	if footer == null:
+		return
+	var cancel_button := _create_deck_action_hud_button("\u53d6\u6d88", HUD_SECONDARY, "WebDeckEditCancelButton")
+	cancel_button.pressed.connect(func() -> void:
+		_close_deck_action_hud_dialog(WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT)
+	)
+	footer.add_child(cancel_button)
+	var continue_button := _create_deck_action_hud_button("\u5df2\u6a2a\u5c4f\uff0c\u7ee7\u7eed", HUD_ACCENT_WARM, "WebDeckEditContinueButton")
+	continue_button.pressed.connect(func() -> void:
+		_close_deck_action_hud_dialog(WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT)
+		GameManager.goto_deck_editor(deck_id)
+	)
+	footer.add_child(continue_button)
+
+
+func _recommendation_poster_variant(recommendation: Dictionary = {}) -> String:
+	if recommendation.has("_poster_variant"):
+		return str(recommendation._poster_variant)
+	if _center_ui != null:
+		return DeckPosterComposerScript.VARIANT_MOBILE_SHARE if bool(_center_ui.layout.portrait) else DeckPosterComposerScript.VARIANT_DESKTOP_OVERVIEW
+	return _deck_image_variant()

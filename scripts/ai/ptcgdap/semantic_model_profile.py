@@ -33,7 +33,12 @@ def _i32(values):
     return tuple(a), tuple(p)
 
 
-def project_semantic_frame(frame, allowed_uids):
+def project_semantic_frame(frame, allowed_uids, *, profile_id=PROFILE_ID):
+    if profile_id == 'ptcgdap_local_semantic_actor_i32_v2':
+        from .semantic_model_profile_v2 import project_semantic_frame_v2
+        return project_semantic_frame_v2(frame, allowed_uids)
+    if profile_id != PROFILE_ID:
+        raise ValueError('model_tensor_profile_invalid')
     from .competitive_policy_v2 import _frame_error
     clean = copy.deepcopy(frame)
     for side in ('self', 'opponent'):

@@ -1,0 +1,70 @@
+{
+  "name": "大岩蛇",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【无】 坚硬头锤 20\n抛掷1次硬币如果为正面，则在下一个对手的回合，这只宝可梦不受到招式的伤害和效果影响。\n\n【无】【无】【无】 大地粉碎 80\n\n\n",
+  "yorenCode": "P095",
+  "pokemonAttr": {
+    "energyType": "F",
+    "stage": "Basic",
+    "hp": 120,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "G",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 4,
+    "attack": [
+      {
+        "name": "坚硬头锤",
+        "text": "抛掷1次硬币如果为正面，则在下一个对手的回合，这只宝可梦不受到招式的伤害和效果影响。",
+        "cost": "C",
+        "damage": "20",
+        "isVStarPower": false
+      },
+      {
+        "name": "大地粉碎",
+        "text": "",
+        "cost": "CCC",
+        "damage": "80",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": ""
+  },
+  "setCode": "CSV6C",
+  "cardIndex": "067",
+  "setCardsNum": "",
+  "artist": "Shiburingaru",
+  "rarity": "C",
+  "releaseDate": "2025-11-06T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "f170a8c91d1fed0fc2c8398f48969539",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV6C",
+      "cardIndex": "067",
+      "cardName": "大岩蛇",
+      "rarity": "C",
+      "effectId": "f170a8c91d1fed0fc2c8398f48969539",
+      "cardType": "Pokemon",
+      "yorenCode": "P095",
+      "is": [
+        "Basic"
+      ],
+      "setCodeEn": "PAR",
+      "cardIndexEn": "90",
+      "nameEn": "Onix"
+    }
+  ],
+  "setCodeEn": "PAR",
+  "cardIndexEn": "90",
+  "nameEn": "Onix"
+}

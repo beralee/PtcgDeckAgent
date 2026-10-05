@@ -256,7 +256,7 @@ func test_live_replay_real_http_round_trip_when_e2e_environment_is_configured() 
 	var base_url := OS.get_environment("PTCGDAP_REPLAY_E2E_BASE_URL").strip_edges()
 	var bearer_token := OS.get_environment("PTCGDAP_REPLAY_E2E_TOKEN")
 	if base_url.is_empty() or bearer_token.is_empty():
-		return ""
+		return "SKIP: Replay HTTP fixture requires PTCGDAP_REPLAY_E2E_BASE_URL and PTCGDAP_REPLAY_E2E_TOKEN"
 	var owner := FakeOwner.new()
 	owner.match_id = "windows-player-http-%d" % Time.get_ticks_usec()
 	var coordinator: Node = CoordinatorScript.new()

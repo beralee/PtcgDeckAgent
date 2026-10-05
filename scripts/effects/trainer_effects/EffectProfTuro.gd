@@ -86,8 +86,8 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		player.hand.append(pokemon_card)
 	for energy_card: CardInstance in target_slot.attached_energy:
 		player.discard_card(energy_card)
-	if target_slot.attached_tool != null:
-		player.discard_card(target_slot.attached_tool)
+	for tool: CardInstance in target_slot.get_attached_tools():
+		player.discard_card(tool)
 
 	target_slot.pokemon_stack.clear()
 	target_slot.attached_energy.clear()

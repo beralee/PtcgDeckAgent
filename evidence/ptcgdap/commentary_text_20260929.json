@@ -1,0 +1,140 @@
+{
+  "date": "2026-09-29",
+  "functional": {
+    "total": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "ui_regression": {
+    "total": 92,
+    "passed": 92,
+    "failed": 0,
+    "skipped": 0
+  },
+  "rendered": {
+    "checks": [
+      {
+        "name": "default_off_creates_no_agent",
+        "passed": true
+      },
+      {
+        "name": "preparation_precedes_narration",
+        "passed": true
+      },
+      {
+        "name": "agent_understands_both_decks_first",
+        "passed": true
+      },
+      {
+        "name": "real_attack_submitted_through_interaction_owner",
+        "passed": true
+      },
+      {
+        "name": "real_engine_resolves_shadow_bullet_damage",
+        "passed": true
+      },
+      {
+        "name": "action_immediately_invalidates_old_subtitle",
+        "passed": true
+      },
+      {
+        "name": "settled_transaction_offered",
+        "passed": true
+      },
+      {
+        "name": "public_events_reach_mock_model",
+        "passed": true
+      },
+      {
+        "name": "agent_response_reaches_live_caption",
+        "passed": true
+      },
+      {
+        "name": "outbound_packet_is_public",
+        "passed": true
+      },
+      {
+        "name": "caption_does_not_intercept_board_input",
+        "passed": true
+      },
+      {
+        "name": "wide_caption_does_not_cover_board",
+        "passed": true
+      },
+      {
+        "name": "wide_caption_does_not_cover_hand",
+        "passed": true
+      },
+      {
+        "name": "wide_button_target",
+        "passed": true
+      },
+      {
+        "name": "portrait_caption_does_not_cover_board",
+        "passed": true
+      },
+      {
+        "name": "portrait_caption_does_not_cover_hand",
+        "passed": true
+      },
+      {
+        "name": "portrait_button_target",
+        "passed": true
+      },
+      {
+        "name": "mouse_history_uses_in_game_modal",
+        "passed": true
+      },
+      {
+        "name": "raw_touch_history_without_mouse_emulation",
+        "passed": true
+      },
+      {
+        "name": "keyboard_close_cancels_agent",
+        "passed": true
+      },
+      {
+        "name": "close_restores_board_space",
+        "passed": true
+      },
+      {
+        "name": "2d_with_opt_in_allocates_no_agent",
+        "passed": true
+      },
+      {
+        "name": "setup_enables_toggle_for_3d",
+        "passed": true
+      },
+      {
+        "name": "setup_toggle_persists_opt_in",
+        "passed": true
+      },
+      {
+        "name": "setup_raw_touch_toggles_once",
+        "passed": true
+      },
+      {
+        "name": "setup_disables_toggle_for_2d",
+        "passed": true
+      }
+    ],
+    "paid_requests": 0,
+    "passed": true,
+    "transport": "sub_agent_authored_fixture"
+  },
+  "knowledge": {
+    "decks": 112,
+    "profiles": 49,
+    "revision": "2026-09-29.1"
+  },
+  "paid_deepseek_requests": 0,
+  "model_test_source": "sub-agent-authored fixtures + localhost HTTP server",
+  "limitations": [
+    "Real DeepSeek output quality, latency and billing not measured",
+    "Public reveal identities and temporary effects are not comprehensively projected",
+    "Rendered fixture exit emitted one RefCounted ObjectDB cleanup warning; no script errors"
+  ],
+  "version_changed": false,
+  "published": false
+}

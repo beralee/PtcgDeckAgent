@@ -1,12 +1,15 @@
 ## 对战设置场景
 extends Control
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const AuthorStrategySetupModelScript := preload("res://scripts/ui/battle/author_strategy/AuthorStrategySetupModel.gd")
 const AuthorStrategyWindowsExecutionGateScript := preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
 const AuthorStrategyFeatureGateScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
+const BattlePresentation := preload("res://scripts/ui/battle/BattlePresentation.gd")
 
 const DECK_DISCUSSION_DIALOG_SCRIPT_PATH := "res://scenes/deck_editor/DeckDiscussionDialog.gd"
 const DECK_DISCUSSION_DIALOG_SCENE_PATH := "res://scenes/deck_editor/DeckDiscussionDialog.tscn"
@@ -33,9 +36,6 @@ const LUGIA_ARCHEOPS_DECK_ID := 575657
 const RAGING_BOLT_OGERPON_DECK_ID := 575718
 const DRAGAPULT_CHARIZARD_DECK_ID := 579502
 const DRAGAPULT_DUSKNOIR_DECK_ID := 575723
-const V17_AI_DECK_PRIORITY_IDS: Array[int] = [
-	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
-]
 const LOCAL_OPTIMIZED_RULE_DECK_IDS: Array[int] = [
 	800017097, # 无碟沙奈朵
 	800017280, # 铝钢龙钢铁防线
@@ -101,7 +101,7 @@ var _deck_strategy_registry: RefCounted = DeckStrategyRegistryScript.new()
 var _playable_ai_versions: Array[Dictionary] = []
 var _deck_view_dialog: RefCounted = null
 var _pending_ai_strategy_variant_id: String = ""
-var _strategy_discussion_dialog: AcceptDialog = null
+var _strategy_discussion_dialog: GameModal = null
 var _strategy_discussion_signature := ""
 var _llm_model_test_client: RefCounted = null
 var _pending_llm_model_test_config: Dictionary = {}
@@ -148,6 +148,7 @@ var _author_strategy_selected_ref: Dictionary = {}
 var _startup_performance: Dictionary = {}
 var _from_strategy_hub := false
 var _quick_setup_more: Button = null
+var _start_pending := false
 
 
 func _ready() -> void:
@@ -180,6 +181,7 @@ func _ready() -> void:
 	_setup_first_player_options()
 	_setup_background_gallery()
 	_setup_battle_effects_options()
+	_setup_commentary_option()
 	_setup_battle_layout_options()
 	_setup_battle_music_options()
 
@@ -304,6 +306,8 @@ func _apply_initial_non_battle_layout_pass(passes_remaining: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if preload("res://scripts/ui/GameModalDialog.gd").active_for(self) != null:
+		return
 	if _should_consume_startup_input_shield_event(event):
 		return
 	# Window GUI input is dispatched after this root hook.  While deck view exists
@@ -317,13 +321,15 @@ func _input(event: InputEvent) -> void:
 		return
 	if _handle_deck_picker_modal_input(event):
 		return
+	# The fixed footer renders above scrolling content. Match that order for
+	# root-routed touches so a slider behind Start cannot consume its tap.
+	if _handle_portrait_action_footer_input(event):
+		return
 	if _handle_deck_action_button_input(event):
 		return
 	if _handle_deck_picker_button_input(event):
 		return
 	if _handle_bgm_volume_slider_input(event):
-		return
-	if _handle_portrait_action_footer_input(event):
 		return
 	if _handle_background_gallery_root_input(event):
 		return
@@ -388,7 +394,7 @@ func _apply_quick_strategy_setup() -> void:
 	_quick_setup_more.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("button_font_size", 44)))
 	var expanded := not compact or _quick_setup_more.button_pressed
 	for node_name: String in ["ModeLabel", "ModeSegment", "BackgroundLabel", "BackgroundGallery",
-		"BattleEffectsLabel", "BattleEffectsSegment", "BattleLayoutLabel", "BattleLayoutSegment",
+		"CommentarySetupOption", "BattleEffectsLabel", "BattleEffectsSegment", "BattleLayoutLabel", "BattleLayoutSegment",
 		"AdvancedSectionTitle", "BgmSpacer", "BgmLabel", "BgmOption", "BgmVolumeRow", "BgmHint", "BgmActionsRow"]:
 		var control := find_child(node_name, true, false) as Control
 		if control != null:
@@ -582,6 +588,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 func _refresh_layout_dependent_controls_after_non_battle_layout() -> void:
 	if _current_non_battle_layout_context.is_empty():
 		return
+	_place_commentary_option(_current_non_battle_layout_context)
 	_sync_mode_segment_buttons()
 	_refresh_first_player_segment_labels()
 	_sync_first_player_segment_buttons()
@@ -782,7 +789,7 @@ func _apply_landscape_setup_hud_height_budget(context: Dictionary) -> void:
 	for picker_name: String in ["Deck1PickerButton", "Deck2PickerButton"]:
 		var picker := find_child(picker_name, true, false) as Button
 		if picker != null:
-			picker.custom_minimum_size.y = 52.0
+			picker.custom_minimum_size.y = _landscape_deck_picker_height(context)
 
 	# Keep the background cards horizontally scrollable without allowing their
 	# total row width to enlarge the two-column setup HUD beyond the viewport.
@@ -801,6 +808,11 @@ func _reset_landscape_minimum_sizes(node: Node) -> void:
 			control.custom_minimum_size.y = 0.0
 	for child: Node in node.get_children():
 		_reset_landscape_minimum_sizes(child)
+
+
+func _landscape_deck_picker_height(context: Dictionary) -> float:
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2(1600, 900))
+	return 52.0 if viewport_size.y <= 800.0 else 68.0
 
 
 func _apply_setup_text_layout_mode(portrait: bool) -> void:
@@ -1366,14 +1378,16 @@ func _apply_battle_setup_mobile_metrics(context: Dictionary) -> void:
 	var portrait := bool(context.get("is_portrait", false))
 	var margin_value := int(context.get("page_margin", 24.0))
 	var safe_area := get_node_or_null("SafeArea") as MarginContainer
-	if safe_area != null:
+	# Landscape owns a compact height budget. Do not temporarily expand it on
+	# every deferred AI refresh; nested containers otherwise retain stale sizes.
+	if safe_area != null and portrait:
 		safe_area.add_theme_constant_override("margin_left", margin_value)
 		safe_area.add_theme_constant_override("margin_top", margin_value)
 		safe_area.add_theme_constant_override("margin_right", margin_value)
 		safe_area.add_theme_constant_override("margin_bottom", margin_value)
 	var root := find_child("RootVBox", true, false) as VBoxContainer
 	if root != null:
-		root.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+		root.add_theme_constant_override("separation", int(context.get("section_gap", 14)) if portrait else 8)
 	var action_row := find_child("ActionRow", true, false) as HBoxContainer
 	if action_row != null:
 		action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1407,7 +1421,7 @@ func _apply_battle_setup_metrics_recursive(node: Node, context: Dictionary, port
 		var target_height := ceilf(float(context.get("secondary_button_height", 44.0)))
 		if button.name == "BtnStart" or button.name.ends_with("PickerButton"):
 			target_height = ceilf(float(context.get("primary_button_height", 52.0)))
-		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, target_height) if portrait else (68.0 if button.name.ends_with("PickerButton") else 42.0)
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, target_height) if portrait else (_landscape_deck_picker_height(context) if button.name.ends_with("PickerButton") else 42.0)
 		var button_font_size := int(context.get("button_font_size", 18))
 		if not portrait and button.name.ends_with("PickerButton"):
 			button_font_size = DECK_PICKER_SETUP_LANDSCAPE_FONT_SIZE
@@ -1981,6 +1995,8 @@ func _reapply_current_non_battle_layout_metrics() -> void:
 	if _current_non_battle_layout_context.is_empty():
 		return
 	_apply_battle_setup_mobile_metrics(_current_non_battle_layout_context)
+	if not bool(_current_non_battle_layout_context.get("is_portrait", false)):
+		_apply_landscape_setup_hud_height_budget(_current_non_battle_layout_context)
 
 
 func _refresh_ai_ui_visibility() -> void:
@@ -2696,6 +2712,8 @@ func _resolve_ai_opening_selection(deck: DeckData) -> Dictionary:
 
 
 func _setup_background_gallery() -> void:
+	_battle_backgrounds = _list_available_background_paths()
+	_selected_background_path = _available_background_or_default(GameManager.selected_battle_background)
 	var gallery := _background_gallery_scroll()
 	if gallery == null:
 		return
@@ -2908,19 +2926,54 @@ func _setup_battle_effects_options() -> void:
 	_sync_battle_effects_segment_buttons()
 
 
+func _setup_commentary_option() -> void:
+	if find_child("CommentarySetupOption", true, false) != null:
+		_refresh_commentary_option()
+		return
+	var anchor := get_node_or_null("%BattleEffectsLabel")
+	if anchor == null: return
+	var option := preload("res://scripts/commentary/CommentarySetupOption.gd").new()
+	anchor.get_parent().add_child(option)
+	anchor.get_parent().move_child(option, anchor.get_index())
+	option.update_field(_selected_background_path)
+
+
+func _refresh_commentary_option() -> void:
+	var option := find_child("CommentarySetupOption", true, false)
+	if option != null: option.update_field(_selected_background_path)
+
+
+func _place_commentary_option(context: Dictionary) -> void:
+	var option := find_child("CommentarySetupOption", true, false)
+	var anchor := get_node_or_null("%BattleEffectsLabel")
+	if option == null or anchor == null: return
+	var available: Vector2 = context.get("viewport_size", Vector2(1600, 900))
+	var compact := not bool(context.get("is_portrait", false)) and available.y <= 800
+	var destination: Node = find_child("BattleEffectsSegment", true, false) if compact else anchor.get_parent()
+	if option.get_parent() != destination: option.reparent(destination)
+	if not compact: destination.move_child(option, anchor.get_index())
+	option.set_compact(compact)
+
+
 func _on_battle_effects_segment_pressed(enabled: bool) -> void:
-	_battle_effects_enabled = enabled
-	GameManager.battle_effects_enabled = enabled
+	if BattlePresentation.field_theme(_selected_background_path) != "":
+		BattlePresentation.ThemeScript.save_option("motion",enabled)
+	else:
+		_battle_effects_enabled = enabled
+		GameManager.battle_effects_enabled = enabled
 	_sync_battle_effects_segment_buttons()
 
 
 func _sync_battle_effects_segment_buttons() -> void:
+	# Show and edit the same preference that the selected field actually uses.
+	# In particular, a saved 3D-off setting must be recoverable on touch devices.
+	var selected_effects := BattlePresentation.ThemeScript.option("motion") if BattlePresentation.field_theme(_selected_background_path) != "" else _battle_effects_enabled
 	for enabled_variant: Variant in _battle_effects_segment_buttons.keys():
 		var enabled := bool(enabled_variant)
 		var button := _battle_effects_segment_buttons[enabled] as Button
 		if button == null:
 			continue
-		var active := enabled == _battle_effects_enabled
+		var active := enabled == selected_effects
 		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
@@ -3475,6 +3528,8 @@ func _list_available_background_paths() -> Array[String]:
 		"res://assets/ui/background4.png",
 	]
 	var results: Array[String] = []
+	if BattlePresentation.fields_3d_available() and ResourceLoader.exists(BattlePresentation.GROVE_FIELD):
+		results.append(BattlePresentation.GROVE_FIELD)
 	for path: String in candidates:
 		if ResourceLoader.exists(path):
 			results.append(path)
@@ -3492,7 +3547,7 @@ func _refresh_background_gallery() -> void:
 		_battle_backgrounds = _list_available_background_paths()
 	else:
 		_battle_backgrounds = _battle_backgrounds.duplicate()
-	_selected_background_path = GameManager.selected_battle_background if GameManager.selected_battle_background != "" else DEFAULT_BACKGROUND
+	_selected_background_path = _available_background_or_default(_selected_background_path)
 	_clear_background_gallery()
 	for bg_path: String in _battle_backgrounds:
 		var texture := _load_background_preview_texture(bg_path)
@@ -3543,12 +3598,12 @@ func _build_background_card(path: String, texture: Texture2D) -> PanelContainer:
 		if _handle_background_gallery_drag_input(event):
 			return
 		if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_selected_background_path = path
-			_refresh_background_selection()
+			_select_background_path(path)
 	)
 
 	var margin := MarginContainer.new()
 	margin.name = "DeckPickerMargin"
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 4)
 	margin.add_theme_constant_override("margin_top", 4)
@@ -3557,11 +3612,54 @@ func _build_background_card(path: String, texture: Texture2D) -> PanelContainer:
 	card.add_child(margin)
 
 	var preview := TextureRect.new()
+	preview.name = "FieldPreview"
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.set_anchors_preset(Control.PRESET_FULL_RECT)
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	preview.texture = texture
 	margin.add_child(preview)
+	var arena_theme := BattlePresentation.field_theme(path)
+	if arena_theme != "":
+		card.tooltip_text = str(BattlePresentation.ThemeScript.palette(arena_theme).title)
+		var overlay := Control.new()
+		overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_child(overlay)
+		var badge := Label.new()
+		badge.name = "Field3DBadge"
+		badge.text = "3D"
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge.add_theme_font_size_override("font_size", 16)
+		badge.add_theme_color_override("font_color", HUD_TEXT)
+		var badge_style := StyleBoxFlat.new()
+		badge_style.bg_color = Color(0.02, 0.08, 0.12, 0.92)
+		badge_style.set_corner_radius_all(5)
+		badge.add_theme_stylebox_override("normal", badge_style)
+		overlay.add_child(badge)
+		badge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+		badge.offset_left = -42
+		badge.offset_top = -26
+		badge.offset_right = -4
+		badge.offset_bottom = -4
+		var caption := Label.new()
+		caption.name = "FieldName"
+		caption.text = card.tooltip_text
+		caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		caption.add_theme_font_size_override("font_size", 14)
+		caption.add_theme_color_override("font_color", HUD_TEXT)
+		var caption_style := badge_style.duplicate() as StyleBoxFlat
+		caption_style.content_margin_left = 6
+		caption_style.content_margin_right = 6
+		caption.add_theme_stylebox_override("normal", caption_style)
+		overlay.add_child(caption)
+		caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+		caption.offset_left = 4
+		caption.offset_top = -26
+		caption.offset_right = 88
+		caption.offset_bottom = -4
 
 	return card
 
@@ -3755,11 +3853,17 @@ func _select_background_card_at_position(global_position: Vector2) -> bool:
 
 
 func _select_background_path(path: String) -> bool:
-	if path == "":
+	if path not in _battle_backgrounds:
 		return false
 	_selected_background_path = path
 	_refresh_background_selection()
 	return true
+
+
+func _available_background_or_default(path: String) -> String:
+	if path in _battle_backgrounds:
+		return path
+	return _battle_backgrounds[0] if not _battle_backgrounds.is_empty() else DEFAULT_BACKGROUND
 
 
 func _background_card_at_position(global_position: Vector2) -> PanelContainer:
@@ -3812,8 +3916,9 @@ func _control_has_global_point(control: Control, global_position: Vector2) -> bo
 
 
 func _refresh_background_selection() -> void:
-	if _selected_background_path == "":
-		_selected_background_path = DEFAULT_BACKGROUND
+	_selected_background_path = _available_background_or_default(_selected_background_path)
+	_refresh_commentary_option()
+	_sync_battle_effects_segment_buttons()
 	for card: PanelContainer in _background_cards:
 		if card == null:
 			continue
@@ -3922,67 +4027,7 @@ func _compare_decks_by_edit_time_desc(a: DeckData, b: DeckData) -> bool:
 
 
 func _compare_ai_decks_by_setup_priority(a: DeckData, b: DeckData) -> bool:
-	var a_setup := _ai_deck_setup_priority_key(a)
-	var b_setup := _ai_deck_setup_priority_key(b)
-	if a_setup != b_setup:
-		return a_setup > b_setup
-	var a_release := _ai_deck_release_key(a)
-	var b_release := _ai_deck_release_key(b)
-	if a_release != b_release:
-		return a_release > b_release
-	var a_time := _deck_edit_key(a)
-	var b_time := _deck_edit_key(b)
-	if a_time != b_time:
-		return a_time > b_time
-	var a_import := _deck_import_key(a)
-	var b_import := _deck_import_key(b)
-	if a_import != b_import:
-		return a_import > b_import
-	var a_id := int(a.id) if a != null else 0
-	var b_id := int(b.id) if b != null else 0
-	return a_id < b_id
-
-
-func _ai_deck_setup_priority_key(deck: DeckData) -> int:
-	if CardDatabase != null and CardDatabase.has_method("get_ai_deck_strength_priority"):
-		var strength_priority := int(CardDatabase.get_ai_deck_strength_priority(deck))
-		if strength_priority > 0:
-			return 1000 + strength_priority
-	var version_priority := _ai_deck_version_priority_key(deck)
-	if version_priority > 0:
-		return version_priority
-	var deck_id := int(deck.id) if deck != null else 0
-	if V17_AI_DECK_PRIORITY_IDS.has(deck_id):
-		return 100
-	return 0
-
-
-func _ai_deck_version_priority_key(deck: DeckData) -> int:
-	if CardDatabase != null and CardDatabase.has_method("get_ai_deck_version_priority"):
-		return int(CardDatabase.get_ai_deck_version_priority(deck))
-	var deck_id := int(deck.id) if deck != null else 0
-	var deck_name := str(deck.deck_name) if deck != null else ""
-	if deck_name.begins_with("18.0"):
-		return 300
-	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
-		return 200
-	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
-		return 100
-	return 0
-
-
-func _ai_deck_release_key(deck: DeckData) -> int:
-	var deck_id := int(deck.id) if deck != null else 0
-	var deck_name := str(deck.deck_name) if deck != null else ""
-	if deck_name.begins_with("18.0"):
-		return 180
-	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
-		return 175
-	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
-		return 170
-	if deck_id < 1000000:
-		return 0
-	return int(floor(float(deck_id) / 100000.0))
+	return CardDatabase.compare_ai_decks_by_import_time_desc(a, b)
 
 
 func _on_deck_picker_pressed(slot_index: int) -> void:
@@ -4108,7 +4153,7 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_tabs.clear()
 	for tab: Dictionary in [
 		{"id": DECK_PICKER_RECENT, "label": "最近使用"},
-		{"id": DECK_PICKER_ALL, "label": "全部(更新18.0)"},
+		{"id": DECK_PICKER_ALL, "label": "全部(更新18.5)"},
 	]:
 		var button := Button.new()
 		button.text = str(tab.get("label", ""))
@@ -4693,7 +4738,7 @@ func _sync_deck_picker_button(slot_index: int) -> void:
 		font_size = int(_current_non_battle_layout_context.get("button_font_size", DECK_PICKER_MAIN_FONT_SIZE))
 	button.add_theme_font_size_override("font_size", font_size)
 	button.clip_text = true
-	button.custom_minimum_size.y = float(_current_non_battle_layout_context.get("primary_button_height", 68.0)) if portrait else 68.0
+	button.custom_minimum_size.y = float(_current_non_battle_layout_context.get("primary_button_height", 68.0)) if portrait else _landscape_deck_picker_height(_current_non_battle_layout_context)
 	if slot_index == 1 and _is_author_strategy_mode():
 		var record := _selected_author_strategy_record()
 		button.disabled = record.is_empty()
@@ -4929,7 +4974,7 @@ func _first_player_option_index_from_choice(choice: int) -> int:
 		_: return 0
 
 
-func _apply_setup_selection() -> bool:
+func _apply_setup_selection(verify_author_deck: bool = true) -> bool:
 	var mode_option := _find_battle_setup_option("ModeOption")
 	var mode_idx: int = mode_option.selected if mode_option != null else 0
 	var deck1 := _selected_deck_for_slot(0)
@@ -4956,26 +5001,34 @@ func _apply_setup_selection() -> bool:
 			)
 			if not bool(admitted.get("ok", false)):
 				return false
-			var materialized := _materialize_author_strategy_deck(author_record)
-			var author_selection: Dictionary = materialized.get("selection", {})
-			if not bool(materialized.get("ok", false)) \
-				or not GameManager.set_author_strategy_selection(author_selection):
+			var author_selection := AuthorStrategySetupModelScript.setup_selection_record(author_record)
+			if not GameManager.set_author_strategy_selection(author_selection):
 				return false
-			deck2 = materialized.get("deck") as DeckData
+			if verify_author_deck:
+				var materialized := _materialize_author_strategy_deck(author_record)
+				if not bool(materialized.get("ok", false)):
+					return false
+				deck2 = materialized.get("deck") as DeckData
 		_:
 			return false
 
-	if deck2 == null:
+	if deck2 == null and (mode_idx != 2 or verify_author_deck):
 		return false
 
-	GameManager.selected_deck_ids = [deck1.id, deck2.id]
+	# Battle owns fresh archive verification and materialization. Selection is
+	# metadata only; it cannot authorize or substitute a different deck.
+	GameManager.selected_deck_ids = [deck1.id, deck2.id if deck2 != null else 0]
 	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
 	GameManager.first_player_choice = _first_player_choice_from_option_index(first_player_option.selected if first_player_option != null else 0)
-	GameManager.selected_battle_background = _selected_background_path if _selected_background_path != "" else DEFAULT_BACKGROUND
+	GameManager.selected_battle_background = _available_background_or_default(_selected_background_path)
 	GameManager.dynamic_stadium_background_enabled = true
+	GameManager.battle_3d_enabled = BattlePresentation.fields_3d_available() and BattlePresentation.field_theme(GameManager.selected_battle_background) != ""
 	GameManager.battle_effects_enabled = _battle_effects_enabled
 	_sync_battle_layout_preference_from_ui()
-	_record_battle_deck_usage([deck1, deck2])
+	var used_decks: Array[DeckData] = [deck1]
+	if deck2 != null:
+		used_decks.append(deck2)
+	_record_battle_deck_usage(used_decks)
 	_sync_battle_music_preferences_from_ui()
 	if _is_ai_mode():
 		_save_llm_model_selection()
@@ -5003,7 +5056,23 @@ func _apply_setup_selection() -> bool:
 
 
 func _on_start() -> void:
-	if not _apply_setup_selection():
+	if _start_pending:
+		return
+	_start_pending = true
+	var loading_event := "battle.two_player_start"
+	if _is_author_strategy_mode():
+		loading_event = "battle.author_start"
+	elif _is_ai_mode():
+		loading_event = "battle.classic_start"
+	GameManager.begin_scene_loading("正在准备对战", loading_event)
+	# Let the acknowledgement paint before doing any preparation.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	if not _apply_setup_selection(false):
+		_start_pending = false
+		GameManager.finish_scene_loading("所选卡组或策略暂不可用")
 		return
 	_save_settings()
 	GameManager.goto_battle()
@@ -5105,9 +5174,8 @@ func _load_settings() -> void:
 	_select_first_player_option(_first_player_option_index_from_choice(fp_choice))
 
 	var bg_path: String = str(data.get("background_path", DEFAULT_BACKGROUND))
-	if bg_path in _battle_backgrounds:
-		_selected_background_path = bg_path
-		_refresh_background_selection()
+	_selected_background_path = _available_background_or_default(bg_path)
+	_refresh_background_selection()
 	_battle_effects_enabled = bool(data.get("battle_effects_enabled", true))
 	GameManager.dynamic_stadium_background_enabled = true
 	GameManager.battle_effects_enabled = _battle_effects_enabled
@@ -5163,9 +5231,8 @@ func _apply_setup_context(context: Dictionary) -> void:
 	_select_first_player_option(_first_player_option_index_from_choice(first_player_choice))
 
 	var background_path := str(context.get("background_path", DEFAULT_BACKGROUND))
-	if background_path in _battle_backgrounds:
-		_selected_background_path = background_path
-		_refresh_background_selection()
+	_selected_background_path = _available_background_or_default(background_path)
+	_refresh_background_selection()
 	_battle_effects_enabled = bool(context.get("battle_effects_enabled", _battle_effects_enabled))
 	GameManager.dynamic_stadium_background_enabled = true
 	GameManager.battle_effects_enabled = _battle_effects_enabled
@@ -5307,10 +5374,10 @@ func _on_discuss_strategy_ai_pressed() -> void:
 		_strategy_discussion_dialog.call("popup_for_viewport", Rect2(Vector2.ZERO, get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)), false)
 		return
 	_strategy_discussion_dialog.popup_centered(Vector2i(980, 760))
-	_strategy_discussion_dialog.size = Vector2i(980, 760)
+	_strategy_discussion_dialog.dialog_size = Vector2i(980, 760)
 
 
-func _create_strategy_discussion_dialog() -> AcceptDialog:
+func _create_strategy_discussion_dialog() -> GameModal:
 	var dialog_scene := ResourceLoader.load(
 		DECK_DISCUSSION_DIALOG_SCENE_PATH,
 		"PackedScene",
@@ -5318,7 +5385,7 @@ func _create_strategy_discussion_dialog() -> AcceptDialog:
 	) as PackedScene
 	if dialog_scene == null:
 		return null
-	var dialog := dialog_scene.instantiate() as AcceptDialog
+	var dialog := dialog_scene.instantiate() as GameModal
 	if dialog == null:
 		return null
 	if not dialog.has_method("setup_for_match"):

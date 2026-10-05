@@ -1,0 +1,9 @@
+test_derives_integrity_from_final_bytes (tests.test_app_update_manifest_builder.AppUpdateBuilderTests.test_derives_integrity_from_final_bytes) ... ok
+test_preserves_independent_web_version (tests.test_app_update_manifest_builder.AppUpdateBuilderTests.test_preserves_independent_web_version) ... ok
+test_rejects_traversal_and_case_collisions (tests.test_app_update_manifest_builder.AppUpdateBuilderTests.test_rejects_traversal_and_case_collisions) ... ok
+test_rejects_untrusted_origin_and_architecture (tests.test_app_update_manifest_builder.AppUpdateBuilderTests.test_rejects_untrusted_origin_and_architecture) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.031s
+
+OK

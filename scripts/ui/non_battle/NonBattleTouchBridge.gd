@@ -23,6 +23,7 @@ const BUTTON_WINDOW_VISIBILITY_FALLBACK_META := "_non_battle_touch_window_visibi
 const RANGE_WINDOW_VISIBILITY_FALLBACK_META := "_non_battle_range_window_visibility_fallback"
 const BUTTON_BRIDGE_DUPLICATE_SUPPRESS_MSEC := 180
 const BUTTON_RELEASE_AFTER_SCROLL_SUPPRESS_MSEC := 220
+const LAST_SCROLL_RELEASE_META := "_non_battle_last_scroll_release_msec"
 const OPTION_PRESS_SIGNAL_ONLY_META := "_non_battle_option_press_signal_only"
 const OPTION_POPUP_BOUNDS_META := "_non_battle_popup_bounds"
 const FOCUS_TOUCH_BOUND_META := "_non_battle_focus_touch_bound"
@@ -43,9 +44,6 @@ const HIDDEN_VERTICAL_DRAG_SCROLLABLE_CONTROL_META := "_non_battle_hidden_vertic
 const HIDDEN_SCROLLBAR_META := "_non_battle_hidden_scrollbar"
 const TOUCH_BRIDGE_ENABLED_META := "_non_battle_touch_bridge_enabled"
 const WEB_INPUT_ADAPTER_META := "_non_battle_web_input_adapter"
-
-static var _last_scroll_drag_release_msec := -1000000
-
 
 static func set_test_web_text_input_enabled(enabled: bool) -> void:
 	WebTextInputBridgeScript.set_test_force_web(enabled)
@@ -621,7 +619,7 @@ static func handle_button_touch(button: Button, event: InputEvent) -> bool:
 	var had_pressed_meta := button.has_meta(BUTTON_TOUCH_PRESSED_META)
 	if had_pressed_meta:
 		button.remove_meta(BUTTON_TOUCH_PRESSED_META)
-	elif _should_suppress_release_after_scroll():
+	elif _should_suppress_release_after_scroll(button):
 		_accept_event(button)
 		return true
 	if not button_can_bridge_touch(button):
@@ -764,7 +762,7 @@ static func _handle_bound_mouse_button(button: Button, mouse_button: InputEventM
 	var had_pressed_meta := button.has_meta(BUTTON_TOUCH_PRESSED_META)
 	if had_pressed_meta:
 		button.remove_meta(BUTTON_TOUCH_PRESSED_META)
-	elif _should_suppress_release_after_scroll():
+	elif _should_suppress_release_after_scroll(button):
 		_accept_event(button)
 		return true
 	if not button_can_bridge_touch(button):
@@ -975,7 +973,7 @@ static func _handle_scroll_release(host: Control) -> bool:
 	var has_focus_candidate := host.has_meta(FOCUS_CANDIDATE_META)
 	_clear_scroll_candidate(host)
 	if active:
-		_last_scroll_drag_release_msec = Time.get_ticks_msec()
+		host.set_meta(LAST_SCROLL_RELEASE_META, Time.get_ticks_msec())
 		_clear_candidate(host)
 		_clear_focus_candidate(host)
 		_accept_event(host)
@@ -986,9 +984,17 @@ static func _handle_scroll_release(host: Control) -> bool:
 	return false
 
 
-static func _should_suppress_release_after_scroll() -> bool:
-	var elapsed := Time.get_ticks_msec() - _last_scroll_drag_release_msec
-	return elapsed >= 0 and elapsed < BUTTON_RELEASE_AFTER_SCROLL_SUPPRESS_MSEC
+static func _should_suppress_release_after_scroll(button: Button) -> bool:
+	# A drag can echo a release to a descendant button. Its suppression belongs
+	# to that input host, and must not disable a fresh page's release-only taps.
+	var host: Node = button
+	while host != null:
+		if host.has_meta(LAST_SCROLL_RELEASE_META):
+			var elapsed := Time.get_ticks_msec() - int(host.get_meta(LAST_SCROLL_RELEASE_META))
+			if elapsed >= 0 and elapsed < BUTTON_RELEASE_AFTER_SCROLL_SUPPRESS_MSEC:
+				return true
+		host = host.get_parent()
+	return false
 
 
 static func _store_candidate(host: Control, button: Button, position: Vector2) -> void:

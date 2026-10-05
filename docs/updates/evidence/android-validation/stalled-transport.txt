@@ -1,0 +1,3 @@
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+STALLED_TRANSPORT_PASS: real TCP timeout and cancellation returned without freezing

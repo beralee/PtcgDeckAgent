@@ -97,12 +97,41 @@ class PythonFallbackRequest:
 			callback.call_deferred(response)
 		queue_free()
 
+	func cancel() -> void:
+		set_process(false)
+		callback = Callable()
+		if process_id > 0 and OS.is_process_running(process_id):
+			OS.kill(process_id)
+		process_id = -1
+		_cleanup_files()
+		queue_free()
+
 var _timeout_seconds: float = 30.0
 var _allow_unsafe_tls: bool = true
 var _allow_python_fallback: bool = true
 var _proxy_host: String = ""
 var _proxy_port: int = -1
 var _proxy_loaded_from_environment: bool = false
+var _active_requests: Array[WeakRef] = []
+
+
+func cancel_pending_requests() -> void:
+	for reference: WeakRef in _active_requests:
+		var request: Node = reference.get_ref()
+		if not is_instance_valid(request) or request.is_queued_for_deletion():
+			continue
+		if request is HTTPRequest:
+			request.set_meta("zenmux_canceled", true)
+			request.cancel_request()
+			request.queue_free()
+		elif request is PythonFallbackRequest:
+			request.cancel()
+	_active_requests.clear()
+
+
+func _track_request(request: Node) -> void:
+	_active_requests = _active_requests.filter(func(reference: WeakRef) -> bool: return is_instance_valid(reference.get_ref()))
+	_active_requests.append(weakref(request))
 
 
 func set_timeout_seconds(timeout_seconds: float) -> void:
@@ -158,6 +187,7 @@ func _request_json_payload_via_http_request(
 	request.set_meta("zenmux_api_key", api_key)
 	request.set_meta("zenmux_tls_mode", tls_mode)
 	parent.add_child(request)
+	_track_request(request)
 	request.request_completed.connect(_on_request_completed.bind(request, callback), CONNECT_ONE_SHOT)
 	request.set_meta("zenmux_request_payload", request_payload)
 	var request_error := request.request(
@@ -530,6 +560,8 @@ func _on_request_completed(
 	request: HTTPRequest,
 	callback: Callable
 ) -> void:
+	if is_instance_valid(request) and bool(request.get_meta("zenmux_canceled", false)):
+		return
 	var response_text := body.get_string_from_utf8()
 	var normalized := _parse_chat_response(response_code, response_text)
 	if result != HTTPRequest.RESULT_SUCCESS:
@@ -842,6 +874,8 @@ func _request_json_payload_via_python_fallback_async(
 	var poller := PythonFallbackRequest.new()
 	poller.configure(self, process_id, python_executable, input_path, output_path, callback, _timeout_seconds)
 	_python_fallback_poller_parent(parent).add_child(poller)
+	_track_request(poller)
+	parent.tree_exiting.connect(poller.cancel, CONNECT_ONE_SHOT)
 	return OK
 
 

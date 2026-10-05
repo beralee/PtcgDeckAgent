@@ -415,9 +415,12 @@ static func _slot_card_ids(slot: Dictionary) -> Array:
 	var result: Array = []
 	result.append_array(slot.get("pokemon_stack", []))
 	result.append_array(slot.get("attached_energy", []))
-	var tool_id := int(slot.get("attached_tool", -1))
-	if tool_id >= 0:
-		result.append(tool_id)
+	if slot.has("attached_tools"):
+		result.append_array(slot.get("attached_tools", []))
+	else:
+		var tool_id := int(slot.get("attached_tool", -1))
+		if tool_id >= 0:
+			result.append(tool_id)
 	return result
 
 

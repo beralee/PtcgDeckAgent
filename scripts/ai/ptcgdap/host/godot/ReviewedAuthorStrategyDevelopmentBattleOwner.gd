@@ -6,6 +6,7 @@ extends "res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorDevelopmentBattleOwner
 const ReviewedPolicyScript = preload(
 	"res://scripts/ai/ptcgdap/runtime/local/ReviewedAuthorStrategyDevelopmentPolicy.gd"
 )
+const StartupTrace = preload("res://scripts/performance/PerformanceTrace.gd")
 
 
 class ReviewedPublicInteractionAdapter extends PublicInteractionAdapter:
@@ -24,6 +25,7 @@ static func create(
 	match_id: String,
 	authority_mode: String = ExecutionGateScript.DEVELOPMENT_MODE
 ) -> Dictionary:
+	var stage_started := StartupTrace.begin()
 	if not _competition_host_authorized() and not ExecutionGateScript.player_host_available():
 		return _error("development_platform_not_authorized")
 	if (
@@ -42,13 +44,18 @@ static func create(
 	)
 	if not pin_error.is_empty():
 		return _error(pin_error)
+	StartupTrace.end("owner.admission", stage_started)
+	stage_started = StartupTrace.begin()
 	var owner := new()
+	StartupTrace.end("owner.construct", stage_started)
 	var bound: Dictionary = owner._bind(
 		handle, gsm, seat, match_id.strip_edges(), authority_mode
 	)
 	if not bool(bound.get("ok", false)):
 		return _error(str(bound.get("error_code", "invalid_bind")))
+	stage_started = StartupTrace.begin()
 	var model_bound: Dictionary = owner._bind_model(handle)
+	StartupTrace.end("owner.model_bind", stage_started)
 	if not bool(model_bound.get("ok", false)):
 		owner.close_match()
 		return _error(str(model_bound.get("error_code", "package_model_relation_invalid")))
@@ -66,6 +73,7 @@ func _bind(
 	_gsm = next_gsm
 	_match_id = match_id
 	_authority_mode = authority_mode
+	var stage_started := StartupTrace.begin()
 	_pins = handle.to_public_dict().duplicate(true)
 	var candidate: Dictionary = _candidate_for_pins(_pins, authority_mode)
 	if candidate.get("runtime_kind") not in ["reviewed_restricted_ir_v1", "reviewed_competitive_policy_v2"]:
@@ -90,15 +98,20 @@ func _bind(
 	var sealed: Dictionary = _serial_registry.seal_card_inventory([60, 60])
 	if not bool(sealed.get("ok", false)):
 		return _error(str(sealed.get("code", "card_inventory_error")))
+	StartupTrace.end("owner.inventory_bind", stage_started)
+	stage_started = StartupTrace.begin()
 	var created: Dictionary = ReviewedPolicyScript.create(handle, match_id, _authority_mode)
+	StartupTrace.end("owner.policy_create", stage_started)
 	if not bool(created.get("ok", false)):
 		return _error(str(created.get("error_code", "package_policy_unsupported")))
 	_policy = created.get("policy")
+	stage_started = StartupTrace.begin()
 	_legal_action_builder = LegalityOnlyActionBuilder.new()
 	_interaction_adapter = ReviewedPublicInteractionAdapter.new(self)
 	_step_resolver = StepResolverScript.new()
 	_step_resolver.call("set_deck_strategy", _interaction_adapter)
 	_engine_executor = EngineActionExecutorScript.new()
+	StartupTrace.end("owner.engine_seams", stage_started)
 	_bound = true
 	return {"ok": true, "error_code": ""}
 

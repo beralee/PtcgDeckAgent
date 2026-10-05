@@ -1,0 +1,101 @@
+[
+  {
+    "asset": "fabric_pattern_07",
+    "source": "https://polyhaven.com/a/fabric_pattern_07",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/fabric_pattern_07/fabric_pattern_07_nor_gl_2k.jpg",
+    "license": "CC0-1.0",
+    "local": "fabric_pattern_07/nor_gl.jpg",
+    "md5": "bf1eb2488da43265bd49e42778b6ae51",
+    "bytes": 2572375
+  },
+  {
+    "asset": "fabric_pattern_07",
+    "source": "https://polyhaven.com/a/fabric_pattern_07",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/fabric_pattern_07/fabric_pattern_07_rough_2k.jpg",
+    "license": "CC0-1.0",
+    "local": "fabric_pattern_07/Rough.jpg",
+    "md5": "96906a97616405b0e664b9d18638d4f9",
+    "bytes": 1657764
+  },
+  {
+    "asset": "black_walnut_veneer_02",
+    "source": "https://polyhaven.com/a/black_walnut_veneer_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/black_walnut_veneer_02/black_walnut_veneer_02_nor_gl_2k.jpg",
+    "license": "CC0-1.0",
+    "local": "black_walnut_veneer_02/nor_gl.jpg",
+    "md5": "f2af23ce4886edcef6b1e7226183d445",
+    "bytes": 1877332
+  },
+  {
+    "asset": "black_walnut_veneer_02",
+    "source": "https://polyhaven.com/a/black_walnut_veneer_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/black_walnut_veneer_02/black_walnut_veneer_02_rough_2k.jpg",
+    "license": "CC0-1.0",
+    "local": "black_walnut_veneer_02/Rough.jpg",
+    "md5": "c1c2f3bfc6942b516499500c60200a9a",
+    "bytes": 2670532
+  },
+  {
+    "asset": "black_walnut_veneer_02",
+    "source": "https://polyhaven.com/a/black_walnut_veneer_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/black_walnut_veneer_02/black_walnut_veneer_02_diff_2k.jpg",
+    "license": "CC0-1.0",
+    "local": "black_walnut_veneer_02/Diffuse.jpg",
+    "md5": "e4ef13d171747d6c877bec563b67d389",
+    "bytes": 2365710
+  },
+  {
+    "asset": "fern_02",
+    "source": "https://polyhaven.com/a/fern_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fern_02/fern_02_1k.gltf",
+    "license": "CC0-1.0",
+    "local": "fern_02/fern_02.gltf",
+    "md5": "cf276874d37bfb73c299504a6b355b77",
+    "bytes": 6899
+  },
+  {
+    "asset": "fern_02",
+    "source": "https://polyhaven.com/a/fern_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_arm_1k.jpg",
+    "license": "CC0-1.0",
+    "local": "fern_02/textures/fern_02_arm_1k.jpg",
+    "md5": "1bbb2b22951f450720d28e17d93a2987",
+    "bytes": 280359
+  },
+  {
+    "asset": "fern_02",
+    "source": "https://polyhaven.com/a/fern_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "local": "fern_02/textures/fern_02_diff_1k.jpg",
+    "md5": "82c18a6cfd5ae91c37c0e078f591181c",
+    "bytes": 315705
+  },
+  {
+    "asset": "fern_02",
+    "source": "https://polyhaven.com/a/fern_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_nor_gl_1k.jpg",
+    "license": "CC0-1.0",
+    "local": "fern_02/textures/fern_02_nor_gl_1k.jpg",
+    "md5": "43aed63dff79554f6064627515afd9d7",
+    "bytes": 367222
+  },
+  {
+    "asset": "fern_02",
+    "source": "https://polyhaven.com/a/fern_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fern_02/fern_02.bin",
+    "license": "CC0-1.0",
+    "local": "fern_02/fern_02.bin",
+    "md5": "c061e9255f7d36ae9ce0e92ef3e100b2",
+    "bytes": 176176
+  },
+  {
+    "asset": "studio_small_09",
+    "source": "https://polyhaven.com/a/studio_small_09",
+    "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr",
+    "license": "CC0-1.0",
+    "local": "studio_small_09.hdr",
+    "md5": "d5d7eb9d26d341d6aa4d11c1a54fd97c",
+    "bytes": 1615248
+  }
+]

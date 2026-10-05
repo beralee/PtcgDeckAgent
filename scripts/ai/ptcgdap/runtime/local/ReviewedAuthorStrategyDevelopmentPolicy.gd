@@ -1,6 +1,8 @@
 class_name ReviewedAuthorStrategyDevelopmentPolicy
 extends "res://scripts/ai/ptcgdap/runtime/local/AuthorStrategyDevelopmentPolicy.gd"
 
+const PerformanceTraceScript = preload("res://scripts/performance/PerformanceTrace.gd")
+
 ## Exact-hash, development-only executor for the reviewed Forge packages.
 ## It reuses the sealed public-frame validation and Base adjudication path,
 ## while binding package/graph/deck/rule counts from the development gate.
@@ -41,7 +43,10 @@ static func create(
 	if not bool(documents_result.get("ok", false)):
 		return _error(str(documents_result.get("error_code", "package_policy_unsupported")))
 	var documents: Dictionary = documents_result.get("documents", {})
+	var stage_started := PerformanceTraceScript.begin()
 	var ir_outcome: Variant = StrategicTraceScript.compile_ir(documents.get("policy/policy_ir.json"))
+	PerformanceTraceScript.end("policy.ir_compile", stage_started)
+	stage_started = PerformanceTraceScript.begin()
 	var raw_adapter: Variant = documents.get("policy/adapter.json")
 	var competitive_policy: Variant = null
 	var adapter_outcome: Variant
@@ -52,6 +57,7 @@ static func create(
 		adapter_outcome = PublicDeckAdapterScript.compile_local_uid(
 			raw_adapter, allowed_uids.keys(), pins.get("deck_manifest_sha256")
 		)
+	PerformanceTraceScript.end("policy.adapter_compile", stage_started)
 	if (
 		ir_outcome == null
 		or not bool(ir_outcome.get("accepted"))
@@ -61,14 +67,21 @@ static func create(
 		or (competitive_policy == null and adapter_outcome.get("adapter") == null)
 	):
 		return _error("package_policy_unsupported")
+	stage_started = PerformanceTraceScript.begin()
 	var ir_document: Dictionary = StrategicTraceScript.ir_public_dict(ir_outcome.get("ir"))
+	PerformanceTraceScript.end("policy.ir_snapshot", stage_started)
+	stage_started = PerformanceTraceScript.begin()
 	var adapter_document: Dictionary = CompetitivePolicyV2Script.policy_public_dict(competitive_policy) \
 		if competitive_policy != null else PublicDeckAdapterScript.adapter_public_dict(adapter_outcome.get("adapter"))
+	PerformanceTraceScript.end("policy.adapter_snapshot", stage_started)
 	var config_document: Variant = documents.get("policy/config.json")
+	stage_started = PerformanceTraceScript.begin()
 	var expanded_config := _expand_conditioned_value_config(handle, config_document, pins)
+	PerformanceTraceScript.end("policy.config_expand", stage_started)
 	if not bool(expanded_config.get("ok", false)):
 		return _error(str(expanded_config.get("error_code", "package_policy_unsupported")))
 	config_document = expanded_config.get("config")
+	stage_started = PerformanceTraceScript.begin()
 	if (
 		not _reviewed_supported_ir(ir_document, candidate)
 		or not _reviewed_supported_adapter(adapter_document, candidate)
@@ -76,7 +89,10 @@ static func create(
 		or not _reviewed_supported_config(config_document, pins, candidate)
 	):
 		return _error("package_policy_unsupported")
+	PerformanceTraceScript.end("policy.support_validation", stage_started)
+	stage_started = PerformanceTraceScript.begin()
 	var claim: Dictionary = handle.claim_for_match(str(match_id))
+	PerformanceTraceScript.end("policy.claim", stage_started)
 	if not bool(claim.get("ok", false)):
 		return _error(str(claim.get("error_code", "package_handle_already_claimed")))
 	var policy_profile := {
@@ -97,6 +113,7 @@ static func create(
 	var script: GDScript = load(
 		"res://scripts/ai/ptcgdap/runtime/local/ReviewedAuthorStrategyDevelopmentPolicy.gd"
 	)
+	stage_started = PerformanceTraceScript.begin()
 	var policy: Variant = script.new(
 		pins,
 		ir_document,
@@ -109,8 +126,11 @@ static func create(
 		_FACTORY_TOKEN,
 		competitive_policy
 	)
+	PerformanceTraceScript.end("policy.construct", stage_started)
+	stage_started = PerformanceTraceScript.begin()
 	if policy == null or not policy._is_valid_owner():
 		return _error("development_policy_invalid")
+	PerformanceTraceScript.end("policy.owner_validation", stage_started)
 	return {"ok": true, "error_code": "", "policy": policy}
 
 

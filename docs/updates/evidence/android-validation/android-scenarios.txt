@@ -1,0 +1,11 @@
+PASS low_space: 存储空间不足，请清理空间后重新下载。当前游戏和本地数据不受影响。
+PASS missing: 下载未完成，可能是网络中断或下载地址暂时不可用。请重新下载，半包不会用于安装。
+PASS stall: 下载连接已中断，请检查网络后重试。
+PASS truncated: 下载文件不完整，请重新下载。
+PASS drop: 下载未完成，可能是网络中断或下载地址暂时不可用。请重新下载，半包不会用于安装。
+PASS corrupt: 更新文件校验未通过，已阻止安装。请重新下载。
+PASS invalid: 下载的文件不是可安装的 Android 安装包，已阻止安装。请重新下载或使用官网入口。
+PASS deleted: 下载文件不完整，请重新下载。
+PASS wrong_build: 安装包版本不符合本次更新，已阻止安装。请重新检查更新。
+PASS process_death_mid_download
+PASS recovery_good_download; ready for system confirmation

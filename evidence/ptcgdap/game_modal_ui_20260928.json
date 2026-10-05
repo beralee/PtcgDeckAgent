@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "task": "in_canvas_game_modal_migration",
+  "date": "2026-09-28",
+  "total": 427,
+  "passed": 427,
+  "failed": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "StrategyHubDeleteModal",
+      "path": "res://tests/ptcgdap/godot/test_strategy_hub_delete_modal.gd",
+      "status": "passed",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "total": 2,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0001-StrategyHubDeleteModal\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0001-StrategyHubDeleteModal\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "StrategyHubScene",
+      "path": "res://tests/ptcgdap/godot/test_strategy_hub_scene.gd",
+      "status": "passed",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "total": 22,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0002-StrategyHubScene\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0002-StrategyHubScene\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "BattlePortraitLayout",
+      "path": "res://tests/test_battle_portrait_layout.gd",
+      "status": "passed",
+      "passed": 107,
+      "failed": 0,
+      "skipped": 0,
+      "total": 107,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0003-BattlePortraitLayout\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0003-BattlePortraitLayout\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "BattleSetupAIVersions",
+      "path": "res://tests/test_battle_setup_ai_versions.gd",
+      "status": "passed",
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "total": 47,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0004-BattleSetupAIVersions\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0004-BattleSetupAIVersions\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "BattleSetupLayout",
+      "path": "res://tests/test_battle_setup_layout.gd",
+      "status": "passed",
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0,
+      "total": 42,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0005-BattleSetupLayout\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0005-BattleSetupLayout\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "DeckDeleteFeedbackRegressions",
+      "path": "res://tests/test_deck_delete_feedback_regressions.gd",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "total": 6,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0006-DeckDeleteFeedbackRegressions\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0006-DeckDeleteFeedbackRegressions\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "DeckDiscussionDialog",
+      "path": "res://tests/test_deck_discussion_dialog.gd",
+      "status": "passed",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "total": 12,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-discussion-final\\0001-DeckDiscussionDialog\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-discussion-final\\0001-DeckDiscussionDialog\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-discussion-final\\report.json"
+    },
+    {
+      "name": "DeckManager",
+      "path": "res://tests/test_deck_manager.gd",
+      "status": "passed",
+      "passed": 112,
+      "failed": 0,
+      "skipped": 0,
+      "total": 112,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0008-DeckManager\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0008-DeckManager\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "GameModalDialog",
+      "path": "res://tests/test_game_modal_dialog.gd",
+      "status": "passed",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "total": 7,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-modal-final\\0001-GameModalDialog\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-modal-final\\0001-GameModalDialog\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-modal-final\\report.json"
+    },
+    {
+      "name": "NonBattlePortraitLayout",
+      "path": "res://tests/test_non_battle_portrait_layout.gd",
+      "status": "passed",
+      "passed": 66,
+      "failed": 0,
+      "skipped": 0,
+      "total": 66,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0010-NonBattlePortraitLayout\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\0010-NonBattlePortraitLayout\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-final\\report.json"
+    },
+    {
+      "name": "DeckEditorSaveValidation",
+      "path": "res://tests/ui/test_deck_editor_save_validation.gd",
+      "status": "passed",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "total": 4,
+      "log": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-verified\\0003-DeckEditorSaveValidation\\console.log",
+      "report": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-verified\\0003-DeckEditorSaveValidation\\result.json",
+      "aggregate_source": "C:\\Users\\24726\\.codex\\tmp\\ptcg-modal-20260928-verified\\report.json"
+    }
+  ],
+  "source_sha256": {
+    "scripts/ui/GameModalDialog.gd": "ddfd7a09365e2a4cfda294b1754bc37f9cc737f21e15aade67c37e53bafb3516",
+    "scripts/ui/decks/DeckViewDialog.gd": "32b2849ed2787f27f1deb84e0f87cadebc4f82be4d0c02a44aa1b2c1d2460c14",
+    "scenes/deck_manager/DeckManager.gd": "c8bb647ccd00d78a94f8814adcd8df0777748e962a9d2e3778a85cb468017244",
+    "scenes/deck_editor/DeckEditor.gd": "39980222979fe7c13c032b8057d8ce76e2740142737d23457249a50865a127b8",
+    "scenes/deck_editor/DeckDiscussionDialog.gd": "ebf7f7d20d6665224607afec84b6df2564965f8c75b21d0b4ca1427d365e91a3",
+    "scripts/ui/decks/DiscussionDialogLayout.gd": "a15ea9ec3f47fb5306ed486097e7a5450e2982c3489db445080b2016924f8a21",
+    "tests/test_game_modal_dialog.gd": "906b9836eef06199bdb6000c3f24b411463f16fd2f5b557d4d7282eb59afeda3"
+  },
+  "render_review": {
+    "sizes": [
+      "1360x860",
+      "390x844",
+      "844x390"
+    ],
+    "views": [
+      "rename",
+      "delete",
+      "error",
+      "discussion",
+      "strategy",
+      "ai_select",
+      "ai_loading",
+      "deck_view"
+    ],
+    "directory": "D:\\ai\\code\\PtcgDAP\\.godot_test_user\\modal_review",
+    "script_errors": 0
+  },
+  "limits": [
+    "Desktop Godot runtime and synthetic platform events only; no Android/iOS physical-device or browser release acceptance.",
+    "Some existing broad UI suites and the render harness report shutdown ObjectDB/RID resource warnings; no clean resource-lifetime claim.",
+    "The seven-test shared-modal suite completes without script errors or leak diagnostics."
+  ],
+  "alignment": "UI implementation only; no CABT, engine parity or device A5 promotion."
+}

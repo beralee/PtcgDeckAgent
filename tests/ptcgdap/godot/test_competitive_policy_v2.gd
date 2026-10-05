@@ -528,7 +528,7 @@ func test_goal_relative_continuity_facts_bind_public_debt_and_position() -> Stri
 
 
 func test_private_unknown_fact_and_mutated_policy_fail_closed() -> String:
-	var private_case: Dictionary = _vectors().get("cases", [])[-1]
+	var private_case: Dictionary = _vector_case("private-fact-fails-closed")
 	var rejected := RuntimeScript.compile_local_uid(
 		private_case.get("policy", {}).duplicate(true),
 		private_case.get("allowed_card_uids", []).duplicate()

@@ -1,0 +1,27 @@
+{
+  "generator": "built-in image_gen",
+  "use": "Stadium backdrops bundled in client 0.6.4; not part of the card content pack",
+  "output_size": [
+    1672,
+    941
+  ],
+  "postprocessing": "Lossless WebP encoding; identical RGB pixels, no resizing",
+  "assets": [
+    {
+      "path": "assets/ui/stadium_backgrounds/calamitous_wasteland.webp",
+      "prompt": "Use case: stylized-concept. Create a polished full-screen 16:9 landscape 1920x1080 2D game battle background for a Pokemon-inspired card battler, richly painted clean anime/PBR environment matching contemporary high quality game backgrounds. View from elevated slightly oblique position looking across a wide empty centered battle court, center and lower 65% mostly clear and visually calm for card UI overlays. Environment and theme visible around sides and upper third. No characters, no Pokemon, no cards, no user interface, no typography, no watermark. Finished opaque scene, single image, not a collage. Scene: Arid orange rocky badlands at sunset, distant layered mesas, eroded cliffs, dry twisted dead trees and small tufts of tough grass at side margins, dusty ochre open ground as the large arena. Warm amber hazy sky and restrained cinematic lighting; rugged but beautiful desolate setting, no snow or green forest."
+    },
+    {
+      "path": "assets/ui/stadium_backgrounds/beach_court.webp",
+      "prompt": "Use case: stylized-concept. Create a polished full-screen 16:9 landscape 1920x1080 2D game battle background for a Pokemon-inspired card battler, richly painted clean anime/PBR environment matching contemporary high quality game backgrounds. View from elevated slightly oblique position looking across a wide empty centered battle court, center and lower 65% mostly clear and visually calm for card UI overlays. Environment and theme visible around sides and upper third. No characters, no Pokemon, no cards, no user interface, no typography, no watermark. Finished opaque scene, single image, not a collage. Scene: Sunny tropical coastal beach court: a large empty flat blue rectangular painted practice court set into pale sandy beach, thin yellow-white geometric boundary lines, a subtle simple circular middle emblem. Palm trees at edges, turquoise ocean on left horizon, low warm sandstone cliffs and white seaside training building at far right, brilliant blue sky and puffy clouds. Joyful bright daylight."
+    },
+    {
+      "path": "assets/ui/stadium_backgrounds/practice_studio.webp",
+      "prompt": "Use case: stylized-concept. Create a polished full-screen 16:9 landscape 1920x1080 2D game battle background for a Pokemon-inspired card battler, richly painted clean anime/PBR environment matching contemporary high quality game backgrounds. View from elevated slightly oblique position looking across a wide empty centered battle court, center and lower 65% mostly clear and visually calm for card UI overlays. Environment and theme visible around sides and upper third. No characters, no Pokemon, no cards, no user interface, no typography, no watermark. Finished opaque scene, single image, not a collage. Scene: Bright indoor training gym with spacious green padded practice floor, a simple large white-red circular training emblem subtly marked in its center. Blue padded walls and large windows, several treadmills in the far rear, small dumbbell racks and orange training cones neatly at the extreme side edges, low benches at sides. Clean airy daylit athletic practice room. Keep middle and foreground wide and empty."
+    },
+    {
+      "path": "assets/ui/stadium_backgrounds/community_center.webp",
+      "prompt": "Use case: stylized-concept. Create a polished full-screen 16:9 landscape 1920x1080 2D game battle background for a Pokemon-inspired card battler, richly painted clean anime/PBR environment matching contemporary high quality game backgrounds. View from elevated slightly oblique position looking across a wide empty centered battle court, center and lower 65% mostly clear and visually calm for card UI overlays. Environment and theme visible around sides and upper third. No characters, no Pokemon, no cards, no user interface, no typography, no watermark. Finished opaque scene, single image, not a collage. Scene: Welcoming Japanese town community center: two-story white civic building with warm terracotta roof trim, centered glass entry canopy, rooftop railing and a narrow vertical turquoise banner without text. An expansive empty clean paved community courtyard in foreground serves as battle area, modest shrubs and flower planters at sides, leafy trees and pale rocky green mountain behind, clear summer blue sky. Gentle, warm daytime civic setting, not futuristic."
+    }
+  ]
+}

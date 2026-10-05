@@ -54,7 +54,7 @@ func set_playback_speed(speed: float) -> void:
 
 func prime_snapshot(game_state: GameState, view_player: int) -> void:
 	clear("prime_snapshot")
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		_baseline_snapshot = {}
 		_view_player = view_player
 		_last_state_transition_signature = ""
@@ -70,7 +70,7 @@ func capture_action(
 	view_player: int,
 	suppressed_semantics: Array = []
 ) -> Array[Dictionary]:
-	if game_state == null or not bool(GameManager.battle_effects_enabled):
+	if game_state == null or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		return []
 	if _baseline_snapshot.is_empty() or _view_player != view_player:
 		prime_snapshot(game_state, view_player)
@@ -89,7 +89,7 @@ func capture_action(
 
 
 func sync_after_refresh(game_state: GameState, view_player: int) -> Array[Dictionary]:
-	if game_state == null or not bool(GameManager.battle_effects_enabled):
+	if game_state == null or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		return []
 	if _baseline_snapshot.is_empty() or _view_player != view_player:
 		prime_snapshot(game_state, view_player)
@@ -109,7 +109,7 @@ func sync_after_refresh(game_state: GameState, view_player: int) -> Array[Dictio
 
 
 func enqueue_events(events: Array) -> void:
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		clear("effects_disabled")
 		return
 	for event_variant: Variant in events:

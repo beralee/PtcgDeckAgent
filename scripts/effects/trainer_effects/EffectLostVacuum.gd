@@ -24,10 +24,9 @@ func build_ucis_interaction_steps_spec_steps(card: CardInstance, state: GameStat
 		target_labels.append("竞技场：%s" % state.stadium_card.card_data.name)
 	for slot_pi: int in 2:
 		for slot: PokemonSlot in state.players[slot_pi].get_all_pokemon():
-			if slot.attached_tool == null:
-				continue
-			target_items.append(slot.attached_tool)
-			target_labels.append("玩家%d %s上的道具：%s" % [slot_pi, slot.get_pokemon_name(), slot.attached_tool.card_data.name])
+			for tool: CardInstance in slot.get_attached_tools():
+				target_items.append(tool)
+				target_labels.append("玩家%d %s上的道具：%s" % [slot_pi, slot.get_pokemon_name(), tool.card_data.name])
 	var target_groups: Array[Dictionary] = []
 	for slot_pi: int in 2:
 		target_groups.append_array(build_attached_card_groups(state.players[slot_pi], target_items))
@@ -69,7 +68,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 		return true
 	for slot_pi: int in 2:
 		for slot: PokemonSlot in state.players[slot_pi].get_all_pokemon():
-			if slot.attached_tool != null:
+			if not slot.get_attached_tools().is_empty():
 				return true
 	return false
 
@@ -97,9 +96,9 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 	for slot_pi: int in 2:
 		var owner: PlayerState = state.players[slot_pi]
 		for slot: PokemonSlot in owner.get_all_pokemon():
-			if slot.attached_tool == target_card:
-				owner.lost_zone.append(slot.attached_tool)
-				slot.attached_tool = null
+			if target_card in slot.get_attached_tools():
+				owner.lost_zone.append(target_card)
+				slot.remove_attached_tool(target_card)
 				return
 
 
@@ -123,14 +122,14 @@ func _resolve_target_card(state: GameState, ctx: Dictionary) -> CardInstance:
 			return selected
 		for player: PlayerState in state.players:
 			for slot: PokemonSlot in player.get_all_pokemon():
-				if slot.attached_tool == selected:
+				if selected in slot.get_attached_tools():
 					return selected
 	if state.stadium_card != null:
 		return state.stadium_card
 	for player: PlayerState in state.players:
 		for slot: PokemonSlot in player.get_all_pokemon():
-			if slot.attached_tool != null:
-				return slot.attached_tool
+			if not slot.get_attached_tools().is_empty():
+				return slot.get_attached_tools()[0]
 	return null
 
 

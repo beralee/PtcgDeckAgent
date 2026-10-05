@@ -35,7 +35,7 @@ func sync_stadium_card_data(card_data: CardData, immediate: bool = false) -> voi
 	if state_key == _last_state_key:
 		return
 	_last_state_key = state_key
-	_apply_backdrop_path(target_path, immediate or not bool(GameManager.battle_effects_enabled))
+	_apply_backdrop_path(target_path, immediate or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene))
 
 
 func resolve_stadium_backdrop_path(stadium_card: CardInstance, default_path: String) -> String:

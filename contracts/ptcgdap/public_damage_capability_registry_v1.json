@@ -192,6 +192,48 @@
       "weakness_energy": "F",
       "weakness_multiplier": 2
     },
+    "151C_084": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "f4d3cb54f0c01ba9b5f2a4cb9fce9ec3",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "151C_085": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3c059ab293ff488fdfe4b1b8282053b2",
+      "energy_type": "C",
+      "has_ability": true,
+      "max_hp": 100,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
     "151C_092": {
       "attacks": [
         {
@@ -376,6 +418,4144 @@
       "resistance_reduction": 30,
       "stage": "Basic",
       "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30THC_057": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "9256615fd387482e220b7e2630343eb7",
+      "energy_type": "P",
+      "has_ability": true,
+      "max_hp": 160,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_001": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d1f3b4174792a4a51d66a96108302713",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_002": {
+      "attacks": [
+        {
+          "active_damage": 150,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c77d3be6b3f3347323cd1b3df86dde1d",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 150,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_003": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        },
+        {
+          "active_damage": 90,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e47c3acd5fdeb66f6535ab4daca5ab28",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_004": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "392dd3f185cc878a05428f48fa76c736",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_005": {
+      "attacks": [
+        {
+          "active_damage": 60,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "48e8990e5652874688fcd2ce0b8cf9e4",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_006": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RRC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "efa2faba61d1b2cd26c7371fe79c23b0",
+      "energy_type": "R",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thC_007": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RR"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RRR"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "040aed788238e1f99d1278fa1ea1a7e7",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thC_008": {
+      "attacks": [
+        {
+          "active_damage": 50,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RC"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "eca20db642e6e7ab1af841dc90d9b347",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thC_009": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RRC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4c6d5da418dfa92f148946c38e0227c6",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 210,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thC_010": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2240b955de9bb9bf1339f846e023f1e7",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_011": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 80,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "fcdfdf2c053d45b97f98ac821dbdf7a8",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_012": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WWC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "831872607eca83307cb94cfa8afc7730",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_013": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "35da9bccad39223d970a5dcaade97abf",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_014": {
+      "attacks": [
+        {
+          "active_damage": 100,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WWC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1bb5d4a79e97af758bb961e3501b26a7",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_015": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        },
+        {
+          "active_damage": 160,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WW"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "de1d3ab0a4a8f5e15498e7a5413c039c",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 300,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_016": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2b88722cf752d07c0234a9dd2da0ca39",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 30,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_017": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b67eb0b4a33026c81e8347de890f489f",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_018": {
+      "attacks": [
+        {
+          "active_damage": 80,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "0cce96ae9a96da81a435b8bc6b616d40",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_019": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b4cd2c7e5bd5040d5b3809105f8411be",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_020": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c24ad9eb6576efbeed0ac25016a926d7",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_021": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "728e4471a1c8d8d5ce730a31051f31a3",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_022": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "cf9419068cb1df6aec5ad050d16039fb",
+      "energy_type": "L",
+      "has_ability": true,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_023": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "87dc2fa8cddd65cd238e462f2238e000",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_024": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3d2fc8522ca3ddac6c4db2801923e5b5",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_025": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "eaeb8eb1ce00137885bc19a7a1eef109",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_026": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "5caef03379545b126b26ba32fa3900d8",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_027": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6198144fca9bc57c5ffa06bcac4c1933",
+      "energy_type": "L",
+      "has_ability": true,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_028": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LLL"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b16f2a48835dd0ee4f9b7a5718feb46f",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_029": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "22ce184c779135e052d5b450abfd9e8c",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_030": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e744c180a78847f1fb4c25eadc3c08dd",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_031": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8466088fd32e6b7496ce3462a6e65aff",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_032": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ed842de73ebe6fb24ce3236e371fa49d",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_033": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6299b6e51aaec31bb5b709b318f9c956",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_034": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "602b93b1b8f83af2c2ed08ed93715884",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_035": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 40,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d7eb6471145eeef2d692563c27b91367",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_036": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "7753f583491e6aae491e9774e2a778de",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_037": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "707f8f3d4ef85eb5f679761bd0f89fa9",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_038": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "215450d0afa5da811b5be9f24b779ad7",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_039": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "86c2e2cd7c5443dd1ad6e3a0b7bcf6cc",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_040": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b53b2abedf7bf024e0b886b1e64c7e8e",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_041": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "eca0671907dac835ac5b50bb62c630c3",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_042": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2abf73288ff5b3acd4652dcf84641f96",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_043": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "53f077cda92c302a72e7f6ab5e57798b",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_044": {
+      "attacks": [
+        {
+          "active_damage": 100,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LLCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "48eaa3fb9a0ead744c6c4cb75e08c2c9",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_045": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LLL"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ae37c5bd0e12492200c33c025fd686cb",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_046": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "df07c7c9e66ddd482c9f94cd9015ba3c",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_047": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 200,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2418309668a6102d250f4bdb4fd89742",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 190,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_048": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        },
+        {
+          "active_damage": 200,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a15ad334101499f5283f47631736ee1c",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 190,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_049": {
+      "attacks": [
+        {
+          "active_damage": 210,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LLLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "23a00b18e1944b72ea1e1598affc5fe4",
+      "energy_type": "L",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_050": {
+      "attacks": [
+        {
+          "active_damage": 50,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "67895895dd26e7d68e8854f48ff88e37",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_051": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        },
+        {
+          "active_damage": 150,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2210e38ce299e07646e3a1a67fc1b258",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_052": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "508470eb99327c31713a9a0543dbb5bc",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_053": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        },
+        {
+          "active_damage": 140,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ab01ac05b94cfa923001e55a1dfde220",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_054": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        },
+        {
+          "active_damage": 120,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PPC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "41d19b25408b67ee69dd56dc60f094f8",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_055": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        },
+        {
+          "active_damage": 230,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PPP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "11641ee70b056fe9c3ef8d2e04ef6dd7",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 230,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_056": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "91e47d789c8f695b74e59253913e15d2",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_058": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PC"
+        },
+        {
+          "active_damage": 90,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4e8f2003856715ec3ae5e5b65ebe2e75",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_059": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c1adb66087005031a31ed27fb30dcd96",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 270,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_060": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "20f3bd0141978828bc0e191ce5090b98",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_061": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b813a0097cf2b40184888c03f51832fd",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_062": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "035ac595564a924d0d2563f374e4adb9",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 2",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_063": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PPC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "7b1750e79eb2adf1fc8cc4ba79e713a3",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_064": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "17c900feba1de0e2290e2310bb79731f",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_065": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "9163fc34feb6948638166d7d08e215a1",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 100,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_066": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        },
+        {
+          "active_damage": 120,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c8015fd4179304101ddb870edfffc872",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 160,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 2",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_067": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "9b7a3e1691f97e2d30d8437093c3500c",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_068": {
+      "attacks": [
+        {
+          "active_damage": 250,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FFFFF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "262402030e46715de21eb138e520134f",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_069": {
+      "attacks": [
+        {
+          "active_damage": 100,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FFC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "00265a9c83b1196e14f44c7e6ce90bac",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
+    "30thC_070": {
+      "attacks": [
+        {
+          "active_damage": 60,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "F"
+        },
+        {
+          "active_damage": 180,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "FCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "5e8f8e53cc52507e705900387a3be87a",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 160,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_071": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "F"
+        },
+        {
+          "active_damage": 80,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "FF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e9c95aca720c468d19bc2c9b4f0e90a8",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_072": {
+      "attacks": [
+        {
+          "active_damage": 50,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FF"
+        },
+        {
+          "active_damage": 140,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "FFC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "7deaab75aeac8b6a9f1a4c6182ee0485",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
+    "30thC_073": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 10,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "D"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "adc2b7eef45640632f3c67ec02aed83b",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_074": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2212a16966600c8c707bcfbfcce7cd1a",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_075": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": ""
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a4813d15f7f218c519135b8fa6e6b34d",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_076": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DD"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3aa3c4269d9f1a5cd5dcbb52a16a9c1d",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 280,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_077": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3860e7c78ea98edb870cdd58b5001170",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_078": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3dd4bd773322d8d5040badce1f880c61",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_079": {
+      "attacks": [
+        {
+          "active_damage": 90,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d39da7a78d3666d00e84860f5d122649",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_080": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "M"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2b9a93502964323c8ee21715e1b9d1ff",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_081": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 150,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b64c857949b418dc7c83e2d803fa5f60",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 160,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_082": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 110,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3ab33883e0c28b50994d0369caf2a261",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_083": {
+      "attacks": [
+        {
+          "active_damage": 50,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MM"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e94c582847c08c302ce02aa2f4e3ed55",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_084": {
+      "attacks": [
+        {
+          "active_damage": 220,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MMCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "caeed4efe12242b3c0177cf125d42f12",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 170,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 2",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_085": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": 120,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "0b1754ca815d6f06b3ae1dcf7565fc73",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_086": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a4dd7f1126ac49fc7ec08efe43097cf8",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_087": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "M"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "fecc124734bc8d0b3d50e6915d4958ee",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_088": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 240,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RW"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8b1f439835db2ae1688662a68d3ac62c",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 330,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_089": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 40,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "f9ce260f2d33fd863626d289736c0cc6",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_090": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 70,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3d3f2ec431904d54a364a75002a7b8c5",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_091": {
+      "attacks": [
+        {
+          "active_damage": 250,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LFC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8860030a26a0467a1fb55e5132c9a479",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 180,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_092": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ae8b67067d78d9ed2768fcb38a2f18d4",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_093": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "06a0c72fadedf66b5169678d05d53132",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_094": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 10,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "010b6a244ea472834e1384bc4efb7634",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_095": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c580b384fb944d40c09ebdcda9c6d94f",
+      "energy_type": "C",
+      "has_ability": true,
+      "max_hp": 160,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_096": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": ""
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "0718f0d8e41f74fee27dd895fab2a9bf",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 30,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_097": {
+      "attacks": [
+        {
+          "active_damage": 250,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RWL"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "cb21f414f39c7d17fc3f47144ed2c342",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_098": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3ca5cce2de4b9bb9b92726424408d2e9",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_099": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1aacf3bfb76bd000769bddef339474fe",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_100": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 40,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4482a5c8b104aa74ad1a4f488e5bdb17",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_101": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_102": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "b0754293ea1611bb9f931f02060ceb3b",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_103": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_104": {
+      "attacks": [
+        {
+          "active_damage": 150,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c77d3be6b3f3347323cd1b3df86dde1d",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 150,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_105": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RRC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "efa2faba61d1b2cd26c7371fe79c23b0",
+      "energy_type": "R",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thC_106": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 80,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "fcdfdf2c053d45b97f98ac821dbdf7a8",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_107": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WWC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "831872607eca83307cb94cfa8afc7730",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_108": {
+      "attacks": [
+        {
+          "active_damage": 210,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LLLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "23a00b18e1944b72ea1e1598affc5fe4",
+      "energy_type": "L",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_109": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        },
+        {
+          "active_damage": 150,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2210e38ce299e07646e3a1a67fc1b258",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_110": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "L"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "508470eb99327c31713a9a0543dbb5bc",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_111": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b813a0097cf2b40184888c03f51832fd",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_112": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "035ac595564a924d0d2563f374e4adb9",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 2",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_113": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "F"
+        },
+        {
+          "active_damage": 80,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "FF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e9c95aca720c468d19bc2c9b4f0e90a8",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_114": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2212a16966600c8c707bcfbfcce7cd1a",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_115": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": ""
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a4813d15f7f218c519135b8fa6e6b34d",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_116": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3dd4bd773322d8d5040badce1f880c61",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thC_117": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "M"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2b9a93502964323c8ee21715e1b9d1ff",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_118": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "M"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "fecc124734bc8d0b3d50e6915d4958ee",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_120": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ae8b67067d78d9ed2768fcb38a2f18d4",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_121": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "06a0c72fadedf66b5169678d05d53132",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_122": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3ca5cce2de4b9bb9b92726424408d2e9",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_123": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 40,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4482a5c8b104aa74ad1a4f488e5bdb17",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_124": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RRC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4c6d5da418dfa92f148946c38e0227c6",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 210,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thC_125": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        },
+        {
+          "active_damage": 160,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WW"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "de1d3ab0a4a8f5e15498e7a5413c039c",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 300,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thC_126": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 200,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2418309668a6102d250f4bdb4fd89742",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 190,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_127": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        },
+        {
+          "active_damage": 200,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a15ad334101499f5283f47631736ee1c",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 190,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thC_130": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c1adb66087005031a31ed27fb30dcd96",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 270,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thC_132": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 150,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b64c857949b418dc7c83e2d803fa5f60",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 160,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thC_133": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 240,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RW"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8b1f439835db2ae1688662a68d3ac62c",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 330,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_134": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        },
+        {
+          "active_damage": 230,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PPP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "11641ee70b056fe9c3ef8d2e04ef6dd7",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 230,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_135": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "dd6e658057478ff1eb223c71000b08a2",
+      "energy_type": "P",
+      "has_ability": true,
+      "max_hp": 160,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thC_DAR": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "46c769fc57a6c250c560df648bb779f8",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_FIG": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "9fedb80a97ddd5cc8b8022a21364c326",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_FIR": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_GRA": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "5e2d0ce37ca0c539aa45908da10544a0",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_LIG": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "45550fd10011f6ade7eef16ba88788cf",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_MET": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "4557c01497b81767fdaa0004089ecfb3",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_PSY": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thC_WAT": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "0cf075ae61b8a0b4e9151e5146c3aa26",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_001": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GC"
+        },
+        {
+          "active_damage": 90,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2919f9b010416347360126d812a61b87",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thDC_002": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 10,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "G"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ce61353f9bb746d0f81652fe0e3d7b3c",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 40,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thDC_003": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4d90b958bac79c1ca798260fab8c7771",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "30thDC_004": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "64758fae3b6ce94027c06e119a6b2397",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thDC_005": {
+      "attacks": [
+        {
+          "active_damage": 60,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "dcf48d3966bd4bc7b4a4c7b1333846b6",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thDC_006": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b7f7481e95ba441dd03d3cfe331b3596",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thDC_007": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d34a44981052506ad934470c29c9ed32",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thDC_008": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "84a76cffd047ab4a3e865781c4c5a26f",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thDC_009": {
+      "attacks": [
+        {
+          "active_damage": 80,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c05f485abf22b534b0e29c1acc5d186d",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thDC_010": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        },
+        {
+          "active_damage": 120,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PPC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "41d19b25408b67ee69dd56dc60f094f8",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thDC_011": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "91e47d789c8f695b74e59253913e15d2",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thDC_012": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "0cc9117514530887cde76b85435e0735",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thDC_013": {
+      "attacks": [
+        {
+          "active_damage": 90,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PPC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8bb1d36f1e56079e0f50cb0917736300",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thDC_014": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d765168a2339f9446f4ee88bb9aff5d7",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 260,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thDC_015": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PC"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "07474feb6ce288c2f43fa9b2f9fc3408",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "30thDC_016": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "71bd2afec3389ee13481c71b980ca790",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "30thDC_017": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8e0a04d63667ed7dc2156b4fdb9220ab",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 270,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thDC_018": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "9995fb384ac73eff14fc1f35399ec716",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thDC_019": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DD"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6490e4427286b8f1e2864175cd682176",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thDC_020": {
+      "attacks": [
+        {
+          "active_damage": 90,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DDC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8a89529177eff0e771a3da6cd765ff54",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thDC_021": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ed42f835279e42ce21860e383fa2960d",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thDC_022": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6e3ecd2b913cd2c9112e724f42d9990b",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 100,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thDC_023": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 140,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "607f252260b417d92ddbc53cdc07a599",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 170,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "30thDC_024": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "091e1fac0abbaef2722d9a2e82da5e3d",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thDC_025": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d55a30533789115b7c2d85e09c899e32",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thDC_026": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d55a30533789115b7c2d85e09c899e32",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "30thDC_027": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "84ab979321ed4fbfb16135c683891bb0",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "30thDC_028": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "187d694096b96c54af0f7463c5e2b2b4",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_029": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "77a259dbcc81481b6d06e3fc18f29c3c",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_030": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_031": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "b0754293ea1611bb9f931f02060ceb3b",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_032": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_033": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "3a6d419769778b40091e69fbd76737ec",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_034": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "4eadb12f43cd50ddec37821f28ce0359",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_035": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "0c06539cb1ff6391b61c2556d2d11e58",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_036": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "dab522c268c493ffb5410114f7f1f2ca",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_037": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "0a9bdf265647461dd5c6c827ffc19e61",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_038": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "8d9b3076693b9f692bae94d057498720",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_039": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_040": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "d57b61102355e6a0407d0aeb4db9477d",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_DAR": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "46c769fc57a6c250c560df648bb779f8",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_FIR": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_GRA": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "5e2d0ce37ca0c539aa45908da10544a0",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_LIG": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "45550fd10011f6ade7eef16ba88788cf",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thDC_PSY": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Basic Energy",
+      "effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "30thP_002": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ff57cea32736dd645dcf07ab54b3f9ea",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "30thP_022": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GG"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6210ae52fd5e55c69feaced7f0ba74c8",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CBB4C_0501": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ffa371eb22d9dfd66abab6a42085d22a",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
       "weakness_multiplier": 2
     },
     "CBB5C_0301": {
@@ -8775,6 +12955,114 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV1C_009": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "26846bd3499b028fb85156f64111e916",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV1C_010": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 60,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "32a4f9af2d7891a833bccf80b40411b7",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV1C_015": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 40,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "5eddf621d8b7bca3d4e0f737b4daea19",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV1C_017": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        },
+        {
+          "active_damage": 10,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "55e5e3d815b73dec1f38aa900afba0ee",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV1C_028": {
       "attacks": [
         {
@@ -8794,6 +13082,33 @@
       "resistance_reduction": 0,
       "stage": "Stage 1",
       "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "CSV1C_029": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "73bdd71cb7017633aaf201b028bd3652",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
       "weakness_multiplier": 2
     },
     "CSV1C_042": {
@@ -8820,6 +13135,33 @@
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "CSV1C_044": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "L"
+        },
+        {
+          "active_damage": 220,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LL"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "70f02f5c8d8cccba81edc75ac5eb4f46",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 330,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
       "weakness_energy": "F",
       "weakness_multiplier": 2
     },
@@ -8982,6 +13324,33 @@
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
+    "CSV1C_071": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "F"
+        },
+        {
+          "active_damage": 170,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "FF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ea313f5fb16a8fa1ee1594a403534d27",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 140,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
     "CSV1C_079": {
       "attacks": [
         {
@@ -9001,6 +13370,27 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
+    "CSV1C_097": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a3fb29e6398509034c1f225f49ecb000",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 140,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
       "weakness_multiplier": 2
     },
     "CSV1C_099": {
@@ -9180,6 +13570,20 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV1C_119": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "4d05011aee8f573fbd15fc0cad79bd9f",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV1C_120": {
       "attacks": [],
       "capability_ids": [],
@@ -9227,6 +13631,20 @@
       "capability_ids": [],
       "card_type": "Supporter",
       "effect_id": "9fb5f53c9952d10b4fe26508ecbc644a",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV1C_125": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "9633328b8477513ca950a1a266c83502",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -9288,6 +13706,27 @@
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV2C_012": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "0779cd043d2977d004c2cfff5503c939",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 310,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
       "weakness_energy": "R",
       "weakness_multiplier": 2
     },
@@ -9456,6 +13895,54 @@
       "weakness_energy": "D",
       "weakness_multiplier": 2
     },
+    "CSV2C_061": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PPP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3681b2671b2cfb5cf4381d72d87ed2f6",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "CSV2C_099": {
+      "attacks": [
+        {
+          "active_damage": 260,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6743b9624831bf2307918dce25e1fb2d",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 300,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV2C_105": {
       "attacks": [
         {
@@ -9533,6 +14020,20 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV2C_122": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "b9c904c0285e30282f6bc5b43b5479c4",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV2C_125": {
       "attacks": [],
       "capability_ids": [],
@@ -9588,6 +14089,102 @@
       "stage": "",
       "weakness_energy": "",
       "weakness_multiplier": 1
+    },
+    "CSV3C_004": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GG"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3fa95a3b6535b99cdd2370decb9ac64b",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_005": {
+      "attacks": [
+        {
+          "active_damage": 120,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GG"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1d232492f05784c869bd73a62bd1e484",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 270,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_015": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GGC"
+        },
+        {
+          "active_damage": 220,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GGGC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "f7bd711194afce054b19b61b5d3fd510",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 230,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_029": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "59c6098cd9e60035da8a0a0f6513ef1b",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
     },
     "CSV3C_031": {
       "attacks": [
@@ -9721,6 +14318,48 @@
       "weakness_energy": "G",
       "weakness_multiplier": 2
     },
+    "CSV3C_080": {
+      "attacks": [
+        {
+          "active_damage": 150,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FFF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6db296a19d741896c070fe471e92b8f3",
+      "energy_type": "F",
+      "has_ability": true,
+      "max_hp": 240,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_082": {
+      "attacks": [
+        {
+          "active_damage": 70,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "889c7ffe260732b2db55b5c14f05cb33",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
     "CSV3C_086": {
       "attacks": [
         {
@@ -9740,6 +14379,87 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_089": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MM"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b215ad214738ffd22b00673b4a254b15",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_096": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        },
+        {
+          "active_damage": 70,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "8e3a8f7248c7087364b542c5e277f6cc",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 100,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "CSV3C_098": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "0d02b63d128400622f704237482e5829",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
       "weakness_multiplier": 2
     },
     "CSV3C_115": {
@@ -9784,6 +14504,20 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV3C_120": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Tool",
+      "effect_id": "09e67f9448cf4a062206fc6266c94b5f",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV3C_123": {
       "attacks": [],
       "capability_ids": [],
@@ -9803,6 +14537,20 @@
       "capability_ids": [],
       "card_type": "Supporter",
       "effect_id": "69c6f343fad1310d0008894c15bd6388",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV3C_128": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Stadium",
+      "effect_id": "b599512657c5c23024fde7875db3ba2d",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -9840,6 +14588,33 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV4C_001": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "16a6b9b3e74104caa59751bf55e6cd28",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV4C_013": {
       "attacks": [
         {
@@ -9861,6 +14636,87 @@
       "weakness_energy": "R",
       "weakness_multiplier": 2
     },
+    "CSV4C_015": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RR"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b540fb36a187e1d05008e3be61084e81",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_032": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LC"
+        },
+        {
+          "active_damage": 180,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LLC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b7337b94bb9779b843cf7c00f703119a",
+      "energy_type": "L",
+      "has_ability": false,
+      "max_hp": 210,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_043": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        },
+        {
+          "active_damage": 130,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a7eb3d36fe16b1c33fbc3b6badaf3553",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 270,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
     "CSV4C_044": {
       "attacks": [
         {
@@ -9879,6 +14735,60 @@
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_045": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "93ddf8f138b1edbb9b57620bcaa80b5d",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_046": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 40,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "bef823435789b8e25911400efe0b50a4",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
@@ -9903,6 +14813,27 @@
       "weakness_energy": "D",
       "weakness_multiplier": 2
     },
+    "CSV4C_073": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "162aa30465bfa41d838cbe010eeed5b2",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 100,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
     "CSV4C_074": {
       "attacks": [
         {
@@ -9921,6 +14852,33 @@
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Stage 2",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_076": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        },
+        {
+          "active_damage": 140,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "DCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "2660960a5e1f7383bd679ca3dc27621f",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
       "weakness_energy": "G",
       "weakness_multiplier": 2
     },
@@ -9945,6 +14903,48 @@
       "energy_type": "M",
       "has_ability": false,
       "max_hp": 140,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_085": {
+      "attacks": [
+        {
+          "active_damage": 120,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ec6d0412aa2e5a0b0ed1490ac796df86",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 150,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 2",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_088": {
+      "attacks": [
+        {
+          "active_damage": 170,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ab8223ccdd32e7042b64196017d4d6db",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 280,
       "resistance_energy": "G",
       "resistance_reduction": 30,
       "stage": "Stage 1",
@@ -9993,6 +14993,27 @@
       "weakness_energy": "L",
       "weakness_multiplier": 2
     },
+    "CSV4C_100": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "837d59970f306655cfdf630bed5431b4",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
     "CSV4C_101": {
       "attacks": [
         {
@@ -10012,6 +15033,33 @@
       "resistance_reduction": 30,
       "stage": "Stage 2",
       "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV4C_103": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b8aaf66c1209ba720cdcabdb011e06e7",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
       "weakness_multiplier": 2
     },
     "CSV4C_117": {
@@ -10056,6 +15104,62 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV4C_120": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Tool",
+      "effect_id": "43b20ef70cd362c3a52aa6820cb69829",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV4C_122": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "8eb02a558725c4ccde3574f0f9451007",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV4C_127": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Stadium",
+      "effect_id": "10aa378456f578af10dfb5c2ff38c878",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV4C_128": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Stadium",
+      "effect_id": "45e96e576a5a81e61acd2e46a81547b4",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV4C_129": {
       "attacks": [],
       "capability_ids": [],
@@ -10069,6 +15173,33 @@
       "stage": "",
       "weakness_energy": "",
       "weakness_multiplier": 1
+    },
+    "CSV5C_008": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "50fcaf60eed755b7394ca95828345980",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
     },
     "CSV5C_009": {
       "attacks": [
@@ -10106,6 +15237,60 @@
       "energy_type": "G",
       "has_ability": true,
       "max_hp": 270,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV5C_011": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "54ac40e061bac6c8b358d6247b7a15eb",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV5C_012": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 140,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GG"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "044e627b60cfc8c546ef7e172c0a874d",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 260,
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Stage 1",
@@ -10154,6 +15339,54 @@
       "weakness_energy": "W",
       "weakness_multiplier": 2
     },
+    "CSV5C_020": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d903825962e8a629b0adfd9e03c4a0d6",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "CSV5C_021": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4364b8582611727c6d832f681c40dfe4",
+      "energy_type": "R",
+      "has_ability": true,
+      "max_hp": 260,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
     "CSV5C_022": {
       "attacks": [
         {
@@ -10179,6 +15412,27 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "CSV5C_029": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": ""
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "54984a509550b1cfdbe940c0b20be30f",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 30,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
       "weakness_multiplier": 2
     },
     "CSV5C_053": {
@@ -10337,6 +15591,158 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV5C_129": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Special Energy",
+      "effect_id": "716f25159d0f0b7693eb93f3fb26a4cd",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV6C_009": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "46d964eb8e1fb610ea78db5873f4e019",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_010": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GG"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "74e486ef3049c0ce097db1e3f6153d02",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_015": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "dea85315621ce2efd111b12d1e2fbc79",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 260,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_030": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "81e1caca63306c340b5915fb14cdb077",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 30,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_032": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "5e06feeca2c0f59fc31f10534bce6844",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_038": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        },
+        {
+          "active_damage": 180,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GG"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a8f9a49f3d894665f5851f51fda77855",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 310,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 2",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
     "CSV6C_042": {
       "attacks": [
         {
@@ -10356,6 +15762,33 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_043": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        },
+        {
+          "active_damage": 130,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WWC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b868f9185451bae128d75f0aca7b91f9",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
       "weakness_multiplier": 2
     },
     "CSV6C_051": {
@@ -10400,6 +15833,27 @@
       "energy_type": "P",
       "has_ability": false,
       "max_hp": 70,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_060": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1e38b408b75cc5ec2a7d0cc98a761420",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 50,
       "resistance_energy": "F",
       "resistance_reduction": 30,
       "stage": "Basic",
@@ -10479,6 +15933,54 @@
       "resistance_reduction": 30,
       "stage": "Basic",
       "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_066": {
+      "attacks": [
+        {
+          "active_damage": 200,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PPC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "b417ad06ad8e4aa783b35fe1f3f27010",
+      "energy_type": "P",
+      "has_ability": true,
+      "max_hp": 220,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_067": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 80,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "f170a8c91d1fed0fc2c8398f48969539",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
       "weakness_multiplier": 2
     },
     "CSV6C_078": {
@@ -10562,6 +16064,27 @@
       "weakness_energy": "P",
       "weakness_multiplier": 2
     },
+    "CSV6C_083": {
+      "attacks": [
+        {
+          "active_damage": 200,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FFC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "31d0610ee2a0b1e904e08ad72251aa48",
+      "energy_type": "F",
+      "has_ability": true,
+      "max_hp": 220,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
     "CSV6C_095": {
       "attacks": [
         {
@@ -10608,6 +16131,33 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV6C_097": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": 180,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MMCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3bc08c4356345e9aac2899f4af8278dd",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 180,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
       "weakness_multiplier": 2
     },
     "CSV6C_112": {
@@ -10978,6 +16528,33 @@
       "weakness_energy": "W",
       "weakness_multiplier": 2
     },
+    "CSV7C_050": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1b27a9489251f2aea2acb7b058f0fcf0",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
     "CSV7C_051": {
       "attacks": [
         {
@@ -11068,6 +16645,27 @@
       "weakness_energy": "L",
       "weakness_multiplier": 2
     },
+    "CSV7C_057": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "f6baf0c4c60ff47c7f836c1271f40cb3",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
     "CSV7C_059": {
       "attacks": [
         {
@@ -11112,6 +16710,33 @@
       "weakness_energy": "L",
       "weakness_multiplier": 2
     },
+    "CSV7C_071": {
+      "attacks": [
+        {
+          "active_damage": 130,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "WCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3fe795cc18c44928e6755503dbc1fdfb",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 150,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
     "CSV7C_091": {
       "attacks": [
         {
@@ -11131,6 +16756,54 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
+    "CSV7C_094": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "12a9c244a95af5d450f3d39ede73a2d2",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "CSV7C_095": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        },
+        {
+          "active_damage": 100,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "9050fd41ac6abcce248c52570001e8e8",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 110,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
       "weakness_multiplier": 2
     },
     "CSV7C_102": {
@@ -11244,6 +16917,54 @@
       "weakness_energy": "D",
       "weakness_multiplier": 2
     },
+    "CSV7C_112": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "329596a8bb8fed48e033da67fe7fabfc",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV7C_113": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 60,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e36b6f130408a32b3baad6cc524fa9de",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
     "CSV7C_118": {
       "attacks": [
         {
@@ -11340,6 +17061,33 @@
       "energy_type": "F",
       "has_ability": false,
       "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV7C_133": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "F"
+        },
+        {
+          "active_damage": 110,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "FFC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "5ed8053b43211ace08218c99208ab742",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 140,
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Basic",
@@ -11522,6 +17270,33 @@
       "stage": "Basic",
       "weakness_energy": "",
       "weakness_multiplier": 1
+    },
+    "CSV7C_157": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "880f55ba795d8703bc0fbb7266d61cee",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
     },
     "CSV7C_159": {
       "attacks": [
@@ -11884,6 +17659,34 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV7C_198": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "c2910457bc7fd02aa51bb4fa59618368",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV7C_199": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "0d2ca8f42fe1500644bc1bd21c89eeb1",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV7C_200": {
       "attacks": [],
       "capability_ids": [],
@@ -12092,6 +17895,33 @@
       "weakness_energy": "R",
       "weakness_multiplier": 2
     },
+    "CSV8C_026": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "G"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "defef39f399206a6de240aab5caa7f6b",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV8C_028": {
       "attacks": [
         {
@@ -12111,6 +17941,33 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_039": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        },
+        {
+          "active_damage": 70,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RRC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "d94f8f6e08bc586538c8b77e3c184a56",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
       "weakness_multiplier": 2
     },
     "CSV8C_041": {
@@ -12137,6 +17994,33 @@
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Stage 1",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_043": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RCC"
+        },
+        {
+          "active_damage": null,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RRR"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "afe6e5fb7931c8c529e43134ef264885",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 210,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
       "weakness_energy": "W",
       "weakness_multiplier": 2
     },
@@ -12197,6 +18081,90 @@
       "energy_type": "W",
       "has_ability": true,
       "max_hp": 270,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_059": {
+      "attacks": [
+        {
+          "active_damage": 250,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WCCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "13f57c90c23bf4118291353727093eff",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 160,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_062": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a4600d2953dacffa956d665a7fb29b02",
+      "energy_type": "W",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_063": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3c38a9d3798223dfe455c2bc898f78b6",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 100,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_064": {
+      "attacks": [
+        {
+          "active_damage": 250,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1b97f4552b78e850d48100edf4d82c95",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 340,
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Stage 1",
@@ -12347,6 +18315,27 @@
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
+    "CSV8C_092": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "90343c8393ff4c3a2ee74e551df524d5",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 40,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
     "CSV8C_094": {
       "attacks": [
         {
@@ -12445,6 +18434,33 @@
       "weakness_energy": "P",
       "weakness_multiplier": 2
     },
+    "CSV8C_115": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        },
+        {
+          "active_damage": 50,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "309c53f62310a22661ec15d7b6327dea",
+      "energy_type": "F",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
     "CSV8C_119": {
       "attacks": [
         {
@@ -12466,6 +18482,27 @@
       "energy_type": "F",
       "has_ability": false,
       "max_hp": 140,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
+    "CSV8C_120": {
+      "attacks": [
+        {
+          "active_damage": 70,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "cc0285c411d9f2c4d7c3f0c486cd2667",
+      "energy_type": "F",
+      "has_ability": true,
+      "max_hp": 130,
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Basic",
@@ -12616,6 +18653,33 @@
       "weakness_energy": "F",
       "weakness_multiplier": 2
     },
+    "CSV8C_147": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MC"
+        },
+        {
+          "active_damage": 70,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1e692d5fa029fe63fd2a730d1a309587",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 100,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV8C_153": {
       "attacks": [
         {
@@ -12664,6 +18728,33 @@
       "energy_type": "N",
       "has_ability": false,
       "max_hp": 120,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV8C_155": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "GR"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "83cf2dc98e97628df64ef9f35f1befb3",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 40,
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Basic",
@@ -12862,6 +18953,33 @@
       "weakness_energy": "F",
       "weakness_multiplier": 2
     },
+    "CSV8C_166": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "fb03e90c5a6d772ba32e1451c20cbae6",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
     "CSV8C_172": {
       "attacks": [
         {
@@ -12888,6 +19006,20 @@
       "capability_ids": [],
       "card_type": "Item",
       "effect_id": "d324e01179ab048ed023bf4a20bf658d",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV8C_174": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "c4ee8747f7ad45f9a828384fb1637fd9",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -12930,6 +19062,48 @@
       "capability_ids": [],
       "card_type": "Item",
       "effect_id": "a13ba21d54c2f0e8ea4f7d5b2ca37380",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV8C_178": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "cbc04dc354816e1a5795de522630d8d1",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV8C_179": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "941f9d4ce0aff2ae62b21503b7615e1b",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV8C_180": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "2002cf21cc417f766451ab5760e81560",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -13149,11 +19323,39 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV8C_202": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Stadium",
+      "effect_id": "2c910670d5c291e5f2c379190be91ee8",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV8C_203": {
       "attacks": [],
       "capability_ids": [],
       "card_type": "Stadium",
       "effect_id": "4e16157bfa88a41e823d058a732df8e0",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV8C_204": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Stadium",
+      "effect_id": "6697150282b5d32d026ce20a993b4b53",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -13454,6 +19656,48 @@
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
+    "CSV9.5C_051": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "WC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "3c38a9d3798223dfe455c2bc898f78b6",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 100,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV9.5C_052": {
+      "attacks": [
+        {
+          "active_damage": 250,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "W"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1b97f4552b78e850d48100edf4d82c95",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 340,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
     "CSV9.5C_058": {
       "attacks": [
         {
@@ -13625,6 +19869,27 @@
       "weakness_energy": "G",
       "weakness_multiplier": 2
     },
+    "CSV9.5C_101": {
+      "attacks": [
+        {
+          "active_damage": 70,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "FF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "cc0285c411d9f2c4d7c3f0c486cd2667",
+      "energy_type": "F",
+      "has_ability": true,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "P",
+      "weakness_multiplier": 2
+    },
     "CSV9.5C_104": {
       "attacks": [
         {
@@ -13650,6 +19915,48 @@
       "resistance_reduction": 0,
       "stage": "Stage 1",
       "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV9.5C_105": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "D"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "608a8fad4d6cf60d03b9711a66be6674",
+      "energy_type": "D",
+      "has_ability": false,
+      "max_hp": 60,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "CSV9.5C_120": {
+      "attacks": [
+        {
+          "active_damage": 20,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6a5025792063a6ff9c0761027bffdbb3",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "R",
       "weakness_multiplier": 2
     },
     "CSV9.5C_126": {
@@ -13795,6 +20102,20 @@
       "capability_ids": [],
       "card_type": "Item",
       "effect_id": "6a7fe7ec3f22c435f50b49909e85b3d3",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV9.5C_166": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "c0ea20d42e8e30a99c2a2430843a7b26",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -13965,6 +20286,27 @@
       "weakness_energy": "R",
       "weakness_multiplier": 2
     },
+    "CSV9C_019": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c2a4f4ce310fd236994b700562ce2892",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 30,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV9C_021": {
       "attacks": [
         {
@@ -14100,6 +20442,27 @@
       "resistance_energy": "",
       "resistance_reduction": 0,
       "stage": "Stage 1",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
+    "CSV9C_051": {
+      "attacks": [
+        {
+          "active_damage": 110,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "5a7b30386f52c19ae6ceb2c9ae905f84",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 130,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
       "weakness_energy": "L",
       "weakness_multiplier": 2
     },
@@ -14475,6 +20838,33 @@
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
+    "CSV9C_091": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 30,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "P"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "a048b275e9d6b42344f9399c374467d0",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "M",
+      "weakness_multiplier": 2
+    },
     "CSV9C_096": {
       "attacks": [
         {
@@ -14802,6 +21192,27 @@
       "weakness_energy": "R",
       "weakness_multiplier": 2
     },
+    "CSV9C_137": {
+      "attacks": [
+        {
+          "active_damage": 160,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MMC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "e5b5f21d3d91e433188733bbd04a3553",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 180,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "CSV9C_138": {
       "attacks": [
         {
@@ -14820,6 +21231,33 @@
       "resistance_energy": "G",
       "resistance_reduction": 30,
       "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSV9C_140": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "M"
+        },
+        {
+          "active_damage": 20,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "MM"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "10fae18e35ba5ba1481dda8253f4b4d8",
+      "energy_type": "M",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Basic",
       "weakness_energy": "R",
       "weakness_multiplier": 2
     },
@@ -15112,6 +21550,20 @@
       "weakness_energy": "",
       "weakness_multiplier": 1
     },
+    "CSV9C_179": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "b2ed6eb5dd7e6221d6673540adb331ab",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSV9C_180": {
       "attacks": [],
       "capability_ids": [],
@@ -15229,6 +21681,20 @@
       "capability_ids": [],
       "card_type": "Supporter",
       "effect_id": "136fdb6578daa3b81aef369495de4c3d",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSV9C_197": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "3f56cb20813b60d36e976cdb5bbe3333",
       "energy_type": "",
       "has_ability": false,
       "max_hp": 0,
@@ -15642,6 +22108,33 @@
       "weakness_energy": "F",
       "weakness_multiplier": 2
     },
+    "CSVH3aC_005": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        },
+        {
+          "active_damage": 130,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "CCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "bbdb7b20fc7c4292acad64687c1ef318",
+      "energy_type": "C",
+      "has_ability": false,
+      "max_hp": 200,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "L",
+      "weakness_multiplier": 2
+    },
     "CSVH3aC_017": {
       "attacks": [],
       "capability_ids": [],
@@ -15683,6 +22176,89 @@
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
+    "CSVH4C_024": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "LP"
+        },
+        {
+          "active_damage": 220,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "LPC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c996546aa1c4254d9f1c41d265b9f016",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 220,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "CSVH4eC_001": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "f727c4fb3a5816eb5cdf2d06b2c37324",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSVH4eC_002": {
+      "attacks": [
+        {
+          "active_damage": 60,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "GCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "29caf0a046110a6cc450e04e493bdfa2",
+      "energy_type": "G",
+      "has_ability": true,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSVH4eC_044": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "a444b83881df9e2a0225aee95bbc853a",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "CSVH5C_002": {
       "attacks": [
         {
@@ -15709,6 +22285,60 @@
       "stage": "Stage 1",
       "weakness_energy": "R",
       "weakness_multiplier": 2
+    },
+    "CSVH5eC_027": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "P"
+        },
+        {
+          "active_damage": 70,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "PC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "04cb7a5607e2d5e5a5a3daeefc15f64a",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "CSVH5pC_006": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "CC"
+        },
+        {
+          "active_damage": 280,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RFF"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "1d75a8974ad24952cc961bbb1a27ffc8",
+      "energy_type": "N",
+      "has_ability": false,
+      "max_hp": 230,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
     },
     "CSVL1C_036": {
       "attacks": [
@@ -15752,6 +22382,27 @@
       "weakness_energy": "P",
       "weakness_multiplier": 2
     },
+    "CSVL1C_039": {
+      "attacks": [
+        {
+          "active_damage": 200,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "DCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "87cc640402d6b606ee4ef78b7c9d2689",
+      "energy_type": "D",
+      "has_ability": true,
+      "max_hp": 280,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "F",
+      "weakness_multiplier": 2
+    },
     "CSVL1C_045": {
       "attacks": [
         {
@@ -15778,6 +22429,27 @@
       "stage": "Stage 1",
       "weakness_energy": "",
       "weakness_multiplier": 1
+    },
+    "CSVL2C_007": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "G"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "ce9e5d4c4001b526757e2fa1f75d0e05",
+      "energy_type": "G",
+      "has_ability": false,
+      "max_hp": 50,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
     },
     "CSVL2C_041": {
       "attacks": [
@@ -15825,6 +22497,27 @@
       "resistance_reduction": 0,
       "stage": "Stage 1",
       "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
+    "CSVNC_015": {
+      "attacks": [
+        {
+          "active_damage": 60,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "C"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "c03588e3709ba32ad3c63409b64bdf2c",
+      "energy_type": "W",
+      "has_ability": true,
+      "max_hp": 110,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "L",
       "weakness_multiplier": 2
     },
     "CSVSC_005": {
@@ -16179,6 +22872,34 @@
       "weakness_energy": "G",
       "weakness_multiplier": 2
     },
+    "LEN_MEG_119": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "47fdbe7775a150170eeced33c27c1c72",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
+    "LEN_POR_81": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Item",
+      "effect_id": "37d9368f331023f9145669360477c7ad",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "LEN_PRE_4": {
       "attacks": [
         {
@@ -16374,6 +23095,48 @@
       "weakness_energy": "D",
       "weakness_multiplier": 2
     },
+    "M6A_060": {
+      "attacks": [
+        {
+          "active_damage": 40,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "PP"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "6f032c3b7bf63df90da2a8d8886ac9b6",
+      "energy_type": "P",
+      "has_ability": false,
+      "max_hp": 80,
+      "resistance_energy": "F",
+      "resistance_reduction": 30,
+      "stage": "Basic",
+      "weakness_energy": "D",
+      "weakness_multiplier": 2
+    },
+    "SVP_047": {
+      "attacks": [
+        {
+          "active_damage": null,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "MCCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "eb1836e87ae4f678bac49ab21623d321",
+      "energy_type": "M",
+      "has_ability": true,
+      "max_hp": 140,
+      "resistance_energy": "G",
+      "resistance_reduction": 30,
+      "stage": "Stage 1",
+      "weakness_energy": "R",
+      "weakness_multiplier": 2
+    },
     "SVP_067": {
       "attacks": [
         {
@@ -16414,6 +23177,27 @@
       "resistance_reduction": 0,
       "stage": "Basic",
       "weakness_energy": "G",
+      "weakness_multiplier": 2
+    },
+    "SVP_100": {
+      "attacks": [
+        {
+          "active_damage": 70,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "RR"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "4eaba5926d7967ebdfe2f91c5511060d",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 90,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "W",
       "weakness_multiplier": 2
     },
     "SVP_102": {
@@ -16512,6 +23296,68 @@
       "weakness_energy": "M",
       "weakness_multiplier": 2
     },
+    "SVP_175": {
+      "attacks": [
+        {
+          "active_damage": 10,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "28875f87f42e55f4606bf4494568705a",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 70,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Basic",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "SVP_176": {
+      "attacks": [
+        {
+          "active_damage": 30,
+          "attack_index": 0,
+          "bench_damage": 0,
+          "cost": "R"
+        },
+        {
+          "active_damage": 80,
+          "attack_index": 1,
+          "bench_damage": 0,
+          "cost": "RCC"
+        }
+      ],
+      "capability_ids": [],
+      "card_type": "Pokemon",
+      "effect_id": "68d5729d1856e519334cecfd49a276ce",
+      "energy_type": "R",
+      "has_ability": false,
+      "max_hp": 100,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "Stage 1",
+      "weakness_energy": "W",
+      "weakness_multiplier": 2
+    },
+    "SVP_341": {
+      "attacks": [],
+      "capability_ids": [],
+      "card_type": "Supporter",
+      "effect_id": "601387a0c0610f55b540d562e9379fa5",
+      "energy_type": "",
+      "has_ability": false,
+      "max_hp": 0,
+      "resistance_energy": "",
+      "resistance_reduction": 0,
+      "stage": "",
+      "weakness_energy": "",
+      "weakness_multiplier": 1
+    },
     "UTEST_001": {
       "attacks": [
         {
@@ -16543,7 +23389,7 @@
       "handlers": [
         {
           "path": "scripts/effects/pokemon_effects/AbilityMoveDamageCountersToOpponent.gd",
-          "sha256": "64E992DB1AF994F022D412C2B300D9A3F98D29B845CFE122A30B34C7F2CF1FBE"
+          "sha256": "B8B9C491FE81F23C160E3E9BD22AA39B42BCEDAF9928C07BAB57E1282C98231D"
         }
       ],
       "parameters": {
@@ -16563,7 +23409,7 @@
         },
         {
           "path": "scripts/effects/pokemon_effects/AbilityMarniesGrimmsnarlPunkUp.gd",
-          "sha256": "8109A68FF1026412932708A219A1005DCCF0942D5650D980510E24B111D2D55C"
+          "sha256": "176AC2E306C7AC4F94D18B9C56CDDAA3967C353F9B476EAFE524862B9EBF3F6A"
         }
       ],
       "parameters": {}
@@ -16576,7 +23422,7 @@
       "handlers": [
         {
           "path": "scripts/effects/pokemon_effects/AttackHealOwnBenchPokemon.gd",
-          "sha256": "0F35F0A6634ABF53FE75703726A38DA2BE559690CDF91025F6FE0253197F2A8F"
+          "sha256": "DB0D94BAC23398DA43E96D3A64C6A2140AC5A93C919021504BF10AFDC3953195"
         }
       ],
       "parameters": {
@@ -16591,7 +23437,7 @@
       "handlers": [
         {
           "path": "scripts/engine/EffectRegistry.gd",
-          "sha256": "E56E858D7FA2E2369F8F00516B0AE4BFDC880FA708566616F68A1A701B4B417F"
+          "sha256": "EF00BD0C73197BA0DD818C92DB4E10BCAD23C058DF8246310168555C83C6C43F"
         },
         {
           "path": "scripts/effects/trainer_effects/EffectTMDevolution.gd",
@@ -16611,7 +23457,7 @@
       "handlers": [
         {
           "path": "scripts/engine/EffectRegistry.gd",
-          "sha256": "E56E858D7FA2E2369F8F00516B0AE4BFDC880FA708566616F68A1A701B4B417F"
+          "sha256": "EF00BD0C73197BA0DD818C92DB4E10BCAD23C058DF8246310168555C83C6C43F"
         },
         {
           "path": "scripts/effects/tool_effects/EffectToolConditionalDamage.gd",
@@ -16643,11 +23489,11 @@
   ],
   "generation": {
     "builder": "tools/ptcgdap/build_public_damage_capability_registry.py",
-    "card_count": 797,
+    "card_count": 1107,
     "catalog_root": "data/bundled_user/cards",
-    "source_root_sha256": "D871555724F529A0635DBCB549CEE798EF6D126AA8ED71F61FBF2788F14112C2"
+    "source_root_sha256": "702CB3F8C546A469C72EAA61765E8871E8E193202D9FBB3A4342B82B567B6DCD"
   },
   "profile_id": "ptcgdap-public-damage-capability-registry-v1",
-  "registry_sha256": "1FDC12126BD74E4E10AEB5B4580E18916B5401B76B0E42EF7EDE70E04CAD398C",
+  "registry_sha256": "3C3536E051B93CCF39FD23570961BDA4B0508C1BBA93389BDB35573A2B4C3CD5",
   "schema_version": 1
 }

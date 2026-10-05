@@ -3,6 +3,7 @@ extends RefCounted
 
 const ACTIVE_META := "_web_text_input_bridge_active"
 const LAST_PROXY_REQUEST_META := "_web_text_input_last_proxy_request_msec"
+const SUBMIT_ACTION_META := "_web_text_input_submit_action"
 
 static var _callback_host: WebTextInputBridge = null
 static var _callbacks: Array = []
@@ -261,6 +262,7 @@ static func _payload_for_control(control: Control) -> Dictionary:
 		"placeholder": placeholder,
 		"input_type": input_type,
 		"multiline": multiline,
+		"submit_on_enter": control.get_meta(SUBMIT_ACTION_META, Callable()) is Callable and (control.get_meta(SUBMIT_ACTION_META, Callable()) as Callable).is_valid(),
 		"select_all": control is LineEdit and (control as LineEdit).has_selection() and (control as LineEdit).get_selected_text() == text,
 	}
 
@@ -537,6 +539,12 @@ static func _install_script() -> String:
 		}, 80);
 	  };
       var keydownHandler = function(event) {
+		if (config.submit_on_enter && event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
+		  event.preventDefault();
+		  event.stopPropagation();
+		  callback('submit', input.value, id);
+		  return;
+		}
         if (!event.isComposing && (event.key === 'Backspace' || event.key === 'Delete')) {
           event.preventDefault();
           event.stopPropagation();
@@ -630,6 +638,12 @@ func _on_js_text_input_event(args: Array) -> void:
 	var event := str(payload.get("event", "input"))
 	var value := str(payload.get("value", ""))
 	commit_active_value(value, event == "commit" or event == "blur")
+	if event == "submit":
+		var control := _active_control()
+		if control != null and _target_is_editable(control):
+			var action: Variant = control.get_meta(SUBMIT_ACTION_META, Callable())
+			if action is Callable and action.is_valid():
+				action.call()
 
 
 static func _active_control() -> Control:

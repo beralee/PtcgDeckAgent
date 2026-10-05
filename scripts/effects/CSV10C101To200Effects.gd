@@ -915,9 +915,9 @@ class AttackOptionalReturnPokemonStackToHand extends BaseEffect:
 		for energy: CardInstance in attacker.attached_energy:
 			energy.face_up = true
 			player.discard_pile.append(energy)
-		if attacker.attached_tool != null:
-			attacker.attached_tool.face_up = true
-			player.discard_pile.append(attacker.attached_tool)
+		for tool: CardInstance in attacker.get_attached_tools():
+			tool.face_up = true
+			player.discard_pile.append(tool)
 		attacker.pokemon_stack.clear()
 		attacker.attached_energy.clear()
 		attacker.attached_tool = null
@@ -2081,18 +2081,16 @@ class AttackDiscardDefenderToolBeforeDamage extends BaseEffect:
 		if attacker != null and processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
 			if bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, defender, state)):
 				return
-		var tool := defender.attached_tool
-		if tool == null:
-			return
-		defender.attached_tool = null
-		var owner := tool.owner_index
-		if owner < 0 or owner >= state.players.size():
-			for player_index: int in state.players.size():
-				if defender in state.players[player_index].get_all_pokemon():
-					owner = player_index
-					break
-		if owner >= 0 and owner < state.players.size():
-			state.players[owner].discard_card(tool)
+		for tool: CardInstance in defender.get_attached_tools():
+			defender.remove_attached_tool(tool)
+			var owner := tool.owner_index
+			if owner < 0 or owner >= state.players.size():
+				for player_index: int in state.players.size():
+					if defender in state.players[player_index].get_all_pokemon():
+						owner = player_index
+						break
+			if owner >= 0 and owner < state.players.size():
+				state.players[owner].discard_card(tool)
 
 	func execute_attack(_attacker: PokemonSlot, _defender: PokemonSlot, _attack_index: int, _state: GameState) -> void:
 		# This effect resolves through before_attack_damage so Tool-based defense and HP

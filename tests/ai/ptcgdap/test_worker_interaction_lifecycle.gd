@@ -3,6 +3,7 @@ extends TestBase
 const Owner = preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorDevelopmentBattleOwner.gd")
 const Reviewed = preload("res://scripts/ai/ptcgdap/host/godot/ReviewedAuthorStrategyDevelopmentBattleOwner.gd")
 const Cynthia = preload("res://scripts/ai/ptcgdap/host/godot/CynthiaAuthorStrategyDevelopmentBattleOwner.gd")
+const CounterContract = preload("res://tests/test_author_strategy_interaction_contract_v2.gd")
 
 class WaitingOwner extends Owner:
 	var waiting := true
@@ -15,6 +16,44 @@ class WaitingOwner extends Owner:
 		return [] if waiting else [items[-1]]
 	func _pick_interaction_target_index(_items: Array, _excluded: Array, _step: Dictionary, _context: Dictionary = {}) -> int:
 		return -1 if waiting else 0
+
+func test_all_local_author_adapters_wait_and_reobserve_counter_suffixes() -> String:
+	var owner := WaitingOwner.new()
+	var checks: Array[String] = []
+	var fixture := CounterContract.new()
+	for adapter: RefCounted in [Owner.PublicInteractionAdapter.new(owner), Reviewed.ReviewedPublicInteractionAdapter.new(owner), Cynthia.CynthiaPublicInteractionAdapter.new(owner)]:
+		var resolver := AIStepResolver.new()
+		resolver.set_deck_strategy(adapter)
+		var scene := CounterContract.CounterDistributionStub.new()
+		var first := fixture._make_counter_target("First")
+		var second := fixture._make_counter_target("Second")
+		var step := {
+			"id": "target_damage_counters", "ui_mode": "counter_distribution",
+			"total_counters": 3, "target_items": [first, second],
+			"max_assignments": 1, "max_assignments_per_target": 1, "allow_partial": true,
+			"ucis_counter_count_window": {"ucis_context_name": "REMOVE_DAMAGE_COUNTER_COUNT"},
+			"ucis_counter_target_window": {"ucis_context_name": "DAMAGE_COUNTER"},
+		}
+		owner.waiting = true
+		checks.append(assert_true(adapter.uses_sequential_interaction_windows()))
+		checks.append(assert_false(adapter.uses_external_decision_port()))
+		checks.append(assert_false(resolver._resolve_counter_distribution_step(scene, step)))
+		checks.append(assert_eq(scene._field_interaction_assignment_selected_source_index, -1))
+		checks.append(assert_eq(scene._field_interaction_assignment_entries.size(), 0))
+		owner.waiting = false
+		checks.append(assert_true(resolver._resolve_counter_distribution_step(scene, step)))
+		checks.append(assert_eq(scene._field_interaction_assignment_selected_source_index, 3))
+		owner.waiting = true
+		checks.append(assert_false(resolver._resolve_counter_distribution_step(scene, step)))
+		checks.append(assert_eq(scene._field_interaction_assignment_entries.size(), 0))
+		step.target_items.reverse()
+		owner.waiting = false
+		checks.append(assert_true(resolver._resolve_counter_distribution_step(scene, step)))
+		checks.append(assert_eq(scene._field_interaction_assignment_entries, [{"target_index": 1, "amount": 30}]))
+		checks.append(assert_eq(step.target_items[1], first, "The new target window uses its current ordering"))
+		adapter.set("owner", null)
+		scene.free()
+	return run_checks(checks)
 
 func test_all_author_adapters_preserve_pending_search_and_target() -> String:
 	var owner := WaitingOwner.new()

@@ -27,6 +27,7 @@ func _frame() -> Dictionary:
 func test_trace_records_exact_runtime_projection_and_rebinds_reordered_frontier() -> String:
 	var owner = Owner.new()
 	owner._model_actor = Actor.new()
+	owner._model_actor._policy_mode = "rules_with_model"
 	if not owner.has_method("_developer_model_evidence"):
 		return "missing runtime model evidence capture"
 	var frame := _frame()
@@ -50,6 +51,7 @@ func test_trace_records_exact_runtime_projection_and_rebinds_reordered_frontier(
 func test_trace_capture_rejects_hidden_unknown_uid_and_bad_indexes() -> String:
 	var owner = Owner.new()
 	owner._model_actor = Actor.new()
+	owner._model_actor._policy_mode = "rules_with_model"
 	if not owner.has_method("_developer_model_evidence"):
 		return "missing runtime model evidence capture"
 	var hidden := _frame()
@@ -66,6 +68,7 @@ func test_trace_capture_rejects_hidden_unknown_uid_and_bad_indexes() -> String:
 func test_trace_queue_keeps_capture_diagnostic_and_rejected_window_unavailable() -> String:
 	var owner = Owner.new()
 	owner._model_actor = Actor.new()
+	owner._model_actor._policy_mode = "rules_with_model"
 	owner.enable_developer_decision_trace(true)
 	var frame := _frame()
 	frame.source = {"public_observation_hash": "A".repeat(64), "window_id": "B".repeat(64)}
@@ -104,4 +107,34 @@ func test_trace_preserves_model_adjudication_without_timing_or_extra_fields() ->
 		assert_eq(model.get("model_artifact_sha256"), "D".repeat(64)),
 		assert_false(model.has("elapsed_us")),
 		assert_false(model.has("unapproved_extra")),
+	])
+
+func test_trace_uses_actual_legacy_model_frontier_and_preserves_semantic_teacher() -> String:
+	var firewall = preload("res://scripts/ai/ptcgdap/public/PublicObservationFirewall.gd")
+	var vectors: Dictionary = firewall._parse_contract_json_bytes(FileAccess.get_file_as_bytes(
+		"res://contracts/ptcgdap/competitive_policy_v2_conformance_vectors.json")).value
+	var spec: Dictionary = vectors.cases[1]
+	var frame: Dictionary = spec.frame
+	var owner = Owner.new()
+	owner._model_actor = Actor.new()
+	for uid: String in spec.allowed_card_uids:
+		owner._model_actor._allowed_uids[uid] = true
+	var response := {"selected_indexes": [1], "decision_audit": {
+		"model_frontier": {"indexes": [1]},
+		"base_result": {"node_audit": [{"operator": "base_veto", "output_indexes": [0, 1]}]}}}
+	var teacher: Dictionary = owner._developer_model_evidence(frame, response)
+	owner._model_actor._policy_mode = "rules_with_model"
+	var legacy: Dictionary = owner._developer_model_evidence(frame, response)
+	var runtime: Dictionary = owner._model_actor._tensorize_development_frame(frame)
+	owner._model_actor._tensor_profile_id = Actor.SemanticInput.PROFILE_ID
+	var semantic: Dictionary = owner._developer_model_evidence(frame, response)
+	return run_checks([
+		assert_eq(teacher.get("status"), "captured"),
+		assert_eq(teacher.get("frame_i32", []).size(), 128),
+		assert_eq(legacy.get("frame_i32"), Array(runtime.frame_i32)),
+		assert_eq(legacy.get("option_i32"), Array(runtime.option_i32.slice(0, 32))),
+		assert_eq(legacy.get("frontier_indexes"), [0, 1]),
+		assert_eq(legacy.get("profile_id"), "ptcgdap-development-model-input-v1"),
+		assert_eq(semantic.get("frame_i32"), teacher.get("frame_i32")),
+		assert_eq(semantic.get("frontier_indexes"), [1]),
 	])

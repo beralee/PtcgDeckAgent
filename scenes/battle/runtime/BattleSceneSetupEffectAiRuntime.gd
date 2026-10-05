@@ -1,5 +1,10 @@
 ## BattleScene setup, effect flow, replay, and AI turn runtime.
 extends "res://scenes/battle/runtime/BattleSceneBoardActionRuntime.gd"
+const StartupPerformance = preload("res://scripts/performance/PerformanceTrace.gd")
+var _battle_start_pending := false
+
+func is_scene_preparation_pending() -> bool:
+	return _battle_start_pending
 
 func _bind_field_slot_input_handlers() -> void:
 	_bind_slot_input_handler(find_child("OppActive", true, false) as Control, "opp_active")
@@ -75,6 +80,14 @@ func _setup_battle_scene_context() -> void:
 
 
 func _start_battle() -> void:
+	_battle_start_pending = true
+	await _prepare_battle()
+	_battle_start_pending = false
+	if not _author_runtime_start_error_code.is_empty():
+		GameManager.finish_scene_loading("策略准备失败，请返回重新选择")
+
+func _prepare_battle() -> void:
+	var stage_started := StartupPerformance.begin()
 	_match_end_return_navigation_started = false
 	_author_strategy_author_name = ""
 	_author_strategy_deck_label = ""
@@ -87,10 +100,16 @@ func _start_battle() -> void:
 	var author_presentation: Dictionary = {}
 	var author_authority_mode := AuthorStrategyWindowsExecutionGateScript.DEVELOPMENT_MODE
 	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
-		var requested: Dictionary = AuthorStrategyWindowsExecutionGateScript.request_match_handle(
+		GameManager.begin_scene_loading("正在校验策略")
+		var requested: Dictionary = await AuthorStrategyWindowsExecutionGateScript.request_match_handle_async(
 			AuthorStrategyPackageCatalog,
 			GameManager.get_author_strategy_selection()
 		)
+		StartupPerformance.end("battle.archive", stage_started)
+		if not is_inside_tree():
+			return
+		await get_tree().process_frame
+		stage_started = StartupPerformance.begin()
 		if not bool(requested.get("ok", false)):
 			_author_runtime_start_error_code = str(requested.get("error_code", "package_integrity_invalid"))
 			_runtime_log("author_development_start_rejected", _author_runtime_start_error_code)
@@ -149,8 +168,13 @@ func _start_battle() -> void:
 		false,
 		defer_author_setup
 	)
+	StartupPerformance.end("battle.engine_start", stage_started)
+	stage_started = StartupPerformance.begin()
 	if GameManager.current_mode == GameManager.GameMode.VS_AUTHOR_STRATEGY_AI:
 		var match_prefix := "windows-device-canary" if author_authority_mode == AuthorStrategyWindowsExecutionGateScript.DEVICE_CANARY_MODE else "windows-player"
+		GameManager.begin_scene_loading("正在准备策略思考")
+		await get_tree().process_frame
+		await get_tree().process_frame
 		var match_id := "%s-%d-%d" % [
 			match_prefix,
 			int(Time.get_unix_time_from_system()),
@@ -159,12 +183,17 @@ func _start_battle() -> void:
 		var owner_result: Dictionary = BattleDecisionOwnerFactoryScript.build_windows_author_owner(
 			author_handle, _gsm, 1, match_id, author_authority_mode
 		)
+		StartupPerformance.end("battle.owner", stage_started)
 		if not bool(owner_result.get("ok", false)):
 			_author_runtime_start_error_code = str(owner_result.get("error_code", "invalid_bind"))
 			_runtime_log("author_development_owner_rejected", _author_runtime_start_error_code)
 			GameManager.recover_tournament_battle_start_failure(_author_runtime_start_error_code)
 			return
 		_author_player_owner = owner_result.get("owner")
+		# Binding and the first public setup window are separate frame budgets.
+		# The owner is not allowed to act until deferred setup is resumed below.
+		await get_tree().process_frame
+		await get_tree().process_frame
 		var policy_execution_profile := OS.get_environment(
 			"PTCGDAP_AUTHOR_POLICY_EXECUTION_PROFILE"
 		).strip_edges().to_lower()
@@ -246,7 +275,8 @@ func _start_deck_training_battle(launch: Dictionary) -> void:
 	if scenario.is_empty():
 		_log("训练残局不存在：%s" % scenario_id)
 		return
-	var admission: Dictionary = DeckTrainingAdmissionVerifierScript.verify_scenario(scenario)
+	var is_expert_play := str(scenario.get("training_mode", "")) == "expert_play_v1"
+	var admission: Dictionary = preload("res://scripts/training/expert/ExpertPlayCatalog.gd").verify_scenario(scenario) if is_expert_play else DeckTrainingAdmissionVerifierScript.verify_scenario(scenario)
 	if not bool(admission.get("ok", false)):
 		_log("训练残局未通过复杂度准入：%s" % "; ".join(PackedStringArray(admission.get("errors", []))))
 		return
@@ -259,6 +289,10 @@ func _start_deck_training_battle(launch: Dictionary) -> void:
 	if _gsm == null or _gsm.game_state == null:
 		_log("训练残局恢复失败：没有可用的游戏状态")
 		return
+	if is_expert_play:
+		# Keep the authored public position, but do not teach memorized hidden draws.
+		for player: PlayerState in _gsm.game_state.players:
+			player.deck.shuffle()
 	_bind_game_state_machine_signals(_gsm)
 	_battle_mode = "deck_training"
 	_view_player = 0
@@ -277,7 +311,7 @@ func _start_deck_training_battle(launch: Dictionary) -> void:
 	if _ai_opponent != null:
 		_ai_opponent.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
 		_ai_opponent.use_mcts = false
-	_deck_training_controller = DeckTrainingBattleControllerScript.new()
+	_deck_training_controller = preload("res://scripts/training/expert/ExpertPlayController.gd").new() if is_expert_play else DeckTrainingBattleControllerScript.new()
 	_deck_training_controller.setup(self, _gsm, _deck_training_scenario, built.get("snapshot", {}))
 	_refresh_ui()
 	_setup_battle_layout()
@@ -681,6 +715,10 @@ func _raise_modal_overlay_for_input(overlay: Control, z_index_value: int) -> voi
 	var parent := overlay.get_parent()
 	if parent != null:
 		parent.move_child(overlay, parent.get_child_count() - 1)
+	# Visual z-order alone does not order Control pointer picking. A refreshed
+	# search dialog must remain below the card detail already covering it.
+	if _detail_overlay != null and _detail_overlay.visible and overlay != _detail_overlay:
+		call("_raise_card_detail_overlay")
 
 
 func _raise_coin_animator_to_front() -> void:
@@ -1186,7 +1224,7 @@ func _prompt_exp_share_dialog(
 		"bench": bench_targets.duplicate(),
 		"source_slot": source_slot,
 		"source_energy": source_energy.duplicate(),
-		"min_select": 1,
+		"min_select": 0,
 		"max_select": 1,
 		"allow_cancel": false,
 	}
@@ -1279,7 +1317,7 @@ func _ai_watchdog_reconcile_authoritative_decision() -> bool:
 				snapshot.get("source_slot", null) as PokemonSlot,
 				exp_energy
 			)
-		"powerglass_end_turn", "bench_limit_cleanup":
+		"powerglass_end_turn", "bench_limit_cleanup", "tool_limit_cleanup":
 			var steps: Array[Dictionary] = []
 			for raw_step: Variant in snapshot.get("steps", []):
 				if raw_step is Dictionary:
@@ -1935,7 +1973,7 @@ func _popup_battle_discussion_dialog_for_current_layout() -> void:
 		_battle_discussion_dialog.call("apply_desktop_profile")
 	if _battle_discussion_dialog.is_inside_tree():
 		_battle_discussion_dialog.popup_centered(Vector2i(980, 760))
-	_battle_discussion_dialog.size = Vector2i(980, 760)
+	_battle_discussion_dialog.dialog_size = Vector2i(980, 760)
 
 
 
@@ -2407,12 +2445,20 @@ func _on_prize_slot_card_left_clicked(_card_instance: CardInstance, _card_data: 
 
 
 func _on_prize_slot_input(event: InputEvent, player_index: int, title: String, slot_index: int) -> void:
+	# Live events have already been observed in viewport coordinates by _input.
+	# Reobserving the localized GUI copy would replace that physical sequence.
+	var observation: Dictionary = {} if is_inside_tree() else call("_observe_battle_pointer_event", event)
+	if bool(observation.get("synthetic_echo", false)):
+		return
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		var touch_viewport := get_viewport()
 		if touch_viewport != null:
 			touch_viewport.set_input_as_handled()
 		var touch_key := str(touch.index)
+		if touch.canceled:
+			_prize_touch_press_contexts.erase(touch_key)
+			return
 		if touch.pressed:
 			if (
 				_pending_choice == "take_prize"
@@ -2420,6 +2466,7 @@ func _on_prize_slot_input(event: InputEvent, player_index: int, title: String, s
 				and _pending_prize_remaining > 0
 				and not _pending_prize_animating
 			):
+				call("_claim_modal_pointer_event", event, "take_prize")
 				_prize_touch_press_contexts[touch_key] = {
 					"generation": _prize_prompt_generation,
 					"player_index": player_index,
@@ -2447,6 +2494,7 @@ func _on_prize_slot_input(event: InputEvent, player_index: int, title: String, s
 		var press_position: Vector2 = press_context.get("position", touch.position)
 		if touch.position.distance_to(press_position) > PRIZE_TOUCH_MOVE_TOLERANCE:
 			return
+		call("_begin_modal_pointer_drain_for_event", event, "take_prize")
 		_try_take_prize_from_slot(player_index, slot_index)
 		return
 	if not (event is InputEventMouseButton):

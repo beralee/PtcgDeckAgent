@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-05",
+  "scope": "local card registration, rule semantics and headless Host attack integration",
+  "cards": [
+    {
+      "uid": "CSV5C_076",
+      "name": "鬼斯",
+      "effect_id": "d855e2994b2c3a876900fd79293e6f83",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/076",
+      "fixture_path": "tests/fixtures/card_audit_20261005/CSV5C_076.api.json",
+      "fixture_sha256": "271AC51133FC7B06B466BE6545DDE9EFAE4152B9E100F4A5F7292120C8A62B79",
+      "card_image_url": "https://tcg.mik.moe/static/img/CSV5C/076.png",
+      "card_image_sha256": "867335C720B87E554AA761CD93FF57FCAC0D1C969CF23F9690DAB38B96324667",
+      "registration": "verified_from_original_api_fixture",
+      "result": "fixed_missing_attack_effect_registration"
+    },
+    {
+      "uid": "CSV5C_077",
+      "name": "鬼斯通",
+      "effect_id": "ad3467af79c5e09c369190ed29beda7c",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/077",
+      "fixture_path": "tests/fixtures/card_audit_20261005/CSV5C_077.api.json",
+      "fixture_sha256": "007B8E1080A3568AFD62A3F1154B5BADB25413F6F52238918899A693EB2AD4F0",
+      "card_image_url": "https://tcg.mik.moe/static/img/CSV5C/077.png",
+      "card_image_sha256": "EA8EB8A24E322A6368DC997A25AC158845F734069D73AF26CBCC9218F628DC50",
+      "registration": "verified_from_original_api_fixture",
+      "result": "fixed_missing_attack_effect_registration"
+    }
+  ],
+  "runtime_change": {
+    "path": "scripts/engine/EffectRegistry.gd",
+    "effect_ids": [
+      "d855e2994b2c3a876900fd79293e6f83",
+      "ad3467af79c5e09c369190ed29beda7c"
+    ],
+    "preexisting_uncommitted_changes_preserved": true
+  },
+  "focused": {
+    "path": "tests/test_csv5c_076_077_audit.gd",
+    "sha256": "82614A8DFF22444AEFB852D45D9D20FF46BCFFB9B2D3F872566741C6B907DB31",
+    "report": ".tmp/card_audit_csv5c_076_077_20261005/verified/report.json",
+    "report_sha256": "ACD83077D6ADC0FC0996D0A843A3A85B577C19C4826D42EA3FD9499911E2E077",
+    "status": "passed",
+    "totals": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "regression": {
+    "suites": [
+      "EffectRegistry",
+      "EffectSystem",
+      "SpecialStatusRules",
+      "CardImplementationStatus"
+    ],
+    "report": ".tmp/card_audit_csv5c_076_077_20261005/regression/report.json",
+    "report_sha256": "29537F41151CF5DA6A53F3801D77931AF1336A99C83458132C151E9C471E0D4B",
+    "status": "passed",
+    "totals": {
+      "total": 54,
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "host": {
+    "seats": [
+      0,
+      1
+    ],
+    "accepted_main_windows": 6,
+    "engine_commits": 6,
+    "policy_errors": 0,
+    "invalid_outputs": 0,
+    "same_window_fallbacks": 0,
+    "engine_rejections": 0,
+    "consumed_window_replay_rejected": true,
+    "effect_choice_windows_required": 0
+  },
+  "red": {
+    "report": ".tmp/card_audit_csv5c_076_077_20261005/red/report.json",
+    "initial_passed": 3,
+    "initial_failed": 6,
+    "confirmed_rule_failures": [
+      "missing_draw",
+      "missing_sleep",
+      "missing_registration"
+    ],
+    "fixture_corrections": [
+      "bind non-null HeadlessMatchBridge for public run_single_step",
+      "register hand-inserted evolution as normal deck startup does"
+    ]
+  },
+  "claims": {
+    "local_rules": true,
+    "local_headless_host": true,
+    "official_engine_parity": false,
+    "device_acceptance": false,
+    "published": false,
+    "bundled_cards_added": false,
+    "player_cache_changed": false
+  },
+  "rollback": "Remove only the two added effect-ID branches, new suite, source fixtures and audit records; preserve other pre-existing worktree changes."
+}

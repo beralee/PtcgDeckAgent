@@ -1,0 +1,106 @@
+{
+  "code": 200,
+  "data": {
+    "name": "嘟嘟利",
+    "cardType": "Pokemon",
+    "mechanic": null,
+    "label": null,
+    "description": "特性: 暴走抽取\n在自己的回合可以使用1次。给这只宝可梦身上放置1个伤害指示物。然后，从自己牌库上方抽取1张卡牌。\n\n【无】 愤怒之喙 10+\n追加造成这只宝可梦身上放置的伤害指示物数量×30伤害。\n\n",
+    "yorenCode": "P085",
+    "pokemonAttr": {
+      "energyType": "C",
+      "stage": "Stage 1",
+      "hp": 100,
+      "ability": [
+        {
+          "name": "暴走抽取",
+          "text": "在自己的回合可以使用1次。给这只宝可梦身上放置1个伤害指示物。然后，从自己牌库上方抽取1张卡牌。",
+          "isVStarPower": false
+        }
+      ],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "L",
+        "value": "×2"
+      },
+      "resistance": {
+        "energy": "F",
+        "value": "-30"
+      },
+      "retreatCost": 1,
+      "attack": [
+        {
+          "name": "愤怒之喙",
+          "text": "追加造成这只宝可梦身上放置的伤害指示物数量×30伤害。",
+          "cost": "C",
+          "damage": "10+",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": "嘟嘟"
+    },
+    "setCode": "151C",
+    "cardIndex": "085",
+    "setCardsNum": "",
+    "artist": "Anesaki Dynamic",
+    "rarity": "R",
+    "releaseDate": "2025-01-16T16:00:00Z",
+    "regulationMark": "G",
+    "effectId": "3c059ab293ff488fdfe4b1b8282053b2",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "CSVH2C",
+        "cardIndex": "034",
+        "cardName": "嘟嘟利",
+        "rarity": "无标记",
+        "effectId": "3c059ab293ff488fdfe4b1b8282053b2",
+        "cardType": "Pokemon",
+        "yorenCode": "P085",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "MEW",
+        "cardIndexEn": "85",
+        "nameEn": "Dodrio"
+      },
+      {
+        "setCode": "151C",
+        "cardIndex": "085",
+        "cardName": "嘟嘟利",
+        "rarity": "R",
+        "effectId": "3c059ab293ff488fdfe4b1b8282053b2",
+        "cardType": "Pokemon",
+        "yorenCode": "P085",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "MEW",
+        "cardIndexEn": "85",
+        "nameEn": "Dodrio"
+      },
+      {
+        "setCode": "151C",
+        "cardIndex": "163",
+        "cardName": "嘟嘟利",
+        "rarity": "S",
+        "effectId": "3c059ab293ff488fdfe4b1b8282053b2",
+        "cardType": "Pokemon",
+        "yorenCode": "P085",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "MEW",
+        "cardIndexEn": "85",
+        "nameEn": "Dodrio"
+      }
+    ],
+    "setCodeEn": "MEW",
+    "cardIndexEn": "85",
+    "nameEn": "Dodrio"
+  },
+  "msg": "OK."
+}

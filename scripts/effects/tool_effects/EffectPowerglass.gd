@@ -4,6 +4,13 @@ extends BaseEffect
 const EFFECT_ID := "1dc38c46be0951b2b135e1df2e5e7767"
 const STEP_ID := "powerglass_energy"
 const RESOLVED_FLAG := "_powerglass_resolved_slot_ids"
+var _bound_tool_id := -1
+
+func bind_tool_card(card: CardInstance) -> void:
+	_bound_tool_id = card.instance_id if card != null else -1
+
+func _resolution_key(slot: PokemonSlot) -> int:
+	return _bound_tool_id if _bound_tool_id >= 0 else int(slot.get_instance_id())
 
 
 func discard_at_end_of_turn(slot: PokemonSlot, state: GameState) -> bool:
@@ -16,6 +23,7 @@ func discard_at_end_of_turn(slot: PokemonSlot, state: GameState) -> bool:
 	if energy == null:
 		return false
 	_attach_energy(slot, state.players[owner_index], energy)
+	_mark_resolved_this_turn(slot, state)
 	return false
 
 
@@ -120,7 +128,7 @@ func _is_resolved_this_turn(slot: PokemonSlot, state: GameState) -> bool:
 	if slot == null or state == null:
 		return false
 	var resolved: Dictionary = state.shared_turn_flags.get(RESOLVED_FLAG, {})
-	var resolved_turn: Variant = resolved.get(int(slot.get_instance_id()), null)
+	var resolved_turn: Variant = resolved.get(_resolution_key(slot), null)
 	return resolved_turn is int and int(resolved_turn) == state.turn_number
 
 
@@ -128,7 +136,7 @@ func _mark_resolved_this_turn(slot: PokemonSlot, state: GameState) -> void:
 	if slot == null or state == null:
 		return
 	var resolved: Dictionary = state.shared_turn_flags.get(RESOLVED_FLAG, {})
-	resolved[int(slot.get_instance_id())] = state.turn_number
+	resolved[_resolution_key(slot)] = state.turn_number
 	state.shared_turn_flags[RESOLVED_FLAG] = resolved
 
 

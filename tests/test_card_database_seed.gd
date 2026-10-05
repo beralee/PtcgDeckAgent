@@ -3,6 +3,64 @@ extends TestBase
 
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 
+const V18_5_IMPORTED_DECKS := {
+	675899: "18.5 N的索罗亚克",
+	675834: "18.5 呆呆王",
+	675893: "18.5 太晶Box",
+	675892: "18.5 火伊布 猫头夜鹰",
+	675703: "18.5 沙奈朵",
+	675701: "18.5 多龙巴鲁托 黑夜魔灵",
+	675700: "18.5 玛俐的长毛巨魔 雪妖女",
+}
+
+
+func test_v18_5_imported_decks_include_all_offline_seed_assets() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest: Array[String] = db._load_bundled_manifest()
+	var checks: Array[String] = []
+	for deck_id: int in V18_5_IMPORTED_DECKS:
+		var deck_path := "res://data/bundled_user/decks/%d.json" % deck_id
+		checks.append(assert_true(deck_path in manifest, "18.5 deck %d must be seeded" % deck_id))
+		var deck: DeckData = db._load_deck_from_file(deck_path)
+		checks.append(assert_not_null(deck, "18.5 deck %d must be bundled" % deck_id))
+		if deck == null:
+			continue
+		checks.append(assert_eq(deck.id, deck_id, "Imported deck identity must be preserved"))
+		checks.append(assert_eq(deck.deck_name, V18_5_IMPORTED_DECKS[deck_id], "18.5 display name"))
+		checks.append(assert_eq(deck.variant_name, deck.deck_name, "18.5 variant name"))
+		checks.append(assert_eq(deck.total_cards, 60, "18.5 declared deck size"))
+		var total := 0
+		for entry: Dictionary in deck.cards:
+			total += int(entry.get("count", 0))
+			var set_code := str(entry.get("set_code", ""))
+			var card_index := str(entry.get("card_index", ""))
+			var uid := "%s_%s" % [set_code, card_index]
+			var card_path := "res://data/bundled_user/cards/%s.json" % uid
+			checks.append(assert_true(card_path in manifest, "%s JSON must be seeded" % uid))
+			checks.append(assert_not_null(db._load_card_from_file(card_path), "%s must load from the bundle" % uid))
+			var has_bundled_image := false
+			for image_path: String in CardData.get_image_candidate_paths(set_code, card_index):
+				if image_path.begins_with("res://") and image_path in manifest and CardData.is_valid_card_image_file(image_path):
+					has_bundled_image = true
+					break
+			checks.append(assert_true(has_bundled_image, "%s must have a valid bundled image in the manifest" % uid))
+		checks.append(assert_eq(total, 60, "18.5 actual deck size"))
+		checks.append(assert_true(deck.validate().is_empty(), "18.5 deck must pass deck validation"))
+	db.free()
+	return run_checks(checks)
+
+
+func test_v18_5_imported_decks_seed_and_build_sixty_instances() -> String:
+	var checks: Array[String] = []
+	for deck_id: int in V18_5_IMPORTED_DECKS:
+		var deck: DeckData = CardDatabase.get_deck(deck_id)
+		checks.append(assert_not_null(deck, "18.5 deck %d must load through CardDatabase" % deck_id))
+		if deck == null:
+			continue
+		checks.append(assert_eq(deck.deck_name, V18_5_IMPORTED_DECKS[deck_id], "Seeded 18.5 display name"))
+		checks.append(assert_eq(CardDatabase.build_deck_instances(deck, 0).size(), 60, "Every 18.5 card must materialize"))
+	return run_checks(checks)
+
 
 func test_marnie_water_printings_refresh_stale_bundled_implementation_cache() -> String:
 	var db := CardDatabaseScript.new()
@@ -910,6 +968,7 @@ func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
 	var expected_ids := [
 		569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 		646600,
+		675700, 675701, 675703, 675834, 675892, 675893, 675899,
 		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 		1750002,
 		18000230, 18000625,
@@ -918,13 +977,16 @@ func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
 		800018499, 800018500, 800018501, 800018502, 800018509, 800018539,
 		800018543, 800018880, 800019125, 800033475, 800052301,
 	]
-	var leading_are_v18 := true
-	for deck: DeckData in ai_decks.slice(0, mini(3, ai_decks.size())):
-		leading_are_v18 = leading_are_v18 and deck.deck_name.begins_with("18.0")
+	var import_dates: Array[String] = []
+	for deck: DeckData in ai_decks:
+		import_dates.append(deck.import_date)
+	var expected_dates := import_dates.duplicate()
+	expected_dates.sort()
+	expected_dates.reverse()
 	return run_checks([
 		assert_eq(ai_decks.size(), expected_ids.size(), "AI deck list should expose exactly the backed-up AI deck set"),
 		assert_eq(ids, expected_ids, "AI deck list should match the backed-up AI deck set"),
-		assert_true(leading_are_v18, "AI deck list should sort the supported 18.0 AI decks first"),
+		assert_eq(import_dates, expected_dates, "AI deck list should sort original import dates newest first"),
 	])
 
 

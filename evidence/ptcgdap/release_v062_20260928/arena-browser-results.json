@@ -1,0 +1,42 @@
+{
+  "stats": {
+    "startTime": "2026-09-27T19:31:47.562Z",
+    "duration": 130746.026,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  },
+  "cases": [
+    {
+      "project": "webkit-desktop",
+      "status": "unexpected",
+      "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "status": "unexpected",
+      "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+    },
+    {
+      "project": "chromium-desktop",
+      "status": "expected",
+      "error": ""
+    },
+    {
+      "project": "chromium-touch",
+      "status": "expected",
+      "error": ""
+    },
+    {
+      "project": "webkit-touch",
+      "status": "unexpected",
+      "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "status": "unexpected",
+      "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+    }
+  ]
+}

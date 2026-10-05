@@ -17,9 +17,11 @@ func _init(damage: int = 20, all_bench: bool = false, side: String = "opponent")
 func execute_attack(
 	attacker: PokemonSlot,
 	_defender: PokemonSlot,
-	_attack_index: int,
+	attack_index: int,
 	state: GameState
 ) -> void:
+	if not applies_to_attack_index(attack_index):
+		return
 	var pi: int = attacker.get_top_card().owner_index
 	var target_pi: int = 1 - pi if target_side == "opponent" else pi
 	var target_player: PlayerState = state.players[target_pi]
@@ -40,6 +42,9 @@ func execute_attack(
 
 
 func _is_opponent_bench_damage_blocked(attacker: PokemonSlot, target: PokemonSlot, state: GameState) -> bool:
+	# The printed Tera Bench rule also prevents damage from the player's own attacks.
+	if target.get_card_data() != null and target.get_card_data().is_tera_pokemon():
+		return true
 	if target_side != "opponent":
 		return false
 	if AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):

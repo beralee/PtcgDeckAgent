@@ -4,32 +4,30 @@ extends TestBase
 const DeckEditorScript := preload("res://scenes/deck_editor/DeckEditor.gd")
 const DeckEditorScene := preload("res://scenes/deck_editor/DeckEditor.tscn")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
-const EXPECTED_TERA_EX_UIDS := [
-	"CSV5C_075",
-	"CSV7C_123",
-	"CSV7C_141",
-	"CSV8C_028",
-	"CSV8C_067",
-	"CSV8C_121",
-	"CSV8C_159",
-	"CSV9.5C_006",
-	"CSV9.5C_023",
-	"CSV9.5C_029",
-	"CSV9.5C_036",
-	"CSV9.5C_047",
-	"CSV9.5C_058",
-	"CSV9.5C_068",
-	"CSV9.5C_104",
-	"CSV9.5C_140",
-	"CSV9C_034",
-	"CSV9C_054",
-	"CSV9C_064",
-	"CSV9C_090",
-	"CSV9C_119",
-	"CSV9C_144",
-	"CSV9C_152",
-	"CSV9C_175",
-]
+
+
+func _printed_tera_ex_uids(energy_type: String = "") -> Array[String]:
+	# Read full printing documents independently of search projection and UI filters.
+	var printings := {}
+	for file_name: String in DirAccess.get_files_at("res://data/card_catalog/sets"):
+		if not file_name.ends_with(".json"):
+			continue
+		var payload: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/card_catalog/sets/" + file_name))
+		for card: Dictionary in payload.get("cards", []):
+			printings[str(card.set_code) + "_" + str(card.card_index)] = card
+	for file_name: String in DirAccess.get_files_at("res://data/bundled_user/cards"):
+		if not file_name.ends_with(".json"):
+			continue
+		var card: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/" + file_name))
+		printings[str(card.set_code) + "_" + str(card.card_index)] = card
+	var uids: Array[String] = []
+	for uid: String in printings:
+		var card: Dictionary = printings[uid]
+		if str(card.get("card_type", "")) == "Pokemon" and str(card.get("mechanic", "")).to_lower() == "ex" and str(card.get("ancient_trait", "")) == "Tera":
+			if energy_type.is_empty() or str(card.get("energy_type", "")) == energy_type:
+				uids.append(uid)
+	uids.sort()
+	return uids
 
 
 func _set_navigation_suppressed(suppressed: bool) -> void:
@@ -296,10 +294,12 @@ func test_catalog_pool_preserves_tera_marker_for_every_ex_pokemon() -> String:
 			"%s should remain selectable through the Tera HUD radio" % uid
 		))
 	tera_uids.sort()
+	var expected_tera := _printed_tera_ex_uids()
+	checks.append(assert_true(expected_tera.has("CSV8C_028") and expected_tera.has("CSV9.5C_006"), "Independent printing audit must include known Tera ex fixtures"))
 	checks.append(assert_true(ex_count >= 132, "The audit must cover the complete catalog of Pokemon ex"))
 	checks.append(assert_eq(
 		Array(tera_uids),
-		EXPECTED_TERA_EX_UIDS,
+		expected_tera,
 		"Every Tera Pokemon ex in the catalog must keep its search marker"
 	))
 	editor.set("_pool_by_category", [ex_cards, [], [], [], [], []] as Array[Array])
@@ -316,13 +316,13 @@ func test_catalog_pool_preserves_tera_marker_for_every_ex_pokemon() -> String:
 	fire_uids.sort()
 	checks.append(assert_eq(
 		Array(grass_uids),
-		["CSV8C_028", "CSV9.5C_006"],
-		"Grass + Tera must include Teal Mask Ogerpon ex and Leafeon ex"
+		_printed_tera_ex_uids("G"),
+		"Grass + Tera must exactly match all printed Grass Tera Pokemon ex"
 	))
 	checks.append(assert_eq(
 		Array(fire_uids),
-		["CSV9.5C_023", "CSV9.5C_029", "CSV9C_034"],
-		"Fire + Tera must include Flareon ex, Hearthflame Mask Ogerpon ex, and Ceruledge ex"
+		_printed_tera_ex_uids("R"),
+		"Fire + Tera must exactly match all printed Fire Tera Pokemon ex"
 	))
 	editor.free()
 	return run_checks(checks)

@@ -86,10 +86,7 @@ static func has_vstar_search(slot: PokemonSlot, state: GameState) -> bool:
 	if cd == null or cd.mechanic != "V":
 		return false
 
-	var tool: CardInstance = slot.attached_tool
-	if tool == null or tool.card_data == null:
-		return false
-	return tool.card_data.effect_id == FOREST_SEAL_EFFECT_ID
+	return slot.find_tool_by_effect_id(FOREST_SEAL_EFFECT_ID) != null
 
 
 func get_ability_name() -> String:

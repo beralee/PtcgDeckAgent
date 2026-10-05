@@ -4,7 +4,7 @@ extends TestBase
 const PACKAGE_ID := "ptcgdap.marnie.windows-local"
 const PACKAGE_VERSION := "0.1.0"
 const PACKAGE_ARCHIVE_SHA256 := "32E25453431886F76CEC606089ED4815EC681FBD33073F53A335A769D293643E"
-const DEVICE_MANIFEST_CANONICAL_SHA256 := "D6B6F0B005A1A0C2AF7AE77DC442C1092F6CE4AB01AA87C1A75F360E1D5260B3"
+const DEVICE_MANIFEST_CANONICAL_SHA256 := "46BEB788764EFC64EDD2438CBEEC6B23FE92AB56614BB28EE876EBCEA1C16C01"
 
 const GateScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsDevelopmentGate.gd")
 const CatalogScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageCatalog.gd")

@@ -17,7 +17,7 @@ func test_live_platform_catalog_stats_replay_challenge_and_event_round_trip() ->
 	var profile_id := str(arguments.get("platform-e2e-profile", ""))
 	if endpoint.is_empty() and release_id.is_empty() and replay_id.is_empty() \
 			and token.is_empty() and profile_id.is_empty():
-		return ""
+		return "SKIP: Strategy platform E2E requires endpoint, release, replay, token and profile arguments"
 	if endpoint.is_empty() or release_id.is_empty() or replay_id.is_empty() \
 			or token.is_empty() or profile_id.is_empty():
 		return "missing strategy platform E2E arguments"

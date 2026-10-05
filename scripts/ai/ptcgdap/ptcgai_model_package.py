@@ -57,9 +57,10 @@ def canonical_bytes(value: Any) -> bytes:
 
 def tensor_profile_document(profile_id=TENSOR_PROFILE_ID) -> dict[str, Any]:
     from .semantic_model_profile import PROFILE_ID as SEMANTIC
-    if profile_id not in (TENSOR_PROFILE_ID, SEMANTIC):
+    from .semantic_model_profile_v2 import PROFILE_ID as SEMANTIC_V2, BOARD_FIELDS, OPTION_FIELDS
+    if profile_id not in (TENSOR_PROFILE_ID, SEMANTIC, SEMANTIC_V2):
         _raise("model_tensor_profile_invalid")
-    fw, ow = (128, 32) if profile_id == SEMANTIC else (FRAME_WIDTH, OPTION_WIDTH)
+    fw, ow = (416, 48) if profile_id == SEMANTIC_V2 else ((128, 32) if profile_id == SEMANTIC else (FRAME_WIDTH, OPTION_WIDTH))
     result = {
         "profile_id": profile_id,
         "max_options": MAX_OPTIONS,
@@ -84,6 +85,11 @@ def tensor_profile_document(profile_id=TENSOR_PROFILE_ID) -> dict[str, Any]:
     if profile_id == SEMANTIC:
         result.update(input_source="competitive_public_frame_v2", uid_vocabulary="sealed_deck_sorted_max32",
                       learning_gate="base_frontier_single_choice_v1", projection_version=1)
+    if profile_id == SEMANTIC_V2:
+        result.update(input_source="competitive_public_frame_v2", uid_vocabulary="sealed_deck_sorted_max32_and_public_category_v2",
+                      learning_gate="base_frontier_single_choice_v1", projection_version=2,
+                      board_slots_per_side=9, board_fields=list(BOARD_FIELDS), option_extension_fields=list(OPTION_FIELDS),
+                      public_category="sha256_domain_first_u32_mod2147483647_plus1_categorical_only")
     return result
 
 
@@ -364,4 +370,3 @@ __all__ = [
     "validate_model_manifest",
     "validate_v2_package_manifest",
 ]
-

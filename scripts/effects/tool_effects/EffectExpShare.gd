@@ -15,8 +15,20 @@ static func find_exp_share_slot(player: PlayerState) -> PokemonSlot:
 static func find_exp_share_slots(player: PlayerState) -> Array[PokemonSlot]:
 	var result: Array[PokemonSlot] = []
 	for slot: PokemonSlot in player.bench:
-		if slot.attached_tool != null and slot.attached_tool.card_data.effect_id == EFFECT_ID:
-			result.append(slot)
+		for tool: CardInstance in slot.get_attached_tools():
+			if tool.card_data != null and tool.card_data.effect_id == EFFECT_ID:
+				result.append(slot)
+	return result
+
+
+static func find_exp_share_entries(player: PlayerState, state: GameState, processor: EffectProcessor) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for slot: PokemonSlot in player.bench:
+		if slot == null or processor.is_effectively_knocked_out(slot, state) or processor.is_tool_effect_suppressed(slot, state):
+			continue
+		for tool: CardInstance in slot.get_attached_tools():
+			if tool.card_data != null and tool.card_data.effect_id == EFFECT_ID:
+				result.append({"target": slot, "tool": tool})
 	return result
 
 
@@ -42,10 +54,10 @@ static func transfer_energy_on_knockout(
 	if not target in find_exp_share_slots(player):
 		return
 	var energy_to_move: CardInstance = selected_energy
-	if energy_to_move == null or not energy_to_move in ko_slot.attached_energy or energy_to_move.card_data == null or energy_to_move.card_data.card_type != "Basic Energy":
+	if energy_to_move == null:
 		var transferable := get_transferable_energy(ko_slot)
 		energy_to_move = transferable[0] if not transferable.is_empty() else null
-	if energy_to_move == null:
+	if energy_to_move == null or energy_to_move not in get_transferable_energy(ko_slot):
 		return
 	ko_slot.attached_energy.erase(energy_to_move)
 	target.attached_energy.append(energy_to_move)

@@ -267,7 +267,7 @@ func sync_top_action_visibility(is_portrait: Variant = null) -> void:
 		_call_scene("_restore_portrait_top_action", [back_button])
 		back_button.visible = not review_mode
 	if portrait:
-		var actions_popup := _get_scene_var("_portrait_actions_popup") as PopupPanel
+		var actions_popup := _get_scene_var("_portrait_actions_popup") as Control
 		if actions_popup != null:
 			actions_popup.hide()
 		if review_mode:
@@ -657,6 +657,11 @@ func move_hud_pair_to_field_edges(
 func enforce_field_axis_width(safe_width: float) -> void:
 	if safe_width <= 0.0:
 		return
+	# ArenaLayout owns the live 3D surface. Explicitly shrinking its inherited
+	# containers here exposes the 2D inset until the next Container sort, which
+	# can change the touch signature between press and release on Android.
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(_scene):
+		return
 	var expand_paths: Array[String] = [
 		"MainArea/CenterField",
 		"MainArea/CenterField/FieldArea",
@@ -702,6 +707,9 @@ func enforce_field_axis_width(safe_width: float) -> void:
 func position_edge_hud_overlay(viewport_size: Vector2, status_width: float, row_gap: float) -> void:
 	var overlay := _find("PortraitEdgeHudOverlay", true, false) as Control
 	if overlay == null:
+		return
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(_scene):
+		overlay.hide()
 		return
 	var frame_rect_variant: Variant = _get_scene_var("_portrait_layout_frame_rect")
 	var frame_rect: Rect2 = frame_rect_variant if frame_rect_variant is Rect2 else Rect2()
@@ -1180,6 +1188,7 @@ func _apply_portrait_modal_overlay_rects(frame_rect: Rect2, full_size: Vector2) 
 		if overlay == null:
 			continue
 		_apply_explicit_portrait_rect(overlay, overlay_rect)
+		overlay.set_meta("portrait_modal_full_rect_child", true)
 		_apply_portrait_overlay_child_rects(overlay, overlay_rect.size)
 
 

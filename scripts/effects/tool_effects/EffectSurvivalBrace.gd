@@ -11,7 +11,8 @@ func try_prevent_attack_knockout(
 ) -> bool:
 	if defender == null or attacker == null or state == null:
 		return false
-	if defender.attached_tool == null:
+	var tool_card := defender.find_tool_by_effect_id("1201698f44df09377c26288931d18b36")
+	if tool_card == null:
 		return false
 	if previous_damage != 0:
 		return false
@@ -25,9 +26,8 @@ func try_prevent_attack_knockout(
 	if max_hp <= 10 or defender.damage_counters < max_hp:
 		return false
 
-	var tool_card: CardInstance = defender.attached_tool
 	defender.damage_counters = maxi(0, max_hp - 10)
-	defender.attached_tool = null
+	defender.remove_attached_tool(tool_card)
 	state.players[defender_owner].discard_pile.append(tool_card)
 	return true
 

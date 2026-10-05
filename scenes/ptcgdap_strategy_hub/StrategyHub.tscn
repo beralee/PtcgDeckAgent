@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/ptcgdap_strategy_hub/StrategyHub.gd" id="1_hub"]
+
+[ext_resource type="Script" path="res://scripts/ui/GameModalDialog.gd" id="modal"]
 
 [node name="StrategyHub" type="Control"]
 layout_mode = 3
@@ -126,7 +128,7 @@ text = "本地策略"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "开发者"
+text = "AI训练家"
 
 [node name="AISettingsTab" type="Button" parent="SafeArea/Root/TabBarPanel/TabBarMargin/WorkspaceTabs"]
 unique_name_in_owner = true
@@ -173,7 +175,7 @@ theme_override_constants/separation = 20
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "天梯排名 · 见证开发者实力，下载即可挑战"
+text = "成为AI训练家 · 制作自己的 AI 策略，挑战天梯与人类玩家"
 autowrap_mode = 3
 
 [node name="QuickImportButton" type="Button" parent="SafeArea/Root/QuickActions"]
@@ -384,24 +386,24 @@ theme_override_constants/separation = 16
 [node name="DeveloperTitle" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/DeveloperIntro"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
-text = "让你的卡组成为 AI 对手"
+text = "成为AI训练家，打造你的专属 AI 策略"
 autowrap_mode = 3
 
 [node name="DeveloperSummary" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/DeveloperIntro"]
 layout_mode = 2
-text = "把你的对战思路做成策略，让更多玩家挑战你。"
+text = "把你的对战思路变成自己的 AI 策略，挑战天梯，迎战更多人类玩家！"
 autowrap_mode = 3
 
 [node name="DeveloperSteps" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/DeveloperIntro"]
 layout_mode = 2
-text = "1  注册开发者账号，阅读开发指南\n2  用 Forge 制作策略，在本机测试\n3  签名并上传 .ptcgai，等待资格验证"
+text = "1  注册AI训练家账号，阅读入门指南\n2  用 Forge 制作自己的 AI 策略，在本机测试\n3  签名并上传 .ptcgai，通过资格验证后挑战天梯\n4  分享你的策略，迎接更多人类玩家的挑战"
 autowrap_mode = 3
 
 [node name="DeveloperPortalButton" type="Button" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/DeveloperIntro"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 56)
-text = "前往开发者首页"
+text = "前往AI训练家首页"
 tooltip_text = "https://ptcg.skillserver.cn/dist/developers.html"
 
 [node name="DeveloperDeviceHint" type="Label" parent="SafeArea/Root/WorkspaceViewport/ReplayWorkspace/ReplayPanel/ReplayMargin/ReplayRoot/DeveloperIntro"]
@@ -561,7 +563,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "作者贡献"
+text = "AI训练家贡献"
 
 [node name="CatalogScroll" type="ScrollContainer" parent="SafeArea/Root/WorkspaceViewport/CatalogWorkspace/CatalogColumns/CatalogPanel/CatalogMargin/CatalogRoot"]
 unique_name_in_owner = true
@@ -768,7 +770,7 @@ layout_mode = 2
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-text = "作者作品"
+text = "AI训练家作品"
 
 [node name="AuthorWorksList" type="VBoxContainer" parent="StrategyDetailOverlay/DetailBounds/DetailPanel/DetailMargin/DetailLayout/DetailScroll/DetailRoot"]
 unique_name_in_owner = true
@@ -935,9 +937,12 @@ text = "确认删除"
 focus_next = NodePath("../LocalPackageDeleteCancel")
 focus_previous = NodePath("../LocalPackageDeleteCancel")
 
-[node name="LocalReplayDeleteDialog" type="ConfirmationDialog" parent="."]
+[node name="LocalReplayDeleteDialog" type="Control" parent="."]
 unique_name_in_owner = true
+script = ExtResource("modal")
+visible = false
+show_cancel = true
 title = "删除本地录像"
-size = Vector2i(600, 260)
+dialog_size = Vector2(600, 260)
 ok_button_text = "确认删除"
 dialog_text = "确认从这台设备删除这场录像吗？"

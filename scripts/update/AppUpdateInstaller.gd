@@ -6,39 +6,35 @@ const CACHE_ROOT := "user://app_updates"
 
 static func availability() -> String:
 	if OS.has_feature("editor"):
-		return "编辑器中可以检查版本；游戏内安装请使用已导出的游戏。"
+		return "当前是工程开发版，不能在游戏内安装发行版；重启工程也不会安装下载包。请点击“去网页下载”并运行下载后的游戏。"
 	match Manifest.platform_key():
 		"windows":
 			return "" if OS.get_executable_path().get_extension().to_lower() == "exe" else "当前启动方式不支持自动安装。"
 		"macos":
-			var target := mac_bundle(OS.get_executable_path())
-			if target.is_empty() or target.begins_with("/Volumes/") or "/AppTranslocation/" in target:
-				return "请先将游戏移到“应用程序”或可写文件夹，再使用游戏内更新。"
-			return ""
+			return "macOS 版本请前往官网下载新版。"
 		"android":
 			return "" if Engine.has_singleton("PtcgAppUpdater") else "当前安装包还没有内置更新组件，请重新安装一次新版以启用。"
-	return "此平台请使用重新下载安装入口。"
+	return "此平台请使用“去网页下载”入口。"
 
 
-static func mac_bundle(executable: String) -> String:
-	var marker := executable.rfind(".app/Contents/MacOS/")
-	return executable.substr(0, marker + 4) if marker > 0 else ""
-
-
-static func begin(artifact: Dictionary, package_path: String, version: String) -> Dictionary:
+static func begin(artifact: Dictionary, package_path: String, version: String, system_installer := false) -> Dictionary:
 	var unsupported := availability()
 	if not unsupported.is_empty():
 		return {"error": unsupported}
 	if Manifest.platform_key() == "android":
 		var plugin := Engine.get_singleton("PtcgAppUpdater")
-		var status := str(plugin.call("installUpdate", ProjectSettings.globalize_path(package_path), artifact.sha256, str(artifact.size), str(artifact.build)))
-		return {"android": true, "status": status} if status in ["preparing", "permission_required"] else {"error": "安装未能开始：%s" % status}
+		var method := "installUpdateWithSystemInstaller" if system_installer else "installUpdate"
+		# Android's JNI singleton dispatches Java calls dynamically; has_method()
+		# does not enumerate them. Export inspection checks the actual DEX methods.
+		var status := str(plugin.call(method, ProjectSettings.globalize_path(package_path), artifact.sha256, str(artifact.size), str(artifact.build)))
+		return {"android": true, "status": status}
+	if Manifest.platform_key() != "windows":
+		return {"error": "请前往官网下载新版。"}
 	var token := Crypto.new().generate_random_bytes(16).hex_encode()
 	var session := ProjectSettings.globalize_path(CACHE_ROOT.path_join(token))
 	if DirAccess.make_dir_recursive_absolute(session) != OK:
 		return {"error": "无法创建更新安装目录，请检查磁盘空间。"}
-	var windows := Manifest.platform_key() == "windows"
-	var script_name := "install_windows.ps1" if windows else "install_macos.sh"
+	var script_name := "install_windows.ps1"
 	var script_path := session.path_join(script_name)
 	var script := FileAccess.open(script_path, FileAccess.WRITE)
 	if script == null:
@@ -57,13 +53,8 @@ static func begin(artifact: Dictionary, package_path: String, version: String) -
 		return {"error": "无法保存安装计划。"}
 	file.store_string(JSON.stringify(plan))
 	file.close()
-	var process: int
-	if windows:
-		var powershell := OS.get_environment("SystemRoot").path_join("System32/WindowsPowerShell/v1.0/powershell.exe")
-		process = OS.create_process(powershell, PackedStringArray(["-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", script_path, "-PlanPath", plan_path]), false)
-	else:
-		# Positional arguments only; no interpolation/eval of server or file text.
-		process = OS.create_process("/bin/bash", PackedStringArray([script_path, session, str(OS.get_process_id()), plan.package, artifact.sha256, str(artifact.size), artifact.entry, mac_bundle(OS.get_executable_path()), token, version]), false)
+	var powershell := OS.get_environment("SystemRoot").path_join("System32/WindowsPowerShell/v1.0/powershell.exe")
+	var process := OS.create_process(powershell, PackedStringArray(["-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", script_path, "-PlanPath", plan_path]), false)
 	if process <= 0:
 		return {"error": "无法启动安装程序；游戏仍可继续使用。"}
 	return {"session": session, "process": process, "token": token}

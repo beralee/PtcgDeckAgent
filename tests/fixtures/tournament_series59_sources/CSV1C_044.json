@@ -1,0 +1,91 @@
+{
+  "code": 200,
+  "data": {
+    "name": "自爆磁怪ex",
+    "cardType": "Pokemon",
+    "mechanic": "ex",
+    "label": null,
+    "description": "【雷】 能量粉碎 50×\n造成对手所有宝可梦身上附着的能量数量×50伤害。\n\n【雷】【雷】 脉冲发射器 220\n给这只宝可梦也造成30伤害。\n\n",
+    "yorenCode": "Y1195",
+    "pokemonAttr": {
+      "energyType": "L",
+      "stage": "Stage 2",
+      "hp": 330,
+      "ability": [],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "F",
+        "value": "×2"
+      },
+      "resistance": null,
+      "retreatCost": 3,
+      "attack": [
+        {
+          "name": "能量粉碎",
+          "text": "造成对手所有宝可梦身上附着的能量数量×50伤害。",
+          "cost": "L",
+          "damage": "50×",
+          "isVStarPower": false
+        },
+        {
+          "name": "脉冲发射器",
+          "text": "给这只宝可梦也造成30伤害。",
+          "cost": "LL",
+          "damage": "220",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": "三合一磁怪"
+    },
+    "setCode": "CSV1C",
+    "cardIndex": "044",
+    "setCardsNum": "",
+    "artist": "hncl",
+    "rarity": "RR",
+    "releaseDate": "2025-01-16T16:00:00Z",
+    "regulationMark": "G",
+    "effectId": "70f02f5c8d8cccba81edc75ac5eb4f46",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "CSV1C",
+        "cardIndex": "044",
+        "cardName": "自爆磁怪ex",
+        "rarity": "RR",
+        "effectId": "70f02f5c8d8cccba81edc75ac5eb4f46",
+        "cardType": "Pokemon",
+        "yorenCode": "Y1195",
+        "is": [
+          "ex",
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "65",
+        "nameEn": "Magnezone ex"
+      },
+      {
+        "setCode": "CSV1C",
+        "cardIndex": "137",
+        "cardName": "自爆磁怪ex",
+        "rarity": "SR",
+        "effectId": "70f02f5c8d8cccba81edc75ac5eb4f46",
+        "cardType": "Pokemon",
+        "yorenCode": "Y1195",
+        "is": [
+          "ex",
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "65",
+        "nameEn": "Magnezone ex"
+      }
+    ],
+    "setCodeEn": "SVI",
+    "cardIndexEn": "65",
+    "nameEn": "Magnezone ex"
+  },
+  "msg": "OK."
+}

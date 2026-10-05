@@ -314,11 +314,7 @@ func _resolve_counter_distribution_step(
 			step,
 			"required_counter_distribution_without_targets"
 		)
-	if (
-		deck_strategy != null
-		and deck_strategy.has_method("uses_external_decision_port")
-		and bool(deck_strategy.call("uses_external_decision_port"))
-	):
+	if _uses_sequential_interaction_windows():
 		return _resolve_external_counter_distribution_step(
 			battle_scene, step, context, target_items, total_counters, state_features
 		)
@@ -485,8 +481,13 @@ func _resolve_external_counter_distribution_step(
 		return _abort_unresolvable_effect_step(
 			battle_scene, step, "ucis_counter_target_compile_failed"
 		)
+	# These entries are choices already accepted in this public attack.
+	# The policy projection emits counts only, never these engine objects.
+	var target_context := context.duplicate(true)
+	target_context["pending_counter_assignments"] = entries.duplicate()
+	target_context["remaining_damage_counters"] = remaining
 	var target_plan: Dictionary = _pick_explicit_interaction_items_with_empty_support(
-		legal_items, window_step, 1, context
+		legal_items, window_step, 1, target_context
 	)
 	if bool(target_plan.get("decision_pending", false)):
 		return false

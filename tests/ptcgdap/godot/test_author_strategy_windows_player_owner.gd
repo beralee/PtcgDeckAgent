@@ -1053,9 +1053,7 @@ func test_real_battle_scene_starts_exact_author_player_owner() -> String:
 	var scene := BattleSceneScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
-	# FocusedSuiteRunner adds the scene before its root Window advances a frame.
-	# Let the engine enter the node and deliver the real _ready lifecycle.
-	await tree.process_frame
+	await _wait_for_battle_preparation(scene, tree)
 	var owner: Variant = scene.get("_author_player_owner")
 	var match_evidence: Variant = scene.get("_author_match_evidence")
 	var evidence_audit: Dictionary = match_evidence.audit_snapshot() if match_evidence != null else {}
@@ -1116,7 +1114,7 @@ func test_real_battle_scene_starts_exact_cynthia_author_owner() -> String:
 	var scene := BattleSceneScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
-	await tree.process_frame
+	await _wait_for_battle_preparation(scene, tree)
 	var owner: Variant = scene.get("_author_player_owner")
 	var checks := run_checks([
 		assert_true(accepted),
@@ -1159,7 +1157,7 @@ func test_real_battle_scene_starts_gift_box_from_package_csv() -> String:
 	var scene := BattleSceneScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
-	await tree.process_frame
+	await _wait_for_battle_preparation(scene, tree)
 	var owner: Variant = scene.get("_author_player_owner")
 	var public_identity: Dictionary = owner.public_replay_identity() if owner != null else {}
 	var strategy_participant: Dictionary = public_identity.get("strategy_participant", {})
@@ -1196,6 +1194,15 @@ func test_real_battle_scene_starts_gift_box_from_package_csv() -> String:
 	if not previous_selection.is_empty():
 		GameManager.set_author_strategy_selection(previous_selection)
 	return checks
+
+
+func _wait_for_battle_preparation(scene: Node, tree: SceneTree) -> void:
+	# Startup now validates the archive asynchronously. Observe completion rather
+	# than disposing the scene while its catalog preparation is still in flight.
+	var deadline := Time.get_ticks_msec() + 10000
+	await tree.process_frame
+	while bool(scene.get("_battle_start_pending")) and Time.get_ticks_msec() < deadline:
+		await tree.process_frame
 
 
 func test_ai_deck_picker_open_stays_metadata_only_for_real_packages() -> String:

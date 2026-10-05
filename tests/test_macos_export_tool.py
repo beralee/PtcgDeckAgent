@@ -9,6 +9,17 @@ MODULE = Path(__file__).resolve().parents[1] / "scripts/tools/export_macos_relea
 
 
 class MacExportToolTests(unittest.TestCase):
+    def test_archive_name_uses_the_current_release_and_keeps_diagnostics_separate(self):
+        spec = importlib.util.spec_from_file_location("mac_export", MODULE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "scripts/app").mkdir(parents=True)
+            (root / "scripts/app/AppVersion.gd").write_text('const VERSION := "0.6.2"\n')
+            self.assertEqual(module.archive_name(root), "PtcgDeckAgent-macOS-0.6.2-rules.zip")
+            self.assertEqual(module.archive_name(root, True), "PtcgDeckAgent-macOS-diagnostic.zip")
+
     def test_snapshot_ignores_extension_without_changing_cross_platform_source(self):
         spec = importlib.util.spec_from_file_location("mac_export", MODULE)
         module = importlib.util.module_from_spec(spec)

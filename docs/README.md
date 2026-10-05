@@ -15,6 +15,11 @@
 - [development_setup.md](development_setup.md)：环境搭建、运行和测试说明
 - [project_status.md](project_status.md)：当前实现状态、已知限制、公开协作建议
 
+## 版本更新
+
+- [0.6.1 更新说明](release-notes-0.6.1.md)：全面支持 30 周年 18.5 版本、内置多套 18.5 卡组、下载 AI 天梯策略对战
+- [0.6.0 更新说明](release-notes-0.6.0.md)
+
 ## 核心设计文档
 
 - [../design_document.md](../design_document.md)：项目整体设计文档

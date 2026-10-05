@@ -200,9 +200,9 @@ func test_portrait_discussion_profile_fits_phone_touch_layout() -> String:
 	var transcript_scroll := dialog.get_node_or_null("%TranscriptScroll") as Control
 	var input_panel := dialog.get_node_or_null("%InputPanel") as Control
 	var suggestions_panel := dialog.get_node_or_null("%SuggestionsPanel") as Control
-	var stacked_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
-	var composer_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
-	var dialog_size: Vector2i = dialog.size
+	var stacked_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
+	var composer_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
+	var dialog_size: Vector2i = dialog.dialog_size
 	var dialog_min_size: Vector2i = dialog.min_size
 	var action_total_width := 0.0
 	if send_button != null and reset_button != null and composer_actions != null:
@@ -248,7 +248,7 @@ func test_portrait_discussion_profile_fits_phone_touch_layout() -> String:
 		assert_true(composer_actions != null and composer_actions.custom_minimum_size.x >= 170.0 and composer_actions.custom_minimum_size.x <= 184.0, "Portrait discussion right-side action area should reserve room for both buttons"),
 		assert_true(composer_actions != null and action_total_width >= composer_actions.custom_minimum_size.x - 1.0 and action_total_width <= composer_actions.custom_minimum_size.x + 1.0, "Portrait discussion action buttons should fill the right-side action area"),
 		assert_true(attach_button != null and not attach_button.visible, "Portrait discussion should hide the unused attach affordance to preserve input width"),
-		assert_true(first_bubble_width >= 240.0 and first_bubble_width <= 310.0, "Portrait discussion bubbles should fit beside the avatar without vertical text wrapping"),
+		assert_true(first_bubble_width * dialog.content_zoom >= 200.0 and first_bubble_width * dialog.content_zoom <= 310.0, "Portrait discussion bubbles should fit beside the avatar without vertical text wrapping"),
 		assert_true(first_body_font >= 30, "Portrait discussion message body should use mobile-scaled text"),
 		assert_true(transcript_scroll != null and input_panel != null and transcript_scroll.offset_bottom <= input_panel.offset_top - 8.0, "Portrait transcript should not overlap the composer"),
 		assert_true(suggestions_panel != null and suggestions_panel.visible, "Portrait discussion should keep generated follow-up suggestions visible when the horizontal composer leaves enough space"),
@@ -279,8 +279,8 @@ func test_portrait_discussion_profile_scales_for_android_logical_canvas() -> Str
 	var send_button := dialog.get_node_or_null("%SendButton") as Button
 	var input_panel := dialog.get_node_or_null("%InputPanel") as Control
 	var transcript_scroll := dialog.get_node_or_null("%TranscriptScroll") as Control
-	var stacked_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
-	var composer_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
+	var stacked_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
+	var composer_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
 	var body: RichTextLabel = null
 	var transcript_list := dialog.get_node_or_null("%TranscriptList") as VBoxContainer
 	if transcript_list != null and transcript_list.get_child_count() > 0:
@@ -289,7 +289,7 @@ func test_portrait_discussion_profile_scales_for_android_logical_canvas() -> Str
 			body = dialog.call("_find_message_body_in_row", row) as RichTextLabel
 	var body_font := body.get_theme_font_size("normal_font_size") if body != null else 0
 	var dialog_min_size: Vector2i = dialog.min_size
-	var dialog_size: Vector2i = dialog.size
+	var dialog_size: Vector2i = dialog.dialog_size
 	dialog.queue_free()
 
 	return run_checks([
@@ -329,12 +329,12 @@ func test_portrait_discussion_buttons_survive_deferred_window_resize() -> String
 	dialog.call("_apply_fixed_window_size")
 	var send_button := dialog.get_node_or_null("%SendButton") as Button
 	var reset_button := dialog.get_node_or_null("%ResetButton") as Button
-	var actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as BoxContainer
+	var actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as BoxContainer
 	var total_action_width := 0.0
 	if send_button != null and reset_button != null and actions != null:
 		total_action_width = send_button.custom_minimum_size.x + reset_button.custom_minimum_size.x + float(actions.get_theme_constant("separation"))
-	var root := dialog.get_node_or_null("Root") as Control
-	var available_width := float(dialog.size.x) - (root.offset_left - root.offset_right if root != null else 0.0)
+	var root := dialog.get_content().get_node_or_null("Root") as Control
+	var available_width := float(dialog.dialog_size.x) - (root.offset_left - root.offset_right if root != null else 0.0)
 	dialog.queue_free()
 
 	return run_checks([
@@ -385,7 +385,7 @@ func test_portrait_discussion_keyboard_inset_keeps_action_buttons_touchable() ->
 	var keyboard_top := full_frame.size.y - keyboard_height
 	var send_button := dialog.get_node_or_null("%SendButton") as Button
 	var reset_button := dialog.get_node_or_null("%ResetButton") as Button
-	var root := dialog.get_node_or_null("Root") as Control
+	var root := dialog.get_content().get_node_or_null("Root") as Control
 	var root_bottom := float(popup_rect.position.y) + float(popup_rect.size.y) - (root.offset_bottom * -1.0 if root != null else 0.0)
 	var send_bottom := float(popup_rect.position.y) + float(popup_rect.size.y)
 	var reset_bottom := send_bottom
@@ -436,8 +436,11 @@ func test_live_battle_portrait_discussion_does_not_auto_focus_android_input() ->
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return "SceneTree root should be available for the battle portrait discussion focus test"
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(390, 844)
+	tree.root.add_child(viewport)
 	var dialog := DialogScene.instantiate()
-	tree.root.add_child(dialog)
+	viewport.add_child(dialog)
 	var deck := DeckData.new()
 	deck.id = 900306
 	deck.deck_name = "Battle portrait focus test deck"
@@ -454,7 +457,7 @@ func test_live_battle_portrait_discussion_does_not_auto_focus_android_input() ->
 	var has_focus := question_input != null and question_input.has_focus()
 	var exposes_policy := dialog.has_method("_should_auto_focus_question_input")
 	var allows_auto_focus := bool(dialog.call("_should_auto_focus_question_input")) if exposes_policy else true
-	dialog.queue_free()
+	viewport.queue_free()
 
 	return run_checks([
 		assert_true(exposes_policy, "Discussion dialog should expose a testable auto-focus policy for Android portrait regressions"),

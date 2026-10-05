@@ -1,17 +1,11 @@
 class_name TestBattleSetupAIVersions
 extends TestBase
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
 const DeckStrategyV18ProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
 const V18CPGProfileCatalogScript = preload("res://scripts/ai/v18_cpg/V18CPGProfileCatalog.gd")
-const EXPECTED_V18_STRENGTH_ORDER_IDS: Array[int] = [
-	# Final normal-mode n100 win rate descending; strong-mode n100 breaks ties.
-	800018500, 800018880, 800017631, 800018501, 18000625, 800018509,
-	800016834, 800018543, 800017047, 800017407, 18000230, 800015734,
-	800018502, 800018498, 800019125, 800018499, 800018105, 800033475,
-	800018497, 800017097, 800015934, 800017643, 800018539, 800018359,
-	800017280,
-]
 
 
 class FakeAIVersionRegistry extends RefCounted:
@@ -1104,6 +1098,68 @@ func test_battle_setup_filters_ai_versions_to_selected_ai_strategy() -> String:
 	])
 
 
+func test_v18_5_bundled_decks_are_visible_searchable_and_selectable_as_ai_opponents() -> String:
+	var expected_ids: Array[int] = [675899, 675834, 675893, 675892, 675703, 675701, 675700]
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+	scene.call("_on_deck_picker_pressed", 1)
+	scene.set("_deck_picker_search", "18.5")
+	scene.call("_refresh_deck_picker")
+	var grid := scene.get("_deck_picker_grid") as GridContainer
+	var buttons_by_id := {}
+	for child: Node in grid.get_children() if grid != null else []:
+		if child is Button and child.has_meta("deck_id"):
+			buttons_by_id[int(child.get_meta("deck_id"))] = child
+	var checks: Array[String] = []
+	checks.append(assert_eq(buttons_by_id.size(), expected_ids.size(), "Searching AI opponents for 18.5 must render all seven bundled decks"))
+	for deck_id: int in expected_ids:
+		checks.append(assert_true(buttons_by_id.has(deck_id), "18.5 deck %d must have a visible AI picker button" % deck_id))
+		var deck: DeckData = CardDatabase.get_ai_deck(deck_id)
+		checks.append(assert_not_null(deck, "18.5 deck %d must load through the AI deck source" % deck_id))
+		if deck == null or not buttons_by_id.has(deck_id):
+			continue
+		var bundled: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/decks/%d.json" % deck_id))
+		checks.append(assert_eq(deck.to_dict(), DeckData.from_dict(bundled).to_dict(), "AI must use the exact bundled 18.5 list"))
+		checks.append(assert_eq(CardDatabase.build_deck_instances(deck, 1).size(), 60, "18.5 AI deck must build all 60 opponent cards"))
+		var button := buttons_by_id[deck_id] as Button
+		checks.append(assert_true(button.text.begins_with(deck.deck_name), "AI picker must display the normalized 18.5 name"))
+		button.pressed.emit()
+		var selected := scene.call("_selected_deck_for_slot", 1) as DeckData
+		checks.append(assert_eq(selected.id if selected != null else -1, deck_id, "Pressing an 18.5 AI button must select that opponent"))
+	scene.free()
+	return run_checks(checks)
+
+
+func test_v18_5_unadapted_ai_decks_never_offer_deepseek() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"provider": "deepseek", "endpoint": "https://api.deepseek.com",
+		"api_key": "test-key", "model": "deepseek-v4-flash", "timeout_seconds": 60.0,
+	})
+	var scene := _make_scene_ready()
+	var mode := scene.find_child("ModeOption", true, false) as OptionButton
+	mode.select(1)
+	scene.call("_on_mode_changed", 1)
+	var checks: Array[String] = []
+	for deck_id: int in [675899, 675834, 675893, 675892, 675703, 675701, 675700]:
+		var deck := CardDatabase.get_ai_deck(deck_id)
+		scene.set("_pending_ai_strategy_variant_id", "gardevoir_llm")
+		scene.call("_on_deck_picker_deck_selected", 1, deck_id)
+		checks.append(assert_false(bool(scene.call("_ai_deck_supports_llm", deck)), "Unadapted 18.5 deck must not display the LLM star: %d" % deck_id))
+		checks.append(assert_eq(scene.call("_detect_ai_strategy_variants"), [], "Configured DeepSeek must not enable an unadapted 18.5 deck: %d" % deck_id))
+		checks.append(assert_eq(str(scene.call("_selected_ai_strategy_variant_id")), "", "Previously saved LLM choice must not activate on an unadapted deck"))
+		var selected_button := scene.find_child("Deck2PickerButton", true, false) as Button
+		checks.append(assert_eq(selected_button.text, deck.deck_name, "Selected deck label must have no false LLM star"))
+		var current_model := scene.find_child("AIModelCurrentLabel", true, false) as Label
+		checks.append(assert_false(current_model.visible, "Unadapted deck must not claim an active LLM opponent"))
+		checks.append(assert_false(bool(scene.call("_is_selected_ai_strategy_llm")), "Unadapted deck must use the rules fallback even with a configured API"))
+	scene.free()
+	_restore_battle_review_config_file(snapshot)
+	return run_checks(checks)
+
+
 func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
@@ -1120,13 +1176,9 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 			resolved_ids.append(deck.id)
 	var missing_v18_ids: Array[int] = []
 	var catalog_v18_ids: Array[int] = DeckStrategyV18ProfileCatalogScript.deck_ids()
-	var resolved_v18_ids: Array[int] = []
 	for deck_id: int in catalog_v18_ids:
 		if deck_id not in resolved_ids:
 			missing_v18_ids.append(deck_id)
-	for deck_id: int in resolved_ids:
-		if deck_id in catalog_v18_ids:
-			resolved_v18_ids.append(deck_id)
 
 	return run_checks([
 		assert_eq(deck2_option.item_count, supported_ids.size(), "AI mode should only expose the supported AI decks"),
@@ -1148,29 +1200,28 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		assert_true(1700008 in resolved_ids, "AI deck list should include 17.0 Dragapult / Dusknoir"),
 		assert_true(1700011 in resolved_ids, "AI deck list should include 17.0 Regidrago"),
 		assert_eq(missing_v18_ids, [], "AI deck list should include all 25 registered 18.0 rule-AI decks"),
-		assert_eq(resolved_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck dropdown should order all 18.0 decks by final normal win rate, using strong win rate as the tie-breaker"),
 	])
 
 
-func test_battle_setup_ai_mode_lists_v18_ai_decks_first() -> String:
+func test_battle_setup_ai_mode_preserves_catalog_import_order() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
 	mode_option.select(1)
 	scene.call("_on_mode_changed", 1)
 
-	var leading_are_v18 := true
-	for i: int in mini(3, deck2_option.item_count):
-		var deck_id := int(deck2_option.get_item_metadata(i))
-		var deck := CardDatabase.get_ai_deck(deck_id)
-		leading_are_v18 = leading_are_v18 and deck != null and deck.deck_name.begins_with("18.0")
+	var actual_ids: Array[int] = []
+	for i: int in deck2_option.item_count:
+		actual_ids.append(int(deck2_option.get_item_metadata(i)))
+	var expected_ids: Array[int] = []
+	for deck: DeckData in CardDatabase.get_all_ai_decks():
+		expected_ids.append(deck.id)
+	var result := assert_eq(actual_ids, expected_ids, "Battle setup dropdown must preserve the AI catalog's import order")
+	scene.free()
+	return result
 
-	return run_checks([
-		assert_true(leading_are_v18, "Battle setup AI deck dropdown should show supported 18.0 AI decks first"),
-	])
 
-
-func test_battle_setup_ai_mode_selects_first_v18_ai_deck_by_default() -> String:
+func test_battle_setup_ai_mode_selects_newest_import_by_default() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
@@ -1179,13 +1230,16 @@ func test_battle_setup_ai_mode_selects_first_v18_ai_deck_by_default() -> String:
 
 	var selected_id := int(deck2_option.get_item_metadata(deck2_option.selected)) if deck2_option.selected >= 0 else -1
 	var selected_deck := scene.call("_selected_deck_for_slot", 1) as DeckData
-	return run_checks([
-		assert_true(selected_id in DeckStrategyV18ProfileCatalogScript.deck_ids(), "Switching to AI mode should default to a supported 18.0 AI deck"),
-		assert_true(selected_deck != null and selected_deck.deck_name.begins_with("18.0"), "Default AI deck should be labeled as 18.0"),
+	var newest := CardDatabase.get_all_ai_decks()[0]
+	var result := run_checks([
+		assert_eq(selected_id, newest.id, "Switching to AI mode should default to the newest imported built-in deck"),
+		assert_true(selected_deck != null and selected_deck.id == newest.id, "Default AI opponent must match the first visible deck"),
 	])
+	scene.free()
+	return result
 
 
-func test_battle_setup_ai_deck_picker_opens_all_with_v18_ai_decks_first() -> String:
+func test_battle_setup_ai_deck_picker_preserves_import_order_in_all_and_recent() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	mode_option.select(1)
@@ -1194,21 +1248,23 @@ func test_battle_setup_ai_deck_picker_opens_all_with_v18_ai_decks_first() -> Str
 	var picker_category := str(scene.call("_default_deck_picker_category", 1))
 	var all_decks: Array = scene.call("_decks_for_picker", 1, "all", "")
 	var recent_decks: Array = scene.call("_decks_for_picker", 1, "recent", "")
-	var all_v18_ids: Array[int] = []
-	var recent_v18_ids: Array[int] = []
-	var catalog_v18_ids: Array[int] = DeckStrategyV18ProfileCatalogScript.deck_ids()
+	var all_ids: Array[int] = []
+	var recent_ids: Array[int] = []
+	var expected_ids: Array[int] = []
+	for deck: DeckData in CardDatabase.get_all_ai_decks():
+		expected_ids.append(deck.id)
 	for deck: DeckData in all_decks:
-		if deck.id in catalog_v18_ids:
-			all_v18_ids.append(deck.id)
+		all_ids.append(deck.id)
 	for deck: DeckData in recent_decks:
-		if deck.id in catalog_v18_ids:
-			recent_v18_ids.append(deck.id)
+		recent_ids.append(deck.id)
 
-	return run_checks([
-		assert_eq(picker_category, "all", "AI deck picker should open on the creation-time ordered full list"),
-		assert_eq(all_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck picker All category should order every 18.0 deck by benchmark strength"),
-		assert_eq(recent_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck picker Recent category should preserve the same 18.0 benchmark-strength order"),
+	var result := run_checks([
+		assert_eq(picker_category, "all", "AI deck picker should open on the import-time ordered full list"),
+		assert_eq(all_ids, expected_ids, "AI All category must preserve the catalog's import order"),
+		assert_eq(recent_ids, expected_ids, "AI Recent category must preserve the catalog's import order"),
 	])
+	scene.free()
+	return result
 
 
 func test_battle_setup_ai_deck_picker_marks_llm_supported_decks_and_explains_star() -> String:
@@ -1663,7 +1719,7 @@ func test_battle_setup_ai_view_button_uses_normal_preview_for_strong_mode() -> S
 
 	var placeholder_opened := false
 	for child: Node in scene.get_children():
-		if child is AcceptDialog:
+		if child is GameModal:
 			placeholder_opened = true
 			break
 

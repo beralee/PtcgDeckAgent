@@ -5,7 +5,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$work = Join-Path $root '.tmp/app-updater-android-build'
+$work = Join-Path $root ('.tmp/app-updater-android-build-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $source = [IO.Compression.ZipFile]::OpenRead($GodotSourceZip)
@@ -21,6 +21,12 @@ $sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src/cn/skillse
 $classpath = (Join-Path $AndroidSdk 'platforms/android-35/android.jar') + ';' + (Join-Path $work 'godot.jar')
 & (Join-Path $JavaHome 'bin/javac.exe') -encoding UTF-8 -source 8 -target 8 -classpath $classpath -d $classes @sources
 if ($LASTEXITCODE -ne 0) { throw 'Android updater compilation failed.' }
+$testClasses = Join-Path $work 'tests'
+New-Item -ItemType Directory -Force -Path $testClasses | Out-Null
+& (Join-Path $JavaHome 'bin/javac.exe') -encoding UTF-8 -classpath "$classes;$classpath" -d $testClasses (Join-Path $PSScriptRoot 'tests/InstallOutcomeTest.java')
+if ($LASTEXITCODE -ne 0) { throw 'Android install outcome tests failed to compile.' }
+& (Join-Path $JavaHome 'bin/java.exe') -classpath "$testClasses;$classes" cn.skillserver.ptcg.updater.InstallOutcomeTest
+if ($LASTEXITCODE -ne 0) { throw 'Android install outcome regression failed.' }
 & (Join-Path $JavaHome 'bin/jar.exe') cf (Join-Path $package 'classes.jar') -C $classes .
 if ($LASTEXITCODE -ne 0) { throw 'Android updater JAR packaging failed.' }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'AndroidManifest.xml') -Destination $package -Force

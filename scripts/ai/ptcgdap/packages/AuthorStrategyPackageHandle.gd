@@ -253,7 +253,10 @@ func _clean_display_text(value: Variant) -> String:
 
 
 static func _canonical_hash(value: Variant) -> String:
-	var parsed: Dictionary = CabtJsonTreeScript.canonicalize_artifact_json_bytes(JSON.stringify(value).to_utf8_buffer())
+	# These are already primitive in-memory values. Avoid converting them into
+	# JSON and parsing them again on every integrity check. Artifact floats,
+	# cycles and unsupported types still fail closed in the canonicalizer.
+	var parsed: Dictionary = CabtJsonTreeScript.canonicalize_artifact(value)
 	return _sha(parsed.get("bytes", PackedByteArray())) if bool(parsed.get("ok", false)) else ""
 
 

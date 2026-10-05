@@ -416,8 +416,8 @@ func _validate_slot_inventory(slot: PokemonSlot, player_index: int) -> String:
 		var energy_error := _registered_card_error(energy)
 		if not energy_error.is_empty():
 			return energy_error
-	if slot.attached_tool != null:
-		var tool_error := _registered_card_error(slot.attached_tool)
+	for tool: CardInstance in slot.get_attached_tools():
+		var tool_error := _registered_card_error(tool)
 		if not tool_error.is_empty():
 			return tool_error
 	return ""

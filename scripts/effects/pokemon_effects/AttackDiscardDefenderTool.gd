@@ -4,22 +4,28 @@ class_name AttackDiscardDefenderTool
 extends BaseEffect
 
 
-func execute_attack(
-	_attacker: PokemonSlot,
+func before_attack_damage(
+	attacker: PokemonSlot,
 	defender: PokemonSlot,
 	_attack_index: int,
 	state: GameState
 ) -> void:
-	if defender == null or defender.attached_tool == null:
+	if defender == null or defender.get_attached_tools().is_empty():
 		return
-	var tool_card: CardInstance = defender.attached_tool
-	defender.attached_tool = null
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.is_attack_effect_prevented_by_defender_ability(attacker, defender, state):
+		return
 	var defender_top: CardInstance = defender.get_top_card()
-	if defender_top != null:
-		var opp_player: PlayerState = state.players[defender_top.owner_index]
-		opp_player.discard_card(tool_card)
-	else:
-		tool_card.face_up = false
+	for tool_card: CardInstance in defender.get_attached_tools():
+		defender.remove_attached_tool(tool_card)
+		if defender_top != null:
+			state.players[defender_top.owner_index].discard_card(tool_card)
+		else:
+			tool_card.face_up = false
+
+
+func execute_attack(_attacker: PokemonSlot, _defender: PokemonSlot, _index: int, _state: GameState) -> void:
+	pass
 
 
 func get_description() -> String:

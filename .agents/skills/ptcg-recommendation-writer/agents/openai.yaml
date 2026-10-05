@@ -1,0 +1,4 @@
+interface:
+  display_name: "PTCG 推荐文章"
+  short_description: "调研最新赛事和卡表，生成、校验并提交卡组推荐文章。"
+  default_prompt: "调研最新 PTCG 赛事，生成一篇新的卡组推荐文章。"

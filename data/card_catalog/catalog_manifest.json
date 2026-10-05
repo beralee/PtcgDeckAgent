@@ -1,276 +1,342 @@
 {
-	"card_count": 792,
+	"card_count": 1107,
 	"catalog_version": "2026.08.02.1",
 	"generated_at": "2026-07-12T00:00:00+08:00",
 	"index_file": {
 		"path": "index.json",
-		"sha256": "be5d36cf2d0c4f3910e6adfabc83afc5afc207665d36b6db5ef998b77775d2a2"
+		"sha256": "492c5530d0c4cfe3aa4d0ec66e065004795fc5f91cba53a193e399895e6116a2"
 	},
-	"schema_version": 2,
+	"schema_version": 3,
 	"sets": [
 		{
-			"card_count": 13,
+			"card_count": 17,
 			"path": "sets/151C.json",
 			"set_code": "151C",
-			"sha256": "d3cdfc2bc620a9b0e2df0f547f7a3027dae3ba49e97836739e5a27f97f53f792"
+			"sha256": "7e287547108cfc18be9782b10a7e391d4f281ca9916915b0906fd3c66e85ed33"
+		},
+		{
+			"card_count": 139,
+			"path": "sets/30THC.json",
+			"set_code": "30THC",
+			"sha256": "d348b06c0e80ed7f1eb280ae3cb79d86c50e17d74106de7ff4a00227315cd2f0"
+		},
+		{
+			"card_count": 45,
+			"path": "sets/30thDC.json",
+			"set_code": "30thDC",
+			"sha256": "7c836d5fee2e3096d5e5400af71848cd50dbf1cb9f559a48635e08c24b715523"
+		},
+		{
+			"card_count": 2,
+			"path": "sets/30thP.json",
+			"set_code": "30thP",
+			"sha256": "e39cf58784b9e15f9f7e28708371d64cb6fe3a75a886045bb9387db7e5f5c245"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CBB4C.json",
+			"set_code": "CBB4C",
+			"sha256": "dbad6f513a047f2f8763916d21542a97e03dac89982e44f3834a572abb76b1ba"
 		},
 		{
 			"card_count": 2,
 			"path": "sets/CBB5C.json",
 			"set_code": "CBB5C",
-			"sha256": "ce7341044bfe3edd9f5f6daaf64c41113b9ebb335a985141b7a33d38b8008e64"
+			"sha256": "75cbfbf429b3d03bd1aa8639a26ed4dacc60a99493caefd7934b0c4c314df7f5"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/CS1bC.json",
 			"set_code": "CS1bC",
-			"sha256": "e6975e0177cd1dafe371ea1a72e21f7c29923580bf66f9e5d866d4d0ff93a07c"
+			"sha256": "56d9f003a99d74ab47c0a69e1679838701530c977b5e4268f78f74490c9cb113"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/CS4.5C.json",
 			"set_code": "CS4.5C",
-			"sha256": "40aae151c3951043e194ca482098a728a4942f2d12a161ca92f4294cf3c255f3"
+			"sha256": "18a77d40f7ce66c62590195894f08919176748a0f137f6960410d5d18d2d5d47"
 		},
 		{
 			"card_count": 4,
 			"path": "sets/CS4DaC.json",
 			"set_code": "CS4DaC",
-			"sha256": "91a2a85dab07651be1095136aa6aa06f0b51423d745f307fc6e1bbb5f9c161d7"
+			"sha256": "9a80437256b719c90aa465d8a7cc61295009471b88abc7e28897be0b8365eb02"
 		},
 		{
 			"card_count": 13,
 			"path": "sets/CS5.5C.json",
 			"set_code": "CS5.5C",
-			"sha256": "a00c870752017940fa8cbf4dbca8a3e78487574bf5ac6483fd13fb1fbdf9bd17"
+			"sha256": "7b01572648eb4ab0f77bb405a01d8453e9105ad8a25755756a1462c9c2328d17"
 		},
 		{
 			"card_count": 10,
 			"path": "sets/CS5DC.json",
 			"set_code": "CS5DC",
-			"sha256": "568abf10abe3964b844b5e642e1b9042d32a5c036e5b71c39634ed1443b15811"
+			"sha256": "9f4ff102f841a6a258ed463259dd02394882cc6513a6bc567c1b97ff291f3aab"
 		},
 		{
 			"card_count": 14,
 			"path": "sets/CS5aC.json",
 			"set_code": "CS5aC",
-			"sha256": "e201463170f84c834d2154b0abcebba106f56185571c528019f6504d44098117"
+			"sha256": "871badbbda998f78e9bdacc4abf5c4c9d3049e2afcbc41424330423bb42cdf08"
 		},
 		{
 			"card_count": 10,
 			"path": "sets/CS5bC.json",
 			"set_code": "CS5bC",
-			"sha256": "27bacbd98f46aafd2c073a800a84853fa4eb57cc0c6610889c0b39cc9791ad1f"
+			"sha256": "88987d94cceebb128a46161060d2b40d1a2b14bc6e546a4f40a492c529cc7ec5"
 		},
 		{
 			"card_count": 16,
 			"path": "sets/CS6.5C.json",
 			"set_code": "CS6.5C",
-			"sha256": "83ba4db7c0acf9aa19d45b6aebbc7b6529d7a3771e7ec32d0aca85840a1f5cdd"
+			"sha256": "b21295f0a83e9a6ce38c189e7414eb74081c76d44b952199353c8dda1ed420b8"
 		},
 		{
 			"card_count": 14,
 			"path": "sets/CS6aC.json",
 			"set_code": "CS6aC",
-			"sha256": "a16e36382c2f027995521c251e300c83b31bbc4ee874f02d4407fbe031150d9f"
+			"sha256": "961edae20a54ebdeac403842f1513e6134874aa70342d18460a6238cd2952326"
 		},
 		{
 			"card_count": 15,
 			"path": "sets/CS6bC.json",
 			"set_code": "CS6bC",
-			"sha256": "7da5fb06aa7ee302c1c6a6c1e1528f82d9fb9022df493db58078faab3914ff24"
+			"sha256": "df820d4b3721418f704e382ee350d88cdc36fd83f952cc375cea0a1665b4c9b8"
 		},
 		{
 			"card_count": 6,
 			"path": "sets/CSNC.json",
 			"set_code": "CSNC",
-			"sha256": "5588a07a60f0b8afe5331085d32897e42cead3cbbe1ab059521406159013576f"
+			"sha256": "c38a3b4d9f908604ba6f8dc0a3a8f983b1f913b9e984ed49338830300b0a1824"
 		},
 		{
 			"card_count": 287,
 			"path": "sets/CSV10C.json",
 			"set_code": "CSV10C",
-			"sha256": "360d7b4615e3a99e961feef9781ac0497a3bcab55b74b22e42c05cb191d1ac43"
+			"sha256": "60fad2218e3a19cfb46822aa3952a6f511af6fb70198ba37eeabe734aa788a61"
+		},
+		{
+			"card_count": 38,
+			"path": "sets/CSV1C.json",
+			"set_code": "CSV1C",
+			"sha256": "fadca0ecd2f2113d4cff4652975e0f9003c0d3f1f1c2f46f9976b3ab5459d714"
+		},
+		{
+			"card_count": 21,
+			"path": "sets/CSV2C.json",
+			"set_code": "CSV2C",
+			"sha256": "c4c9bb3a4f055db96717e5f3504adde096ac52c412852eb78a43c9f78cfc7fde"
+		},
+		{
+			"card_count": 25,
+			"path": "sets/CSV3C.json",
+			"set_code": "CSV3C",
+			"sha256": "dd1f8dcdb17b10c6f754121b69133b8f248c592ebe9fb041c95f203b2dddb6a9"
 		},
 		{
 			"card_count": 28,
-			"path": "sets/CSV1C.json",
-			"set_code": "CSV1C",
-			"sha256": "be849b1525d53829e93f887ab1208a61b2014eb5d7bf2c87a5a43c97da7135f7"
-		},
-		{
-			"card_count": 17,
-			"path": "sets/CSV2C.json",
-			"set_code": "CSV2C",
-			"sha256": "9d1860ba2b04322023382991d00293335269fea9f5e1df79985fa00ccf80da8f"
-		},
-		{
-			"card_count": 14,
-			"path": "sets/CSV3C.json",
-			"set_code": "CSV3C",
-			"sha256": "b16a7cf990d563c42ded988ad432cb0ead71b6cbd17a244381e75d6a0ce1c714"
-		},
-		{
-			"card_count": 13,
 			"path": "sets/CSV4C.json",
 			"set_code": "CSV4C",
-			"sha256": "384812dc0dbb3d7a37c3b3c255c823127982e08ccf9fdc1e77e9dfb0d00d22ac"
+			"sha256": "c1e6f03b98956b17ae5fb1080e92be1c43a5f16bbb969c517ecea325dce44e7c"
 		},
 		{
-			"card_count": 14,
+			"card_count": 21,
 			"path": "sets/CSV5C.json",
 			"set_code": "CSV5C",
-			"sha256": "e7ca18d04febbbe16f2e06d46c6df99d4aed431f6a8df999aa715a41963d69f9"
+			"sha256": "582578fcadfa0ecb05ea5ccbe243b815b0841c510fcae1299791c0dcc1a518dc"
 		},
 		{
-			"card_count": 22,
+			"card_count": 34,
 			"path": "sets/CSV6C.json",
 			"set_code": "CSV6C",
-			"sha256": "12a5a99b39dd665ae79c8204e2e2cb38f92d11602f8c3cbcb04c938e9ac14436"
+			"sha256": "efc2a56c3efe3a8594f5702c40b55f1f645b47ba463e0c230bb84bc35d397e11"
 		},
 		{
-			"card_count": 57,
+			"card_count": 70,
 			"path": "sets/CSV7C.json",
 			"set_code": "CSV7C",
-			"sha256": "3b3c57b0ba0a0f64c02edfbb162f4c267e5286755850bac836f5162967dbade9"
+			"sha256": "9df087ec98a647065755515d1c8797a86d8d08b01dc72a73b47393448a9d4712"
 		},
 		{
-			"card_count": 62,
+			"card_count": 81,
 			"path": "sets/CSV8C.json",
 			"set_code": "CSV8C",
-			"sha256": "daf8ecb25c0430117e7b20092c68e37d8c76658faf192be167a5cd6c9e658e87"
+			"sha256": "d9edf44892d5706e45e56221fe2d7596ecada1689a2bae74ddbd66c3247970b0"
 		},
 		{
-			"card_count": 29,
+			"card_count": 35,
 			"path": "sets/CSV9.5C.json",
 			"set_code": "CSV9.5C",
-			"sha256": "840a26c1c65e9627349f8033e5c4e0ebd4249a8e1721fc69fb5b035f4e089407"
+			"sha256": "a9737229d25d84870318171f00ade6244496f7b2c372b46a04ffaacadc311629"
 		},
 		{
-			"card_count": 69,
+			"card_count": 78,
 			"path": "sets/CSV9C.json",
 			"set_code": "CSV9C",
-			"sha256": "8f512bc927a9e28c2f893b025d9d402ab67327d1de4b2617dcb42d19fc173090"
+			"sha256": "261721081ab04f486cdc487d6c0b92c8c7b47b7c0e67c8ce1098484e15deb829"
 		},
 		{
 			"card_count": 8,
 			"path": "sets/CSVE1C.json",
 			"set_code": "CSVE1C",
-			"sha256": "3cee6af143615dd73a3809227e0f8489156e103a9e359fb98f751c45417e8d35"
+			"sha256": "887fc9fe9ce7d993943e906fda6889345290cef583b33e9a63eaa2e0f7ded8e8"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/CSVE2C.json",
 			"set_code": "CSVE2C",
-			"sha256": "d5b1f4b49518ae6cf43edc05d41a9def23fb8560f03ab995cbcc1f62e08e16d2"
+			"sha256": "ede623dfed47f96f8ed8deb5952e01d9793743c8a019ce8e934d59d8c980caba"
 		},
 		{
 			"card_count": 7,
 			"path": "sets/CSVH1C.json",
 			"set_code": "CSVH1C",
-			"sha256": "940439b29b982a810b3fd36d88af55ad0744af931c93ed2e1ef7ddc32fa10a1d"
+			"sha256": "7f066ca6e98adcf96c48fc1425a282c47b6729ee8abea2c34afbf8eb7b3d900e"
 		},
 		{
 			"card_count": 2,
 			"path": "sets/CSVH1aC.json",
 			"set_code": "CSVH1aC",
-			"sha256": "040dd25fae22bb95d7b23ea921ecca9f6761a07ae81111f204676964e04a40c6"
+			"sha256": "b7e41663a8b7810505dfae4162c0b2786ebb32f520cb435ac695b447deb7c941"
 		},
 		{
-			"card_count": 2,
+			"card_count": 3,
 			"path": "sets/CSVH3aC.json",
 			"set_code": "CSVH3aC",
-			"sha256": "668e5bda17097730d003e18c8188f80c97c5d9615e3d3d3a4bc73887252f31dc"
+			"sha256": "f99c3fd81294ea40078b19bcb46d885ea39b382d92faa4c25f8f6d9c9106fe30"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/CSVH3pC.json",
 			"set_code": "CSVH3pC",
-			"sha256": "53d7a01f5edf5fd0eb580a8281abe1a9fc6a816e38cbeee1774ff8f1505819b8"
+			"sha256": "e22fba3b091f0130d84d33236a69b378dd538817385e385651b701bdc67e2f7c"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVH4C.json",
+			"set_code": "CSVH4C",
+			"sha256": "f67df1358fdc7330d79be9e3394ddfd536f22f7bb167663c16fec75b99462132"
+		},
+		{
+			"card_count": 3,
+			"path": "sets/CSVH4eC.json",
+			"set_code": "CSVH4eC",
+			"sha256": "993fab50265d719526162a949f05b7ca699bf4bf3d8e17827fed7c7cfc88749e"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/CSVH5C.json",
 			"set_code": "CSVH5C",
-			"sha256": "ee3955835130a156a57d88c2365350f0e13833407379eb7706ab128a4f676df4"
+			"sha256": "cfda4e11335e31a1c96797d44dcafe960934ea1ce487c63a6b01dc72823869ba"
 		},
 		{
-			"card_count": 3,
+			"card_count": 1,
+			"path": "sets/CSVH5eC.json",
+			"set_code": "CSVH5eC",
+			"sha256": "abd366f9aab477df49b060f302d1db6224253a06405db6e0f2cda392acc3d92f"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVH5pC.json",
+			"set_code": "CSVH5pC",
+			"sha256": "b2f3b722871ec7323fa5bf47fe1d60ba58b1d2072e1b74fef1ef70f275f68985"
+		},
+		{
+			"card_count": 4,
 			"path": "sets/CSVL1C.json",
 			"set_code": "CSVL1C",
-			"sha256": "6ee43e87a4631cfdd960b2eb445e7e5fe8ff51094e7e865c7d777dfbe2edcd8b"
+			"sha256": "e2a6c5b0fe57799411ea2a8bbb5b649c5d8acd635bddf403a4cef7556a454ff6"
 		},
 		{
-			"card_count": 1,
+			"card_count": 2,
 			"path": "sets/CSVL2C.json",
 			"set_code": "CSVL2C",
-			"sha256": "a77950f584b6974777ed728a3024dda773b0eeee1296ffb574e93324e68243c4"
+			"sha256": "2595f24c9397c429239d4c364cc876356fed9f610744e45736af5cf7ff325f86"
 		},
 		{
-			"card_count": 1,
+			"card_count": 2,
 			"path": "sets/CSVNC.json",
 			"set_code": "CSVNC",
-			"sha256": "26a67b7596805e2dc0f19c77b9c5b90356c4b459b09cbb439afe004936dd7496"
+			"sha256": "91485681a81bd641e0429d9259da3ac917628195e73f120db6ea6d2b696c1919"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/CSVSC.json",
 			"set_code": "CSVSC",
-			"sha256": "e5c960423a59178f06eddeba5c574935461d8975bb317590b02baceab0b9857b"
+			"sha256": "ef8f59d51b33526d402c492c706931167e024bb6368e57c21b9495e5aa1f9d7e"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/LEN_BLK.json",
 			"set_code": "LEN_BLK",
-			"sha256": "66fb686cb763f3246e5b035f0796b480dce9d186c191aa5b11bf94e6ff816c8e"
+			"sha256": "87eeb77026d21948d0822ca4ae5d32afd11dfe0176e21abcb9e1a8182c5aece1"
 		},
 		{
 			"card_count": 5,
 			"path": "sets/LEN_DRI.json",
 			"set_code": "LEN_DRI",
-			"sha256": "19d400581f7a2d98c4a2481df1c6a48666af4425c4d4b3c8e253cd5f335338ff"
+			"sha256": "6e03a015b4c2afb3c5a8dbcc519be795c443a2776fcf9013c35f4cda169e0857"
 		},
 		{
 			"card_count": 10,
 			"path": "sets/LEN_JTG.json",
 			"set_code": "LEN_JTG",
-			"sha256": "d9ad5407ab6e3649cd71c910e686508eb4aa279a1c71be7a0f0934b094b15f41"
+			"sha256": "fb49947864b58423a2f5a9f3eb23d2e37eed0cd8303e87a4d3b439d53eff44d2"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/LEN_MEG.json",
+			"set_code": "LEN_MEG",
+			"sha256": "59f6f06f88c3adfdf517f9bf1b90b661f216151708ca3aea23ca8c610f9c589f"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/LEN_POR.json",
+			"set_code": "LEN_POR",
+			"sha256": "0e44782de3e1b557cd1ab74d728e7c7bb92a547fae2480c08f9648c97484f65c"
 		},
 		{
 			"card_count": 2,
 			"path": "sets/LEN_PRE.json",
 			"set_code": "LEN_PRE",
-			"sha256": "4ee48c39eaf305cf5cd85a0d5336d986c3c66f10f10cb61063dd81126669dba0"
+			"sha256": "12785c5d9298d6b0c35667d19651279b99b8a5e08998a999f7ab8b8b54e1c133"
 		},
 		{
 			"card_count": 5,
 			"path": "sets/LEN_SCR.json",
 			"set_code": "LEN_SCR",
-			"sha256": "2e7a6d5e698446573c38c1fe361fa3c283e74ab5d039245bf3dd940287638c34"
+			"sha256": "35405a687a8e7c5fe243ff49c084b5440f0a540ae6033e5d7f42d9cb26dc2369"
 		},
 		{
 			"card_count": 2,
 			"path": "sets/LEN_SSP.json",
 			"set_code": "LEN_SSP",
-			"sha256": "d3622d0b23d2ab70a87c2b7755b1e658ec1007eb49b1af2da4529f9e16d737c5"
+			"sha256": "28d1070ea824f25636e710d02b4991a2f85243bab630d4bb39ce099472c96ac7"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/LEN_SVI.json",
 			"set_code": "LEN_SVI",
-			"sha256": "3a8bbe436c7d6406eccc9ed708608ec097b28c3502e052d14291c653d74c9b4f"
+			"sha256": "7dad2bbcab50fe0ade0fb485daa3ec1fb651456a2b3cf1ce428db98a96b69913"
 		},
 		{
-			"card_count": 6,
+			"card_count": 1,
+			"path": "sets/M6A.json",
+			"set_code": "M6A",
+			"sha256": "c0d24b55cd7e3071352375b0ba0a982571de703b10ebf7f9cf79a9dfc8cefce9"
+		},
+		{
+			"card_count": 11,
 			"path": "sets/SVP.json",
 			"set_code": "SVP",
-			"sha256": "ab6b5622394ec2d46f2721dddfc6cb38399d5190ffe20b8aaf6465cb23917fcb"
+			"sha256": "2ea188ac708e6e252c82ee7b1120b5798dec22654c9677c54847bbe9a663fbc6"
 		},
 		{
 			"card_count": 1,
 			"path": "sets/UTEST.json",
 			"set_code": "UTEST",
-			"sha256": "d31449397e2a2d72d5ec3a410dc06530fe39499af95db214f1f794f81311b24e"
+			"sha256": "eac2ae24b6f968c13e034427e95dcd65d89d0a3d8ee45be1fb220199fdc001a3"
 		}
 	],
 	"sources": [

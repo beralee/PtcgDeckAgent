@@ -12,6 +12,8 @@ const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
 const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const DEEPSEEK_HOME_URL := "https://platform.deepseek.com/api_keys"
 const DEEPSEEK_DEFAULT_ENDPOINT := "https://api.deepseek.com"
+const DEEPSEEK_USAGE_HINT := "用途：连接 DeepSeek，为已支持的大模型 AI 对手提供对战决策，并用于对局复盘和建议。普通规则 AI 和本地开发者策略无需此 API。"
+const DEEPSEEK_ABILITY_HINT := "能力提醒：接入大模型不保证 AI 更强，仍可能误判或出现不合理操作，实力可能不足以与真人玩家抗衡。适合练习和体验，复盘与建议仅供参考。"
 const DEEPSEEK_SETUP_GUIDE := "1. 在 DeepSeek 开放平台登录并创建 API Key。\n2. 选择“DeepSeek 直连”，API 地址保持 https://api.deepseek.com。\n3. 粘贴 DeepSeek API Key，选择 V4 Flash 或 V4 Pro。\n4. 点“测试连接”。通过后，游戏里的大模型 AI、复盘和建议都会走 DeepSeek 官方接口。"
 const DEEPSEEK_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：确认完整复制了 DeepSeek 开放平台的 API Key，且 Key 未失效。\n- 余额不足/402：请在 DeepSeek 开放平台检查余额。\n- timeout/请求超时：把超时改成 90 或 120 秒再试。"
 const MODEL_PICKER_OVERLAY_NAME := "AISettingsModelPickerOverlay"
@@ -19,6 +21,8 @@ const API_KEY_SELECT_ALL_BOUND_META := "_ai_settings_api_key_select_all_bound"
 const API_KEY_SELECTED_ALL_META := "_ai_settings_api_key_selected_all"
 
 var _test_client = AiApiClientScript.new()
+var _connection_test_busy := false
+var _connection_test_generation := 0
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _portrait_action_footer_candidate: Button = null
 var _current_non_battle_layout_context: Dictionary = {}
@@ -59,6 +63,10 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	_connection_test_generation += 1
+	_connection_test_busy = false
+	if _test_client != null and _test_client.has_method("cancel_pending_requests"):
+		_test_client.cancel_pending_requests()
 	if _web_platform_services != null:
 		_web_platform_services.shutdown()
 
@@ -555,7 +563,7 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 		elif portrait and label.name in ["EndpointHint", "ApiKeyHint", "ModelHint"]:
 			label.add_theme_font_size_override("font_size", int(context.get("meta_font_size", 19)))
 			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0))
-		elif portrait and label.name in ["DeepSeekGuideBody", "DeepSeekTroubleBody"]:
+		elif portrait and label.name in ["DeepSeekGuideBody", "DeepSeekTroubleBody", "DeepSeekUsageHint", "DeepSeekAbilityHint"]:
 			label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 23)))
 			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 8.0))
 		elif portrait:
@@ -752,6 +760,8 @@ func _ensure_deepseek_setup_guide() -> void:
 	form_column.add_theme_constant_override("separation", 8)
 	content_columns.add_child(form_column)
 	form_column.owner = self
+	form_column.add_child(_build_hint_label("DeepSeekUsageHint", DEEPSEEK_USAGE_HINT))
+	form_column.add_child(_build_hint_label("DeepSeekAbilityHint", DEEPSEEK_ABILITY_HINT))
 
 	var guide_column := VBoxContainer.new()
 	guide_column.name = "DeepSeekGuideColumn"
@@ -1061,9 +1071,9 @@ func _style_hud_label(label: Label) -> void:
 		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
 		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 		return
-	if label.name in ["DeepSeekGuideBody", "DeepSeekTroubleBody"]:
+	if label.name in ["DeepSeekGuideBody", "DeepSeekTroubleBody", "DeepSeekUsageHint", "DeepSeekAbilityHint"]:
 		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
-		label.add_theme_color_override("font_color", HUD_TEXT)
+		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0) if label.name == "DeepSeekAbilityHint" else HUD_TEXT)
 		label.add_theme_constant_override("line_spacing", 3)
 		return
 	if label.name in ["EndpointHint", "ApiKeyHint", "ModelHint"]:
@@ -1661,6 +1671,8 @@ func _write_config_data(data: Dictionary, success_message: String) -> bool:
 
 
 func _on_test_connection() -> void:
+	if _connection_test_busy:
+		return
 	var test_button := _settings_button("BtnTest")
 	var endpoint_input := _endpoint_input()
 	var api_key_input := _api_key_input()
@@ -1676,6 +1688,9 @@ func _on_test_connection() -> void:
 
 	if test_button != null:
 		test_button.disabled = true
+	_connection_test_busy = true
+	_connection_test_generation += 1
+	var tested_signature := GameManager.battle_review_ai_config_signature(_current_config_data())
 	_set_status_message("正在测试...", Color(1, 0.85, 0.35))
 	_test_client.set_timeout_seconds(float(timeout_input.value) if timeout_input != null else 60.0)
 	var error := _test_client.request_json(
@@ -1693,15 +1708,19 @@ func _on_test_connection() -> void:
 			}],
 			"max_tokens": 80,
 		},
-		_on_test_connection_response
+		_on_test_connection_response.bind(_connection_test_generation, tested_signature)
 	)
 	if error != OK:
+		_connection_test_busy = false
 		if test_button != null:
 			test_button.disabled = false
 		_set_status_message("测试失败：请求无法启动 (%d)" % error, Color(1, 0.35, 0.25))
 
 
-func _on_test_connection_response(response: Dictionary) -> void:
+func _on_test_connection_response(response: Dictionary, generation: int = -1, tested_signature: String = "") -> void:
+	if generation != -1 and generation != _connection_test_generation:
+		return
+	_connection_test_busy = false
 	var test_button := _settings_button("BtnTest")
 	if test_button != null:
 		test_button.disabled = false
@@ -1713,6 +1732,9 @@ func _on_test_connection_response(response: Dictionary) -> void:
 			_set_ai_settings_inputs_unavailable_status("保存测试结果")
 			return
 		var data := _current_config_data()
+		if tested_signature.is_empty() or tested_signature != GameManager.battle_review_ai_config_signature(data):
+			_set_status_message("配置已更改，请重新测试当前 API 地址、密钥和模型。", Color(1, 0.85, 0.35))
+			return
 		data["ai_test_passed"] = true
 		data["ai_test_signature"] = GameManager.battle_review_ai_config_signature(data)
 		_write_config_data(data, "测试通过：模型可用，已保存")

@@ -109,6 +109,8 @@ func get_uid() -> String:
 
 
 static func build_image_url(card_set_code: String, card_idx: String) -> String:
+	var content_url: String = preload("res://scripts/card_content/ContentPaths.gd").image_url("%s_%s" % [card_set_code, card_idx])
+	if content_url != "": return content_url
 	if card_set_code == "" or card_idx == "":
 		return ""
 	return "%s/%s/%s.png" % [IMAGE_BASE_URL, card_set_code, card_idx]
@@ -130,6 +132,8 @@ static func build_limitless_image_url(card_set_code: String, card_idx: String) -
 
 
 static func build_local_image_path(card_set_code: String, card_idx: String) -> String:
+	var content_path: String = preload("res://scripts/card_content/ContentPaths.gd").image_path("%s_%s" % [card_set_code, card_idx])
+	if content_path != "": return content_path
 	if card_set_code == "" or card_idx == "":
 		return ""
 	return "%s/%s/%s.png" % [LOCAL_IMAGE_ROOT, card_set_code, card_idx]
@@ -142,6 +146,10 @@ static func build_bundled_image_path(card_set_code: String, card_idx: String) ->
 
 
 static func get_image_candidate_paths(card_set_code: String, card_idx: String, preferred_local_path: String = "") -> PackedStringArray:
+	var content_path: String = preload("res://scripts/card_content/ContentPaths.gd").image_path("%s_%s" % [card_set_code, card_idx])
+	if content_path != "":
+		_reuse_signed_image(card_set_code, card_idx, preferred_local_path, content_path)
+		return PackedStringArray([content_path])
 	var candidates := PackedStringArray()
 	var local_path := preferred_local_path if preferred_local_path != "" else build_local_image_path(card_set_code, card_idx)
 	if local_path != "":
@@ -157,10 +165,39 @@ static func get_image_candidate_paths(card_set_code: String, card_idx: String, p
 	return candidates
 
 
+## All views use this path, including views without a download service. Reuse
+## only exact signed bytes, keeping texture keys scoped to the image revision.
+static func _reuse_signed_image(card_set_code: String, card_idx: String, preferred: String, target: String) -> void:
+	var manifest = preload("res://scripts/card_content/ContentManifest.gd")
+	var item: Dictionary = preload("res://scripts/card_content/ContentPaths.gd").card("%s_%s" % [card_set_code, card_idx])
+	var descriptor: Dictionary = item.image
+	if manifest.object_valid(target, descriptor): return
+	var sources := PackedStringArray([preferred, "%s/%s/%s.png" % [LOCAL_IMAGE_ROOT, card_set_code, card_idx], build_bundled_image_path(card_set_code, card_idx)])
+	if card_set_code == "30thC":
+		sources.append("%s/30THC/%s.png" % [LOCAL_IMAGE_ROOT, card_idx])
+		sources.append(build_bundled_image_path("30THC", card_idx))
+	for source: String in sources:
+		if source == "" or source == target or not manifest.object_valid(source, descriptor): continue
+		var absolute := ProjectSettings.globalize_path(target)
+		if DirAccess.make_dir_recursive_absolute(absolute.get_base_dir()) != OK: return
+		var temporary := absolute + ".reuse.tmp"
+		if DirAccess.copy_absolute(ProjectSettings.globalize_path(source), temporary) != OK: return
+		if not manifest.object_valid(temporary, descriptor) or not is_valid_card_image_file(temporary):
+			DirAccess.remove_absolute(temporary)
+			return
+		if DirAccess.rename_absolute(temporary, absolute) != OK:
+			DirAccess.remove_absolute(temporary)
+		return
+
+
 static func resolve_existing_image_path(paths: PackedStringArray) -> String:
 	for candidate: String in paths:
 		if candidate == "":
 			continue
+		# A valid PNG header is insufficient for a signed content-addressed file.
+		if candidate.begins_with("user://card_content/objects/") and candidate.ends_with(".img"):
+			if FileAccess.get_sha256(candidate) != candidate.get_file().trim_suffix(".img"):
+				continue
 		if candidate.begins_with("res://"):
 			if is_valid_card_image_file(candidate):
 				return candidate
@@ -216,6 +253,13 @@ static func is_valid_png_file(path: String) -> bool:
 
 
 func ensure_image_metadata() -> bool:
+	var content_path: String = preload("res://scripts/card_content/ContentPaths.gd").image_path(get_uid())
+	if content_path != "":
+		var content_url: String = preload("res://scripts/card_content/ContentPaths.gd").image_url(get_uid())
+		var content_changed := image_local_path != content_path or image_url != content_url
+		image_local_path = content_path
+		image_url = content_url
+		return content_changed
 	var changed := false
 	if source_provider.strip_edges().to_lower() == "limitless":
 		var limitless_set := source_set_code if source_set_code != "" else set_code_en

@@ -278,6 +278,7 @@ func serialize_pokemon_slot(slot: PokemonSlot) -> Dictionary:
 		"retreat_cost": slot.get_retreat_cost(),
 		"attached_energy": serialize_card_list(slot.attached_energy),
 		"attached_tool": serialize_card_instance(slot.attached_tool),
+		"attached_tools": serialize_card_list(slot.get_attached_tools()),
 		"status_conditions": slot.status_conditions.duplicate(true),
 		"effects": slot.effects.duplicate(true),
 		"turn_played": slot.turn_played,

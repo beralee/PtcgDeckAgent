@@ -19,6 +19,11 @@ func sanitize_layout_mode(mode: String) -> String:
 func resolve_layout_mode(viewport_size: Vector2, preferred_mode: String, is_mobile_like: bool = false) -> String:
 	var sanitized := sanitize_layout_mode(preferred_mode)
 	if sanitized == LAYOUT_PORTRAIT:
+		# Browsers cannot honor the native portrait orientation request. Keep
+		# every page usable while its actual viewport is landscape (also during
+		# a native rotation), without changing the saved portrait preference.
+		if viewport_size.x > viewport_size.y and viewport_size.y > 0.0:
+			return LAYOUT_LANDSCAPE
 		return LAYOUT_PORTRAIT
 	if sanitized == LAYOUT_LANDSCAPE:
 		return LAYOUT_LANDSCAPE

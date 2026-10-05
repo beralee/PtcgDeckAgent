@@ -19,17 +19,42 @@ const BATCH_CARD_GAP := Vector2.ZERO
 const BATCH_AREA_PADDING := Vector2(16.0, 16.0)
 const DRAW_REVEAL_GENERATION_META := "draw_reveal_generation"
 const DRAW_REVEAL_TIMEOUT_MSEC := 8000
+const REVEAL_CARDS_META := &"draw_reveal_cards"
+const EXCHANGE_CARDS_META := &"draw_reveal_exchange_cards"
+
+var _active_tweens: Array[Tween] = []
+
+
+func release(scene: Object) -> void:
+	if scene == null or not is_instance_valid(scene):
+		return
+	# Scene teardown must sever Tween callbacks without resuming gameplay.
+	scene.set_meta(DRAW_REVEAL_GENERATION_META, _draw_reveal_generation(scene) + 1)
+	_clear_card_views(scene)
 
 
 func enqueue_reveal(scene: Object, action: GameAction) -> void:
 	if scene == null or action == null:
 		return
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		# The card movement is already committed to GameState. Render the final
 		# state immediately without creating an overlay, timer, or blocking queue.
 		if action.action_type == GameAction.ActionType.DRAW_CARD and scene.has_method("_refresh_hand"):
 			scene.call("_refresh_hand")
 		return
+	# Queue a private presentation snapshot at the action signal, before another
+	# effect can move these cards or a log consumer can alter the action payload.
+	# Object references stay in metadata, never in serialized GameAction.data.
+	action = GameAction.create(action.action_type, action.player_index,
+		action.data.duplicate(true), action.turn_number, action.description)
+	if _is_prize_exchange_action(action):
+		var exchange_cards: Dictionary = {}
+		for key: String in ["old_prize_instance_ids", "new_prize_instance_ids"]:
+			for card: CardInstance in _exchange_cards_from_ids(scene, action.player_index, action.data.get(key, [])):
+				exchange_cards[card.instance_id] = card
+		action.set_meta(EXCHANGE_CARDS_META, exchange_cards)
+	else:
+		action.set_meta(REVEAL_CARDS_META, _cards_from_action(scene, action))
 	var queue: Array = scene.get("_draw_reveal_queue")
 	queue.append(action)
 	scene.set("_draw_reveal_queue", queue)
@@ -209,7 +234,7 @@ func _run_prize_exchange_phase(
 	var phase: Dictionary = phases[phase_index]
 	if phase_index == 0 or phase_index == 2:
 		_clear_card_views(scene)
-		var cards := _exchange_cards_from_ids(scene, action.player_index, phase.get("card_instance_ids", []))
+		var cards := _exchange_cards_from_ids(scene, action.player_index, phase.get("card_instance_ids", []), action)
 		if cards.size() != int(phase.get("count", 0)):
 			_finish_prize_exchange(scene)
 			return
@@ -237,7 +262,7 @@ func _run_prize_exchange_phase(
 	var duration := float(phase.get("duration", 0.24))
 	var stagger := float(phase.get("stagger", PRIZE_EXCHANGE_STAGGER_SECONDS))
 	if scene is Node and (scene as Node).is_inside_tree():
-		var tween: Tween = (scene as Node).create_tween()
+		var tween: Tween = _track_tween((scene as Node).create_tween())
 		tween.set_parallel(true)
 		for index: int in views.size():
 			var card_view := views[index]
@@ -297,8 +322,15 @@ func _finish_prize_exchange(scene: Object) -> void:
 	_finish_current_reveal(scene)
 
 
-func _exchange_cards_from_ids(scene: Object, player_index: int, raw_ids: Array) -> Array[CardInstance]:
+func _exchange_cards_from_ids(scene: Object, player_index: int, raw_ids: Array, action: GameAction = null) -> Array[CardInstance]:
 	var ordered: Array[CardInstance] = []
+	if action != null and action.has_meta(EXCHANGE_CARDS_META):
+		var captured: Dictionary = action.get_meta(EXCHANGE_CARDS_META)
+		for raw_id: Variant in raw_ids:
+			if not captured.has(int(raw_id)):
+				return []
+			ordered.append(captured[int(raw_id)])
+		return ordered
 	if scene == null:
 		return ordered
 	var gsm: Variant = scene.get("_gsm")
@@ -423,7 +455,9 @@ func _begin_batch_reveal(scene: Object, cards: Array[CardInstance], player_index
 	var overlay: Control = _ensure_overlay(scene)
 	overlay.visible = true
 	_set_hint_text(overlay, "")
-	var batch_scale: Vector2 = _batch_reveal_scale(scene, _make_probe_card_view(scene), cards.size())
+	var probe := _make_probe_card_view(scene)
+	var batch_scale: Vector2 = _batch_reveal_scale(scene, probe, cards.size())
+	probe.free()
 	if scene is Node and (scene as Node).is_inside_tree():
 		_reveal_batch_card(scene, overlay, cards, player_index, 0, batch_scale, reveal_generation)
 		return
@@ -513,7 +547,7 @@ func _begin_fly_to_hand(scene: Object) -> void:
 	var action: GameAction = scene.get("_draw_reveal_current_action") as GameAction
 	var player_index: int = action.player_index if action != null else int(scene.get("_view_player"))
 	if scene is Node and (scene as Node).is_inside_tree():
-		var tween: Tween = (scene as Node).create_tween()
+		var tween: Tween = _track_tween((scene as Node).create_tween())
 		for index: int in card_views.size():
 			var card_view: BattleCardView = card_views[index]
 			if card_view == null:
@@ -526,7 +560,8 @@ func _begin_fly_to_hand(scene: Object) -> void:
 			).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 			tween.parallel().tween_property(card_view, "scale", Vector2.ONE, FLY_TO_HAND_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 			tween.tween_callback(func() -> void:
-				_mark_card_landed(scene, card_view, player_index, index + 1)
+				if _is_draw_reveal_generation_current(scene, reveal_generation):
+					_mark_card_landed(scene, card_view, player_index, index + 1)
 			)
 		tween.finished.connect(func() -> void:
 			_finish_current_reveal(scene, reveal_generation)
@@ -559,7 +594,7 @@ func _begin_discard_reveal(scene: Object, cards: Array[CardInstance], player_ind
 		scene.call("_refresh_hand")
 	if not (scene is Node and (scene as Node).is_inside_tree()):
 		return
-	var tween: Tween = (scene as Node).create_tween()
+	var tween: Tween = _track_tween((scene as Node).create_tween())
 	for index: int in staged_views.size():
 		var card_view: BattleCardView = staged_views[index]
 		if card_view == null:
@@ -572,7 +607,8 @@ func _begin_discard_reveal(scene: Object, cards: Array[CardInstance], player_ind
 		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 		tween.parallel().tween_property(card_view, "scale", Vector2(0.72, 0.72), DISCARD_FLY_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 		tween.tween_callback(func() -> void:
-			_mark_discard_card_landed(scene, card_view, player_index, index + 1)
+			if _is_draw_reveal_generation_current(scene, reveal_generation):
+				_mark_discard_card_landed(scene, card_view, player_index, index + 1)
 		)
 	tween.finished.connect(func() -> void:
 		_finish_current_reveal(scene, reveal_generation)
@@ -595,6 +631,8 @@ func _finish_current_reveal(scene: Object, expected_generation: int = -1) -> voi
 
 func _finish_all_reveals(scene: Object) -> void:
 	scene.set_meta(DRAW_REVEAL_GENERATION_META, int(scene.get_meta(DRAW_REVEAL_GENERATION_META, 0)) + 1)
+	_clear_card_views(scene)
+	(scene.get("_draw_reveal_queue") as Array).clear()
 	_finish_reveal_session(scene, "all_reveals_finished")
 	scene.set("_draw_reveal_active", false)
 	scene.set("_draw_reveal_waiting_for_confirm", false)
@@ -621,11 +659,16 @@ func _finish_all_reveals(scene: Object) -> void:
 
 
 func _clear_card_views(scene: Object) -> void:
+	for tween: Tween in _active_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	_active_tweens.clear()
 	var card_views: Array[BattleCardView] = scene.get("_draw_reveal_card_views")
 	for card_view: BattleCardView in card_views:
 		if card_view == null:
 			continue
 		if is_instance_valid(card_view):
+			card_view.hide()
 			card_view.queue_free()
 	var cleared_views: Array[BattleCardView] = []
 	scene.set("_draw_reveal_card_views", cleared_views)
@@ -654,7 +697,7 @@ func _create_reveal_tween(
 	keep_face_down: bool = false
 ) -> Tween:
 	card_view.pivot_offset = _card_visual_size(card_view) * 0.5
-	var tween: Tween = (scene as Node).create_tween()
+	var tween: Tween = _track_tween((scene as Node).create_tween())
 	tween.tween_property(card_view, "position", target_position, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(card_view, "scale", target_scale, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if not keep_face_down:
@@ -672,9 +715,18 @@ func _make_probe_card_view(scene: Object) -> BattleCardView:
 	return card_view
 
 
+func _track_tween(tween: Tween) -> Tween:
+	_active_tweens.append(tween)
+	return tween
+
+
 func _cards_from_action(scene: Object, action: GameAction) -> Array[CardInstance]:
 	if scene == null or action == null:
 		return []
+	if action.has_meta(REVEAL_CARDS_META):
+		var captured: Array[CardInstance] = []
+		captured.assign(action.get_meta(REVEAL_CARDS_META))
+		return captured
 	var gsm: Variant = scene.get("_gsm")
 	if gsm == null or gsm.game_state == null:
 		return []
@@ -705,6 +757,8 @@ func _ensure_overlay(scene: Object) -> Control:
 	scene.set("_draw_reveal_overlay", overlay)
 	if overlay.get_parent() == null and scene is Node:
 		(scene as Node).add_child(overlay)
+	if scene.has_method("_refresh_end_turn_hud_button_state"):
+		scene.call("_refresh_end_turn_hud_button_state")
 	if scene.has_method("_register_ios_web_hud_touch_root"):
 		scene.call("_register_ios_web_hud_touch_root", overlay)
 	if scene.has_method("_apply_portrait_popup_text_metrics"):
@@ -725,14 +779,20 @@ func _build_overlay(scene: Object) -> Control:
 		if event is InputEventMouseButton:
 			var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+				if scene.has_method("_begin_modal_pointer_drain_for_event"):
+					scene.call("_begin_modal_pointer_drain_for_event", event, "draw_reveal_confirm")
 				confirm_current_reveal(scene)
+				_finish_confirm_dispatch(scene)
 				var viewport := overlay.get_viewport()
 				if viewport != null:
 					viewport.set_input_as_handled()
 		elif event is InputEventScreenTouch:
 			var touch_event := event as InputEventScreenTouch
-			if touch_event.pressed:
+			if touch_event.pressed and not touch_event.canceled:
+				if scene.has_method("_begin_modal_pointer_drain_for_event"):
+					scene.call("_begin_modal_pointer_drain_for_event", event, "draw_reveal_confirm")
 				confirm_current_reveal(scene)
+				_finish_confirm_dispatch(scene)
 				var viewport := overlay.get_viewport()
 				if viewport != null:
 					viewport.set_input_as_handled()
@@ -762,6 +822,12 @@ func _build_overlay(scene: Object) -> Control:
 	overlay.add_child(hint)
 
 	return overlay
+
+
+func _finish_confirm_dispatch(scene: Object) -> void:
+	var router: Variant = scene.get("_battle_pointer_input_router")
+	if router != null:
+		router.call("finish_gui_dispatch")
 
 
 func _open_reveal_session(scene: Object, action: GameAction, reveal_generation: int) -> void:

@@ -2043,7 +2043,7 @@ class AbilityBlockAceSpecIfTooled:
 	extends BaseEffect
 
 	func blocks_opponent_ace_spec(source: PokemonSlot, player_index: int, card: CardInstance, state: GameState) -> bool:
-		if source == null or source.attached_tool == null or card == null or card.card_data == null:
+		if source == null or source.get_attached_tools().is_empty() or card == null or card.card_data == null:
 			return false
 		if not card.card_data.is_ace_spec():
 			return false

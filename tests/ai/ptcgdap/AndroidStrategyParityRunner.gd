@@ -9,10 +9,42 @@ var connected_clients: Array[int] = []
 var execution_profile := "worker_v1"
 var smoke_only := false
 var error_gate = preload("res://tests/SharedSuiteRunner.gd").ScriptErrorGate.new()
+var live_capture_elapsed := 0.0
+var live_audit: Dictionary = {}
 
 func _ready() -> void:
 	OS.add_logger(error_gate)
 	_boot.call_deferred()
+
+func _process(delta: float) -> void:
+	# Read-only evidence for ordinary hub -> setup -> BattleScene checks. The
+	# automatic suite has its own traces; never inspect an active policy worker.
+	if not package_path.is_empty() or output_dir.is_empty():
+		return
+	live_capture_elapsed += delta
+	if live_capture_elapsed < 0.5:
+		return
+	live_capture_elapsed = 0.0
+	var scene := get_tree().current_scene
+	if scene == null or not scene.has_method("_runtime_ai_owner"):
+		return
+	var owner: Variant = scene.get("_author_player_owner")
+	if owner == null or not owner.has_method("audit_snapshot"):
+		return
+	if owner.has_pending_policy_decision():
+		return
+	var audit: Dictionary = owner.audit_snapshot()
+	if audit == live_audit:
+		return
+	live_audit = audit.duplicate(true)
+	_write_json("live-ui-audit.json", {"platform": OS.get_name(), "audit": audit})
+	# Existing scene logs stay in ignored local evidence; no engine state is
+	# added to a policy frame or public decision trace by this observer.
+	var log_path := "user://logs/battle_runtime.log"
+	if FileAccess.file_exists(log_path):
+		var copy := FileAccess.open(output_dir.path_join("live-ui-runtime.log"), FileAccess.WRITE)
+		if copy != null:
+			copy.store_string(FileAccess.get_file_as_string(log_path))
 
 func _boot() -> void:
 	output_dir = "/sdcard/Android/data/com.example.ptcgdeckagent/files/strategy-parity" if OS.get_name() == "Android" else "user://strategy-parity"

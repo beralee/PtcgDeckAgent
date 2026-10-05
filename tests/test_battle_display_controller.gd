@@ -54,6 +54,9 @@ class FieldSceneStub extends Control:
 	func _is_field_interaction_active() -> bool:
 		return false
 
+	func _should_present_field_interaction() -> bool:
+		return false
+
 
 class RecordingFieldCardView extends BattleCardView:
 	var setup_call_count: int = 0

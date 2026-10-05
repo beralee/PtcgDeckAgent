@@ -8,8 +8,26 @@ static var _next_order_stamp: int = 1
 var pokemon_stack: Array[CardInstance] = []
 ## 附着的能量卡
 var attached_energy: Array[CardInstance] = []
-## 附着的宝可梦道具（最多1张）
-var attached_tool: CardInstance = null
+## 道具按附着顺序保存；允许数量由特性和规则层决定。
+var attached_tools: Array[CardInstance] = []
+## 旧调用方的单道具视图。移除特定道具须使用 remove_attached_tool。
+var attached_tool: CardInstance:
+	get:
+		return attached_tools[0] if not attached_tools.is_empty() else null
+	set(value):
+		attached_tools.clear()
+		if value != null: attached_tools.append(value)
+
+func get_attached_tools() -> Array[CardInstance]:
+	return attached_tools.duplicate()
+
+func remove_attached_tool(card: CardInstance) -> void:
+	attached_tools.erase(card)
+
+func find_tool_by_effect_id(effect_id: String) -> CardInstance:
+	for card: CardInstance in attached_tools:
+		if card.card_data != null and card.card_data.effect_id == effect_id: return card
+	return null
 ## 伤害指示物总量（10的倍数）
 var damage_counters: int = 0
 
@@ -192,6 +210,7 @@ const _BENCH_CLEAR_EFFECT_TYPES: Array[String] = [
 	"attack_lock_all",
 	"attack_lock_until_leave_active",
 	"defender_attack_lock",
+	"smoliv_oil_attack_failure",
 	"defender_action_cost_increase",
 	"retreat_lock",
 	"sweet_trap_damage_bonus",
@@ -335,8 +354,7 @@ func collect_all_cards() -> Array[CardInstance]:
 	var all_cards: Array[CardInstance] = []
 	all_cards.append_array(pokemon_stack)
 	all_cards.append_array(attached_energy)
-	if attached_tool:
-		all_cards.append(attached_tool)
+	all_cards.append_array(attached_tools)
 	return all_cards
 
 

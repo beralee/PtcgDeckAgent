@@ -1,0 +1,2 @@
+WINDOWS_EXPORTED_HOME_HEALTH_PASS: 0.6.0
+Evidence: D:\ai\code\PtcgDAP\.tmp\app-update-health-f1541dee421f4daca6b82dd11d34d205

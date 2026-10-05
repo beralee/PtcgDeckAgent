@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-09-27",
+  "engine_version": "4.6.1.stable.official.14d19694e",
+  "cards": [
+    {
+      "uid": "CSV6C_097",
+      "name": "大钢蛇",
+      "effect_id": "3bc08c4356345e9aac2899f4af8278dd",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/097",
+      "fixture_path": "tests/fixtures/card_audit_20260927/CSV6C_097.api.json",
+      "fixture_sha256": "7A6800A15BE1F24F07F8ABE11B4048E1E3811BC3BFF46972EC6D0EA03D44B172"
+    },
+    {
+      "uid": "CSV6C_067",
+      "name": "大岩蛇",
+      "effect_id": "f170a8c91d1fed0fc2c8398f48969539",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/067",
+      "fixture_path": "tests/fixtures/card_audit_20260927/CSV6C_067.api.json",
+      "fixture_sha256": "F220576C60CA10E3AE6BDFFF3EE8749E65336EE1F8B8DB0372B91F0CCF97E264"
+    },
+    {
+      "uid": "CSV5C_032",
+      "name": "蓝蟾蜍",
+      "effect_id": "5e425c4d3a20e504af62da85fd46a673",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/032",
+      "fixture_path": "tests/fixtures/card_audit_20260927/CSV5C_032.api.json",
+      "fixture_sha256": "6872036B3A418E162CC67B1ED0E63C23F78A7DDE1060F4CA73A5B1CBC7BCF966"
+    },
+    {
+      "uid": "CSV5C_031",
+      "name": "圆蝌蚪",
+      "effect_id": "435265b51152d54ad3de46c253757ffb",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/031",
+      "fixture_path": "tests/fixtures/card_audit_20260927/CSV5C_031.api.json",
+      "fixture_sha256": "0D6CC8BBD5E8A6C0D07E7816E18C39DEEADB6327C21EA5B7B7EC65AFAFE4D6CB"
+    }
+  ],
+  "initial_red": {
+    "failed": 4,
+    "passed": 1,
+    "total": 5
+  },
+  "shared_interaction_red": {
+    "failed": 4,
+    "passed": 4,
+    "total": 8
+  },
+  "godot_reports": [
+    {
+      "report_path": ".godot_test_user/card_audit_20260927_regression_report/report.json",
+      "report_sha256": "FCDD388B79CCBC4EC0E3A2B219AD798AD5E4C2D98025588C9D5B4233381807A3",
+      "status": "passed",
+      "totals": {
+        "total": 155,
+        "passed": 155,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "report_path": ".godot_test_user/card_audit_20260927_final_report/report.json",
+      "report_sha256": "280297492959CB02A84A609CC3ACC8EAB1A28DD4F44A19C27D40624B68A240D1",
+      "status": "passed",
+      "totals": {
+        "total": 31,
+        "passed": 31,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "unique_godot_tests_passed": 165,
+  "python_ucis_contract": {
+    "failed": 0,
+    "passed": 8,
+    "total": 8
+  },
+  "host_energy_windows": {
+    "invalid_outputs": 0,
+    "same_window_fallbacks": 0,
+    "engine_rejections": 0,
+    "seats": [
+      0,
+      1
+    ],
+    "stale_rejected": 2,
+    "accepted": 2,
+    "policy_errors": 0
+  },
+  "source_identities": [
+    {
+      "path": "scripts/engine/EffectRegistry.gd",
+      "sha256": "91620B4BA0EE16FB7BCE681F68E1044FE8D2D3E3727E98A3BA060441385E377D"
+    },
+    {
+      "path": "scripts/effects/pokemon_effects/EffectBenchDamage.gd",
+      "sha256": "105F4BC3F7B49FB436EA9394C9800FF5D8B1570541137CFB2706B72CA715FDAA"
+    },
+    {
+      "path": "scripts/effects/pokemon_effects/AttackCoinFlipDiscardOpponentActiveEnergy.gd",
+      "sha256": "CB88DAD37EE03F47FDF9E142E0A9AB3FED2CBE0BDE282BF9A6DF5573E33A9E05"
+    },
+    {
+      "path": "tests/test_onix_steelix_tympole_audit.gd",
+      "sha256": "0A935EC6C51DE76516BC93A6E646AE52B5DC53CA0E05668CBD10FFD9DA3383AC"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_runtime_attestation_v1.json",
+      "sha256": "64CD22763A8E0AAA890A64697AEA29E2490046E6971B59C770A0AEE388C4727A"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_card_catalog_v1.json",
+      "sha256": "661F7962E227597D04BA02BEB6C874CF8F62740BF270A52DB69B53E6F8F6D624"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_coverage_ledger_v1.json",
+      "sha256": "5A16AA4912F1F601CBFEF7DDAE032A7ED0C74ABED938CABAB2262541E07B0835"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_legacy_inventory_v1.json",
+      "sha256": "C80FE5B4CCE065B5FC4AFF1F39E328C86B7A79E87D883AA4A42324BC8CFD4716"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_bundle_v1.json",
+      "sha256": "A09A1CF4BCED87FD6D9345249D0F8EC26559A32BEC7C6B360C8CCAB30C8F5C7D"
+    }
+  ],
+  "limitations": [
+    "No official CABT engine parity claim",
+    "No GUI or exported device acceptance",
+    "No full-match strength claim",
+    "Existing unrelated worktree changes preserved"
+  ]
+}

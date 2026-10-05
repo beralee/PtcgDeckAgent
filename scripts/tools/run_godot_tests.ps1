@@ -1,10 +1,12 @@
 param(
-	[ValidateSet("functional", "ai", "focused")]
+	[ValidateSet("functional", "ui", "ai", "all", "focused")]
 	[string]$Runner = "functional",
 	[string]$Suite = "",
 	[string]$SuiteScript = "",
 	[string]$GodotExe = "",
 	[string]$UserDataRoot = "",
+	[int]$TimeoutSeconds = 0,
+	[string]$ReportDirectory = "",
 	[Parameter(ValueFromRemainingArguments = $true)]
 	[string[]]$ExtraUserArgs = @()
 )
@@ -24,6 +26,31 @@ if ([string]::IsNullOrWhiteSpace($GodotExe)) {
 
 if (-not (Test-Path -LiteralPath $GodotExe)) {
 	throw "Godot executable not found: $GodotExe. Set GODOT_EXE or pass -GodotExe."
+}
+
+# Ordinary suites share one catalog, executor and evidence contract. Benchmark
+# modes retain their existing command-line interface below.
+$isBenchmark = $Runner -eq "ai" -and @($ExtraUserArgs | Where-Object {
+	$_ -match '^--(?:mode=(?!suite(?:$|=))|matchup-sweep|matchup-anchor-deck=|anchor-deck-id=)'
+}).Count -gt 0
+if (-not $isBenchmark) {
+	$matrixArgs = @((Join-Path $scriptRoot 'run_test_matrix.py'), '--godot', $GodotExe)
+	if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) {
+		if ($TimeoutSeconds -le 0) { throw 'TimeoutSeconds must be positive' }
+		$matrixArgs += @('--timeout', "$TimeoutSeconds")
+	}
+	if ($Runner -eq 'focused') {
+		if ([string]::IsNullOrWhiteSpace($SuiteScript)) { throw 'Focused runner requires -SuiteScript' }
+		$matrixArgs += @('--suite-script', $SuiteScript)
+	} else {
+		$matrixArgs += @('--group', $Runner)
+	}
+	if ($Suite) { $matrixArgs += @('--suite', $Suite) }
+	if ($UserDataRoot) { $matrixArgs += @('--user-data-root', $UserDataRoot) }
+	if ($ReportDirectory) { $matrixArgs += @('--output', $ReportDirectory) }
+	$matrixArgs += $ExtraUserArgs
+	& python @matrixArgs
+	exit $LASTEXITCODE
 }
 
 if ([string]::IsNullOrWhiteSpace($UserDataRoot)) {

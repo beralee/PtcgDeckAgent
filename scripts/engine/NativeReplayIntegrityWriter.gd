@@ -248,6 +248,7 @@ func _runtime_identity(meta: Dictionary) -> Dictionary:
 		"ai_version", "agent_version", "policy_hash", "policy_sha256",
 		"card_catalog_sha256", "package_id", "package_version", "archive_sha256",
 		"live_pacing_profile_id", "author_recording_profile_id",
+		"content_release_id",
 	]:
 		if meta.has(key):
 			var value: Variant = meta.get(key)

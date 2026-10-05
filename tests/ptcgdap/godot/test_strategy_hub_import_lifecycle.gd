@@ -21,10 +21,11 @@ class FakeReadTask extends RefCounted:
 
 class FakeLocalCatalog extends RefCounted:
 	var imports: Array[PackedByteArray] = []
+	var rejection := {"ok": false, "error_code": "package_archive_invalid"}
 
 	func install_local_bytes(bytes: PackedByteArray) -> Dictionary:
 		imports.append(bytes)
-		return {"ok": false, "error_code": "package_archive_invalid"}
+		return rejection.duplicate(true)
 
 
 func _new_hub(task: RefCounted, catalog: RefCounted) -> Control:
@@ -153,3 +154,41 @@ func test_background_read_collects_bytes_and_cancellation_without_scene_owner() 
 		assert_eq(canceled_result.get("error_code"), "package_import_canceled"),
 		assert_false(canceled_result.has("archive_bytes")),
 	])
+
+
+func test_import_upgrade_requirement_reaches_visible_status() -> String:
+	var task := FakeReadTask.new()
+	var catalog := FakeLocalCatalog.new()
+	catalog.rejection = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyRuntimeCompatibility.gd").inspect({"plan_comparison_profile": "resource-continuity-v2"}, {})
+	catalog.rejection.runtime_compatibility.current_version = "0.6.2"
+	var hub := await _new_hub(task, catalog)
+	hub.call("_on_local_package_file_selected", "content://provider/document/42")
+	task.completed.emit({"ok": true, "archive_bytes": PackedByteArray([1])})
+	var statuses: Dictionary = hub.get("_workspace_statuses")
+	var found := false
+	for status: Dictionary in statuses.values():
+		var text := str(status.get("text", ""))
+		if text.contains("0.6.3") and text.contains("63") and text.contains("0.6.2") and text.contains("重启"):
+			found = bool(status.get("error", false))
+	assert_true(found, "Import must retain both installed and required client versions")
+	hub.free()
+	return ""
+
+
+func test_import_success_reports_why_an_unregistered_package_cannot_start() -> String:
+	var task := FakeReadTask.new()
+	var catalog := FakeLocalCatalog.new()
+	var record := {"package_id": "unregistered.developer", "package_version": "1.0.0", "archive_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "install_source": "user", "status": "metadata_only", "strategy": {"display_name": "开发包测试"}}
+	catalog.rejection = {"ok": true, "metadata": record, "catalog_report": {"metadata_records": [record], "ready_records": [], "diagnostics": []}}
+	var hub := await _new_hub(task, catalog)
+	hub.call("_on_local_package_file_selected", "content://provider/document/42")
+	task.completed.emit({"ok": true, "archive_bytes": PackedByteArray([1])})
+	var statuses: Dictionary = hub.get("_workspace_statuses")
+	var found := false
+	for status: Dictionary in statuses.values():
+		var text := str(status.get("text", ""))
+		if text.contains("已导入") and text.contains("暂不能开战") and text.contains("登记"):
+			found = bool(status.get("error", false))
+	assert_true(found, "Successful import must not promise battle access when admission fails")
+	hub.free()
+	return ""

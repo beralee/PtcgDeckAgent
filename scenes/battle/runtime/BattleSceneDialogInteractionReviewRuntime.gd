@@ -612,6 +612,7 @@ func _commit_heavy_baton_assignment(stored_assignments: Array[Dictionary]) -> vo
 
 func _commit_exp_share_assignment(stored_assignments: Array[Dictionary]) -> void:
 	var consumed_choice := _pending_choice
+	var consumed_data := _dialog_data.duplicate(true)
 	var pi_exp: int = int(_dialog_data.get("player", -1))
 	var target_slot: PokemonSlot = null
 	var selected_energy: CardInstance = null
@@ -622,15 +623,17 @@ func _commit_exp_share_assignment(stored_assignments: Array[Dictionary]) -> void
 			selected_energy = source
 		if target_slot == null and target is PokemonSlot:
 			target_slot = target
-	if target_slot == null:
+	if stored_assignments.size() > 1 or (not stored_assignments.is_empty() and (target_slot == null or selected_energy == null)):
 		_log("Invalid Exp. Share target")
 		return
+	_pending_choice = ""
 	if _gsm.resolve_exp_share_choice(pi_exp, target_slot, selected_energy):
-		if _pending_choice == consumed_choice:
-			_pending_choice = ""
 		_refresh_ui()
 		_maybe_run_ai()
 	else:
+		if _pending_choice == "":
+			_pending_choice = consumed_choice
+			_dialog_data = consumed_data
 		_log("Invalid Exp. Share target")
 
 
@@ -804,6 +807,11 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 				else:
 					GameManager.request_battle_setup_startup_input_shield("battle_confirm_exit")
 					GameManager.goto_battle_setup()
+			else:
+				# The optional exit dialog consumed the UI choice, not the engine's
+				# pending reward. Rebind it before returning control to the board.
+				_restore_pending_engine_prize_choice_if_needed("cancel_exit")
+				_maybe_run_ai()
 		"zeus_help":
 			var zeus_player_index: int = int(_dialog_data.get("player", _view_player))
 			var zeus_dialog_cards: Array = _dialog_data.get("deck_cards", [])
@@ -1210,7 +1218,7 @@ func _on_battle_discuss_ai_pressed() -> void:
 	if view_deck == null:
 		return
 	if _battle_discussion_dialog == null or not is_instance_valid(_battle_discussion_dialog):
-		_battle_discussion_dialog = DeckDiscussionDialogScene.instantiate() as AcceptDialog
+		_battle_discussion_dialog = DeckDiscussionDialogScene.instantiate() as GameModal
 		add_child(_battle_discussion_dialog)
 		if _battle_discussion_dialog.has_signal("assistant_response_finished"):
 			_battle_discussion_dialog.connect("assistant_response_finished", Callable(self, "_on_battle_discussion_response_finished"))
@@ -1566,9 +1574,21 @@ func _run_ai_step() -> void:
 	if GameManager.current_mode == GameManager.GameMode.VS_AI and _should_wait_for_llm():
 		return
 	_reset_ai_action_counter_if_needed()
-	if _ai_actions_this_turn >= AI_MAX_ACTIONS_PER_TURN:
-		if _pending_choice == "" and _gsm != null and _gsm.game_state != null and _gsm.game_state.phase == GameState.GamePhase.MAIN:
-			_on_end_turn(int(owner.player_index))
+	# Bound newly initiated MAIN actions, not selection windows. A single attack
+	# can require six counter choices followed by prizes and replacements; these
+	# must finish even when its initiating action exhausted the turn budget.
+	var starts_main_action := (
+		_pending_choice == ""
+		and _gsm != null
+		and _gsm.game_state != null
+		and _gsm.game_state.phase == GameState.GamePhase.MAIN
+		and _gsm.game_state.current_player_index == int(owner.player_index)
+	)
+	if starts_main_action and _ai_actions_this_turn >= AI_MAX_ACTIONS_PER_TURN:
+		_runtime_log("ai_main_action_limit", "turn=%d player=%d actions=%d" % [
+			_gsm.game_state.turn_number, int(owner.player_index), _ai_actions_this_turn,
+		])
+		_on_end_turn(int(owner.player_index))
 		return
 	var starting_pending_choice: String = _pending_choice
 	_ai_running = true
@@ -1586,7 +1606,8 @@ func _run_ai_step() -> void:
 	var handled := step_status == "progressed"
 	_ai_running = false
 	if handled:
-		_ai_actions_this_turn += 1
+		if starts_main_action:
+			_ai_actions_this_turn += 1
 	elif step_status == "waiting_policy":
 		# Both V18CPG and a local author package reuse the existing policy-wait
 		# lifecycle. The author package also reuses the friendly thinking HUD while
@@ -2060,7 +2081,7 @@ func _advance_coin_animation_queue() -> void:
 
 
 func _on_discard_open_control_input(event: InputEvent, visible_side_or_player: Variant, title: String) -> void:
-	if _consume_modal_hud_input_if_needed(event, "discard_hud"):
+	if _consume_board_hud_input_if_needed(event, "discard_hud"):
 		return
 	var pressed := false
 	if event is InputEventMouseButton:
@@ -2094,7 +2115,7 @@ func _discard_player_index_for_visible_side(visible_side_or_player: Variant) -> 
 
 
 func _on_lost_zone_open_control_input(event: InputEvent, enemy: bool) -> void:
-	if _consume_modal_hud_input_if_needed(event, "lost_zone_hud"):
+	if _consume_board_hud_input_if_needed(event, "lost_zone_hud"):
 		return
 	var pressed := false
 	if event is InputEventMouseButton:
@@ -2111,7 +2132,10 @@ func _on_lost_zone_open_control_input(event: InputEvent, enemy: bool) -> void:
 	var player_index := 1 - _view_player if enemy else _view_player
 	if player_index < 0 or player_index >= _gsm.game_state.players.size():
 		return
-	_show_lost_zone(player_index, "对方 LOST 区" if enemy else "己方 LOST 区")
+	var title := "对方 LOST 区" if enemy else "己方 LOST 区"
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(self):
+		title = "对手放逐区" if enemy else "我的放逐区"
+	_show_lost_zone(player_index, title)
 	var viewport := get_viewport()
 	if viewport != null:
 		viewport.set_input_as_handled()

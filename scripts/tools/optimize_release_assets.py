@@ -110,12 +110,35 @@ def is_webp_file(path: Path) -> bool:
     return len(header) >= 12 and header[0:4] == b"RIFF" and header[8:12] == b"WEBP"
 
 
+def is_lossless_webp_file(path: Path) -> bool:
+    """Read RIFF chunks, including VP8L inside extended WebP with EXIF/alpha.
+
+    Already lossy cards stay byte-identical on repeated runs. A WebP extension
+    alone does not mean the card has gone through the release compression pass.
+    """
+    with path.open("rb") as file:
+        header = file.read(12)
+        if header[:4] != b"RIFF" or header[8:12] != b"WEBP":
+            return False
+        end = min(path.stat().st_size, 8 + int.from_bytes(header[4:8], "little"))
+        while file.tell() + 8 <= end:
+            chunk = file.read(8)
+            size = int.from_bytes(chunk[4:8], "little")
+            if file.tell() + size > end:
+                return False
+            if chunk[:4] in (b"VP8L", b"VP8 "):
+                return chunk[:4] == b"VP8L"
+            file.seek(size + (size % 2), 1)
+    return False
+
+
 def optimize_card_image(path: Path, root: Path, tmp_dir: Path) -> AssetResult:
     before = path.stat().st_size
     tmp = tmp_dir / (path.name + ".webp.tmp")
     try:
-        if is_webp_file(path):
-            return AssetResult("card_images", rel(path, root), before, before, "kept", "already_webp")
+        source_webp = is_webp_file(path)
+        if source_webp and not is_lossless_webp_file(path):
+            return AssetResult("card_images", rel(path, root), before, before, "kept", "already_lossy_webp")
         with Image.open(path) as image:
             image.load()
             has_alpha = image.mode in ("RGBA", "LA") or "transparency" in image.info
@@ -127,11 +150,18 @@ def optimize_card_image(path: Path, root: Path, tmp_dir: Path) -> AssetResult:
                 method=6,
                 exact=has_alpha,
             )
+            with Image.open(tmp) as candidate:
+                candidate.load()
+                if candidate.size != converted.size:
+                    raise ValueError("card dimensions changed")
+                if has_alpha and candidate.convert("RGBA").getchannel("A").tobytes() != converted.getchannel("A").tobytes():
+                    raise ValueError("card alpha changed")
         verify_image(tmp)
         after = tmp.stat().st_size
         if after < before:
             shutil.move(str(tmp), str(path))
-            return AssetResult("card_images", rel(path, root), before, after, "optimized", "webp")
+            note = "lossless_webp_to_lossy_q94" if source_webp else "webp"
+            return AssetResult("card_images", rel(path, root), before, after, "optimized", note)
         tmp.unlink(missing_ok=True)
         return AssetResult("card_images", rel(path, root), before, before, "kept", "webp_not_smaller")
     except Exception as exc:  # pragma: no cover - operational script

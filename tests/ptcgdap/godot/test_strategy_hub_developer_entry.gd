@@ -70,7 +70,7 @@ func test_developer_onboarding_is_available_on_desktop_android_and_web() -> Stri
 		hub.call("apply_non_battle_layout_for_test", Vector2(900, 1800) if platform != "Windows" else Vector2(1600, 900), "portrait" if platform != "Windows" else "landscape")
 		hub.call("select_workspace_for_test", "replays")
 		checks.append(assert_true(hub.get_node("%ReplayTab").visible))
-		checks.append(assert_eq(hub.get_node("%ReplayTab").text, "开发者"))
+		checks.append(assert_eq(hub.get_node("%ReplayTab").text, "AI训练家"))
 		checks.append(assert_true(hub.get_node("%ReplayWorkspace").visible))
 		checks.append(assert_true(hub.get_node("%DeveloperIntro").visible))
 		checks.append(assert_eq(hub.find_child("LocalReplayScroll", true, false).visible, platform == "Windows"))

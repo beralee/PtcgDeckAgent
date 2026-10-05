@@ -158,6 +158,15 @@ class FastInstallCatalog extends RefCounted:
 class ControlReadyCatalog extends RefCounted:
 	var record: Dictionary = {}
 	var handle: Variant = null
+	var preparation_required_ready := false
+
+	func list_metadata_records() -> Array[Dictionary]:
+		return [record.duplicate(true)]
+
+	func request_match_handle_async(package_id: String, package_version: String, archive_sha256: String, require_player_ready: bool = false) -> Dictionary:
+		preparation_required_ready = require_player_ready
+		await (Engine.get_main_loop() as SceneTree).process_frame
+		return request_ready_match_handle(package_id, package_version, archive_sha256)
 
 	func list_ready_records() -> Array[Dictionary]:
 		return [record.duplicate(true)]
@@ -825,6 +834,7 @@ func test_control_distributed_ready_handle_is_ordinary_player_start_authority() 
 	var requested: Dictionary = ExecutionGateScript.request_match_handle(
 		catalog, selection, "Windows"
 	)
+	var async_requested: Dictionary = await ExecutionGateScript.request_match_handle_async(catalog, selection)
 	var pins: Dictionary = created.get("handle").to_public_dict()
 	return run_checks([
 		assert_true(bool(admitted.get("ok", false)), "%s record=%s" % [
@@ -833,6 +843,9 @@ func test_control_distributed_ready_handle_is_ordinary_player_start_authority() 
 		assert_eq(admitted.get("authority_mode"), ExecutionGateScript.CONTROL_DISTRIBUTED_MODE),
 		assert_true(bool(requested.get("ok", false)), str(requested)),
 		assert_eq(requested.get("authority_mode"), ExecutionGateScript.CONTROL_DISTRIBUTED_MODE),
+		assert_true(async_requested.get("ok", false), str(async_requested.get("error_code"))),
+		assert_eq(async_requested.get("authority_mode"), ExecutionGateScript.CONTROL_DISTRIBUTED_MODE),
+		assert_true(catalog.preparation_required_ready, "Market releases must retain the ready gate through async preparation"),
 		assert_eq(
 			ExecutionGateScript.validate_handle_pins(
 				pins, ExecutionGateScript.CONTROL_DISTRIBUTED_MODE

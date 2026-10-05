@@ -1093,7 +1093,7 @@ func build_attached_card_groups(player: PlayerState, card_items: Array) -> Array
 			if not (item is CardInstance):
 				continue
 			var card_item := item as CardInstance
-			if card_item in slot.attached_energy or slot.attached_tool == card_item:
+			if card_item in slot.attached_energy or card_item in slot.get_attached_tools():
 				group_indices.append(i)
 		if not group_indices.is_empty():
 			groups.append({

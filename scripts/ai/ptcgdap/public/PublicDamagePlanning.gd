@@ -1,5 +1,6 @@
 class_name PublicDamagePlanning
 extends RefCounted
+const GustForecast = preload("res://scripts/ai/ptcgdap/public/PublicGustForecast.gd")
 
 const TreeHashScript = preload("res://scripts/ai/ptcgdap/cabt/CabtTreeHash.gd")
 const JsonTreeScript = preload("res://scripts/ai/ptcgdap/cabt/CabtJsonTree.gd")
@@ -172,6 +173,7 @@ static func compile_execution_plan(
 	policy_hash: Variant,
 	damage_plans: Variant,
 	semantic_transactions: Variant = [],
+	reviewed_gust: bool = false,
 ) -> Dictionary:
 	if not _is_sha(policy_hash) or not damage_plans is Array \
 		or not semantic_transactions is Array:
@@ -194,6 +196,7 @@ static func compile_execution_plan(
 		"registry_sha256": _registry_cache_hash,
 		"damage_plans": damage_plans,
 		"semantic_transactions": semantic_transactions,
+		"reviewed_gust": reviewed_gust,
 	}
 	var execution_plan_hash := _tree_hash(payload)
 	if not _is_sha(execution_plan_hash):
@@ -211,6 +214,7 @@ static func compile_execution_plan(
 			"registry": trusted,
 			"damage_plans": damage_plans.duplicate(true),
 			"semantic_transactions": semantic_transactions.duplicate(true),
+			"reviewed_gust": reviewed_gust,
 		}
 		_sealed_execution_plan_order.append(execution_plan_hash)
 	return {
@@ -240,7 +244,8 @@ static func calculate_compiled(
 		frame,
 		sealed.get("damage_plans", []),
 		sealed.get("registry", {}),
-		include_full_audit
+		include_full_audit,
+		bool(sealed.get("reviewed_gust", false))
 	)
 
 
@@ -282,7 +287,7 @@ static func _execution_plan_binding_error(
 	return ""
 
 
-static func calculate(frame: Variant, damage_plans: Variant, registry: Dictionary = {}) -> Dictionary:
+static func calculate(frame: Variant, damage_plans: Variant, registry: Dictionary = {}, reviewed_gust: bool = false) -> Dictionary:
 	if _contains_private(frame) or _contains_private(damage_plans):
 		return _error("private_damage_plan_input")
 	var using_default := registry.is_empty()
@@ -293,7 +298,7 @@ static func calculate(frame: Variant, damage_plans: Variant, registry: Dictionar
 	var plan_error := _validate_damage_plans_trusted(damage_plans, trusted)
 	if not plan_error.is_empty():
 		return _error(plan_error)
-	return _calculate_prevalidated(frame, damage_plans, trusted)
+	return _calculate_prevalidated(frame, damage_plans, trusted, true, reviewed_gust)
 
 
 static func _calculate_prevalidated(
@@ -301,6 +306,7 @@ static func _calculate_prevalidated(
 	damage_plans: Array,
 	trusted: Dictionary,
 	include_full_audit: bool = true,
+	reviewed_gust: bool = false,
 ) -> Dictionary:
 	var own: Variant = frame.get("public_state", {}).get("self")
 	var opponent: Variant = frame.get("public_state", {}).get("opponent")
@@ -410,13 +416,16 @@ static func _calculate_prevalidated(
 			current_attack_bench_damage,
 			int(option_metrics.get(str(option_value.get("index")), {}).get("bench_damage", 0))
 		)
+	var legacy_targets := {}
+	for target: Dictionary in opponent.get("bench", []): legacy_targets[target.entity_serial] = true
+	var gust_inputs := GustForecast.inputs(frame, trusted.get("cards", {})) if reviewed_gust else [attack_options, legacy_targets, false]
 	var gust_target_metrics := {}
 	for target_value: Variant in opponent.get("bench", []):
 		if not target_value is Dictionary or not _safe_int(target_value.get("entity_serial")):
 			continue
 		var target: Dictionary = target_value
 		var target_damage := 0
-		for option_value: Variant in attack_options:
+		for option_value: Variant in (gust_inputs[0] if gust_inputs[1].has(target.get("entity_serial")) else []):
 			var rebound: Dictionary = option_value.duplicate(true)
 			rebound["projected_damage"] = null
 			target_damage = maxi(
@@ -432,6 +441,11 @@ static func _calculate_prevalidated(
 		var metrics: Dictionary = metrics_value
 		if best_gust_target.is_empty() or _target_less(metrics, best_gust_target):
 			best_gust_target = metrics
+	if gust_inputs[2]:
+		for option: Dictionary in frame.get("options", []):
+			if option.get("source_uid") not in ["30thDC_039", "CSV6C_114"]: continue
+			var metrics: Variant = gust_target_metrics.get(str(option.get("target_entity_serial")))
+			if metrics is Dictionary: option_metrics[str(option.index)] = metrics.duplicate(true)
 	var facts := {
 		"damage.movable_counter_count": transferable,
 		"damage.available_mover_count": available_movers,

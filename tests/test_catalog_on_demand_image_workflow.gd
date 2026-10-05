@@ -33,7 +33,7 @@ class FakeImageCacheService:
 		return "fake_manual_job"
 
 
-func test_csv4c_015_keeps_catalog_only_data_but_bundles_its_card_image() -> String:
+func test_csv4c_015_offline_completion_keeps_catalog_data_and_bundled_image() -> String:
 	var db := CardDatabaseScript.new()
 	var card: CardData = db.get_card("CSV4C", "015")
 	var search_results: Array[Dictionary] = db.search_catalog_cards("CSV4C 015", {}, 20, 0)
@@ -49,7 +49,7 @@ func test_csv4c_015_keeps_catalog_only_data_but_bundles_its_card_image() -> Stri
 		assert_eq(card.name if card != null else "", "九尾", "CSV4C_015 should preserve its Chinese name"),
 		assert_eq(card.effect_id if card != null else "", "b540fb36a187e1d05008e3be61084e81", "CSV4C_015 should preserve the source effect id"),
 		assert_true(found_in_search, "CSV4C_015 should be searchable in the catalog index"),
-		assert_false(FileAccess.file_exists("res://data/bundled_user/cards/CSV4C_015.json"), "Catalog-only cards should not be copied into the curated bundled card directory"),
+		assert_true(FileAccess.file_exists("res://data/bundled_user/cards/CSV4C_015.json"), "The tournament content snapshot now includes CSV4C_015 for offline completeness"),
 		assert_true(FileAccess.file_exists("res://data/bundled_user/cards/images/CSV4C/015.png.bin"), "CSV4C_015 should bundle its image so every platform can display the card"),
 		assert_true(CardData.is_valid_card_image_file("res://data/bundled_user/cards/images/CSV4C/015.png.bin"), "CSV4C_015 bundled image should be a valid supported card image"),
 		assert_false(FileAccess.file_exists("res://data/bundled_user/cards/images/CSV4C/015.png"), "CSV4C_015 must not bundle a raw image"),

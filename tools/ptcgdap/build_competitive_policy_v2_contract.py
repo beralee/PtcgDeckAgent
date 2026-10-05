@@ -621,6 +621,8 @@ def build_schema() -> dict[str, Any]:
         {
             "schema_version": {"const": 2},
             "adapter_id": identifier,
+            "damage_forecast_profile": {"type": "string", "enum": ["legacy-v1", "reviewed-gust-v1"]},
+            "plan_comparison_profile": {"type": "string", "enum": ["legacy-v1", "resource-continuity-v1", "resource-continuity-v2", "card-goals-v1"]},
             "adapter_version": {"type": "integer", "minimum": 2, "maximum": 9007199254740991},
             "goals": {"type": "array", "minItems": 1, "maxItems": 64, "items": goal},
             "count_rules": {"type": "array", "maxItems": 128, "items": count_rule},
@@ -3154,7 +3156,12 @@ def build_vectors() -> dict[str, Any]:
 
 
 def build_contract_documents() -> dict[str, dict[str, Any]]:
+    from tools.ptcgdap.public_counter_contract import extend_counter_contract
+
     documents = {"schema": build_schema(), "profile": build_profile(), "vectors": build_vectors()}
+    extend_counter_contract(documents, _sample_policy, _option, _frame)
+    from tools.ptcgdap.public_decision_contract import extend_decision_contract
+    extend_decision_contract(documents, _sample_policy, _option, _frame)
     documents["bundle"] = {
         "schema_version": 2,
         "bundle_id": BUNDLE_ID,
@@ -3183,6 +3190,8 @@ def write_or_check(*, check: bool) -> None:
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(expected)
+    from tools.ptcgdap.public_counter_contract import sync_consumer_pins
+    sync_consumer_pins(ROOT, documents, canonical_json_v1_bytes, check=check)
 
 
 def main() -> None:

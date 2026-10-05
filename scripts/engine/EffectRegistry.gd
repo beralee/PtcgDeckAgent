@@ -107,7 +107,10 @@ static func _load_effect_script(path: String) -> GDScript:
 		var cached_script := (cached_ref as WeakRef).get_ref() as GDScript
 		if cached_script != null:
 			return cached_script
-	var script := ResourceLoader.load(path, "GDScript", ResourceLoader.CACHE_MODE_IGNORE) as GDScript
+	# Effects can already be preloaded by a Host or UI consumer. Reuse that
+	# script identity; recompiling a second copy while an effect is executing
+	# can invalidate its typed property bindings in Godot 4.6.
+	var script := ResourceLoader.load(path, "GDScript", ResourceLoader.CACHE_MODE_REUSE) as GDScript
 	if script != null:
 		_effect_script_cache[path] = weakref(script)
 	return script
@@ -440,6 +443,8 @@ static func register_all(processor: EffectProcessor) -> void:
 	CSV10C101To200Registry.register_fixed(processor)
 	_register_csv10c_201_to_287(processor)
 	preload("res://scripts/engine/ThirtiethDeluxeRegistry.gd").register_fixed(processor)
+	preload("res://scripts/engine/TournamentSeries59TrainerRegistry.gd").register_fixed(processor)
+	preload("res://scripts/engine/TournamentSeries59SpecialTrainerRegistry.gd").register_fixed(processor)
 
 
 static func _register_csv10c_201_to_287(processor: EffectProcessor) -> void:
@@ -502,6 +507,9 @@ static func register_pokemon_card(processor: EffectProcessor, card: CardData) ->
 	CSV10C101To200Registry.register_pokemon_card(processor, card)
 	preload("res://scripts/engine/ThirtiethCelebrationRegistry.gd").register_pokemon_card(processor, card)
 	preload("res://scripts/engine/ThirtiethDeluxeRegistry.gd").register_pokemon_card(processor, card)
+	preload("res://scripts/engine/TournamentSeries59PokemonRegistry.gd").register_pokemon_card(processor, card)
+	preload("res://scripts/engine/TournamentSeries59ToolRegistry.gd").register_pokemon_card(processor, card)
+	preload("res://scripts/engine/TournamentSeries59AdditionalPokemonRegistry.gd").register_pokemon_card(processor, card)
 
 
 static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: int) -> void:
@@ -518,6 +526,37 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"d855e2994b2c3a876900fd79293e6f83": # CSV5C_076 Gastly: Allure / Will-O-Wisp
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackDrawCardsEffect, [1, 0]),
+			])
+		"ad3467af79c5e09c369190ed29beda7c": # CSV5C_077 Haunter: Dark Slumber
+			processor.replace_attack_effects(effect_id, [EffectApplyStatus.new("asleep", false, 0)])
+		"1b27a9489251f2aea2acb7b058f0fcf0": # CSV7C_050 Chi-Yu: Allure / Ground Melt
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackDrawCardsEffect, [2, 0]),
+				preload("res://scripts/effects/pokemon_effects/AttackStadiumDamageAndDiscard.gd").new(60, 0, 1),
+			])
+		"5ed8053b43211ace08218c99208ab742": # CSV7C_133 Ting-Lu: Land Crush
+			processor.replace_attack_effects(effect_id, [
+				preload("res://scripts/effects/pokemon_effects/AttackStadiumDamageAndDiscard.gd").new(0, 30, 0),
+			])
+		"3bc08c4356345e9aac2899f4af8278dd": # CSV6C_097 Steelix: Earthquake
+			var earthquake := EffectBenchDamage.new(30, true, "own")
+			earthquake.bind_default_attack_index(0)
+			processor.replace_attack_effects(effect_id, [earthquake])
+		"f170a8c91d1fed0fc2c8398f48969539": # CSV6C_067 Onix: Rigid Headbutt
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackCoinFlipPreventDamageAndEffectsNextTurnEffect, [processor.coin_flipper, 0]),
+			])
+		"435265b51152d54ad3de46c253757ffb": # CSV5C_031 Tympole: Spiral Tail
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackCoinFlipDiscardOpponentActiveEnergyEffect, [0, processor.coin_flipper]),
+			])
+		"5e06feeca2c0f59fc31f10534bce6844": # CSV6C_032 Snorunt: Ice Shard
+			processor.replace_attack_effects(effect_id, [
+				preload("res://scripts/effects/pokemon_effects/AttackBonusIfDefenderEnergyType.gd").new(30, "F", 0),
+			])
 		"b792079c0ae7abf7b11d88dbc5367419": # CSV9.5C_064 Alakazam (also CSV8C_075)
 			processor.replace_attack_effects(effect_id, [
 				EffectApplyStatus.new("confused", false, 0),

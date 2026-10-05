@@ -1,0 +1,70 @@
+{
+  "code": 200,
+  "data": {
+    "name": "飘飘雏",
+    "cardType": "Pokemon",
+    "mechanic": null,
+    "label": null,
+    "description": "【超】【超】 精神强念 10+\n追加造成对手战斗宝可梦身上附着的能量数量×10伤害。\n\n",
+    "yorenCode": "P0955",
+    "pokemonAttr": {
+      "energyType": "P",
+      "stage": "Basic",
+      "hp": 50,
+      "ability": [],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "D",
+        "value": "×2"
+      },
+      "resistance": {
+        "energy": "F",
+        "value": "-30"
+      },
+      "retreatCost": 1,
+      "attack": [
+        {
+          "name": "精神强念",
+          "text": "追加造成对手战斗宝可梦身上附着的能量数量×10伤害。",
+          "cost": "PP",
+          "damage": "10+",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": ""
+    },
+    "setCode": "CSV6C",
+    "cardIndex": "060",
+    "setCardsNum": "",
+    "artist": "kodama",
+    "rarity": "C",
+    "releaseDate": "2025-11-06T16:00:00Z",
+    "regulationMark": "G",
+    "effectId": "1e38b408b75cc5ec2a7d0cc98a761420",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "CSV6C",
+        "cardIndex": "060",
+        "cardName": "飘飘雏",
+        "rarity": "C",
+        "effectId": "1e38b408b75cc5ec2a7d0cc98a761420",
+        "cardType": "Pokemon",
+        "yorenCode": "P0955",
+        "is": [
+          "Basic"
+        ],
+        "setCodeEn": "PAR",
+        "cardIndexEn": "80",
+        "nameEn": "Flittle"
+      }
+    ],
+    "setCodeEn": "PAR",
+    "cardIndexEn": "80",
+    "nameEn": "Flittle"
+  },
+  "msg": "OK."
+}

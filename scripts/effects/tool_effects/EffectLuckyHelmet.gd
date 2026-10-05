@@ -15,7 +15,7 @@ func on_damaged_by_attack(
 	var owner := defender.get_top_card().owner_index
 	if state.players[owner].active_pokemon != defender or attacker.get_top_card().owner_index == owner:
 		return
-	_draw_cards_with_log(state, owner, 2, defender.attached_tool, "tool")
+	_draw_cards_with_log(state, owner, 2, defender.find_tool_by_effect_id("76ed73e869ac742e97ea521f200a360e"), "tool")
 
 
 func get_description() -> String:

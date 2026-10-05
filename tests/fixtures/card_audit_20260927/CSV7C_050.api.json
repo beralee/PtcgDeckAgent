@@ -1,0 +1,70 @@
+{
+  "name": "古玉鱼",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【无】 吸引 \n从自己牌库上方抽取2张卡牌。\n\n【火】【无】 大地熔化 60+\n如果场上有竞技场的话，则追加造成60伤害。然后，将那张竞技场放于弃牌区。\n\n",
+  "yorenCode": "P1004",
+  "pokemonAttr": {
+    "energyType": "R",
+    "stage": "Basic",
+    "hp": 110,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "W",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 1,
+    "attack": [
+      {
+        "name": "吸引",
+        "text": "从自己牌库上方抽取2张卡牌。",
+        "cost": "C",
+        "damage": "",
+        "isVStarPower": false
+      },
+      {
+        "name": "大地熔化",
+        "text": "如果场上有竞技场的话，则追加造成60伤害。然后，将那张竞技场放于弃牌区。",
+        "cost": "RC",
+        "damage": "60+",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": ""
+  },
+  "setCode": "CSV7C",
+  "cardIndex": "050",
+  "setCardsNum": "",
+  "artist": "Oku",
+  "rarity": "U",
+  "releaseDate": "2026-01-15T16:00:00Z",
+  "regulationMark": "H",
+  "effectId": "1b27a9489251f2aea2acb7b058f0fcf0",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV7C",
+      "cardIndex": "050",
+      "cardName": "古玉鱼",
+      "rarity": "U",
+      "effectId": "1b27a9489251f2aea2acb7b058f0fcf0",
+      "cardType": "Pokemon",
+      "yorenCode": "P1004",
+      "is": [
+        "Basic"
+      ],
+      "setCodeEn": "TWM",
+      "cardIndexEn": "39",
+      "nameEn": "Chi-Yu"
+    }
+  ],
+  "setCodeEn": "TWM",
+  "cardIndexEn": "39",
+  "nameEn": "Chi-Yu"
+}

@@ -1,0 +1,153 @@
+{
+  "audit": "CSV7C_050_CSV7C_133",
+  "completed_date": "2026-09-28",
+  "godot_version": "4.6.1.stable.official.14d19694e",
+  "sources": [
+    {
+      "uid": "CSV7C_050",
+      "url": "https://tcg.mik.moe/cards/CSV7C/050",
+      "api": "https://tcg.mik.moe/api/v3/card/card-detail",
+      "image_url": "https://tcg.mik.moe/static/img/CSV7C/050.png",
+      "image_sha256": "854FDD5A38BF051A025717B932BBB20525525DAC74A3D6AFEF59F7BF51B10815",
+      "fixture": "tests/fixtures/card_audit_20260927/CSV7C_050.api.json"
+    },
+    {
+      "uid": "CSV7C_133",
+      "url": "https://tcg.mik.moe/cards/CSV7C/133",
+      "api": "https://tcg.mik.moe/api/v3/card/card-detail",
+      "image_url": "https://tcg.mik.moe/static/img/CSV7C/133.png",
+      "image_sha256": "4AB85D4F23FBACC530B420705E7A7952464625EA3968B4C3A360A1E386094231",
+      "fixture": "tests/fixtures/card_audit_20260927/CSV7C_133.api.json"
+    }
+  ],
+  "red": {
+    "report": ".tmp/card-audit-csv7c-stadium/red2/report.json",
+    "passed": 1,
+    "failed": 6
+  },
+  "godot_regression": {
+    "report": ".tmp/card-audit-csv7c-stadium/regression/report.json",
+    "sha256": "A5BE44B789F85D48C48A483E8EE8A4B6382680CF3DF10B0230753FA1F9BD7F87",
+    "suites": [
+      {
+        "name": "A3ExternalDecisionPort",
+        "path": "res://tests/ptcgdap/godot/test_a3_external_decision_port.gd",
+        "total": 19,
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "UcisEffectOptionShapes",
+        "path": "res://tests/ptcgdap/godot/test_ucis_effect_option_shapes.gd",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "CardImplementationStatus",
+        "path": "res://tests/test_card_implementation_status.gd",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Csv7cStadiumAttacks",
+        "path": "res://tests/test_csv7c_stadium_attacks.gd",
+        "total": 10,
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "EffectRegistry",
+        "path": "res://tests/test_effect_registry.gd",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "EffectSystem",
+        "path": "res://tests/test_effect_system.gd",
+        "total": 31,
+        "passed": 31,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "UcisInteractionCompiler",
+        "path": "res://tests/test_ucis_interaction_compiler.gd",
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "total": 86,
+    "passed": 86,
+    "failed": 0,
+    "skipped": 0
+  },
+  "python_ucis_contract": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0
+  },
+  "host": {
+    "cards": 2,
+    "seats_per_card": 2,
+    "accepted_main_windows": 4,
+    "engine_commits": 4,
+    "policy_errors": 0,
+    "invalid_outputs": 0,
+    "same_window_fallbacks": 0,
+    "engine_rejections": 0,
+    "replayed_windows_rejected": 4
+  },
+  "files": [
+    {
+      "path": "scripts/engine/EffectRegistry.gd",
+      "sha256": "B29C7BDF257622E8B86A0997F84D75CCFAA442DF29ECF28F236111CB17045508"
+    },
+    {
+      "path": "scripts/effects/pokemon_effects/AttackStadiumDamageAndDiscard.gd",
+      "sha256": "612A7FD88D15A5FDAA9C0CBF6BBD91DE92020C744CC713D522687F14E08C82FB"
+    },
+    {
+      "path": "tests/test_csv7c_stadium_attacks.gd",
+      "sha256": "464DFADB499D78521784DE8AD11BDB2B37AA2CF9FFD58A838A9465B5096917EE"
+    },
+    {
+      "path": "tests/fixtures/card_audit_20260927/CSV7C_050.api.json",
+      "sha256": "C228F3EEF114593BAD373EDF7FBB1D244CBDCDD9431E864664CA3031F0F0B1DE"
+    },
+    {
+      "path": "tests/fixtures/card_audit_20260927/CSV7C_133.api.json",
+      "sha256": "22E36D9E9EE61B3AA6C2114022015D5B63C9DB433501786F328F1BBF8ADE7DA0"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_card_catalog_v1.json",
+      "sha256": "5C2FB172B0DC8760454FE9821F33EF3D692E04603F0D87CDA40E458467133655"
+    },
+    {
+      "path": "contracts/ptcgdap/ucis_bundle_v1.json",
+      "sha256": "F38284C5D41AC98531211F88662AB8595C99049D9D2ABDFA1822F08EE3443F89"
+    },
+    {
+      "path": "docs/evidence/ptcgdap/card_audit_csv7c_050_133_20260928.md",
+      "sha256": "322FDE3148193B947C355E5AAC220734ACA5798AAF2F57B6ABC7821625C3BEB2"
+    }
+  ],
+  "claims": {
+    "local_card_rules": true,
+    "local_author_host_integration": true,
+    "official_engine_parity": false,
+    "device_acceptance": false,
+    "full_match_strength": false,
+    "published": false
+  },
+  "rollback": "Remove only the two added registry branches, new effect and audit tests/fixtures; rebuild UCIS against the preserved worktree. Local pre-edit snapshots: .tmp/card-audit-csv7c-stadium/before/."
+}

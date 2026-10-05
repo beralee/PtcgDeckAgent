@@ -1,6 +1,8 @@
 class_name CompetitivePolicyV2Core
 extends RefCounted
+const PlanComparisonScript = preload("res://scripts/ai/ptcgdap/public/PublicPlanComparison.gd")
 
+const DecisionFactsScript = preload("res://scripts/ai/ptcgdap/public/PublicDecisionFacts.gd")
 const TreeHashScript = preload("res://scripts/ai/ptcgdap/cabt/CabtTreeHash.gd")
 const DamagePlanningScript = preload("res://scripts/ai/ptcgdap/public/PublicDamagePlanning.gd")
 const TurnProgramPlannerScript = preload(
@@ -62,6 +64,175 @@ const PRIVATE_KEYS := {
 	"object_ref": true, "instance_id": true, "raw_private_hash": true,
 }
 const SCALAR_FACTS := {
+	"decision.option.access_resource_cost": true,
+	"decision.option.access_pressure": true,
+	"decision.option.access_gain": true,
+	"decision.option.access_best": true,
+	"decision.option.counter_prize_plan": true,
+
+
+	"decision.selection.max_assignments": true,
+	"decision.selection.max_assignments_per_target": true,
+	"decision.selection.allow_partial": true,
+	"decision.self.active.ability_use_recorded_this_turn": true,
+	"decision.opponent.active.ability_use_recorded_this_turn": true,
+	"decision.option.target.ability_use_recorded_this_turn": true,
+	"decision.option.source.ability_use_recorded_this_turn": true,
+
+	"decision.version": true,
+	"decision.current_player_index": true,
+	"decision.first_player_index": true,
+	"decision.stadium.card_uid": true,
+	"decision.stadium.owner_index": true,
+	"decision.turn.stadium_play_available": true,
+	"decision.turn.stadium_effect_used": true,
+	"decision.selection.remaining_energy_cost": true,
+	"decision.selection.remaining_damage_counters": true,
+	"decision.self.is_first_turn": true,
+	"decision.self.vstar_used": true,
+	"decision.self.knocked_out_previous_opponent_turn": true,
+	"decision.self.bench_capacity": true,
+	"decision.self.lost_zone_count": true,
+	"decision.self.lost_zone_uids": true,
+	"decision.opponent.is_first_turn": true,
+	"decision.opponent.vstar_used": true,
+	"decision.opponent.knocked_out_previous_opponent_turn": true,
+	"decision.opponent.bench_capacity": true,
+	"decision.opponent.lost_zone_count": true,
+	"decision.opponent.lost_zone_uids": true,
+	"decision.self.active.played_this_turn": true,
+	"decision.self.active.evolved_this_turn": true,
+	"decision.self.active.conditions": true,
+	"decision.self.active.effective_retreat_cost": true,
+	"decision.self.active.retreat_energy_units": true,
+	"decision.self.active.retreat_energy_ready": true,
+	"decision.self.active.tool_effect_suppressed": true,
+	"decision.self.active.ability_disabled": true,
+	"decision.self.active.early_evolution_allowed": true,
+	"decision.self.active.attack.0.energy_debt": true,
+	"decision.self.active.attack.0.energy_ready": true,
+	"decision.self.active.attack.0.cost_candidates": true,
+	"decision.self.active.attack.1.energy_debt": true,
+	"decision.self.active.attack.1.energy_ready": true,
+	"decision.self.active.attack.1.cost_candidates": true,
+	"decision.self.active.attack.2.energy_debt": true,
+	"decision.self.active.attack.2.energy_ready": true,
+	"decision.self.active.attack.2.cost_candidates": true,
+	"decision.self.active.attack.3.energy_debt": true,
+	"decision.self.active.attack.3.energy_ready": true,
+	"decision.self.active.attack.3.cost_candidates": true,
+	"decision.self.active.attack.4.energy_debt": true,
+	"decision.self.active.attack.4.energy_ready": true,
+	"decision.self.active.attack.4.cost_candidates": true,
+	"decision.self.active.attack.5.energy_debt": true,
+	"decision.self.active.attack.5.energy_ready": true,
+	"decision.self.active.attack.5.cost_candidates": true,
+	"decision.self.active.attack.6.energy_debt": true,
+	"decision.self.active.attack.6.energy_ready": true,
+	"decision.self.active.attack.6.cost_candidates": true,
+	"decision.self.active.attack.7.energy_debt": true,
+	"decision.self.active.attack.7.energy_ready": true,
+	"decision.self.active.attack.7.cost_candidates": true,
+	"decision.opponent.active.played_this_turn": true,
+	"decision.opponent.active.evolved_this_turn": true,
+	"decision.opponent.active.conditions": true,
+	"decision.opponent.active.effective_retreat_cost": true,
+	"decision.opponent.active.retreat_energy_units": true,
+	"decision.opponent.active.retreat_energy_ready": true,
+	"decision.opponent.active.tool_effect_suppressed": true,
+	"decision.opponent.active.ability_disabled": true,
+	"decision.opponent.active.early_evolution_allowed": true,
+	"decision.opponent.active.attack.0.energy_debt": true,
+	"decision.opponent.active.attack.0.energy_ready": true,
+	"decision.opponent.active.attack.0.cost_candidates": true,
+	"decision.opponent.active.attack.1.energy_debt": true,
+	"decision.opponent.active.attack.1.energy_ready": true,
+	"decision.opponent.active.attack.1.cost_candidates": true,
+	"decision.opponent.active.attack.2.energy_debt": true,
+	"decision.opponent.active.attack.2.energy_ready": true,
+	"decision.opponent.active.attack.2.cost_candidates": true,
+	"decision.opponent.active.attack.3.energy_debt": true,
+	"decision.opponent.active.attack.3.energy_ready": true,
+	"decision.opponent.active.attack.3.cost_candidates": true,
+	"decision.opponent.active.attack.4.energy_debt": true,
+	"decision.opponent.active.attack.4.energy_ready": true,
+	"decision.opponent.active.attack.4.cost_candidates": true,
+	"decision.opponent.active.attack.5.energy_debt": true,
+	"decision.opponent.active.attack.5.energy_ready": true,
+	"decision.opponent.active.attack.5.cost_candidates": true,
+	"decision.opponent.active.attack.6.energy_debt": true,
+	"decision.opponent.active.attack.6.energy_ready": true,
+	"decision.opponent.active.attack.6.cost_candidates": true,
+	"decision.opponent.active.attack.7.energy_debt": true,
+	"decision.opponent.active.attack.7.energy_ready": true,
+	"decision.opponent.active.attack.7.cost_candidates": true,
+	"decision.option.target.played_this_turn": true,
+	"decision.option.target.evolved_this_turn": true,
+	"decision.option.target.conditions": true,
+	"decision.option.target.effective_retreat_cost": true,
+	"decision.option.target.retreat_energy_units": true,
+	"decision.option.target.retreat_energy_ready": true,
+	"decision.option.target.tool_effect_suppressed": true,
+	"decision.option.target.ability_disabled": true,
+	"decision.option.target.early_evolution_allowed": true,
+	"decision.option.target.attack.0.energy_debt": true,
+	"decision.option.target.attack.0.energy_ready": true,
+	"decision.option.target.attack.0.cost_candidates": true,
+	"decision.option.target.attack.1.energy_debt": true,
+	"decision.option.target.attack.1.energy_ready": true,
+	"decision.option.target.attack.1.cost_candidates": true,
+	"decision.option.target.attack.2.energy_debt": true,
+	"decision.option.target.attack.2.energy_ready": true,
+	"decision.option.target.attack.2.cost_candidates": true,
+	"decision.option.target.attack.3.energy_debt": true,
+	"decision.option.target.attack.3.energy_ready": true,
+	"decision.option.target.attack.3.cost_candidates": true,
+	"decision.option.target.attack.4.energy_debt": true,
+	"decision.option.target.attack.4.energy_ready": true,
+	"decision.option.target.attack.4.cost_candidates": true,
+	"decision.option.target.attack.5.energy_debt": true,
+	"decision.option.target.attack.5.energy_ready": true,
+	"decision.option.target.attack.5.cost_candidates": true,
+	"decision.option.target.attack.6.energy_debt": true,
+	"decision.option.target.attack.6.energy_ready": true,
+	"decision.option.target.attack.6.cost_candidates": true,
+	"decision.option.target.attack.7.energy_debt": true,
+	"decision.option.target.attack.7.energy_ready": true,
+	"decision.option.target.attack.7.cost_candidates": true,
+	"decision.option.source.played_this_turn": true,
+	"decision.option.source.evolved_this_turn": true,
+	"decision.option.source.conditions": true,
+	"decision.option.source.effective_retreat_cost": true,
+	"decision.option.source.retreat_energy_units": true,
+	"decision.option.source.retreat_energy_ready": true,
+	"decision.option.source.tool_effect_suppressed": true,
+	"decision.option.source.ability_disabled": true,
+	"decision.option.source.early_evolution_allowed": true,
+	"decision.option.source.attack.0.energy_debt": true,
+	"decision.option.source.attack.0.energy_ready": true,
+	"decision.option.source.attack.0.cost_candidates": true,
+	"decision.option.source.attack.1.energy_debt": true,
+	"decision.option.source.attack.1.energy_ready": true,
+	"decision.option.source.attack.1.cost_candidates": true,
+	"decision.option.source.attack.2.energy_debt": true,
+	"decision.option.source.attack.2.energy_ready": true,
+	"decision.option.source.attack.2.cost_candidates": true,
+	"decision.option.source.attack.3.energy_debt": true,
+	"decision.option.source.attack.3.energy_ready": true,
+	"decision.option.source.attack.3.cost_candidates": true,
+	"decision.option.source.attack.4.energy_debt": true,
+	"decision.option.source.attack.4.energy_ready": true,
+	"decision.option.source.attack.4.cost_candidates": true,
+	"decision.option.source.attack.5.energy_debt": true,
+	"decision.option.source.attack.5.energy_ready": true,
+	"decision.option.source.attack.5.cost_candidates": true,
+	"decision.option.source.attack.6.energy_debt": true,
+	"decision.option.source.attack.6.energy_ready": true,
+	"decision.option.source.attack.6.cost_candidates": true,
+	"decision.option.source.attack.7.energy_debt": true,
+	"decision.option.source.attack.7.energy_ready": true,
+	"decision.option.source.attack.7.cost_candidates": true,
+
 	"prompt_kind": true,
 	"select.type": true,
 	"select.context": true,
@@ -115,6 +286,8 @@ const SCALAR_FACTS := {
 	"option.option_number": true,
 	"option.ability_index": true,
 	"option.pending_assignment_count": true,
+	"option.target_pending_damage_counters": true,
+	"option.remaining_damage_counters": true,
 	"option.tags": true,
 	"option.source_is_active": true,
 	"option.target_is_active": true,
@@ -225,6 +398,118 @@ const WINDOW_UID_FACTS := {
 	"window.option_count_target_uid": true,
 }
 const NON_NUMERIC_FACTS := {
+	"decision.option.access_best": true,
+
+	"decision.selection.allow_partial": true,
+	"decision.self.active.ability_use_recorded_this_turn": true,
+	"decision.opponent.active.ability_use_recorded_this_turn": true,
+	"decision.option.target.ability_use_recorded_this_turn": true,
+	"decision.option.source.ability_use_recorded_this_turn": true,
+
+	"decision.stadium.card_uid": true,
+	"decision.turn.stadium_play_available": true,
+	"decision.turn.stadium_effect_used": true,
+	"decision.self.is_first_turn": true,
+	"decision.self.vstar_used": true,
+	"decision.self.knocked_out_previous_opponent_turn": true,
+	"decision.self.lost_zone_uids": true,
+	"decision.opponent.is_first_turn": true,
+	"decision.opponent.vstar_used": true,
+	"decision.opponent.knocked_out_previous_opponent_turn": true,
+	"decision.opponent.lost_zone_uids": true,
+	"decision.self.active.played_this_turn": true,
+	"decision.self.active.evolved_this_turn": true,
+	"decision.self.active.conditions": true,
+	"decision.self.active.retreat_energy_ready": true,
+	"decision.self.active.tool_effect_suppressed": true,
+	"decision.self.active.ability_disabled": true,
+	"decision.self.active.early_evolution_allowed": true,
+	"decision.self.active.attack.0.energy_ready": true,
+	"decision.self.active.attack.0.cost_candidates": true,
+	"decision.self.active.attack.1.energy_ready": true,
+	"decision.self.active.attack.1.cost_candidates": true,
+	"decision.self.active.attack.2.energy_ready": true,
+	"decision.self.active.attack.2.cost_candidates": true,
+	"decision.self.active.attack.3.energy_ready": true,
+	"decision.self.active.attack.3.cost_candidates": true,
+	"decision.self.active.attack.4.energy_ready": true,
+	"decision.self.active.attack.4.cost_candidates": true,
+	"decision.self.active.attack.5.energy_ready": true,
+	"decision.self.active.attack.5.cost_candidates": true,
+	"decision.self.active.attack.6.energy_ready": true,
+	"decision.self.active.attack.6.cost_candidates": true,
+	"decision.self.active.attack.7.energy_ready": true,
+	"decision.self.active.attack.7.cost_candidates": true,
+	"decision.opponent.active.played_this_turn": true,
+	"decision.opponent.active.evolved_this_turn": true,
+	"decision.opponent.active.conditions": true,
+	"decision.opponent.active.retreat_energy_ready": true,
+	"decision.opponent.active.tool_effect_suppressed": true,
+	"decision.opponent.active.ability_disabled": true,
+	"decision.opponent.active.early_evolution_allowed": true,
+	"decision.opponent.active.attack.0.energy_ready": true,
+	"decision.opponent.active.attack.0.cost_candidates": true,
+	"decision.opponent.active.attack.1.energy_ready": true,
+	"decision.opponent.active.attack.1.cost_candidates": true,
+	"decision.opponent.active.attack.2.energy_ready": true,
+	"decision.opponent.active.attack.2.cost_candidates": true,
+	"decision.opponent.active.attack.3.energy_ready": true,
+	"decision.opponent.active.attack.3.cost_candidates": true,
+	"decision.opponent.active.attack.4.energy_ready": true,
+	"decision.opponent.active.attack.4.cost_candidates": true,
+	"decision.opponent.active.attack.5.energy_ready": true,
+	"decision.opponent.active.attack.5.cost_candidates": true,
+	"decision.opponent.active.attack.6.energy_ready": true,
+	"decision.opponent.active.attack.6.cost_candidates": true,
+	"decision.opponent.active.attack.7.energy_ready": true,
+	"decision.opponent.active.attack.7.cost_candidates": true,
+	"decision.option.target.played_this_turn": true,
+	"decision.option.target.evolved_this_turn": true,
+	"decision.option.target.conditions": true,
+	"decision.option.target.retreat_energy_ready": true,
+	"decision.option.target.tool_effect_suppressed": true,
+	"decision.option.target.ability_disabled": true,
+	"decision.option.target.early_evolution_allowed": true,
+	"decision.option.target.attack.0.energy_ready": true,
+	"decision.option.target.attack.0.cost_candidates": true,
+	"decision.option.target.attack.1.energy_ready": true,
+	"decision.option.target.attack.1.cost_candidates": true,
+	"decision.option.target.attack.2.energy_ready": true,
+	"decision.option.target.attack.2.cost_candidates": true,
+	"decision.option.target.attack.3.energy_ready": true,
+	"decision.option.target.attack.3.cost_candidates": true,
+	"decision.option.target.attack.4.energy_ready": true,
+	"decision.option.target.attack.4.cost_candidates": true,
+	"decision.option.target.attack.5.energy_ready": true,
+	"decision.option.target.attack.5.cost_candidates": true,
+	"decision.option.target.attack.6.energy_ready": true,
+	"decision.option.target.attack.6.cost_candidates": true,
+	"decision.option.target.attack.7.energy_ready": true,
+	"decision.option.target.attack.7.cost_candidates": true,
+	"decision.option.source.played_this_turn": true,
+	"decision.option.source.evolved_this_turn": true,
+	"decision.option.source.conditions": true,
+	"decision.option.source.retreat_energy_ready": true,
+	"decision.option.source.tool_effect_suppressed": true,
+	"decision.option.source.ability_disabled": true,
+	"decision.option.source.early_evolution_allowed": true,
+	"decision.option.source.attack.0.energy_ready": true,
+	"decision.option.source.attack.0.cost_candidates": true,
+	"decision.option.source.attack.1.energy_ready": true,
+	"decision.option.source.attack.1.cost_candidates": true,
+	"decision.option.source.attack.2.energy_ready": true,
+	"decision.option.source.attack.2.cost_candidates": true,
+	"decision.option.source.attack.3.energy_ready": true,
+	"decision.option.source.attack.3.cost_candidates": true,
+	"decision.option.source.attack.4.energy_ready": true,
+	"decision.option.source.attack.4.cost_candidates": true,
+	"decision.option.source.attack.5.energy_ready": true,
+	"decision.option.source.attack.5.cost_candidates": true,
+	"decision.option.source.attack.6.energy_ready": true,
+	"decision.option.source.attack.6.cost_candidates": true,
+	"decision.option.source.attack.7.energy_ready": true,
+	"decision.option.source.attack.7.cost_candidates": true,
+
 	"prompt_kind": true, "select.type": true, "select.context": true,
 	"option.kind": true, "option.card_uid": true,
 	"option.source_uid": true, "option.target_uid": true, "option.tags": true,
@@ -259,7 +544,7 @@ const DOCUMENT_REQUIRED_KEYS := ["schema_version", "adapter_id", "adapter_versio
 const DOCUMENT_KEYS := [
 	"schema_version", "adapter_id", "adapter_version", "goals", "count_rules", "rules",
 	"turn_routes", "route_candidates", "interaction_recipes", "turn_bonus_contracts",
-	"damage_plans", "semantic_transactions", "turn_transactions",
+	"damage_plans", "damage_forecast_profile", "plan_comparison_profile", "semantic_transactions", "turn_transactions",
 ]
 const GOAL_KEYS := ["goal_id", "stage", "priority", "requirements"]
 const REQUIREMENT_KEYS := ["card_uid", "ready_target_count", "energy_required"]
@@ -373,6 +658,7 @@ const OPTION_KEYS := [
 	"option_number", "ability_index", "energy_type_raw", "energy_count",
 	"special_condition_type", "pending_assignment_count", "tags", "option_type_raw",
 	"option_player_index", "source_entity_serial", "target_entity_serial",
+	"target_pending_damage_counters", "remaining_damage_counters",
 ]
 
 
@@ -523,7 +809,9 @@ static func _decide_with_execution_plan(
 		damage_result = DamagePlanningScript.calculate_compiled(
 			frame_value, policy_hash, planning_execution_hash
 		)
-		if not bool(damage_result.get("accepted", false)):
+		# Catalog coverage is optional advice in every supported forecast profile.
+		# Missing damage facts remain unusable; independent legal rules still run.
+		if not bool(damage_result.get("accepted", false)) and damage_result.get("error_code") != "unknown_damage_card_uid":
 			return _decision_error(str(damage_result.get("error_code", "damage_plan_failed")))
 	var transaction_result := {
 		"accepted": true, "error_code": "", "event": "idle",
@@ -543,6 +831,8 @@ static func _decide_with_execution_plan(
 			))
 	frame_value["_derived_damage"] = damage_result
 	frame_value["_derived_transaction"] = transaction_result
+	if DecisionFactsScript.AttackAccessScript.uses_attack_access(document):
+		frame_value["_derived_access"] = DecisionFactsScript.AttackAccessScript.plan(frame_value)
 	var turn_transaction_result := {
 		"accepted": true, "error_code": "", "event": "idle",
 		"reason": "journal_not_bound", "transaction_id": null,
@@ -646,6 +936,7 @@ static func _decide_with_execution_plan(
 	var selected: Array = []
 	var owner := "base_graph"
 	var fallback_used := false
+	var comparison_result: Variant = null
 	if not terminal_indexes.is_empty():
 		owner = "terminal"
 		selected = terminal_indexes.duplicate()
@@ -672,6 +963,12 @@ static func _decide_with_execution_plan(
 			if index in frontier and index not in base_vetoed_indexes:
 				ordered.append(index)
 		var selection_quotas: Variant = evaluated.get("selection_quotas")
+		if document.get("plan_comparison_profile") in ["resource-continuity-v1", "resource-continuity-v2", "card-goals-v1"] and selection_quotas == null:
+			comparison_result = PlanComparisonScript.compare_plans(frame_value, ordered, document.plan_comparison_profile)
+			var proposal: Variant = comparison_result.get("proposed_index")
+			if comparison_result.get("accepted", false) and proposal in ordered:
+				ordered.erase(proposal)
+				ordered.push_front(proposal)
 		if selection_quotas is Dictionary:
 			var remaining: Dictionary = selection_quotas.duplicate()
 			var typed_ordered: Array = []
@@ -947,6 +1244,9 @@ static func _decide_with_execution_plan(
 		"public_only": true,
 		"stale_plan_has_authority": false,
 	}
+	if not bool(damage_result.get("accepted", false)):
+		audit_payload["damage_plan"]["status"] = "unavailable"
+		audit_payload["damage_plan"]["error_code"] = damage_result.get("error_code")
 	if turn_program_request != null or auto_turn_program_shadow:
 		audit_payload["turn_program_shadow"] = turn_program_shadow.duplicate(true)
 	if auto_turn_program_shadow and turn_program_request == null:
@@ -954,6 +1254,7 @@ static func _decide_with_execution_plan(
 		audit_payload["turn_program_differential"] = turn_program_differential.duplicate(true)
 	if turn_program_canary_profile != null:
 		audit_payload["turn_program_canary"] = turn_program_canary.duplicate(true)
+	if comparison_result != null: audit_payload["plan_comparison"] = comparison_result
 	var audit := audit_payload.duplicate(true)
 	audit["audit_hash"] = _hash(audit_payload)
 	return {
@@ -1012,7 +1313,7 @@ static func _model_terminal_attack(frame: Dictionary) -> bool:
 
 static func _is_option_fact(fact: String) -> bool:
 	return (
-		fact.begins_with("option.") or fact.begins_with("goal.option.")
+		fact.begins_with("option.") or fact.begins_with("decision.option.") or fact.begins_with("goal.option.")
 		or fact.begins_with("damage.option.") or fact.begins_with("transaction.option.")
 	)
 
@@ -1046,7 +1347,8 @@ static func _store_execution_plan(
 		var planning: Dictionary = DamagePlanningScript.compile_execution_plan(
 			policy_hash,
 			source.get("damage_plans", []),
-			source.get("semantic_transactions", [])
+			source.get("semantic_transactions", []),
+			source.get("damage_forecast_profile", "legacy-v1") == "reviewed-gust-v1"
 		)
 		if not bool(planning.get("accepted", false)):
 			return false
@@ -1117,6 +1419,8 @@ static func _evaluate_compiled(execution_plan: Dictionary, frame: Dictionary) ->
 	for entry_value: Variant in execution_plan.get("rules", []):
 		var entry: Dictionary = entry_value
 		var rule: Dictionary = entry.get("rule", {})
+		if _unavailable_damage_facts(rule.get("score_terms", []), frame):
+			continue
 		var goal: Dictionary = goals.get(rule.get("goal_id"), {})
 		if not _matches_cached(entry.get("frame_when", []), frame_facts, null, goal, threat):
 			continue
@@ -1496,6 +1800,8 @@ static func _matches_cached(
 	goal: Dictionary,
 	threat: Dictionary,
 ) -> bool:
+	if _unavailable_damage_facts(conditions, frame_facts.get("frame", {})):
+		return false
 	for condition_value: Variant in conditions:
 		var condition: Dictionary = condition_value
 		var actual: Variant = _fact_cached(
@@ -1515,6 +1821,8 @@ static func _fact_cached(
 	threat: Dictionary,
 	card_uid: Variant,
 ) -> Variant:
+	if DecisionFactsScript.FACT_TYPES.has(fact):
+		return DecisionFactsScript.fact(frame_facts.get("frame", {}), option, fact)
 	var derived := _derived_policy_fact(frame_facts.get("frame", {}), option, fact)
 	if bool(derived.get("handled", false)):
 		return derived.get("value")
@@ -1612,6 +1920,8 @@ static func _evaluate(policy: Dictionary, frame: Dictionary) -> Dictionary:
 			matched.append(base_floor)
 		for rule_value: Variant in document.get("rules", []):
 			var rule: Dictionary = rule_value
+			if _unavailable_damage_facts(rule.get("score_terms", []), frame):
+				continue
 			var goal: Dictionary = goals.get(rule.get("goal_id"), {})
 			if not _matches(rule.get("when", []), frame, option, goal, threat):
 				continue
@@ -2683,6 +2993,17 @@ static func _threat_clock(frame: Dictionary) -> Dictionary:
 	}
 
 
+static func _unavailable_damage_facts(rows: Array, frame: Dictionary) -> bool:
+	# A catalog gap invalidates damage advice, never the legal action frontier.
+	# In particular, null must not turn a negative damage predicate into true.
+	if frame.get("_derived_damage", {}).get("accepted", true) != false:
+		return false
+	for row: Dictionary in rows:
+		if str(row.get("fact", "")).begins_with("damage."):
+			return true
+	return false
+
+
 static func _matches(
 	conditions: Array,
 	frame: Dictionary,
@@ -2690,6 +3011,8 @@ static func _matches(
 	goal: Dictionary,
 	threat: Dictionary,
 ) -> bool:
+	if _unavailable_damage_facts(conditions, frame):
+		return false
 	for condition_value: Variant in conditions:
 		var condition: Dictionary = condition_value
 		var actual: Variant = _fact(
@@ -2708,6 +3031,8 @@ static func _fact(
 	threat: Dictionary,
 	card_uid: Variant,
 ) -> Variant:
+	if DecisionFactsScript.FACT_TYPES.has(fact):
+		return DecisionFactsScript.fact(frame, option, fact)
 	var derived := _derived_policy_fact(frame, option, fact)
 	if bool(derived.get("handled", false)):
 		return derived.get("value")
@@ -2999,6 +3324,10 @@ static func _document_error(value: Variant, allowed: Dictionary) -> String:
 	var turn_bonus_contracts: Variant = value.get("turn_bonus_contracts", [])
 	var damage_plans: Variant = value.get("damage_plans", [])
 	var semantic_transactions: Variant = value.get("semantic_transactions", [])
+	if value.get("plan_comparison_profile", "legacy-v1") not in ["legacy-v1", "resource-continuity-v1", "resource-continuity-v2", "card-goals-v1"]:
+		return "invalid_plan_comparison_profile"
+	if value.get("damage_forecast_profile", "legacy-v1") not in ["legacy-v1", "reviewed-gust-v1"]:
+		return "invalid_damage_forecast_profile"
 	var turn_transactions: Variant = value.get("turn_transactions", [])
 	if not goals is Array or goals.is_empty() or goals.size() > 64:
 		return "invalid_goal_state"
@@ -3690,6 +4019,31 @@ static func _turn_transaction_error(
 	return ""
 
 
+static func _counter_state_error(options: Array, semantics: Dictionary) -> bool:
+	var keys := ["target_pending_damage_counters", "remaining_damage_counters"]
+	var present := false
+	for option: Variant in options:
+		if option is Dictionary and (option.has(keys[0]) or option.has(keys[1])):
+			present = true
+	if not present:
+		return false
+	if semantics.get("select_type_raw") != 1 or semantics.get("select_context_raw") not in [13, 14]:
+		return true
+	var budget := -1
+	for option: Variant in options:
+		if not option is Dictionary:
+			return true
+		for key: String in keys:
+			if not _safe_int(option.get(key)) or int(option.get(key)) > 100:
+				return true
+		if not _safe_int(option.get("target_entity_serial")) or int(option.get("target_entity_serial")) <= 0:
+			return true
+		if budget != -1 and budget != int(option.get("remaining_damage_counters")):
+			return true
+		budget = int(option.get("remaining_damage_counters"))
+	return false
+
+
 static func _frame_error(value: Variant) -> String:
 	if _contains_forbidden_value(value):
 		return "private_or_runtime_frame"
@@ -3709,7 +4063,8 @@ static func _frame_error(value: Variant) -> String:
 	if (
 		not source is Dictionary or not _has_exact_keys(source, ["public_observation_hash", "window_id"])
 		or not _is_sha(source.get("public_observation_hash")) or not _is_sha(source.get("window_id"))
-		or not state is Dictionary or not _has_exact_keys(state, ["turn_number", "phase", "self", "opponent"])
+		or not state is Dictionary or not _has_required_allowed_keys(state, ["turn_number", "phase", "self", "opponent"], ["turn_number", "phase", "self", "opponent", "decision"])
+		or DecisionFactsScript.decision_error(state)
 		or not semantics is Dictionary
 		or not _has_exact_keys(semantics, ["min_count", "max_count", "select_type_raw", "select_context_raw"])
 		or not options is Array or options.size() > 1024
@@ -3764,6 +4119,8 @@ static func _frame_error(value: Variant) -> String:
 		or maximum > options.size() or not _safe_int(semantics.get("select_type_raw"))
 		or not _safe_int(semantics.get("select_context_raw"))
 	):
+		return "invalid_public_frame"
+	if _counter_state_error(options, semantics):
 		return "invalid_public_frame"
 	for index: int in options.size():
 		var option: Variant = options[index]

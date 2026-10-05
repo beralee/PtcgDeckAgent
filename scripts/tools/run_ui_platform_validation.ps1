@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("all", "functional", "ai", "web", "windows", "android")]
+    [ValidateSet("all", "ui", "functional", "ai", "web", "windows", "android")]
     [string]$Scope = "all",
     [string]$ArtifactDirectory = "",
     [switch]$SkipBrowserInstall,
@@ -58,7 +58,7 @@ function Invoke-ValidationGate {
     }
     $results.Add([ordered]@{
         name = $Name
-        status = $(if ($exitCode -eq 0) { "passed" } else { "failed" })
+        status = $(if ($exitCode -eq 0) { "passed" } elseif ($exitCode -eq 2) { "not_verified" } else { "failed" })
         exit_code = $exitCode
         started_at = $startedAt.ToString("o")
         duration_seconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 2)
@@ -69,44 +69,49 @@ function Invoke-ValidationGate {
 
 $runAll = $Scope -eq "all"
 $godotRunner = Join-Path $PSScriptRoot "run_godot_tests.ps1"
+if ($runAll -or $Scope -eq "ui") {
+    Invoke-ValidationGate -Name "ui" -ScriptPath $godotRunner -Arguments @("-Runner", "ui", "-ReportDirectory", (Join-Path $ArtifactDirectory "ui"))
+}
 if ($runAll -or $Scope -eq "functional") {
-    Invoke-ValidationGate -Name "functional" -ScriptPath $godotRunner -Arguments @("-Runner", "functional")
+    Invoke-ValidationGate -Name "functional" -ScriptPath $godotRunner -Arguments @("-Runner", "functional", "-ReportDirectory", (Join-Path $ArtifactDirectory "functional"))
 }
 if ($runAll -or $Scope -eq "ai") {
-    Invoke-ValidationGate -Name "ai" -ScriptPath $godotRunner -Arguments @("-Runner", "ai")
+    Invoke-ValidationGate -Name "ai" -ScriptPath $godotRunner -Arguments @("-Runner", "ai", "-ReportDirectory", (Join-Path $ArtifactDirectory "ai"))
 }
 if ($runAll -or $Scope -eq "web") {
-    $webArgs = @()
+    $webArgs = @("-ArtifactDirectory", (Join-Path $ArtifactDirectory "web"))
     if ($SkipBrowserInstall) { $webArgs += "-SkipBrowserInstall" }
     if ($SkipWebExport) { $webArgs += "-SkipExport" }
     Invoke-ValidationGate -Name "web" -ScriptPath (Join-Path $PSScriptRoot "run_web_ui_e2e.ps1") -Arguments $webArgs
 }
 if ($runAll -or $Scope -eq "windows") {
-    $windowsArgs = @()
+    $windowsArgs = @("-ArtifactDirectory", (Join-Path $ArtifactDirectory "windows"))
     if ($SkipWindowsExport) { $windowsArgs += "-SkipExport" }
     Invoke-ValidationGate -Name "windows" -ScriptPath (Join-Path $PSScriptRoot "run_windows_ui_e2e.ps1") -Arguments $windowsArgs
 }
 if ($runAll -or $Scope -eq "android") {
-    $androidArgs = @()
+    $androidArgs = @("-ArtifactDirectory", (Join-Path $ArtifactDirectory "android"))
     if ($SkipAndroidProvision) { $androidArgs += "-SkipProvision" }
     Invoke-ValidationGate -Name "android" -ScriptPath (Join-Path $PSScriptRoot "run_android_ui_e2e.ps1") -Arguments $androidArgs
 }
 
 $failed = @($results | Where-Object { $_.status -eq "failed" })
+$notVerified = @($results | Where-Object { $_.status -eq "not_verified" })
 $summary = [ordered]@{
     schema_version = 1
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
     repository = $repoRoot
     scope = $Scope
-    status = $(if ($failed.Count -eq 0) { "passed" } else { "failed" })
+    status = $(if ($failed.Count -gt 0) { "failed" } elseif ($notVerified.Count -gt 0) { "incomplete" } else { "passed" })
     passed = @($results | Where-Object { $_.status -eq "passed" }).Count
     failed = $failed.Count
-    not_verified = 0
+    not_verified = $notVerified.Count
     artifact_path = $ArtifactDirectory
     gates = $results
 }
 $summaryPath = Join-Path $ArtifactDirectory "summary.json"
 $latestRoot = Join-Path $repoRoot ".tmp\ui_platform_validation"
+New-Item -ItemType Directory -Force -Path $latestRoot | Out-Null
 $latestPath = Join-Path $latestRoot "latest-summary.json"
 $summaryJson = $summary | ConvertTo-Json -Depth 8
 [System.IO.File]::WriteAllText($summaryPath, $summaryJson, [System.Text.UTF8Encoding]::new($false))
@@ -114,3 +119,4 @@ $summaryJson = $summary | ConvertTo-Json -Depth 8
 $summaryJson
 
 if ($failed.Count -gt 0) { exit 1 }
+if ($notVerified.Count -gt 0) { exit 2 }

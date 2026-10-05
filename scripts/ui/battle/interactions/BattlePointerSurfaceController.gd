@@ -82,6 +82,10 @@ func handle_event(event: InputEvent, observation: Dictionary) -> bool:
 	var sequence: PointerSequence = observation.get("sequence", null) as PointerSequence
 	if sequence == null:
 		return false
+	if event is InputEventScreenTouch and event.canceled:
+		var owned := _sequence_owned_by_surface(sequence)
+		_active_gestures.erase(sequence.sequence_id)
+		return owned
 	# BattlePointerInputRouter normalizes native/browser compatibility events onto
 	# one semantic sequence. Only its canonical event may mutate gesture state:
 	# processing a mouse-first touch echo as a second press overwrites pointer_id,

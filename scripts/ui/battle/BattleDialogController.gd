@@ -862,6 +862,8 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 		scene.call("_sync_portrait_modal_overlay_rects")
 	if scene.has_method("_apply_portrait_popup_text_metrics"):
 		scene.call("_apply_portrait_popup_text_metrics")
+	var arena: Node = (scene as Node).get_node_or_null("Arena3DPresenter") if scene is Node else null
+	if arena != null: arena.call("style_dialog")
 	dialog_overlay.modulate = Color(1, 1, 1, 0)
 	dialog_overlay.visible = true
 	if scene.has_method("_raise_dialog_overlay_for_input"):
@@ -4889,7 +4891,7 @@ func show_exp_share_dialog(
 		"bench": bench_targets.duplicate(),
 		"source_slot": source_slot,
 		"source_energy": source_energy.duplicate(),
-		"min_select": 1,
+		"min_select": 0,
 		"max_select": 1,
 		"allow_cancel": false,
 	}
@@ -4912,7 +4914,7 @@ func show_exp_share_dialog(
 		"target_items": bench_targets.duplicate(),
 		"target_labels": target_labels,
 		"single_target_only": true,
-		"min_select": 1,
+		"min_select": 0,
 		"max_select": 1,
 		"allow_cancel": false,
 	}, true)

@@ -1,0 +1,39 @@
+{
+  "latest_version": "0.7.0",
+  "release_date": "2026-09-19",
+  "title": "示例配置，请替换为实际发布版本",
+  "summary": [
+    "游戏内下载和安装更新"
+  ],
+  "platforms": {
+    "windows": {
+      "version": "0.7.0",
+      "artifacts": [
+        {
+          "file": "windows-x86_64.zip",
+          "url": "https://ptcg.skillserver.cn/dist/updates/0.7.0/windows-x86_64.zip",
+          "arch": "x86_64",
+          "entry": "PTCGDeckAgent.exe"
+        }
+      ]
+    },
+    "macos": {
+      "version": "0.7.0"
+    },
+    "android": {
+      "version": "0.7.0",
+      "artifacts": [
+        {
+          "file": "android-arm64.apk",
+          "url": "https://ptcg.skillserver.cn/dist/updates/0.7.0/android-arm64.apk",
+          "arch": "arm64",
+          "entry": "PTCGDeckAgent.apk",
+          "build": 70
+        }
+      ]
+    },
+    "web": {
+      "version": "0.6.0.2"
+    }
+  }
+}

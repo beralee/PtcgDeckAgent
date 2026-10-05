@@ -7,7 +7,7 @@ const STEP_ID := "handheld_fan_assignment"
 func can_trigger(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> bool:
 	if attacker == null or defender == null or state == null:
 		return false
-	if defender.attached_tool == null or defender.attached_tool.card_data == null:
+	if defender.find_tool_by_effect_id("1bc2bed91258ca0ecfb69e5ee8dc0c79") == null:
 		return false
 	if state.players[0].active_pokemon != defender and state.players[1].active_pokemon != defender:
 		return false

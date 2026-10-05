@@ -1,10 +1,11 @@
-extends AcceptDialog
+extends "res://scripts/ui/GameModalDialog.gd"
 
 signal assistant_response_finished
 
 const DeckDiscussionServiceScript = preload("res://scripts/engine/DeckDiscussionService.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const DiscussionLayout := preload("res://scripts/ui/decks/DiscussionDialogLayout.gd")
 
 const DIALOG_SIZE := Vector2i(980, 760)
 const DIALOG_MIN_SIZE := Vector2i(820, 620)
@@ -69,14 +70,23 @@ var _portrait_popup_rect := Rect2i()
 var _portrait_touch_scale := 1.0
 var _portrait_keyboard_inset := 0.0
 var _use_non_battle_hidden_scrollbars := false
+var _request_active := false
+var _submitted_question := ""
+var _follow_latest := true
+var _scroll_queued := false
+var _setting_scroll := false
+var _pending_body: RichTextLabel
 
 
 func _ready() -> void:
+	super._ready()
+	scale_content = false
+	show_header = false
 	title = _discussion_title()
 	ok_button_text = "关闭"
 	dialog_hide_on_ok = true
 	min_size = DIALOG_MIN_SIZE
-	size = DIALOG_SIZE
+	dialog_size = DIALOG_SIZE
 	_service.message_completed.connect(_on_service_message_completed)
 	_service.status_changed.connect(_on_service_status_changed)
 	close_requested.connect(_on_dialog_close_requested)
@@ -86,6 +96,8 @@ func _ready() -> void:
 	%QuestionInput.gui_input.connect(_on_question_input_gui_input)
 	%QuestionInput.focus_entered.connect(_on_question_input_focus_entered)
 	%QuestionInput.focus_exited.connect(_on_question_input_focus_exited)
+	visibility_changed.connect(_on_discussion_visibility_changed)
+	%TranscriptScroll.get_v_scroll_bar().value_changed.connect(_on_transcript_scrolled)
 	NonBattleTouchBridgeScript.mark_native_text_input(%QuestionInput)
 	NonBattleTouchBridgeScript.bind_buttons_recursive(self)
 	_sync_non_battle_touch_bridge_policy()
@@ -103,15 +115,11 @@ func _ready() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		get_tree().quit()
+	super._notification(what)
 
 
 func _input(event: InputEvent) -> void:
-	if _use_non_battle_hidden_scrollbars and _layout_profile == PROFILE_PORTRAIT_TOUCH:
-		var root := get_node_or_null("Root") as Control
-		if root != null:
-			NonBattleTouchBridgeScript.handle_root_touch(root, event)
+	super._input(event)
 
 
 func _sync_non_battle_touch_bridge_policy() -> void:
@@ -119,9 +127,43 @@ func _sync_non_battle_touch_bridge_policy() -> void:
 
 
 func _on_dialog_close_requested() -> void:
+	_cancel_response()
 	_release_question_input_focus()
-	_stop_stream_timer()
 	hide()
+
+
+func _on_discussion_visibility_changed() -> void:
+	if not visible:
+		_cancel_response()
+
+
+func _exit_tree() -> void:
+	_cancel_response()
+	super._exit_tree()
+
+
+func _cancel_response() -> void:
+	if _request_active and has_node("%QuestionInput") and %QuestionInput.text.is_empty():
+		_set_question_text(_submitted_question)
+	_submitted_question = ""
+	_service.cancel_pending_request()
+	_request_active = false
+	_stop_stream_timer()
+	_stream_body = null
+	_stream_full_text = ""
+	_stream_index = 0
+	_stream_metadata = {}
+	_pending_body = null
+	if has_node("%SendButton"):
+		%SendButton.disabled = false
+
+
+func _begin_context(next_id: int) -> void:
+	_cancel_response()
+	if _deck != null and _deck.id != next_id:
+		_set_question_text("")
+	_refresh_suggestion_buttons([])
+	_follow_latest = true
 
 
 func _clamp_dialog_position(target: Vector2i) -> Vector2i:
@@ -131,8 +173,8 @@ func _clamp_dialog_position(target: Vector2i) -> Vector2i:
 	var viewport_rect := viewport.get_visible_rect()
 	var min_pos := Vector2i(viewport_rect.position)
 	var max_pos := Vector2i(
-		int(viewport_rect.position.x + viewport_rect.size.x) - size.x,
-		int(viewport_rect.position.y + viewport_rect.size.y) - size.y
+		int(viewport_rect.position.x + viewport_rect.size.x) - dialog_size.x,
+		int(viewport_rect.position.y + viewport_rect.size.y) - dialog_size.y
 	)
 	return Vector2i(
 		clampi(target.x, min_pos.x, maxi(min_pos.x, max_pos.x)),
@@ -141,14 +183,20 @@ func _clamp_dialog_position(target: Vector2i) -> Vector2i:
 
 
 func apply_desktop_profile() -> void:
+	if is_inside_tree():
+		_portrait_keyboard_inset = 0.0
+		_layout()
+		return
+	content_zoom = 1.0
+	content_min_height = 540.0
 	_layout_profile = PROFILE_DESKTOP
 	_portrait_frame_rect = Rect2()
 	_portrait_popup_rect = Rect2i()
 	_portrait_touch_scale = 1.0
 	_set_portrait_composer_stack(false)
 	min_size = DIALOG_MIN_SIZE
-	size = DIALOG_SIZE
-	var root := get_node_or_null("Root") as Control
+	dialog_size = DIALOG_SIZE
+	var root := get_content().get_node_or_null("Root") as Control
 	if root != null:
 		root.offset_left = 18.0
 		root.offset_top = 16.0
@@ -170,7 +218,7 @@ func apply_desktop_profile() -> void:
 		%AttachButton.custom_minimum_size = Vector2(48, 48)
 	if has_node("%ComposerRow"):
 		%ComposerRow.add_theme_constant_override("separation", 12)
-	var input_vbox := get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
+	var input_vbox := get_content().get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
 	if input_vbox != null:
 		input_vbox.add_theme_constant_override("separation", 8)
 	var actions := _actions_container()
@@ -206,6 +254,7 @@ func apply_desktop_profile() -> void:
 	_apply_battle_layout()
 	_refresh_existing_message_metrics()
 	_apply_discussion_scrollbar_policy(false)
+	_layout()
 
 
 func prepare_for_portrait_popup(frame_rect: Rect2) -> Rect2i:
@@ -219,20 +268,28 @@ func popup_for_viewport(frame_rect: Rect2, portrait: bool = false) -> void:
 			_release_question_input_focus()
 		if is_inside_tree():
 			popup(popup_rect)
-			position = popup_rect.position
-		size = popup_rect.size
+
+		dialog_size = popup_rect.size
 		return
 	apply_desktop_profile()
 	if is_inside_tree():
 		popup_centered(DIALOG_SIZE)
-	size = DIALOG_SIZE
+	dialog_size = DIALOG_SIZE
 
 
 func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
+	if is_inside_tree():
+		_portrait_frame_rect = frame_rect
+		_layout()
+		_portrait_popup_rect = Rect2i(get_panel().get_rect())
+		dialog_size = _portrait_popup_rect.size
+		return _portrait_popup_rect
 	_layout_profile = PROFILE_PORTRAIT_TOUCH
 	if frame_rect.size == Vector2.ZERO:
 		frame_rect = Rect2(Vector2.ZERO, Vector2(390, 844))
 	_portrait_frame_rect = frame_rect
+	content_zoom = minf(1.0, frame_rect.size.x / PORTRAIT_REFERENCE_LOGICAL_WIDTH)
+	content_min_height = 440.0
 	_portrait_touch_scale = _portrait_touch_scale_for_frame(frame_rect)
 	var layout_frame_rect := _portrait_frame_rect_with_keyboard_inset(frame_rect)
 	_portrait_popup_rect = _portrait_popup_rect_for_frame(layout_frame_rect)
@@ -240,7 +297,7 @@ func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
 		mini(PORTRAIT_DIALOG_MIN_SIZE.x, _portrait_popup_rect.size.x),
 		mini(PORTRAIT_DIALOG_MIN_SIZE.y, _portrait_popup_rect.size.y)
 	)
-	size = _portrait_popup_rect.size
+	dialog_size = _portrait_popup_rect.size
 	_set_portrait_composer_stack(false)
 	var root_margin := _portrait_px(8.0)
 	var root_height := maxf(float(_portrait_popup_rect.size.y) - root_margin * 2.0, 1.0)
@@ -259,13 +316,15 @@ func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
 	var suggestion_top := input_top - panel_gap - suggestion_height
 	var suggestion_bottom := input_top - panel_gap
 	var transcript_bottom := suggestion_top - panel_gap if show_suggestions else input_top - panel_gap
-	var root := get_node_or_null("Root") as Control
+	var root := get_content().get_node_or_null("Root") as Control
 	if root != null:
 		root.offset_left = root_margin
 		root.offset_top = root_margin
 		root.offset_right = -root_margin
 		root.offset_bottom = -root_margin
 	if has_node("%TitleLabel"):
+		%TitleLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		%TitleLabel.offset_right = -close_size
 		%TitleLabel.offset_top = title_top
 		%TitleLabel.offset_bottom = title_top + title_height
 		%TitleLabel.add_theme_font_size_override("font_size", _portrait_font_size(34.0))
@@ -307,7 +366,7 @@ func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
 		%AttachButton.visible = false
 	if has_node("%ComposerRow"):
 		%ComposerRow.add_theme_constant_override("separation", roundi(_portrait_px(8.0)))
-	var input_vbox := get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
+	var input_vbox := get_content().get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
 	if input_vbox != null:
 		input_vbox.add_theme_constant_override("separation", roundi(_portrait_px(10.0)))
 		input_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -333,11 +392,23 @@ func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
 	_refresh_existing_message_metrics()
 	_refresh_suggestion_button_metrics()
 	_apply_discussion_scrollbar_policy(true)
+	_layout()
 	return _portrait_popup_rect
+
+
+func _layout() -> void:
+	if not is_inside_tree() or not has_node("%QuestionInput"):
+		return
+	DiscussionLayout.apply(self)
+	layout_updated.emit()
 
 
 func apply_portrait_keyboard_inset(keyboard_height: float) -> Rect2i:
 	_portrait_keyboard_inset = maxf(0.0, keyboard_height)
+	# Public inset is in viewport coordinates; GameModal owns physical-keyboard
+	# conversion and placement. Never reopen the modal or steal focus on resize.
+	var screen_scale := DiscussionLayout.window_scale(self) if is_inside_tree() else 1.0
+	_keyboard_height = roundi(_portrait_keyboard_inset * screen_scale)
 	if _layout_profile != PROFILE_PORTRAIT_TOUCH:
 		return Rect2i()
 	var frame_rect := _portrait_frame_rect
@@ -345,9 +416,9 @@ func apply_portrait_keyboard_inset(keyboard_height: float) -> Rect2i:
 		frame_rect = Rect2(Vector2.ZERO, Vector2(390, 844))
 	var popup_rect := _apply_portrait_profile(frame_rect)
 	if is_inside_tree() and visible:
-		popup(popup_rect)
-		position = popup_rect.position
-	size = popup_rect.size
+		_layout()
+
+	dialog_size = popup_rect.size
 	return popup_rect
 
 
@@ -391,33 +462,31 @@ func _portrait_font_size(value: float) -> int:
 
 
 func _actions_container() -> HBoxContainer:
-	var actions := get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
+	var actions := get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
 	if actions != null:
 		return actions
-	return get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
+	return get_content().get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
 
 
 func _set_portrait_composer_stack(enabled: bool) -> void:
-	var input_vbox := get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
-	var composer_row := get_node_or_null("Root/InputPanel/InputVBox/ComposerRow") as HBoxContainer
+	var input_vbox := get_content().get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
+	var composer_row := get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow") as HBoxContainer
 	var actions := _actions_container()
 	if input_vbox == null or composer_row == null or actions == null:
 		return
 	var target_parent: Node = input_vbox if enabled else composer_row
 	if actions.get_parent() == target_parent:
 		return
-	var current_parent := actions.get_parent()
-	if current_parent != null:
-		current_parent.remove_child(actions)
-	actions.owner = null
-	target_parent.add_child(actions)
+	# reparent preserves scene ownership and %SendButton/%ResetButton bindings.
+	actions.reparent(target_parent, false)
 	if enabled:
 		input_vbox.move_child(actions, mini(composer_row.get_index() + 1, input_vbox.get_child_count() - 1))
 
 
 func setup_for_deck(deck: DeckData) -> void:
-	_stop_stream_timer()
-	_stream_body = null
+	if deck == null:
+		return
+	_begin_context(deck.id)
 	_forced_external_tool_results.clear()
 	_battle_context_provider = Callable()
 	_use_non_battle_hidden_scrollbars = true
@@ -432,15 +501,13 @@ func setup_for_deck(deck: DeckData) -> void:
 	%SendButton.disabled = false
 	_apply_fixed_window_size.call_deferred()
 	_reload_transcript()
-	_refresh_suggestion_buttons([])
 	call_deferred("_deferred_grab_question_focus")
 
 
 func setup_for_match(player_deck: DeckData, opponent_deck: DeckData, opponent_label: String = "AI 卡组", session_id: int = 0, reset_session: bool = false) -> void:
 	if player_deck == null or opponent_deck == null:
 		return
-	_stop_stream_timer()
-	_stream_body = null
+	_begin_context(session_id if session_id > 0 else _match_session_id(player_deck.id, opponent_deck.id, opponent_label))
 	_battle_context_provider = Callable()
 	_use_non_battle_hidden_scrollbars = true
 	_sync_non_battle_touch_bridge_policy()
@@ -462,15 +529,13 @@ func setup_for_match(player_deck: DeckData, opponent_deck: DeckData, opponent_la
 	%SendButton.disabled = false
 	_apply_fixed_window_size.call_deferred()
 	_reload_transcript()
-	_refresh_suggestion_buttons([])
 	call_deferred("_deferred_grab_question_focus")
 
 
 func setup_for_battle_context(view_deck: DeckData, battle_context: Dictionary, session_id: int = 0, reset_session: bool = false, context_provider: Callable = Callable()) -> void:
 	if view_deck == null:
 		return
-	_stop_stream_timer()
-	_stream_body = null
+	_begin_context(session_id if session_id > 0 else 730000000 + (abs(view_deck.id) % 100000))
 	_battle_context_provider = context_provider
 	_use_non_battle_hidden_scrollbars = false
 	_sync_non_battle_touch_bridge_policy()
@@ -493,7 +558,6 @@ func setup_for_battle_context(view_deck: DeckData, battle_context: Dictionary, s
 	%SendButton.disabled = false
 	_apply_fixed_window_size.call_deferred()
 	_reload_transcript()
-	_refresh_suggestion_buttons([])
 	call_deferred("_deferred_grab_question_focus")
 
 
@@ -575,10 +639,13 @@ func _apply_fixed_window_size() -> void:
 			_apply_portrait_profile(_portrait_frame_rect)
 		return
 	min_size = DIALOG_MIN_SIZE
-	size = DIALOG_SIZE
+	dialog_size = DIALOG_SIZE
 
 
 func _apply_compact_layout() -> void:
+	if is_inside_tree():
+		_layout()
+		return
 	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
 		_apply_portrait_profile(_portrait_frame_rect)
 		return
@@ -592,6 +659,9 @@ func _apply_compact_layout() -> void:
 
 
 func _apply_battle_layout() -> void:
+	if is_inside_tree():
+		_layout()
+		return
 	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
 		_apply_portrait_profile(_portrait_frame_rect)
 		return
@@ -782,6 +852,7 @@ func _style_chip_button(button: Button) -> void:
 
 func _reload_transcript() -> void:
 	for child: Node in %TranscriptList.get_children():
+		%TranscriptList.remove_child(child)
 		child.queue_free()
 	if _deck == null:
 		return
@@ -828,7 +899,7 @@ func _create_avatar(label_text: String, user: bool) -> Control:
 	label.text = label_text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", _portrait_font_size(30.0) if _is_portrait_profile() else 26)
+	label.add_theme_font_size_override("font_size", _avatar_font_size())
 	label.add_theme_color_override("font_color", Color(0.95, 0.99, 1.0, 1.0))
 	panel.add_child(label)
 	return panel
@@ -866,8 +937,9 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 	body.bbcode_enabled = true
 	body.fit_content = true
 	body.scroll_active = false
+	body.selection_enabled = true
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(maxf(bubble_width - float(_bubble_margin() * 2), _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH - 32.0)), 0)
+	body.custom_minimum_size = Vector2(maxf(bubble_width - float(_bubble_margin() * 2), 1.0 if is_inside_tree() else _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH - 32.0)), 0)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_color_override("default_color", COLOR_TEXT)
 	body.add_theme_font_size_override("normal_font_size", _body_font_size())
@@ -925,6 +997,7 @@ func _refresh_suggestion_buttons(suggestions: Array[String], preserve_existing: 
 	else:
 		_latest_suggestions = suggestions.duplicate()
 	for child: Node in %SuggestionButtons.get_children():
+		%SuggestionButtons.remove_child(child)
 		child.queue_free()
 	var has_visible_suggestion := false
 	for suggestion: String in _latest_suggestions:
@@ -933,14 +1006,15 @@ func _refresh_suggestion_buttons(suggestions: Array[String], preserve_existing: 
 		has_visible_suggestion = true
 		var button := Button.new()
 		button.text = suggestion
+		button.tooltip_text = suggestion
 		button.custom_minimum_size = Vector2(0, 44 if _is_portrait_profile() else 32)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.clip_text = _is_portrait_profile()
+		button.clip_text = true
 		_style_chip_button(button)
 		_apply_suggestion_button_profile(button)
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 		button.pressed.connect(func() -> void:
-			%QuestionInput.text = suggestion
+			_set_question_text(suggestion, true)
 			%QuestionInput.grab_focus()
 		)
 		%SuggestionButtons.add_child(button)
@@ -949,12 +1023,13 @@ func _refresh_suggestion_buttons(suggestions: Array[String], preserve_existing: 
 		_apply_portrait_profile(_portrait_frame_rect)
 	else:
 		%TranscriptScroll.offset_bottom = TRANSCRIPT_BOTTOM_WITH_SUGGESTIONS if has_visible_suggestion else TRANSCRIPT_BOTTOM
+	_layout()
 
 
 func _on_send_pressed() -> void:
 	if _deck == null:
 		return
-	if _service.is_busy():
+	if _service.is_busy() or _request_active or is_instance_valid(_stream_body):
 		%StatusLabel.text = "上一条请求还在处理中。"
 		return
 	var question: String = %QuestionInput.text.strip_edges()
@@ -963,26 +1038,32 @@ func _on_send_pressed() -> void:
 		return
 	var api_config: Dictionary = GameManager.get_battle_review_api_config()
 	if str(api_config.get("endpoint", "")).strip_edges() == "" or str(api_config.get("api_key", "")).strip_edges() == "":
-		%StatusLabel.text = "AI 未配置。请先在设置页填写 ZenMux endpoint 和 api_key。"
+		%StatusLabel.text = "尚未配置 DeepSeek，请先到设置页填写 API 地址和密钥。"
 		return
 	_refresh_live_battle_context_before_request()
-
+	# Establish UI ownership before starting transport: test/local clients may
+	# complete synchronously, and must not leave a pending bubble afterwards.
+	_request_active = true
+	_submitted_question = question
+	%SendButton.disabled = true
+	%StatusLabel.text = "请求中..."
+	_follow_latest = true
+	_add_hint_message("user", question)
+	_set_question_text("")
+	_pending_body = _add_message_bubble("assistant", PENDING_TEXT, {})
 	var result: Dictionary = _service.ask(self, _deck, question, api_config, _forced_external_tool_results)
 	var status := str(result.get("status", ""))
 	if status == "error":
-		%StatusLabel.text = "请求没有发出去：%s" % str(result.get("message", "unknown_error"))
-		%SendButton.disabled = false
+		if _request_active:
+			_on_service_message_completed(result)
 		return
 	if status == "ignored":
+		_request_active = false
+		_remove_last_pending_message()
+		_set_question_text(question)
 		%StatusLabel.text = "上一条请求还在处理中。"
 		%SendButton.disabled = false
 		return
-
-	%StatusLabel.text = "请求中..."
-	%SendButton.disabled = true
-	_add_hint_message("user", question)
-	%QuestionInput.clear()
-	_add_hint_message("assistant", PENDING_TEXT)
 	_queue_scroll_to_bottom()
 
 
@@ -1001,18 +1082,32 @@ func _refresh_live_battle_context_before_request() -> void:
 
 
 func _on_question_input_gui_input(event: InputEvent) -> void:
+	# A DOM editor can blur while Godot still considers this field focused.
+	# Reopen it on a fresh click even when focus_entered will not fire again.
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_request_question_web_input()
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
-		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ENTER and not key_event.shift_pressed:
+		if %QuestionInput.has_ime_text():
+			return
+		if _should_auto_focus_question_input() and key_event.pressed and not key_event.echo and key_event.keycode in [KEY_ENTER, KEY_KP_ENTER] and not key_event.shift_pressed:
 			get_viewport().set_input_as_handled()
 			_on_send_pressed()
 
 
 func _on_question_input_focus_entered() -> void:
+	_request_question_web_input()
 	_sync_portrait_keyboard_inset.call_deferred()
 	if is_inside_tree() and get_tree() != null:
 		var timer := get_tree().create_timer(0.16)
 		timer.timeout.connect(_sync_portrait_keyboard_inset, CONNECT_ONE_SHOT)
+
+
+func _request_question_web_input() -> void:
+	var bridge := NonBattleTouchBridgeScript.WebTextInputBridgeScript
+	if bridge.is_web_runtime():
+		%QuestionInput.set_meta(bridge.SUBMIT_ACTION_META, _on_send_pressed if _should_auto_focus_question_input() else Callable())
+		NonBattleTouchBridgeScript.request_web_text_input(%QuestionInput)
 
 
 func _on_question_input_focus_exited() -> void:
@@ -1022,7 +1117,7 @@ func _on_question_input_focus_exited() -> void:
 
 
 func _on_viewport_size_changed() -> void:
-	_sync_portrait_keyboard_inset.call_deferred()
+	_layout()
 
 
 func _sync_portrait_keyboard_inset() -> void:
@@ -1031,8 +1126,8 @@ func _sync_portrait_keyboard_inset() -> void:
 	if not has_node("%QuestionInput") or not %QuestionInput.has_focus():
 		return
 	var keyboard_height := 0.0
-	if DisplayServer.has_method("virtual_keyboard_get_height"):
-		keyboard_height = float(DisplayServer.call("virtual_keyboard_get_height"))
+	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+		keyboard_height = float(DisplayServer.call("virtual_keyboard_get_height")) / maxf(0.01, DiscussionLayout.window_scale(self))
 	apply_portrait_keyboard_inset(keyboard_height)
 
 
@@ -1050,10 +1145,15 @@ func _on_service_status_changed(status: String, context: Dictionary) -> void:
 
 
 func _on_service_message_completed(result: Dictionary) -> void:
+	if not _request_active:
+		return
+	_request_active = false
 	if String(result.get("status", "")) == "error":
 		%SendButton.disabled = false
 		_remove_last_pending_message()
 		%StatusLabel.text = "AI 对话失败：%s" % _format_error_message(result)
+		if %QuestionInput.text.is_empty():
+			_set_question_text(_submitted_question)
 		_queue_scroll_to_bottom()
 		return
 
@@ -1067,11 +1167,14 @@ func _on_service_message_completed(result: Dictionary) -> void:
 
 
 func _start_streaming_assistant_message(answer: String, metadata: Dictionary) -> void:
-	_stream_body = _find_last_pending_body()
+	_stream_body = _pending_body if is_instance_valid(_pending_body) else _find_last_pending_body()
+	_pending_body = null
 	if _stream_body == null:
 		_stream_body = _add_message_bubble("assistant", "", {})
 	else:
 		_stream_body.text = ""
+	_stream_body.text = _message_to_bbcode(answer)
+	_stream_body.visible_characters = 0
 	_stream_full_text = answer
 	_stream_index = 0
 	_stream_metadata = metadata.duplicate(true)
@@ -1089,11 +1192,10 @@ func _on_stream_tick() -> void:
 	if _stream_full_text == "":
 		_finish_streaming_assistant_message()
 		return
-	_stream_index = mini(_stream_index + STREAM_CHARS_PER_TICK, _stream_full_text.length())
-	var visible_text := _stream_full_text.substr(0, _stream_index)
-	_stream_body.text = _message_to_bbcode(visible_text)
+	_stream_index = mini(_stream_index + STREAM_CHARS_PER_TICK, _stream_body.get_total_character_count())
+	_stream_body.visible_characters = _stream_index
 	_queue_scroll_to_bottom()
-	if _stream_index >= _stream_full_text.length():
+	if _stream_index >= _stream_body.get_total_character_count():
 		_finish_streaming_assistant_message()
 
 
@@ -1109,6 +1211,7 @@ func _finish_streaming_assistant_message() -> void:
 			old_outer = old_outer.get_parent()
 	if old_outer != null and is_instance_valid(old_outer):
 		old_outer.visible = false
+		old_outer.get_parent().remove_child(old_outer)
 		old_outer.queue_free()
 	_add_message_bubble("assistant", _stream_full_text, _stream_metadata)
 	var next_suggestions := _to_string_array(_stream_metadata.get("suggested_questions", []))
@@ -1147,15 +1250,20 @@ func _find_last_pending_body() -> RichTextLabel:
 func _on_reset_pressed() -> void:
 	if _deck == null:
 		return
-	_stop_stream_timer()
-	_stream_body = null
-	if _service.has_method("cancel_pending_request"):
-		_service.cancel_pending_request()
+	_cancel_response()
 	_service.clear_history(_deck.id)
 	%StatusLabel.text = ""
 	%SendButton.disabled = false
-	%QuestionInput.clear()
+	_set_question_text("")
+	_refresh_suggestion_buttons([])
+	_follow_latest = true
 	_reload_transcript()
+
+
+func _set_question_text(value: String, keep_focused: bool = false) -> void:
+	# Updating only TextEdit leaves the browser textarea holding its old value;
+	# its delayed blur would otherwise resurrect a sent or cleared question.
+	NonBattleTouchBridgeScript.replace_text_input_value(%QuestionInput, value, keep_focused)
 
 
 func _remove_last_pending_message() -> void:
@@ -1171,7 +1279,9 @@ func _remove_last_pending_message() -> void:
 		return
 	var text := body.get_parsed_text()
 	if text == PENDING_TEXT:
+		%TranscriptList.remove_child(last)
 		last.queue_free()
+	_pending_body = null
 
 
 func _find_message_body_in_row(row: HBoxContainer) -> RichTextLabel:
@@ -1189,11 +1299,15 @@ func _find_message_body_in_row(row: HBoxContainer) -> RichTextLabel:
 
 
 func _queue_scroll_to_bottom() -> void:
+	if _scroll_queued or not _follow_latest:
+		return
+	_scroll_queued = true
 	call_deferred("_scroll_to_bottom_after_layout")
 
 
 func _scroll_to_bottom_after_layout() -> void:
 	if not is_inside_tree():
+		_scroll_queued = false
 		return
 	await get_tree().process_frame
 	if not is_inside_tree():
@@ -1201,11 +1315,23 @@ func _scroll_to_bottom_after_layout() -> void:
 	await get_tree().process_frame
 	if not is_inside_tree():
 		return
+	_scroll_queued = false
+	if not _follow_latest:
+		return
+	_setting_scroll = true
 	%TranscriptScroll.scroll_vertical = int(%TranscriptScroll.get_v_scroll_bar().max_value)
+	_setting_scroll = false
+
+
+func _on_transcript_scrolled(value: float) -> void:
+	if _setting_scroll:
+		return
+	var bar := %TranscriptScroll.get_v_scroll_bar() as VScrollBar
+	_follow_latest = value >= bar.max_value - bar.page - 24.0
 
 
 func _deferred_grab_question_focus() -> void:
-	if not is_inside_tree() or not has_node("%QuestionInput"):
+	if not is_inside_tree() or not visible or not has_node("%QuestionInput"):
 		return
 	if not _should_auto_focus_question_input():
 		return
@@ -1213,7 +1339,7 @@ func _deferred_grab_question_focus() -> void:
 
 
 func _should_auto_focus_question_input() -> bool:
-	return not (_layout_profile == PROFILE_PORTRAIT_TOUCH and _is_live_battle_discussion())
+	return _layout_profile != PROFILE_PORTRAIT_TOUCH and not DisplayServer.is_touchscreen_available()
 
 
 func _is_live_battle_discussion() -> bool:
@@ -1236,26 +1362,42 @@ func _is_portrait_profile() -> bool:
 
 
 func _body_font_size() -> int:
+	if is_inside_tree():
+		return 17
 	return _portrait_font_size(30.0) if _is_portrait_profile() else 15
 
 
 func _code_font_size() -> int:
+	if is_inside_tree():
+		return 16
 	return _portrait_font_size(27.0) if _is_portrait_profile() else 14
 
 
 func _heading_font_size() -> int:
+	if is_inside_tree():
+		return 20
 	return _portrait_font_size(36.0) if _is_portrait_profile() else 16
 
 
 func _footer_font_size() -> int:
+	if is_inside_tree():
+		return 13
 	return _portrait_font_size(22.0) if _is_portrait_profile() else 12
 
 
 func _avatar_size() -> float:
+	if is_inside_tree():
+		return 32
 	return _portrait_px(68.0) if _is_portrait_profile() else 58.0
 
 
+func _avatar_font_size() -> int:
+	return 16 if is_inside_tree() else (_portrait_font_size(30.0) if _is_portrait_profile() else 26)
+
+
 func _bubble_margin() -> int:
+	if is_inside_tree():
+		return 10
 	return roundi(_portrait_px(18.0)) if _is_portrait_profile() else 12
 
 
@@ -1276,7 +1418,7 @@ func _refresh_existing_message_metrics() -> void:
 			if direct_child is Label:
 				var avatar_size := _avatar_size()
 				panel.custom_minimum_size = Vector2(avatar_size, avatar_size)
-				(direct_child as Label).add_theme_font_size_override("font_size", _portrait_font_size(30.0) if _is_portrait_profile() else 26)
+				(direct_child as Label).add_theme_font_size_override("font_size", _avatar_font_size())
 				continue
 			if not (direct_child is VBoxContainer):
 				continue
@@ -1285,7 +1427,7 @@ func _refresh_existing_message_metrics() -> void:
 			for vbox_child: Node in vbox.get_children():
 				if vbox_child is RichTextLabel:
 					var rich := vbox_child as RichTextLabel
-					rich.custom_minimum_size = Vector2(maxf(bubble_width - float(_bubble_margin() * 2), _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH - 32.0)), 0)
+					rich.custom_minimum_size = Vector2(maxf(bubble_width - float(_bubble_margin() * 2), 1.0 if is_inside_tree() else _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH - 32.0)), 0)
 					rich.add_theme_font_size_override("normal_font_size", _body_font_size())
 					rich.add_theme_font_size_override("bold_font_size", _body_font_size())
 				elif vbox_child is Label:
@@ -1313,14 +1455,16 @@ func _apply_suggestion_button_profile(button: Button) -> void:
 
 
 func _bubble_width() -> float:
+	if is_inside_tree():
+		return clampf(get_content().size.x - _avatar_size() - 40, 40, MAX_BUBBLE_WIDTH)
 	if _is_portrait_profile():
 		var min_width := _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH)
 		var root_margin := _portrait_px(14.0)
-		var inner_width := maxf(float(size.x) - root_margin * 2.0, min_width)
+		var inner_width := maxf((float(dialog_size.x) - 40.0) / content_zoom - root_margin * 2.0, min_width)
 		var available_width := maxf(inner_width - _avatar_size() - _portrait_px(24.0), min_width)
 		var max_width := maxf(min_width, inner_width - _avatar_size() - _portrait_px(12.0))
 		return clampf(available_width, min_width, max_width)
-	var available_width := float(size.x) - 150.0
+	var available_width := float(dialog_size.x) - 150.0
 	return clampf(available_width * 0.72, MIN_BUBBLE_WIDTH, MAX_BUBBLE_WIDTH)
 
 
@@ -1338,8 +1482,6 @@ func _compact_model_name(model_id: String) -> String:
 	var slash := trimmed.rfind("/")
 	if slash >= 0 and slash + 1 < trimmed.length():
 		trimmed = trimmed.substr(slash + 1)
-	if trimmed.ends_with("-pro"):
-		trimmed = trimmed.substr(0, trimmed.length() - 4)
 	return trimmed
 
 
@@ -1398,7 +1540,7 @@ func _replace_wrapped(text: String, marker: String, open_tag: String, close_tag:
 
 
 func _escape_bbcode(text: String) -> String:
-	return text.replace("[", "\\[").replace("]", "\\]")
+	return text.replace("[", "[lb]")
 
 
 func _to_string_array(value: Variant) -> Array[String]:

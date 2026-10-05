@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-09-29T12:51:49.949815+00:00",
+  "godot": "D:\\ai\\godot\\Godot_v4.6.1-stable_win64_console.exe",
+  "filters": [
+    "--suite-script=res://tests/test_battle_setup_layout.gd"
+  ],
+  "suite_count": 1,
+  "isolation": "process-and-userdata-per-suite",
+  "suites": [
+    {
+      "name": "BattleSetupLayout",
+      "path": "res://tests/test_battle_setup_layout.gd",
+      "status": "passed",
+      "exit_code": 0,
+      "infrastructure_error": "",
+      "timeout_seconds": 180.0,
+      "elapsed_seconds": 11.082,
+      "report": "C:\\Users\\24726\\.codex\\tmp\\opponent_talk_final_layout_20260929\\0001-BattleSetupLayout\\result.json",
+      "log": "C:\\Users\\24726\\.codex\\tmp\\opponent_talk_final_layout_20260929\\0001-BattleSetupLayout\\console.log",
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "total": 43
+    }
+  ],
+  "resumed_from": "",
+  "status": "passed",
+  "completed_suites": 1,
+  "statuses": {
+    "passed": 1
+  },
+  "completed_at": "2026-09-29T12:52:01.038861+00:00",
+  "totals": {
+    "total": 43,
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0
+  }
+}

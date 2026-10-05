@@ -1,0 +1,119 @@
+{
+  "code": 200,
+  "data": {
+    "name": "奥利纽",
+    "cardType": "Pokemon",
+    "mechanic": null,
+    "label": null,
+    "description": "【无】 巴掌 20\n\n\n【草】【无】 泼油 40\n在下一个对手的回合，受到这个招式影响的宝可梦在使用招式时，对手将抛掷1次硬币。如果为反面则那个招式失败。\n\n",
+    "yorenCode": "P0929",
+    "pokemonAttr": {
+      "energyType": "G",
+      "stage": "Stage 1",
+      "hp": 90,
+      "ability": [],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "R",
+        "value": "×2"
+      },
+      "resistance": null,
+      "retreatCost": 1,
+      "attack": [
+        {
+          "name": "巴掌",
+          "text": "",
+          "cost": "C",
+          "damage": "20",
+          "isVStarPower": false
+        },
+        {
+          "name": "泼油",
+          "text": "在下一个对手的回合，受到这个招式影响的宝可梦在使用招式时，对手将抛掷1次硬币。如果为反面则那个招式失败。",
+          "cost": "GC",
+          "damage": "40",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": "迷你芙"
+    },
+    "setCode": "CSV1C",
+    "cardIndex": "015",
+    "setCardsNum": "",
+    "artist": "Mina Nakai",
+    "rarity": "C",
+    "releaseDate": "2025-01-16T16:00:00Z",
+    "regulationMark": "G",
+    "effectId": "5eddf621d8b7bca3d4e0f737b4daea19",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "CSVL2C",
+        "cardIndex": "005",
+        "cardName": "奥利纽",
+        "rarity": "无标记",
+        "effectId": "5eddf621d8b7bca3d4e0f737b4daea19",
+        "cardType": "Pokemon",
+        "yorenCode": "P0929",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "22",
+        "nameEn": "Dolliv"
+      },
+      {
+        "setCode": "CSVL2C",
+        "cardIndex": "056",
+        "cardName": "奥利纽",
+        "rarity": "无标记",
+        "effectId": "5eddf621d8b7bca3d4e0f737b4daea19",
+        "cardType": "Pokemon",
+        "yorenCode": "P0929",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "22",
+        "nameEn": "Dolliv"
+      },
+      {
+        "setCode": "CSV1C",
+        "cardIndex": "015",
+        "cardName": "奥利纽",
+        "rarity": "C",
+        "effectId": "5eddf621d8b7bca3d4e0f737b4daea19",
+        "cardType": "Pokemon",
+        "yorenCode": "P0929",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "22",
+        "nameEn": "Dolliv"
+      },
+      {
+        "setCode": "CSV1C",
+        "cardIndex": "129",
+        "cardName": "奥利纽",
+        "rarity": "AR",
+        "effectId": "5eddf621d8b7bca3d4e0f737b4daea19",
+        "cardType": "Pokemon",
+        "yorenCode": "P0929",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "22",
+        "nameEn": "Dolliv"
+      }
+    ],
+    "setCodeEn": "SVI",
+    "cardIndexEn": "22",
+    "nameEn": "Dolliv"
+  },
+  "msg": "OK."
+}

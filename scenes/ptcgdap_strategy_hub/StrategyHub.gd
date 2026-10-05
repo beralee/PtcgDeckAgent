@@ -83,6 +83,7 @@ var _local_public_replay_rows: Array[Dictionary] = []
 var _active_workspace := WORKSPACE_CATALOG
 var _ai_settings_content: Control = null
 var _active_marketplace_board := MARKETPLACE_STRATEGY_RANKINGS
+var _marketplace_page_counts := {}
 var _detail_extra_sections: Dictionary = {}
 var _quick_install_button: Button = null
 var _quick_install_release_id := ""
@@ -157,7 +158,7 @@ func _ready() -> void:
 	_bind_local_package_catalog()
 	_refresh_local_packages(false)
 	_replay_viewer = get_node_or_null("%ReplayViewer")
-	if _skip_service_initialization_for_tests:
+	if _skip_service_initialization_for_tests or get_tree().root.has_meta("performance_bench_offline"):
 		_refresh_local_replays()
 		_finish_startup_performance_trace(ready_started)
 		return
@@ -579,7 +580,7 @@ func _apply_desktop_presentation() -> void:
 	find_child("LocalReplayScroll", true, false).vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	%QuickActions.visible = desktop and _active_workspace in [WORKSPACE_CATALOG, WORKSPACE_LOCAL]
 	%QuickImportButton.visible = desktop
-	%DiscoveryGuide.text = "天梯排名 · 见证开发者实力，下载即可挑战" if _active_workspace == WORKSPACE_CATALOG else "选择已下载的策略，开始对战"
+	%DiscoveryGuide.text = "成为AI训练家 · 制作自己的 AI 策略，挑战天梯与人类玩家" if _active_workspace == WORKSPACE_CATALOG else "选择已下载的策略，开始对战"
 	# Keep service internals and file paths out of the player's main route.
 	for node_name: String in ["HeaderSubtitle", "CatalogKicker", "CatalogTitle", "CatalogHint",
 		"LocalPackageTitle", "LocalPackageHint", "ImportKicker", "ImportTitle", "ImportSummary",
@@ -607,7 +608,7 @@ func _apply_desktop_presentation() -> void:
 	%AISettingsTab.text = "DeepSeek"
 	%StrategyRankingBoardTab.text = "策略排名"
 	%LatestBoardTab.text = "最新上架"
-	%AuthorRankingBoardTab.text = "作者榜"
+	%AuthorRankingBoardTab.text = "AI训练家榜"
 	%MarketplaceBoardStateLabel.hide()
 	var snapshot: Dictionary = _workspace_statuses.get(_active_workspace, {})
 	%StatusStrip.visible = bool(snapshot.get("error", false))
@@ -694,7 +695,7 @@ func _on_local_strategy_start(reference: Dictionary) -> void:
 func _configure_replay_platform(platform: String = OS.get_name()) -> void:
 	_replays_enabled = platform not in ["Android", "Web"]
 	%ReplayTab.show()
-	%ReplayTab.text = "开发者"
+	%ReplayTab.text = "AI训练家"
 	%DeveloperPortalButton.tooltip_text = DEVELOPER_PORTAL_URL
 	%DeveloperDeviceHint.visible = not _replays_enabled
 	for node_name: String in ["ReplayHeaderRow", "LocalReplayHint", "ReplayFolderRows", "ReplayDivider", "LocalReplayScroll"]:
@@ -819,9 +820,12 @@ func _on_local_strategy_detail(reference: Dictionary) -> void:
 		return
 	_open_strategy_detail()
 	%StrategyTitle.text = str(record.get("display_name", "策略"))
-	%AuthorLabel.text = "作者：%s" % str(record.get("author_name", "未知"))
+	%AuthorLabel.text = "AI训练家：%s" % str(record.get("author_name", "未知"))
 	%SummaryLabel.text = str(record.get("summary", ""))
 	%ReleaseLabel.text = "已下载 · %s" % str(record.get("package_version_label", ""))
+	var runtime: Dictionary = record.get("runtime_compatibility", {})
+	if not str(runtime.get("minimum_client_version", "")).is_empty():
+		%ReleaseLabel.text += " · 需要游戏 v%s（build %s）或更新的兼容版本" % [runtime.minimum_client_version, runtime.minimum_client_build]
 	_set_catalog_legacy_replay_visible(false)
 	_hide_marketplace_author_works()
 	for node_name: String in ["MatchHistoryDivider", "MatchHistoryTitle", "MatchHistoryList", "StatsDivider", "StatsTitle", "OfficialStats", "ShadowStats", "CommunityStats"]:
@@ -830,8 +834,13 @@ func _on_local_strategy_detail(reference: Dictionary) -> void:
 	%SelectedDownloadButton.set_meta("installable_release", reference.duplicate(true))
 	%SelectedDownloadButton.set_meta("start_strategy_ref", {})
 	%SelectedDownloadButton.visible = true
-	%SelectedDownloadButton.text = "开战" if _local_package_can_start(record) else "暂不可开战"
-	%SelectedDownloadButton.disabled = not _local_package_can_start(record)
+	var admission := _local_package_admission(record)
+	var available := bool(admission.get("ok", false))
+	%SelectedDownloadButton.text = "开战" if available else "暂不可开战"
+	%SelectedDownloadButton.disabled = not available
+	%SelectedDownloadButton.tooltip_text = "" if available else _local_package_unavailable_text(admission)
+	if not available:
+		%SummaryLabel.text += "\n\n无法开战：" + _local_package_unavailable_text(admission)
 	_update_detail_primary_action()
 	_update_strategy_deck_preview(reference)
 
@@ -843,6 +852,8 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if preload("res://scripts/ui/GameModalDialog.gd").active_for(self) != null:
+		return
 	if not is_visible_in_tree() or %ReplayOverlay.visible:
 		return
 	if %LocalPackageDeleteDialog.visible:
@@ -999,7 +1010,7 @@ func _initialize_service() -> void:
 	if _continuous_ladder_mode:
 		%LatestBoardTab.visible = false
 		%StrategyRankingBoardTab.text = "策略积分榜"
-		%AuthorRankingBoardTab.text = "开发者榜"
+		%AuthorRankingBoardTab.text = "AI训练家榜"
 		_select_marketplace_board(MARKETPLACE_STRATEGY_RANKINGS, false)
 	phase_started = Time.get_ticks_usec()
 	var created: Dictionary = _client_script.create(null, _base_url, _allow_insecure_loopback)
@@ -1112,7 +1123,7 @@ func _render_local_packages(diagnostic_count: int) -> void:
 		for record: Dictionary in _local_package_records:
 			var admission := _local_package_admission(record)
 			var available := bool(admission.get("ok", false))
-			var unavailable_reason := AUTHOR_WINDOWS_GATE_SCRIPT.PlatformCapabilitiesScript.error_text(str(admission.get("error_code", "")))
+			var unavailable_reason := _local_package_unavailable_text(admission)
 			var source_label := "内置 + 用户目录" if record.get("install_sources", []).size() > 1 else (
 				"用户目录" if record.get("install_source") == "user" else "内置"
 			)
@@ -1148,7 +1159,7 @@ func _render_local_packages(diagnostic_count: int) -> void:
 			))
 			header.add_child(badge)
 			var meta := Label.new()
-			meta.text = "%s · %s" % [record.get("author_name", "未知作者"), record.get("deck_name", "未命名卡组")]
+			meta.text = "%s · %s" % [record.get("author_name", "未知AI训练家"), record.get("deck_name", "未命名卡组")]
 			meta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			meta.add_theme_color_override("font_color", HUD_THEME_SCRIPT.TEXT_MUTED)
 			content.add_child(meta)
@@ -1166,7 +1177,7 @@ func _render_local_packages(diagnostic_count: int) -> void:
 			readiness.visible = not available
 			if not _portrait_context.is_empty():
 				badge.hide()
-				meta.text = "%s · %s" % [record.get("author_name", "未知作者"), record.get("package_version_label", "")]
+				meta.text = "%s · %s" % [record.get("author_name", "未知AI训练家"), record.get("package_version_label", "")]
 				readiness.visible = not available
 			var actions := _responsive_row()
 			actions.set_meta("hub_primary_actions", true)
@@ -1227,7 +1238,7 @@ func _local_package_can_start(record: Dictionary) -> bool:
 
 func _local_package_unavailable_text(admission: Dictionary) -> String:
 	var reason := AUTHOR_WINDOWS_GATE_SCRIPT.PlatformCapabilitiesScript.error_text(str(admission.get("error_code", "")))
-	return reason if not reason.is_empty() else "该策略尚未通过本地运行校验，请选择其他策略。"
+	return reason if not reason.is_empty() else "此策略暂不能开战（%s）。请保留此错误码并联系策略作者检查。" % str(admission.get("error_code", "unknown"))
 
 
 func _local_package_admission(record: Dictionary) -> Dictionary:
@@ -1280,16 +1291,25 @@ func _on_local_package_source_read(captured: Dictionary, generation: int) -> voi
 	_local_package_import_busy = false
 	_set_busy(false)
 	if not bool(result.get("ok", false)):
-		_set_workspace_status(WORKSPACE_LOCAL, _local_package_error_text(str(result.get("error_code", "package_install_failed"))), true)
+		_set_workspace_status(WORKSPACE_LOCAL, _local_package_error_text(str(result.get("error_code", "package_install_failed")), result), true)
 		return
 	_apply_local_package_catalog(result.get("catalog_report", {}))
 	var metadata: Dictionary = result.get("metadata", {})
 	var strategy: Dictionary = metadata.get("strategy", {}) if metadata.get("strategy", {}) is Dictionary else {}
 	var display_name := str(strategy.get("display_name", metadata.get("package_id", "策略包")))
+	var installed_record := _local_package_record_for_ref(metadata)
+	var admission := _local_package_admission(installed_record)
+	if not bool(admission.get("ok", false)):
+		_set_workspace_status(WORKSPACE_LOCAL, "%s 已导入，但暂不能开战。%s" % [display_name, _local_package_unavailable_text(admission)], true)
+		return
+	var runtime: Dictionary = metadata.get("runtime_compatibility", {})
+	var version_hint := ""
+	if not str(runtime.get("minimum_client_version", "")).is_empty():
+		version_hint = " 需要游戏 v%s（build %s）或更新的兼容版本。" % [runtime.minimum_client_version, runtime.minimum_client_build]
 	_set_workspace_status(WORKSPACE_LOCAL,
-		"%s 已在用户目录中，无需重复复制；现在可在 AI 对战的“AI 卡组”中选择。" % display_name
+		("%s 已在用户目录中，无需重复复制；现在可在 AI 对战的“AI 卡组”中选择。" % display_name
 		if bool(result.get("already_installed", false)) else
-		"%s 已通过验证并加载；现在可在 AI 对战的“AI 卡组”中选择。" % display_name
+		"%s 已通过验证并加载；现在可在 AI 对战的“AI 卡组”中选择。" % display_name) + version_hint
 	)
 
 
@@ -1419,7 +1439,9 @@ func _local_package_record_for_ref(reference: Dictionary) -> Dictionary:
 	return {}
 
 
-func _local_package_error_text(error_code: String) -> String:
+func _local_package_error_text(error_code: String, result: Dictionary = {}) -> String:
+	var compatibility_text := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyRuntimeCompatibility.gd").error_text(result)
+	if not compatibility_text.is_empty(): return compatibility_text
 	var messages := {
 		"package_file_missing": "没有读取到所选文件，请重新选择。",
 		"package_file_read_failed": "所选文件读取失败，请确认文件可用后重新选择。",
@@ -1432,11 +1454,11 @@ func _local_package_error_text(error_code: String) -> String:
 		"package_file_unlisted": "策略包包含清单未声明的额外文件。",
 		"package_contract_incompatible": "策略包与当前游戏接口版本不兼容。",
 		"package_catalog_incompatible": "策略包使用的卡牌目录版本与当前游戏不兼容。",
-		"package_policy_unsupported": "策略包使用了当前游戏不支持的策略格式。",
+		"package_policy_unsupported": "策略规则未通过当前游戏的格式校验（package_policy_unsupported）。请确认策略与客户端兼容，或联系作者检查策略包。",
 		"package_resource_limit_exceeded": "策略包过大或超过安全资源限制。",
 		"package_deck_invalid": "策略包牌表格式不正确或不是完整 60 张。",
 		"package_deck_unmapped": "策略包牌表中存在当前游戏没有的卡牌，或牌表不完整。",
-		"package_install_identity_conflict": "相同包 ID 和版本已经存在，但文件内容不同。请让作者提升版本号。",
+		"package_install_identity_conflict": "相同包 ID 和版本已经存在，但文件内容不同。请让AI训练家提升版本号。",
 		"package_install_destination_conflict": "用户目录中已有冲突文件，未覆盖任何内容。",
 		"package_install_user_data_unavailable": "游戏用户目录不可用，未写入任何文件。",
 		"package_install_catalog_refresh_failed": "文件写入后未能通过目录复验，已自动回滚。",
@@ -1637,7 +1659,7 @@ func _select_marketplace_board(board_id: String, request_if_empty: bool = true) 
 	%MarketplaceBoardStateLabel.text = (
 		{
 			MARKETPLACE_STRATEGY_RANKINGS: "按服务端积分从高到低排列",
-			MARKETPLACE_AUTHOR_RANKINGS: "每位开发者只取当前 active 版本中的最佳策略",
+			MARKETPLACE_AUTHOR_RANKINGS: "每位AI训练家只取当前 active 版本中的最佳策略",
 		}.get(normalized, "")
 		if _continuous_ladder_mode else {
 			MARKETPLACE_LATEST: "按首次发布时间倒序",
@@ -1645,6 +1667,8 @@ func _select_marketplace_board(board_id: String, request_if_empty: bool = true) 
 			MARKETPLACE_AUTHOR_RANKINGS: "贡献分 = 所选比赛配置下的平均比赛奖励",
 		}.get(normalized, "")
 	)
+	if _marketplace_page_counts.has(normalized):
+		_set_marketplace_page_state(normalized, cursor, int(_marketplace_page_counts[normalized]))
 	if not request_if_empty or _client == null:
 		return
 	var list: VBoxContainer = {
@@ -1726,7 +1750,7 @@ func _apply_continuous_ladder_authors(items: Array, profile_id: String) -> void:
 	_clear_children(%AuthorRankingList)
 	if items.is_empty():
 		%AuthorRankingList.add_child(_empty_state_card(
-			"暂无开发者排名", "当前持续联赛还没有开发者策略积分。"
+			"暂无AI训练家排名", "当前持续联赛还没有AI训练家策略积分。"
 		))
 	for item_value: Variant in items:
 		if not item_value is Dictionary:
@@ -1741,9 +1765,9 @@ func _apply_continuous_ladder_authors(items: Array, profile_id: String) -> void:
 		button.name = "ContinuousLadderAuthorButton"
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.text = "#%d  %s\n%s%s\n最佳版本：%s · 点击查看作者档案" % [
+		button.text = "#%d  %s\n%s%s\n最佳版本：%s · 点击查看AI训练家档案" % [
 			int(item.get("rank", 0)),
-			str(item.get("author_display_name", item.get("developer_id", "未知开发者"))),
+			str(item.get("author_display_name", item.get("developer_id", "未知AI训练家"))),
 			_format_ladder_score(float(item.get("mu", 0.0))),
 			" · 暂定" if bool(item.get("provisional", false)) else "",
 			str(item.get("display_name", item.get("release_id", "未知版本"))),
@@ -1757,7 +1781,7 @@ func _apply_continuous_ladder_authors(items: Array, profile_id: String) -> void:
 	_set_marketplace_page_state(MARKETPLACE_AUTHOR_RANKINGS, null, items.size())
 	_set_workspace_status(
 		WORKSPACE_CATALOG,
-		"已连接 %s：作者榜只统计开发者 active 版本，游戏内置 NPC 不进入作者榜。" % profile_id
+		"已连接 %s：AI训练家榜只统计AI训练家 active 版本，游戏内置 NPC 不进入AI训练家榜。" % profile_id
 	)
 
 
@@ -1777,10 +1801,10 @@ func _continuous_ladder_release_card(item: Dictionary) -> PanelContainer:
 			"平台 NPC · %s" % str(item.get("owner_id", item.get("release_id", "未知")))
 			if npc else str(item.get("release_id", "未知策略"))
 		)
-	var owner_label := "平台 NPC" if npc else "开发者策略"
+	var owner_label := "平台 NPC" if npc else "AI训练家策略"
 	var author_label := (
-		"归属游戏自身，不占开发者三槽位"
-		if npc else "开发者：%s" % str(item.get(
+		"归属游戏自身，不占AI训练家三槽位"
+		if npc else "AI训练家：%s" % str(item.get(
 			"author_display_name", item.get("developer_id", "未知")
 		))
 	)
@@ -1799,14 +1823,14 @@ func _continuous_ladder_release_card(item: Dictionary) -> PanelContainer:
 		button.text = "%s\n%s · %d 局%s\n%s" % [title,
 			_format_ladder_score(float(item.get("mu", 0.0))), int(item.get("actual_game_count", 0)),
 			" · 暂定" if bool(item.get("provisional", false)) else "",
-			"内置对手" if npc else "作者 · %s" % str(item.get("author_display_name", item.get("developer_id", "未知开发者")))]
+			"内置对手" if npc else "AI训练家 · %s" % str(item.get("author_display_name", item.get("developer_id", "未知AI训练家")))]
 	button.pressed.connect(_on_continuous_ladder_release_pressed.bind(button))
 	_style_strategy_button(button, false)
 	if _portrait_context.is_empty():
 		button.text = "%s\n%s · %d 局%s\n%s" % [title,
 			_format_ladder_score(float(item.get("mu", 0.0))), int(item.get("actual_game_count", 0)),
 			" · 暂定" if bool(item.get("provisional", false)) else "",
-			"内置对手" if npc else "作者 · %s" % str(item.get("author_display_name", item.get("developer_id", "未知开发者")))]
+			"内置对手" if npc else "AI训练家 · %s" % str(item.get("author_display_name", item.get("developer_id", "未知AI训练家")))]
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 		button.add_theme_font_size_override("font_size", 20)
@@ -1968,22 +1992,22 @@ func _on_continuous_ladder_author_pressed(button: Button) -> void:
 	if developer_id.is_empty():
 		return
 	_open_strategy_detail()
-	%StrategyTitle.text = "%s 的作者档案" % str(item.get(
+	%StrategyTitle.text = "%s 的AI训练家档案" % str(item.get(
 		"author_display_name", developer_id
 	))
-	%AuthorLabel.text = "正在读取该作者的全部策略与积分…"
+	%AuthorLabel.text = "正在读取该AI训练家的全部策略与积分…"
 	%SummaryLabel.text = ""
 	%SelectedDownloadButton.visible = false
 	if _client == null:
 		return
 	_set_busy(true)
-	_set_workspace_status(WORKSPACE_CATALOG, "正在读取作者全部策略与得分…")
+	_set_workspace_status(WORKSPACE_CATALOG, "正在读取AI训练家全部策略与得分…")
 	var started: Dictionary = _client.fetch_continuous_ladder_author_profile(
 		developer_id
 	)
 	if not bool(started.get("accepted", false)):
 		_set_busy(false)
-		_set_workspace_status(WORKSPACE_CATALOG, "作者档案读取失败。", true)
+		_set_workspace_status(WORKSPACE_CATALOG, "AI训练家档案读取失败。", true)
 
 
 func _show_continuous_ladder_release_loading(item: Dictionary) -> void:
@@ -1992,7 +2016,7 @@ func _show_continuous_ladder_release_loading(item: Dictionary) -> void:
 	%DetailKicker.text = "策略档案"
 	_set_catalog_legacy_replay_visible(false)
 	%StrategyTitle.text = str(item.get("display_name", item.get("release_id", "策略")))
-	%AuthorLabel.text = "作者：%s" % str(item.get(
+	%AuthorLabel.text = "AI训练家：%s" % str(item.get(
 		"author_display_name", "游戏内置 NPC" if item.get("owner_kind") == "platform_npc" else "未知"
 	))
 	%SummaryLabel.text = "正在读取历史积分、对战记录与胜率…"
@@ -2020,9 +2044,9 @@ func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
 	_set_catalog_legacy_replay_visible(false)
 	%StrategyTitle.text = str(release.get("display_name", release.get("release_id", "策略")))
 	%AuthorLabel.text = (
-		"归属：游戏内置 NPC（无需下载，不占开发者三槽位）"
+		"归属：游戏内置 NPC（无需下载，不占AI训练家三槽位）"
 		if release.get("owner_kind") == "platform_npc" else
-		"作者：%s" % str(release.get("author_display_name", release.get("developer_id", "未知")))
+		"AI训练家：%s" % str(release.get("author_display_name", release.get("developer_id", "未知")))
 	)
 	%SummaryLabel.text = str(release.get("summary", ""))
 	%ReleaseLabel.text = "全榜 #%s · %s%s" % [
@@ -2097,11 +2121,11 @@ func _apply_continuous_ladder_release_profile(profile: Dictionary) -> void:
 func _apply_continuous_ladder_author_profile(profile: Dictionary) -> void:
 	var author: Dictionary = profile.get("author", {})
 	var releases: Array = profile.get("releases", [])
-	var display_name := str(author.get("display_name", author.get("developer_id", "作者")))
-	%DetailKicker.text = "作者档案"
+	var display_name := str(author.get("display_name", author.get("developer_id", "AI训练家")))
+	%DetailKicker.text = "AI训练家档案"
 	_set_catalog_legacy_replay_visible(false)
-	%StrategyTitle.text = "%s 的作者档案" % display_name
-	%AuthorLabel.text = "作者榜 #%s · 最佳策略 %s%s" % [
+	%StrategyTitle.text = "%s 的AI训练家档案" % display_name
+	%AuthorLabel.text = "AI训练家榜 #%s · 最佳策略 %s%s" % [
 		str(author.get("rank", "—")),
 		_format_ladder_score(float(author.get("mu", 0.0))),
 		" · 暂定" if bool(author.get("provisional", false)) else "",
@@ -2112,7 +2136,7 @@ func _apply_continuous_ladder_author_profile(profile: Dictionary) -> void:
 	]
 	%ReleaseLabel.text = "最佳版本：%s" % str(author.get("best_release_id", "—"))
 	%SelectedDownloadButton.visible = false
-	%OfficialStats.text = "作者策略总数：%d" % releases.size()
+	%OfficialStats.text = "AI训练家策略总数：%d" % releases.size()
 	%ShadowStats.text = "每个版本独立显示联赛积分和胜率。"
 	%CommunityStats.text = "点击策略可继续查看其积分历史与逐场记录。"
 	%MatchHistoryDivider.visible = false
@@ -2126,7 +2150,7 @@ func _apply_continuous_ladder_author_profile(profile: Dictionary) -> void:
 	for item_value: Variant in releases:
 		if item_value is Dictionary:
 			%AuthorWorksList.add_child(_continuous_ladder_author_release_row(item_value))
-	_set_workspace_status(WORKSPACE_CATALOG, "作者档案已加载：共 %d 个策略版本。" % releases.size())
+	_set_workspace_status(WORKSPACE_CATALOG, "AI训练家档案已加载：共 %d 个策略版本。" % releases.size())
 
 
 func _continuous_ladder_match_row(item: Dictionary) -> PanelContainer:
@@ -2302,7 +2326,7 @@ func _apply_marketplace_author_rankings(
 	_clear_children(%AuthorRankingList)
 	if items.is_empty():
 		%AuthorRankingList.add_child(_empty_state_card(
-			"暂无作者排行", "当前比赛配置还没有达到发布条件的作者贡献数据。"
+			"暂无AI训练家排行", "当前比赛配置还没有达到发布条件的AI训练家贡献数据。"
 		))
 	for item_value: Variant in items:
 		if not item_value is Dictionary:
@@ -2314,7 +2338,7 @@ func _apply_marketplace_author_rankings(
 		button.custom_minimum_size = Vector2(0, 76)
 		button.text = "#%d  %s\nKaggle 分 %.3f · 胜率 %.1f%% · %d 场%s · 查看最高分 5 个策略" % [
 			int(item.get("rank", 0)),
-			str(item.get("author_display_name", item.get("author_id", "未知作者"))),
+			str(item.get("author_display_name", item.get("author_id", "未知AI训练家"))),
 			float(item.get("kaggle_score_micros", 0)) / 1000000.0,
 			float(item.get("win_rate_micros", 0)) / 10000.0,
 			int(item.get("games", 0)),
@@ -2327,7 +2351,7 @@ func _apply_marketplace_author_rankings(
 	_set_marketplace_page_state(MARKETPLACE_AUTHOR_RANKINGS, next_cursor, items.size())
 	_set_workspace_status(
 		WORKSPACE_CATALOG,
-		"作者贡献榜已锁定快照 %s；点击作者查看当前赛道最高分 5 个策略。" % snapshot_id
+		"AI训练家贡献榜已锁定快照 %s；点击AI训练家查看当前赛道最高分 5 个策略。" % snapshot_id
 	)
 
 
@@ -2336,18 +2360,18 @@ func _apply_marketplace_author_strategies(author: Dictionary, items: Array) -> v
 	%AuthorWorksTitle.visible = true
 	%AuthorWorksList.visible = true
 	%AuthorWorksTitle.text = "%s的策略作品" % str(
-		author.get("display_name", author.get("author_id", "作者"))
+		author.get("display_name", author.get("author_id", "AI训练家"))
 	)
 	_clear_children(%AuthorWorksList)
 	if items.is_empty():
 		%AuthorWorksList.add_child(_empty_state_card(
-			"暂无可安装作品", "这位作者当前没有完成显式绑定且可在本机安装的 .ptcgai。"
+			"暂无可安装作品", "这位AI训练家当前没有完成显式绑定且可在本机安装的 .ptcgai。"
 		))
 	else:
 		for item_value: Variant in items:
 			if item_value is Dictionary:
-				%AuthorWorksList.add_child(_marketplace_strategy_row(item_value, "作者作品"))
-	_set_workspace_status(WORKSPACE_CATALOG, "已加载作者作品 %d 个。" % items.size())
+				%AuthorWorksList.add_child(_marketplace_strategy_row(item_value, "AI训练家作品"))
+	_set_workspace_status(WORKSPACE_CATALOG, "已加载AI训练家作品 %d 个。" % items.size())
 
 
 func _apply_marketplace_strategy_archive(strategy: Dictionary, matches: Array) -> void:
@@ -2380,19 +2404,19 @@ func _apply_marketplace_author_top_strategies(
 	%AuthorWorksTitle.visible = true
 	%AuthorWorksList.visible = true
 	%AuthorWorksTitle.text = "%s · 最高分 5 个策略" % str(
-		author.get("display_name", author.get("author_id", "作者"))
+		author.get("display_name", author.get("author_id", "AI训练家"))
 	)
 	_clear_children(%AuthorWorksList)
 	if items.is_empty():
 		%AuthorWorksList.add_child(_empty_state_card(
-			"暂无计分策略", "这位作者在当前比赛配置下还没有可排名的策略。"
+			"暂无计分策略", "这位AI训练家在当前比赛配置下还没有可排名的策略。"
 		))
 	else:
 		for item_value: Variant in items:
 			if not item_value is Dictionary:
 				continue
 			var item := item_value as Dictionary
-			var prefix := "作者第 %d · 全榜 #%d\nKaggle 分 %.3f · 胜率 %.1f%% · %d 场%s" % [
+			var prefix := "AI训练家第 %d · 全榜 #%d\nKaggle 分 %.3f · 胜率 %.1f%% · %d 场%s" % [
 				int(item.get("author_strategy_rank", 0)),
 				int(item.get("rank", 0)),
 				float(item.get("kaggle_score_micros", 0)) / 1000000.0,
@@ -2402,7 +2426,7 @@ func _apply_marketplace_author_top_strategies(
 			]
 			%AuthorWorksList.add_child(_marketplace_strategy_row(item, prefix))
 	_set_workspace_status(
-		WORKSPACE_CATALOG, "已加载作者最高分策略 %d 个。" % items.size()
+		WORKSPACE_CATALOG, "已加载AI训练家最高分策略 %d 个。" % items.size()
 	)
 
 
@@ -2453,6 +2477,7 @@ func _hide_marketplace_author_works() -> void:
 
 func _set_marketplace_page_state(board_id: String, next_cursor: Variant, item_count: int) -> void:
 	_marketplace_cursors[board_id] = next_cursor
+	_marketplace_page_counts[board_id] = item_count
 	if board_id == _active_marketplace_board:
 		%MarketplaceNextButton.visible = next_cursor is String and not str(next_cursor).is_empty()
 		%MarketplaceBoardStateLabel.text = (
@@ -2475,7 +2500,7 @@ func _marketplace_strategy_row(item: Dictionary, prefix: String) -> PanelContain
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var author: Dictionary = item.get("author", {})
 	var author_name := str(item.get(
-		"author_display_name", author.get("display_name", "未知作者")
+		"author_display_name", author.get("display_name", "未知AI训练家")
 	))
 	var title := str(item.get("display_name", item.get("strategy_id", "策略")))
 	info.text = "%s%s\n%s · %s" % [
@@ -2544,7 +2569,7 @@ func _show_marketplace_strategy(item: Dictionary) -> void:
 	var release_value: Variant = item.get("installable_release")
 	var release: Dictionary = release_value if release_value is Dictionary else {}
 	%StrategyTitle.text = str(item.get("display_name", item.get("strategy_id", "策略")))
-	%AuthorLabel.text = "作者：%s" % str(item.get(
+	%AuthorLabel.text = "AI训练家：%s" % str(item.get(
 		"author_display_name", item.get("author", {}).get("display_name", "未知")
 	))
 	%SummaryLabel.text = str(item.get("summary", ""))
@@ -2575,13 +2600,13 @@ func _on_marketplace_author_pressed(button: Button) -> void:
 		return
 	_open_strategy_detail()
 	_set_busy(true)
-	_set_workspace_status(WORKSPACE_CATALOG, "正在读取作者最高分 5 个策略…")
+	_set_workspace_status(WORKSPACE_CATALOG, "正在读取AI训练家最高分 5 个策略…")
 	var started: Dictionary = _client.list_marketplace_author_top_strategies(
 		_marketplace_ranking_profile_id, author_id, 5
 	)
 	if not bool(started.get("accepted", false)):
 		_set_busy(false)
-		_set_workspace_status(WORKSPACE_CATALOG, "作者最高分策略读取失败。", true)
+		_set_workspace_status(WORKSPACE_CATALOG, "AI训练家最高分策略读取失败。", true)
 
 
 func _on_marketplace_download_pressed(button: Button) -> void:
@@ -2643,7 +2668,7 @@ func _apply_marketplace_package_download(result: Dictionary) -> void:
 		_set_workspace_status(
 			WORKSPACE_CATALOG,
 			"下载完成但安装校验失败：%s" % _local_package_error_text(
-				str(installed.get("error_code", "package_install_failed"))
+				str(installed.get("error_code", "package_install_failed")), installed
 			),
 			true
 		)
@@ -2712,7 +2737,7 @@ func _apply_catalog(items: Array) -> void:
 		var button := Button.new()
 		button.text = "%s\n%s" % [
 			str(item.get("display_name", item.get("strategy_id", ""))),
-			str(item.get("author_display_name", "未知作者")),
+			str(item.get("author_display_name", "未知AI训练家")),
 		]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size = Vector2(0, 72)
@@ -2752,7 +2777,7 @@ func _apply_detail(detail: Dictionary) -> void:
 	%StrategyTitle.text = str(detail.get("display_name", detail.get("strategy_id", "策略")))
 	%SummaryLabel.text = str(detail.get("summary", ""))
 	var author: Dictionary = detail.get("author", {})
-	%AuthorLabel.text = "作者：%s" % str(author.get("display_name", author.get("author_id", "未知")))
+	%AuthorLabel.text = "AI训练家：%s" % str(author.get("display_name", author.get("author_id", "未知")))
 	_selected_release_id = ""
 	var releases: Array = detail.get("releases", [])
 	if not releases.is_empty() and releases[0] is Dictionary:

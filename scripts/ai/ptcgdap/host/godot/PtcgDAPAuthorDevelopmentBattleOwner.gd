@@ -819,6 +819,8 @@ static func _legal_send_out_slots(
 
 
 func _run_handoff_step(battle_scene: Control, heavy_baton: bool) -> bool:
+	if not heavy_baton:
+		return _run_exp_share_step(battle_scene)
 	var data: Dictionary = battle_scene.get("_dialog_data")
 	if int(data.get("player", -1)) != player_index:
 		return false
@@ -838,12 +840,35 @@ func _run_handoff_step(battle_scene: Control, heavy_baton: bool) -> bool:
 	if index < 0 or index >= bench.size():
 		return false
 	var energies: Array = data.get("source_energy", [])
-	var ok := _gsm.resolve_heavy_baton_choice_with_energy(player_index, bench[index], energies) \
-		if heavy_baton else _gsm.resolve_exp_share_choice(player_index, bench[index], energies[0] if not energies.is_empty() else null)
+	var ok := _gsm.resolve_heavy_baton_choice_with_energy(player_index, bench[index], energies)
 	if not ok:
 		_engine_rejections += 1
 		return false
 	_clear_prompt_if_same(battle_scene, "heavy_baton_target" if heavy_baton else "exp_share_target", player_index)
+	_engine_commits += 1
+	return true
+
+
+func _run_exp_share_step(battle_scene: Control) -> bool:
+	var data: Dictionary = battle_scene.get("_dialog_data")
+	if int(data.get("player", -1)) != player_index:
+		return false
+	var bench: Array = data.get("bench", [])
+	var energies: Array = data.get("source_energy", [])
+	if bench.size() != 1 or energies.is_empty():
+		return false
+	var selected := _select_items("exp_share_target", _options_for_items(energies, "select_energy"), 0, 1)
+	if has_pending_external_decision() or has_pending_policy_decision():
+		return false
+	var target: PokemonSlot = null if selected.is_empty() else bench[0]
+	var energy: CardInstance = null if selected.is_empty() else energies[int(selected[0])]
+	var consumed := data.duplicate(true)
+	# A synchronous resolution may immediately publish the next copy's choice.
+	_clear_prompt_if_same(battle_scene, "exp_share_target", player_index)
+	if not _gsm.resolve_exp_share_choice(player_index, target, energy):
+		_restore_prompt_if_unclaimed(battle_scene, "exp_share_target", consumed)
+		_engine_rejections += 1
+		return false
 	_engine_commits += 1
 	return true
 
@@ -1095,6 +1120,7 @@ func _pick_interaction_items(items: Array, step: Dictionary, _context: Dictionar
 	var prompt_kind := _prompt_kind_for_step(step)
 	var option_context := _context.duplicate(true)
 	var raw_semantics := _select_raw_semantics_for_step(step, prompt_kind, false)
+	_add_public_assignment_limits(raw_semantics, step)
 	option_context["cabt_select_type_raw"] = raw_semantics.get("type")
 	option_context["cabt_select_context_raw"] = raw_semantics.get("context")
 	var ucis_option_type := _ucis_option_type_for_step(step, false)
@@ -1188,6 +1214,7 @@ func _pick_interaction_target_index(
 	var options: Array = []
 	var option_context := context.duplicate(true)
 	var target_semantics := _select_raw_semantics_for_step(step, "assignment_target", true)
+	_add_public_assignment_limits(target_semantics, step)
 	option_context["cabt_select_type_raw"] = target_semantics.get("type")
 	option_context["cabt_select_context_raw"] = target_semantics.get("context")
 	var ucis_target_option_type := _ucis_option_type_for_step(step, true)
@@ -1465,7 +1492,7 @@ func _current_selection_request_fingerprint(
 	var hashed: Dictionary = TreeHashScript.public_observation_hash({
 		"seat": player_index,
 		"prompt_kind": prompt_kind,
-		"public_state": _build_public_state(),
+		"public_state": _build_selection_public_state(prompt_kind, options, raw_semantics_override),
 		"select_semantics": _selection_semantics(
 			prompt_kind, minimum, maximum, raw_semantics_override
 		),
@@ -1537,31 +1564,45 @@ func _developer_model_evidence(frame: Dictionary, response: Dictionary) -> Dicti
 		if typeof(value) != TYPE_INT or value < 0 or value >= options.size() or value in checked:
 			return {"status": "unavailable", "error_code": "model_trace_rule_indexes_invalid"}
 		checked.append(value)
-	var projected: Dictionary = _model_actor.SemanticInput.project(frame, _model_actor._allowed_uids)
+	# Rules-only captures remain semantic teacher data. A loaded model must be
+	# recorded with the exact projector and frontier used by its runtime profile.
+	var semantic_profile: bool = _model_actor._policy_mode == "rules_only" \
+		or _model_actor._tensor_profile_id in [_model_actor.SemanticInput.PROFILE_ID, _model_actor.SemanticInputV2.PROFILE_ID]
+	var projected: Dictionary = _model_actor.SemanticInput.project(frame, _model_actor._allowed_uids) \
+		if _model_actor._policy_mode == "rules_only" else _model_actor._tensorize_development_frame(frame)
 	if not bool(projected.get("ok", false)):
 		return {"status": "unavailable", "error_code": str(projected.get("error_code", "model_public_frame_invalid"))}
-	var frontier: Array = response.get("decision_audit",{}).get("model_frontier",{}).get("indexes",checked)
+	var base_frontier: Dictionary = response.get("decision_audit", {}).get("model_frontier", {})
+	var frontier: Array = base_frontier.get("indexes", checked) if semantic_profile \
+		else _model_frontier_from_response(response, checked, options.size())
 	var frontier_rows: Array = []
-	for index: int in frontier:
+	for index: Variant in frontier:
+		if typeof(index) != TYPE_INT or not projected.current_index_to_row.has(index) \
+			or projected.current_index_to_row[index] in frontier_rows:
+			return {"status": "unavailable", "error_code": "model_trace_frontier_invalid"}
 		frontier_rows.append(projected.current_index_to_row[index])
-	return {
+	var is_v2: bool = semantic_profile and _model_actor._tensor_profile_id == _model_actor.SemanticInputV2.PROFILE_ID
+	var option_width: int = 48 if is_v2 else (_model_actor.SemanticInput.OPTION_WIDTH if semantic_profile else _model_actor.OPTION_WIDTH)
+	var evidence := {
 		"status": "captured",
-		"profile_id": "ptcgdap-semantic-model-input-v1",
-		"tensor_profile_id": "ptcgdap_local_semantic_actor_i32_v1",
-		"semantic_projector_sha256": _script_artifact_sha256("res://scripts/ai/ptcgdap/host/godot/SemanticModelInput.gd"),
+		"profile_id": "ptcgdap-semantic-model-input-v2" if is_v2 else "ptcgdap-semantic-model-input-v1" if semantic_profile else "ptcgdap-development-model-input-v1",
+		"tensor_profile_id": _model_actor.SemanticInputV2.PROFILE_ID if is_v2 else _model_actor.SemanticInput.PROFILE_ID if semantic_profile else _model_actor._tensor_profile_id,
 		"projector_sha256": _model_projector_artifact_sha256(),
 		"frame_i32": Array(projected.frame_i32),
 		"frame_presence_i32": Array(projected.frame_presence_i32),
-		"option_i32": Array(projected.option_i32.slice(0, options.size() * 32)),
-		"option_presence_i32": Array(projected.option_presence_i32.slice(0, options.size() * 32)),
+		"option_i32": Array(projected.option_i32.slice(0, options.size() * option_width)),
+		"option_presence_i32": Array(projected.option_presence_i32.slice(0, options.size() * option_width)),
 		"option_mask_i32": Array(projected.option_mask_i32.slice(0, options.size())),
 		"row_to_current_index": projected.row_to_current_index.duplicate(),
 		"semantic_keys": projected.semantic_keys.duplicate(),
 		"frontier_indexes": Array(frontier),
-		"base_frontier": response.get("decision_audit",{}).get("model_frontier",{}).duplicate(true),
+		"base_frontier": base_frontier.duplicate(true),
 		"frontier_rows": frontier_rows,
 		"authority": "diagnostic_only",
 	}
+	if semantic_profile:
+		evidence["semantic_projector_sha256"] = _script_artifact_sha256("res://scripts/ai/ptcgdap/host/godot/SemanticModelInputV2.gd" if is_v2 else "res://scripts/ai/ptcgdap/host/godot/SemanticModelInput.gd")
+	return evidence
 
 
 func _model_projector_artifact_sha256() -> String:
@@ -1676,6 +1717,28 @@ func _queue_developer_decision(
 	})
 
 
+func _build_selection_public_state(
+	prompt_kind: String, options: Array, raw_semantics_override: Dictionary
+) -> Dictionary:
+	# Scheduling and polling must fingerprint the same public selection facts.
+	# Rebuild them without advancing the immutable window sequence.
+	var state := _build_public_state()
+	var competitive := _uses_competitive_policy_v2()
+	if competitive:
+		var raw := raw_semantics_override if not raw_semantics_override.is_empty() else _select_raw_semantics(prompt_kind)
+		state["decision"]["selection"] = {
+			"remaining_energy_cost": raw.get("remainEnergyCost"),
+			"remaining_damage_counters": raw.get("remainDamageCounter"),
+			"max_assignments": raw.get("max_assignments"),
+			"max_assignments_per_target": raw.get("max_assignments_per_target"),
+			"allow_partial": raw.get("allow_partial"),
+		}
+		# Live accepted assignments override static effect metadata.
+		if not options.is_empty() and options[0].has("remaining_damage_counters"):
+			state["decision"]["selection"]["remaining_damage_counters"] = options[0].remaining_damage_counters
+	return state
+
+
 func _build_frame(
 	prompt_kind: String,
 	options: Array,
@@ -1685,7 +1748,7 @@ func _build_frame(
 ) -> Dictionary:
 	_sequence += 1
 	_prompt_counts[prompt_kind] = int(_prompt_counts.get(prompt_kind, 0)) + 1
-	var state := _build_public_state()
+	var state := _build_selection_public_state(prompt_kind, options, raw_semantics_override)
 	var competitive := _uses_competitive_policy_v2()
 	var observation_source := {
 		"schema_version": 2 if competitive else 1,
@@ -1739,9 +1802,8 @@ func _selection_semantics(
 		"select_type_raw": raw_semantics.get("type"),
 		"select_context_raw": raw_semantics.get("context"),
 	}
-	# Competitive v2 is a frozen, closed-key author-policy contract. The CABT
-	# selection window and UCIS runtime retain their remain-* facts in their own
-	# typed owners; they must not leak into this older public projection.
+	# Keep the existing closed selection wire shape. Public remaining budgets
+	# now live in decision.selection; private research retains its prior shape.
 	if _authority_mode == "a3_private_oracle_research":
 		semantics["remain_damage_counter"] = maxi(
 			0, int(raw_semantics.get("remainDamageCounter", 0))
@@ -1756,7 +1818,7 @@ func _build_public_state() -> Dictionary:
 	var state := _gsm.game_state
 	var own: PlayerState = state.players[player_index]
 	var opponent: PlayerState = state.players[1 - player_index]
-	return {
+	var public_state := {
 		"turn_number": maxi(0, int(state.turn_number)),
 		"phase": _phase_name(state),
 		"self": {
@@ -1784,6 +1846,86 @@ func _build_public_state() -> Dictionary:
 			"prizes_remaining": opponent.prizes.size(),
 		},
 	}
+
+	if _uses_competitive_policy_v2():
+		public_state["decision"] = _public_decision_state()
+	return public_state
+
+
+func _public_decision_state() -> Dictionary:
+	var state: GameState = _gsm.game_state
+	var result := {
+		"version": 1, "current_player_index": state.current_player_index,
+		"first_player_index": state.first_player_index,
+		"stadium": {"card_uid": _uid_for_card(state.stadium_card),
+			"owner_index": state.stadium_owner_index if state.stadium_card != null and state.stadium_owner_index in [0, 1] else null},
+		"turn": {"stadium_play_available": not state.stadium_played_this_turn,
+			"stadium_effect_used": state.stadium_effect_used_turn == state.turn_number
+				and state.stadium_effect_used_player == state.current_player_index},
+		"selection": {"remaining_energy_cost": null, "remaining_damage_counters": null,
+			"max_assignments": null, "max_assignments_per_target": null, "allow_partial": null},
+		"entities": [],
+	}
+	for side: String in ["self", "opponent"]:
+		var seat := player_index if side == "self" else 1 - player_index
+		var player: PlayerState = state.players[seat]
+		result[side] = {
+			"is_first_turn": state.is_first_turn_for_player(seat),
+			"vstar_used": state.vstar_power_used[seat],
+			"knocked_out_previous_opponent_turn": state.was_knocked_out_during_opponents_previous_turn(seat),
+			"bench_capacity": BenchLimitScript.get_bench_limit_for_player(state, player, _gsm.effect_processor),
+			"lost_zone": _public_cards(player.lost_zone),
+		}
+		for slot: PokemonSlot in player.get_all_pokemon():
+			if slot != null and slot.get_top_card() != null:
+				result.entities.append(_public_decision_entity(slot, seat))
+	return result
+
+
+func _public_decision_entity(slot: PokemonSlot, seat: int) -> Dictionary:
+	var state: GameState = _gsm.game_state
+	var processor: EffectProcessor = _gsm.effect_processor
+	var conditions: Array = []
+	for name: String in ["poisoned", "burned", "asleep", "paralyzed", "confused"]:
+		if bool(slot.status_conditions.get(name, false)): conditions.append(name)
+	var energies: Array = []
+	var units := 0
+	for energy: CardInstance in slot.attached_energy:
+		var count := processor.get_energy_colorless_count(energy, state)
+		units += count
+		energies.append({"serial": _serial_for_card(energy), "local_card_uid": _uid_for_card(energy),
+			"units": count, "types": Array(processor.get_energy_types(energy, state))})
+	var attacks: Array = []
+	for index: int in slot.get_card_data().attacks.size():
+		var attack: Dictionary = slot.get_card_data().attacks[index]
+		var candidates := _effective_attack_cost_candidates(slot, attack)
+		var debt := 32
+		for cost: String in candidates:
+			debt = mini(debt, _missing_energy_units(slot.attached_energy, cost))
+		attacks.append({"attack_index": index, "source_uid": _uid_for_slot(slot),
+			"cost_candidates": Array(candidates), "energy_debt": debt, "energy_ready": debt == 0})
+	var retreat_cost := processor.get_effective_retreat_cost(slot, state)
+	return {
+		"entity_serial": _entity_serial_for_slot(slot),
+		"played_this_turn": slot.turn_played == state.turn_number,
+		"evolved_this_turn": slot.turn_evolved == state.turn_number,
+		"conditions": conditions, "effective_retreat_cost": retreat_cost,
+		"retreat_energy_units": units, "retreat_energy_ready": units >= retreat_cost,
+		"tool_effect_suppressed": processor.is_tool_effect_suppressed(slot, state),
+		"ability_disabled": processor.is_ability_disabled(slot, state),
+		"early_evolution_allowed": processor.slot_allows_early_evolution(slot, seat, state),
+		"ability_use_recorded_this_turn": slot.has_ability_used(state.turn_number),
+		"energies": energies, "attacks": attacks,
+	}
+
+
+static func _add_public_assignment_limits(raw: Dictionary, step: Dictionary) -> void:
+	# Copy only explicit public limits, never callbacks, effect objects or defaults.
+	for key: String in ["max_assignments", "max_assignments_per_target"]:
+		if typeof(step.get(key)) == TYPE_INT and int(step[key]) >= 0:
+			raw[key] = step[key]
+	if typeof(step.get("allow_partial")) == TYPE_BOOL:
+		raw["allow_partial"] = step["allow_partial"]
 
 
 func _options_for_items(
@@ -1914,7 +2056,7 @@ func _make_option(
 			"card_serial": option_card_serial,
 			"source_uid": source_uid,
 			"target_uid": target_uid,
-			"target_remaining_hp": maxi(0, target_slot.get_remaining_hp()) if target_slot != null else null,
+			"target_remaining_hp": _effective_public_remaining_hp(target_slot) if target_slot != null else null,
 			"target_prize_value": target_slot.get_prize_count() if target_slot != null else null,
 			"attached_energy_count": target_slot.attached_energy.size() if target_slot != null else null,
 			"attack_index": attack_index_value,
@@ -1956,7 +2098,7 @@ func _make_option(
 		"target_uid": target_uid,
 		"target_serial": target_serial,
 		"target_entity_serial": _entity_serial_for_slot(target_slot),
-		"target_remaining_hp": maxi(0, target_slot.get_remaining_hp()) if target_slot != null else null,
+		"target_remaining_hp": _effective_public_remaining_hp(target_slot) if target_slot != null else null,
 		"target_prize_value": clampi(target_slot.get_prize_count(), 1, 3) if target_slot != null else null,
 		"target_attached_energy_count": target_profile.get("attached_energy_count") if target_slot != null else null,
 		"target_attached_energy_uids": target_profile.get("attached_energy_uids", []).duplicate() \
@@ -1978,6 +2120,15 @@ func _make_option(
 		"option_type_raw": raw_option_type,
 		"option_player_index": option_player_index,
 	}
+	# Explicit optional public counter state; preserve actual remaining HP
+	# and the existing energy-assignment count semantics.
+	if interaction_context.has("remaining_damage_counters") and target_slot != null:
+		var pending_damage_counters := 0
+		for entry_value: Variant in interaction_context.get("pending_counter_assignments", []):
+			if entry_value is Dictionary and entry_value.get("target") == target_slot:
+				pending_damage_counters += maxi(0, int(entry_value.get("amount", 0)) / 10)
+		competitive_option["target_pending_damage_counters"] = pending_damage_counters
+		competitive_option["remaining_damage_counters"] = maxi(0, int(interaction_context["remaining_damage_counters"]))
 	# The private A3 research port has a separate, explicitly reviewed position
 	# shape. Frozen data-only Competitive v2 packages do not receive these keys.
 	if _authority_mode == "a3_private_oracle_research":
@@ -1999,10 +2150,13 @@ func _resolve_granted_attack_identity(action: Dictionary, source_slot: PokemonSl
 		for stack_card: CardInstance in source_slot.pokemon_stack:
 			if stack_card != null and int(stack_card.instance_id) == original_instance_id:
 				return {"card": stack_card, "attack_index": original_attack_index}
-	if str(granted_attack.get("source", "")) == "tool" and source_slot.attached_tool != null:
+	if str(granted_attack.get("source", "")) == "tool":
 		# Technical Machines expose one printed granted attack. Bind its public
 		# attack identity to the attached Tool printing, not to the attacker.
-		return {"card": source_slot.attached_tool, "attack_index": 0}
+		var tool_instance_id := int(granted_attack.get("source_card_instance_id", -1))
+		for tool: CardInstance in source_slot.get_attached_tools():
+			if int(tool.instance_id) == tool_instance_id:
+				return {"card": tool, "attack_index": 0}
 	return {}
 
 
@@ -2023,41 +2177,36 @@ func _slot_attack_profile(slot: PokemonSlot, interaction_context: Dictionary) ->
 		var uid: Variant = _uid_for_card(energy)
 		if uid != null:
 			attached_uids.append(uid)
-	var minimum_cost := 0
-	var minimum_debt := 0
-	var has_attack := false
-	for attack_value: Variant in slot.get_card_data().attacks:
-		if not attack_value is Dictionary:
-			continue
-		var cost := CardData.normalize_attack_cost(str(attack_value.get("cost", "")))
-		var count := cost.length()
-		var debt := _missing_energy_units(attached, cost)
-		if not has_attack or debt < minimum_debt or (debt == minimum_debt and count < minimum_cost):
-			minimum_cost = count
-			minimum_debt = debt
-		has_attack = true
 	var evaluation_slot := slot
-	var simulated: PokemonSlot = null
 	if pending_count > 0:
-		simulated = PokemonSlot.new()
+		var simulated := PokemonSlot.new()
 		simulated.pokemon_stack = slot.pokemon_stack.duplicate()
 		simulated.attached_energy = attached
-		simulated.attached_tool = slot.attached_tool
+		simulated.attached_tools = slot.get_attached_tools()
 		simulated.damage_counters = slot.damage_counters
 		simulated.status_conditions = slot.status_conditions.duplicate(true)
 		simulated.effects = slot.effects.duplicate(true)
 		evaluation_slot = simulated
+	var minimum_cost := 0
+	var minimum_debt := 0
+	var has_attack := false
 	var ready := false
-	if has_attack and _gsm != null and _gsm.rule_validator != null:
-		for attack_value: Variant in slot.get_card_data().attacks:
-			if not attack_value is Dictionary:
-				continue
-			var cost := CardData.normalize_attack_cost(str(attack_value.get("cost", "")))
-			if _gsm.rule_validator.has_enough_energy(
+	for attack_value: Variant in slot.get_card_data().attacks:
+		if not attack_value is Dictionary:
+			continue
+		# Cost modifiers inspect the real public entity, including its owner,
+		# zone, Tool and suppression state. Only the payment view is simulated.
+		for cost: String in _effective_attack_cost_candidates(slot, attack_value):
+			var count := cost.length()
+			var debt := _missing_energy_units(attached, cost)
+			if not has_attack or debt < minimum_debt or (debt == minimum_debt and count < minimum_cost):
+				minimum_cost = count
+				minimum_debt = debt
+			has_attack = true
+			if _gsm != null and _gsm.rule_validator != null and _gsm.rule_validator.has_enough_energy(
 				evaluation_slot, cost, _gsm.effect_processor, _gsm.game_state
 			):
 				ready = true
-				break
 	return {
 		"attached_energy_count": attached.size(),
 		"attached_energy_uids": attached_uids,
@@ -2066,6 +2215,24 @@ func _slot_attack_profile(slot: PokemonSlot, interaction_context: Dictionary) ->
 		"energy_debt": minimum_debt if has_attack else 0,
 		"pending_assignment_count": pending_count,
 	}
+
+
+func _effective_attack_cost_candidates(slot: PokemonSlot, attack: Dictionary) -> Array[String]:
+	var cost := CardData.normalize_attack_cost(str(attack.get("cost", "")))
+	if _gsm == null or _gsm.rule_validator == null or _gsm.effect_processor == null or _gsm.game_state == null:
+		return [cost]
+	# Mirror RuleValidator.get_attack_unusable_reason's cost-only branch.
+	# This is not a claim that an attack is legal now or after a future pivot.
+	var any_modifier := _gsm.effect_processor.get_attack_any_cost_modifier(slot, attack, _gsm.game_state)
+	var colorless_modifier := _gsm.effect_processor.get_attack_colorless_cost_modifier(slot, attack, _gsm.game_state)
+	if colorless_modifier < 0:
+		cost = _gsm.rule_validator._remove_cost_symbols(cost, "C", -colorless_modifier)
+	elif colorless_modifier > 0:
+		for _i: int in colorless_modifier:
+			cost += "C"
+	if any_modifier < 0:
+		return _gsm.rule_validator._get_all_any_cost_removals(cost, -any_modifier)
+	return [cost]
 
 
 func _missing_energy_units(attached: Array[CardInstance], raw_cost: String) -> int:
@@ -2513,7 +2680,7 @@ func _find_attached_card_owner_slot(card: CardInstance) -> PokemonSlot:
 		for slot: PokemonSlot in slots:
 			if slot == null:
 				continue
-			if card in slot.attached_energy or slot.attached_tool == card:
+			if card in slot.attached_energy or card in slot.get_attached_tools():
 				return slot
 	return null
 
@@ -2537,11 +2704,17 @@ func _public_slot_list(slot: PokemonSlot) -> Array:
 	return [] if slot == null or slot.get_top_card() == null else [_public_slot(slot)]
 
 
+func _effective_public_remaining_hp(slot: PokemonSlot) -> int:
+	if _gsm != null and _gsm.effect_processor != null:
+		return maxi(0, _gsm.effect_processor.get_effective_remaining_hp(slot, _gsm.game_state))
+	return maxi(0, slot.get_remaining_hp())
+
+
 func _public_slot(slot: PokemonSlot) -> Dictionary:
 	var row := {
 		"serial": _serial_for_card(slot.get_top_card()),
 		"local_card_uid": _uid_for_slot(slot),
-		"remaining_hp": maxi(0, slot.get_remaining_hp()),
+		"remaining_hp": _effective_public_remaining_hp(slot),
 		"attached_energy_count": slot.attached_energy.size(),
 	}
 	if not _uses_competitive_policy_v2():

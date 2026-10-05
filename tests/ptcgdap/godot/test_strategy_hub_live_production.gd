@@ -7,7 +7,7 @@ const HubScene = preload("res://scenes/ptcgdap_strategy_hub/StrategyHub.tscn")
 
 func test_default_strategy_hub_loads_the_production_ladder() -> String:
 	if OS.get_environment("PTCGDAP_RUN_LIVE_PRODUCTION_TESTS") != "1":
-		return ""
+		return "SKIP: Set PTCGDAP_RUN_LIVE_PRODUCTION_TESTS=1 to exercise the live production service"
 	var hub := HubScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(hub)

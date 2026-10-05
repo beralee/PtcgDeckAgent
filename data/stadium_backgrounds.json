@@ -31,7 +31,11 @@
 		"cf88045d66d42c709157d28d64449c64": "res://assets/ui/stadium_backgrounds/levincia.webp",
 		"0c3c21449043e462bb73afac6c389a34": "res://assets/ui/stadium_backgrounds/postwick.webp",
 		"99173b61a66aa2b9c169e36c8e0a10b4": "res://assets/ui/stadium_backgrounds/team_rocket_watchtower.webp",
-		"0efa680f3ebb077cfd90884f9317c93b": "res://assets/ui/stadium_backgrounds/team_rocket_factory.webp"
+		"0efa680f3ebb077cfd90884f9317c93b": "res://assets/ui/stadium_backgrounds/team_rocket_factory.webp",
+		"b599512657c5c23024fde7875db3ba2d": "res://assets/ui/stadium_backgrounds/calamitous_wasteland.webp",
+		"10aa378456f578af10dfb5c2ff38c878": "res://assets/ui/stadium_backgrounds/beach_court.webp",
+		"45e96e576a5a81e61acd2e46a81547b4": "res://assets/ui/stadium_backgrounds/practice_studio.webp",
+		"2c910670d5c291e5f2c379190be91ee8": "res://assets/ui/stadium_backgrounds/community_center.webp"
 	},
 	"by_card_id": {
 		"CS5.5C_066": "res://assets/ui/stadium_backgrounds/gapejaw_bog.webp",
@@ -66,7 +70,11 @@
 		"CSV10C_218": "res://assets/ui/stadium_backgrounds/postwick.webp",
 		"CSV10C_219": "res://assets/ui/stadium_backgrounds/team_rocket_watchtower.webp",
 		"CSV10C_220": "res://assets/ui/stadium_backgrounds/team_rocket_factory.webp",
-		"CSV10C_286": "res://assets/ui/stadium_backgrounds/levincia.webp"
+		"CSV10C_286": "res://assets/ui/stadium_backgrounds/levincia.webp",
+		"CSV3C_128": "res://assets/ui/stadium_backgrounds/calamitous_wasteland.webp",
+		"CSV4C_127": "res://assets/ui/stadium_backgrounds/beach_court.webp",
+		"CSV4C_128": "res://assets/ui/stadium_backgrounds/practice_studio.webp",
+		"CSV8C_202": "res://assets/ui/stadium_backgrounds/community_center.webp"
 	},
 	"by_name_en": {},
 	"by_name": {}

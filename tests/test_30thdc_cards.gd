@@ -340,7 +340,11 @@ func _check_frame(checkpoint: Dictionary, checks: Array[String], handles: Array)
 		option.erase("option_area_index")
 	frame["select_semantics"].erase("remain_damage_counter")
 	frame["select_semantics"].erase("remain_energy_cost")
-	checks.append(assert_eq(Competitive._frame_error(frame), "", "Full public schema accepts the compiled window"))
+	var frame_error := Competitive._frame_error(frame)
+	var diagnostic := ""
+	if not frame_error.is_empty():
+		diagnostic = str(load("res://scripts/tools/run_ogerpon_author_vs_rule_matrix.gd").diagnose_competitive_frame(frame))
+	checks.append(assert_eq(frame_error, "", "Full public schema accepts the compiled window: " + diagnostic))
 
 
 func _pick(host: Dictionary, step: Dictionary, items: Array, selected: Array, context: Dictionary, checks: Array[String], handles: Array) -> Array:

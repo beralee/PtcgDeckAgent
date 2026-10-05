@@ -91,6 +91,11 @@ static func version_at_least(value: String, major: int, minor: int) -> bool:
 
 static func error_text(code: String) -> String:
 	match code:
+		"development_candidate_not_authorized": return "这是本地开发包，当前客户端尚未登记此版本的开战许可。请使用已登记该策略的配套客户端，或从策略市场安装已发布版本。"
+		"development_platform_not_authorized": return "此开发策略尚未获准在当前平台开战，请使用配套的 Windows 客户端。"
+		"author_strategy_feature_disabled": return "当前客户端已关闭本地策略模式，请在启用该功能的客户端运行。"
+		"package_catalog_unavailable": return "本地策略目录尚未就绪，请重新打开策略中心。"
+		"package_integrity_invalid": return "策略文件的完整性校验失败，请重新导入原始策略包。"
 		"author_strategy_platform_unsupported": return "此平台暂不支持本地策略运行。"
 		"author_strategy_platform_disabled": return "此平台的本地策略运行已暂停，已安装策略仍会保留。"
 		"author_strategy_architecture_unsupported": return "此设备架构暂不支持本地策略；Android 需要 ARM64 或 x86_64。"

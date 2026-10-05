@@ -1,6 +1,8 @@
 class_name TestStrategyHubScene
 extends TestBase
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const HubScene = preload("res://scenes/ptcgdap_strategy_hub/StrategyHub.tscn")
 const MainMenuScene = preload("res://scenes/main_menu/MainMenu.tscn")
 const ContractsScript = preload(
@@ -204,7 +206,8 @@ func test_strategy_hub_exposes_catalog_stats_replay_and_challenge_surfaces() -> 
 		assert_not_null(hub.get_node_or_null("%LocalReplayDeleteDialog")),
 		assert_eq(hub.call("_local_package_error_text", "package_contract_incompatible"), "策略包与当前游戏接口版本不兼容。"),
 		assert_eq(hub.call("_local_package_error_text", "package_deck_invalid"), "策略包牌表格式不正确或不是完整 60 张。"),
-		assert_false("package_" in str(hub.call("_local_package_error_text", "package_policy_unsupported"))),
+		assert_str_contains(str(hub.call("_local_package_error_text", "package_policy_unsupported")), "规则未通过当前游戏的格式校验"),
+		assert_str_contains(str(hub.call("_local_package_error_text", "package_policy_unsupported")), "package_policy_unsupported"),
 	]
 	hub.free()
 	return run_checks(checks)
@@ -318,7 +321,7 @@ func test_strategy_marketplace_renders_three_boards_author_works_and_download_st
 		assert_str_contains(author_text, "胜率 66.7%"),
 		assert_str_contains(author_text, "查看最高分 5 个策略"),
 		assert_str_contains(works_text, "测试策略"),
-		assert_str_contains(works_text, "作者第 1"),
+		assert_str_contains(works_text, "AI训练家第 1"),
 		assert_str_contains(history_text, "测试策略 vs 对手策略"),
 		assert_str_contains(history_text, "胜利"),
 		assert_str_contains(history_text, "录像可用"),
@@ -353,7 +356,7 @@ func test_strategy_marketplace_renders_three_boards_author_works_and_download_st
 	checks += run_checks([
 		assert_str_contains(_collect_label_and_button_text(hub.get_node("%StrategyList")), "暂无已发布策略"),
 		assert_str_contains(_collect_label_and_button_text(hub.get_node("%StrategyRankingList")), "暂无策略排行"),
-		assert_str_contains(_collect_label_and_button_text(hub.get_node("%AuthorRankingList")), "暂无作者排行"),
+		assert_str_contains(_collect_label_and_button_text(hub.get_node("%AuthorRankingList")), "暂无AI训练家排行"),
 	])
 	hub.free()
 	return checks
@@ -519,7 +522,7 @@ func test_continuous_ladder_rankings_drive_release_and_author_archives() -> Stri
 			or replay_store.calls.size() != 1 \
 			or not release_download_visible \
 			or not release_download_text.contains("一键下载") \
-			or not author_text.contains("Beralee 的作者档案") \
+			or not author_text.contains("Beralee 的AI训练家档案") \
 			or not author_text.contains("全部 2 个策略版本") \
 			or not author_text.contains("厄诡椪 1.3.0") \
 			or not author_text.contains("640.00 分") \
@@ -550,8 +553,8 @@ func test_continuous_ladder_rankings_drive_release_and_author_archives() -> Stri
 		assert_str_contains(release_download_text, "一键下载"),
 		assert_eq(release_kicker_text, "策略档案"),
 		assert_false(release_legacy_replay_visible),
-		assert_str_contains(author_text, "Beralee 的作者档案"),
-		assert_eq(author_kicker_text, "作者档案"),
+		assert_str_contains(author_text, "Beralee 的AI训练家档案"),
+		assert_eq(author_kicker_text, "AI训练家档案"),
 		assert_false(author_legacy_replay_visible),
 		assert_str_contains(author_text, "全部 2 个策略版本"),
 		assert_str_contains(author_text, "厄诡椪 1.3.0"),
@@ -666,7 +669,7 @@ func test_strategy_hub_uses_one_hud_workspace_at_a_time() -> String:
 		assert_eq(settings_tab.get_index(), 3, "AI 设置必须是末尾页签"),
 		assert_eq(catalog_tab.text, "AI天梯"),
 		assert_eq(local_tab.text, "已下载"),
-		assert_eq(replay_tab.text, "开发者"),
+		assert_eq(replay_tab.text, "AI训练家"),
 		assert_eq(settings_tab.text, "DeepSeek"),
 		assert_false(local_workspace.visible),
 		assert_false(replay_workspace.visible),
@@ -889,6 +892,7 @@ func test_strategy_hub_renders_imported_packages_with_battle_availability() -> S
 	var list := hub.get_node("%LocalPackageList") as VBoxContainer
 	var record_label := list.find_child("LocalPackageRecordLabel", true, false) as Label
 	var delete_button := list.find_child("LocalPackageDeleteButton", true, false) as Button
+	var start_button := list.find_child("LocalPackageStartButton", true, false) as Button
 	var rendered_text := ""
 	for child: Node in list.find_children("*", "Label", true, false):
 		if child is Label:
@@ -896,6 +900,9 @@ func test_strategy_hub_renders_imported_packages_with_battle_availability() -> S
 	if delete_button == null:
 		hub.free()
 		return "User-installed package card did not expose a delete button"
+	if start_button == null:
+		hub.free()
+		return "User-installed package card did not expose battle availability"
 	var result := run_checks([
 		assert_not_null(record_label),
 		assert_not_null(delete_button),
@@ -904,7 +911,9 @@ func test_strategy_hub_renders_imported_packages_with_battle_availability() -> S
 		assert_false("完整作者策略" in rendered_text, "Verbose package-shape suffixes must not remain in the visible package name"),
 		assert_str_contains(rendered_text, "本地作者"),
 		assert_str_contains(rendered_text, "已加载"),
-		assert_str_contains(rendered_text, "暂不可开战"),
+		assert_str_contains(rendered_text, "尚未登记此版本的开战许可"),
+		assert_eq(start_button.text, "暂不可开战"),
+		assert_true(start_button.disabled, "Metadata-only package must not start a battle"),
 	])
 	delete_button.pressed.emit()
 	var delete_dialog := hub.get_node_or_null("%LocalPackageDeleteDialog") as Control
@@ -1232,7 +1241,7 @@ func test_strategy_hub_confirmed_native_replay_delete_includes_merged_public_cop
 		hub.free()
 		return "Native replay card did not expose delete"
 	delete_button.pressed.emit()
-	var dialog := hub.get_node_or_null("%LocalReplayDeleteDialog") as ConfirmationDialog
+	var dialog := hub.get_node_or_null("%LocalReplayDeleteDialog") as GameModal
 	if dialog == null:
 		hub.free()
 		return "Replay delete confirmation dialog is missing"

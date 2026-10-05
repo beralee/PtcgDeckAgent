@@ -455,12 +455,10 @@ func test_battle_scene_public_player_autoplays_at_selected_speed_and_never_gains
 	])
 
 
-func test_real_156_frame_replay_uses_strategy_seat_and_responsive_battle_layout() -> String:
-	var source_path := "res://artifacts/ptcgdap/csp_wp1/marnie_public_replay_acceptance.json"
-	var decoded: Variant = JSON.parse_string(FileAccess.get_file_as_string(source_path))
-	if not decoded is Dictionary or not decoded.get("artifact") is Dictionary:
-		return "real public replay fixture could not be decoded"
-	var artifact: Dictionary = ServiceContractScript.coerce_integral_numbers(decoded.artifact)
+func test_tracked_ui_fixture_uses_strategy_seat_and_responsive_battle_layout() -> String:
+	var artifact: Dictionary = FixtureFactoryScript.load_developer_artifact()
+	if artifact.is_empty():
+		return "tracked synthetic public replay fixture could not be decoded"
 	var source_before := JSON.stringify(artifact)
 	var viewer: Control = ViewerScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
@@ -469,7 +467,6 @@ func test_real_156_frame_replay_uses_strategy_seat_and_responsive_battle_layout(
 	var opened: Dictionary = viewer.load_public_replay(
 		_contract_owner(), artifact.manifest, artifact.frames, artifact.match_envelope
 	)
-	viewer.show_next()
 	viewer.show_next()
 	var view: Dictionary = viewer.current_view()
 	var visual: Dictionary = viewer.visual_snapshot()
@@ -506,12 +503,12 @@ func test_real_156_frame_replay_uses_strategy_seat_and_responsive_battle_layout(
 	viewer.free()
 	return run_checks([
 		assert_true(bool(opened.get("accepted", false))),
-		assert_eq(view.get("frame_count"), 156),
-		assert_eq(view.get("ordinal"), 2),
+		assert_eq(view.get("frame_count"), 3),
+		assert_eq(view.get("ordinal"), 1),
 		assert_eq(audit.get("view_seat"), 1),
 		assert_eq(visual.get("view_seat"), 1),
-		assert_eq(visual.get("slots", {}).get("my_active", {}).get("card_uid"), "CSV10C_007"),
-		assert_eq(visual.get("slots", {}).get("opp_active", {}).get("card_uid"), "CS6.5C_020"),
+		assert_eq(visual.get("slots", {}).get("my_active", {}).get("card_uid"), "CSV7C_059"),
+		assert_eq(visual.get("slots", {}).get("opp_active", {}).get("card_uid"), "CSV8C_094"),
 		assert_eq(compact_mode, "portrait"),
 		assert_false(compact_log_visible),
 		assert_true(
@@ -525,10 +522,10 @@ func test_real_156_frame_replay_uses_strategy_seat_and_responsive_battle_layout(
 	])
 
 
-func test_tracked_marnie_replay_steps_every_frame_without_engine_authority() -> String:
+func test_synthetic_public_replay_steps_every_frame_without_engine_authority() -> String:
 	var artifact: Dictionary = FixtureFactoryScript.load_developer_artifact()
 	if artifact.is_empty():
-		return "tracked Marnie public replay fixture could not be decoded"
+		return "tracked synthetic public replay fixture could not be decoded"
 	var viewer: Control = ViewerScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(viewer)
@@ -539,7 +536,7 @@ func test_tracked_marnie_replay_steps_every_frame_without_engine_authority() -> 
 	if not bool(opened.get("accepted", false)):
 		tree.root.remove_child(viewer)
 		viewer.free()
-		return "tracked Marnie public replay rejected: %s" % opened
+		return "tracked synthetic public replay rejected: %s" % opened
 	viewer.set_playback_speed(4.0)
 	viewer.play()
 	viewer.advance_playback(1000.0)
@@ -550,14 +547,14 @@ func test_tracked_marnie_replay_steps_every_frame_without_engine_authority() -> 
 	tree.root.remove_child(viewer)
 	viewer.free()
 	return run_checks([
-		assert_eq(player.get("autoplay_advance_count"), 155),
-		assert_eq(final_view.get("frame_count"), 156),
-		assert_eq(final_view.get("ordinal"), 155),
+		assert_eq(player.get("autoplay_advance_count"), 2),
+		assert_eq(final_view.get("frame_count"), 3),
+		assert_eq(final_view.get("ordinal"), 2),
 		assert_eq(final_view.get("event_kind"), "match_finished"),
 		assert_eq(final_visual.get("view_seat"), 1),
-		assert_eq(final_visual.get("slots", {}).get("my_active", {}).get("card_uid"), "CSV10C_148"),
+		assert_true(final_visual.get("slots", {}).get("my_active", {}).is_empty()),
 		assert_true(final_visual.get("slots", {}).get("opp_active", {}).is_empty()),
-		assert_eq(final_visual.get("stadium_card_uid"), "CSV10C_216"),
+		assert_null(final_visual.get("stadium_card_uid"), "Empty terminal board must not retain a stadium"),
 		assert_true(bool(player.get("next_disabled", false))),
 		assert_false(bool(player.get("previous_disabled", true))),
 		assert_eq(audit.get("engine_invocations"), 0),

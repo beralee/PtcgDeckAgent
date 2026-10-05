@@ -1,0 +1,92 @@
+{
+  "code": 200,
+  "data": {
+    "name": "青铜钟",
+    "cardType": "Pokemon",
+    "mechanic": null,
+    "label": null,
+    "description": "【超】 进化妨碍 30\n在下一个对手的回合，对手无法从手牌使出宝可梦进行进化。\n\n【超】【无】【无】 超念力 100\n\n\n",
+    "yorenCode": "P437",
+    "pokemonAttr": {
+      "energyType": "P",
+      "stage": "Stage 1",
+      "hp": 110,
+      "ability": [],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "D",
+        "value": "×2"
+      },
+      "resistance": {
+        "energy": "F",
+        "value": "-30"
+      },
+      "retreatCost": 3,
+      "attack": [
+        {
+          "name": "进化妨碍",
+          "text": "在下一个对手的回合，对手无法从手牌使出宝可梦进行进化。",
+          "cost": "P",
+          "damage": "30",
+          "isVStarPower": false
+        },
+        {
+          "name": "超念力",
+          "text": "",
+          "cost": "PCC",
+          "damage": "100",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": "铜镜怪"
+    },
+    "setCode": "CSV7C",
+    "cardIndex": "095",
+    "setCardsNum": "",
+    "artist": "Katsunori Sato",
+    "rarity": "U",
+    "releaseDate": "2026-01-15T16:00:00Z",
+    "regulationMark": "H",
+    "effectId": "9050fd41ac6abcce248c52570001e8e8",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "SVP",
+        "cardIndex": "184",
+        "cardName": "青铜钟",
+        "rarity": "无标记",
+        "effectId": "9050fd41ac6abcce248c52570001e8e8",
+        "cardType": "Pokemon",
+        "yorenCode": "P437",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "TEF",
+        "cardIndexEn": "69",
+        "nameEn": "Bronzong"
+      },
+      {
+        "setCode": "CSV7C",
+        "cardIndex": "095",
+        "cardName": "青铜钟",
+        "rarity": "U",
+        "effectId": "9050fd41ac6abcce248c52570001e8e8",
+        "cardType": "Pokemon",
+        "yorenCode": "P437",
+        "is": [
+          "Stage 1"
+        ],
+        "setCodeEn": "TEF",
+        "cardIndexEn": "69",
+        "nameEn": "Bronzong"
+      }
+    ],
+    "setCodeEn": "TEF",
+    "cardIndexEn": "69",
+    "nameEn": "Bronzong"
+  },
+  "msg": "OK."
+}

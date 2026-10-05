@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-09-27T19:33:52.2587724Z",
+  "executable": "D:\\ai\\code\\PtcgDAP\\.tmp\\ptcgdap_device_release\\v062_rotation_final\\PtcgDeckAgent.exe",
+  "client_size": "1600x900",
+  "navigation_difference": 0.2384,
+  "minimum_navigation_difference": 0.08,
+  "round_trip_difference": 0.0022,
+  "maximum_round_trip_difference": 0.12,
+  "screenshots": {
+    "main": ".tmp\\v062_release\\windows_rotation_final_ui\\main.png",
+    "settings": ".tmp\\v062_release\\windows_rotation_final_ui\\settings.png",
+    "main_return": ".tmp\\v062_release\\windows_rotation_final_ui\\main_return.png"
+  },
+  "runtime_failure_markers": "",
+  "passed": true
+}

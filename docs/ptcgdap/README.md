@@ -1,5 +1,9 @@
 # PtcgDAP public architecture record
 
+2026-09-30：卡牌内容增量更新的客户端、公开协议和维护者发布工具已实现并完成本地验收；见 [设计与操作说明](card-content-updates.md)。需要一次底座客户端发行，生产部署另行执行。
+
+2026-09-19: Complete 1,011-card developer catalog refresh and source-delivery checks; see [71](71-developer-card-catalog-refresh.md). Server deployment remains a separate acceptance claim.
+
 This directory documents the open-source, device-local CABT/Kaggle policy
 boundary, Godot host integration, author strategy package format, conformance
 gates, and rollback model.
@@ -29,3 +33,7 @@ Read documents 01–10 first, followed by 25, 30 (competitive author policy),
   oracle. It is never inferred from interface tests alone.
 - Device acceptance: the pinned PC/Android package operates offline within its
   approved resource profile.
+
+Game UI, functional and AI test discovery, quality gates, isolation, multiversion
+selectors and regression commands are documented in
+[the testing architecture guide](testing-architecture.md).

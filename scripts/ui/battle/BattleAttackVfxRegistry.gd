@@ -516,6 +516,10 @@ func resolve_profile(attacker_card_data: CardData, _attack_name: String = "") ->
 	return _generic_profile
 
 
+func get_attribute_profile(attribute: String) -> RefCounted:
+	return _energy_fallback_profiles.get(attribute.strip_edges().to_upper(), _generic_profile)
+
+
 func get_counter_transfer_profile() -> RefCounted:
 	return _counter_transfer_profile
 

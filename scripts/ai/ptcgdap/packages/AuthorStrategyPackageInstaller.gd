@@ -70,7 +70,10 @@ func _install_captured_bytes(
 		loader, archive_bytes, archive_sha, control_distributed
 	)
 	if not bool(inspected.get("ok", false)):
-		return _error(str(inspected.get("error_code", "package_archive_invalid")))
+		var rejected := _error(str(inspected.get("error_code", "package_archive_invalid")))
+		if inspected.get("runtime_compatibility") is Dictionary:
+			rejected["runtime_compatibility"] = inspected.runtime_compatibility.duplicate(true)
+		return rejected
 	var deck_gate: Dictionary = DeckGateScript.build(inspected.get("payloads", {}))
 	if not bool(deck_gate.get("ok", false)):
 		return _error(str(deck_gate.get("error_code", "package_deck_unmapped")))

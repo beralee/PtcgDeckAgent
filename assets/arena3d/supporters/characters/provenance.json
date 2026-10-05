@@ -1,0 +1,351 @@
+{
+  "generator": "built-in imagegen",
+  "style_reference": "assets/arena3d/supporters/boss-command-hd.png",
+  "atlas_grid": [
+    3,
+    2
+  ],
+  "postprocessing": "Original alpha preserved; cell-edge feather applied by the runtime shader.",
+  "characters": {
+    "iono": {
+      "file": "iono.png",
+      "sha256": "8f8ed848a78f3f323284c9ca58f93d1e40153b92baa493d3333aff5f8f8cc770",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3443,
+      "pose_sha256": [
+        "b2197af4b6c9b9078ce4e39e1bdda23a708e69ea12bcaf34fe165c43d63461d9",
+        "f8ab16c6dad772b1108dee7cf094c4b66a6be7d391482c5b48e01375dac022d6",
+        "0740813edd8a2720d345d756c4569a22168cc196e9e0a123cd5eb341688e4372",
+        "711d20e866c242aca9c71a106950d1fc96b28fe4aa6639e0432b092855d0b14d",
+        "cd3ab20e996a661c9f0dcd2c5acf7c0ebd70f4c5bffe37d92f80a3f021773233",
+        "673aa20353f5011179ab7fda1e312dc49245bce3b95f9f8b3ba0f6747f1b7d92"
+      ],
+      "source_filename": "exec-ea289728-3179-4c31-8889-fd689bde0813.png",
+      "reference_printing": "CSV3C_123",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Iono / 奇树, pink and pale-cyan very long split-color hair, two Magnemite-style round hair ornaments, oversized bright yellow jacket, black inner top. Match the card's youthful animated personality and exact accessories. Six poses: 1 cheerful anticipatory glance, hands near chest; 2 sleeves raised, two differently colored small electric sparks gather beside shoulders; 3 lively forward lean with a playful confident grin; 4 both long sleeves fling outward to announce her livestream, electric cyan and pink arc around shoulders; 5 decisive finger-point toward viewer, pink/cyan electric flourish; 6 satisfied pose with both twin hair ornaments and a contained electric crescent. Strong hand/arm pose changes; cyan/pink electricity stays behind her face, no obscuring features."
+    },
+    "arven": {
+      "file": "arven.png",
+      "sha256": "28a5204a479ba5179e3625e44f21df9a79d8645cadd3706e9151583da21195c6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.2781,
+      "pose_sha256": [
+        "173dc698d81494a9ad953b36c60c72f3f7f406f015e0c119f77edced74f21cfd",
+        "eab5a5256bebbdf865aaf0083e9ae048ff89881efcd305cd2ec7ea0ff1699c6e",
+        "56df8b0d5845da9929a6b242900f8ea0d9a3f0b4929ce29a3ec58eebf179d89a",
+        "bd79154eeb14149429a6d5d664f5c3bdd378578d5795c8230279039dc423fec4",
+        "9210f46d9e8e809fda79adfe224c921e06849207e1ad1126a877d627179c0230",
+        "92822bcfa9a54136df52abb612fb0672092ca0a511793875be520ae765e28d25"
+      ],
+      "source_filename": "exec-260c8e3f-79fb-4a32-aaba-a3e0bce66053.png",
+      "reference_printing": "CSV1C_123",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Arven / 派帕, tall athletic young man with long ash-blond tousled hair covering one eye, blue-green eyes, white shirt with rolled sleeves, purple tie and trousers, yellow puffer vest and large yellow backpack. Six poses: 1 thoughtful half-smile hands at straps; 2 reach into backpack; 3 draw a small closed equipment pouch with left hand and a wrapped sandwich in right; 4 confidently present the two useful supplies to viewer; 5 encouraging open palm and knowing smile; 6 settled confident stance with a restrained warm gold/cyan glow. He is an adventuring cook, not a wizard. Keep backpack silhouette visible, upper-body only, all props contained."
+    },
+    "research": {
+      "file": "research.png",
+      "sha256": "652838673a6283f542e6bdcb705a5ad1e34b1870ba8d71deb578d5553da7a19d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3086,
+      "pose_sha256": [
+        "44f91f155037041cbdf5f0ca459882753fa52c46f74ec0356c29e51385dd9eb3",
+        "0190978ad8134977ca5861db29a52c024bf4e0c3c4a79a0cffaca9a3b7846ebb",
+        "4ce40b5e64265921988c57ba5f8ae67b29f504ef2d12b5bc39f90e8ed881fc04",
+        "5d6c68ae98064dc0c871d9a20eb6f62f5627d11690d8ebdef934cdf9faa3aa35",
+        "6e0257e5ddf1709dfa94a675d97b4f48b7655fcf229633e1abd1c6d708e8ef01",
+        "2e94c26e352aa36fc6299a6f102d18907fa710426743a1fddafef0a185b282e0"
+      ],
+      "source_filename": "exec-bee08cbd-9d46-457a-a676-61133e763e1b.png",
+      "reference_printing": "CSV1C_121",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Professor Sada / 奥琳博士 as the woman depicted on this Professor's Research card, long sandy blond swept-up prehistoric hair with small red toothlike ornaments, warm tan skin, turquoise eyes, orange cropped primitive top under white lab coat with lavender lining, tooth pendant and belt. Six poses: 1 thoughtful confident scholar; 2 hand raised to chin; 3 open a compact tablet/book in left hand; 4 sweep right hand forward to reveal research insight, pale-cyan and ivory light behind shoulders; 5 point assertively toward viewer while holding tablet close; 6 confident smile, coat flaring slightly, contained pale-cyan light. Keep outfit, necklace and ancient-hair silhouette faithful, only one woman in each cell, torso framing."
+    },
+    "turo": {
+      "file": "turo.png",
+      "sha256": "5d3efa26578a807d705c3b8556519ef379e494fbf31575e5b188b127a92b92c7",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3055,
+      "pose_sha256": [
+        "1e71a365d6b164f35ac6c7a7e08bfde2fd6d629bc0828bc71f634aa6a2c1c872",
+        "6e8484da155a085cf90ea5e152cb53f4a82b5fc7830c818370c7b9e863247cea",
+        "9c4e01361c2e9ee5a94869926f407baa22364598c82ac04d484414f3285bc688",
+        "8ef00c532e2c045af87c7610190f9249a86b88ce94dc9dce41ddff18a6cc7a55",
+        "d50ab8ac2f63686544f2104d56e360599ba97a52aaf1f971c5a00231679790c1",
+        "04c80f91ca59dbfa072d96a54282c851bebbf1c53786922ce75d74901798157b"
+      ],
+      "source_filename": "exec-09eec75d-289c-457b-b7df-23a0468ae405.png",
+      "reference_printing": "CSV6C_125",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character Professor Turo / 弗图博士: mature man with black swept-back hair, full neat dark beard, intense blue eyes, white futuristic long lab coat with very high purple collar, black fitted futuristic bodysuit with violet geometric glowing lines. Six sequential poses: 1 restrained serious gaze; 2 raise gloved hand to wrist device; 3 turn an open palm upward as small violet/cyan temporal energy gathers; 4 reach forward with an open hand, inviting a return; 5 draw the hand decisively back toward his chest as two violet time crescents curl behind shoulders; 6 calm final stance with faint contained cyan/purple rings. Distinct open-hand retrieval action, not Giovanni finger-pointing; no extra characters or pokemon."
+    },
+    "cipher": {
+      "file": "cipher.png",
+      "sha256": "7f1056afeda0174cbc5fb844c875a2cdb63e388d64b32febd4d954df66d86a6f",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.332,
+      "pose_sha256": [
+        "f6a896774cc8ecfa536c9a3d6e158e9e99d39c07984042a3d09bf84527c937df",
+        "d5bc7a44d9f097b209f5d6e8876a1df04dc3152207310693da4ad51e25097a8c",
+        "20dc21081a29d7d0c536ff766f35c26a5f904d4b702c736067e531332a908dd7",
+        "1f31ddc8ca1b64d9f66a9897fcf7d0fa6e9ef68b9875938b8f28e900c27abdcd",
+        "6de3468758c810229775060d5a95d4e4d25f69110a4bb08f8fd3f285e976c496",
+        "4bae2e1c616ba053cd90ec905433970dc0ded67affa26f496a3e9b522253cf0f"
+      ],
+      "source_filename": "exec-eef54eb0-e1db-4468-8c72-0f369a0db497.png",
+      "reference_printing": "CSV7C_191",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character Ciphermaniac / 暗码迷: androgynous young green-haired code scholar exactly matching the card, light yellow-green asymmetrical hair swept over one eye, violet-blue eyes, teal-blue high-collared long coat with pale trim and purple pointed panels, purple gold-marked notebook, long thin pencil/stylus, tiny headset microphone. Six sequential poses: 1 thoughtful side glance with closed book; 2 open the purple notebook and lift stylus; 3 focus intently on the page; 4 swift confident stylus stroke through the air, bright teal coded light behind shoulders with NO text; 5 hold up exactly two fingers next to open notebook to signify the two ordered cards; 6 composed knowing smile with clean emerald digital glints. Keep hands expressive and book close, no legible symbols/letters."
+    },
+    "crispin": {
+      "file": "crispin.png",
+      "sha256": "e79f592d6253d31e402437ceb74f142b607dc8712f71fc7154904fe1f60cff0c",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.378,
+      "pose_sha256": [
+        "8480f0ec4e3a26fe6ac39afbc6029fec250c531ba5979a6629b0e24fb9963a20",
+        "f7ada129732f6be92558944189d91b26ed2f1bbc06176a885b8243f3cd2a6bb3",
+        "65c2851d7936a7d706537524bfe4ddade60cd2e9885bc8a14a207b630fd2aa54",
+        "47ec7e7e032b2193771026d693622e426b3097ed86f52f5020a4daae84446b4f",
+        "4e0a168012039835caa927095198568d9dc8d51260bda690d6c682d740e5a382",
+        "8e727cd8ebadf4b0587a8264892ad53eb56333a643ba735cd7eab14a47c8acc6"
+      ],
+      "source_filename": "exec-bcf66b4a-7ff4-4126-b358-ade96cbd26b1.png",
+      "reference_printing": "CSV9C_196",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character Crispin / 赤松, red spiky side-swept hair with single upright tuft, golden-brown lively eyes, white short-sleeved double-breasted chef jacket with gray sleeves and collar and gold small accents. Six sequential poses: 1 cheerful chef confidence; 2 bring both hands close as if preparing heat; 3 hold two compact glowing energy embers near hands, one orange-gold and one cyan; 4 vigorous arm sweep, warm contained flame crest behind shoulder; 5 extend a welcoming open palm with one small orange energy ember floating above it; 6 satisfied smile with arms relaxed and orange/cyan crescent. Chef themed energy activation; no food utensils stabbing, no giant detached props, no pokemon."
+    },
+    "briar": {
+      "file": "briar.png",
+      "sha256": "bb46c0de6e3a6718dfe08db7c22a223bd99fe810270d23df41d685aed53dade5",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3889,
+      "pose_sha256": [
+        "ae345ba52368d83e85abc9ff7120340fad697b8fa169436bbbd2b927a70b351c",
+        "7578882919c65fb4d796195cdcefd60fb14f36f744ee477f88bf3fb5a628c8ef",
+        "dd50469779d16f8b8f957b28ce45cf5ddfc80d4ebd8e92a65fa1234334003fea",
+        "a11930a5f6f23e9a0438253524bc233a5158b8b202727e224020ee1afe6e0e1b",
+        "a46cfbaeea748ffe2f3aaa608996d1e33eaa8a0dadbfac85ec31d88dc0e8e273",
+        "f71f4926f31e8e40fd7e9a23e40793b4022f0b9f5bd2062b38cdbe62b9c13abd"
+      ],
+      "source_filename": "exec-53f30457-c789-4cd7-afd7-857321091a72.png",
+      "reference_printing": "CSV9C_202",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Briar 白蕾雅, short wavy golden-orange bob, green gemstone earrings, elegant tailored purple jacket with golden details, pale violet skirt/belt. Mature confident scholar. Six poses: composed with one hand on hip; lift scholarly notebook; study crystalline light; decisive open hand forward with faceted pink-blue crystal surge; poised palm presenting a radiant jewel; confident smiling finale with restrained pink crystal halo. Accurate reference costume, torso only, no Giovanni."
+    },
+    "carmine": {
+      "file": "carmine.png",
+      "sha256": "e7b37be788ffbffe333a7c9b6361b3fe62d480d6c2022cb7410ad16a97531c80",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3572,
+      "pose_sha256": [
+        "133a671a5b7d2e574e85586a94a5edd5d9147d0b00078af3af0eada053d995f9",
+        "3604952f136891e22d074f19edf7acc7f0338fd0ba120c22f72a61f0e943a2b0",
+        "9ac09542b7eba6d1f7c805a3bf781ed6a03d1bda2a0c71244a66be38519b9a96",
+        "1cfda7a69b7f54fad19cf550e2a442f26033c45553b9adcb2f80bf5945ed7d44",
+        "acb4b2027b63ea102e4a7d71a29488792d358c11ecb84aa62377be68b9b14f01",
+        "3e13fedca95490a6da42935c6250039139f97bb85ac38907bc73a33fd3cc4abb"
+      ],
+      "source_filename": "exec-2eff52fa-1633-42ca-9c84-350f8c494a1c.png",
+      "reference_printing": "CSV8C_199",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Carmine 丹瑜, very long navy-black hair with red inner ends, yellow headband, golden eyes, blue festival academy uniform, yellow belt pouch, red gloves. Proud forceful teenage trainer. Six poses: crossed arms challenging gaze; hand on hip tilted head; sweep long hair back preparing; dramatic red-gloved pointing hand toward viewer with crimson fan of streaks; fierce smile with spread palm; triumphant confident finale with hair sweeping. NO fire magic, red energy accents only. Keep very long hair cropped cleanly at bust baseline."
+    },
+    "sada": {
+      "file": "sada.png",
+      "sha256": "6bfe30c93caf2e9aca98c1e7545d204cc432763072642b1856137c1c0562c45b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.306,
+      "pose_sha256": [
+        "02f3f829264a9f5e7bbba898607a31959540bb4d4aaa5cb5a4db6585c1027d54",
+        "37f605e35868e68a4df52410e3438db1bee53202fe067d9afd7453f787654535",
+        "58c002c5777247da23a9c0c23e9b78aa8483bc32f634cd60f52d25451c105d81",
+        "99b1d98e182482ce8c7094cce98014c52a73a3f173217b99d2b4ff9bc962a0da",
+        "48ca4633149db45f2d2561ec72bf7a9e2c93847b059d022c18ab275d223a5f09",
+        "683734950941fd0580d59a4a0bc07a98fb05cefcf89027955653e60631641386"
+      ],
+      "source_filename": "exec-62e5b3d5-3c92-4fe5-8eb1-5b2121fdbfa4.png",
+      "reference_printing": "CSV6C_121",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Professor Sada 奥琳博士, sandy-blond long hair, teal eyes, prehistoric tooth jewelry, orange cropped top, white laboratory coat with lavender furry collar, matching reference precisely. This is Sada's VITALITY, fierce ancient researcher: six poses: determined stance; fists close at chest gathering amber sparks; lift open palm with primal amber energy; powerful hand thrust outward with broad ancient orange energy sweep; both hands guiding two luminous energy wisps; resolute victorious pose framed by ancient amber aura. Dramatic adult scientist, no weapons, no text."
+    },
+    "blackbelt": {
+      "file": "blackbelt.png",
+      "sha256": "a983d38afbd5db38792cf9f3882ce5c1ee6f9cb79f20e902b6c31add374cda8e",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3529,
+      "pose_sha256": [
+        "2769165b8e624d7e2ea416b9d228974bd3bd6c70020d396c6a681390f12967c8",
+        "342306ec0220f67c5a677ff93ffc166b1aac2086fbab8a1ba26fd50010861755",
+        "39ab7a53717827e4156a039ad8102beab3dddb3a13fbbb46025cb440374dd01c",
+        "95a3129e634f7ae3631bc954ff8701fee9dfd78be04cdf4be57e6eabda68470e",
+        "6d3ec74f38436a37363a20d71a5b29cbaa0a98bd3a19eb17d92618ee705df219",
+        "36e810086ad766c9ae17d94930c8875cd84c6f08fc2bb4ef6fc043b5f4f54931"
+      ],
+      "source_filename": "exec-b95438e9-f00c-4722-9ed5-d30ae1045a8c.png",
+      "reference_printing": "CSV9.5C_188",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Black Belt from supplied trainer card, very muscular adult man, short spiky black hair, white tied headband, sleeveless white karate gi and black belt, red wrist wraps. Six upper body poses: grounded guard with fists; close eyes and inhale; tense guard gathering restrained amber air pressure; powerful foreshortened straight punch toward viewer; controlled follow-through across body; settle victorious martial stance. Dynamic anime motion smears and warm ivory-gold impact accents in frame4. No weapons, no giant floating fists. All six depict same person."
+    },
+    "cilan": {
+      "file": "cilan.png",
+      "sha256": "f28ed3fae9af567b9e6bbe724eb86e798c57af70857c162f4d18ca2ed78fdfd7",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3971,
+      "pose_sha256": [
+        "f7a8150ef93f789a1428d7e40b25688e42c91a9e68673394fb97c7f0736d0726",
+        "2fb0c45833ed71455bc793484194f0b89a9a4a6685aeed7e71a68bb71ee931e8",
+        "477e71e0235bef2cdf9a0fc53b961242fc01186988b7bf237124b91d1498dcff",
+        "7d14710d5497421359c231eee5c252f73c26c4992bb4c8c13c7bd15b42d21358",
+        "f9238a8be37b580da00935c835c875354a3ac02f222f6b00243e963afcca681f",
+        "27debc9884d6834acfe1fa42276259566c2f6705f7bb6a99288307f29b2f4f43"
+      ],
+      "source_filename": "exec-65271a69-1f10-4e9b-9110-6a5667cf602b.png",
+      "reference_printing": "CSV9C_198",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: 席蓝, CYRANO as pictured in the first reference, an older tan/brown-skinned smiling gentleman with dark-blue hair, broad WHITE FEDORA with blue hatband, white elegant coat with BLUE collar, black waistcoat and red bow tie. IMPORTANT: this is NOT green-haired Cilan; use the card's exact gentleman identity. Six upper body poses: welcoming smile with palm open; tip brim of white hat; raise three fingers thoughtfully; grand welcoming outward arm sweep with tasteful blue-gold gleam; proud invitation with two open palms; tip hat with warm confident smile. Elegant light blue and gold accents, no plants, no green hair, no scenery."
+    },
+    "kieran": {
+      "file": "kieran.png",
+      "sha256": "90615d729729d85ba6da70a3d1c58ca81ff85aefd57c6ad34c9f23b4b3537a27",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3142,
+      "pose_sha256": [
+        "948fd311e26e9769de2bf71c0da86f615afdceab6b3dc03b529ad2f0949ee109",
+        "5763ddbfaa63213505ce011c3ace383793bf90492c23254adf22cc2a37d6dd8f",
+        "23c110e39e1c1491505e7ad986d5b9df7475bd296fba8f866835359433ac8f0a",
+        "f4a36d8bf0c45c7b7235529620dff7494e392ca37a318685e5b532fe6a259379",
+        "b961904381979e7b57c6b591f19ba003756ee41df5d411424804736c862bb5b5",
+        "e346d6126a78a86fed2a5118d5dafb6688e42b99559bf5ba5be4e2189220c921"
+      ],
+      "source_filename": "exec-2c4df554-ea66-47a8-93b2-c772a87fd8bc.png",
+      "reference_printing": "CSV8C_198",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: Kieran 乌栗 from the card, teenage boy with navy black hair pulled into high spiky topknot, distinctive yellow forelock/tie, intense amber-gold eyes, white/navy athletic academy zip uniform with gold shoulder trim and red gloves. Six upper body poses: resolute challenging stare; clenched fist at chest; lowering stance with determined eyes; fierce commanding pointing thrust toward viewer with purple-red speed streaks; clenched fist forward in follow-through; triumphant composed glare. Intense determined expression, no weapons, no monsters, no headband changes."
+    },
+    "judge": {
+      "file": "judge.png",
+      "sha256": "28f9ac92212e46a52e3e7ae38fa94a70bf47bca79fb6b6dc69db7c0a31a17df6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3345,
+      "pose_sha256": [
+        "8df9145f94dd31d78b623f566390887149d9e6df00b540316588047a632b225c",
+        "e346814128b7f28cf3d3a87d2bcf00424d6f771cbf388d46f5317c4693358ae0",
+        "f22cda28777cd367844ff3bf6a1ec6a380ecbba4e871e35b1131813657cbec16",
+        "92f517068d7fdac10ba2837286f45ae6e7c701829049117b9eaa202b1218ee7a",
+        "e73a93380ebe70dc458125bc9fe0fb787444988cc23a549dc13d9518e9d61b5b",
+        "94d145246299e0c30f9de1aa8af2d5e2af8ac9f30072aa2e95b128ed4d4a98be"
+      ],
+      "source_filename": "exec-bf9a8714-799c-4cfc-afce-6b691107b506.png",
+      "reference_printing": "30thDC_037",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: JUDGE from supplied card: athletic tan-skinned adult man, SHORT spiky dark grey hair, big reflective CYAN wraparound visor sunglasses with yellow frame, BLACK referee polo with hot-pink collar and sleeve trim, green wristbands, green whistle on cord, confident energetic expression. SIX poses: composed with whistle held at chest; bring whistle toward mouth; commanding focused stance; forceful crossed forearms then open arms outward in referee restart gesture, foreshortened palm; firm palm stopping play; decisive balanced stance with golden ivory motion accents. Match actual modern black-shirt reference, NOT a lawyer or courtroom judge. No gavel, no robes, no scale."
+    },
+    "lana": {
+      "file": "lana.png",
+      "sha256": "aff5a1bd9407764d3574503b9362a754fa183cda9da2a511d9f6b66ecde3f2d0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.4355,
+      "pose_sha256": [
+        "588a2cdc5c3b8e2682d6fd10416700adc61b3a6c958bf9099f987c6689eca9ea",
+        "d64bc121b52866db1d077a01bb3f9f1745e975a993d46e805ba92c67fb4f1cbb",
+        "32ba2126ab284d58d3b8ad01e28817549b1adcf29807b37c82460049e477b6e4",
+        "ccf3b60971218eb12757db44af3f08e379fd0e2a9b2994885e21cf3907fbf177",
+        "0011731b52a0b6ee7e38f521e6275785d1feaf7cb10586060cd3df9693e386f3",
+        "1db458e53b88dd8a099c0ff7173b364cbb7328cd9b6e3465768322ceec3019f7"
+      ],
+      "source_filename": "exec-b8e6c7de-3a29-454a-ba25-7f28cdd3071c.png",
+      "reference_printing": "CSV7C_193",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: LANA 水莲, short deep blue bob haircut, yellow double hairclips, large blue eyes, white sleeveless top with darkblue sailor collar, blue lower outfit and yellow waist tie from reference. Young girl shown as a wholesome nonsexual upper-body trainer. SIX poses: gentle alert look; hands near chest with caring smile; lift open palm with a small aqua droplet; sweep arm protectively outward with elegant broad translucent water ribbon; cup hands inviting a returning companion (no creature); warm reassured smile with tiny blue water sparkles. NO giant weapon or fishing rod, no background scenery; keep sailor uniform consistent."
+    },
+    "lillie": {
+      "file": "lillie.png",
+      "sha256": "10c3aa836eb686680054d2a75e3d39de707a47ed0060870e31284695203ce585",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.2462,
+      "pose_sha256": [
+        "a73b8997dae02ed14fab809dbe0694a87fd07c90ac44697be5936e3020acf81b",
+        "ba1000132b3118f0fa608dd032ce4e65baac5a9bfe6247eee8a09d775c7c0b8d",
+        "62da58f0235f7865de811a56095cc18f488b6961905bd1a148b78056b8f76054",
+        "bc0a53caa85778d1ab2fe7aced0b71803ff9a6c50e1d86e867cc6bb53888a33e",
+        "4a708ab11aa7bca0f18061d28bcedba17d8ab5b287b474b92e26cc3a477fb7b8",
+        "fbf791421a6c5984a5809562446c3f2a72c151361ab803a6ce185a56ed9db411"
+      ],
+      "source_filename": "exec-fbc3d622-1b64-42e2-a641-36dc4778bb3c.png",
+      "reference_printing": "30thDC_040",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: LILLIE 莉莉艾 from supplied card: long pale blond hair with TWO FRONT BRAIDS, green eyes, broad WHITE round sunhat, white elegant dress with pale blue ribbon, shoulder bag grey strap. Wholesome young trainer, upper body only. SIX poses: hands clasped at chest uncertain but hopeful; lift gaze with resolve; one fist softly closes at heart; determined open palm extended toward viewer, hair and hat ribbon sweeping with luminous ivory stars; confident hand at heart; warm resolved smile framed by soft gold-lavender star sparkle. Match reference outfit and wide white hat in all six frames, keep hat inside safe margins, no text, no monster."
+    },
+    "brock": {
+      "file": "brock.png",
+      "sha256": "999fb650636447243c9dfdb673e27094ae8e8f18bafc144dcf027b54ef7f3f98",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.3901,
+      "pose_sha256": [
+        "8cd94e8ba35931a85adb0a8e2ac85b13d65b4ab645394426c41722c5f59a1e34",
+        "5d54013626956e52704932e030f9cf5d7b3ec50b23aaaac8ce1e9d1af5d985e8",
+        "bc23998c1c61a7a018f7dd313e02f93e28fae4d86441c4b2ad61005c84d5c85d",
+        "5d200fec7bd2f5289b6657a969cf181cc45ee44bac7b4b78ace4cc95cb08a2f4",
+        "08c36f7db2233ae4ae446f7bc9c4c74421ffa5b7d09e984ea786ca231866cc99",
+        "1a46d2facb70325f373b5d40315263d6e8e07ca9be207010b44d4e89b94314b7"
+      ],
+      "source_filename": "exec-3901fd52-fcec-4c58-8b93-e90e19bedb21.png",
+      "reference_printing": "30thDC_038",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: BROCK 小刚 from supplied modern card, tan-skinned sturdy adult/older teen man, spiky brown hair, distinctive narrow closed eyes, charcoal short-sleeve jacket with mustard-orange shoulder/chest yoke, matching reference, olive lower outfit. Six torso-only poses: friendly confident smile with fist; examine a small stone between fingers; thoughtful focus holding stone; strong open palm forward with amber dust sweep and teal mineral glints; offer a discovered stone proudly; warm confident final fist beside chest. Practical trainer geology theme, no fantasy armor, no giant boulders, no other creatures."
+    },
+    "penny": {
+      "file": "penny.png",
+      "sha256": "36d4508985553448583757325ed4eff6c6fc7299520c261d23980d33a09ad4ec",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "transparent_fraction": 0.2912,
+      "pose_sha256": [
+        "e5ed6cf24d6d89713dab2428070afe0c47d8d9c397370f48e881a3d22bad25a1",
+        "322764f0c3b1c392cae469cd27314ea2efb4a08df1cd944afd70bf7516a1f3f3",
+        "4e38e4fd8954e090fca7602d567f1a70c30c1aa72bcbf253455aa35e11379889",
+        "fd271d735cd518194cb32fed09dfd046ad2d421ece8701e18b3e1e7a9e69f20e",
+        "e9448011ac793590219cbc6b718c919c070d01c74d8e1e6ca032b506d392e690",
+        "f9a60b7bd8180c7f3c288e652955d572e4f218272dd51d1ebfbdfa40355db1e9"
+      ],
+      "source_filename": "exec-9fe1d429-d4fa-4e39-b24c-e608765dd8f0.png",
+      "reference_printing": "CSV1C_124",
+      "prompt": "Create a high-resolution transparent sprite sheet for the SAME character shown on the supplied Pokemon trainer card. Card image is identity/costume reference only. Second image (Giovanni sheet) is the approved STYLE and dramatic bust composition reference, never copy Giovanni's face or clothes. Clean premium anime cel shading, confident expressive face, sharp outlines, vivid but controlled aura, PC game cinematic quality. EXACT 3 columns x 2 rows, SIX sequential upper-body poses in row-major order, 1536x1024. Every cell exactly 512x512. Identical character, scale, head position and flat waist/bust baseline across all six frames: top of head y=100 in each cell, waist baseline y=430. Keep all hair, hands, accessories and aura within 30 px safe margin on all sides. Frame centers stay fixed. REAL transparent background with alpha, no background scenery or painted checkers, no card border, no writing, no letters, no logos, no UI. Character: PENNY 牡丹 from supplied card, fair-skinned teenage girl with SHORT split-color bob (icy light blue on one side, red on the other), round thin black glasses, dark charcoal oversized hoodie, grey skirt lower edge, BIG brown EEVEE backpack with long ears and fluffy pale beige collar behind shoulders. Wholesome shy tech-savvy trainer. Six upper-body poses: shy reserved gaze with one hand near hoodie collar; adjust round glasses; caring determined face with hand on fluffy backpack strap; open hand reaching toward viewer, soft cyan-magenta pixel trail curling toward her; draw hand back protectively to chest; gentle relieved smile with pixel sparkle. Keep glasses and short split red-blue bob, no long hair, no generic trainer, no text."
+    }
+  }
+}

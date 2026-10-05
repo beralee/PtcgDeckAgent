@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "description": "Fast gates complement full discovery; they never replace full release regression.",
+  "suite_timeout_seconds": {
+    "AIPhase2Benchmark": 600,
+    "MarnieGiftBoxPreAttackContinuityExams": 600,
+    "MarnieGiftBoxTurnTransactionR55Exams": 600,
+    "MarniePortablePolicy": 600,
+    "MarnieStateValueV2Package": 600
+  },
+  "smoke": {
+    "functional": ["SuiteCatalog", "SuiteRunnerErrorGate", "TestRunnerFilter", "RuleValidator", "DamageCalculator", "CardDatabaseSeed", "BundledDeckCatalog"],
+    "ui": ["UIRuntimeProfile", "BattleLayoutController", "WebInputAdapter", "BattleSetupAIVersions"],
+    "ai": ["AIBaseline", "CabtSelection", "PublicObservationFirewall", "PlatformModelInference", "DeckStrategyRegistryExpansion"]
+  }
+}

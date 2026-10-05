@@ -1,0 +1,112 @@
+{
+  "cases": [
+    {
+      "id": "comic_opening",
+      "personality": "逗比臭牌篓子",
+      "trigger": "opening",
+      "subject": "多龙梅西亚",
+      "prizes_taken": 0,
+      "text": "我先把场面摆好，别急，今天争取少下一点臭棋。",
+      "expected_valid": true
+    },
+    {
+      "id": "fiery_attack_call",
+      "personality": "中二热血",
+      "trigger": "attack_call",
+      "subject": "幻影潜袭",
+      "prizes_taken": 0,
+      "text": "轮到我出招了——幻影潜袭，向前场进发！",
+      "expected_valid": true
+    },
+    {
+      "id": "fiery_charizard_arrival",
+      "personality": "中二热血",
+      "trigger": "ace_arrival",
+      "subject": "喷火龙ex",
+      "prizes_taken": 0,
+      "text": "我的喷火龙登场！烈焰已至，接下来由我燃起战局！",
+      "expected_valid": true
+    },
+    {
+      "id": "comic_stalled_without_hand_identity",
+      "personality": "逗比臭牌篓子",
+      "trigger": "stalled",
+      "subject": "愿增猿",
+      "prizes_taken": 0,
+      "text": "我这回合先缓缓，场面没转起来，嘴倒是先开了。",
+      "expected_valid": true
+    },
+    {
+      "id": "comic_confirmed_two_prizes",
+      "personality": "逗比臭牌篓子",
+      "trigger": "prize_burst",
+      "subject": "幻影潜袭",
+      "prizes_taken": 2,
+      "text": "我这一下真拿了两张奖赏，今天先准我得意三秒！",
+      "expected_valid": true
+    },
+    {
+      "id": "calm_recovery_after_public_energy",
+      "personality": "冷静克制",
+      "trigger": "recovery",
+      "subject": "玛俐的长毛巨魔ex",
+      "prizes_taken": 0,
+      "text": "我的长毛巨魔已经完成附能，接下来把进攻接起来。",
+      "expected_valid": true
+    },
+    {
+      "id": "calm_public_setback",
+      "personality": "冷静克制",
+      "trigger": "setback",
+      "subject": "含羞苞",
+      "prizes_taken": 0,
+      "text": "我的含羞苞离场了，这一步确实吃亏，先把后续接稳。",
+      "expected_valid": true
+    },
+    {
+      "id": "fiery_confirmed_victory",
+      "personality": "中二热血",
+      "trigger": "victory",
+      "subject": "多龙巴鲁托ex",
+      "prizes_taken": 2,
+      "text": "这一战，我拿下了！收起锋芒，下一场继续全力以赴！",
+      "expected_valid": true
+    },
+    {
+      "id": "calm_confirmed_defeat",
+      "personality": "冷静克制",
+      "trigger": "defeat",
+      "subject": "玛俐的长毛巨魔ex",
+      "prizes_taken": 0,
+      "text": "这局我输了。结果我认，下一局再把自己的节奏打好。",
+      "expected_valid": true
+    },
+    {
+      "id": "reject_prize_boast_before_any_prize",
+      "personality": "逗比臭牌篓子",
+      "trigger": "prize_burst",
+      "subject": "幻影潜袭",
+      "prizes_taken": 0,
+      "text": "我这一招已经连收两张奖赏，胜利正在向我招手！",
+      "expected_valid": false
+    },
+    {
+      "id": "reject_hidden_hand_identity",
+      "personality": "逗比臭牌篓子",
+      "trigger": "opening",
+      "subject": "多龙梅西亚",
+      "prizes_taken": 0,
+      "text": "我手里藏着两张神奇糖果，下一回合就给你变出多龙！",
+      "expected_valid": false
+    },
+    {
+      "id": "reject_personal_insult",
+      "personality": "逗比臭牌篓子",
+      "trigger": "setback",
+      "subject": "含羞苞",
+      "prizes_taken": 0,
+      "text": "我输这一手算什么，你这蠢货根本不会打牌。",
+      "expected_valid": false
+    }
+  ]
+}

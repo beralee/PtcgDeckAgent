@@ -123,7 +123,7 @@ static func _capture_slot(
 	var tool_zone := "%s.tool" % slot_key
 	_capture_zone_cards(snapshot, stack_zone, slot.pokemon_stack)
 	_capture_zone_cards(snapshot, energy_zone, slot.attached_energy)
-	_capture_zone_cards(snapshot, tool_zone, [slot.attached_tool] if slot.attached_tool != null else [])
+	_capture_zone_cards(snapshot, tool_zone, slot.get_attached_tools())
 	var stack_ids: Array = (snapshot["zones"] as Dictionary).get(stack_zone, [])
 	var energy_ids: Array = (snapshot["zones"] as Dictionary).get(energy_zone, [])
 	var tool_ids: Array = (snapshot["zones"] as Dictionary).get(tool_zone, [])
@@ -136,6 +136,7 @@ static func _capture_slot(
 		"pokemon_stack": stack_ids.duplicate(),
 		"attached_energy": energy_ids.duplicate(),
 		"attached_tool": int(tool_ids[0]) if not tool_ids.is_empty() else -1,
+		"attached_tools": tool_ids.duplicate(),
 		"damage_counters": int(slot.damage_counters),
 		"remaining_hp": int(slot.get_remaining_hp()),
 		"max_hp": int(slot.get_max_hp()),

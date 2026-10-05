@@ -133,9 +133,11 @@ static func _is_card_effect_registered(card: CardData) -> bool:
 	var effect_id := str(card.effect_id).strip_edges()
 	if effect_id == "":
 		return false
-	var processor := EffectProcessor.new()
+	# CardDatabase loads this resolver at boot; importing EffectProcessor here
+	# would compile the entire battle/effect graph before the home screen.
+	var processor: RefCounted = load("res://scripts/engine/EffectProcessor.gd").new()
 	if card.is_pokemon():
 		processor.register_pokemon_card(card)
-	var implemented := processor.has_effect(effect_id) or processor.has_attack_effect(effect_id)
+	var implemented: bool = processor.has_effect(effect_id) or processor.has_attack_effect(effect_id)
 	processor.prepare_for_disposal()
 	return implemented

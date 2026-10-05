@@ -21,6 +21,7 @@ var _integrity_writer = NativeReplayIntegrityWriterScript.new()
 var _match_id: String = ""
 var _match_dir: String = ""
 var _meta: Dictionary = {}
+var _content_release_id := ""
 var _initial_state: Dictionary = {}
 var _result: Dictionary = {}
 var _events: Array = []
@@ -48,7 +49,9 @@ func set_write_profile(profile_id: String) -> void:
 
 func start_match(match_meta: Dictionary, initial_state: Dictionary = {}) -> void:
 	_reset_session()
+	_content_release_id = preload("res://scripts/card_content/ContentPaths.gd").release_id()
 	_meta = match_meta.duplicate(true)
+	_meta["content_release_id"] = _content_release_id
 	_initial_state = initial_state.duplicate(true)
 	_match_id = _builder.make_match_id()
 	_match_dir = base_dir.path_join(_match_id)
@@ -70,6 +73,7 @@ func update_match_context(match_meta: Dictionary, initial_state: Dictionary = {}
 	if not _active:
 		return
 	_meta = match_meta.duplicate(true)
+	_meta["content_release_id"] = _content_release_id
 	_initial_state = initial_state.duplicate(true)
 	_integrity_writer.update_context(_meta)
 

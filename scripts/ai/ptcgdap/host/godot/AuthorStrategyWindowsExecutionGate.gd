@@ -11,6 +11,44 @@ const PlatformCapabilitiesScript = preload("res://scripts/ai/ptcgdap/host/godot/
 const PortabilityScript = preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyPortability.gd")
 const ModelActorScript = preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPModelActor.gd")
 
+class PreparedCatalog extends RefCounted:
+	var records: Array = []
+	var ready_records: Array = []
+	var selection: Dictionary = {}
+	var prepared: Dictionary = {}
+	func list_metadata_records() -> Array: return records.duplicate(true)
+	func list_ready_records() -> Array: return ready_records.duplicate(true)
+	func request_match_handle(id: String, version: String, sha: String) -> Dictionary:
+		if id != selection.get("package_id") or version != selection.get("package_version") or sha != selection.get("archive_sha256"):
+			return {"ok": false, "error_code": "package_integrity_invalid"}
+		return prepared
+	func request_ready_match_handle(id: String, version: String, sha: String) -> Dictionary:
+		return request_match_handle(id, version, sha)
+
+
+static func request_match_handle_async(catalog: Variant, selection: Dictionary) -> Dictionary:
+	var admitted := evaluate_selection(catalog, selection)
+	if not bool(admitted.get("ok", false)):
+		return admitted
+	if catalog == null or not catalog.has_method("request_match_handle_async"):
+		return {"ok": false, "error_code": "package_catalog_unavailable"}
+	var prepared: Dictionary = await catalog.request_match_handle_async(
+		str(selection.get("package_id")), str(selection.get("package_version")),
+		str(selection.get("archive_sha256")).to_upper(),
+		admitted.get("authority_mode") == CONTROL_DISTRIBUTED_MODE
+	)
+	if not bool(prepared.get("ok", false)):
+		return prepared
+	var proxy := PreparedCatalog.new()
+	proxy.records = catalog.list_metadata_records()
+	# Imported development metadata must not become Control release authority
+	# while adapting an asynchronously prepared archive to the existing gate.
+	proxy.ready_records = catalog.list_ready_records()
+	proxy.selection = selection.duplicate(true)
+	proxy.prepared = prepared
+	# Reuse the complete existing authority/pin/model gate after preparation.
+	return request_match_handle(proxy, selection)
+
 
 static func is_device_canary_requested(args: Variant = null) -> bool:
 	return DeviceCanaryGateScript.is_activation_requested(args)

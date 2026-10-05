@@ -200,6 +200,31 @@ func test_main_menu_navigation_prewarm_is_single_stage_and_excludes_heavy_scenes
 	return run_checks(checks)
 
 
+func test_loading_events_match_navigation_and_battle_bench_cases() -> String:
+	var manager = _load_game_manager_script().new()
+	var checks: Array[String] = []
+	var pages := {
+		GameManager.SCENE_BATTLE_SETUP: "navigation.battle_setup",
+		GameManager.SCENE_DECK_MANAGER: "navigation.deck_manager",
+		GameManager.SCENE_STRATEGY_HUB: "navigation.strategy_hub",
+		GameManager.SCENE_SETTINGS: "navigation.settings",
+		GameManager.SCENE_DECK_TRAINING: "navigation.deck_training",
+	}
+	for path: String in pages:
+		checks.append(assert_eq(manager.scene_loading_event_id(path), pages[path], "Navigation must use its measured bench event"))
+	manager.current_mode = GameManager.GameMode.VS_AUTHOR_STRATEGY_AI
+	checks.append(assert_eq(manager.scene_loading_event_id(GameManager.SCENE_BATTLE), "battle.author_start", "Author preparation has a distinct baseline"))
+	manager.current_mode = GameManager.GameMode.VS_AI
+	checks.append(assert_eq(manager.scene_loading_event_id(GameManager.SCENE_BATTLE), "battle.classic_start", "Classic preparation has a distinct baseline"))
+	manager.current_mode = GameManager.GameMode.TWO_PLAYER
+	checks.append(assert_eq(manager.scene_loading_event_id(GameManager.SCENE_BATTLE), "battle.two_player_start", "Unmeasured human battles cannot borrow AI timings"))
+	manager.set("_deck_training_launch", {"scenario_id": "loading-test"})
+	checks.append(assert_eq(manager.scene_loading_event_id(GameManager.SCENE_BATTLE), "battle.training_start", "Training setup has no measured loading baseline"))
+	checks.append(assert_eq(manager.scene_loading_event_id(GameManager.SCENE_REPLAY_BROWSER), GameManager.SCENE_REPLAY_BROWSER, "Unmeasured destinations retain a distinct identity"))
+	manager.free()
+	return run_checks(checks)
+
+
 func test_scene_navigation_waits_for_in_progress_threaded_prewarm() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var checks: Array[String] = [
@@ -217,7 +242,8 @@ func test_scene_navigation_stops_waiting_for_stalled_prewarm() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	return run_checks([
 		assert_true(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 50)), "A nearly complete preload may be awaited briefly"),
-		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 250)), "Navigation must not silently wait hundreds of milliseconds for a background preload"),
+		assert_true(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 250)), "Visible progress should keep rendering instead of switching to a blocking load"),
+		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_IN_PROGRESS, 15000)), "Stalled preparation must return to a recoverable error"),
 		assert_false(bool(manager.call("_should_continue_awaiting_prewarm", ResourceLoader.THREAD_LOAD_FAILED, 1000)), "A failed preload should never keep navigation waiting"),
 	])
 

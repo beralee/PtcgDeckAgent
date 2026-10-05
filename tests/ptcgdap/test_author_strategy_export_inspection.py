@@ -6,7 +6,7 @@ import unittest
 import warnings
 import zipfile
 
-from tools.ptcgdap.inspect_author_strategy_export import inspect_zip_inventory
+from tools.ptcgdap.inspect_author_strategy_export import inspect_zip_inventory, required_paths_for_player_release
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +33,18 @@ def archive_bytes(paths: list[str]) -> bytes:
 
 
 class AuthorStrategyExportInspectionTests(unittest.TestCase):
+    def test_player_inventory_tracks_every_current_package_and_rejects_a_missing_one(self) -> None:
+        required = required_paths_for_player_release(ROOT)
+        packages = sorted(path.relative_to(ROOT).as_posix() for path in (ROOT / "data/ptcgdap/author_strategy_packages").glob("*.ptcgai"))
+        self.assertTrue(packages)
+        self.assertEqual(packages, sorted(path for path in required if path.endswith(".ptcgai")))
+        self.assertIn("data/ptcgdap/author_strategy_catalog_cache.json", required)
+        self.assertTrue(inspect_zip_inventory(archive_bytes(required), required_paths=required)["accepted"])
+        for package in packages:
+            report = inspect_zip_inventory(archive_bytes([p for p in required if p != package]), required_paths=required)
+            self.assertEqual([package], report["missing_paths"])
+            self.assertFalse(report["accepted"])
+
     def test_complete_export_inventory_is_accepted(self) -> None:
         required = [
             "contracts/ptcgdap/author_strategy_package_profile.json",

@@ -5,6 +5,7 @@ $lockStream = $null
 $newProcess = $null
 $journal = @()
 $mutating = $false
+$oldExited = $false
 
 function Write-Marker([string]$Name, [string]$Text = '') {
     [IO.File]::WriteAllText((Join-Path $sessionPath $Name), $Text, [Text.UTF8Encoding]::new($false))
@@ -26,6 +27,15 @@ function Child-Path([string]$Root, [string]$Relative) {
 }
 function Save-Journal {
     Write-Marker 'journal.json' (ConvertTo-Json -Depth 6 -InputObject @($journal))
+}
+function File-Sha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+    finally { $algorithm.Dispose(); $stream.Dispose() }
+}
+function Assert-NotCancelled {
+    if (Test-Path -LiteralPath (Join-Path $sessionPath 'cancelled')) { throw 'Preparation cancelled by the game.' }
 }
 function Restore-Files {
     for ($i = $journal.Count - 1; $i -ge 0; $i--) {
@@ -54,7 +64,7 @@ try {
     if ([IO.Path]::GetFullPath($oldProcess.Path) -ne $targetExe) { throw 'The running game no longer matches this plan.' }
     $oldStart = $oldProcess.StartTime
     $packageItem = Get-Item -LiteralPath $plan.package
-    if ($packageItem.Length -ne $plan.size -or (Get-FileHash -LiteralPath $plan.package -Algorithm SHA256).Hash -ne $plan.sha256) { throw 'Package integrity check failed.' }
+    if ($packageItem.Length -ne $plan.size -or (File-Sha256 $plan.package) -ne $plan.sha256) { throw 'Package integrity check failed.' }
     $stageRoot = Join-Path $sessionPath 'stage'
     $backupRoot = Join-Path $sessionPath 'backup'
     New-Item -ItemType Directory -Path $stageRoot,$backupRoot | Out-Null
@@ -66,6 +76,7 @@ try {
     try {
         if ($archive.Entries.Count -gt 20000) { throw 'Too many archive entries.' }
         foreach ($entry in $archive.Entries) {
+            Assert-NotCancelled
             $name = $entry.FullName
             if ($name.Contains('\') -or $name.StartsWith('/') -or $name -match '[\x00-\x1f\x7f:*?"<>|%]') { throw 'Invalid archive path.' }
             $trimmed = $name.TrimEnd('/')
@@ -97,14 +108,19 @@ try {
     $probe = Join-Path $targetRoot ('.ptcg-write-' + $plan.token)
     [IO.File]::WriteAllText($probe, '')
     Remove-Item -LiteralPath $probe
+    Assert-NotCancelled
     Write-Marker 'prepared'
     $deadline = [DateTime]::UtcNow.AddSeconds(120)
     while ($true) {
+        Assert-NotCancelled
         $current = Get-Process -Id $plan.pid -ErrorAction SilentlyContinue
         if (-not $current -or $current.StartTime -ne $oldStart) { break }
         if ([DateTime]::UtcNow -gt $deadline) { throw 'Game did not close; update cancelled.' }
         Start-Sleep -Milliseconds 200
     }
+    Assert-NotCancelled
+    if (-not (Test-Path -LiteralPath (Join-Path $sessionPath 'proceed'))) { throw 'Game exited without authorizing installation.' }
+    $oldExited = $true
     foreach ($item in $files) {
         $backup = Child-Path $backupRoot $item.relative
         $exists = Test-Path -LiteralPath $item.target -PathType Leaf
@@ -138,8 +154,11 @@ try {
             if ($newProcess -and -not $newProcess.HasExited) { $newProcess.Kill(); $newProcess.WaitForExit(10000) | Out-Null }
             Restore-Files
             Write-Marker 'rolled_back'
-            Start-Process -FilePath $targetExe -ArgumentList @('--', ('--ptcg-update-rollback=' + $plan.token)) -WorkingDirectory $targetRoot | Out-Null
-        } catch { Write-Marker 'rollback_failed.txt' 'Use the reinstall entry; retained backups and journal are in this directory.' }
+        } catch { $oldExited = $false; Write-Marker 'rollback_failed.txt' 'Use the reinstall entry; retained backups and journal are in this directory.' }
+    }
+    if ($oldExited) {
+        try { Start-Process -FilePath $targetExe -ArgumentList @('--', ('--ptcg-update-rollback=' + $plan.token)) -WorkingDirectory $targetRoot | Out-Null }
+        catch { Write-Marker 'restart_failed.txt' 'Open the game again from its original location.' }
     }
     Write-Marker 'failed.txt' $_.Exception.Message
     exit 1

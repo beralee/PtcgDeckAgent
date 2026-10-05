@@ -2,6 +2,7 @@ extends RefCounted
 
 const CabtJsonTreeScript = preload("res://scripts/ai/ptcgdap/cabt/CabtJsonTree.gd")
 const SemanticInput = preload("res://scripts/ai/ptcgdap/host/godot/SemanticModelInput.gd")
+const SemanticInputV2 = preload("res://scripts/ai/ptcgdap/host/godot/SemanticModelInputV2.gd")
 const MAX_OPTIONS := 1024
 const FRAME_WIDTH := 24
 const OPTION_WIDTH := 16
@@ -78,7 +79,7 @@ func initialization_error() -> String:
 
 
 func decide(context: Variant, local_context: Variant, prompt: Dictionary, rule_indexes: Array) -> Dictionary:
-	if _tensor_profile_id == SemanticInput.PROFILE_ID:
+	if _tensor_profile_id in [SemanticInput.PROFILE_ID, SemanticInputV2.PROFILE_ID]:
 		return _fallback(rule_indexes, "model_bypassed_input_lane", false)
 	if _policy_mode != "rules_with_model":
 		return _fallback(rule_indexes, "", false)
@@ -174,7 +175,7 @@ func decide_development_frame(
 		"setup_bench", "take_prize", "send_out",
 	]:
 		return _fallback(rule_indexes, "model_bypassed_mandatory", false)
-	if _tensor_profile_id == SemanticInput.PROFILE_ID:
+	if _tensor_profile_id in [SemanticInput.PROFILE_ID, SemanticInputV2.PROFILE_ID]:
 		if base_frontier.get("profile_id") != "ptcgdap-base-model-frontier-v1" or base_frontier.get("window_id") != frame.source.window_id or base_frontier.get("public_observation_hash") != frame.source.public_observation_hash:
 			return _fallback(rule_indexes,"model_authority_input_invalid",false)
 		if not base_frontier.get("enabled",false):
@@ -190,7 +191,7 @@ func decide_development_frame(
 				return _fallback(rule_indexes,"model_authority_input_invalid",false)
 			seen_indexes[candidate] = true
 	var tensorized := _tensorize_development_frame(frame)
-	if _tensor_profile_id == SemanticInput.PROFILE_ID and tensorized.get("error_code") in ["model_unknown_uid","model_unknown_option_shape"]:
+	if _tensor_profile_id in [SemanticInput.PROFILE_ID, SemanticInputV2.PROFILE_ID] and tensorized.get("error_code") in ["model_unknown_uid","model_unknown_option_shape"]:
 		return _fallback(rule_indexes,"model_bypassed_unsupported_public_semantics",false)
 	if not bool(tensorized.get("ok", false)):
 		return _fallback(
@@ -258,8 +259,8 @@ func decide_development_frame(
 
 
 func _tensorize_development_frame(frame: Dictionary) -> Dictionary:
-	if _tensor_profile_id == SemanticInput.PROFILE_ID:
-		return SemanticInput.project(frame,_allowed_uids)
+	if _tensor_profile_id in [SemanticInput.PROFILE_ID, SemanticInputV2.PROFILE_ID]:
+		return SemanticInputV2.project(frame,_allowed_uids) if _tensor_profile_id == SemanticInputV2.PROFILE_ID else SemanticInput.project(frame,_allowed_uids)
 	if _contains_forbidden(frame):
 		return _error("model_hidden_field")
 	var state: Variant = frame.get("public_state")

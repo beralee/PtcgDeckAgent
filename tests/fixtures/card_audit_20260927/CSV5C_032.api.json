@@ -1,0 +1,63 @@
+{
+  "name": "蓝蟾蜍",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【水】【水】 泼水 50\n\n\n",
+  "yorenCode": "P536",
+  "pokemonAttr": {
+    "energyType": "W",
+    "stage": "Stage 1",
+    "hp": 100,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "L",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 2,
+    "attack": [
+      {
+        "name": "泼水",
+        "text": "",
+        "cost": "WW",
+        "damage": "50",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": "圆蝌蚪"
+  },
+  "setCode": "CSV5C",
+  "cardIndex": "032",
+  "setCardsNum": "",
+  "artist": "sowsow",
+  "rarity": "C",
+  "releaseDate": "2025-09-11T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "5e425c4d3a20e504af62da85fd46a673",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV5C",
+      "cardIndex": "032",
+      "cardName": "蓝蟾蜍",
+      "rarity": "C",
+      "effectId": "5e425c4d3a20e504af62da85fd46a673",
+      "cardType": "Pokemon",
+      "yorenCode": "P536",
+      "is": [
+        "Stage 1"
+      ],
+      "setCodeEn": "OBF",
+      "cardIndexEn": "51",
+      "nameEn": "Palpitoad"
+    }
+  ],
+  "setCodeEn": "OBF",
+  "cardIndexEn": "51",
+  "nameEn": "Palpitoad"
+}

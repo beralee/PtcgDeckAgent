@@ -1,0 +1,14 @@
+{
+  "package": "cn.skillserver.ptcg.updatelab",
+  "initial": "1.0.0 / 1",
+  "target": "1.0.1 / 2",
+  "payload": {
+    "arch": "universal",
+    "format": "android_apk",
+    "entry": "UpdateLab.apk",
+    "size": 161500921,
+    "sha256": "3a74192fe5aa04a95119715e7354e52f59c15107191ad93c74e4dad0635c1eb9",
+    "build": 2
+  },
+  "production_modified": false
+}

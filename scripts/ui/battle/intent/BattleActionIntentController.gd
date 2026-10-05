@@ -18,7 +18,7 @@ var _last_success_msec: int = -100000
 
 func setup(scene: Control) -> void:
 	_scene = scene
-	if bool(GameManager.battle_effects_enabled):
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		_ensure_overlay()
 
 
@@ -26,7 +26,7 @@ func sync() -> void:
 	if _scene == null or not is_instance_valid(_scene):
 		return
 	var gsm: GameStateMachine = _scene.get("_gsm") as GameStateMachine
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		_model = {}
 		if _overlay != null and is_instance_valid(_overlay):
 			_overlay.call("clear_visuals")
@@ -94,7 +94,7 @@ func show_rejection(payload: Dictionary) -> void:
 
 
 func play_success(success_kind: String, payload: Dictionary = {}) -> void:
-	if not bool(GameManager.battle_effects_enabled) or not _prepare_overlay():
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene) or not _prepare_overlay():
 		return
 	_overlay.call("dismiss_rejection")
 	var source_rect := _resolve_source_rect(payload)
@@ -119,7 +119,7 @@ func play_success(success_kind: String, payload: Dictionary = {}) -> void:
 
 
 func play_press(payload: Dictionary = {}) -> void:
-	if not bool(GameManager.battle_effects_enabled) or not _prepare_overlay():
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene) or not _prepare_overlay():
 		return
 	_overlay.call("dismiss_rejection")
 	var anchor := _resolve_target_rect(payload)
@@ -128,12 +128,12 @@ func play_press(payload: Dictionary = {}) -> void:
 
 
 func play_phase_sweep() -> void:
-	if bool(GameManager.battle_effects_enabled) and _prepare_overlay():
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene) and _prepare_overlay():
 		_overlay.call("play_event", "phase_sweep", {})
 
 
 func play_field_movement(movement: Dictionary) -> void:
-	if not bool(GameManager.battle_effects_enabled) or not _prepare_overlay():
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene) or not _prepare_overlay():
 		return
 	var played := false
 	for move_variant: Variant in movement.get("moves", []):

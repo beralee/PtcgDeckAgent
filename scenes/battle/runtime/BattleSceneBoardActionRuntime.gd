@@ -1,12 +1,15 @@
 ## BattleScene board action, card detail, prize, and match-end runtime.
 extends "res://scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd"
 
+var _prize_flip_tween: Tween = null
+
 func _ensure_portrait_actions_popup() -> VBoxContainer:
 	if _portrait_actions_popup == null:
-		_portrait_actions_popup = PopupPanel.new()
+		_portrait_actions_popup = GameModal.new()
 		_portrait_actions_popup.name = "PortraitActionsPopup"
-		_portrait_actions_popup.exclusive = false
-		_portrait_actions_popup.transient = true
+		_portrait_actions_popup.title = "更多操作"
+		_portrait_actions_popup.scale_content = false
+		_portrait_actions_popup.get_ok_button().hide()
 		IosWebHudTouchAdapterScript.mark_hud_root(_portrait_actions_popup)
 		var panel_style := StyleBoxFlat.new()
 		panel_style.bg_color = Color(0.02, 0.07, 0.10, 0.96)
@@ -21,7 +24,7 @@ func _ensure_portrait_actions_popup() -> VBoxContainer:
 		margin.add_theme_constant_override("margin_right", 18)
 		margin.add_theme_constant_override("margin_top", 18)
 		margin.add_theme_constant_override("margin_bottom", 18)
-		_portrait_actions_popup.add_child(margin)
+		_portrait_actions_popup.add_content(margin)
 		var scroll := ScrollContainer.new()
 		scroll.name = "PortraitActionsScroll"
 		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -36,9 +39,9 @@ func _ensure_portrait_actions_popup() -> VBoxContainer:
 		list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		list.add_theme_constant_override("separation", 10)
 		scroll.add_child(list)
-	var existing := _portrait_actions_popup.get_node_or_null("PortraitActionsMargin/PortraitActionsScroll/PortraitActionsList") as VBoxContainer
+	var existing := _portrait_actions_popup.get_content().get_node_or_null("PortraitActionsMargin/PortraitActionsScroll/PortraitActionsList") as VBoxContainer
 	if existing == null:
-		existing = _portrait_actions_popup.get_node_or_null("PortraitActionsMargin/PortraitActionsList") as VBoxContainer
+		existing = _portrait_actions_popup.get_content().get_node_or_null("PortraitActionsMargin/PortraitActionsList") as VBoxContainer
 	return existing
 
 
@@ -57,7 +60,7 @@ func _popup_portrait_panel() -> void:
 		frame_rect = Rect2(Vector2.ZERO, logical_size)
 	var ui_scale := _portrait_layout_ui_scale(frame_rect.size)
 	var margin := maxf(PORTRAIT_ACTION_POPUP_MARGIN * ui_scale, frame_rect.size.x * 0.035)
-	var margin_node := _portrait_actions_popup.get_node_or_null("PortraitActionsMargin") as MarginContainer
+	var margin_node := _portrait_actions_popup.get_content().get_node_or_null("PortraitActionsMargin") as MarginContainer
 	if margin_node != null:
 		var margin_px := roundi(margin)
 		margin_node.add_theme_constant_override("margin_left", margin_px)
@@ -67,7 +70,7 @@ func _popup_portrait_panel() -> void:
 	var available_width := maxf(frame_rect.size.x - margin * 2.0, 1.0)
 	var available_height := maxf(frame_rect.size.y - margin * 2.0, 1.0)
 	var popup_width := clampf(frame_rect.size.x * 0.92, minf(320.0 * ui_scale, available_width), minf(560.0 * ui_scale, available_width))
-	var list := _portrait_actions_popup.get_node_or_null("PortraitActionsMargin/PortraitActionsScroll/PortraitActionsList") as VBoxContainer
+	var list := _portrait_actions_popup.get_content().get_node_or_null("PortraitActionsMargin/PortraitActionsScroll/PortraitActionsList") as VBoxContainer
 	var desired_content_height := _portrait_actions_popup_content_height(list)
 	var popup_height := minf(desired_content_height + margin * 2.0, available_height)
 	var popup_position := Vector2(
@@ -79,15 +82,15 @@ func _popup_portrait_panel() -> void:
 		Vector2i(roundi(popup_width), roundi(popup_height))
 	)
 	var popup_size := Vector2i(roundi(popup_width), roundi(popup_height))
-	_portrait_actions_popup.size = popup_size
-	var scroll := _portrait_actions_popup.get_node_or_null("PortraitActionsMargin/PortraitActionsScroll") as ScrollContainer
+	_portrait_actions_popup.dialog_size = popup_size
+	var scroll := _portrait_actions_popup.get_content().get_node_or_null("PortraitActionsMargin/PortraitActionsScroll") as ScrollContainer
 	if scroll != null:
-		scroll.custom_minimum_size = Vector2(0, maxf(popup_height - margin * 2.0, 1.0))
+		scroll.custom_minimum_size = Vector2.ZERO
 		HudThemeScript.style_scroll_container(scroll, _portrait_scrollbar_profile())
 	if not is_inside_tree():
 		return
 	_portrait_actions_popup.popup(popup_rect)
-	_portrait_actions_popup.size = popup_size
+	_portrait_actions_popup.dialog_size = popup_size
 
 
 
@@ -102,37 +105,6 @@ func _apply_portrait_popup_text_metrics() -> void:
 	for root: Node in _portrait_popup_text_roots():
 		_apply_popup_text_scale(root, PORTRAIT_POPUP_FONT_SCALE)
 	_apply_portrait_scrollbar_metrics()
-
-
-
-func _style_hud_button(button: Button) -> void:
-	if button == null:
-		return
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.01, 0.11, 0.18, 0.72)
-	normal.border_color = Color(0.16, 0.62, 0.76, 0.9)
-	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(10)
-	var hover := normal.duplicate()
-	hover.bg_color = Color(0.04, 0.18, 0.28, 0.82)
-	hover.border_color = Color(0.37, 0.91, 0.98, 0.96)
-	var pressed := normal.duplicate()
-	pressed.bg_color = Color(0.03, 0.14, 0.22, 0.9)
-	pressed.border_color = Color(0.56, 0.94, 1.0, 1.0)
-	var disabled := normal.duplicate()
-	disabled.bg_color = Color(0.04, 0.08, 0.12, 0.45)
-	disabled.border_color = Color(0.22, 0.31, 0.38, 0.6)
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("disabled", disabled)
-	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
-	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
-	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
-	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.58, 0.63))
-
-
-
 
 
 
@@ -259,7 +231,10 @@ func _consume_modal_pointer_sequence_if_needed(
 ) -> bool:
 	if (
 		_battle_pointer_input_router == null
-		or not _battle_pointer_input_router.should_block(event, "battle_board")
+		or not (
+			_battle_pointer_input_router.should_block_gui_event(event, "battle_board")
+			if is_inside_tree() else _battle_pointer_input_router.should_block(event, "battle_board")
+		)
 	):
 		return false
 	_cancel_slot_touch_long_press(false)
@@ -294,6 +269,16 @@ func _consume_modal_origin_slot_echo(event: InputEvent, source: String = "") -> 
 	_runtime_log("modal_slot_input_consumed", "source=%s event=%s mode=origin" % [source, event.get_class()])
 	return true
 
+
+
+func _consume_board_hud_input_if_needed(event: InputEvent, source: String = "") -> bool:
+	# Direct GUI callbacks and manual/native HUD dispatch share the same gate.
+	if _is_board_modal_overlay_visible() or _draw_reveal_active or _pending_prize_animating:
+		var viewport := get_viewport()
+		if viewport != null:
+			viewport.set_input_as_handled()
+		return true
+	return _consume_modal_hud_input_if_needed(event, source)
 
 
 func _consume_modal_hud_input_if_needed(event: InputEvent, source: String = "") -> bool:
@@ -1066,6 +1051,7 @@ func _can_accept_live_action() -> bool:
 		and not (_deck_training_controller != null and _deck_training_controller.is_modal_open())
 		and not _is_board_modal_overlay_visible()
 		and not _draw_reveal_active
+		and not _pending_prize_animating
 		and not _ai_llm_waiting
 		and not _is_ai_action_pause_active()
 		and not _handover_attack_vfx_delay_active
@@ -1392,6 +1378,8 @@ func _ensure_battle_deck_shuffle_animator() -> void:
 
 
 func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
+	var arena := get_node_or_null("Arena3DPresenter")
+	if arena != null and arena.motion.is_busy(): return
 	if _gsm == null:
 		return
 	if _pending_choice != "take_prize" or _pending_prize_player_index != player_index:
@@ -1405,6 +1393,8 @@ func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
 	var prize_view: BattleCardView = _get_prize_slot_view(player_index, slot_index)
 	if prize_view == null:
 		return
+	# Claim before resolving: the last prize can synchronously close the modal.
+	call("_begin_modal_pointer_drain", "take_prize")
 	# Commit the rule transaction synchronously. The flip is presentation only:
 	# losing a Tween callback must never be able to prevent resolve_take_prize.
 	_pending_prize_animating = true
@@ -1425,12 +1415,16 @@ func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
 		_focus_prize_panel(player_index)
 		_refresh_ui()
 		_maybe_run_ai()
+		_battle_pointer_input_router.finish_gui_dispatch()
 		return
 	_restore_pending_engine_prize_choice_if_needed("take_prize_resolve")
 	if _pending_choice == "take_prize":
 		_focus_prize_panel(_pending_prize_player_index)
 	else:
 		_clear_prize_selection()
+	# Starting/clearing the next rules prompt resets its presentation flag. The
+	# committed card's flip still owns input until this generation completes.
+	_pending_prize_animating = true
 	_refresh_ui()
 	_check_two_player_handover()
 	_animate_prize_flip(
@@ -1438,6 +1432,7 @@ func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
 		prize_card,
 		Callable(self, "_complete_prize_presentation").bind(animation_generation)
 	)
+	_battle_pointer_input_router.finish_gui_dispatch()
 
 
 func _can_view_player_start_turn_action() -> bool:
@@ -1709,7 +1704,7 @@ func _try_play_to_bench(player_index: int, card: CardInstance, slot_id: String) 
 
 
 func _try_handle_field_interaction_slot_click(slot_id: String, _target_slot: PokemonSlot) -> void:
-	if not _is_field_interaction_active():
+	if not _should_present_field_interaction():
 		return
 	if not _field_interaction_slot_index_by_id.has(slot_id):
 		return
@@ -2072,20 +2067,25 @@ func _get_prize_slot_view(player_index: int, slot_index: int) -> BattleCardView:
 
 
 func _animate_prize_flip(prize_view: BattleCardView, prize_card: CardInstance, on_complete: Callable) -> void:
+	_stop_prize_flip_tween()
 	if prize_view == null:
 		if on_complete.is_valid():
 			on_complete.call()
 		return
-	if not bool(GameManager.battle_effects_enabled) or not is_inside_tree():
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(self) or not is_inside_tree():
 		prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
 		prize_view.set_face_down(false)
 		if on_complete.is_valid():
 			on_complete.call()
 		return
 	prize_view.pivot_offset = prize_view.size * 0.5
+	var animation_generation := _prize_animation_generation
 	var tween := create_tween()
+	_prize_flip_tween = tween
 	tween.tween_property(prize_view, "scale:x", 0.05, 0.11).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tween.tween_callback(func() -> void:
+		if animation_generation != _prize_animation_generation or not is_instance_valid(prize_view):
+			return
 		prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
 		prize_view.set_face_down(false)
 		prize_view.set_selected(true)
@@ -2093,15 +2093,24 @@ func _animate_prize_flip(prize_view: BattleCardView, prize_card: CardInstance, o
 	tween.tween_property(prize_view, "scale:x", 1.0, 0.13).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_interval(0.08)
 	tween.finished.connect(func() -> void:
+		if animation_generation != _prize_animation_generation or not is_instance_valid(prize_view):
+			return
 		prize_view.scale = Vector2.ONE
 		if on_complete.is_valid():
 			on_complete.call()
 	)
 
 
+func _stop_prize_flip_tween() -> void:
+	if _prize_flip_tween != null and _prize_flip_tween.is_valid():
+		_prize_flip_tween.kill()
+	_prize_flip_tween = null
+
+
 func _complete_prize_presentation(animation_generation: int) -> void:
 	if animation_generation != _prize_animation_generation:
 		return
+	_stop_prize_flip_tween()
 	_pending_prize_animating = false
 	_refresh_ui()
 	_check_two_player_handover()
@@ -2111,6 +2120,7 @@ func _complete_prize_presentation(animation_generation: int) -> void:
 func _ai_watchdog_force_finish_prize_animation() -> void:
 	if not _pending_prize_animating:
 		return
+	_stop_prize_flip_tween()
 	_prize_animation_generation += 1
 	_pending_prize_animating = false
 	for prize_view: BattleCardView in _my_prize_slots + _opp_prize_slots:
@@ -2334,7 +2344,7 @@ func _ensure_battle_field_swap_animator() -> void:
 func _sync_field_swap_snapshot_after_refresh() -> void:
 	if _gsm == null or _gsm.game_state == null:
 		return
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(self):
 		_field_swap_last_snapshot = {}
 		return
 	_ensure_battle_field_swap_animator()
@@ -2463,6 +2473,10 @@ func _hide_invalid_action_hint() -> void:
 func _is_field_interaction_active() -> bool:
 	_ensure_battle_interaction_coordinator()
 	return bool(_battle_interaction_coordinator.call("is_field_interaction_active"))
+
+
+func _should_present_field_interaction() -> bool:
+	return bool(_battle_interaction_controller.call("should_present_field_interaction", self))
 
 
 
@@ -2871,7 +2885,7 @@ func _start_ai_action_pause() -> void:
 
 
 func _check_ready_vfx_triggers() -> void:
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(self):
 		_ready_vfx_trigger_source_player_index = -1
 		_ready_vfx_trigger_action_kind = ""
 		return

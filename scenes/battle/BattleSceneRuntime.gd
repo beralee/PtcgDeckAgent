@@ -1,6 +1,8 @@
 ## BattleScene lifecycle and layout runtime.
 extends "res://scenes/battle/runtime/BattleSceneBrowserPointerRuntime.gd"
 
+const BattleMulliganNoticeScript = preload("res://scripts/ui/battle/BattleMulliganNotice.gd")
+
 var _dialog_card_touch_bridge_active_card: BattleCardView = null
 var _dialog_card_touch_bridge_touch_index: int = -1
 
@@ -38,6 +40,7 @@ func _recover_battle_runtime_after_resume(reason: String = "resume") -> void:
 
 
 func _ready() -> void:
+	var startup_started := StartupPerformance.begin()
 	set_process(false)
 	# Consume and snapshot the launch before any live setup helper can clear
 	# transient battle identity. Recorded labels are scene-local below.
@@ -238,6 +241,7 @@ func _ready() -> void:
 	_bind_field_slot_input_handlers()
 
 	if not _is_review_mode():
+		StartupPerformance.end("battle.ui_ready", startup_started)
 		_start_battle()
 
 
@@ -338,6 +342,10 @@ func _release_runtime_timer_nodes() -> void:
 
 
 func _release_runtime_tweens() -> void:
+	if _battle_draw_reveal_controller != null:
+		_battle_draw_reveal_controller.call("release", self)
+	_stop_prize_flip_tween()
+	_prize_animation_generation += 1
 	_kill_runtime_tween(_detail_reveal_tween)
 	_detail_reveal_tween = null
 	_kill_runtime_tween(_my_deck_shuffle_tween)
@@ -523,11 +531,18 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if preload("res://scripts/ui/GameModalDialog.gd").active_for(self) != null:
+		return
 	var pointer_observation := _observe_battle_pointer_event(event)
 	if _update_modal_pointer_drain(event, pointer_observation):
 		var drain_viewport := get_viewport()
 		if drain_viewport != null:
 			drain_viewport.set_input_as_handled()
+		return
+	# Native Android also emits compatibility mouse events. Normalize before
+	# manual HUD hit testing; an echo must never acquire a new UI target.
+	if bool(pointer_observation.get("synthetic_echo", false)):
+		get_viewport().set_input_as_handled()
 		return
 	var direct_hud_touch_route_active := (
 		_ios_web_hud_touch_adapter != null
@@ -605,6 +620,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _try_handle_battle_hud_touch_input(event: InputEvent) -> bool:
+	# This entry point receives raw viewport input, including direct native calls.
+	# Observe it before any GUI-aware ownership check can consult the dispatch.
+	var pointer_observation := _observe_battle_pointer_event(event)
+	if bool(pointer_observation.get("synthetic_echo", false)):
+		return false
 	var pointer_position := Vector2(-1.0, -1.0)
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
@@ -625,7 +645,7 @@ func _try_handle_battle_hud_touch_input(event: InputEvent) -> bool:
 		)
 	else:
 		return false
-	if _is_board_modal_overlay_visible():
+	if _is_board_modal_overlay_visible() or _draw_reveal_active or _pending_prize_animating:
 		return false
 	for descriptor: Dictionary in [
 		{
@@ -667,27 +687,9 @@ func _try_handle_battle_hud_touch_input(event: InputEvent) -> bool:
 
 
 func _battle_hud_control_contains_touch(control: Control, screen_position: Vector2) -> bool:
-	if not PointerGeometryScript.control_is_pointer_visible(control):
-		return false
-	# _input receives Godot's logical viewport coordinate. With canvas_items
-	# stretch, get_global_transform_with_canvas() includes the physical-screen
-	# scale and therefore belongs to a different coordinate space. Resolve the
-	# HUD rectangle in battle-local logical coordinates, matching the established
-	# portrait Bench hit-test path.
-	var battle_rect := _control_rect_in_battle_local(control)
-	if (
-		battle_rect.size.x <= 0.0
-		or battle_rect.size.y <= 0.0
-	):
-		return false
-	if battle_rect.has_point(screen_position):
-		return true
-	# Some forced-orientation builds keep a landscape logical viewport and rotate
-	# the battle root. Their touch position must be converted once; Android builds
-	# that already report post-rotation logical coordinates are handled above.
-	if _rotated_portrait_canvas_active:
-		return battle_rect.has_point(_screen_position_to_battle_local(screen_position))
-	return false
+	# _input positions are viewport coordinates, including under a rotated root.
+	# Invert the actual control transform exactly once, and honor clipping.
+	return PointerGeometryScript.control_visible_viewport_point(control, screen_position)
 
 
 func _ensure_modal_pointer_drain_shield() -> void:
@@ -1541,12 +1543,13 @@ func _move_portrait_hud_pair_to_field_edges(
 func _ensure_portrait_edge_hud_overlay() -> Control:
 	var existing := find_child("PortraitEdgeHudOverlay", true, false) as Control
 	if existing != null:
-		existing.visible = true
+		existing.visible = not preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(self)
 		existing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		existing.z_index = 30
 		return existing
 	var overlay := Control.new()
 	overlay.name = "PortraitEdgeHudOverlay"
+	overlay.visible = not preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(self)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	overlay.z_index = 30
@@ -2759,19 +2762,13 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 		"mulligan_extra_draw":
 			var beneficiary: int = data.get("beneficiary", 0)
 			var count: int = data.get("mulligan_count", 1)
-			var choices: Array[String] = []
-			for draw_count: int in count + 1:
-				choices.append("让玩家 %d 多抽 %d 张牌" % [beneficiary + 1, draw_count])
-			_pending_choice = "mulligan_extra_draw"
-			_show_dialog(
-				"对手第 %d 次重抽" % count,
-				choices,
-				{
-					"beneficiary": beneficiary,
-					"maximum_draw_count": count,
-					"allow_cancel": false,
-				}
-			)
+			if _gsm == null or _gsm.game_state == null or beneficiary not in [0, 1] or count <= 0:
+				return
+			# Normal play automatically takes the full bonus. The engine retains
+			# its exact DRAW_COUNT boundary for external decision/replay callers.
+			var drawn_count := mini(count, _gsm.game_state.players[beneficiary].deck.size())
+			if _gsm.resolve_mulligan_draw_count(beneficiary, count):
+				BattleMulliganNoticeScript.show_result(self, beneficiary, drawn_count)
 		"setup_ready":
 			_begin_setup_flow()
 		"take_prize":
@@ -2795,6 +2792,11 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 					cleanup_steps,
 					null
 				)
+		"tool_limit_cleanup":
+			var tool_steps: Array[Dictionary] = []
+			for step: Dictionary in data.get("steps", []): tool_steps.append(step)
+			if not tool_steps.is_empty():
+				_start_effect_interaction("tool_limit_cleanup", int(data.player), tool_steps, data.card, data.slot)
 		"powerglass_end_turn":
 			var powerglass_steps: Array[Dictionary] = []
 			for raw_powerglass_step: Variant in data.get("steps", []):

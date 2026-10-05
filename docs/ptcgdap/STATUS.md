@@ -1,5 +1,57 @@
 # PtcgDAP public status
 
+2026-10-04 AI 领奖卡死修复：原盘第 19 回合的伤害指示物子选择耗尽了界面 20 次行动计数，领奖被统一限额提前拦截。共享调度器改为仅限制新发起的 MAIN 行动，效果子步骤、领奖和强制替换继续结算。8 项专项与 139 项相关回归通过；原盘快照、原多龙 0.29 包和完整战斗场景续局见证奖赏 3→2、手牌 2→3，并进入玩家第 20 回合。仅本地源码，重启生效，未发布。见 [根因、验证与回滚](ai-prize-action-limit.md)。
+
+2026-10-04 大钢蛇再次导致作者 AI 空过：定位到新 `reviewed-gust-v1` 模式未继承旧目录缺项保护；Python/Godot 统一仅将 `unknown_damage_card_uid` 作为可选伤害预测不可用，独立合法规则继续，Base 和隐私门保留。原 0.29 包在二维/三维、前期/满能、大岩蛇/大钢蛇八种完整场景中均出牌/攻击，0 错误/兜底/引擎拒绝。构造局面不冒充原盘，包及发行版本不变，本地源码需重启。见 [修复记录](../evidence/ptcgdap/developer_ai_damage_catalog_gap_20260928.md)。
+
+2026-10-04 本地 Windows 后台策略修复：多龙已选幻影潜袭，却因指示物窗口的调度/回收摘要不一致被误判 `stale_policy_response`，随后 12 秒超时丢失攻击。两侧统一使用当前公开选择状态，真实过期仍拒绝；原盘第 6/8 回合分别恢复后，以原 0.29 包、完整战斗场景和后台策略执行见证 200+60 结算与拿奖赏卡提示。未改策略、未复验整局胜率、未发布；本地源码重启生效。见 [指示物状态与证据](author-public-counter-state.md)。
+
+2026-10-03 开战补充修复：精确多龙 0.29/0.23 原包登记为 Windows 本地开发可执行；异步准备保留开发元数据与市场 ready 记录边界，修复导入后误入市场资格门。策略列表、详情和导入完成提示说明具体阻塞原因。0.29 实际安装、异步准备及真实引擎 Owner 初始化通过；仍为本地 0.6.3 / build 63 源码，重启生效，未导出或发布。见 [兼容性](strategy-runtime-compatibility.md) 和 Forge `work/dragapult-local-start-20261003/RESULTS.md`。
+
+2026-10-03：Windows 本地源码 0.6.3 / build 63 接入 reviewed-gust-v1 与 resource-continuity-v2，原多龙 0.29 包无需改动。导入诊断和策略详情显示最低客户端要求；能力检查不授予生产资格。见 [策略运行时兼容性](strategy-runtime-compatibility.md)。
+
+2026-10-03 expert feedback 0.1.1 / local：四项评价提示和模板、同一示范的反馈草稿恢复、键盘高度布局与保存前 IME 提交、恢复弹窗独占输入已实现，13 项专项通过。独立 APK 覆盖安装/文件回读和限制见 Forge `work/dragapult-expert-save-20261003/RESULTS.md`；未改生产更新器或策略。
+
+2026-10-03 active / local：新增多龙 675701 专家共创开放训练，36 局面、五题短组、真实公开事件记录和 Android 原生文件导出。8 项新模式与 53 项旧训练回归通过。示范保持待审，不冒充 current-window/Host 标签；独立安卓试用包和设备/上传验收单独记录。见 [设计与边界](expert-play-teaching.md)。
+
+2026-09-30：active / local — 卡牌增量更新支持自动/手动检查、签名内容包、按需图片、重启激活、失败回退和对局版本记录。Windows 一次导出 12 步、Android 模拟器一次安装 9 步及完整游戏效果执行验证通过。实现、TDD 与边界见 [设计文档](card-content-updates.md)。未部署生产、未改变作者策略本地执行和精确源摘要门。
+
+2026-09-30 多龙后续本地迭代：新增公开派生 counter_prize_plan fact，Python/Godot 当前指示物子集规划和 7 个跨语言向量同步；原生真实幻影潜袭见证 2+2+2 结算，相关原生组 16/16 通过。没有改变生产策略安装或部署；Forge 的整局 Bench 尚受磁盘准入门阻塞，未声明胜率提升。参见 author-public-decision-api.md。
+
+2026-09-30：用户授权本地公开决策 API 审计与 SDK 同步，未授权本轮上线。Owner 已修复 effective remaining HP，并投影 decision v1 的逐招式成本/逐能量供给、进化与状态、撤退资源、公开全局上下文及显式交互限制；Python/Godot 规则层共享 160 个事实及闭合验证。严格选择边界和 Base 权限保留，未将费用满足冒充当前合法。详见 [接口说明](author-public-decision-api.md)；Forge 侧证据目录为 work/public-decision-api-20260930。原多龙策略逻辑未变，未新增胜率证明、未上传 z/部署。
+
+2026-09-30: User-authorized local public counter-state repair and scoped Forge SDK port completed. The exact Dragapult attack publishes six successive budgets before settling 200 + 60. 64/64 Godot checks pass, including counter, cross-language, cost and privacy regressions; Forge 0.11.0 passes all 950 scenarios, strict Host validation and deterministic double build. No online deployment or new strategy strength is claimed. See [counter state](author-public-counter-state.md).
+
+2026-09-25: User-authorized public attack-cost projection repair has been applied
+to the local author Host. Crystal/Bloodmoon discounts now enter the public
+payment profile through the same cost modifiers as attack validation. Applied
+engine checks pass 45/45; maintained cost / competitive / privacy suites pass
+7/7, 19/19 and 5/5. The 44 isolated developer-only matches are clean with
+4,881/4,881 successful policy calls. No reliable strength gain, cloud deployment
+or new strategy promotion is claimed. See [cost projection](author-public-attack-cost.md).
+
+2026-09-20: Built-in Marnie/Froslass deck 675700 now uses three CSV9.5C/043
+Snorunt as explicitly corrected by the user. Exact old-seed migration preserves
+newer player edits and original import ordering. Bundled catalog, seed and
+printing regressions pass 101/101, plus the seed-digest unit test. See
+[printing correction](marnie185-snorunt-printing-correction.md). No game release
+or full-match strength claim is made by this change.
+
+2026-09-20: The user-authorized local-author counter-distribution repair routes
+sequential-capable adapters through fresh source/count/target windows. Two
+focused RED cases reproduced the skipped NUMBER window; after the one-branch
+fix, 68 Godot regressions pass, including classic, official, local and pending
+adapter paths. Full-game strategy comparisons remain a separate Forge gate.
+See [local counter-window validation](local-author-counter-windows.md).
+
+2026-09-20: User-authorized public damage registry refresh covers all 1,011
+current card printings, preserving the original 797 entries. Fourteen damage
+planner regressions pass, including anniversary Bench cards and retained
+unknown/hidden-input rejection. Local full-game verification is recorded
+separately by Forge's Gardevoir bench. See [71](71-developer-card-catalog-refresh.md).
+
+2026-09-19: Complete 1,011-card developer catalog refresh and source-delivery checks; see [71](71-developer-card-catalog-refresh.md). Server deployment remains a separate acceptance claim.
+
 2026-09-19: Added the versioned local semantic 128/32 Actor profile, Base-owned single-choice frontier, teacher projection capture and Windows native v4 support for Forge's Marnie BC experiment. Old 24/16 rules/model behavior remains separate. Cross-language and real native probes pass; full-game results are reported independently. See `70-local-semantic-neural-actor.md`. No new production or other-device authority is asserted.
 
 Updated: 2026-09-14

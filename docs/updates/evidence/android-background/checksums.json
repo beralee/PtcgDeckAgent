@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Install-A-first.apk",
+    "bytes": 224037400,
+    "sha256": "f111a9b915a128c3ca98a656f019ef812b4460005062b1ea0c444550b10564a5"
+  },
+  {
+    "name": "B-update-payload.apk",
+    "bytes": 161509076,
+    "sha256": "dd5a7230bc772093611adc8dc3e1921b7070bb36d34eb51d0d3b6f2ed09ab734"
+  }
+]

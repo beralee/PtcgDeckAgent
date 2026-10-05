@@ -707,7 +707,8 @@ func test_contract_diagnostic_identifies_semantic_and_option_shape_drift() -> St
 	frame["select_semantics"].erase("remain_energy_cost")
 	frame["select_semantics"]["max_count"] = 1
 	var option := {}
-	for key: Variant in CompetitivePolicyV2Script.OPTION_KEYS:
+	# Optional counter-assignment fields must be absent for a number prompt.
+	for key: Variant in CompetitivePolicyV2Script.OPTION_REQUIRED_KEYS:
 		option[key] = null
 	option.merge({
 		"index": 0,

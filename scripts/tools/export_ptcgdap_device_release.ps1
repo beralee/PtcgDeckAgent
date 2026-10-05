@@ -7,7 +7,8 @@ param(
 	[string]$AndroidNdkRoot = "",
 	[string]$ZipalignPath = "",
 	[switch]$WindowsOnly,
-	[switch]$AndroidOnly
+	[switch]$AndroidOnly,
+	[switch]$PlayerRelease
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,17 +65,24 @@ if (-not (Test-Path -LiteralPath $canonicalizer -PathType Leaf)) {
 $outputs = @()
 $exportLogIndex = 0
 $canonicalizationLogIndex = 0
+[string[]]$inventoryArgs = @()
+if ($PlayerRelease) { $inventoryArgs += '--player-release' }
 
 function Invoke-GodotExport {
 	param([string]$Mode, [string]$Preset, [string]$Target)
 	$script:exportLogIndex += 1
 	$logPath = Join-Path $resolvedOutput ("godot-export-{0:D2}.log" -f $script:exportLogIndex)
 	$previousErrorPreference = $ErrorActionPreference
+	$previousGradleOpts = $env:GRADLE_OPTS
 	$ErrorActionPreference = "Continue"
 	try {
+		# A persistent Gradle daemon inherits the console export's redirected
+		# pipe on Windows, keeping the completed export alive indefinitely.
+		if ($Preset -eq "Android") { $env:GRADLE_OPTS = "$previousGradleOpts -Dorg.gradle.daemon=false".Trim() }
 		& $GodotExe --headless --path $projectRoot $Mode $Preset $Target *> $logPath
 		$exportExitCode = $LASTEXITCODE
 	} finally {
+		$env:GRADLE_OPTS = $previousGradleOpts
 		$ErrorActionPreference = $previousErrorPreference
 	}
 	if ($exportExitCode -ne 0) {
@@ -151,7 +159,7 @@ if (-not $AndroidOnly) {
 	Invoke-GodotExport -Mode "--export-pack" -Preset "Windows Desktop" -Target $windowsPack
 	Invoke-CanonicalizeGodotContainer -Kind "zip" -Path $windowsPack
 	$windowsInventory = Join-Path $resolvedOutput "windows-inventory.json"
-	& $PythonExe $inspector $windowsPack --output $windowsInventory
+	& $PythonExe $inspector $windowsPack --output $windowsInventory @inventoryArgs
 	if ($LASTEXITCODE -ne 0) { throw "Windows export inventory verification failed" }
 	Invoke-GodotExport -Mode "--export-pack" -Preset "Windows Desktop" -Target $windowsPck
 	Invoke-CanonicalizeGodotContainer -Kind "pck" -Path $windowsPck
@@ -159,7 +167,7 @@ if (-not $AndroidOnly) {
 	$previousErrorPreference = $ErrorActionPreference
 	$ErrorActionPreference = "Continue"
 	try {
-		& $GodotExe --headless --main-pack $windowsPck --script res://scripts/tools/inspect_ptcgdap_export_inventory.gd *> $runtimeProbeLog
+		& $GodotExe --headless --main-pack $windowsPck --script res://scripts/tools/inspect_ptcgdap_export_inventory.gd -- @inventoryArgs *> $runtimeProbeLog
 		$probeExitCode = $LASTEXITCODE
 	} finally {
 		$ErrorActionPreference = $previousErrorPreference
@@ -169,11 +177,16 @@ if (-not $AndroidOnly) {
 	}
 	Invoke-GodotExport -Mode "--export-release" -Preset "Windows Desktop" -Target $windowsExe
 	Invoke-CanonicalizeGodotContainer -Kind "embedded-exe" -Path $windowsExe
+	$windowsUpdaterInventory = Join-Path $resolvedOutput "windows-updater-inventory.json"
+	& $PythonExe (Join-Path $projectRoot "tools/inspect_app_update_export.py") $windowsExe --output $windowsUpdaterInventory
+	if ($LASTEXITCODE -ne 0) { throw "Windows in-game updater is incomplete; see $windowsUpdaterInventory" }
+	Add-OutputRecord -Kind "updater_inventory" -Platform "windows" -Path $windowsUpdaterInventory
 	$windowsNativeInventory = Join-Path $resolvedOutput "windows-native-inventory.json"
 	& (Join-Path $projectRoot "native/ptcgai_ort_actor/verify_windows_native.ps1") -Directory $resolvedOutput |
 		Set-Content -LiteralPath $windowsNativeInventory -Encoding utf8
 	Add-OutputRecord -Kind "native_inventory" -Platform "windows" -Path $windowsNativeInventory
-	foreach ($nativeName in @("ptcgai_ort.windows.template_release.x86_64.v3.dll", "onnxruntime.dll")) {
+	$verifiedNative = Get-Content -LiteralPath $windowsNativeInventory -Raw | ConvertFrom-Json
+	foreach ($nativeName in @($verifiedNative.native_files | ForEach-Object { $_.name })) {
 		Add-OutputRecord -Kind "native_library" -Platform "windows" -Path (Join-Path $resolvedOutput $nativeName)
 	}
 	Add-OutputRecord -Kind "resource_zip" -Platform "windows" -Path $windowsPack
@@ -188,17 +201,27 @@ if (-not $WindowsOnly) {
 	$androidApk = Join-Path $resolvedOutput "PtcgDeckAgent.apk"
 	Invoke-GodotExport -Mode "--export-pack" -Preset "Android" -Target $androidPack
 	$androidInventory = Join-Path $resolvedOutput "android-inventory.json"
-	& $PythonExe $inspector $androidPack --output $androidInventory
+	& $PythonExe $inspector $androidPack --output $androidInventory @inventoryArgs
 	if ($LASTEXITCODE -ne 0) { throw "Android export inventory verification failed" }
 	$androidMode = if ($AndroidBuildMode -eq "Release") { "--export-release" } else { "--export-debug" }
 	Invoke-GodotExport -Mode $androidMode -Preset "Android" -Target $androidApk
+	$androidUpdaterInventory = Join-Path $resolvedOutput "android-updater-inventory.json"
+	$updaterInspectArgs = @($androidApk, "--output", $androidUpdaterInventory)
+	if ($AndroidBuildMode -eq "Release") { $updaterInspectArgs += "--require-release" }
+	& $PythonExe (Join-Path $projectRoot "tools/inspect_app_update_export.py") @updaterInspectArgs
+	if ($LASTEXITCODE -ne 0) { throw "Android in-game updater is incomplete; see $androidUpdaterInventory" }
+	Add-OutputRecord -Kind "updater_inventory" -Platform "android" -Path $androidUpdaterInventory
 	$androidNativeInventory = Join-Path $resolvedOutput "android-native-inventory.json"
 	& (Join-Path $projectRoot "native/ptcgai_ort_actor/verify_android_native.ps1") -ApkPath $androidApk -NdkRoot $AndroidNdkRoot -ZipalignPath $ZipalignPath |
 		Set-Content -LiteralPath $androidNativeInventory -Encoding utf8
 	Add-OutputRecord -Kind "native_inventory" -Platform "android" -Path $androidNativeInventory
 	$androidApkInventory = Join-Path $resolvedOutput "android-apk-inventory.json"
-	& $PythonExe $inspector $androidApk --prefix "assets/" --output $androidApkInventory
+	& $PythonExe $inspector $androidApk --prefix "assets/" --output $androidApkInventory @inventoryArgs
 	if ($LASTEXITCODE -ne 0) { throw "Android APK inventory verification failed" }
+	$android2dInventory = Join-Path $resolvedOutput "android-2d-assets.json"
+	& $PythonExe (Join-Path $projectRoot "tools/inspect_2d_export_assets.py") $androidApk --root $projectRoot --output $android2dInventory --arena-mode portable
+	if ($LASTEXITCODE -ne 0) { throw "Android 2D asset verification failed; see $android2dInventory" }
+	Add-OutputRecord -Kind "2d_asset_inventory" -Platform "android" -Path $android2dInventory
 	Add-OutputRecord -Kind "resource_zip" -Platform "android" -Path $androidPack
 	Add-OutputRecord -Kind ("apk_{0}" -f $AndroidBuildMode.ToLowerInvariant()) -Platform "android" -Path $androidApk
 	Add-OutputRecord -Kind "apk_inventory" -Platform "android" -Path $androidApkInventory
@@ -229,6 +252,10 @@ $manifest = [ordered]@{
 		"The built-in package is signed by the test-fixture key and execution_trusted=false.",
 		$scopeLimitation
 	)
+}
+if ($PlayerRelease) {
+	$manifest.document_type = 'player_device_export_manifest_v1'
+	$manifest.limitations = @('Export checks do not grant strategy approval or replace native platform acceptance.', $scopeLimitation)
 }
 if (-not $WindowsOnly) {
 	$manifest.android_build_mode = $AndroidBuildMode.ToLowerInvariant()

@@ -29,7 +29,7 @@ func ensure_overlay(scene: Object) -> Control:
 
 
 func play_ready_vfx(scene: Object, trigger: Dictionary) -> void:
-	if scene == null or trigger.is_empty() or not bool(GameManager.battle_effects_enabled):
+	if scene == null or trigger.is_empty() or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return
 	var overlay := ensure_overlay(scene)
 	if overlay == null:

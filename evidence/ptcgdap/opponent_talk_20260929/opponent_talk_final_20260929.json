@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-09-29T12:51:37.979547+00:00",
+  "godot": "D:\\ai\\godot\\Godot_v4.6.1-stable_win64_console.exe",
+  "filters": [
+    "--suite-script=res://tests/test_opponent_talk.gd"
+  ],
+  "suite_count": 1,
+  "isolation": "process-and-userdata-per-suite",
+  "suites": [
+    {
+      "name": "OpponentTalk",
+      "path": "res://tests/test_opponent_talk.gd",
+      "status": "passed",
+      "exit_code": 0,
+      "infrastructure_error": "",
+      "timeout_seconds": 180.0,
+      "elapsed_seconds": 4.255,
+      "report": "C:\\Users\\24726\\.codex\\tmp\\opponent_talk_final_20260929\\0001-OpponentTalk\\result.json",
+      "log": "C:\\Users\\24726\\.codex\\tmp\\opponent_talk_final_20260929\\0001-OpponentTalk\\console.log",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "total": 9
+    }
+  ],
+  "resumed_from": "",
+  "status": "passed",
+  "completed_suites": 1,
+  "statuses": {
+    "passed": 1
+  },
+  "completed_at": "2026-09-29T12:51:43.652533+00:00",
+  "totals": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  }
+}

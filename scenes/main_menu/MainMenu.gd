@@ -116,12 +116,18 @@ var _budew_mascot_last_move_x := 1.0
 var _budew_mascot_dodge_tween: Tween = null
 var _budew_mascot_jump_offset := 0.0
 var _main_menu_touch_button_candidate: Button = null
+var _modal_release_guard_until := 0
+var _modal_button_filters: Dictionary = {}
+var _scoped_modal: Control
+var _home_input_blocked := false
+var _had_active_modal := false
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _main_menu_landscape_background_texture: Texture2D = null
 var _main_menu_portrait_background_texture: Texture2D = null
 var _portrait_home_title: Label = null
 var _portrait_home_subtitle: Label = null
 var _navigation_started := false
+var _card_content_button: Button
 
 
 func _ready() -> void:
@@ -144,10 +150,54 @@ func _ready() -> void:
 	%BtnBattleReplay.pressed.connect(_on_deck_training)
 	%BtnStrategyHub.pressed.connect(_on_strategy_hub)
 	%BtnQuit.pressed.connect(_on_quit)
+	_setup_card_content_updates()
+	var content_bootstrap := get_node_or_null("/root/CardContentBootstrap")
+	if content_bootstrap != null: content_bootstrap.call_deferred("confirm_boot")
+
+func _setup_card_content_updates() -> void:
+	if not preload("res://scripts/card_content/ContentBootstrap.gd").is_enabled(): return
+	var content_updater := get_node_or_null("/root/CardContentUpdater")
+	if content_updater == null: return
+	_card_content_button = Button.new()
+	_card_content_button.name = "CardContentUpdates"
+	_card_content_button.text = "卡牌更新"
+	_card_content_button.tooltip_text = "查看卡牌更新、修复与自动下载设置"
+	_card_content_button.custom_minimum_size = Vector2(156, 40)
+	add_child(_card_content_button)
+	_card_content_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_card_content_button.offset_left = -186
+	_card_content_button.offset_right = -22
+	_card_content_button.offset_top = 18
+	_card_content_button.offset_bottom = 60
+	_card_content_button.add_theme_stylebox_override("normal", _main_menu_button_style(HudThemeScript.ACCENT, false, false, false))
+	_card_content_button.add_theme_stylebox_override("hover", _main_menu_button_style(HudThemeScript.ACCENT, false, true, false))
+	_card_content_button.add_theme_stylebox_override("pressed", _main_menu_button_style(HudThemeScript.ACCENT, false, true, true))
+	_card_content_button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0))
+	_enable_button_touch_activation(_card_content_button)
+	_card_content_button.pressed.connect(func():
+		if get_node_or_null("CardContentUpdateOverlay") != null: return
+		var panel := preload("res://scripts/card_content/ContentUpdatePanel.gd").new()
+		add_child(panel)
+		panel.configure(content_updater)
+	)
+	content_updater.state_changed.connect(_on_card_content_changed)
+	_on_card_content_changed(content_updater.snapshot())
+
+func _on_card_content_changed(data: Dictionary) -> void:
+	if not is_instance_valid(_card_content_button): return
+	_card_content_button.text = {"available": "卡牌有更新", "downloading": "卡牌下载中…", "ready": "卡牌更新已就绪"}.get(data.get("state", ""), "卡牌更新")
+	_card_content_button.tooltip_text = str(data.get("message", ""))
 
 
 func _input(event: InputEvent) -> void:
-	if _handle_active_modal_input(event):
+	_sync_modal_input_scope(true)
+	# A root bridge searches descendants, so it must never search the home
+	# buttons while a modal owns this pointer. Native mouse GUI still runs.
+	if _active_modal_overlay() != null:
+		_handle_active_modal_input(event)
+		return
+	if _is_pointer_input_event(event) and Time.get_ticks_msec() < _modal_release_guard_until:
+		_accept_main_menu_touch()
 		return
 	if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton:
 		if bool(NonBattleTouchBridgeScript.handle_root_touch(self, event)):
@@ -212,6 +262,10 @@ func _handle_active_modal_input(event: InputEvent) -> bool:
 		return true
 	if native_text_input_touch:
 		return false
+	if event is InputEventMouseButton:
+		# If the bridge did not consume this mouse event, let the modal's
+		# native Controls handle it, including Web v2 on a touch-capable host.
+		return false
 	if _event_inside_modal_overlay(overlay, event):
 		_accept_main_menu_touch()
 		return true
@@ -219,8 +273,10 @@ func _handle_active_modal_input(event: InputEvent) -> bool:
 
 
 func _active_modal_overlay() -> Control:
-	var active: Control = null
-	for overlay_name: String in [FEEDBACK_OVERLAY_NAME, HUD_MODAL_OVERLAY_NAME]:
+	# The app-update dialog is a real modal but does not use the generic HUD
+	# overlay's node name. Include its live reference as well as named overlays.
+	var active: Control = _hud_modal_overlay if is_instance_valid(_hud_modal_overlay) and _modal_overlay_is_active(_hud_modal_overlay) else null
+	for overlay_name: String in [FEEDBACK_OVERLAY_NAME, HUD_MODAL_OVERLAY_NAME, "CardContentUpdateOverlay"]:
 		var overlay := get_node_or_null(overlay_name) as Control
 		if not _modal_overlay_is_active(overlay):
 			continue
@@ -242,11 +298,7 @@ func _is_pointer_input_event(event: InputEvent) -> bool:
 
 
 func _should_guard_active_modal_event(event: InputEvent) -> bool:
-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		return true
-	if event is InputEventMouseButton:
-		return _should_guard_modal_mouse_echo()
-	return false
+	return _is_pointer_input_event(event)
 
 
 func _should_guard_modal_mouse_echo() -> bool:
@@ -344,7 +396,32 @@ func _notification(what: int) -> void:
 
 
 func _process(delta: float) -> void:
+	_sync_modal_input_scope()
 	_update_budew_mascot(delta)
+
+
+func _sync_modal_input_scope(force: bool = false) -> void:
+	var active := _active_modal_overlay()
+	# Independently owned dialogs (e.g. app updates) can dismiss themselves.
+	# Their closing gesture needs the same drain as the home-owned modals.
+	if active == null and _had_active_modal: _drain_modal_release()
+	_had_active_modal = active != null
+	var blocked := active != null or Time.get_ticks_msec() < _modal_release_guard_until
+	if not force and active == _scoped_modal and blocked == _home_input_blocked:
+		return
+	for button in _modal_button_filters:
+		if is_instance_valid(button): button.mouse_filter = _modal_button_filters[button]
+	_modal_button_filters.clear()
+	if blocked:
+		# Godot's native Button can activate before a gui_input guard observes
+		# the echo. Remove covered buttons from both native and bridge hit tests.
+		for node in find_children("*","Button",true,false):
+			var button := node as Button
+			if active != null and _node_is_descendant_of(button,active): continue
+			_modal_button_filters[button] = button.mouse_filter
+			button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scoped_modal = active
+	_home_input_blocked = blocked
 
 
 func _apply_main_menu_hud() -> void:
@@ -428,6 +505,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	_ensure_corner_action_buttons()
 	_apply_main_menu_frame_metrics(context, portrait)
 	_layout_home_status_stack(context, portrait)
+	_layout_card_content_entry(context, portrait)
 	_layout_corner_action_buttons(context, portrait)
 	_position_deck_center_new_badge()
 	_position_deck_training_new_badge()
@@ -444,22 +522,30 @@ func _apply_main_menu_frame_metrics(context: Dictionary, portrait: bool) -> void
 	var button_font := int(context.get("button_font_size", 18))
 	var button_width := content_width if portrait else MAIN_MENU_BUTTON_WIDTH
 	var separation := int(context.get("section_gap", 12))
-	menu.add_theme_constant_override("separation", separation)
 	if portrait:
 		var viewport_size: Vector2 = context.get("viewport_size", Vector2(1080, 2400))
+		button_width = minf(content_width,viewport_size.x*.86)
+		var footer_size := _corner_action_button_size_for_context(context,true)
+		var top := viewport_size.y*.38
+		var bottom := viewport_size.y-footer_size-_corner_action_bottom_margin_for_size(footer_size,true)-viewport_size.y*.018
+		separation = roundi(minf(separation,viewport_size.y*.012))
 		var button_count := 6.0
+		var fitted_height := (bottom-top-float(separation)*5.0)/button_count
+		var fit_scale := minf(1.0,fitted_height/button_height)
+		button_height *= fit_scale
+		button_font = maxi(18,roundi(button_font*fit_scale))
 		var group_height := button_height * button_count + float(separation) * (button_count - 1.0)
-		var menu_center_y := viewport_size.y * 0.595 + button_height * PORTRAIT_MENU_BUTTON_DOWN_SHIFT
 		var viewport_center_y := viewport_size.y * 0.5
 		menu.offset_left = -button_width * 0.5
 		menu.offset_right = button_width * 0.5
-		menu.offset_top = menu_center_y - group_height * 0.5 - viewport_center_y
+		menu.offset_top = top + (bottom-top-group_height)*.5 - viewport_center_y
 		menu.offset_bottom = menu.offset_top + group_height
 	else:
 		menu.offset_left = -170.0
 		menu.offset_right = 170.0
 		menu.offset_top = -175.0 + MENU_VERTICAL_SHIFT
 		menu.offset_bottom = 175.0 + MENU_VERTICAL_SHIFT
+	menu.add_theme_constant_override("separation", separation)
 	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnStrategyHub", "BtnQuit"]:
 		var button := get_node_or_null("%" + button_name) as Button
 		if button == null:
@@ -1046,6 +1132,7 @@ func _ensure_corner_action_buttons() -> void:
 		_share_button.pressed.connect(_on_share_button_pressed)
 		add_child(_share_button)
 	_update_non_battle_orientation_button_state()
+	_sync_update_entry_visibility()
 
 
 func _corner_action_button_size_for_context(context: Dictionary = {}, portrait: bool = false) -> float:
@@ -1140,6 +1227,12 @@ func _layout_home_status_stack(context: Dictionary, portrait: bool) -> void:
 	var button_width := float(context.get("content_width", MAIN_MENU_BUTTON_WIDTH)) if portrait else 240.0
 	var button_height := _portrait_update_button_height(context) if portrait else 44.0
 	var button_font := int(context.get("button_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(16)
+	if portrait:
+		var primary := get_node_or_null("%BtnStartBattle") as Button
+		if primary != null:
+			button_width = primary.custom_minimum_size.x
+			button_height = primary.custom_minimum_size.y
+			button_font = primary.get_theme_font_size("font_size")
 	var top_margin := maxf(float(context.get("page_margin", 24.0)), 20.0)
 	var separation := int(context.get("section_gap", 10)) if portrait else 10
 	var version_height := maxf(float(context.get("meta_font_size", 14)) * 1.55, 28.0)
@@ -1160,6 +1253,25 @@ func _layout_home_status_stack(context: Dictionary, portrait: bool) -> void:
 		_update_button.custom_minimum_size = Vector2(button_width, button_height)
 		_update_button.size_flags_horizontal = Control.SIZE_FILL
 		_update_button.add_theme_font_size_override("font_size", button_font)
+
+
+func _layout_card_content_entry(context: Dictionary, portrait: bool) -> void:
+	if not is_instance_valid(_card_content_button): return
+	var viewport_size: Vector2 = context.get("viewport_size", size)
+	var margin := float(context.get("page_margin", 24.0))
+	var phone_scale := float(context.get("portrait_scale", 1.0))
+	var width := minf(280.0 * phone_scale if portrait else 184.0, viewport_size.x - margin * 2.0)
+	var height := float(context.get("secondary_button_height", 104.0)) if portrait else 44.0
+	var top := margin
+	var status_stack := get_node_or_null("HomeStatusStack") as Control
+	if portrait and status_stack != null:
+		top = maxf(top, status_stack.offset_bottom + 12.0)
+	_card_content_button.custom_minimum_size = Vector2(width, height)
+	_card_content_button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 33)) if portrait else HudThemeScript.scaled_font_size(16))
+	_card_content_button.offset_left = -margin - width
+	_card_content_button.offset_right = -margin
+	_card_content_button.offset_top = top
+	_card_content_button.offset_bottom = top + height
 
 
 func _portrait_update_button_height(context: Dictionary) -> float:
@@ -1389,6 +1501,7 @@ func _setup_version_and_updates() -> void:
 	if (
 		PTCGDAP_DEVELOPMENT_UI_MATCH_ARG in OS.get_cmdline_user_args()
 		or PTCGDAP_PRODUCTION_DEVICE_CANARY_ARG in OS.get_cmdline_user_args()
+		or get_tree().root.has_meta("performance_bench_offline")
 	):
 		print("PTCGDAP_WINDOWS_UI_NETWORK=application_disabled")
 		return
@@ -1405,6 +1518,9 @@ func _schedule_startup_network_tasks() -> void:
 	if not is_inside_tree() or _navigation_started:
 		return
 	_start_update_check()
+	var content_updater := get_node_or_null("/root/CardContentUpdater")
+	if content_updater != null and preload("res://scripts/card_content/ContentBootstrap.gd").is_enabled():
+		content_updater.check_for_updates(false)
 	_start_deck_center_meta_check()
 	_send_startup_visit_ping()
 
@@ -1453,11 +1569,21 @@ func _ensure_update_button() -> void:
 	_update_button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_enable_button_touch_activation(_update_button)
 	_update_button.pressed.connect(_on_update_button_pressed)
+	_update_button.visibility_changed.connect(_sync_update_entry_visibility)
 	var status_stack := get_node_or_null("HomeStatusStack") as VBoxContainer
 	if status_stack != null:
 		status_stack.add_child(_update_button)
 	else:
 		add_child(_update_button)
+	_sync_update_entry_visibility()
+
+
+func _sync_update_entry_visibility() -> void:
+	# The status entry takes the place of the manual check icon while active.
+	if is_instance_valid(_manual_update_button):
+		_manual_update_button.visible = not is_instance_valid(_update_button) or not _update_button.visible
+		if not _manual_update_button.visible:
+			_hide_corner_action_label(_manual_update_button)
 
 
 func _start_update_button_flash() -> void:
@@ -1754,6 +1880,10 @@ func _start_update_check(force: bool = false) -> void:
 	if not force and _should_show_temp_update_preview_on_startup():
 		_show_temp_update_available_preview()
 		return
+	# A source run cannot install an exported release over the Godot editor.
+	# Keep manual website checks, without restoring startup release banners.
+	if not force and OS.has_feature("editor"):
+		return
 	_temp_update_preview_active = false
 	if _update_checker != null:
 		var existing_err: int = int(_update_checker.call("check_for_updates", force))
@@ -1797,7 +1927,7 @@ func _build_temp_update_preview_info() -> Dictionary:
 		"summary": PackedStringArray([
 			"临时预览：模拟自动检查发现新版本。",
 			"用于检查首页更新提示、闪烁按钮和更新弹窗表现。",
-			"不会访问服务器，也不会写入忽略版本或更新检查状态。",
+			"不会访问服务器，也不会写入更新检查状态。",
 		]),
 		"download_page_url": UpdateCheckerScript.DEFAULT_DOWNLOAD_PAGE_URL,
 		"manifest_url": "debug://preview-update-available",
@@ -1834,6 +1964,7 @@ func _on_update_available(info: Dictionary) -> void:
 		_show_update_dialog(_available_update)
 	var updater := get_node_or_null("/root/AppUpdater")
 	if updater != null:
+		updater.offer(info)
 		_on_app_update_state_changed(updater.snapshot())
 
 
@@ -1846,7 +1977,7 @@ func _on_update_info_refreshed(info: Dictionary) -> void:
 
 func _on_no_update(info: Dictionary) -> void:
 	var updater := get_node_or_null("/root/AppUpdater")
-	if updater != null and updater.snapshot().state in ["downloading", "verifying", "ready", "installing", "updated"]:
+	if updater != null and updater.snapshot().state in ["downloading", "verifying", "ready", "installing"]:
 		_manual_update_requested = false
 		_set_manual_update_busy(false)
 		_on_app_update_state_changed(updater.snapshot())
@@ -1862,7 +1993,7 @@ func _on_no_update(info: Dictionary) -> void:
 		_apply_non_battle_layout()
 	if was_manual:
 		var display_version := str(info.get("display_version", AppVersionScript.current_display_version()))
-		_show_update_status_dialog("已是最新版本", "当前版本：%s\n服务器版本：%s" % [AppVersionScript.current_display_version(), display_version])
+		_show_update_status_dialog("已是最新版本", "当前版本：%s\n服务器版本：%s" % [AppVersionScript.current_display_version(), display_version], true)
 
 
 func _on_update_check_failed(message: String) -> void:
@@ -1870,12 +2001,16 @@ func _on_update_check_failed(message: String) -> void:
 	if _manual_update_requested:
 		_manual_update_requested = false
 		_set_manual_update_busy(false)
-		_show_update_status_dialog("检查更新失败", "%s\n请稍后重试，或直接前往下载页查看。" % message)
+		_show_update_status_dialog("检查更新失败", "%s\n请稍后重试，或点击“去网页下载”。" % message, true)
 		return
 	print_debug("[UpdateChecker] %s" % message)
 
 
 func _on_update_button_pressed() -> void:
+	var updater := get_node_or_null("/root/AppUpdater")
+	if updater != null and not updater.snapshot().info.is_empty():
+		updater.activate_update_entry()
+		return
 	if _available_update.is_empty():
 		return
 	_show_update_dialog(_available_update)
@@ -1884,7 +2019,7 @@ func _on_update_button_pressed() -> void:
 func _on_manual_update_button_pressed() -> void:
 	_hide_corner_action_label(_manual_update_button)
 	var updater := get_node_or_null("/root/AppUpdater")
-	if updater != null and updater.snapshot().state in ["downloading", "verifying", "ready", "failed", "installing"]:
+	if updater != null and updater.snapshot().state in ["downloading", "verifying", "ready", "failed", "installing", "permission_required", "awaiting_install", "cancelled"]:
 		_show_update_dialog(updater.snapshot().info)
 		return
 	_temp_update_preview_active = false
@@ -1904,20 +2039,17 @@ func _set_manual_update_busy(busy: bool) -> void:
 		_show_corner_action_label(_manual_update_button)
 
 
-func _show_update_status_dialog(title: String, message: String) -> void:
-	_show_hud_modal(title, message, [
-		{
-			"id": "download_update",
-			"text": "重新下载安装",
-			"primary": false,
-		},
-		{
+func _show_update_status_dialog(title: String, message: String, allow_reinstall: bool = false) -> void:
+	var actions: Array[Dictionary] = []
+	if allow_reinstall:
+		actions.append({"id": "download_update", "text": "去网页下载", "primary": false})
+	actions.append({
 			"id": "close",
 			"text": "确定",
 			"accent": HudThemeScript.ACCENT_WARM,
 			"primary": true,
-		},
-	], Vector2(460, 260))
+		})
+	_show_hud_modal(title, message, actions, Vector2(460, 260))
 
 
 func _on_share_button_pressed() -> void:
@@ -2129,12 +2261,21 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 func _hide_hud_modal() -> void:
 	var existing := get_node_or_null(HUD_MODAL_OVERLAY_NAME)
 	if existing != null:
+		_drain_modal_release()
 		NonBattleTouchBridgeScript.clear_transient_input_state(existing, "modal_closed")
 		if existing.get_parent() != null:
 			existing.get_parent().remove_child(existing)
 		existing.queue_free()
 	_hud_modal_overlay = null
 	_hud_modal_panel = null
+
+
+func _drain_modal_release() -> void:
+	# Touch release and its compatibility mouse echo may arrive after a close
+	# button removes the overlay. Neither may click the newly exposed footer.
+	_modal_release_guard_until = Time.get_ticks_msec()+220
+	_main_menu_touch_button_candidate = null
+	NonBattleTouchBridgeScript.clear_transient_input_state(self,"modal_closed")
 
 
 func _resize_hud_modal_panel() -> void:
@@ -2163,9 +2304,6 @@ func _on_hud_modal_action_pressed(action_id: String) -> void:
 			_copy_share_invite_to_clipboard()
 		"download_update":
 			_open_update_download_page()
-			_hide_hud_modal()
-		"ignore_update":
-			_ignore_current_update_version()
 			_hide_hud_modal()
 		_:
 			_hide_hud_modal()
@@ -2203,6 +2341,7 @@ func _show_feedback_dialog() -> void:
 func _hide_feedback_dialog() -> void:
 	var overlay := get_node_or_null(FEEDBACK_OVERLAY_NAME) as Control
 	if overlay != null:
+		_drain_modal_release()
 		NonBattleTouchBridgeScript.clear_transient_input_state(overlay, "modal_closed")
 		overlay.visible = false
 	if _feedback_text_edit != null and _feedback_text_edit.has_focus():
@@ -2765,7 +2904,6 @@ func _show_update_dialog(info: Dictionary) -> void:
 	add_child(dialog)
 	_hud_modal_overlay = dialog
 	_bind_modal_input_guard(dialog)
-	dialog.ignore_requested.connect(_ignore_current_update_version)
 	dialog.dismissed.connect(func() -> void: _hud_modal_overlay = null)
 	dialog.configure(get_node_or_null("/root/AppUpdater"), info)
 	dialog.move_to_front()
@@ -2773,7 +2911,14 @@ func _show_update_dialog(info: Dictionary) -> void:
 
 func _on_app_update_state_changed(data: Dictionary) -> void:
 	var state := str(data.get("state", "idle"))
-	if state not in ["downloading", "verifying", "ready", "failed", "installing", "updated"]:
+	if state in ["idle", "updated"]:
+		_available_update = {}
+		_stop_update_button_flash()
+		if _update_button != null:
+			_update_button.hide()
+			_apply_non_battle_layout()
+		return
+	if state not in ["downloading", "verifying", "ready", "failed", "cancelled", "installing", "permission_required", "awaiting_install"]:
 		return
 	var info: Dictionary = data.get("info", {})
 	if not info.is_empty():
@@ -2784,8 +2929,12 @@ func _on_app_update_state_changed(data: Dictionary) -> void:
 		return
 	_stop_update_button_flash()
 	_update_button.visible = true
-	var labels := {"downloading": "正在下载更新", "verifying": "正在校验更新", "ready": "更新已就绪 · 点击安装", "failed": "更新下载失败 · 点击重试", "installing": "正在安装更新", "updated": str(data.get("message", "更新已完成"))}
+	var labels := {"downloading": "正在下载更新", "verifying": "正在校验更新", "ready": "更新已就绪 · 点击安装", "failed": "更新未完成 · 点击重试", "cancelled": "更新已取消 · 点击重试", "installing": "正在安装更新", "permission_required": "更新等待安装权限", "awaiting_install": "更新等待安装确认", "updated": str(data.get("message", "更新已完成"))}
 	_update_button.text = labels.get(state, "游戏更新")
+	if state == "ready" and not str(data.get("install_reason", "")).is_empty():
+		_update_button.text = "更新已就绪 · 点击查看"
+	if state in ["downloading", "verifying"]:
+		_update_button.text += " %d%%" % preload("res://scripts/update/AppUpdateProgress.gd").percent(data)
 	_apply_non_battle_layout()
 
 
@@ -2818,29 +2967,6 @@ func _open_update_download_page() -> void:
 	var err := OS.shell_open(url)
 	if err != OK:
 		print_debug("[UpdateChecker] open download page failed: %d" % err)
-
-
-func _on_update_dialog_custom_action(action: StringName) -> void:
-	if str(action) != "ignore_update":
-		return
-	_ignore_current_update_version()
-
-
-func _ignore_current_update_version() -> void:
-	if _temp_update_preview_active:
-		_temp_update_preview_active = false
-		_available_update = {}
-		if _update_button != null:
-			_stop_update_button_flash()
-			_update_button.visible = false
-			_apply_non_battle_layout()
-		return
-	if _update_checker != null:
-		_update_checker.ignore_version(str(_available_update.get("latest_version", "")))
-	if _update_button != null:
-		_stop_update_button_flash()
-		_update_button.visible = false
-		_apply_non_battle_layout()
 
 
 func _on_start_battle() -> void:

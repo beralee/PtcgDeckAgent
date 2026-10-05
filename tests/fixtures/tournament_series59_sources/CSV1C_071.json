@@ -1,0 +1,209 @@
+{
+  "code": 200,
+  "data": {
+    "name": "弃世猴",
+    "cardType": "Pokemon",
+    "mechanic": null,
+    "label": null,
+    "description": "【斗】 愤怒之拳 70×\n造成对手已经获得的奖赏卡张数×70伤害。\n\n【斗】【斗】 裂爆拳 170\n给这只宝可梦也造成50伤害。\n\n",
+    "yorenCode": "P0979",
+    "pokemonAttr": {
+      "energyType": "F",
+      "stage": "Stage 2",
+      "hp": 140,
+      "ability": [],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "P",
+        "value": "×2"
+      },
+      "resistance": null,
+      "retreatCost": 2,
+      "attack": [
+        {
+          "name": "愤怒之拳",
+          "text": "造成对手已经获得的奖赏卡张数×70伤害。",
+          "cost": "F",
+          "damage": "70×",
+          "isVStarPower": false
+        },
+        {
+          "name": "裂爆拳",
+          "text": "给这只宝可梦也造成50伤害。",
+          "cost": "FF",
+          "damage": "170",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": "火暴猴"
+    },
+    "setCode": "CSV1C",
+    "cardIndex": "071",
+    "setCardsNum": "",
+    "artist": "Anesaki Dynamic",
+    "rarity": "R",
+    "releaseDate": "2025-01-16T16:00:00Z",
+    "regulationMark": "G",
+    "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "CBB3C",
+        "cardIndex": "1801",
+        "cardName": "弃世猴",
+        "rarity": "●",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CBB3C",
+        "cardIndex": "1802",
+        "cardName": "弃世猴",
+        "rarity": "●",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CBB3C",
+        "cardIndex": "1803",
+        "cardName": "弃世猴",
+        "rarity": "◆",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CBB3C",
+        "cardIndex": "1804",
+        "cardName": "弃世猴",
+        "rarity": "◆",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CBB3C",
+        "cardIndex": "1805",
+        "cardName": "弃世猴",
+        "rarity": "★",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CBB3C",
+        "cardIndex": "1806",
+        "cardName": "弃世猴",
+        "rarity": "★★",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CSVE2C",
+        "cardIndex": "074",
+        "cardName": "弃世猴",
+        "rarity": "无标记",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CSVL1C",
+        "cardIndex": "031",
+        "cardName": "弃世猴",
+        "rarity": "无标记",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CSVL1C",
+        "cardIndex": "072",
+        "cardName": "弃世猴",
+        "rarity": "无标记",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      },
+      {
+        "setCode": "CSV1C",
+        "cardIndex": "071",
+        "cardName": "弃世猴",
+        "rarity": "R",
+        "effectId": "ea313f5fb16a8fa1ee1594a403534d27",
+        "cardType": "Pokemon",
+        "yorenCode": "P0979",
+        "is": [
+          "Stage 2"
+        ],
+        "setCodeEn": "SVI",
+        "cardIndexEn": "109",
+        "nameEn": "Annihilape"
+      }
+    ],
+    "setCodeEn": "SVI",
+    "cardIndexEn": "109",
+    "nameEn": "Annihilape"
+  },
+  "msg": "OK."
+}

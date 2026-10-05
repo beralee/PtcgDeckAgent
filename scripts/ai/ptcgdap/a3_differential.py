@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -378,9 +379,22 @@ class JsonLineEngineAdapter:
             try:
                 self._rpc("dispose")
             finally:
-                if process.poll() is None:
-                    process.terminate()
-                process.wait(timeout=5)
+                # The response precedes the bridge's engine cleanup. Let that
+                # finally block finish, including when EOF follows a failed RPC.
+                if process.stdin is not None:
+                    process.stdin.close()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    if os.name == "nt":
+                        subprocess.run(
+                            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            check=False, timeout=5,
+                        )
+                    if process.poll() is None:
+                        process.kill()
+                    process.wait(timeout=5)
                 for stream in (process.stdin, process.stdout, process.stderr):
                     if stream is not None:
                         stream.close()

@@ -24,6 +24,31 @@ class FakeClient:
 		return OK
 
 
+func test_cancel_stops_owned_http_transport_without_delivering_a_reply() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var parent := Node.new()
+	tree.root.add_child(parent)
+	var service := ServiceScript.new()
+	var client := preload("res://scripts/network/ZenMuxClient.gd").new()
+	client.set_allow_python_fallback(false)
+	client.set_allow_unsafe_tls(false)
+	client.clear_proxy()
+	service.configure_dependencies(client, null, null, null)
+	var replies := [0]
+	service.message_completed.connect(func(_result: Dictionary): replies[0] += 1)
+	service.ask(parent, _make_test_deck(910998), "取消本地请求", {"endpoint": "http://127.0.0.1:1", "api_key": "fixture", "model": "fixture"})
+	service.cancel_pending_request()
+	for frame in range(3): await tree.process_frame
+	var result := run_checks([
+		assert_eq(parent.get_child_count(), 0, "Cancel must dispose the HTTP transport owned by this request"),
+		assert_eq(replies[0], 0, "Canceled transport must not deliver a UI completion"),
+		assert_false(service.is_busy(), "Cancel must unlock the next request"),
+	])
+	parent.queue_free()
+	await tree.process_frame
+	return result
+
+
 func test_service_persists_successful_assistant_response() -> String:
 	var service = ServiceScript.new()
 	var client := FakeClient.new()

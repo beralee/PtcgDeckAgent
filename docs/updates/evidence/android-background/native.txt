@@ -1,0 +1,4 @@
+PASS permission_denied_then_retry
+PASS system_cancel_then_retry
+PASS process_death_during_confirmation
+PASS real_A_to_B_upgrade_preserves_data

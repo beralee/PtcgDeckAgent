@@ -30,6 +30,9 @@ func apply(viewport_size: Vector2, preferred_mode: String, is_mobile: bool = fal
 
 	var resolved_mode := str(_metrics_controller.call("resolve_layout_mode", viewport_size, preferred_mode, is_mobile))
 	var rotate_canvas := _should_rotate_layout_canvas(viewport_size, resolved_mode, preferred_mode)
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(_scene):
+		resolved_mode = "portrait" if viewport_size.y > viewport_size.x else "landscape"
+		rotate_canvas = false
 	var logical_size := _logical_viewport_size(viewport_size, rotate_canvas)
 	if _scene.has_method("_apply_battle_canvas_transform"):
 		_scene.call("_apply_battle_canvas_transform", rotate_canvas, viewport_size, logical_size)

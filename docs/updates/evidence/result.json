@@ -1,0 +1,71 @@
+{
+  "date": "2026-09-19",
+  "android_apk_verified": true,
+  "android_device_install_tested": false,
+  "windows_export_exit_code": 0,
+  "android_export_exit_code": 0,
+  "artifacts": [
+    {
+      "size": 13685,
+      "path": "scripts/update/AppUpdater.gd",
+      "sha256": "401ee0d95b12ccf53946845d648502b95bf19637e6d35032f9a07267b39ca855"
+    },
+    {
+      "size": 5454,
+      "path": "scripts/update/AppUpdateManifest.gd",
+      "sha256": "91e52821c44a2f2f071ab07d94561a397abc8aa65fbd672f62a7ffa95a470d21"
+    },
+    {
+      "size": 3795,
+      "path": "scripts/update/AppUpdateInstaller.gd",
+      "sha256": "2756ace8a359a416d6c81e2b72ab15daa4772e47023003b498fc012a994d45d1"
+    },
+    {
+      "size": 8404,
+      "path": "scripts/update/AppUpdateDialog.gd",
+      "sha256": "c0fb1b00725e5ff4203c56e96d16dcc73bc395bd15fbfbd5905099257b1c95a4"
+    },
+    {
+      "size": 9076,
+      "path": "scripts/update/install_windows.ps1",
+      "sha256": "6df744a76f90081dc2d176134888334bf676136e04bd8d852b219e75d729fbdc"
+    },
+    {
+      "size": 4991,
+      "path": "scripts/update/install_macos.sh",
+      "sha256": "59fd9fb02220c5ab3f6ba4601f3e9c3b1d8c6c705b5bf38c939aa44b7f9c6a9f"
+    },
+    {
+      "size": 6736,
+      "path": "addons/app_updater/PtcgAppUpdater.aar",
+      "sha256": "63bc6fcee9d387f77c857c87f9b38608c8efdfb28a943bbd494ffb58b104368f"
+    },
+    {
+      "size": 292414848,
+      "path": ".tmp/game-updater-20260919/update-debug-final.apk",
+      "sha256": "a5f4fa88615a64ba9b93c90d4a1e97813ffb18ea5ae5c951f49b02fffe7f1b58"
+    },
+    {
+      "size": 310237392,
+      "path": ".tmp/game-updater-20260919/update-windows.exe",
+      "sha256": "9bdd3ee241c654ac015f2f9a083a0a8861e4d92c2d18ff9ccbb369efe9fc3d17"
+    }
+  ],
+  "godot": "4.6.1",
+  "builder_tests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "godot_tests": {
+    "passed": 59,
+    "failed": 0
+  },
+  "published": false,
+  "ui_layouts_passed": 8,
+  "windows_real_home_health": "passed",
+  "macos_install_tested": false,
+  "windows_helper_tests": {
+    "passed": 6,
+    "failed": 0
+  }
+}

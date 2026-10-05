@@ -1,0 +1,58 @@
+{
+	"name": "大王铜象ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "特性: 青铜之躯\n这只宝可梦所受到的招式的伤害「-30」。\n\n【钢】【钢】【无】 长鼻震撼 260\n给自己所有的备战宝可梦，也各造成30伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+	"yoren_code": "Y1252",
+	"set_code": "CSV2C",
+	"card_index": "099",
+	"set_code_en": "PAL",
+	"card_index_en": "150",
+	"name_en": "Copperajah ex",
+	"name_zh": "",
+	"artist": "Uta",
+	"rarity": "RR",
+	"release_date": "2025-03-20T16:00:00Z",
+	"regulation_mark": "G",
+	"effect_id": "6743b9624831bf2307918dce25e1fb2d",
+	"image_url": "https://tcg.mik.moe/static/img/CSV2C/099.png",
+	"image_local_path": "user://cards/images/CSV2C/099.png",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/cards/CSV2C/099",
+	"source_set_code": "CSV2C",
+	"source_card_index": "099",
+	"source_language": "zh-CN",
+	"source_prints": [],
+	"source_imported_at": 0,
+	"source_parser_version": 1,
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "M",
+	"stage": "Stage 1",
+	"hp": 300,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 4,
+	"evolves_from": "铜象",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "长鼻震撼",
+			"text": "给自己所有的备战宝可梦，也各造成30伤害。[备战宝可梦不计算弱点、抗性。]",
+			"cost": "MMC",
+			"damage": "260",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "青铜之躯",
+			"text": "这只宝可梦所受到的招式的伤害「-30」。"
+		}
+	],
+	"energy_provides": ""
+}

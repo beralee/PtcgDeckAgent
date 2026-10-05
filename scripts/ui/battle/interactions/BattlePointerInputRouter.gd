@@ -22,6 +22,9 @@ var _active_mouse_device: int = 0
 var _mouse_first_touch_aliases: Dictionary = {}
 var _recent_touch_sequences: Array[PointerSequence] = []
 var _event_records: Dictionary = {}
+var _last_pointer_event: InputEvent = null
+var _last_pointer_result: Dictionary = {}
+var _last_pointer_frame: int = -1
 
 
 func configure(merge_touch_mouse_echo: bool) -> void:
@@ -49,6 +52,9 @@ func observe(event: InputEvent, now_msec: int = -1) -> Dictionary:
 	else:
 		result = _result(false, false, "unsupported", null)
 	_remember_event(event_id, result, now)
+	_last_pointer_event = event
+	_last_pointer_result = result
+	_last_pointer_frame = Engine.get_process_frames()
 	return result
 
 
@@ -65,7 +71,39 @@ func claim_event(
 
 func claim_current(intent: String, owner: String, now_msec: int = -1) -> bool:
 	var sequence := _latest_active_sequence()
+	if _last_pointer_frame == Engine.get_process_frames():
+		sequence = _last_pointer_result.get("sequence", sequence)
 	return _claim_sequence(sequence, intent, owner, _resolve_now(now_msec))
+
+
+func claim_gui_event(event: InputEvent, intent: String, owner: String) -> bool:
+	return _claim_sequence(_gui_event_sequence(event), intent, owner, Time.get_ticks_msec())
+
+
+func should_block_gui_event(event: InputEvent, requesting_owner: String) -> bool:
+	var sequence := _gui_event_sequence(event)
+	return sequence != null and sequence.consumed_intent != "" and sequence.owner != requesting_owner
+
+
+func _gui_event_sequence(event: InputEvent) -> PointerSequence:
+	# Godot transforms GUI event copies into control-local coordinates. They are
+	# the same dispatch already observed by _input, not another physical press.
+	var same_dispatch := false
+	if event is InputEventScreenTouch and _last_pointer_event is InputEventScreenTouch:
+		same_dispatch = event.index == _last_pointer_event.index and event.pressed == _last_pointer_event.pressed
+	elif event is InputEventMouseButton and _last_pointer_event is InputEventMouseButton:
+		same_dispatch = event.button_index == _last_pointer_event.button_index and event.pressed == _last_pointer_event.pressed and event.device == _last_pointer_event.device
+	if same_dispatch and _last_pointer_frame == Engine.get_process_frames():
+		return _last_pointer_result.get("sequence", null)
+	return observe(event).get("sequence", null)
+
+
+func finish_gui_dispatch() -> void:
+	var sequence := _last_pointer_result.get("sequence", null) as PointerSequence
+	if _last_pointer_frame == Engine.get_process_frames() and _preserve_sequence(sequence, "battle_modal"):
+		# Synchronous engine/UI work can take longer than the Android echo window.
+		# That time is part of this dispatch, not time available for a new tap.
+		sequence.metadata["gui_completed_at_msec"] = Time.get_ticks_msec()
 
 
 func should_block(
@@ -80,21 +118,38 @@ func should_block(
 	return sequence.owner != requesting_owner
 
 
-func cancel_all(reason: String = "platform_cancel", now_msec: int = -1) -> int:
+func cancel_all(reason: String = "platform_cancel", now_msec: int = -1, preserved_owner: String = "") -> int:
 	var cancelled := 0
-	for value: Variant in _active_touch_sequences.values():
-		var sequence := value as PointerSequence
+	for pointer_id: Variant in _active_touch_sequences.keys():
+		var sequence := _active_touch_sequences[pointer_id] as PointerSequence
+		if _preserve_sequence(sequence, preserved_owner):
+			continue
 		if sequence != null and sequence.cancel(reason, now_msec):
 			cancelled += 1
-	_active_touch_sequences.clear()
-	if _active_mouse_sequence != null and _active_mouse_sequence.cancel(reason, now_msec):
-		cancelled += 1
-	_active_mouse_sequence = null
-	_active_mouse_device = 0
-	_mouse_first_touch_aliases.clear()
-	_recent_touch_sequences.clear()
-	_event_records.clear()
+		_active_touch_sequences.erase(pointer_id)
+	if not _preserve_sequence(_active_mouse_sequence, preserved_owner):
+		if _active_mouse_sequence != null and _active_mouse_sequence.cancel(reason, now_msec):
+			cancelled += 1
+		_active_mouse_sequence = null
+		_active_mouse_device = 0
+	for pointer_id: Variant in _mouse_first_touch_aliases.keys():
+		if not _preserve_sequence(_mouse_first_touch_aliases[pointer_id], preserved_owner):
+			_mouse_first_touch_aliases.erase(pointer_id)
+	for index: int in range(_recent_touch_sequences.size() - 1, -1, -1):
+		if not _preserve_sequence(_recent_touch_sequences[index], preserved_owner):
+			_recent_touch_sequences.remove_at(index)
+	for event_id: Variant in _event_records.keys():
+		var result: Dictionary = _event_records[event_id].get("result", {})
+		if not _preserve_sequence(result.get("sequence", null), preserved_owner):
+			_event_records.erase(event_id)
+	if not _preserve_sequence(_last_pointer_result.get("sequence", null), preserved_owner):
+		_last_pointer_event = null
+		_last_pointer_result = {}
 	return cancelled
+
+
+func _preserve_sequence(sequence: PointerSequence, owner: String) -> bool:
+	return owner != "" and sequence != null and sequence.owner == owner and sequence.consumed_intent != ""
 
 
 func active_sequence_count() -> int:
@@ -116,6 +171,19 @@ func active_snapshots() -> Array[Dictionary]:
 
 func _observe_touch(touch: InputEventScreenTouch, now: int) -> Dictionary:
 	var pointer_id := touch.index
+	if touch.canceled:
+		var cancelled_sequence := _active_touch_sequences.get(pointer_id,
+			_mouse_first_touch_aliases.get(pointer_id, null)) as PointerSequence
+		_active_touch_sequences.erase(pointer_id)
+		_mouse_first_touch_aliases.erase(pointer_id)
+		if cancelled_sequence == null:
+			return _result(false, false, "orphan_touch_cancel", null)
+		cancelled_sequence.cancel("touch_cancelled", now)
+		_remember_touch(cancelled_sequence)
+		if _active_mouse_sequence == cancelled_sequence:
+			_active_mouse_sequence = null
+			_active_mouse_device = 0
+		return _result(true, false, "touch_cancelled", cancelled_sequence)
 	if touch.pressed:
 		if _active_touch_sequences.has(pointer_id):
 			var stale := _active_touch_sequences[pointer_id] as PointerSequence
@@ -228,7 +296,7 @@ func _matching_touch_sequence(
 		):
 			return active
 	for sequence: PointerSequence in _recent_touch_sequences:
-		var age_since_touch_release := now - sequence.finished_at_msec
+		var age_since_touch_release := now - maxi(sequence.finished_at_msec, int(sequence.metadata.get("gui_completed_at_msec", 0)))
 		var recent_echo_max_age := (
 			TOUCH_MOUSE_ECHO_MAX_AGE_MSEC
 			if mouse_button.device == InputEvent.DEVICE_ID_EMULATION
@@ -278,6 +346,19 @@ func _claim_sequence(
 		return false
 	if sequence.consumed_intent != "":
 		return sequence.owner == owner and sequence.consumed_intent == intent
+	# _input observes a release before BaseButton/card GUI callbacks execute.
+	# Only that exact current dispatch may claim its already-completed sequence.
+	if (
+		sequence.state == PointerSequenceScript.STATE_COMPLETED
+		and sequence == _last_pointer_result.get("sequence", null)
+		and _last_pointer_frame == Engine.get_process_frames()
+		and intent.strip_edges() != "" and owner.strip_edges() != ""
+		and (sequence.owner == "" or sequence.owner == owner)
+	):
+		sequence.owner = owner
+		sequence.consumed_intent = intent
+		sequence.last_progress_at_msec = now
+		return true
 	return sequence.consume(intent, owner, now)
 
 
@@ -318,7 +399,7 @@ func _remember_event(event_id: int, result: Dictionary, now: int) -> void:
 func _prune(now: int) -> void:
 	var kept_touch: Array[PointerSequence] = []
 	for sequence: PointerSequence in _recent_touch_sequences:
-		if now - sequence.finished_at_msec <= TOUCH_MOUSE_ECHO_MAX_AGE_MSEC:
+		if now - maxi(sequence.finished_at_msec, int(sequence.metadata.get("gui_completed_at_msec", 0))) <= TOUCH_MOUSE_ECHO_MAX_AGE_MSEC:
 			kept_touch.append(sequence)
 	_recent_touch_sequences = kept_touch
 	for event_id: Variant in _event_records.keys():

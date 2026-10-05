@@ -1999,12 +1999,17 @@ func test_battle_setup_replaces_dynamic_stadium_toggle_with_battle_effects_toggl
 func test_battle_setup_lists_background_assets() -> String:
 	var setup := BattleSetupScript.new()
 	var backgrounds: Array[String] = setup._list_available_background_paths()
-
-	return run_checks([
+	setup._battle_backgrounds = backgrounds
+	var presentation := preload("res://scripts/ui/battle/BattlePresentation.gd")
+	var first := presentation.GROVE_FIELD if presentation.fields_3d_available() else BattleSetupScript.DEFAULT_BACKGROUND
+	var result := run_checks([
 		assert_contains(backgrounds, "res://assets/ui/background.png", "应包含默认背景图"),
 		assert_contains(backgrounds, "res://assets/ui/background1.png", "应包含新导入的 background1"),
-		assert_eq(backgrounds[0], "res://assets/ui/background.png", "未主动选择时默认背景应为 background.png"),
+		assert_eq(backgrounds[0], first, "Gallery offers the available native field first"),
+		assert_eq(setup._available_background_or_default(BattleSetupScript.DEFAULT_BACKGROUND), BattleSetupScript.DEFAULT_BACKGROUND, "A saved 2D selection must survive adding a 3D gallery option"),
 	])
+	setup.free()
+	return result
 
 
 func test_battle_scene_includes_zeus_help_button() -> String:

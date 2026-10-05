@@ -1,0 +1,17 @@
+Local validation only. No production service is changed.
+Phone and PC on same Wi-Fi: http://192.168.2.2:18761
+Keep this window open. Ctrl+C to stop.
+"GET /slow HTTP/1.1" 200 -
+"GET /slow HTTP/1.1" 200 -
+"GET /slow HTTP/1.1" 206 -
+RESUME slow offset=12582912
+"GET /good HTTP/1.1" 200 -
+code 404, message Not Found
+"GET /missing HTTP/1.1" 404 -
+"GET /truncated HTTP/1.1" 200 -
+"GET /drop HTTP/1.1" 200 -
+"GET /corrupt HTTP/1.1" 200 -
+"GET /invalid HTTP/1.1" 200 -
+"GET /invalid HTTP/1.1" 200 -
+"GET /invalid HTTP/1.1" 200 -
+"GET /invalid HTTP/1.1" 200 -

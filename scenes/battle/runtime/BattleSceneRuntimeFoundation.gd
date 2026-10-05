@@ -1,6 +1,8 @@
 ## BattleScene
 extends Control
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 # ===================== Constants =====================
 const BENCH_SIZE := 5
 const MAX_BENCH_SIZE := 8
@@ -523,12 +525,12 @@ var _battle_advice_panel_content: RichTextLabel = null
 var _battle_advice_panel_collapsed: bool = false
 var _review_pin_btn: Button = null
 var _review_overlay_mode: String = ""
-var _battle_discussion_dialog: AcceptDialog = null
+var _battle_discussion_dialog: GameModal = null
 var _battle_discussion_signature := ""
 var _battle_discussion_flash_tween: Tween = null
 var _portrait_my_bench_grid: Container = null
 var _portrait_opp_bench_grid: Container = null
-var _portrait_actions_popup: PopupPanel = null
+var _portrait_actions_popup: GameModal = null
 var _rotated_portrait_canvas_active: bool = false
 var _rotated_portrait_physical_viewport_size: Vector2 = Vector2.ZERO
 var _portrait_layout_frame_rect: Rect2 = Rect2()

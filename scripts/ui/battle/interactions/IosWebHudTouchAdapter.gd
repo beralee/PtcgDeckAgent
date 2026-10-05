@@ -27,8 +27,8 @@ var _last_touch_event_msec := -1000000
 var _last_touch_was_owned := false
 
 
-func configure(profile: UiRuntimeProfile) -> void:
-	_enabled = should_enable_for_profile(profile)
+func configure(profile: UiRuntimeProfile, direct_touch_surface: bool = false) -> void:
+	_enabled = should_enable_for_profile(profile) or (direct_touch_surface and profile != null and profile.prefers_touch())
 	if not _enabled:
 		cancel_all()
 
@@ -115,6 +115,11 @@ func _reset_active_gesture() -> void:
 
 
 func _handle_touch(host: Control, touch: InputEventScreenTouch) -> bool:
+	if touch.canceled:
+		var was_owned := _touch_active and touch.index == _touch_index and _gesture_owned
+		if touch.index == _touch_index:
+			_reset_active_gesture()
+		return was_owned
 	if touch.pressed:
 		var button := _marked_button_at_position(host, touch.position)
 		if button == null:

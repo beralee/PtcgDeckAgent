@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "errors": [],
+  "mobileOverflow": false,
+  "images": [
+    {
+      "file": "01-arena.png",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "file": "02-retro-handheld.png",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "file": "03-scrapbook.png",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "file": "04-editorial.png",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "file": "05-comic-challenge.png",
+      "width": 1086,
+      "height": 1448
+    }
+  ]
+}

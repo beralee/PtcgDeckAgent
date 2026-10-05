@@ -99,7 +99,7 @@ func resolve_source_position(scene: Object, player_index: int) -> Vector2:
 
 
 func play_attack_vfx(scene: Object, action: GameAction) -> void:
-	if scene == null or action == null or not bool(GameManager.battle_effects_enabled):
+	if scene == null or action == null or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return
 	var overlay: Control = ensure_overlay(scene)
 	if overlay == null:
@@ -122,7 +122,7 @@ func play_attack_vfx(scene: Object, action: GameAction) -> void:
 
 
 func play_preview_vfx(scene: Object, profile: RefCounted) -> void:
-	if scene == null or profile == null or not bool(GameManager.battle_effects_enabled):
+	if scene == null or profile == null or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return
 	var overlay: Control = ensure_overlay(scene)
 	if overlay == null:
@@ -138,7 +138,7 @@ func play_preview_vfx(scene: Object, profile: RefCounted) -> void:
 
 
 func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
-	if scene == null or data.is_empty() or not bool(GameManager.battle_effects_enabled):
+	if scene == null or data.is_empty() or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return
 	var overlay: Control = ensure_overlay(scene)
 	if overlay == null:
@@ -166,7 +166,7 @@ func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
 
 
 func play_boss_orders_vfx(scene: Object, data: Dictionary) -> void:
-	if scene == null or data.is_empty() or not bool(GameManager.battle_effects_enabled):
+	if scene == null or data.is_empty() or not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(scene):
 		return
 	if str(data.get("trainer_vfx", "")) != "boss_orders":
 		return
@@ -213,6 +213,31 @@ func get_active_attack_vfx_count(scene: Object) -> int:
 	return active_count
 
 
+## Public presentation entry for projected 3D boards. Callers provide only
+## public attribute/positions. Uses the same authored assets and timing as 2D.
+func play_projected_vfx(overlay: Control, attribute: String, source: Vector2, targets: Array, card_width: float = 130.0, speed: float = 1.0) -> void:
+	var registry := BattleAttackVfxRegistryScript.new()
+	var original: RefCounted = registry.get_attribute_profile(attribute)
+	var profile := preload("res://scripts/ui/battle/BattleAttackVfxProfile.gd").new()
+	for property: Dictionary in original.get_property_list():
+		if int(property.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			profile.set(property.name,original.get(property.name))
+	var ratio := clampf(card_width / 175.0,.55,1.05)
+	profile.impact_radius *= ratio
+	profile.shockwave_radius *= ratio
+	profile.target_flash_strength = .06
+	profile.screen_shake_strength = 0
+	profile.cast_duration /= speed
+	profile.travel_duration /= speed
+	profile.impact_duration /= speed
+	profile.residue_duration /= speed
+	if attribute == "L":
+		profile.asset_specs = profile.asset_specs.duplicate(true)
+		profile.asset_specs["impact"] = {"path":"res://assets/arena3d/product-v4/lightning-impact.png","frames":4,"rows":2,"cols":2}
+	warm_profile(profile)
+	_play_sequence(overlay,overlay,profile,source,targets,"attack")
+
+
 func _play_sequence(
 	scene: Object,
 	overlay: Control,
@@ -255,7 +280,8 @@ func _play_sequence(
 	sequence.add_child(flash)
 
 	if scene is Node and (scene as Node).is_inside_tree():
-		_play_sequence_animation(scene as Node, sequence, cast_node, flash, profile, target_specs)
+		# Sequence-bound tweens are cancelled when the overlay is cleared/resized.
+		_play_sequence_animation(sequence, sequence, cast_node, flash, profile, target_specs)
 
 
 func _preview_source_position(scene: Object) -> Vector2:
@@ -1017,7 +1043,7 @@ func _play_sequence_animation(
 			impact_tween.tween_interval(cast_duration + travel_duration * 0.62 + index * 0.04)
 			var impact_flipbook: TextureRect = impact.get_node_or_null("ImpactBloomTexture") as TextureRect
 			if impact_flipbook != null:
-				_animate_flipbook(scene, impact_flipbook, max(1, int(impact_flipbook.get_meta("flipbook_frame_count", 1))), impact_duration * 0.52)
+				impact_tween.tween_callback(func(): _animate_flipbook(scene, impact_flipbook, max(1, int(impact_flipbook.get_meta("flipbook_frame_count", 1))), impact_duration * 0.82))
 			impact_tween.tween_property(impact, "modulate:a", 1.0, impact_duration * 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 			impact_tween.parallel().tween_property(impact, "scale", Vector2(1.6, 1.6), impact_duration * 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			impact_tween.parallel().tween_property(flash, "modulate:a", float(profile.get("target_flash_strength")) if profile != null else 0.28, impact_duration * 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -1035,7 +1061,7 @@ func _play_sequence_animation(
 			residue_tween.tween_interval(cast_duration + travel_duration * 0.8 + index * 0.04)
 			var residue_flipbook: TextureRect = residue.get_node_or_null("EmbersSmokeTexture") as TextureRect
 			if residue_flipbook != null:
-				_animate_flipbook(scene, residue_flipbook, max(1, int(residue_flipbook.get_meta("flipbook_frame_count", 1))), residue_duration * 0.9)
+				residue_tween.tween_callback(func(): _animate_flipbook(scene, residue_flipbook, max(1, int(residue_flipbook.get_meta("flipbook_frame_count", 1))), residue_duration * 0.9))
 			residue_tween.tween_property(residue, "modulate:a", 0.72, residue_duration * 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 			residue_tween.parallel().tween_property(residue, "scale", Vector2(1.22, 1.22), residue_duration * 0.62).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 			residue_tween.tween_property(residue, "modulate:a", 0.0, residue_duration * 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)

@@ -525,6 +525,13 @@ func refresh_slot_card_view(scene: Object, slot_id: String, slot: PokemonSlot, i
 	var card_view: BattleCardView = slot_card_views.get(slot_id)
 	if card_view == null:
 		return
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(scene):
+		# The arena renders public field cards. Keep legacy anchor identity for
+		# shared controllers without decoding art/rebuilding an invisible 2D HUD.
+		card_view.card_instance = slot.get_top_card() if slot != null else null
+		card_view.card_data = card_view.card_instance.card_data if card_view.card_instance != null else null
+		card_view.display_mode = BattleCardView.MODE_SLOT_ACTIVE if is_active else BattleCardView.MODE_SLOT_BENCH
+		return
 	# Field Pokemon use the same readable HP/USED/Tool status metrics in both layouts.
 	card_view.set_status_text_scale(1.0 if _is_portrait_battle_layout(scene) else 0.8)
 	var slot_panel := card_view.get_parent() as PanelContainer
@@ -532,10 +539,11 @@ func refresh_slot_card_view(scene: Object, slot_id: String, slot: PokemonSlot, i
 		card_view.call("set_field_slot_layout_size", _field_slot_layout_size(scene, slot_panel, card_view))
 	card_view.set_portrait_status_metrics_enabled(true)
 	var field_slot_index_map: Dictionary = scene.get("_field_interaction_slot_index_by_id")
-	var is_selectable := field_slot_index_map.has(slot_id)
+	var present_interaction := bool(scene.call("_should_present_field_interaction"))
+	var is_selectable := present_interaction and field_slot_index_map.has(slot_id)
 	var selected_slot_ids: Array[String] = scene.call("_field_interaction_selected_slot_ids")
-	var is_selected := slot_id in selected_slot_ids
-	var should_disable := bool(scene.call("_is_field_interaction_active")) and not is_selectable
+	var is_selected := present_interaction and slot_id in selected_slot_ids
+	var should_disable := present_interaction and not is_selectable
 
 	if slot == null or slot.pokemon_stack.is_empty():
 		card_view.setup_from_instance(null, BattleCardView.MODE_SLOT_ACTIVE if is_active else BattleCardView.MODE_SLOT_BENCH)
@@ -580,8 +588,9 @@ func apply_field_slot_style(scene: Object, panel: PanelContainer, slot_id: Strin
 		return
 	var is_player_slot := slot_id.begins_with("my_")
 	var field_slot_index_map: Dictionary = scene.get("_field_interaction_slot_index_by_id")
-	var is_selectable := field_slot_index_map.has(slot_id)
-	var is_selected := slot_id in (scene.call("_field_interaction_selected_slot_ids") as Array[String])
+	var present_interaction := bool(scene.call("_should_present_field_interaction"))
+	var is_selectable := present_interaction and field_slot_index_map.has(slot_id)
+	var is_selected := present_interaction and slot_id in (scene.call("_field_interaction_selected_slot_ids") as Array[String])
 	var border_color := Color(0.52, 0.72, 0.58) if is_player_slot else Color(0.63, 0.68, 0.79)
 	if not is_active:
 		border_color = Color(0.32, 0.5, 0.44) if is_player_slot else Color(0.33, 0.39, 0.5)
@@ -611,21 +620,24 @@ func slot_overlay_text(scene: Object, slot: PokemonSlot) -> String:
 	var energy_summary := slot_energy_summary(scene, slot)
 	if energy_summary != "":
 		parts.append(energy_summary)
-	if slot.attached_tool != null:
-		parts.append(slot.attached_tool.card_data.display_name())
+	for tool: CardInstance in slot.get_attached_tools():
+		parts.append(tool.card_data.display_name())
 	return " | ".join(parts)
 
 
 func build_battle_status(scene: Object, slot: PokemonSlot) -> Dictionary:
 	var hp_current := get_display_remaining_hp(scene, slot)
 	var hp_max := maxi(get_display_max_hp(scene, slot), 1)
+	var tool_names: Array[String] = []
+	for tool: CardInstance in slot.get_attached_tools():
+		tool_names.append(tool.card_data.display_name())
 	return {
 		"hp_current": hp_current,
 		"hp_max": hp_max,
 		"hp_ratio": float(hp_current) / float(hp_max),
 		"status_icons": slot_status_icon_keys(slot),
 		"energy_icons": slot_energy_icon_codes(scene, slot),
-		"tool_name": slot.attached_tool.card_data.display_name() if slot.attached_tool != null else "",
+		"tool_name": "、".join(tool_names),
 		"ability_used_this_turn": slot_used_ability_this_turn(scene, slot),
 	}
 
@@ -1013,6 +1025,7 @@ func clear_container_children(container: Node) -> void:
 
 func build_hand_card(scene: Object, inst: CardInstance) -> PanelContainer:
 	var card_view := BattleCardViewScript.new()
+	card_view.info_overlay_enabled = not preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(scene)
 	card_view.custom_minimum_size = scene.get("_play_card_size")
 	card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)
 	card_view.name = "HandCard_%d" % inst.instance_id
@@ -1049,6 +1062,7 @@ func _refresh_hand_card_view(
 ) -> void:
 	if card_view == null or inst == null:
 		return
+	card_view.info_overlay_enabled = not preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(scene)
 	card_view.custom_minimum_size = scene.get("_play_card_size")
 	if card_view.card_instance != inst:
 		card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)

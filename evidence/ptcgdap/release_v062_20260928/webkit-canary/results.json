@@ -1,0 +1,90 @@
+[
+  {
+    "playwright": "1.61.1",
+    "browser": "26.5",
+    "host": "Windows",
+    "godot": "4.6.1.stable.official.14d19694e",
+    "errors": [
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image. (No more validation messages will be reported)"
+    ],
+    "samples": {
+      "before": {
+        "center_pixel": [
+          0,
+          2,
+          255
+        ],
+        "color_count": 1,
+        "screenshot": "canary-1.61.1-before.png"
+      },
+      "after": {
+        "center_pixel": [
+          0,
+          0,
+          0
+        ],
+        "color_count": 1,
+        "screenshot": "canary-1.61.1-after.png"
+      }
+    }
+  },
+  {
+    "playwright": "1.58.2",
+    "browser": "26.0",
+    "host": "Windows",
+    "godot": "4.6.1.stable.official.14d19694e",
+    "errors": [
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image.",
+      "WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image. (No more validation messages will be reported)"
+    ],
+    "samples": {
+      "before": {
+        "center_pixel": [
+          0,
+          18,
+          255
+        ],
+        "color_count": 1,
+        "screenshot": "canary-1.58.2-before.png"
+      },
+      "after": {
+        "center_pixel": [
+          0,
+          0,
+          0
+        ],
+        "color_count": 1,
+        "screenshot": "canary-1.58.2-after.png"
+      }
+    }
+  }
+]

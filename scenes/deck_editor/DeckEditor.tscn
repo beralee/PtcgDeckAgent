@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://b3deckeditor01"]
+[gd_scene load_steps=4 format=3 uid="uid://b3deckeditor01"]
 
 [ext_resource type="Script" path="res://scenes/deck_editor/DeckEditor.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/ui/gamesbackground.png" id="2_bg"]
+
+[ext_resource type="Script" path="res://scripts/ui/GameModalDialog.gd" id="modal"]
 
 [node name="DeckEditor" type="Control"]
 layout_mode = 3
@@ -218,9 +220,19 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="UnsavedDialog" type="ConfirmationDialog" parent="."]
+[node name="UnsavedDialog" type="Control" parent="."]
 unique_name_in_owner = true
+script = ExtResource("modal")
+visible = false
+show_cancel = true
 title = "未保存的修改"
 ok_button_text = "不保存，直接返回"
 cancel_button_text = "取消"
 dialog_text = "卡组有未保存的修改，确定要放弃修改并返回吗？"
+
+[node name="SaveErrorDialog" type="Control" parent="."]
+unique_name_in_owner = true
+script = ExtResource("modal")
+visible = false
+title = "无法保存卡组"
+ok_button_text = "继续编辑"

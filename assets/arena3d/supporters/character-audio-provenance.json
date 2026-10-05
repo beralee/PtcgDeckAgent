@@ -1,0 +1,92 @@
+{
+  "generator": "tools/arena3d/build_supporter_character_audio.py",
+  "type": "original procedural stereo synthesis; no voice or sampled recordings",
+  "sample_rate": 48000,
+  "cues": {
+    "iono": {
+      "duration": 3.08,
+      "gesture": 0.94,
+      "resolve": 1.72
+    },
+    "arven": {
+      "duration": 3.1,
+      "gesture": 1.08,
+      "resolve": 1.82
+    },
+    "research": {
+      "duration": 3.08,
+      "gesture": 1.04,
+      "resolve": 1.76
+    },
+    "turo": {
+      "duration": 3.22,
+      "gesture": 1.12,
+      "resolve": 1.88
+    },
+    "cipher": {
+      "duration": 3.14,
+      "gesture": 1.1,
+      "resolve": 1.85
+    },
+    "crispin": {
+      "duration": 3.02,
+      "gesture": 0.96,
+      "resolve": 1.72
+    },
+    "briar": {
+      "duration": 3.24,
+      "gesture": 1.13,
+      "resolve": 1.88
+    },
+    "carmine": {
+      "duration": 2.96,
+      "gesture": 0.92,
+      "resolve": 1.66
+    },
+    "sada": {
+      "duration": 3.15,
+      "gesture": 1.02,
+      "resolve": 1.78
+    },
+    "blackbelt": {
+      "duration": 2.94,
+      "gesture": 0.9,
+      "resolve": 1.66
+    },
+    "cilan": {
+      "duration": 3.14,
+      "gesture": 1.12,
+      "resolve": 1.86
+    },
+    "kieran": {
+      "duration": 3.02,
+      "gesture": 0.93,
+      "resolve": 1.7
+    },
+    "judge": {
+      "duration": 3.0,
+      "gesture": 0.98,
+      "resolve": 1.72
+    },
+    "lana": {
+      "duration": 3.26,
+      "gesture": 1.14,
+      "resolve": 1.9
+    },
+    "lillie": {
+      "duration": 3.3,
+      "gesture": 1.12,
+      "resolve": 1.9
+    },
+    "brock": {
+      "duration": 3.1,
+      "gesture": 1.04,
+      "resolve": 1.8
+    },
+    "penny": {
+      "duration": 3.2,
+      "gesture": 1.09,
+      "resolve": 1.85
+    }
+  }
+}

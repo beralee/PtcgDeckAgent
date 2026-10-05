@@ -11,9 +11,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var owner_index := pokemon.get_top_card().owner_index
 	if state.current_player_index != owner_index:
 		return false
-	if pokemon.attached_tool == null or pokemon.attached_tool.card_data == null:
-		return false
-	if pokemon.attached_tool.card_data.effect_id != ANCIENT_CAPSULE_EFFECT_ID:
+	if pokemon.find_tool_by_effect_id(ANCIENT_CAPSULE_EFFECT_ID) == null:
 		return false
 	if _tool_suppressed(pokemon, state):
 		return false

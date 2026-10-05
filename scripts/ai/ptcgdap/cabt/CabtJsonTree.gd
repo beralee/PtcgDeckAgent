@@ -6,6 +6,8 @@ const MAX_NODES := 1_000_000
 const MAX_SAFE_INTEGER := 9_007_199_254_740_991
 const MAX_INPUT_BYTES := 67_108_864
 const MAX_OUTPUT_BYTES := 67_108_864
+const STRING_MEMO_LIMIT := 4096
+const STRING_MEMO_MAX_LENGTH := 256
 const DEFAULT_LIMITS := {
 	"max_input_bytes": MAX_INPUT_BYTES,
 	"max_depth": MAX_DEPTH,
@@ -19,10 +21,13 @@ static func canonicalize(value: Variant, limit_overrides: Dictionary = {}) -> Di
 	if not bool(resolved.get("ok", false)):
 		return resolved
 	var limits: Dictionary = resolved.get("limits", {})
-	var validation := _validate_tree(value, limits)
+	# Invocation-local memoization only: never retain a tree/hash or trust a
+	# previous observation. Every node, type and cumulative limit is rechecked.
+	var memo := {"strings": {}, "sizes": {}, "utf16": {}}
+	var validation := _validate_tree(value, limits, memo)
 	if not bool(validation.get("ok", false)):
 		return validation
-	var state := {"nodes": 0, "ancestors": [], "limits": limits}
+	var state := {"nodes": 0, "ancestors": [], "limits": limits, "memo": memo}
 	var result: Dictionary = _serialize(value, state, 0)
 	if not bool(result.get("ok", false)):
 		return result
@@ -43,10 +48,11 @@ static func canonicalize_artifact(
 	if not bool(resolved.get("ok", false)):
 		return resolved
 	var limits: Dictionary = resolved.get("limits", {})
-	var validation := _validate_tree(value, limits)
+	var memo := {"strings": {}, "sizes": {}, "utf16": {}}
+	var validation := _validate_tree(value, limits, memo)
 	if not bool(validation.get("ok", false)):
 		return validation
-	var state := {"nodes": 0, "ancestors": [], "limits": limits}
+	var state := {"nodes": 0, "ancestors": [], "limits": limits, "memo": memo}
 	var result: Dictionary = _serialize_artifact(value, state, 0)
 	if not bool(result.get("ok", false)):
 		return result
@@ -142,7 +148,7 @@ static func _serialize(value: Variant, state: Dictionary, depth: int) -> Diction
 				return _error("non_finite_number")
 			return _success(_serialize_float(number))
 		TYPE_STRING:
-			return _serialize_string(str(value))
+			return _memoized_string(str(value), state)
 		TYPE_ARRAY:
 			return _serialize_array(value, state, depth)
 		TYPE_DICTIONARY:
@@ -174,7 +180,7 @@ static func _serialize_artifact(
 				return _error("unsafe_integer")
 			return _success(str(integer_value))
 		TYPE_STRING:
-			return _serialize_string(str(value))
+			return _memoized_string(str(value), state)
 		TYPE_ARRAY:
 			return _serialize_artifact_array(value, state, depth)
 		TYPE_DICTIONARY:
@@ -227,7 +233,7 @@ static func _serialize_artifact_dictionary(
 	for entry_value: Variant in entries:
 		var entry: Dictionary = entry_value
 		var key := str(entry.get("key", ""))
-		var key_result := _serialize_string(key)
+		var key_result := _memoized_string(key, state)
 		if not bool(key_result.get("ok", false)):
 			ancestors.pop_back()
 			return key_result
@@ -263,14 +269,14 @@ static func _serialize_dictionary(value: Dictionary, state: Dictionary, depth: i
 	for key: Variant in keys:
 		if typeof(key) != TYPE_STRING:
 			return _error("non_string_key")
-	keys.sort_custom(_utf16_less)
+	keys.sort_custom(_utf16_less_memoized.bind(state))
 
 	var ancestors: Array = state.get("ancestors", [])
 	ancestors.append(value)
 	var parts: PackedStringArray = PackedStringArray()
 	for key_value: Variant in keys:
 		var key := str(key_value)
-		var key_result: Dictionary = _serialize_string(key)
+		var key_result: Dictionary = _memoized_string(key, state)
 		if not bool(key_result.get("ok", false)):
 			ancestors.pop_back()
 			return key_result
@@ -288,6 +294,35 @@ static func _serialize_string(value: String) -> Dictionary:
 	for index in value.length():
 		codepoints.append(value.unicode_at(index))
 	return _serialize_codepoints(codepoints)
+
+
+static func _memoized_string(value: String, state: Dictionary) -> Dictionary:
+	var cache: Dictionary = state["memo"]["strings"]
+	if cache.has(value):
+		return cache[value]
+	var result := _serialize_string(value)
+	if value.length() <= STRING_MEMO_MAX_LENGTH and cache.size() < STRING_MEMO_LIMIT:
+		cache[value] = result
+	return result
+
+
+static func _utf16_less_memoized(left_value: Variant, right_value: Variant, state: Dictionary) -> bool:
+	var cache: Dictionary = state["memo"]["utf16"]
+	var left := _memoized_utf16(str(left_value), cache)
+	var right := _memoized_utf16(str(right_value), cache)
+	for index: int in mini(left.size(), right.size()):
+		if left[index] != right[index]:
+			return left[index] < right[index]
+	return left.size() < right.size()
+
+
+static func _memoized_utf16(value: String, cache: Dictionary) -> PackedInt32Array:
+	if cache.has(value):
+		return cache[value]
+	var units := _utf16_units(value)
+	if value.length() <= STRING_MEMO_MAX_LENGTH and cache.size() < STRING_MEMO_LIMIT:
+		cache[value] = units
+	return units
 
 
 static func _serialize_codepoints(codepoints: Array) -> Dictionary:
@@ -441,7 +476,7 @@ static func _utf16_units(value: String) -> PackedInt32Array:
 
 
 static func _canonicalize_json_text(text: String, limits: Dictionary) -> Dictionary:
-	var state := {"index": 0, "nodes": 0}
+	var state := {"index": 0, "nodes": 0, "literal_strings": {}}
 	_skip_json_whitespace(text, state)
 	var result := _parse_canonical_json_value(text, state, limits, 0)
 	if not bool(result.get("ok", false)):
@@ -462,7 +497,7 @@ static func _canonicalize_json_text(text: String, limits: Dictionary) -> Diction
 
 
 static func _canonicalize_artifact_json_text(text: String, limits: Dictionary) -> Dictionary:
-	var state := {"index": 0, "nodes": 0}
+	var state := {"index": 0, "nodes": 0, "literal_strings": {}}
 	_skip_json_whitespace(text, state)
 	var result := _parse_artifact_json_value(text, state, limits, 0)
 	if not bool(result.get("ok", false)):
@@ -732,6 +767,21 @@ static func _parse_canonical_json_string(
 	state: Dictionary,
 	limits: Dictionary,
 ) -> Dictionary:
+	# Only identical, previously validated unescaped literals may be reused.
+	# Escaped keys still go through the scalar parser, preserving duplicate-key
+	# detection (e.g. "a" and "\u0061") and surrogate/noncharacter rejection.
+	var start := int(state.get("index", 0))
+	var end := text.find('"', start + 1)
+	var literal := ""
+	var reusable := start < text.length() and text.unicode_at(start) == 0x22 \
+		and end >= start + 1 and end - start <= STRING_MEMO_MAX_LENGTH
+	if reusable:
+		literal = text.substr(start, end - start + 1)
+		reusable = not literal.contains("\\")
+	var cache: Dictionary = state.get("literal_strings", {})
+	if reusable and cache.has(literal):
+		state["index"] = end + 1
+		return cache[literal]
 	var parsed := _parse_json_string_codepoints(text, state)
 	if not bool(parsed.get("ok", false)):
 		return parsed
@@ -745,6 +795,8 @@ static func _parse_canonical_json_string(
 	fragment["signature"] = str(parsed.get("signature", ""))
 	fragment["utf16_units"] = _utf16_units_from_codepoints(codepoints)
 	fragment["codepoints"] = codepoints
+	if reusable and cache.size() < STRING_MEMO_LIMIT:
+		cache[literal] = fragment
 	return fragment
 
 
@@ -1397,7 +1449,7 @@ static func _resolve_limits(overrides: Dictionary) -> Dictionary:
 	return {"ok": true, "error_code": "", "limits": limits}
 
 
-static func _validate_tree(root: Variant, limits: Dictionary) -> Dictionary:
+static func _validate_tree(root: Variant, limits: Dictionary, memo: Dictionary) -> Dictionary:
 	var frames: Array = [{"exiting": false, "value": root, "depth": 0}]
 	var active: Array = []
 	var nodes := 0
@@ -1429,7 +1481,7 @@ static func _validate_tree(root: Variant, limits: Dictionary) -> Dictionary:
 					return _error("non_finite_number")
 				output_bytes += _serialize_float(float(current)).length()
 			TYPE_STRING:
-				var string_size := _canonical_string_byte_length(str(current))
+				var string_size := _memoized_string_size(str(current), memo["sizes"])
 				if not bool(string_size.get("ok", false)):
 					return string_size
 				output_bytes += int(string_size.get("size", 0))
@@ -1451,7 +1503,7 @@ static func _validate_tree(root: Variant, limits: Dictionary) -> Dictionary:
 				for key_value: Variant in keys:
 					if typeof(key_value) != TYPE_STRING:
 						return _error("non_string_key")
-					var key_size := _canonical_string_byte_length(str(key_value))
+					var key_size := _memoized_string_size(str(key_value), memo["sizes"])
 					if not bool(key_size.get("ok", false)):
 						return key_size
 					output_bytes += int(key_size.get("size", 0)) + 1
@@ -1468,6 +1520,15 @@ static func _validate_tree(root: Variant, limits: Dictionary) -> Dictionary:
 		if output_bytes > int(limits.get("max_output_bytes", MAX_OUTPUT_BYTES)):
 			return _error("output_size_limit")
 	return {"ok": true, "error_code": ""}
+
+
+static func _memoized_string_size(value: String, cache: Dictionary) -> Dictionary:
+	if cache.has(value):
+		return cache[value]
+	var result := _canonical_string_byte_length(value)
+	if value.length() <= STRING_MEMO_MAX_LENGTH and cache.size() < STRING_MEMO_LIMIT:
+		cache[value] = result
+	return result
 
 
 static func _canonical_string_byte_length(value: String) -> Dictionary:

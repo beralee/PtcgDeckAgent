@@ -48,8 +48,10 @@ func _process(_delta: float) -> bool:
 		return false
 	_peer.poll()
 	if _peer.get_status() != StreamPeerTCP.STATUS_CONNECTED:
-		if _disposed:
-			quit(0)
+		# A disconnected transport can no longer drive this private match. Release
+		# it even if its parent crashed before sending the explicit dispose RPC.
+		_dispose()
+		quit(0)
 		return false
 	var available := _peer.get_available_bytes()
 	if available > 0:

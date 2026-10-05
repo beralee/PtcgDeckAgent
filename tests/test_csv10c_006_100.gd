@@ -1109,7 +1109,7 @@ func test_csv10c_076_080_bundle_and_semantics() -> String:
 	var tool_target := state.players[1].active_pokemon
 	var opponent_tool := _trainer_instance("Opponent Tool", "Tool", 1)
 	tool_target.attached_tool = opponent_tool
-	processor.execute_attack_effect(joltik, 0, tool_target, state)
+	processor.execute_before_attack_damage_effects(joltik, 0, tool_target, state)
 	checks.append(assert_null(tool_target.attached_tool, "CSV10C_076 should discard the opposing Active Pokemon Tool before damage"))
 	checks.append(assert_true(opponent_tool in state.players[1].discard_pile, "CSV10C_076 should put the discarded Tool in its owner's discard pile"))
 	checks.append(assert_true(tool_target.status_conditions.get("paralyzed", false), "CSV10C_076 should Paralyze only after successfully discarding the Tool"))

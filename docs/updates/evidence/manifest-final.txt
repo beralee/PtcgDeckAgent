@@ -1,0 +1,15 @@
+Godot user data root: D:\ai\code\PtcgDAP\.godot_test_user\appdata
+Godot log file: D:\ai\code\PtcgDAP\.godot_test_user\logs\focused-20260919-161852.log
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+RUN test_update_manifest_owner_exists
+PASS test_update_manifest_owner_exists
+RUN test_selects_actual_platform_version_and_architecture
+PASS test_selects_actual_platform_version_and_architecture
+RUN test_rejects_unsafe_or_incomplete_native_artifacts
+PASS test_rejects_unsafe_or_incomplete_native_artifacts
+RUN test_legacy_feed_keeps_manual_reinstall_without_inventing_downloads
+PASS test_legacy_feed_keeps_manual_reinstall_without_inventing_downloads
+RUN test_v2_wire_json_numbers_preserve_artifact_authority
+PASS test_v2_wire_json_numbers_preserve_artifact_authority
+Total: 5 | Failed: 0

@@ -138,7 +138,7 @@ $mainPath = ""
 $settingsPath = ""
 $returnPath = ""
 try {
-    $process = Start-Process -FilePath $ExecutablePath -ArgumentList "--verbose" -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+    $process = Start-Process -FilePath $ExecutablePath -ArgumentList "--verbose" -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
     $windowDeadline = (Get-Date).AddSeconds(30)
     do {
         Start-Sleep -Milliseconds 500
@@ -182,8 +182,11 @@ try {
     } while (($geometry.width -lt 1400 -or $geometry.height -lt 800 -or (Get-Item -LiteralPath $mainPath).Length -lt $minimumRenderedBytes) -and (Get-Date) -lt $renderDeadline)
     if ($geometry.width -lt 1400 -or $geometry.height -lt 800 -or (Get-Item -LiteralPath $mainPath).Length -lt $minimumRenderedBytes) { throw "Windows main menu did not finish rendering within 45 seconds" }
 
-    # MainMenu BtnSettings in the desktop landscape action stack.
+    # AI settings now live in StrategyHub's DeepSeek workspace.
     Invoke-RealMouseClick -Handle $handle -X 0.5 -Y 0.703
+    Start-Sleep -Milliseconds 1000
+    Save-WindowScreenshot -Handle $handle -Name "strategy_hub" | Out-Null
+    Invoke-RealMouseClick -Handle $handle -X 0.854 -Y 0.195
     $navigationDeadline = (Get-Date).AddSeconds(20)
     do {
         Start-Sleep -Milliseconds 500
@@ -191,8 +194,8 @@ try {
         $navigationDifference = Get-NormalizedImageDifference -FirstPath $mainPath -SecondPath $settingsPath
     } while ($navigationDifference -lt $MinimumNavigationDifference -and (Get-Date) -lt $navigationDeadline)
 
-    # Settings BtnBack is the rightmost action at the bottom of the landscape panel.
-    Invoke-RealMouseClick -Handle $handle -X 0.6 -Y 0.856
+    # StrategyHub keeps a persistent BackButton in the top-left header.
+    Invoke-RealMouseClick -Handle $handle -X 0.069 -Y 0.087
     $roundTripDeadline = (Get-Date).AddSeconds(20)
     do {
         Start-Sleep -Milliseconds 500

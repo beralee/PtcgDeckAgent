@@ -84,6 +84,8 @@ func is_busy() -> bool:
 func cancel_pending_request() -> void:
 	_request_generation += 1
 	_busy = false
+	if _client != null and _client.has_method("cancel_pending_requests"):
+		_client.cancel_pending_requests()
 
 
 func load_history(deck_id: int) -> Array[Dictionary]:

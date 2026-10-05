@@ -1,0 +1,422 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-28",
+  "scope": "DeepSeek dialogue UI, input, rendering and request lifecycle",
+  "state": "local uncommitted worktree",
+  "artifact_root": "%LOCALAPPDATA%/Temp/ptcg_deepseek_ui_review",
+  "regression": {
+    "status": "passed",
+    "totals": {
+      "total": 207,
+      "passed": 207,
+      "failed": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "BattleAdviceCoordinator",
+        "status": "passed",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "BattleAdviceFormatter",
+        "status": "passed",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "BattleAdviceService",
+        "status": "passed",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "BattleReviewFormatter",
+        "status": "passed",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "BattleReviewService",
+        "status": "passed",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "BattleSetupLayout",
+        "status": "passed",
+        "total": 42,
+        "passed": 42,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeckDiscussionContextBuilder",
+        "status": "passed",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeckDiscussionDialog",
+        "status": "passed",
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeckDiscussionService",
+        "status": "passed",
+        "total": 10,
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeckDiscussionSessionStore",
+        "status": "passed",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "GameModalDialog",
+        "status": "passed",
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "NonBattlePortraitLayout",
+        "status": "passed",
+        "total": 66,
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "NonBattleWebInputV2",
+        "status": "passed",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "WebInputAdapter",
+        "status": "passed",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "WebUIE2eBridge",
+        "status": "passed",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "ZenMuxClient",
+        "status": "passed",
+        "total": 26,
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeepseekAuxiliaryUI",
+        "status": "passed",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeepseekDiscussionUI",
+        "status": "passed",
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "DeepseekSettingsUI",
+        "status": "passed",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "source": "final_regression/report.json"
+  },
+  "final_focused": {
+    "status": "passed",
+    "totals": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "source": "final_discussion/report.json"
+  },
+  "browser": {
+    "summary": {
+      "schema_version": 1,
+      "status": "passed",
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "not_applicable": 0,
+      "cases": [
+        {
+          "project": "webkit-desktop",
+          "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+          "status": "passed",
+          "annotations": []
+        },
+        {
+          "project": "webkit-tablet-touch",
+          "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+          "status": "passed",
+          "annotations": []
+        },
+        {
+          "project": "chromium-desktop",
+          "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+          "status": "passed",
+          "annotations": []
+        },
+        {
+          "project": "chromium-touch",
+          "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+          "status": "passed",
+          "annotations": []
+        },
+        {
+          "project": "webkit-touch",
+          "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+          "status": "passed",
+          "annotations": []
+        },
+        {
+          "project": "webkit-touch-landscape",
+          "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+          "status": "passed",
+          "annotations": []
+        }
+      ]
+    },
+    "projects": [
+      "webkit-desktop",
+      "webkit-tablet-touch",
+      "chromium-desktop",
+      "chromium-touch",
+      "webkit-touch",
+      "webkit-touch-landscape"
+    ],
+    "source": "web_verified/summary.json",
+    "transport": "Synthetic intercepted endpoint; no real DeepSeek request",
+    "target_min_height_css_px": 44,
+    "rounding_tolerance_css_px": 1
+  },
+  "native": {
+    "platform": "Windows Godot 4.6.1 OpenGL Compatibility",
+    "exit_code": 0,
+    "stderr_bytes": 0,
+    "screenshots": 12,
+    "dimensions": [
+      "1360x860",
+      "390x844",
+      "844x390"
+    ],
+    "variants": [
+      "deck",
+      "match",
+      "battle",
+      "keyboard"
+    ]
+  },
+  "red_evidence": [
+    {
+      "source": "red2",
+      "passed": 1,
+      "failed": 5
+    },
+    {
+      "source": "settings_red2",
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "source": "transport_red",
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "source": "cancel_draft_red",
+      "passed": 8,
+      "failed": 1
+    },
+    {
+      "source": "web",
+      "passed": 4,
+      "failed": 2
+    },
+    {
+      "source": "web2",
+      "passed": 5,
+      "failed": 1
+    },
+    {
+      "source": "touch_target_red2",
+      "passed": 0,
+      "failed": 1,
+      "actual_target_height_css_px": 16.622222
+    }
+  ],
+  "resource_budget": {
+    "passed": true,
+    "pck": {
+      "name": "PtcgDeckAgent.pck",
+      "bytes": 227047828,
+      "mib": 216.53,
+      "max_mib": 225.0
+    },
+    "wasm": {
+      "name": "PtcgDeckAgent.wasm",
+      "bytes": 35739700,
+      "mib": 34.08,
+      "max_mib": 40.0
+    }
+  },
+  "limitations": [
+    "Browser device profiles are emulation, not physical iOS or Android acceptance.",
+    "Native Android, iOS, macOS and Linux packages were not run.",
+    "IME composition flag is simulated; OS-specific IME confirmation remains a physical-device check.",
+    "Source hashes include preserved preexisting worktree changes in shared files."
+  ],
+  "screenshots": [
+    {
+      "path": "evidence/ptcgdap/deepseek_ui_20260928/native-desktop-match.png",
+      "sha256": "20da3936859ac5199f0a9076bf5cb1a16764c497f7462cc7c36f3423558566dd"
+    },
+    {
+      "path": "evidence/ptcgdap/deepseek_ui_20260928/native-keyboard.png",
+      "sha256": "e021dfd27cfcb3461c57b1e91a02c877820454188f1cf8fc995606f808141fd5"
+    },
+    {
+      "path": "evidence/ptcgdap/deepseek_ui_20260928/native-landscape-battle.png",
+      "sha256": "b78d2b44b8057eca572ed7708d021feaf00dc7d618cfd82c738db923dd0dbebd"
+    },
+    {
+      "path": "evidence/ptcgdap/deepseek_ui_20260928/native-phone.png",
+      "sha256": "3393fe644b604055cd763235108757e15e302874bd6e5a3f037b1d5d9f96bfb4"
+    },
+    {
+      "path": "evidence/ptcgdap/deepseek_ui_20260928/webkit-landscape.png",
+      "sha256": "60b4444977f8e22f36bfb018d35a287a99786bc392dfa027f0eb9f26c5f0f5a6"
+    },
+    {
+      "path": "evidence/ptcgdap/deepseek_ui_20260928/webkit-phone.png",
+      "sha256": "74bde5b45ba367cc632963f93059ea38bc37129fd1f890a6b0166eef4acbc9a6"
+    }
+  ],
+  "source_hashes": [
+    {
+      "path": "scenes/deck_editor/DeckDiscussionDialog.gd",
+      "sha256": "9529ab6c3c003bf3f4f2fdf4d34165b89a34452974cf0ea8fe54f831b6fe54f1"
+    },
+    {
+      "path": "scenes/deck_editor/DeckEditor.gd",
+      "sha256": "58c1ccae19e29b7b0cfa35576e875810984bc22ea6276a25993c46465c3684a7"
+    },
+    {
+      "path": "scenes/settings/Settings.gd",
+      "sha256": "eb86a9f5bee82907c52090e58db03289548966abac9294691d4bef35040453f0"
+    },
+    {
+      "path": "scripts/engine/DeckDiscussionService.gd",
+      "sha256": "3cca1e56c95f6ebe7d28e2c2653a904e7dd8cd53f6257935ee47c1ae098c04cc"
+    },
+    {
+      "path": "scripts/network/ZenMuxClient.gd",
+      "sha256": "61ca251d3ef4894a9099759d18b65f368fde3729d6f1b766d0a14633c38d8a8b"
+    },
+    {
+      "path": "scripts/ui/decks/DiscussionDialogLayout.gd",
+      "sha256": "d29e754bedc88b1b4820aaaeaadab703018e5f167360f88362ce8b0be30b71a9"
+    },
+    {
+      "path": "scripts/ui/ModelDisplayText.gd",
+      "sha256": "f758987ca8d5354f1bb9ac791c0c414b454cf495d053d210c2d0f5fe3ec249cc"
+    },
+    {
+      "path": "scripts/ui/battle/BattleAdviceController.gd",
+      "sha256": "c3656c9645f42f8c92250f88bc1b7614f7ba0518922f614779f33d143110a02c"
+    },
+    {
+      "path": "scripts/ui/battle/BattleAdviceFormatter.gd",
+      "sha256": "6ab859d301982ec5ce108d3279117ac4641defca6d63545325fb3a91575cafba"
+    },
+    {
+      "path": "scripts/ui/battle/BattleReviewFormatter.gd",
+      "sha256": "f6f34b0651547e35d457c1a558062a246541ec9658d97c9a2394cf9902b6e70d"
+    },
+    {
+      "path": "scripts/ui/non_battle/WebTextInputBridge.gd",
+      "sha256": "3b26566371a83f500e3b07e13a746f0d484efb1cb44644b69f0f31c5fc1c507a"
+    },
+    {
+      "path": "tests/ui/test_deepseek_discussion_ui.gd",
+      "sha256": "49e00ebb6c2b13aef625507eba0f9fec9b5c980da4d523e85c8de4965f7075e0"
+    },
+    {
+      "path": "tests/ui/test_deepseek_settings_ui.gd",
+      "sha256": "e871340c07224939ba450491e587a008009c6fb5ebe07fc6947d5547f260bb26"
+    },
+    {
+      "path": "tests/ui/test_deepseek_auxiliary_ui.gd",
+      "sha256": "d14c968e8a4eddc2cb14bfa2987d4f2086568b4ea5be623ce3dade4fbac4086b"
+    },
+    {
+      "path": "tests/test_deck_discussion_service.gd",
+      "sha256": "4144e257617dd99c99b86746b53325241ca56352d1605200e3fe5d9761d5f481"
+    },
+    {
+      "path": "tests/web_e2e/ui-stability.spec.cjs",
+      "sha256": "2380a5ef74c0b5917e35b8e4082030435cdbb5d0b7c7a69297f60f5582d87d75"
+    },
+    {
+      "path": "web/e2e/DeepSeekDiscussionProbe.gd",
+      "sha256": "d8874963bbc434d0849ad4fd09f7046a9ec2737ed4c7da0febaba1331153c15b"
+    },
+    {
+      "path": "web/e2e/WebUiE2EBridge.gd",
+      "sha256": "b8e2cb959c587f718854b1170cae2469c0575b2cd1f7c3115912a96f1fa71ea3"
+    },
+    {
+      "path": "scripts/tools/capture_deepseek_dialogs.gd",
+      "sha256": "a6dafe9050568f0431e6c74aacdb61c578c6ae2c63caf22bfb330654086c884e"
+    }
+  ]
+}

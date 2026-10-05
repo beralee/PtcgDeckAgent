@@ -11,6 +11,67 @@ const ReleaseGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrat
 const FeatureGateScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
 const InstallerScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageInstaller.gd")
 const SourceReaderScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageSourceReader.gd")
+const ArchivePreparation = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyArchivePreparation.gd")
+var _preparation_thread: Thread = null
+var _preparation_pending := false
+var _preparation_generation := 0
+
+func _supports_preparation_thread() -> bool:
+	return not OS.has_feature("web") or OS.has_feature("threads")
+
+func request_match_handle_async(package_id: String, package_version: String, archive_sha256: String, require_player_ready: bool = false) -> Dictionary:
+	if _preparation_pending or not is_inside_tree():
+		return {"ok": false, "error_code": "package_preparation_unavailable", "handle": null}
+	var records: Array[Dictionary] = _ready_records if require_player_ready else _metadata_records
+	var selected := {}
+	for record: Dictionary in records:
+		if record.get("package_id") == package_id and record.get("package_version") == package_version and record.get("archive_sha256") == archive_sha256:
+			selected = record
+			break
+	var path := str(_match_locations.get(selected.get("catalog_key", ""), ""))
+	if path.is_empty() or not FeatureGateScript.is_enabled():
+		return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
+	_preparation_pending = true
+	_preparation_generation += 1
+	var generation := _preparation_generation
+	var tree := get_tree()
+	var raw: Variant
+	if _supports_preparation_thread():
+		_preparation_thread = Thread.new()
+		var error := _preparation_thread.start(ArchivePreparation.capture.bind(path, archive_sha256, _valid_control_distributed_metadata(selected)))
+		if error != OK:
+			_preparation_thread = null
+			_preparation_pending = false
+			return {"ok": false, "error_code": "package_preparation_unavailable", "handle": null}
+		while _preparation_thread.is_alive():
+			await tree.process_frame
+			if generation != _preparation_generation or not is_inside_tree():
+				return {"ok": false, "error_code": "package_preparation_unavailable", "handle": null}
+		raw = _preparation_thread.wait_to_finish()
+		_preparation_thread = null
+	else:
+		# Single-thread Web exports still yield for the loading UI. Use the same
+		# byte capture and integrity gates; Thread.start is unavailable there.
+		await tree.process_frame
+		if generation != _preparation_generation or not is_inside_tree():
+			return {"ok": false, "error_code": "package_preparation_unavailable", "handle": null}
+		raw = ArchivePreparation.capture(path, archive_sha256, _valid_control_distributed_metadata(selected))
+	_preparation_pending = false
+	if not raw is Dictionary:
+		return {"ok": false, "error_code": "package_preparation_failed", "handle": null}
+	var prepared: Dictionary = raw
+	if not bool(prepared.get("ok", false)):
+		return prepared
+	# Re-resolve current catalog membership, paths and release authority after
+	# the yield. Only the exact captured bytes enter the original match gate.
+	return _request_match_handle(package_id, package_version, archive_sha256, require_player_ready, prepared)
+
+func _exit_tree() -> void:
+	_preparation_generation += 1
+	if _preparation_thread != null and _preparation_thread.is_started():
+		_preparation_thread.wait_to_finish()
+	_preparation_thread = null
+	_preparation_pending = false
 const RemovalStoreScript = preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyPackageRemovalStore.gd")
 const BUILT_IN_ROOT := "res://data/ptcgdap/author_strategy_packages"
 const USER_ROOT := "user://ptcgdap/author_strategy_packages"
@@ -325,7 +386,8 @@ func _request_match_handle(
 	package_id: String,
 	package_version: String,
 	archive_sha256: String,
-	require_player_ready: bool
+	require_player_ready: bool,
+	prepared: Dictionary = {}
 ) -> Dictionary:
 	if not FeatureGateScript.is_enabled():
 		return {"ok": false, "error_code": "author_strategy_feature_disabled", "handle": null}
@@ -342,11 +404,15 @@ func _request_match_handle(
 			"handle": null,
 		}
 	var path := str(_match_locations[catalog_key])
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {"ok": false, "error_code": "package_file_missing", "handle": null}
-	var capture_result := SourceReaderScript.read_stream(file)
-	file.close()
+	var capture_result: Dictionary = prepared
+	if prepared.is_empty():
+		var file := FileAccess.open(path, FileAccess.READ)
+		if file == null:
+			return {"ok": false, "error_code": "package_file_missing", "handle": null}
+		capture_result = SourceReaderScript.read_stream(file)
+		file.close()
+	elif prepared.get("path") != path:
+		return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
 	if not bool(capture_result.get("ok", false)):
 		return {"ok": false, "error_code": "package_integrity_invalid", "handle": null}
 	var captured: PackedByteArray = capture_result.get("archive_bytes", PackedByteArray())
@@ -359,10 +425,11 @@ func _request_match_handle(
 				and record.get("archive_sha256") == archive_sha256:
 			selected_record = record
 			break
+	var match_loader: Variant = prepared.get("loader", _loader)
 	var inspected: Dictionary = (
-		_loader.inspect_control_distributed_player_match_bytes(captured, archive_sha256)
+		match_loader.inspect_control_distributed_player_match_bytes(captured, archive_sha256)
 		if _valid_control_distributed_metadata(selected_record)
-		else _loader.inspect_match_bytes(captured, archive_sha256)
+		else match_loader.inspect_match_bytes(captured, archive_sha256)
 	)
 	if not bool(inspected.get("ok", false)):
 		return {"ok": false, "error_code": str(inspected.get("error_code", "package_integrity_invalid")), "handle": null}

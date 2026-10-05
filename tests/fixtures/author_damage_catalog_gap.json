@@ -1,0 +1,407 @@
+{
+  "policy": {
+    "schema_version": 2,
+    "adapter_id": "dev.bodao-yongzhe.marnies-gift-box",
+    "adapter_version": 2,
+    "goals": [
+      {
+        "goal_id": "take-two-prize-knockout",
+        "stage": "execute",
+        "priority": 100,
+        "requirements": [
+          {
+            "card_uid": "CSV10C_148",
+            "ready_target_count": 1,
+            "energy_required": 2,
+            "energy_requirements": [
+              {
+                "energy_uid": "CSVE1C_DAR",
+                "count": 2
+              }
+            ],
+            "attack_index": 0
+          }
+        ]
+      }
+    ],
+    "count_rules": [],
+    "rules": [
+      {
+        "rule_id": "damage-plan.prefer-two-prize-attack",
+        "goal_id": "take-two-prize-knockout",
+        "goal_stage": "execute",
+        "channel": "tactical",
+        "horizon": 0,
+        "confidence_milli": 1000,
+        "base_score": 1000,
+        "when": [
+          {
+            "fact": "option.kind",
+            "op": "eq",
+            "value": "attack",
+            "card_uid": null
+          },
+          {
+            "fact": "damage.option.prize_yield",
+            "op": "eq",
+            "value": 2,
+            "card_uid": null
+          }
+        ],
+        "score_terms": [
+          {
+            "fact": "damage.option.remaining_debt",
+            "coefficient": -10,
+            "minimum": 0,
+            "maximum": 400
+          }
+        ]
+      },
+      {
+        "rule_id": "independent-attack",
+        "goal_id": "take-two-prize-knockout",
+        "goal_stage": "execute",
+        "channel": "tactical",
+        "horizon": 0,
+        "confidence_milli": 1000,
+        "base_score": 1000,
+        "when": [
+          {
+            "fact": "option.kind",
+            "op": "eq",
+            "value": "attack",
+            "card_uid": null
+          }
+        ],
+        "score_terms": []
+      },
+      {
+        "rule_id": "unknown-ne-must-not-match",
+        "goal_id": "take-two-prize-knockout",
+        "goal_stage": "execute",
+        "channel": "tactical",
+        "horizon": 0,
+        "confidence_milli": 1000,
+        "base_score": 100000,
+        "when": [
+          {
+            "fact": "option.kind",
+            "op": "eq",
+            "value": "end_turn",
+            "card_uid": null
+          },
+          {
+            "fact": "damage.best_remaining_debt",
+            "op": "ne",
+            "value": 0,
+            "card_uid": null
+          }
+        ],
+        "score_terms": []
+      },
+      {
+        "rule_id": "unknown-score-must-not-match",
+        "goal_id": "take-two-prize-knockout",
+        "goal_stage": "execute",
+        "channel": "tactical",
+        "horizon": 0,
+        "confidence_milli": 1000,
+        "base_score": 100000,
+        "when": [
+          {
+            "fact": "option.kind",
+            "op": "eq",
+            "value": "end_turn",
+            "card_uid": null
+          }
+        ],
+        "score_terms": [
+          {
+            "fact": "damage.best_remaining_debt",
+            "coefficient": 1,
+            "minimum": 0,
+            "maximum": 400
+          }
+        ]
+      }
+    ],
+    "damage_plans": [
+      {
+        "plan_id": "ogerpon-prize-map",
+        "goal_id": "take-two-prize-knockout",
+        "priority": 0,
+        "horizon_attack_windows": 2,
+        "capability_ids": [
+          "attack.fixed_split.v1",
+          "attack.bench_heal.v1",
+          "between_turn.ability_counter.v1",
+          "ability.move_damage_counters.v1",
+          "tool.conditional_active_damage_bonus.v1",
+          "attack.mass_devolution.v1"
+        ],
+        "target_roles": [
+          "opponent.active",
+          "opponent.bench"
+        ],
+        "objective_order": [
+          "attack_windows",
+          "prize_yield",
+          "remaining_debt",
+          "overkill",
+          "response_risk"
+        ]
+      }
+    ],
+    "semantic_transactions": [
+      {
+        "transaction_id": "ogerpon-two-prize-conversion",
+        "goal_id": "take-two-prize-knockout",
+        "priority": 0,
+        "max_own_turns": 2,
+        "target_role": "opponent.pokemon",
+        "start_when": [],
+        "continue_when": [],
+        "success_when": [
+          {
+            "fact": "transaction.remaining_damage_debt",
+            "op": "eq",
+            "value": 0,
+            "card_uid": null
+          }
+        ],
+        "abort_when": [],
+        "step_prompt_kinds": [
+          "main_action",
+          "attack",
+          "damage_target"
+        ]
+      }
+    ]
+  },
+  "allowed_card_uids": [
+    "CSV10C_148",
+    "CSVE1C_DAR"
+  ],
+  "frame": {
+    "schema_version": 2,
+    "profile_id": "ptcgdap-competitive-public-frame-v2",
+    "sequence": 1,
+    "seat": 0,
+    "prompt_kind": "main_action",
+    "source": {
+      "public_observation_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "window_id": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+    },
+    "public_state": {
+      "turn_number": 8,
+      "phase": "MAIN",
+      "self": {
+        "hand": [],
+        "active": [
+          {
+            "serial": 101,
+            "entity_serial": 100,
+            "local_card_uid": "CSV10C_148",
+            "remaining_hp": 260,
+            "max_hp": 320,
+            "damage_counters": 60,
+            "prize_value": 2,
+            "attached_energy_count": 2,
+            "attached_energy_uids": [
+              "CSVE1C_DAR",
+              "CSVE1C_DAR"
+            ],
+            "attached_tool_uid": "CSV1C_117",
+            "pokemon_stack_uids": [
+              "CSV10C_148"
+            ],
+            "minimum_attack_energy_count": 2,
+            "attack_ready": true,
+            "energy_debt": 0
+          }
+        ],
+        "bench": [
+          {
+            "serial": 111,
+            "entity_serial": 110,
+            "local_card_uid": "CSV7C_059",
+            "remaining_hp": 90,
+            "max_hp": 90,
+            "damage_counters": 0,
+            "prize_value": 1,
+            "attached_energy_count": 0,
+            "attached_energy_uids": [],
+            "attached_tool_uid": null,
+            "pokemon_stack_uids": [
+              "CSV7C_059"
+            ],
+            "minimum_attack_energy_count": 2,
+            "attack_ready": false,
+            "energy_debt": 2
+          },
+          {
+            "serial": 121,
+            "entity_serial": 120,
+            "local_card_uid": "CSV7C_059",
+            "remaining_hp": 90,
+            "max_hp": 90,
+            "damage_counters": 0,
+            "prize_value": 1,
+            "attached_energy_count": 0,
+            "attached_energy_uids": [],
+            "attached_tool_uid": null,
+            "pokemon_stack_uids": [
+              "CSV7C_059"
+            ],
+            "minimum_attack_energy_count": 2,
+            "attack_ready": false,
+            "energy_debt": 2
+          },
+          {
+            "serial": 131,
+            "entity_serial": 130,
+            "local_card_uid": "CSV8C_094",
+            "remaining_hp": 90,
+            "max_hp": 110,
+            "damage_counters": 20,
+            "prize_value": 1,
+            "attached_energy_count": 1,
+            "attached_energy_uids": [
+              "CSVE1C_DAR"
+            ],
+            "attached_tool_uid": null,
+            "pokemon_stack_uids": [
+              "CSV8C_094"
+            ],
+            "minimum_attack_energy_count": 2,
+            "attack_ready": false,
+            "energy_debt": 1
+          }
+        ],
+        "discard": [],
+        "deck_count": 25,
+        "prizes_remaining": 2
+      },
+      "opponent": {
+        "hand_count": 5,
+        "active": [
+          {
+            "serial": 201,
+            "entity_serial": 900,
+            "local_card_uid": "CSV8C_028",
+            "remaining_hp": 210,
+            "max_hp": 210,
+            "damage_counters": 0,
+            "prize_value": 2,
+            "attached_energy_count": 1,
+            "attached_energy_uids": [
+              "CSVE1C_GRA"
+            ],
+            "attached_tool_uid": null,
+            "pokemon_stack_uids": [
+              "CSV8C_028"
+            ],
+            "minimum_attack_energy_count": 2,
+            "attack_ready": false,
+            "energy_debt": 1
+          }
+        ],
+        "bench": [
+          {
+            "serial": 911,
+            "entity_serial": 910,
+            "local_card_uid": "CSV7C_059",
+            "remaining_hp": 90,
+            "max_hp": 90,
+            "damage_counters": 0,
+            "prize_value": 1,
+            "attached_energy_count": 0,
+            "attached_energy_uids": [],
+            "attached_tool_uid": null,
+            "pokemon_stack_uids": [
+              "CSV7C_059"
+            ],
+            "minimum_attack_energy_count": 2,
+            "attack_ready": false,
+            "energy_debt": 2
+          }
+        ],
+        "discard": [],
+        "deck_count": 24,
+        "prizes_remaining": 4
+      }
+    },
+    "select_semantics": {
+      "min_count": 1,
+      "max_count": 1,
+      "select_type_raw": 6,
+      "select_context_raw": 36
+    },
+    "options": [
+      {
+        "index": 0,
+        "kind": "attack",
+        "card_uid": null,
+        "card_serial": null,
+        "source_uid": "CSV10C_148",
+        "source_serial": 101,
+        "source_entity_serial": 100,
+        "target_uid": null,
+        "target_serial": null,
+        "target_entity_serial": null,
+        "target_remaining_hp": null,
+        "target_prize_value": null,
+        "target_attached_energy_count": null,
+        "target_attached_energy_uids": null,
+        "target_minimum_attack_energy_count": null,
+        "target_attack_ready": null,
+        "target_energy_debt": null,
+        "projected_damage": null,
+        "projected_knockout": false,
+        "requires_interaction": false,
+        "attack_index": 0,
+        "option_number": null,
+        "ability_index": null,
+        "energy_type_raw": null,
+        "energy_count": null,
+        "special_condition_type": null,
+        "pending_assignment_count": 0,
+        "tags": [],
+        "option_type_raw": 13,
+        "option_player_index": 0
+      },
+      {
+        "index": 1,
+        "kind": "end_turn",
+        "card_uid": null,
+        "card_serial": null,
+        "source_uid": null,
+        "source_serial": null,
+        "source_entity_serial": null,
+        "target_uid": null,
+        "target_serial": null,
+        "target_entity_serial": null,
+        "target_remaining_hp": null,
+        "target_prize_value": null,
+        "target_attached_energy_count": null,
+        "target_attached_energy_uids": null,
+        "target_minimum_attack_energy_count": null,
+        "target_attack_ready": null,
+        "target_energy_debt": null,
+        "projected_damage": null,
+        "projected_knockout": false,
+        "requires_interaction": false,
+        "attack_index": null,
+        "option_number": null,
+        "ability_index": null,
+        "energy_type_raw": null,
+        "energy_count": null,
+        "special_condition_type": null,
+        "pending_assignment_count": 0,
+        "tags": [],
+        "option_type_raw": 14,
+        "option_player_index": 0
+      }
+    ]
+  }
+}

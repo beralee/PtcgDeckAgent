@@ -118,16 +118,29 @@ def required_paths_from_profile(root: Path = ROOT) -> list[str]:
     return list(paths)
 
 
+def required_paths_for_player_release(root: Path = ROOT) -> list[str]:
+    # The AS-WP6 profile is an immutable historical fixture contract. Player
+    # exports carry today's entire bundled directory, not that archived sample.
+    archived = "data/ptcgdap/author_strategy_packages/ptcgdap-author-strategy-release-candidate.ptcgai"
+    paths = [path for path in required_paths_from_profile(root) if path != archived]
+    packages = sorted(path.relative_to(root).as_posix() for path in
+                      (root / "data/ptcgdap/author_strategy_packages").glob("*.ptcgai"))
+    if not packages:
+        raise ValueError("player release has no bundled strategy packages")
+    return sorted(set(paths + packages + ["data/ptcgdap/author_strategy_catalog_cache.json"]))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("archive", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--prefix", default="")
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--player-release", action="store_true")
     args = parser.parse_args()
     report = inspect_zip_inventory(
         args.archive.read_bytes(),
-        required_paths=required_paths_from_profile(),
+        required_paths=required_paths_for_player_release() if args.player_release else required_paths_from_profile(),
         path_prefix=args.prefix,
     )
     rendered = json.dumps(report, ensure_ascii=False, indent=2) + "\n"

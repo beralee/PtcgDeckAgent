@@ -39,7 +39,7 @@ func check_for_updates(force: bool = false) -> int:
 	var state := _load_state()
 	if not force:
 		var cached_info := _cached_update_info(state)
-		var cached_update_available := is_update_available(cached_info) and not _is_version_ignored(cached_info, state)
+		var cached_update_available := is_update_available(cached_info)
 		if not _should_check_now(state):
 			if cached_update_available:
 				_emit_update_available(cached_info, "cache")
@@ -77,15 +77,6 @@ func check_for_updates(force: bool = false) -> int:
 		_provisional_cached_update_version = ""
 		check_failed.emit("更新检查启动失败：%d" % err)
 	return err
-
-
-func ignore_version(version: String) -> void:
-	var clean_version := _normalize_version_string(version)
-	if clean_version == "":
-		return
-	var state := _load_state()
-	state["ignored_version"] = clean_version
-	_save_state(state)
 
 
 func is_update_available(info: Dictionary, current_version: String = "") -> bool:
@@ -127,6 +118,7 @@ func normalize_manifest(data: Dictionary) -> Dictionary:
 		"download_page_url": selected.download_page_url,
 		"artifact": selected.artifact,
 		"native_update_reason": selected.native_update_reason,
+		"website_only": selected.get("website_only", false),
 		"manifest_url": MANIFEST_URL,
 	}
 
@@ -141,17 +133,21 @@ func _ready() -> void:
 	_ensure_http_request()
 
 
-func _ensure_http_request() -> void:
+func _ensure_http_request(web_runtime: bool = OS.has_feature("web")) -> void:
 	if _http_request != null:
 		return
 	if _test_environment != null and _test_environment.has_method("create_request"):
 		_http_request = _test_environment.call("create_request") as Node
 	else:
 		var request := HTTPRequest.new()
+		# Fetch already decodes compressed responses but preserves their headers.
+		# Native HTTP clients still need Godot to decode the response body.
+		request.accept_gzip = not web_runtime
 		request.timeout = 8.0
 		request.body_size_limit = 256 * 1024
 		request.max_redirects = 0
-		request.use_threads = not OS.has_feature("web")
+		# Nonblocking polling keeps timeout and cancel responsive to stalled peers.
+		request.use_threads = false
 		_http_request = request
 	if _http_request == null or not _http_request.has_signal("request_completed") or not _http_request.has_method("request"):
 		_http_request = null
@@ -229,7 +225,7 @@ func _on_manifest_response(result: int, response_code: int, _headers: PackedStri
 	state["latest_info"] = info
 	_save_state(state)
 
-	if is_update_available(info) and (force_check or not _is_version_ignored(info, state)):
+	if is_update_available(info):
 		update_info_refreshed.emit(info.duplicate(true))
 		var latest_version := str(info.get("latest_version", ""))
 		if force_check or latest_version != _provisional_cached_update_version:
@@ -249,12 +245,6 @@ func _emit_no_update(info: Dictionary, source: String) -> void:
 	var payload := info.duplicate(true)
 	payload["notification_source"] = source
 	no_update.emit(payload)
-
-
-func _is_version_ignored(info: Dictionary, state: Dictionary) -> bool:
-	var ignored_version := _normalize_version_string(str(state.get("ignored_version", "")))
-	var latest_version := _normalize_version_string(str(info.get("latest_version", "")))
-	return ignored_version != "" and ignored_version == latest_version
 
 
 func _should_check_now(state: Dictionary) -> bool:

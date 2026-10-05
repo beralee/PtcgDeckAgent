@@ -1,6 +1,8 @@
 class_name TestBattlePortraitLayout
 extends TestBase
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const BattleLayoutControllerScript := preload("res://scripts/ui/battle/BattleLayoutController.gd")
 const BattleLayoutCoordinatorScript := preload("res://scripts/ui/battle/layouts/BattleLayoutCoordinator.gd")
 const BattleDrawRevealControllerScript := preload("res://scripts/ui/battle/BattleDrawRevealController.gd")
@@ -1736,18 +1738,18 @@ func test_portrait_battle_discussion_popup_uses_safe_touch_metrics() -> String:
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
 	var scene: Control = BattleScene.instantiate()
 	scene.call("_apply_portrait_layout", Vector2(390, 844))
-	var dialog := DeckDiscussionDialogScene.instantiate() as AcceptDialog
+	var dialog := DeckDiscussionDialogScene.instantiate() as GameModal
 	scene.add_child(dialog)
 	scene.set("_battle_discussion_dialog", dialog)
 	scene.call("_popup_battle_discussion_dialog_for_current_layout")
 
 	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
-	var popup_size := Vector2(float(dialog.size.x), float(dialog.size.y))
+	var popup_size := Vector2(float(dialog.dialog_size.x), float(dialog.dialog_size.y))
 	var title_label := dialog.get_node_or_null("%TitleLabel") as Label
 	var question_input := dialog.get_node_or_null("%QuestionInput") as TextEdit
 	var send_button := dialog.get_node_or_null("%SendButton") as Button
-	var stacked_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
-	var composer_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
+	var stacked_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
+	var composer_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
 	var transcript_scroll := dialog.get_node_or_null("%TranscriptScroll") as Control
 	var input_panel := dialog.get_node_or_null("%InputPanel") as Control
 	var roots: Array[Node] = scene.call("_portrait_popup_text_roots")
@@ -1756,7 +1758,7 @@ func test_portrait_battle_discussion_popup_uses_safe_touch_metrics() -> String:
 		assert_true(popup_size.y <= frame_rect.size.y, "Portrait AI discussion dialog should stay inside the safe portrait frame height"),
 		assert_true(popup_size.y >= frame_rect.size.y * 0.66, "Portrait AI discussion dialog should visibly apply the taller portrait profile"),
 		assert_true(popup_size.y <= frame_rect.size.y * 0.70, "Portrait AI discussion dialog should stay below a full-height mobile sheet after the increase"),
-		assert_true(dialog.min_size.x <= dialog.size.x and dialog.min_size.y <= dialog.size.y, "Portrait AI discussion min size should not force desktop dimensions"),
+		assert_true(dialog.min_size.x <= dialog.dialog_size.x and dialog.min_size.y <= dialog.dialog_size.y, "Portrait AI discussion min size should not force desktop dimensions"),
 		assert_true(title_label != null and title_label.get_theme_font_size("font_size") >= 34, "Portrait AI discussion title should use mobile battle-scale text"),
 		assert_true(question_input != null and question_input.get_theme_font_size("font_size") >= 30, "Portrait AI discussion input should use mobile battle-scale text"),
 		assert_true(send_button != null and send_button.custom_minimum_size.x >= 80.0 and send_button.custom_minimum_size.x <= 96.0, "Portrait AI discussion send button should use a readable right-side touch width"),
@@ -1779,7 +1781,7 @@ func test_portrait_battle_discussion_popup_scales_on_android_canvas() -> String:
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
 	var scene: Control = BattleScene.instantiate()
 	scene.call("_apply_portrait_layout", Vector2(1600, 2844))
-	var dialog := DeckDiscussionDialogScene.instantiate() as AcceptDialog
+	var dialog := DeckDiscussionDialogScene.instantiate() as GameModal
 	scene.add_child(dialog)
 	scene.set("_battle_discussion_dialog", dialog)
 	scene.call("_popup_battle_discussion_dialog_for_current_layout")
@@ -1788,13 +1790,13 @@ func test_portrait_battle_discussion_popup_scales_on_android_canvas() -> String:
 	var title_label := dialog.get_node_or_null("%TitleLabel") as Label
 	var question_input := dialog.get_node_or_null("%QuestionInput") as TextEdit
 	var send_button := dialog.get_node_or_null("%SendButton") as Button
-	var stacked_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
-	var composer_actions := dialog.get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
+	var stacked_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
+	var composer_actions := dialog.get_content().get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
 	var result := run_checks([
-		assert_true(dialog.size.x <= frame_rect.size.x, "Android portrait AI discussion dialog should stay inside the safe frame width"),
-		assert_true(dialog.size.y <= frame_rect.size.y, "Android portrait AI discussion dialog should stay inside the safe frame height"),
-		assert_true(dialog.size.y >= int(round(frame_rect.size.y * 0.66)), "Android portrait AI discussion dialog should apply the taller portrait profile"),
-		assert_true(dialog.size.y <= int(round(frame_rect.size.y * 0.70)), "Android portrait AI discussion dialog should remain a centered dialog after the height increase"),
+		assert_true(dialog.dialog_size.x <= frame_rect.size.x, "Android portrait AI discussion dialog should stay inside the safe frame width"),
+		assert_true(dialog.dialog_size.y <= frame_rect.size.y, "Android portrait AI discussion dialog should stay inside the safe frame height"),
+		assert_true(dialog.dialog_size.y >= int(round(frame_rect.size.y * 0.66)), "Android portrait AI discussion dialog should apply the taller portrait profile"),
+		assert_true(dialog.dialog_size.y <= int(round(frame_rect.size.y * 0.70)), "Android portrait AI discussion dialog should remain a centered dialog after the height increase"),
 		assert_true(title_label != null and title_label.get_theme_font_size("font_size") >= 60, "Android portrait AI discussion title should scale with top battle buttons"),
 		assert_true(question_input != null and question_input.get_theme_font_size("font_size") >= 53, "Android portrait AI discussion input should scale with top battle buttons"),
 		assert_true(send_button != null and send_button.custom_minimum_size.y >= 270.0, "Android portrait AI discussion send button should match the scaled input height"),
@@ -3391,53 +3393,31 @@ func test_portrait_text_dialog_scales_dynamic_option_and_footer_fonts() -> Strin
 	return result
 
 
-func test_portrait_mulligan_prompt_uses_large_stable_text_option() -> String:
+func test_portrait_mulligan_notice_is_readable_and_does_not_block_input() -> String:
 	var previous_layout: String = GameManager.battle_layout_mode
-	var previous_mode: int = GameManager.current_mode
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
-	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
 	var scene: Control = BattleScene.instantiate()
-	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
-	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
-	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
-	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
-	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
-	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
-	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
-	scene.call("_setup_dialog_gallery")
 	scene.call("_apply_portrait_layout", Vector2(390, 844))
-
-	scene.call("_on_player_choice_required", "mulligan_extra_draw", {"beneficiary": 0, "mulligan_count": 1})
-	var dialog_box := scene.find_child("DialogBox", true, false) as Control
-	var first_box_size := dialog_box.custom_minimum_size if dialog_box != null else Vector2.ZERO
-	var first_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
-	var first_panels := _text_hud_panels(scene.get("_dialog_card_row") as Node)
-	var first_panel := first_panels[0] if not first_panels.is_empty() else null
-
-	scene.call("_on_player_choice_required", "mulligan_extra_draw", {"beneficiary": 0, "mulligan_count": 2})
-	var second_box_size := dialog_box.custom_minimum_size if dialog_box != null else Vector2.ZERO
-	var second_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
-	var second_panels := _text_hud_panels(scene.get("_dialog_card_row") as Node)
-	var second_panel := second_panels[0] if not second_panels.is_empty() else null
+	var notice_script = load("res://scripts/ui/battle/BattleMulliganNotice.gd")
+	notice_script.show_result(scene, 0, 1)
+	var first := scene.get_node("MulliganNotice") as PanelContainer
+	var first_width := first.size.x
+	notice_script.show_result(scene, 0, 2)
+	var second := scene.get_node("MulliganNotice") as PanelContainer
+	var label := second.get_node("Content/MulliganNoticeText") as Label
 	var safe_width := _portrait_safe_width(scene, Vector2(390, 844))
-
 	var result := run_checks([
-		assert_true(first_panel != null and first_panel.custom_minimum_size.y >= 112.0, "First portrait mulligan prompt button should use a large touch height"),
-		assert_true(second_panel != null and second_panel.custom_minimum_size.y >= 112.0, "Second portrait mulligan prompt button should keep the large touch height"),
-		assert_true(first_panel != null and first_panel.custom_minimum_size.x <= first_box_size.x, "First portrait mulligan prompt button should not force the dialog wider"),
-		assert_true(second_panel != null and second_panel.custom_minimum_size.x <= second_box_size.x, "Second portrait mulligan prompt button should not force the dialog wider"),
-		assert_true(first_scroll != null and first_panel != null and first_scroll.custom_minimum_size.y >= first_panel.custom_minimum_size.y, "First portrait mulligan prompt scroll area should fit the large button"),
-		assert_true(second_scroll != null and second_panel != null and second_scroll.custom_minimum_size.y >= second_panel.custom_minimum_size.y, "Second portrait mulligan prompt scroll area should fit the large button"),
-		assert_true(first_box_size.x <= safe_width + 0.5 and second_box_size.x <= safe_width + 0.5, "Portrait mulligan prompt dialog should stay within the safe portrait width"),
-		assert_true(absf(first_box_size.x - second_box_size.x) <= 0.5, "Repeated portrait mulligan prompts should keep a stable width"),
-		assert_eq(first_panels.size(), 2, "One mulligan offers drawing zero or one card"),
-		assert_eq(second_panels.size(), 3, "Two mulligans offer drawing zero, one or two cards"),
-		assert_true(second_box_size.y >= first_box_size.y and second_box_size.y <= 844.0, "Extra draw choices must remain within the portrait viewport"),
+		assert_eq(second.mouse_filter, Control.MOUSE_FILTER_IGNORE, "Portrait information must not intercept touches"),
+		assert_eq(label.mouse_filter, Control.MOUSE_FILTER_IGNORE),
+		assert_eq(second.find_children("*", "Button", true, false).size(), 0, "Portrait information needs no confirmation"),
+		assert_str_contains(label.text, "补抽 2 张"),
+		assert_eq(first_width, second.size.x, "Bonus count must not change the notice width"),
+		assert_true(second.size.x <= safe_width, "Notice must fit the portrait safe width"),
+		assert_true(second.size.y <= 88, "Portrait notice must stay compact"),
+		assert_gte(label.get_theme_font_size("font_size"), 18, "Notice text must remain readable"),
 	])
-
 	scene.queue_free()
 	GameManager.battle_layout_mode = previous_layout
-	GameManager.current_mode = previous_mode
 	return result
 
 
@@ -3988,6 +3968,23 @@ func test_android_redmi_landscape_scene_keeps_side_huds_inside_width_budget() ->
 		scene.queue_free()
 
 	GameManager.battle_layout_mode = previous_layout
+	return run_checks(checks)
+
+
+func test_portrait_to_landscape_restores_modal_and_center_bounds() -> String:
+	var scene: Control = BattleScene.instantiate()
+	scene.call("_apply_portrait_layout", Vector2(1600, 3259))
+	scene.call("_apply_landscape_layout", Vector2(1833, 900))
+	var checks: Array[String] = []
+	for overlay_name: String in ["DialogOverlay", "HandoverPanel", "DetailOverlay", "ReviewOverlay"]:
+		var overlay := scene.find_child(overlay_name, true, false) as Control
+		checks.append(assert_true(overlay != null and overlay.anchor_right == 1.0 and overlay.anchor_bottom == 1.0, overlay_name + " must follow the landscape canvas after rotation"))
+		if overlay != null:
+			checks.append(assert_true(overlay.size.y <= 900.0, overlay_name + " must not retain the old portrait height"))
+			for child: Node in overlay.get_children():
+				if child is Control and child.get_meta("portrait_modal_full_rect_child", false):
+					checks.append(assert_true(child.anchor_right == 1.0 and child.anchor_bottom == 1.0, str(child.name) + " must recenter within the landscape overlay"))
+	scene.queue_free()
 	return run_checks(checks)
 
 

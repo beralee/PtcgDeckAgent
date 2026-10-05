@@ -25,6 +25,7 @@ const INDEX_FIELDS := [
 	"source_prints",
 	"energy_type",
 	"stage",
+	"evolves_from",
 	"hp",
 	"image_url",
 	"ancient_trait",

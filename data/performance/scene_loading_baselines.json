@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "source": "evidence/ptcgdap/performance_20260925.json",
+  "source_canonical_sha256": "37deba91538b38f11ad37f529153572dc21c6cf692c71684fad85ace6eb288bd",
+  "navigation_source": "evidence/ptcgdap/scene_loading_navigation_20260927.json",
+  "navigation_source_canonical_sha256": "8fa192ed50198bde72e95d741c46874f8de45be0572f1f1c7dc9c5f324bd693b",
+  "statistic": "p50_ms",
+  "usage": "Visual estimate only; Android emulator is a reference, not physical-device qualification.",
+  "profiles": {
+    "windows_editor": {
+      "battle.author_start": {
+        "first_in_process": {
+          "expected_ms": 1630.28,
+          "sample_count": 3,
+          "source_report": "windows_editor_after"
+        },
+        "warm_in_process": {
+          "expected_ms": 1646.236,
+          "sample_count": 3,
+          "source_report": "windows_editor_after"
+        }
+      },
+      "battle.classic_start": {
+        "first_in_process": {
+          "expected_ms": 2273.404,
+          "sample_count": 3,
+          "source_report": "windows_editor_after"
+        },
+        "warm_in_process": {
+          "expected_ms": 460.215,
+          "sample_count": 3,
+          "source_report": "windows_editor_after"
+        }
+      },
+      "navigation.battle_setup": {
+        "first_in_process": {
+          "expected_ms": 2497.777,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 106.735,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        }
+      },
+      "navigation.deck_manager": {
+        "first_in_process": {
+          "expected_ms": 743.699,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 335.283,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        }
+      },
+      "navigation.deck_training": {
+        "first_in_process": {
+          "expected_ms": 181.343,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 64.725,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        }
+      },
+      "navigation.settings": {
+        "first_in_process": {
+          "expected_ms": 130.149,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 47.799,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        }
+      },
+      "navigation.strategy_hub": {
+        "first_in_process": {
+          "expected_ms": 712.338,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 81.362,
+          "sample_count": 3,
+          "source_report": "windows_editor_navigation_entry"
+        }
+      }
+    },
+    "windows_release": {
+      "battle.author_start": {
+        "first_in_process": {
+          "expected_ms": 2721.828,
+          "sample_count": 3,
+          "source_report": "windows_release_author_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 1180.426,
+          "sample_count": 3,
+          "source_report": "windows_release_author_entry"
+        }
+      },
+      "battle.classic_start": {
+        "first_in_process": {
+          "expected_ms": 1295.687,
+          "sample_count": 3,
+          "source_report": "windows_release"
+        },
+        "warm_in_process": {
+          "expected_ms": 354.503,
+          "sample_count": 3,
+          "source_report": "windows_release"
+        }
+      },
+      "navigation.battle_setup": {
+        "first_in_process": {
+          "expected_ms": 1286.486,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 93.949,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        }
+      },
+      "navigation.deck_manager": {
+        "first_in_process": {
+          "expected_ms": 467.951,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 120.452,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        }
+      },
+      "navigation.deck_training": {
+        "first_in_process": {
+          "expected_ms": 133.003,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 49.78,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        }
+      },
+      "navigation.settings": {
+        "first_in_process": {
+          "expected_ms": 83.066,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 50.177,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        }
+      },
+      "navigation.strategy_hub": {
+        "first_in_process": {
+          "expected_ms": 166.65,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 66.606,
+          "sample_count": 3,
+          "source_report": "windows_navigation_entry"
+        }
+      }
+    },
+    "android_emulator_reference": {
+      "battle.author_start": {
+        "first_in_process": {
+          "expected_ms": 3327.59,
+          "sample_count": 3,
+          "source_report": "android_emulator_author_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 1551.557,
+          "sample_count": 3,
+          "source_report": "android_emulator_author_entry"
+        }
+      },
+      "battle.classic_start": {
+        "first_in_process": {
+          "expected_ms": 1700.368,
+          "sample_count": 3,
+          "source_report": "android_emulator_release"
+        },
+        "warm_in_process": {
+          "expected_ms": 605.985,
+          "sample_count": 3,
+          "source_report": "android_emulator_release"
+        }
+      },
+      "navigation.battle_setup": {
+        "first_in_process": {
+          "expected_ms": 1527.481,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 128.671,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        }
+      },
+      "navigation.deck_manager": {
+        "first_in_process": {
+          "expected_ms": 481.382,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 187.426,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        }
+      },
+      "navigation.deck_training": {
+        "first_in_process": {
+          "expected_ms": 216.89,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 82.475,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        }
+      },
+      "navigation.settings": {
+        "first_in_process": {
+          "expected_ms": 182.951,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 66.743,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        }
+      },
+      "navigation.strategy_hub": {
+        "first_in_process": {
+          "expected_ms": 232.927,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        },
+        "warm_in_process": {
+          "expected_ms": 100.223,
+          "sample_count": 3,
+          "source_report": "android_navigation_entry"
+        }
+      }
+    }
+  }
+}

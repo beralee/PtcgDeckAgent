@@ -557,6 +557,10 @@ func _auto_select_step_into_context(step: Dictionary, context: Dictionary) -> vo
 	if step_id == "":
 		return
 
+	if str(step.get("ui_mode", "")) == "card_assignment":
+		context[step_id] = _auto_select_assignments(step)
+		return
+
 	var items: Array = step.get("items", [])
 	var max_select: int = int(step.get("max_select", 0))
 	var min_select: int = int(step.get("min_select", 0))
@@ -567,6 +571,37 @@ func _auto_select_step_into_context(step: Dictionary, context: Dictionary) -> vo
 	for i in range(desired_count):
 		selected.append(items[i])
 	context[step_id] = selected
+
+
+func _auto_select_assignments(step: Dictionary) -> Array:
+	# Assignment prompts carry selectable sources separately from preview cards.
+	# Submit the same source/target records as the real interaction controller.
+	var sources: Array = step.get("source_items", [])
+	var targets: Array = step.get("target_items", [])
+	var exclusions: Dictionary = step.get("source_exclude_targets", {})
+	var limit := maxi(int(step.get("min_select", 0)), int(step.get("max_select", 0)))
+	var per_target_limit := int(step.get("max_assignments_per_target", 0))
+	var single_target := bool(step.get("single_target_only", false))
+	var assignments: Array = []
+	var target_counts: Dictionary = {}
+	for source_index: int in sources.size():
+		if assignments.size() >= limit:
+			break
+		for target_index: int in targets.size():
+			if target_index in exclusions.get(source_index, []):
+				continue
+			if single_target and not assignments.is_empty() and target_index != int(assignments[0].target_index):
+				continue
+			var count := int(target_counts.get(target_index, 0))
+			if per_target_limit > 0 and count >= per_target_limit:
+				continue
+			assignments.append({
+				"source_index": source_index, "source": sources[source_index],
+				"target_index": target_index, "target": targets[target_index],
+			})
+			target_counts[target_index] = count + 1
+			break
+	return assignments
 
 
 func _pending_steps_have_id(steps: Array[Dictionary], start_index: int, step_id: String) -> bool:

@@ -7,9 +7,33 @@ const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBatt
 const UiRuntimeProfileResolverScript := preload("res://scripts/ui/runtime/UiRuntimeProfileResolver.gd")
 const BrowserLifecycleBridgeScript := preload("res://scripts/ui/web/BrowserLifecycleBridge.gd")
 const WebUiFeatureGateScript := preload("res://scripts/ui/web/WebUiFeatureGate.gd")
-const AuthorStrategyWindowsExecutionGateScript := preload("res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd")
+# Match preparation owns the model/policy graph; the home autoload needs only
+# its path. Keep full validation on the existing match/tournament entry points.
+const AUTHOR_STRATEGY_EXECUTION_GATE_PATH := "res://scripts/ai/ptcgdap/host/godot/AuthorStrategyWindowsExecutionGate.gd"
 const AuthorStrategyFeatureGateScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyFeatureGate.gd")
 const AuthorStrategyDeckMaterializerScript := preload("res://scripts/ai/ptcgdap/packages/AuthorStrategyDeckMaterializer.gd")
+const SceneLoadingOverlayScript := preload("res://scripts/ui/SceneLoadingOverlay.gd")
+var _scene_loading_overlay: CanvasLayer = null
+var _scene_loading_error := false
+
+func begin_scene_loading(message: String = "正在打开", event_id: String = "") -> void:
+	_scene_loading_error = false
+	if _scene_loading_overlay == null:
+		_scene_loading_overlay = SceneLoadingOverlayScript.new()
+		add_child(_scene_loading_overlay)
+	_scene_loading_overlay.begin(message, event_id)
+
+func finish_scene_loading(error: String = "") -> void:
+	if _scene_loading_overlay == null:
+		return
+	if error.is_empty():
+		_scene_loading_overlay.finish()
+	else:
+		_scene_loading_error = true
+		_scene_loading_overlay.fail(error)
+
+func scene_loading_feedback_usec() -> int:
+	return int(_scene_loading_overlay.feedback_usec) if _scene_loading_overlay != null else 0
 
 signal non_battle_layout_mode_changed(mode: String)
 
@@ -54,6 +78,7 @@ var battle_effects_enabled: bool = true
 var selected_battle_music_id: String = "none"
 var battle_bgm_volume_percent: int = 20
 var battle_layout_mode: String = "auto"
+var battle_3d_enabled: bool = false
 var non_battle_layout_mode: String = "landscape"
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var ui_runtime_profile: UiRuntimeProfile = null
@@ -88,7 +113,7 @@ const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DESKTOP_RENDER_CAP_SIZE := Vector2i(1920, 1080)
-const NAVIGATION_PREWARM_AWAIT_TIMEOUT_MSEC := 100
+const NAVIGATION_PREWARM_AWAIT_TIMEOUT_MSEC := 15000
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
 const BATTLE_BGM_VOLUME_USER_SET_KEY := "battle_bgm_volume_user_set"
 const BATTLE_LAYOUT_AUTO := "auto"
@@ -158,7 +183,10 @@ var current_tournament: RefCounted = null
 var battle_player_display_names: Array[String] = ["", ""]
 var tournament_battle_in_progress: bool = false
 var tournament_start_error: String = ""
-const TournamentAuthorPoolScript = preload("res://scripts/tournament/TournamentAuthorStrategyPool.gd")
+const TOURNAMENT_AUTHOR_POOL_PATH := "res://scripts/tournament/TournamentAuthorStrategyPool.gd"
+var TournamentAuthorPoolScript: Script:
+	get:
+		return load(TOURNAMENT_AUTHOR_POOL_PATH)
 var suppress_scene_navigation_for_tests: bool = false
 var last_requested_scene_path: String = ""
 var _touch_button_bridge_candidate: Button = null
@@ -174,6 +202,8 @@ var _battle_setup_startup_input_shield_reason: String = ""
 
 
 func _ready() -> void:
+	if "--arena-acceptance" in OS.get_cmdline_user_args():
+		call_deferred("_start_arena_acceptance")
 	refresh_ui_runtime_profile()
 	_ensure_browser_lifecycle_bridge()
 	_ensure_web_ui_e2e_bridge()
@@ -197,6 +227,12 @@ func _connect_desktop_render_resolution_cap() -> void:
 func _on_root_window_size_changed() -> void:
 	refresh_ui_runtime_profile()
 	apply_desktop_render_resolution_cap()
+
+
+func _start_arena_acceptance() -> void:
+	# Release templates disable command-line scene overrides. Keep the normal
+	# product entry intact and expose only this explicit local acceptance scene.
+	get_tree().change_scene_to_file("res://scenes/arena3d/ArenaLobby.tscn")
 
 
 func refresh_ui_runtime_profile(viewport_size: Vector2 = Vector2.ZERO, user_agent: String = "") -> UiRuntimeProfile:
@@ -482,7 +518,12 @@ func apply_desktop_render_resolution_cap(window_size: Vector2i = Vector2i.ZERO) 
 	if size.x <= 0 or size.y <= 0:
 		return
 	_applying_desktop_render_resolution_cap = true
-	if _should_apply_desktop_render_resolution_cap(OS.get_name(), {}, "", size, DisplayServer.window_get_mode()):
+	if preload("res://scripts/ui/battle/BattlePresentation.gd").is_3d_scene(get_tree().current_scene):
+		# Arena HUD lays out against native pixels; scale its 3D SubViewport
+		# independently instead of stretching the whole card interface.
+		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		root.content_scale_size = preload("res://scenes/arena3d/ArenaPlatform.gd").canvas_size(size)
+	elif _should_apply_desktop_render_resolution_cap(OS.get_name(), {}, "", size, DisplayServer.window_get_mode()):
 		root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 		root.content_scale_size = _desktop_render_size_for_window_size(size)
 	else:
@@ -737,7 +778,7 @@ func _input(event: InputEvent) -> void:
 			return
 	# BattleScene owns its complete pointer pipeline. The compatibility bridge is a
 	# non-battle fallback and must never bypass battle modal input isolation.
-	if _has_active_battle_scene():
+	if _has_active_battle_scene() or _has_active_expert_play_form():
 		_touch_button_bridge_candidate = null
 		return
 	if WebUiFeatureGateScript.web_input_adapter_v2_enabled(ui_runtime_profile):
@@ -843,6 +884,16 @@ func _button_can_bridge_touch(button: Button) -> bool:
 	return NonBattleTouchBridgeScript.button_can_bridge_touch(button)
 
 
+func _has_active_expert_play_form() -> bool:
+	var tree := _scene_tree_or_null()
+	if tree == null:
+		return false
+	for node: Node in tree.get_nodes_in_group("expert_play_forms"):
+		if node is Control and (node as Control).is_visible_in_tree():
+			return true
+	return false
+
+
 func _has_active_battle_scene() -> bool:
 	var tree := _scene_tree_or_null()
 	if tree == null or tree.root == null:
@@ -883,8 +934,24 @@ func goto_scene(path: String) -> void:
 		return
 	if not _queue_scene_change(path):
 		return
+	begin_scene_loading("正在准备对战" if path == SCENE_BATTLE else "正在打开", scene_loading_event_id(path))
 	var request_token := _pending_scene_change_token
 	call_deferred("_deferred_goto_scene", path, request_token)
+
+
+func scene_loading_event_id(path: String) -> String:
+	match path:
+		SCENE_BATTLE_SETUP: return "navigation.battle_setup"
+		SCENE_DECK_MANAGER: return "navigation.deck_manager"
+		SCENE_STRATEGY_HUB: return "navigation.strategy_hub"
+		SCENE_SETTINGS: return "navigation.settings"
+		SCENE_DECK_TRAINING: return "navigation.deck_training"
+		SCENE_BATTLE:
+			if not _deck_training_launch.is_empty(): return "battle.training_start"
+			if current_mode == GameMode.VS_AUTHOR_STRATEGY_AI: return "battle.author_start"
+			return "battle.classic_start" if current_mode == GameMode.VS_AI else "battle.two_player_start"
+	# Unmeasured destinations use a marquee rather than another page's timing.
+	return path
 
 
 func _queue_scene_change(path: String) -> bool:
@@ -951,6 +1018,9 @@ func _deferred_goto_scene(path: String, request_token: int = 0) -> void:
 		apply_deck_editor_orientation()
 	elif _should_apply_non_battle_orientation_before_scene_change(path):
 		apply_non_battle_orientation_for_scene(path)
+	# A fast tap can beat the idle prewarm timer. Start the same threaded load
+	# now, while the source scene and acknowledgement remain drawable.
+	_request_navigation_resource_prewarm(path)
 	var prewarmed_scene := _take_prewarmed_scene(path)
 	if prewarmed_scene != null:
 		var packed_err := get_tree().change_scene_to_packed(prewarmed_scene)
@@ -958,6 +1028,7 @@ func _deferred_goto_scene(path: String, request_token: int = 0) -> void:
 			await get_tree().process_frame
 			_clear_pending_scene_change(path, request_token)
 		else:
+			finish_scene_loading("画面准备未完成，请返回重试")
 			_clear_pending_scene_change(path, request_token)
 			push_error("GameManager: failed to change scene to prewarmed %s: %s" % [path, packed_err])
 		return
@@ -971,14 +1042,19 @@ func _deferred_goto_scene(path: String, request_token: int = 0) -> void:
 				await get_tree().process_frame
 				_clear_pending_scene_change(path, request_token)
 			else:
+				finish_scene_loading("画面准备未完成，请返回重试")
 				_clear_pending_scene_change(path, request_token)
 				push_error("GameManager: failed to change scene to awaited %s: %s" % [path, awaited_err])
 			return
+		finish_scene_loading("画面准备未完成，请返回重试")
+		_clear_pending_scene_change(path, request_token)
+		return
 	var file_err := get_tree().change_scene_to_file(path)
 	if file_err == OK:
 		await get_tree().process_frame
 		_clear_pending_scene_change(path, request_token)
 	else:
+		finish_scene_loading("画面准备未完成，请返回重试")
 		_clear_pending_scene_change(path, request_token)
 		push_error("GameManager: failed to change scene to %s: %s" % [path, file_err])
 
@@ -988,9 +1064,14 @@ func _is_current_scene_change_request(path: String, request_token: int) -> bool:
 
 
 func _clear_pending_scene_change(path: String, request_token: int) -> void:
+	var scene := get_tree().current_scene
+	while is_instance_valid(scene) and scene.has_method("is_scene_preparation_pending") and scene.is_scene_preparation_pending():
+		await get_tree().process_frame
 	if not _is_current_scene_change_request(path, request_token):
 		return
 	_pending_scene_change_path = ""
+	if not _scene_loading_error:
+		finish_scene_loading()
 
 
 func prewarm_navigation_resources() -> void:
@@ -1075,7 +1156,7 @@ func _await_prewarmed_scene(path: String) -> PackedScene:
 			return null
 		if not _should_continue_awaiting_prewarm(status, Time.get_ticks_msec() - started_msec):
 			_navigation_prewarm_requested.erase(path)
-			push_warning("GameManager: prewarm timed out for %s; falling back to direct scene loading" % path)
+			push_warning("GameManager: scene preparation timed out for %s" % path)
 			return null
 		await get_tree().process_frame
 	return _take_prewarmed_scene(path)
@@ -1137,7 +1218,7 @@ func resolve_selected_battle_deck(player_index: int) -> DeckData:
 	if current_mode == GameMode.VS_AUTHOR_STRATEGY_AI and player_index == 1:
 		if not AuthorStrategyFeatureGateScript.is_enabled():
 			return null
-		var requested: Dictionary = AuthorStrategyWindowsExecutionGateScript.request_match_handle(
+		var requested: Dictionary = load(AUTHOR_STRATEGY_EXECUTION_GATE_PATH).request_match_handle(
 			AuthorStrategyPackageCatalog,
 			_author_strategy_selection
 		)
@@ -1866,7 +1947,7 @@ func prepare_current_tournament_battle() -> bool:
 	var author_selection: Dictionary = {}
 	if opponent_mode == "author":
 		author_selection = current_tournament.participant_author_selection(opponent_id)
-		var checked := TournamentAuthorPoolScript.resolve(AuthorStrategyPackageCatalog, author_selection)
+		var checked: Dictionary = TournamentAuthorPoolScript.resolve(AuthorStrategyPackageCatalog, author_selection)
 		if not checked.get("ok", false):
 			tournament_start_error = "本轮开发者策略不可用：%s v%s。请在 AI 策略中心恢复该版本后重试；赛程已保留。\n原因：%s" % [author_selection.get("display_name_snapshot", "未知策略"), author_selection.get("package_version", "?"), checked.get("error_code", "package_unavailable")]
 			_persist_tournament_state()

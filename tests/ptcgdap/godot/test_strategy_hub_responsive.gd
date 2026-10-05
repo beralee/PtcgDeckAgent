@@ -71,6 +71,15 @@ func test_actual_subviewport_contains_tabs_long_rows_and_embedded_settings() -> 
 	checks.append(assert_true(form.get_global_rect().position.x >= settings.get_global_rect().position.x - 0.5, "embedded form starts outside parent"))
 	checks.append(assert_true(form.get_global_rect().end.x <= settings.get_global_rect().end.x + 0.5, "embedded form overflows parent"))
 	checks.append(assert_true(settings.custom_minimum_size.y >= form.get_combined_minimum_size().y, "outer scroll owns complete form height"))
+	for notice_name: String in ["DeepSeekUsageHint", "DeepSeekAbilityHint"]:
+		var notice := settings.find_child(notice_name, true, false) as Label
+		checks.append(assert_not_null(notice, "DeepSeek must explain its purpose and ability limits before configuration"))
+		if notice != null:
+			checks.append(assert_true(notice.is_visible_in_tree(), "DeepSeek notice must be visible"))
+			checks.append(assert_eq(notice.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART))
+			checks.append(assert_false(notice.clip_text, "DeepSeek notice must remain complete"))
+			checks.append(assert_true(notice.get_global_rect().end.x <= settings.get_global_rect().end.x + 0.5, "DeepSeek notice must fit narrow screens"))
+			checks.append(assert_true(notice.get_global_rect().end.y <= (settings.get_node("%ApiKeyInput") as Control).get_global_rect().position.y, "DeepSeek notice must precede the API key field"))
 	await _capture_viewport_if_requested(viewport, "strategy-hub-390-settings")
 	settings.call("_ensure_settings_model_picker_overlay")
 	settings.call("_refresh_settings_model_picker_layout")

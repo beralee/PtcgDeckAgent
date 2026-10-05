@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 import unittest
 
@@ -27,10 +28,34 @@ class UcisCatalogQualificationTests(unittest.TestCase):
         self.assertEqual(report["qualification_status"], "passed")
         self.assertEqual(report["failure_reasons"], [])
         scope = report["scope"]
-        self.assertEqual(scope["total_cards"], 797)
-        self.assertEqual(scope["total_effects"], 730)
-        self.assertEqual(scope["declared_usable"], 729)
-        self.assertEqual(scope["explicit_unsupported"], 1)
+        # Scan the actual source files independently of generated manifests,
+        # so an omitted newly bundled printing cannot shrink the denominator.
+        source_cards = {}
+        for path in (ROOT / "data/bundled_user/cards").glob("*.json"):
+            card = json.loads(path.read_text(encoding="utf-8-sig"))
+            uid = f"{card['set_code']}_{card['card_index']}"
+            self.assertNotIn(uid, source_cards, "Duplicate source printing")
+            source_cards[uid] = (path, card)
+        self.assertTrue(source_cards)
+        source_effects = {card["effect_id"] for _, card in source_cards.values()}
+        self.assertEqual(scope["total_cards"], len(source_cards))
+        self.assertEqual(scope["total_effects"], len(source_effects))
+        catalog = json.loads((ROOT / "contracts/ptcgdap/ucis_card_catalog_v1.json").read_bytes())
+        self.assertEqual({row["card_uid"] for row in catalog["cards"]}, set(source_cards))
+        self.assertEqual(len(catalog["cards"]), len(source_cards))
+        self.assertEqual({row["effect_id"] for row in catalog["effects"]}, source_effects)
+        self.assertEqual(len(catalog["effects"]), len(source_effects))
+        for row in catalog["cards"]:
+            path, card = source_cards[row["card_uid"]]
+            self.assertEqual(row["effect_id"], card["effect_id"])
+            self.assertEqual(row["source_path"], path.relative_to(ROOT).as_posix())
+            self.assertEqual(row["source_sha256"], _sha(path))
+        statuses = Counter(row["status"] for row in catalog["effects"])
+        self.assertLessEqual(set(statuses), {"compiled", "automatic", "unsupported"})
+        self.assertEqual(scope["compiled"], statuses["compiled"])
+        self.assertEqual(scope["automatic"], statuses["automatic"])
+        self.assertEqual(scope["declared_usable"], statuses["compiled"] + statuses["automatic"])
+        self.assertEqual(scope["explicit_unsupported"], statuses["unsupported"])
         for field in (
             "unregistered",
             "silent_fallback",
@@ -86,13 +111,23 @@ class UcisCatalogQualificationTests(unittest.TestCase):
         registry = json.loads((ROOT / "contracts/ptcgdap/ucis_registry_v1.json").read_bytes())
         current_contracts["registry_canonical_sha256"] = hashlib.sha256(canonical_json_v1_bytes(registry)).hexdigest().upper()
         audit = audit_qualification_inputs(self.report, {key: _sha(ROOT / path) for key, path in paths.items()}, current_contracts)
-        self.assertEqual(audit["status"], "requires_requalification")
-        self.assertFalse(audit["current_inputs_qualified"])
+        self.assertEqual(audit["status"], "applicable")
+        self.assertTrue(audit["current_inputs_qualified"])
         self.assertEqual(audit["unverified_identities"], [])
-        self.assertEqual(audit["changed_identities"], sorted(
-            f"contract_identities.{key}" for key, value in current_contracts.items()
-            if value != report["contract_identities"][key]
-        ))
+        self.assertEqual(audit["changed_identities"], [])
+
+    def test_stale_contract_and_source_inputs_require_requalification(self) -> None:
+        for group in ("source_identities", "contract_identities"):
+            source = dict(self.report["source_identities"])
+            contracts = dict(self.report["contract_identities"])
+            changed = source if group == "source_identities" else contracts
+            key = next(iter(changed))
+            changed[key] = "0" * 64 if changed[key] != "0" * 64 else "F" * 64
+            audit = audit_qualification_inputs(self.report, source, contracts)
+            self.assertEqual(audit["status"], "requires_requalification")
+            self.assertFalse(audit["current_inputs_qualified"])
+            self.assertEqual(audit["changed_identities"], [f"{group}.{key}"])
+            self.assertEqual(audit["unverified_identities"], [])
 
     def test_exact_historical_inputs_retain_the_recorded_scope(self) -> None:
         audit = audit_qualification_inputs(self.report, self.report["source_identities"], self.report["contract_identities"])

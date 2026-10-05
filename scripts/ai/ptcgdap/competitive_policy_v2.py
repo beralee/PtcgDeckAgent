@@ -15,6 +15,7 @@ import re
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from .public_decision_facts import DECISION_FACT_TYPES, decision_error, decision_fact
 from .cabt_tree_hash import CabtTreeHashError, public_observation_hash
 from .public_damage_planning import (
     PublicDamageCapabilityRegistry,
@@ -174,6 +175,8 @@ SCALAR_FACTS = frozenset(
         "option.option_number",
         "option.ability_index",
         "option.pending_assignment_count",
+        "option.target_pending_damage_counters",
+        "option.remaining_damage_counters",
         "option.tags",
         "option.target_attached_energy_uids",
         "option.source_is_active",
@@ -299,6 +302,8 @@ WINDOW_UID_FACTS = frozenset(
         "window.option_count_target_uid",
     }
 )
+SCALAR_FACTS = SCALAR_FACTS | frozenset(DECISION_FACT_TYPES)
+
 NUMERIC_TERM_FACTS = frozenset(
     fact
     for fact in SCALAR_FACTS
@@ -359,6 +364,7 @@ DOCUMENT_REQUIRED_KEYS = {
     "rules",
 }
 DOCUMENT_KEYS = DOCUMENT_REQUIRED_KEYS | {
+    "damage_forecast_profile", "plan_comparison_profile",
     "turn_routes",
     "route_candidates",
     "interaction_recipes",
@@ -505,6 +511,8 @@ TURN_TRANSACTION_SELECTION_GROUP_KEYS = {
     "selection_count",
     "option_when",
 }
+NUMERIC_TERM_FACTS = NUMERIC_TERM_FACTS - frozenset(k for k, v in DECISION_FACT_TYPES.items() if v != "integer")
+
 CONDITION_KEYS = {"fact", "op", "value", "card_uid"}
 TERM_KEYS = {"fact", "coefficient", "minimum", "maximum"}
 FRAME_KEYS = {
@@ -586,7 +594,7 @@ OPTION_REQUIRED_KEYS = {
     "option_type_raw",
     "option_player_index",
 }
-OPTION_KEYS = OPTION_REQUIRED_KEYS | {"source_entity_serial", "target_entity_serial"}
+OPTION_KEYS = OPTION_REQUIRED_KEYS | {"source_entity_serial", "target_entity_serial", "target_pending_damage_counters", "remaining_damage_counters"}
 
 
 def _sha(value: Any) -> str:
@@ -682,7 +690,7 @@ def _condition_list_error(
             return error
         fact = condition["fact"]
         if not allow_option_facts and (
-            fact.startswith("option.")
+            fact.startswith(("option.", "decision.option."))
             or fact.startswith("goal.option.")
             or fact.startswith("damage.option.")
             or fact.startswith("transaction.option.")
@@ -784,7 +792,7 @@ def _route_value_component_error(value: Any) -> str | None:
         fact = term["fact"]
         if (
             fact not in NUMERIC_TERM_FACTS
-            or fact.startswith("option.")
+            or fact.startswith(("option.", "decision.option."))
             or fact.startswith("goal.option.")
             or not _safe_int(term["coefficient"], signed=True)
             or abs(term["coefficient"]) > 10_000
@@ -976,6 +984,10 @@ def _document_error(value: Any, allowed_uids: frozenset[str]) -> str | None:
     interaction_recipes = value.get("interaction_recipes", [])
     turn_bonus_contracts = value.get("turn_bonus_contracts", [])
     damage_plans = value.get("damage_plans", [])
+    if value.get("damage_forecast_profile", "legacy-v1") not in ("legacy-v1", "reviewed-gust-v1"):
+        return "invalid_damage_forecast_profile"
+    if value.get("plan_comparison_profile", "legacy-v1") not in ("legacy-v1", "resource-continuity-v1", "resource-continuity-v2", "card-goals-v1"):
+        return "invalid_plan_comparison_profile"
     semantic_transactions = value.get("semantic_transactions", [])
     turn_transactions = value.get("turn_transactions", [])
     if type(goals) is not list or not goals or len(goals) > 64:
@@ -1281,7 +1293,7 @@ def _document_error(value: Any, allowed_uids: frozenset[str]) -> str | None:
             if (
                 fact not in NUMERIC_TERM_FACTS
                 or type(fact) is not str
-                or fact.startswith("option.")
+                or fact.startswith(("option.", "decision.option."))
                 or fact.startswith("goal.option.")
                 or not _safe_int(divisor)
                 or not 1 <= divisor <= 1_000_000
@@ -1447,6 +1459,26 @@ def _nullable(value: Any, kind: type) -> bool:
     return value is None or type(value) is kind
 
 
+def _counter_state_error(options: list, semantics: dict) -> bool:
+    keys = {"target_pending_damage_counters", "remaining_damage_counters"}
+    if not any(type(option) is dict and keys & set(option) for option in options):
+        return False
+    if semantics["select_type_raw"] != 1 or semantics["select_context_raw"] not in {13, 14}:
+        return True
+    budget = None
+    for option in options:
+        if type(option) is not dict or not keys <= set(option):
+            return True
+        if any(type(option[key]) is not int or not 0 <= option[key] <= 100 for key in keys):
+            return True
+        if not _safe_int(option.get("target_entity_serial")) or option["target_entity_serial"] <= 0:
+            return True
+        if budget is not None and budget != option["remaining_damage_counters"]:
+            return True
+        budget = option["remaining_damage_counters"]
+    return False
+
+
 def _frame_error(value: Any) -> str | None:
     if _contains_private(value):
         return "private_or_runtime_frame"
@@ -1472,7 +1504,8 @@ def _frame_error(value: Any) -> str | None:
         or UPPER_SHA.fullmatch(str(source["public_observation_hash"])) is None
         or UPPER_SHA.fullmatch(str(source["window_id"])) is None
         or type(state) is not dict
-        or set(state) != STATE_KEYS
+        or not STATE_KEYS <= set(state) <= STATE_KEYS | {"decision"}
+        or decision_error(state)
         or type(semantics) is not dict
         or set(semantics) != SEMANTIC_KEYS
         or type(options) is not list
@@ -1530,6 +1563,8 @@ def _frame_error(value: Any) -> str | None:
         or not _safe_int(semantics["select_type_raw"])
         or not _safe_int(semantics["select_context_raw"])
     ):
+        return "invalid_public_frame"
+    if _counter_state_error(options, semantics):
         return "invalid_public_frame"
     for index, option in enumerate(options):
         if (
@@ -2000,6 +2035,9 @@ def _fact(
     threat: dict[str, int],
     card_uid: str | None,
 ) -> Any:
+    if fact in DECISION_FACT_TYPES:
+        return decision_fact(frame, option, fact)
+
     damage = frame.get("_derived_damage", {})
     transaction = frame.get("_derived_transaction", {})
     if fact.startswith("damage.option."):
@@ -2163,7 +2201,7 @@ def _fact(
             )
             for slot in frame["public_state"]["self"]["active"]
         )
-    if fact.startswith("option."):
+    if fact.startswith(("option.", "decision.option.")):
         return None if option is None else option.get(fact.split(".", 1)[1])
     return None
 
@@ -2193,6 +2231,14 @@ def _compare(actual: Any, op: str, expected: Any) -> bool:
     return False
 
 
+def _unavailable_damage_facts(rows: list[dict[str, Any]], frame: dict[str, Any]) -> bool:
+    # Missing catalog coverage disables derived damage advice, not the current
+    # legal frontier. Unknown facts must not satisfy even a negative predicate.
+    return frame.get("_derived_damage", {}).get("accepted") is False and any(
+        str(row.get("fact", "")).startswith("damage.") for row in rows
+    )
+
+
 def _matches(
     conditions: list[dict[str, Any]],
     frame: dict[str, Any],
@@ -2200,6 +2246,8 @@ def _matches(
     goal: dict[str, int],
     threat: dict[str, int],
 ) -> bool:
+    if _unavailable_damage_facts(conditions, frame):
+        return False
     return all(
         _compare(
             _fact(condition["fact"], frame, option, goal, threat, condition["card_uid"]),
@@ -2701,6 +2749,8 @@ def _evaluate(
             matched.append(base_floor)
         for rule in document["rules"]:
             goal = goals[rule["goal_id"]]
+            if _unavailable_damage_facts(rule["score_terms"], frame):
+                continue
             if not _matches(rule["when"], frame, option, goal, threat):
                 continue
             raw = rule["base_score"]
@@ -3649,8 +3699,11 @@ class CompetitivePolicyV2Runtime:
                 frame_value,
                 document["damage_plans"],
                 PublicDamageCapabilityRegistry.load_default(),
+                reviewed_gust=document.get("damage_forecast_profile", "legacy-v1") == "reviewed-gust-v1",
             )
-            if not damage_result.get("accepted"):
+            # A supported profile does not make optional catalog coverage a
+            # prerequisite for independent choices from the legal frontier.
+            if not damage_result.get("accepted") and damage_result.get("error_code") != "unknown_damage_card_uid":
                 return CompetitivePolicyV2Decision(
                     False,
                     str(damage_result.get("error_code", "damage_plan_failed")),
@@ -3680,6 +3733,9 @@ class CompetitivePolicyV2Runtime:
                 )
         frame_value["_derived_damage"] = damage_result
         frame_value["_derived_transaction"] = transaction_result
+        from .public_attack_access import plan_attack_access, uses_attack_access
+        if uses_attack_access(document):
+            frame_value["_derived_access"] = plan_attack_access(frame_value, validated=True)
         turn_transaction_result: dict[str, Any] = {
             "accepted": True,
             "error_code": "",
@@ -3888,6 +3944,7 @@ class CompetitivePolicyV2Runtime:
                 if option["kind"] == "end_turn"
             ]
             ranked = [*end_turn, *(index for index in ranked if index not in end_turn)]
+        comparison_result = None
         fallback_used = False
         if terminal:
             owner = "terminal"
@@ -3903,6 +3960,12 @@ class CompetitivePolicyV2Runtime:
                 frontier = [index for index in frontier if tiers[index] == best_tier]
             frontier = [index for index in frontier if index not in vetoed]
             ordered = [index for index in ranked if index in frontier]
+            if document.get("plan_comparison_profile") in ("resource-continuity-v1", "resource-continuity-v2", "card-goals-v1") and selection_quotas is None:
+                from .public_plan_comparison import compare_plans
+                comparison_result = compare_plans(frame_value, ordered, validated=True, profile=document["plan_comparison_profile"])
+                proposal = comparison_result.get("proposed_index")
+                if comparison_result.get("accepted") and proposal in ordered:
+                    ordered = [proposal, *(index for index in ordered if index != proposal)]
             if selection_quotas is not None:
                 remaining = dict(selection_quotas)
                 typed_ordered: list[int] = []
@@ -4166,6 +4229,10 @@ class CompetitivePolicyV2Runtime:
             "public_only": True,
             "stale_plan_has_authority": False,
         }
+        if not damage_result.get("accepted"):
+            audit_payload["damage_plan"].update(
+                status="unavailable", error_code=damage_result["error_code"]
+            )
         if turn_program_request is not None or auto_turn_program_shadow:
             audit_payload["turn_program_shadow"] = copy.deepcopy(turn_program_shadow)
         if auto_turn_program_shadow and turn_program_request is None:
@@ -4184,6 +4251,8 @@ class CompetitivePolicyV2Runtime:
             and owner == "base_graph"
             and any(index in authority_indexes for index in selected)
         )
+        if comparison_result is not None:
+            audit_payload["plan_comparison"] = comparison_result
         audit = {**audit_payload, "audit_hash": _sha(audit_payload)}
         from .semantic_model_profile import base_model_frontier
         model_frontier = base_model_frontier(frame=frame_value, selected=selected, tiers=tiers,

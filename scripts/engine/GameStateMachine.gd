@@ -11,6 +11,7 @@ const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
 const AreaZeroUnderdepthsEffect = preload("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd")
 const RandomEventPortScript = preload("res://scripts/engine/RandomEventPort.gd")
+const ToolLimit = preload("res://scripts/engine/ToolLimitRules.gd")
 
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
 const EffectHandheldFan = preload("res://scripts/effects/tool_effects/EffectHandheldFan.gd")
@@ -21,6 +22,8 @@ const BOSS_ORDERS_EFFECT_ID := "8e1fa2c9018db938084c94c7c970d419"
 const SWITCHING_TICKET_EFFECT_ID := "6c48ceec110a6f65a07e0547b059e7aa"
 
 static var _live_refs: Array[WeakRef] = []
+## Bound once: UI/download services never alter the rules of an existing match.
+var content_release_id: String = preload("res://scripts/card_content/ContentPaths.gd").release_id()
 
 
 ## 游戏状态变更信号
@@ -54,6 +57,9 @@ var _pending_heavy_baton_is_active: bool = false
 var _pending_exp_share_player_index: int = -1
 var _pending_exp_share_slot: PokemonSlot = null
 var _pending_exp_share_is_active: bool = false
+var _pending_exp_share_tool: CardInstance = null
+var _pending_exp_share_target: PokemonSlot = null
+var _exp_share_used_tool_keys: Dictionary = {}
 var _pending_amulet_player_index: int = -1
 var _pending_amulet_slot: PokemonSlot = null
 var _pending_amulet_is_active: bool = false
@@ -78,6 +84,10 @@ var _attack_damage_knockout_slot_ids: Dictionary = {}
 var _attack_resolution_knockout_slot_ids: Dictionary = {}
 var _pending_trainer_vfx_data: Dictionary = {}
 var _prepared_attack_confusion_key := ""
+var _prepared_attack_failure_key := ""
+var _pending_tool_cleanup := false
+var _tool_cleanup_resume := ""
+var _tool_cleanup_attack_player := -1
 
 const MAX_SETUP_MULLIGAN_LOOPS: int = 64
 const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
@@ -105,6 +115,8 @@ func _init() -> void:
 func get_pending_decision_snapshot() -> Dictionary:
 	if game_state == null:
 		return {}
+	if _pending_tool_cleanup:
+		return ToolLimit.first_excess(game_state, effect_processor)
 	if _pending_starting_player_chooser_index >= 0:
 		return {
 			"kind": "choose_starting_player",
@@ -149,14 +161,16 @@ func get_pending_decision_snapshot() -> Dictionary:
 			"source_energy": heavy_energy,
 		}
 	if _pending_exp_share_player_index >= 0 and _pending_exp_share_slot != null:
-		var exp_player: PlayerState = game_state.players[_pending_exp_share_player_index]
 		return {
 			"kind": "exp_share_target",
 			"scene_choice": "exp_share_target",
 			"owner_player_index": _pending_exp_share_player_index,
-			"bench": EffectExpShare.find_exp_share_slots(exp_player),
+			"bench": [_pending_exp_share_target],
 			"source_slot": _pending_exp_share_slot,
 			"source_energy": EffectExpShare.get_transferable_energy(_pending_exp_share_slot),
+			"tool": _pending_exp_share_tool,
+			"min_select": 0,
+			"max_select": 1,
 		}
 	if (
 		_pending_powerglass_player_index >= 0
@@ -169,6 +183,7 @@ func get_pending_decision_snapshot() -> Dictionary:
 				_pending_powerglass_tool.card_data.effect_id
 			)
 			if powerglass_effect != null and powerglass_effect.has_method("get_end_turn_interaction_steps"):
+				if powerglass_effect.has_method("bind_tool_card"): powerglass_effect.call("bind_tool_card", _pending_powerglass_tool)
 				var powerglass_steps_raw: Variant = powerglass_effect.call(
 					"get_end_turn_interaction_steps",
 					_pending_powerglass_slot,
@@ -254,6 +269,9 @@ func recover_pending_decision_without_input(kind: String) -> bool:
 
 
 func prepare_for_disposal() -> void:
+	_pending_tool_cleanup = false
+	_tool_cleanup_resume = ""
+	_tool_cleanup_attack_player = -1
 	_prepared_attack_confusion_key = ""
 	action_log.clear()
 	_deck_order_overrides.clear()
@@ -273,6 +291,10 @@ func prepare_for_disposal() -> void:
 	_clear_pending_powerglass_choice()
 	_exp_share_resolved_knockout_slot_ids.clear()
 	_pending_prize_player_index = -1
+	_exp_share_used_tool_keys.clear()
+	_pending_exp_share_target = null
+	_pending_exp_share_tool = null
+	_prepared_attack_failure_key = ""
 	_pending_prize_remaining = 0
 	_pending_prize_knocked_out_player_index = -1
 	_pending_prize_knockout_is_active = false
@@ -339,6 +361,10 @@ func start_game(
 	_clear_pending_powerglass_choice()
 	_exp_share_resolved_knockout_slot_ids.clear()
 	_attack_damage_knockout_slot_ids.clear()
+	_exp_share_used_tool_keys.clear()
+	_pending_exp_share_target = null
+	_pending_exp_share_tool = null
+	_prepared_attack_failure_key = ""
 	_pending_starting_player_chooser_index = -1
 	_setup_start_deferred = false
 	effect_processor = EffectProcessor.new(coin_flipper)
@@ -562,6 +588,16 @@ func _check_mulligan() -> void:
 
 		if not needs_mulligan[0] and not needs_mulligan[1]:
 			_pending_mulligan_beneficiary_index = -1
+			# Finish all redraws before opening one DRAW_COUNT window. Otherwise
+			# successive totals of 1, 2, ... can award the same bonus more than once.
+			for pi: int in 2:
+				if _mulligan_counts[pi] > 0:
+					_pending_mulligan_beneficiary_index = 1 - pi
+					player_choice_required.emit("mulligan_extra_draw", {
+						"beneficiary": 1 - pi,
+						"mulligan_count": _mulligan_counts[pi],
+					})
+					return
 			player_choice_required.emit("setup_ready", {})
 			return
 
@@ -590,13 +626,10 @@ func _check_mulligan() -> void:
 				_abort_invalid_setup(1 - pi, "玩家%d的牌库与手牌中均无基础宝可梦" % (pi + 1))
 				return
 			_do_mulligan(pi)
-			var opp_index: int = 1 - pi
 			_mulligan_counts[pi] += 1
-			_pending_mulligan_beneficiary_index = opp_index
-			player_choice_required.emit("mulligan_extra_draw", {
-				"beneficiary": opp_index,
-				"mulligan_count": _mulligan_counts[pi]
-			})
+		loop_count += 1
+		if loop_count >= MAX_SETUP_MULLIGAN_LOOPS:
+			_abort_invalid_setup(-1, "Mulligan 次数异常过多，终止无效开局")
 			return
 
 
@@ -616,7 +649,9 @@ func _do_mulligan(player_index: int) -> void:
 
 ## 解决Mulligan后的选择（对手是否额外抽牌）
 func resolve_mulligan_choice(beneficiary: int, draw_extra: bool) -> void:
-	resolve_mulligan_draw_count(beneficiary, 1 if draw_extra else 0)
+	if beneficiary not in [0, 1]:
+		return
+	resolve_mulligan_draw_count(beneficiary, _mulligan_counts[1 - beneficiary] if draw_extra else 0)
 
 
 ## CABT DRAW_COUNT semantics: choose exactly one NUMBER in 0..mulliganCount.
@@ -636,21 +671,7 @@ func resolve_mulligan_draw_count(beneficiary: int, draw_count: int) -> bool:
 			_log_action(GameAction.ActionType.DRAW_CARD, beneficiary,
 				{"count": drawn.size()}, "玩家%d因对手重抽额外抽%d张" % [beneficiary + 1, drawn.size()])
 
-	# 检查重抽后是否还需要Mulligan
-	if not rule_validator.has_basic_pokemon_in_hand(game_state.players[mulligan_player]):
-		if not _player_can_recover_from_mulligan(mulligan_player):
-			_abort_invalid_setup(beneficiary, "玩家%d的牌库与手牌中均无基础宝可梦" % (mulligan_player + 1))
-			return true
-		_do_mulligan(mulligan_player)
-		_mulligan_counts[mulligan_player] += 1
-		_pending_mulligan_beneficiary_index = beneficiary
-		player_choice_required.emit("mulligan_extra_draw", {
-			"beneficiary": beneficiary,
-			"mulligan_count": _mulligan_counts[mulligan_player]
-		})
-		return true
-
-	_pending_mulligan_beneficiary_index = -1
+	# _check_mulligan has already prepared both opening hands.
 	player_choice_required.emit("setup_ready", {})
 	return true
 
@@ -876,6 +897,9 @@ func _do_pokemon_check() -> void:
 
 
 func _check_all_knockouts() -> void:
+	if not _enforce_current_tool_limits():
+		_tool_cleanup_resume = "knockouts"
+		return
 	var knockout_found := false
 	var ordered_result := _handle_ordered_pending_knockouts()
 	if bool(ordered_result.get("paused", false)):
@@ -993,6 +1017,9 @@ func _has_pending_active_knockouts() -> bool:
 
 
 func _resolve_mid_turn_knockouts() -> bool:
+	if not _enforce_current_tool_limits():
+		_tool_cleanup_resume = "main"
+		return true
 	if not _has_pending_knockouts():
 		return false
 	_knockout_return_to_main = true
@@ -1025,6 +1052,8 @@ func _enforce_current_bench_limits(
 	targets: Array = []
 ) -> bool:
 	if game_state == null:
+		return false
+	if not _enforce_current_tool_limits():
 		return false
 	var start_player_index := _bench_cleanup_start_player(
 		acting_player_index,
@@ -1074,7 +1103,55 @@ func _enforce_current_bench_limits(
 		)
 	_assert_card_totals("bench_limit_cleanup:%s" % context)
 	_resume_pending_knockout_after_bench_cleanup()
+	if not _tool_cleanup_resume.is_empty():
+		_resume_after_tool_limit_cleanup()
 	return true
+
+
+func _enforce_current_tool_limits() -> bool:
+	var pending := ToolLimit.first_excess(game_state, effect_processor)
+	if pending.is_empty():
+		_pending_tool_cleanup = false
+		return true
+	if not _pending_tool_cleanup:
+		_pending_tool_cleanup = true
+		player_choice_required.emit("tool_limit_cleanup", pending)
+	return false
+
+
+func resolve_tool_limit_cleanup(player_index: int, targets: Array) -> bool:
+	if not _pending_tool_cleanup or not ToolLimit.apply_selection(game_state, effect_processor, player_index, targets):
+		return false
+	_pending_tool_cleanup = false
+	_log_action(GameAction.ActionType.DISCARD, player_index, {"source": "tool_limit_cleanup"}, "玩家%d弃掉超过上限的宝可梦道具" % [player_index + 1])
+	if not _enforce_current_tool_limits(): return true
+	if _tool_cleanup_resume.is_empty():
+		_tool_cleanup_resume = "main"
+	_resume_after_tool_limit_cleanup()
+	return true
+
+
+func _resume_after_tool_limit_cleanup() -> void:
+	if _tool_cleanup_resume.is_empty() or _pending_tool_cleanup:
+		return
+	# Losing an Ability can also shrink the Bench. That owner must finish its
+	# mandatory choice before resuming KO settlement or advancing the turn.
+	var cleanup_steps := AreaZeroUnderdepthsEffect.build_cleanup_interaction_steps(
+		game_state, game_state.current_player_index, BenchLimit.DEFAULT_BENCH_LIMIT,
+		_current_bench_limits_by_player())
+	if not cleanup_steps.is_empty():
+		_enforce_current_bench_limits("tool_limit_cleanup", game_state.current_player_index)
+		return
+	var resume := _tool_cleanup_resume
+	_tool_cleanup_resume = ""
+	if resume == "after_attack":
+		_after_attack(_tool_cleanup_attack_player)
+	elif resume == "knockouts":
+		_check_all_knockouts()
+	elif resume == "send_out":
+		_finish_send_out_pokemon()
+	else:
+		_resolve_mid_turn_knockouts()
 
 
 func _current_bench_limits_by_player() -> Dictionary:
@@ -1110,13 +1187,22 @@ func resolve_powerglass_end_turn_choice(player_index: int, targets: Array = []) 
 		return false
 	var pending_slot: PokemonSlot = _pending_powerglass_slot
 	var pending_tool: CardInstance = _pending_powerglass_tool
-	_clear_pending_powerglass_choice()
-	if pending_slot.attached_tool != pending_tool or pending_tool.card_data == null:
-		_finish_advance_to_next_turn()
+	if pending_tool not in pending_slot.attached_tools or pending_tool.card_data == null:
+		_clear_pending_powerglass_choice()
+		if not _discard_expired_tools(): _finish_advance_to_next_turn()
 		return true
 
 	var tool_effect: BaseEffect = effect_processor.get_effect(pending_tool.card_data.effect_id)
+	if tool_effect != null and tool_effect.has_method("get_end_turn_interaction_steps"):
+		if tool_effect.has_method("bind_tool_card"): tool_effect.call("bind_tool_card", pending_tool)
+		var steps: Array = tool_effect.call("get_end_turn_interaction_steps", pending_slot, game_state)
+		var context := tool_effect.get_interaction_context(targets)
+		for step: Dictionary in steps:
+			var validation := tool_effect.validate_context_selection(context, str(step.id), step.items, int(step.min_select), int(step.max_select))
+			if not bool(validation.get("valid", false)): return false
+	_clear_pending_powerglass_choice()
 	if tool_effect != null and tool_effect.has_method("resolve_end_turn_choice"):
+		if tool_effect.has_method("bind_tool_card"): tool_effect.call("bind_tool_card", pending_tool)
 		var attached: Variant = tool_effect.call("resolve_end_turn_choice", pending_slot, targets, game_state)
 		if attached is CardInstance:
 			var energy_card := attached as CardInstance
@@ -1135,7 +1221,7 @@ func resolve_powerglass_end_turn_choice(player_index: int, targets: Array = []) 
 					pending_slot.get_pokemon_name(),
 				]
 			)
-	_finish_advance_to_next_turn()
+	if not _discard_expired_tools(): _finish_advance_to_next_turn()
 	return true
 
 
@@ -1195,7 +1281,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 	var pokemon_name: String = slot.get_pokemon_name()
 	var player: PlayerState = game_state.players[player_index]
 	# 学习装置：战斗位昏厥时转移1张基本能量到持有学习装置的备战宝可梦
-	if is_active and not _exp_share_resolved_knockout_slot_ids.has(int(slot.get_instance_id())):
+	if is_active and _knockout_prize_modifiers_apply(slot) and not _exp_share_resolved_knockout_slot_ids.has(int(slot.get_instance_id())):
 		if _maybe_request_exp_share_choice(player_index, slot, is_active):
 			return false
 		_apply_exp_share_if_possible(player_index, slot, null, null)
@@ -1263,13 +1349,13 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 
 
 func _maybe_request_amulet_of_hope_choice(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
-	if slot == null or slot.attached_tool == null or slot.attached_tool.card_data == null:
+	if slot == null or effect_processor.is_tool_effect_suppressed(slot, game_state):
 		return false
-	if slot.attached_tool.card_data.effect_id != "6aac84f2cdc661d1ebbcbbd38ee890e4":
-		return false
+	var amulet := slot.find_tool_by_effect_id("6aac84f2cdc661d1ebbcbbd38ee890e4")
+	if amulet == null: return false
 	if not _attack_damage_knockout_slot_ids.has(int(slot.get_instance_id())):
 		return false
-	var effect := effect_processor.get_effect(slot.attached_tool.card_data.effect_id)
+	var effect := effect_processor.get_effect(amulet.card_data.effect_id)
 	if effect == null or not effect.has_method("get_knockout_interaction_steps"):
 		return false
 	var steps: Array = effect.call("get_knockout_interaction_steps", slot, game_state)
@@ -1280,7 +1366,7 @@ func _maybe_request_amulet_of_hope_choice(player_index: int, slot: PokemonSlot, 
 	_pending_amulet_is_active = is_active
 	player_choice_required.emit("amulet_of_hope_knockout", {
 		"player": player_index,
-		"card": slot.attached_tool,
+		"card": amulet,
 		"slot": slot,
 		"steps": steps,
 	})
@@ -1292,7 +1378,8 @@ func resolve_amulet_of_hope_choice(player_index: int, targets: Array = []) -> bo
 		return false
 	var slot := _pending_amulet_slot
 	var is_active := _pending_amulet_is_active
-	var effect := effect_processor.get_effect(slot.attached_tool.card_data.effect_id) if slot.attached_tool != null else null
+	var amulet := slot.find_tool_by_effect_id("6aac84f2cdc661d1ebbcbbd38ee890e4")
+	var effect := effect_processor.get_effect(amulet.card_data.effect_id) if amulet != null else null
 	if effect == null or not effect.has_method("resolve_attack_damage_knockout"):
 		return false
 	var context: Dictionary = targets[0] if not targets.is_empty() and targets[0] is Dictionary else {}
@@ -1641,8 +1728,7 @@ func _move_knocked_out_cards(slot: PokemonSlot, player: PlayerState) -> void:
 				player.hand.append(energy)
 			else:
 				player.discard_pile.append(energy)
-		if slot.attached_tool != null:
-			player.discard_pile.append(slot.attached_tool)
+		player.discard_pile.append_array(slot.get_attached_tools())
 		return
 
 	for card: CardInstance in slot.collect_all_cards():
@@ -1838,24 +1924,31 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 	if send_out_action != null:
 		send_out_action.data["replacement_pokemon_name"] = bench_slot.get_pokemon_name()
 	_enforce_current_bench_limits("send_out_pokemon", player_index)
+	if _pending_tool_cleanup:
+		_tool_cleanup_resume = "send_out"
+		return true
+	_finish_send_out_pokemon()
+	return true
+
+
+func _finish_send_out_pokemon() -> void:
 	if _has_pending_knockouts():
 		_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 		_check_all_knockouts()
-		return true
+		return
 	if _request_empty_active_replacement_if_needed():
-		return true
+		return
 
 	# 特性自爆等回合中间 KO：替换完后回到 MAIN 阶段继续操作
 	if _knockout_return_to_main:
 		_knockout_return_to_main = false
 		_enter_phase(GameState.GamePhase.MAIN)
-		return true
+		return
 	if _consume_pending_second_attack_if_available(game_state.current_player_index):
 		_enter_phase(GameState.GamePhase.MAIN)
-		return true
+		return
 	# 正常攻击后 KO：切换回合
 	_advance_to_next_turn()
-	return true
 
 
 func _advance_to_next_turn() -> void:
@@ -1894,28 +1987,41 @@ func _consume_pending_extra_turn(player_index: int) -> bool:
 	return true
 
 
+func _exp_share_tool_key(slot: PokemonSlot, tool: CardInstance) -> String:
+	return "%d:%d" % [slot.get_instance_id(), tool.instance_id]
+
+
+func _available_exp_share_entries(player_index: int, slot: PokemonSlot) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for entry: Dictionary in EffectExpShare.find_exp_share_entries(game_state.players[player_index], game_state, effect_processor):
+		if not _exp_share_used_tool_keys.has(_exp_share_tool_key(slot, entry.tool)):
+			result.append(entry)
+	return result
+
+
 func _maybe_request_exp_share_choice(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
-	if not is_active or slot == null:
+	if not is_active or slot == null or not _has_player_choice_listener():
 		return false
-	var player: PlayerState = game_state.players[player_index]
-	var transferable: Array[CardInstance] = EffectExpShare.get_transferable_energy(slot)
-	if transferable.is_empty():
-		return false
-	var targets: Array[PokemonSlot] = EffectExpShare.find_exp_share_slots(player)
-	if targets.is_empty():
-		return false
-	if targets.size() == 1 and transferable.size() == 1:
+	var transferable := EffectExpShare.get_transferable_energy(slot)
+	var entries := _available_exp_share_entries(player_index, slot)
+	if transferable.is_empty() or entries.is_empty():
 		return false
 	_pending_exp_share_player_index = player_index
 	_pending_exp_share_slot = slot
 	_pending_exp_share_is_active = is_active
+	_pending_exp_share_target = entries[0].target
+	_pending_exp_share_tool = entries[0].tool
 	player_choice_required.emit("exp_share_target", {
 		"player": player_index,
-		"bench": targets.duplicate(),
+		"bench": [_pending_exp_share_target],
 		"count": 1,
 		"source_name": "学习装置",
 		"source_slot": slot,
 		"source_energy": transferable.duplicate(),
+		"tool": _pending_exp_share_tool,
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": false,
 	})
 	return true
 
@@ -1924,47 +2030,54 @@ func _apply_exp_share_if_possible(
 	player_index: int,
 	slot: PokemonSlot,
 	target_slot: PokemonSlot,
-	selected_energy: CardInstance
+	selected_energy: CardInstance,
+	tool: CardInstance = null
 ) -> void:
 	var player: PlayerState = game_state.players[player_index]
-	var resolved_target := target_slot
-	if resolved_target == null:
-		resolved_target = EffectExpShare.find_exp_share_slot(player)
-	if resolved_target == null:
-		return
-	var before_count := 0
-	before_count = resolved_target.attached_energy.size()
-	EffectExpShare.transfer_energy_on_knockout(slot, player, resolved_target, selected_energy)
-	if resolved_target == null or resolved_target.attached_energy.size() <= before_count:
-		return
-	_log_action(GameAction.ActionType.ATTACH_ENERGY, player_index,
-		{
-			"tool": resolved_target.attached_tool.card_data.name if resolved_target.attached_tool != null else "学习装置",
-			"count": 1,
-			"target": resolved_target.get_pokemon_name()
-		},
-		"学习装置将1张基本能量转移给%s" % resolved_target.get_pokemon_name())
+	var entries: Array = _available_exp_share_entries(player_index, slot) if tool == null else [{"target": target_slot, "tool": tool}]
+	for entry: Dictionary in entries:
+		var target: PokemonSlot = entry.target
+		var attached: CardInstance = entry.tool
+		_exp_share_used_tool_keys[_exp_share_tool_key(slot, attached)] = true
+		var before := target.attached_energy.size()
+		EffectExpShare.transfer_energy_on_knockout(slot, player, target, selected_energy)
+		if target.attached_energy.size() > before:
+			_log_action(GameAction.ActionType.ATTACH_ENERGY, player_index, {"tool": attached.card_data.name, "tool_instance_id": attached.instance_id, "count": 1, "target": target.get_pokemon_name()}, "学习装置将1张基本能量转移给%s" % target.get_pokemon_name())
 
 
 func resolve_exp_share_choice(player_index: int, bench_slot: PokemonSlot, selected_energy: CardInstance = null) -> bool:
 	if (
 		_pending_exp_share_slot == null
 		or _pending_exp_share_player_index != player_index
-		or bench_slot == null
 	):
 		return false
-	var player: PlayerState = game_state.players[player_index]
-	if not bench_slot in EffectExpShare.find_exp_share_slots(player):
+	if bench_slot != null:
+		if bench_slot != _pending_exp_share_target or selected_energy not in EffectExpShare.get_transferable_energy(_pending_exp_share_slot):
+			return false
+		var still_legal := false
+		for entry: Dictionary in _available_exp_share_entries(player_index, _pending_exp_share_slot):
+			if entry.target == bench_slot and entry.tool == _pending_exp_share_tool:
+				still_legal = true
+		if not still_legal:
+			return false
+	elif selected_energy != null:
 		return false
 
 	var pending_slot: PokemonSlot = _pending_exp_share_slot
 	var pending_is_active: bool = _pending_exp_share_is_active
+	var pending_tool: CardInstance = _pending_exp_share_tool
 	_pending_exp_share_player_index = -1
 	_pending_exp_share_slot = null
 	_pending_exp_share_is_active = false
+	_pending_exp_share_tool = null
+	_pending_exp_share_target = null
+	_exp_share_used_tool_keys[_exp_share_tool_key(pending_slot, pending_tool)] = true
+	if bench_slot != null:
+		_apply_exp_share_if_possible(player_index, pending_slot, bench_slot, selected_energy, pending_tool)
+	if _maybe_request_exp_share_choice(player_index, pending_slot, pending_is_active):
+		return true
 
 	_exp_share_resolved_knockout_slot_ids[int(pending_slot.get_instance_id())] = true
-	_apply_exp_share_if_possible(player_index, pending_slot, bench_slot, selected_energy)
 	var knockout_completed: bool = _finalize_knockout(player_index, pending_slot, pending_is_active)
 	_exp_share_resolved_knockout_slot_ids.erase(int(pending_slot.get_instance_id()))
 
@@ -2309,7 +2422,7 @@ func attach_tool(player_index: int, tool_card: CardInstance, target_slot: Pokemo
 	game_state.shared_turn_flags.erase(_trainer_disruption_pass_key(tool_card))
 
 	player.hand.erase(tool_card)
-	target_slot.attached_tool = tool_card
+	target_slot.attached_tools.append(tool_card)
 	effect_processor.execute_card_effect(tool_card, [target_slot], game_state)
 	if game_state.is_game_over():
 		return true
@@ -2317,6 +2430,8 @@ func attach_tool(player_index: int, tool_card: CardInstance, target_slot: Pokemo
 	_log_action(GameAction.ActionType.PLAY_TOOL, player_index,
 		{"tool": tool_card.card_data.name, "target": target_slot.get_pokemon_name()},
 		"玩家%d将 %s 附着到 %s" % [player_index + 1, tool_card.card_data.name, target_slot.get_pokemon_name()])
+	_enforce_current_tool_limits()
+	_resolve_mid_turn_knockouts()
 	return true
 
 
@@ -2598,6 +2713,8 @@ func retreat(player_index: int, energy_to_discard: Array[CardInstance], bench_sl
 			"energy_discarded": energy_to_discard.size()
 		},
 		"玩家%d将 %s 撤退，派出 %s" % [player_index + 1, active.get_pokemon_name(), bench_slot.get_pokemon_name()])
+	_enforce_current_bench_limits("retreat", player_index)
+	_resolve_mid_turn_knockouts()
 	return true
 
 
@@ -2740,16 +2857,39 @@ func prepare_attack_interaction(player_index: int, attacker: PokemonSlot, attack
 			return false
 	elif not rule_validator.can_use_granted_attack(game_state, player_index, attacker, granted_attack, effect_processor):
 		return false
-	return _resolve_attack_confusion(player_index, attacker, attack_index, granted_attack)
+	return _resolve_attack_declaration_checks(player_index, attacker, attack_index, granted_attack)
 
 
 func protect_committed_attack_steps(attacker: PokemonSlot, steps: Array[Dictionary]) -> void:
 	if attacker == null or attacker.get_top_card() == null or game_state == null:
 		return
 	var prefix := "%d:%d:%d:%d:" % [game_state.get_instance_id(), game_state.turn_number, attacker.get_top_card().owner_index, attacker.get_top_card().instance_id]
-	if _prepared_attack_confusion_key.begins_with(prefix):
+	if _prepared_attack_confusion_key.begins_with(prefix) or _prepared_attack_failure_key.begins_with(prefix):
 		for step: Dictionary in steps:
 			step["allow_cancel"] = false
+
+
+func _resolve_attack_declaration_checks(player_index: int, attacker: PokemonSlot, attack_index: int, granted_attack: Dictionary = {}) -> bool:
+	# Official advanced rules A-01.2a resolves imposed failure before confusion (2b).
+	if preload("res://scripts/engine/TournamentSeries59TemporaryRules.gd").oil_check_required(attacker, game_state):
+		var identity := "%s#%d" % [attacker.get_card_data().get_uid(), attack_index]
+		if not granted_attack.is_empty():
+			identity = "granted:%s#%d:%s" % [granted_attack.get("original_effect_id", ""), granted_attack.get("original_attack_index", -1), granted_attack.get("name", "")]
+		var key := "%d:%d:%d:%d:%s" % [game_state.get_instance_id(), game_state.turn_number, player_index, attacker.get_top_card().instance_id, identity]
+		if _prepared_attack_failure_key != key:
+			var heads := _flip_with_random_context({"acting_seat": player_index, "source_identity": "oil_attack_check:" + identity, "source_card_uid": attacker.get_card_data().get_uid(), "source_attack_ordinal": attack_index, "effect_phase": "attack_failure_check"})
+			_log_action(GameAction.ActionType.COIN_FLIP, player_index, {"result": heads, "reason": "smoliv_oil_attack_check"}, "泼油招式判定：%s" % ("正面" if heads else "反面"))
+			if not heads:
+				_prepared_attack_failure_key = ""
+				_prepared_attack_confusion_key = ""
+				_clear_attack_damage_tracking()
+				# Failed declarations are not attacks used, so Festival Lead cannot grant a second attack.
+				_enter_phase(GameState.GamePhase.POKEMON_CHECK)
+				_do_pokemon_check()
+				_clear_expired_attack_markers()
+				return false
+			_prepared_attack_failure_key = key
+	return _resolve_attack_confusion(player_index, attacker, attack_index, granted_attack)
 
 
 func _resolve_attack_confusion(player_index: int, attacker: PokemonSlot, attack_index: int, granted_attack: Dictionary = {}) -> bool:
@@ -2804,7 +2944,7 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 	var attack_name: String = str(attack.get("name", ""))
 	if not effect_processor.validate_attack_effect_context(attacker, attack_index, defender, game_state, targets, true):
 		return false
-	if not _resolve_attack_confusion(player_index, attacker, attack_index):
+	if not _resolve_attack_declaration_checks(player_index, attacker, attack_index):
 		return true
 	if not effect_processor.validate_attack_effect_context(attacker, attack_index, defender, game_state, targets):
 		return false
@@ -2883,12 +3023,14 @@ func use_granted_attack(
 		return false
 
 	var attack_name: String = str(granted_attack.get("name", ""))
+	if not effect_processor.validate_granted_attack_effect_context(attacker, granted_attack, game_state, targets):
+		return false
 	var original_effect_id := str(granted_attack.get("original_effect_id", ""))
 	var original_attack_index := int(granted_attack.get("original_attack_index", -1))
 	if original_effect_id != "" and original_attack_index >= 0:
 		if not effect_processor.validate_attack_effect_context_by_id(original_effect_id, original_attack_index, attacker, defender, game_state, targets, null, true):
 			return false
-	if not _resolve_attack_confusion(player_index, attacker, -1, granted_attack):
+	if not _resolve_attack_declaration_checks(player_index, attacker, -1, granted_attack):
 		return true
 	if original_effect_id != "" and original_attack_index >= 0:
 		if not effect_processor.validate_attack_effect_context_by_id(
@@ -3002,11 +3144,22 @@ func get_post_damage_defender_interaction_steps(attacker: PokemonSlot, defender:
 			steps.append_array(native_effect.call("get_reactive_interaction_steps", defender, attacker, game_state))
 	if defender.attached_tool == null or effect_processor.is_tool_effect_suppressed(defender, game_state):
 		return steps
-	var effect: BaseEffect = effect_processor.get_effect(defender.attached_tool.card_data.effect_id)
-	if effect is EffectHandheldFan:
-		var fan_effect: EffectHandheldFan = effect as EffectHandheldFan
-		steps.append_array(fan_effect.get_trigger_interaction_steps(attacker, defender, game_state))
+	var fans := _handheld_fans(defender)
+	if not fans.is_empty():
+		var fan_effect: EffectHandheldFan = effect_processor.get_effect(fans[0].card_data.effect_id)
+		var fan_steps := fan_effect.get_trigger_interaction_steps(attacker, defender, game_state)
+		for step: Dictionary in fan_steps:
+			step["min_select"] = mini(fans.size(), attacker.attached_energy.size())
+			step["max_select"] = step.min_select
+		steps.append_array(fan_steps)
 	return steps
+
+
+func _handheld_fans(slot: PokemonSlot) -> Array[CardInstance]:
+	var result: Array[CardInstance] = []
+	for tool: CardInstance in slot.get_attached_tools():
+		if effect_processor.get_effect(tool.card_data.effect_id) is EffectHandheldFan: result.append(tool)
+	return result
 
 
 func _apply_handheld_fan_if_possible(attacker: PokemonSlot, defender: PokemonSlot, targets: Array = []) -> void:
@@ -3014,11 +3167,30 @@ func _apply_handheld_fan_if_possible(attacker: PokemonSlot, defender: PokemonSlo
 		return
 	if effect_processor.is_tool_effect_suppressed(defender, game_state):
 		return
-	var effect: BaseEffect = effect_processor.get_effect(defender.attached_tool.card_data.effect_id)
-	if not effect is EffectHandheldFan:
-		return
-	var fan_effect: EffectHandheldFan = effect as EffectHandheldFan
-	var resolved: Dictionary = fan_effect.apply(attacker, defender, game_state, targets)
+	var fans := _handheld_fans(defender)
+	if fans.is_empty(): return
+	var context := BaseEffect.new().get_interaction_context(targets)
+	var selected: Array = context.get(EffectHandheldFan.STEP_ID, [])
+	var count := mini(fans.size(), attacker.attached_energy.size())
+	# Each physical card moves a distinct Energy. Validate all supplied pairs
+	# before moving any of them, so duplicate/stale sources cannot substitute.
+	if context.has(EffectHandheldFan.STEP_ID):
+		if selected.size() != count: return
+		var seen: Array = []
+		for pair: Variant in selected:
+			if not pair is Dictionary: return
+			var source: Variant = pair.get("source")
+			var destination: Variant = pair.get("target")
+			if source not in attacker.attached_energy or source in seen or destination not in game_state.players[attacker.get_top_card().owner_index].bench: return
+			seen.append(source)
+	for index: int in count:
+		var fan_effect: EffectHandheldFan = effect_processor.get_effect(fans[index].card_data.effect_id)
+		var pair_targets: Array = [{EffectHandheldFan.STEP_ID: [selected[index]]}] if not selected.is_empty() else []
+		var resolved: Dictionary = fan_effect.apply(attacker, defender, game_state, pair_targets)
+		_log_handheld_fan_transfer(attacker, fans[index], resolved)
+
+
+func _log_handheld_fan_transfer(attacker: PokemonSlot, tool: CardInstance, resolved: Dictionary) -> void:
 	if resolved.is_empty():
 		return
 	var attacker_owner: int = _find_slot_owner_index(attacker)
@@ -3030,12 +3202,12 @@ func _apply_handheld_fan_if_possible(attacker: PokemonSlot, defender: PokemonSlo
 		GameAction.ActionType.ATTACH_ENERGY,
 		attacker_owner,
 		{
-			"tool": defender.attached_tool.card_data.name,
+			"tool": tool.card_data.name,
 			"source": attacker.get_pokemon_name(),
 			"target": moved_target_slot.get_pokemon_name(),
 		},
 		"%s 将 %s 身上的 1 个能量移到了 %s" % [
-			defender.attached_tool.card_data.name,
+			tool.card_data.name,
 			attacker.get_pokemon_name(),
 			moved_target_slot.get_pokemon_name(),
 		]
@@ -3308,7 +3480,12 @@ func _calculate_attack_damage(
 
 ## 招式使用后的流程
 func _after_attack(player_index: int) -> void:
+	if not _enforce_current_tool_limits():
+		_tool_cleanup_resume = "after_attack"
+		_tool_cleanup_attack_player = player_index
+		return
 	_prepared_attack_confusion_key = ""
+	_prepared_attack_failure_key = ""
 	_assert_card_totals("after_attack:p%d" % player_index)
 	_record_attack_resolution_knockout_candidates()
 	_mark_pending_second_attack_if_available(player_index)
@@ -3373,19 +3550,18 @@ func _discard_expired_tools() -> bool:
 		for slot: PokemonSlot in player.get_all_pokemon():
 			if slot == null or slot.attached_tool == null:
 				continue
-			var tool_effect: BaseEffect = effect_processor.get_effect(slot.attached_tool.card_data.effect_id)
-			if tool_effect == null or not tool_effect.has_method("discard_at_end_of_turn"):
-				continue
-			if _maybe_request_powerglass_end_turn_choice(player.player_index, slot, tool_effect):
-				return true
-			if not bool(tool_effect.call("discard_at_end_of_turn", slot, game_state)):
-				continue
-			player.discard_pile.append(slot.attached_tool)
-			slot.attached_tool = null
+			for tool: CardInstance in slot.get_attached_tools():
+				var tool_effect: BaseEffect = effect_processor.get_effect(tool.card_data.effect_id)
+				if tool_effect == null or not tool_effect.has_method("discard_at_end_of_turn"): continue
+				if tool_effect.has_method("bind_tool_card"): tool_effect.call("bind_tool_card", tool)
+				if _maybe_request_powerglass_end_turn_choice(player.player_index, slot, tool_effect, tool): return true
+				if not bool(tool_effect.call("discard_at_end_of_turn", slot, game_state)): continue
+				player.discard_pile.append(tool)
+				slot.remove_attached_tool(tool)
 	return false
 
 
-func _maybe_request_powerglass_end_turn_choice(player_index: int, slot: PokemonSlot, tool_effect: BaseEffect) -> bool:
+func _maybe_request_powerglass_end_turn_choice(player_index: int, slot: PokemonSlot, tool_effect: BaseEffect, tool: CardInstance = null) -> bool:
 	if tool_effect == null or not tool_effect.has_method("get_end_turn_interaction_steps"):
 		return false
 	if not _has_player_choice_listener():
@@ -3400,10 +3576,10 @@ func _maybe_request_powerglass_end_turn_choice(player_index: int, slot: PokemonS
 		return false
 	_pending_powerglass_player_index = player_index
 	_pending_powerglass_slot = slot
-	_pending_powerglass_tool = slot.attached_tool
+	_pending_powerglass_tool = tool if tool != null else slot.attached_tool
 	player_choice_required.emit("powerglass_end_turn", {
 		"player": player_index,
-		"card": slot.attached_tool,
+		"card": _pending_powerglass_tool,
 		"slot": slot,
 		"steps": steps,
 	})

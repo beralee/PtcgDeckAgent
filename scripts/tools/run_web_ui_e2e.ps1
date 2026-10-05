@@ -39,6 +39,9 @@ if (-not $SkipExport) {
     & (Join-Path $PSScriptRoot "check_web_export_budget.ps1") -ExportDirectory $exportDir -ReportPath (Join-Path $artifactDir "resource-budget.json")
 }
 
+& python (Join-Path $repoRoot "tools/inspect_2d_export_assets.py") (Join-Path $exportDir "PtcgDeckAgent.pck") --root $repoRoot --output (Join-Path $artifactDir "2d-assets.json") --arena-mode portable
+if ($LASTEXITCODE -ne 0) { throw "Web UI export contains desktop-only media or is missing portable arena/shared assets" }
+
 Push-Location $e2eDir
 try {
     if (-not (Test-Path (Join-Path $e2eDir "node_modules\.bin\playwright.cmd"))) {
@@ -50,6 +53,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Playwright browser install failed with exit code $LASTEXITCODE" }
     }
     $playwright = Join-Path $e2eDir "node_modules\.bin\playwright.cmd"
+    $runStarted = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
     $filterArgs = @()
     if ($TestFilter -ne "") { $filterArgs = @('--grep', $TestFilter) }
     if ($Project -ne "") {
@@ -58,8 +62,11 @@ try {
     else {
         & $playwright test @filterArgs
     }
-    if ($LASTEXITCODE -ne 0) { throw "Web UI E2E failed with exit code $LASTEXITCODE" }
+    $playwrightExit = $LASTEXITCODE
+    & python (Join-Path $PSScriptRoot "validate_web_test_report.py") (Join-Path $artifactDir "results.json") --started-after $runStarted --process-exit $playwrightExit --output (Join-Path $artifactDir "summary.json")
+    $gateExit = $LASTEXITCODE
 }
 finally {
     Pop-Location
 }
+exit $gateExit

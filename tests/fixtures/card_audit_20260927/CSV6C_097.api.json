@@ -1,0 +1,88 @@
+{
+  "name": "大钢蛇",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【钢】 地震 130\n给自己所有的备战宝可梦，也各造成30伤害。[备战宝可梦不计算弱点、抗性。]\n\n【钢】【钢】【无】【无】【无】 重磅冲击 180\n\n\n",
+  "yorenCode": "P208",
+  "pokemonAttr": {
+    "energyType": "M",
+    "stage": "Stage 1",
+    "hp": 180,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "R",
+      "value": "×2"
+    },
+    "resistance": {
+      "energy": "G",
+      "value": "-30"
+    },
+    "retreatCost": 4,
+    "attack": [
+      {
+        "name": "地震",
+        "text": "给自己所有的备战宝可梦，也各造成30伤害。[备战宝可梦不计算弱点、抗性。]",
+        "cost": "M",
+        "damage": "130",
+        "isVStarPower": false
+      },
+      {
+        "name": "重磅冲击",
+        "text": "",
+        "cost": "MMCCC",
+        "damage": "180",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": "大岩蛇"
+  },
+  "setCode": "CSV6C",
+  "cardIndex": "097",
+  "setCardsNum": "",
+  "artist": "Po-Suzuki",
+  "rarity": "R",
+  "releaseDate": "2025-11-06T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "3bc08c4356345e9aac2899f4af8278dd",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV6C",
+      "cardIndex": "097",
+      "cardName": "大钢蛇",
+      "rarity": "R",
+      "effectId": "3bc08c4356345e9aac2899f4af8278dd",
+      "cardType": "Pokemon",
+      "yorenCode": "P208",
+      "is": [
+        "Stage 1"
+      ],
+      "setCodeEn": "PAR",
+      "cardIndexEn": "125",
+      "nameEn": "Steelix"
+    },
+    {
+      "setCode": "CSVL2C",
+      "cardIndex": "109",
+      "cardName": "大钢蛇",
+      "rarity": "无标记",
+      "effectId": "3bc08c4356345e9aac2899f4af8278dd",
+      "cardType": "Pokemon",
+      "yorenCode": "P208",
+      "is": [
+        "Stage 1"
+      ],
+      "setCodeEn": "PAR",
+      "cardIndexEn": "125",
+      "nameEn": "Steelix"
+    }
+  ],
+  "setCodeEn": "PAR",
+  "cardIndexEn": "125",
+  "nameEn": "Steelix"
+}

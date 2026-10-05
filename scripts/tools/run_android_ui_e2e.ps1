@@ -16,12 +16,39 @@ if (-not $ArtifactDirectory) {
 }
 New-Item -ItemType Directory -Force -Path $ArtifactDirectory | Out-Null
 
+$deviceReason = ""
+if (-not (Test-Path -LiteralPath $AdbPath)) {
+    $deviceReason = "Android platform tools are unavailable"
+} else {
+    $previousErrorPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $deviceOutput = & $AdbPath get-state 2>&1
+        $deviceExit = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorPreference
+    }
+    if ($deviceExit -ne 0 -or (($deviceOutput -join "").Trim()) -ne "device") {
+        $deviceReason = "One ready Android device is required"
+    }
+}
+if ($deviceReason) {
+    $preflight = [ordered]@{ schema_version = 1; platform = "Android"; status = "not_verified"; reason = $deviceReason }
+    $preflightJson = $preflight | ConvertTo-Json
+    [IO.File]::WriteAllText((Join-Path $ArtifactDirectory "report.json"), $preflightJson, [Text.UTF8Encoding]::new($false))
+    Write-Host $preflightJson
+    exit 2
+}
+
 if (-not $SkipProvision) {
-	$exportScript = Join-Path $repoRoot "scripts\tools\export_ptcgdap_device_release.ps1"
-	$releaseRoot = Join-Path $repoRoot ".tmp\ptcgdap_device_release\android-ui-e2e-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
-	& powershell -ExecutionPolicy Bypass -File $exportScript -AndroidOnly -OutputDirectory $releaseRoot
-	if ($LASTEXITCODE -ne 0) { throw "Android export failed with exit code $LASTEXITCODE" }
-	$ApkPath = Join-Path $releaseRoot "PtcgDeckAgent.apk"
+	if (-not $PSBoundParameters.ContainsKey('ApkPath')) {
+		$exportScript = Join-Path $repoRoot "scripts\tools\export_ptcgdap_device_release.ps1"
+		$releaseRoot = Join-Path $repoRoot ".tmp\ptcgdap_device_release\android-ui-e2e-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+		& powershell -ExecutionPolicy Bypass -File $exportScript -AndroidOnly -PlayerRelease -AndroidBuildMode Release -OutputDirectory $releaseRoot
+		if ($LASTEXITCODE -ne 0) { throw "Android export failed with exit code $LASTEXITCODE" }
+		$ApkPath = Join-Path $releaseRoot "PtcgDeckAgent.apk"
+	}
+	if (-not (Test-Path -LiteralPath $ApkPath -PathType Leaf)) { throw "APK not found: $ApkPath" }
 	if (-not (Test-Path -LiteralPath $AdbPath)) { throw "adb.exe not found: $AdbPath" }
 	$installOutput = & $AdbPath install -r $ApkPath 2>&1
 	if ($LASTEXITCODE -ne 0) { throw "Android install failed with exit code $LASTEXITCODE`n$(($installOutput | Out-String).Trim())" }
@@ -141,19 +168,29 @@ if ((Get-Item -LiteralPath $mainPath).Length -lt $minimumRenderedBytes) {
     throw "Main menu did not finish rendering within 45 seconds"
 }
 
-# MainMenu BtnSettings is centered in the portrait action stack.
+# Open the AI strategy hub, then its embedded DeepSeek workspace.
 Invoke-NormalizedTap -X 0.5 -Y 0.748 -Width $width -Height $height
-$navigationDeadline = (Get-Date).AddSeconds(20)
+$navigationDeadline = (Get-Date).AddSeconds(30)
 $navigationDifference = 0.0
 $settingsPath = ""
+$workspaceActive = $false
 do {
+    Invoke-NormalizedTap -X 0.85 -Y 0.10 -Width $width -Height $height
     Start-Sleep -Seconds 1
     $settingsPath = Save-DeviceScreenshot -Name "settings"
     $navigationDifference = Get-NormalizedImageDifference -FirstPath $mainPath -SecondPath $settingsPath
-} while ($navigationDifference -lt $MinimumNavigationDifference -and (Get-Date) -lt $navigationDeadline)
+    # The cyan active tab is rendered only after the hub replaces the loading
+    # overlay. A whole-image difference alone accepts the dark loading screen.
+    $bitmap = [Drawing.Bitmap]::FromFile($settingsPath)
+    try {
+        $pixel = $bitmap.GetPixel([int]($width * 0.85), [int]($height * 0.082))
+        $workspaceActive = $pixel.R -lt 125 -and $pixel.G -gt 130 -and $pixel.B -gt 150
+    } finally { $bitmap.Dispose() }
+} while (-not $workspaceActive -and (Get-Date) -lt $navigationDeadline)
+if (-not $workspaceActive) { throw "DeepSeek workspace did not become active within 30 seconds" }
 
-# Settings BtnBack is the rightmost bottom action in portrait mode.
-Invoke-NormalizedTap -X 0.833 -Y 0.951 -Width $width -Height $height
+# StrategyHub BackButton stays at the top-left in portrait mode.
+Invoke-NormalizedTap -X 0.09 -Y 0.039 -Width $width -Height $height
 $roundTripDeadline = (Get-Date).AddSeconds(20)
 $roundTripDifference = 1.0
 $returnPath = ""
@@ -171,6 +208,7 @@ $result = [ordered]@{
     pid = $appPid
     focus = $focus
     navigation_difference = [math]::Round($navigationDifference, 4)
+    deepseek_workspace_active = $workspaceActive
     minimum_navigation_difference = $MinimumNavigationDifference
     round_trip_difference = [math]::Round($roundTripDifference, 4)
     maximum_round_trip_difference = $MaximumRoundTripDifference

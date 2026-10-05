@@ -1,0 +1,16 @@
+{
+  "accepted": true,
+  "checks": {
+    "production_autoload": true,
+    "windows_helper": true,
+    "no_macos_installer": true,
+    "no_lab_resources": true,
+    "AppUpdater": true,
+    "AppUpdateDialog": true,
+    "AppUpdateProgress": true,
+    "AppUpdateManifest": true,
+    "AppUpdateInstaller": true
+  },
+  "bytes": 314123352,
+  "sha256": "d4286e4d739f98b54127098c1c82ba5e522b2a7351e2be70e0f0ebe693c4cb46"
+}

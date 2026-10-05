@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="blue" cx="18%" cy="5%" r="85%">
+      <stop stop-color="#173b67" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#080f20" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violet" cx="100%" cy="88%" r="70%">
+      <stop stop-color="#33305b" stop-opacity=".48"/>
+      <stop offset="1" stop-color="#080f20" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
+      <path d="M56 0H0V56" fill="none" stroke="#78baff" stroke-opacity=".055"/>
+    </pattern>
+    <linearGradient id="trace">
+      <stop stop-color="#69d8ff" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#69d8ff" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#999bff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path fill="#080f20" d="M0 0h1600v900H0z"/>
+  <path fill="url(#blue)" d="M0 0h1600v900H0z"/>
+  <path fill="url(#violet)" d="M0 0h1600v900H0z"/>
+  <path fill="url(#grid)" d="M0 0h1600v900H0z"/>
+  <g fill="none" stroke="url(#trace)">
+    <path d="M800 84h460l42 42h298M1060 810h290l56-56h194"/>
+    <path d="M0 448h140l40-40h320M0 462h130l40-40h186"/>
+  </g>
+</svg>

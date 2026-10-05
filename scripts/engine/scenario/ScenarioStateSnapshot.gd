@@ -156,6 +156,7 @@ static func _capture_slot(slot: PokemonSlot) -> Dictionary:
 		"retreat_cost": slot.get_retreat_cost(),
 		"attached_energy": _capture_card_list(slot.attached_energy),
 		"attached_tool": _capture_card_instance(slot.attached_tool),
+		"attached_tools": _capture_card_list(slot.get_attached_tools()),
 		"status_conditions": slot.status_conditions.duplicate(true),
 		"effects": slot.effects.duplicate(true),
 		"turn_played": slot.turn_played,
@@ -307,6 +308,8 @@ static func _validate_slot(slot_variant: Dictionary, path: String, errors: Array
 		errors.append("%s.effects must be an Array" % path)
 
 	_validate_card(slot_variant.get("attached_tool", {}), "%s.attached_tool" % path, errors, true)
+	if slot_variant.has("attached_tools"):
+		_validate_card_array(slot_variant.get("attached_tools"), "%s.attached_tools" % path, errors)
 	_validate_card_array(slot_variant.get("pokemon_stack", []), "%s.pokemon_stack" % path, errors)
 	_validate_card_array(slot_variant.get("attached_energy", []), "%s.attached_energy" % path, errors)
 

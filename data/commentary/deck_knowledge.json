@@ -1,0 +1,1139 @@
+{
+  "schema": 1,
+  "revision": "2026-09-29.1",
+  "perspective": "public_observer",
+  "source": "Bundled exact card texts; authored mechanism briefs, not metagame rankings.",
+  "profiles": {
+    "dragapult": {
+      "anchors": [
+        "多龙巴鲁托ex",
+        "多龙奇",
+        "多龙梅西亚"
+      ],
+      "opening": "保住多条进化线，建立多龙奇抽滤",
+      "engine": "正面攻击与备战伤害指示物形成跨回合收割",
+      "prizes": "比较正面击倒与备战同时取奖窗口",
+      "sustain": "保留下一只进化体与异色附能路线",
+      "risks": "二阶进化被截断、断能；放置指示物不是攻击伤害",
+      "printings": [
+        "CSV8C_157",
+        "CSV8C_158",
+        "CSV8C_159"
+      ]
+    },
+    "charizard": {
+      "anchors": [
+        "喷火龙ex"
+      ],
+      "opening": "铺小火龙并准备二阶进化与检索",
+      "engine": "进化附能启动攻击；输出受对方取奖进度影响",
+      "prizes": "关注对方取奖后反击门槛与后排双奖目标",
+      "sustain": "下一条进化线与回收维持续攻",
+      "risks": "前期进化线被抢杀、能力封锁；不同属性喷火龙须看具体文本",
+      "printings": [
+        "CSV5C_075"
+      ]
+    },
+    "gardevoir": {
+      "anchors": [
+        "沙奈朵ex",
+        "奇鲁莉安",
+        "拉鲁拉丝"
+      ],
+      "opening": "保护进化线并发展抽滤、弃能",
+      "engine": "从弃牌区附超能量，同时管理自身伤害指示物",
+      "prizes": "单奖攻击手与双奖核心分工，承伤换输出",
+      "sustain": "保留弃牌能量、回收与替补进化",
+      "risks": "能力封锁、附能承伤上限、备战核心被拉出击倒",
+      "printings": [
+        "CS5aC_043",
+        "CS6.5C_030",
+        "CSV2C_053",
+        "CSV2C_054",
+        "CSV2C_055"
+      ]
+    },
+    "raging_bolt": {
+      "anchors": [
+        "猛雷鼓ex"
+      ],
+      "opening": "尽快铺攻击手与附能组件",
+      "engine": "全场可弃能量转为输出；碧草厄诡椪是常见搭配",
+      "prizes": "按击倒门槛投入能量，争取连续双奖击倒",
+      "sustain": "计算下回合重新补能条件",
+      "risks": "断能、加速手被拉出；未见常见组件不能说本局必有",
+      "printings": [
+        "CSV7C_154"
+      ]
+    },
+    "miraidon": {
+      "anchors": [
+        "密勒顿ex"
+      ],
+      "opening": "检索基础雷宝可梦铺场并安排加速顺序",
+      "engine": "多种雷属性基础攻击手轮换",
+      "prizes": "公开铁臂膀且满足费用时才讨论额外取奖路线",
+      "sustain": "手填、加速和换位保证下一只接力",
+      "risks": "辅助双奖目标过多；高速铺场不等于能量足够",
+      "printings": [
+        "CSV1C_050"
+      ]
+    },
+    "regidrago": {
+      "anchors": [
+        "雷吉铎拉戈VSTAR",
+        "雷吉铎拉戈V"
+      ],
+      "opening": "准备进化、能量与弃牌区龙属性素材",
+      "engine": "复制弃牌区龙宝可梦招式，VSTAR力量是一次性资源",
+      "prizes": "按局面选择爆发、备战压制或减伤",
+      "sustain": "保护下只进化体与后续附能",
+      "risks": "素材未入弃牌、V阶段被抢杀；复制条件依具体文本",
+      "printings": [
+        "CS6.5C_054",
+        "CS6.5C_055"
+      ]
+    },
+    "lugia": {
+      "anchors": [
+        "洛奇亚VSTAR",
+        "洛奇亚V",
+        "始祖大鸟"
+      ],
+      "opening": "始祖大鸟入弃牌后准备VSTAR启动",
+      "engine": "召唤始祖大鸟提供特殊能量加速",
+      "prizes": "根据属性与奖赏交换选择攻击手",
+      "sustain": "特殊能量种类与始祖大鸟存活决定续攻",
+      "risks": "VSTAR启动前受干扰、特殊能量破坏、缩备战",
+      "printings": [
+        "CS6aC_102",
+        "CS6aC_103",
+        "CS6aC_113"
+      ]
+    },
+    "gholdengo": {
+      "anchors": [
+        "赛富豪ex",
+        "索财灵"
+      ],
+      "opening": "铺多个索财灵，建立抽牌引擎",
+      "engine": "手牌能量转为伤害，回收把弃能变成下轮输出",
+      "prizes": "按门槛投入能量，避免无意义过量弃能",
+      "sustain": "能量回收与抽牌保障连续攻击",
+      "risks": "手牌干扰、进化断档；未知手牌不能精算输出",
+      "printings": [
+        "CSV4C_063",
+        "CSV4C_089",
+        "CSV9C_096",
+        "SVP_105"
+      ]
+    },
+    "palkia": {
+      "anchors": [
+        "起源帕路奇亚VSTAR",
+        "起源帕路奇亚V"
+      ],
+      "opening": "铺场与水能弃牌，准备VSTAR加速",
+      "engine": "双方备战规模影响输出，VSTAR附能支持水系接力",
+      "prizes": "比较正面攻击与辅助攻击的取奖价值",
+      "sustain": "一次性附能分配照顾后续攻击手",
+      "risks": "缩备战、V阶段被抓、过早耗尽VSTAR力量",
+      "printings": [
+        "CS5bC_051",
+        "CSNC_003"
+      ]
+    },
+    "arceus": {
+      "anchors": [
+        "阿尔宙斯VSTAR",
+        "阿尔宙斯V"
+      ],
+      "opening": "形成可攻击的阿尔宙斯并铺接力V",
+      "engine": "攻击附能推进后续主攻，VSTAR检索补组件",
+      "prizes": "启动回合换取后续稳定取奖",
+      "sustain": "接力主攻的进化与能量优先",
+      "risks": "先手节奏被打断、特殊能量被移除",
+      "printings": [
+        "CS5aC_107",
+        "CSNC_009"
+      ]
+    },
+    "giratina": {
+      "anchors": [
+        "骑拉帝纳VSTAR",
+        "骑拉帝纳V"
+      ],
+      "opening": "准备进化、异色能量，确认是否有放逐组件",
+      "engine": "高伤害伴随能量消耗，部分招式要求放逐门槛",
+      "prizes": "权衡爆发与一次性VSTAR击倒资源",
+      "sustain": "留足下一击能量与换位",
+      "risks": "看到骑拉不代表放逐体系；未满足门槛不能使用效果",
+      "printings": [
+        "CS6bC_107",
+        "CS6bC_108"
+      ]
+    },
+    "dialga": {
+      "anchors": [
+        "起源帝牙卢卡VSTAR",
+        "起源帝牙卢卡V"
+      ],
+      "opening": "铺进化与钢能加速组件",
+      "engine": "积累能量并规划额外回合时机",
+      "prizes": "额外回合串联击倒，必须实际满足招式费用",
+      "sustain": "主攻存活与加速核心保护",
+      "risks": "启动慢、后排引擎被抓、能量过度集中",
+      "printings": [
+        "CS5bC_096",
+        "CSNC_008"
+      ]
+    },
+    "archaludon": {
+      "anchors": [
+        "铝钢桥龙ex",
+        "铝钢龙"
+      ],
+      "opening": "钢能入弃牌并建立进化线路",
+      "engine": "进化附能使新攻击手接入战线",
+      "prizes": "高HP与防守招式改善奖赏交换",
+      "sustain": "回收与再次进化恢复附能循环",
+      "risks": "能力封锁、一击击倒；钢铁防线变体须核对基础卡招式",
+      "printings": [
+        "CSV9.5C_126",
+        "CSV9C_136",
+        "CSV9C_138"
+      ]
+    },
+    "lost_box": {
+      "anchors": [
+        "花疗环环",
+        "古月鸟",
+        "勾魂眼"
+      ],
+      "opening": "逐步积累放逐区并保留关键资源",
+      "engine": "不同放逐数量解锁攻击与加速",
+      "prizes": "单奖交换与后期多目标收割结合",
+      "sustain": "规划切换、能量和不可放逐的关键卡",
+      "risks": "前期引擎受压；放逐区不同于弃牌区",
+      "printings": [
+        "CS6.5C_032",
+        "CS6bC_026",
+        "CS6bC_052"
+      ]
+    },
+    "future": {
+      "anchors": [
+        "铁头壳ex"
+      ],
+      "opening": "发展未来加速攻击与辅助",
+      "engine": "未来加成和多属性攻击手配合",
+      "prizes": "铁臂膀等额外取奖改变路线需确有公开卡",
+      "sustain": "轮换攻击手并维持附能",
+      "risks": "辅助双奖暴露、加速被切断",
+      "printings": [
+        "CSV7C_111"
+      ]
+    },
+    "ancient": {
+      "anchors": [
+        "轰鸣月",
+        "古代的活力"
+      ],
+      "opening": "用远古组件展开并积累弃牌资源",
+      "engine": "远古弃牌与攻击条件联动",
+      "prizes": "单奖攻击手与双奖目标交换",
+      "sustain": "回收与附能维持连续单奖进攻",
+      "risks": "资源不足、手牌干扰；轰鸣月不同于轰鸣月ex",
+      "printings": [
+        "CSV7C_143"
+      ]
+    },
+    "roaring_moon": {
+      "anchors": [
+        "轰鸣月ex"
+      ],
+      "opening": "尽快发展恶能加速与可用换位手段",
+      "engine": "强制昏厥招式附带自伤，另一招与竞技场联动",
+      "prizes": "强制击倒大型目标时计算自身被收割代价",
+      "sustain": "下一只攻击手与补能同步准备",
+      "risks": "自伤后被补刀；直接昏厥不同于攻击伤害",
+      "printings": [
+        "CSV6C_096"
+      ]
+    },
+    "poison": {
+      "anchors": [
+        "猛恶菇",
+        "毛崖蟹",
+        "桃歹郎"
+      ],
+      "opening": "组织中毒来源、换位与攻击手",
+      "engine": "特殊状态既可能增伤也可能造成检查阶段伤害",
+      "prizes": "攻击加中毒跨越门槛，须区分结算时点",
+      "sustain": "保持中毒来源与换位解状态手段",
+      "risks": "状态解除、能力封锁；中毒不是攻击伤害",
+      "printings": [
+        "CSV6C_080",
+        "CSV6C_095",
+        "CSV9C_127"
+      ]
+    },
+    "conkeldurr": {
+      "anchors": [
+        "修建老匠"
+      ],
+      "opening": "完成二阶进化并准备特殊状态",
+      "engine": "特殊状态满足招式免附能条件",
+      "prizes": "单奖高输出换大型双奖目标",
+      "sustain": "下一条进化线与可控特殊状态",
+      "risks": "进化慢、状态被解除，混乱影响招式成功",
+      "printings": [
+        "CSV8C_112"
+      ]
+    },
+    "slowking": {
+      "anchors": [
+        "呆呆王"
+      ],
+      "opening": "准备进化、附能与牌库顶控制",
+      "engine": "弃置顶牌若是合格非规则宝可梦则复制招式",
+      "prizes": "工具箱改变对局，但未知顶牌只能条件化解释",
+      "sustain": "维持顶牌控制与合格素材",
+      "risks": "顶牌失败、素材不符；绝不能读取真实牌库顶",
+      "printings": [
+        "CSV9C_072"
+      ]
+    },
+    "terapagos": {
+      "anchors": [
+        "太乐巴戈斯ex",
+        "爆炸头水牛"
+      ],
+      "opening": "发展备战规模与太晶辅助",
+      "engine": "备战数量、防守与能量路线共同支撑攻击",
+      "prizes": "扩展备战收益与双奖辅助暴露并存",
+      "sustain": "维持场地、换位、能量与后续攻击手",
+      "risks": "场地替换缩备战、辅助被抓",
+      "printings": [
+        "CSV9C_162",
+        "CSV9C_175"
+      ]
+    },
+    "tera_box": {
+      "anchors": [
+        "猫头夜鹰",
+        "旋转洛托姆"
+      ],
+      "opening": "建立太晶与猫头夜鹰检索循环",
+      "engine": "检索和换位支持多种太晶攻击手",
+      "prizes": "按已公开的属性和招式选取奖方案",
+      "sustain": "回收进化组件并维持能量分布",
+      "risks": "场地或能力依赖；未露出的攻击手不能预设",
+      "printings": [
+        "CSV9C_155",
+        "CSV9C_161"
+      ]
+    },
+    "festival": {
+      "anchors": [
+        "虫甲圣",
+        "裹蜜虫",
+        "啃果虫"
+      ],
+      "opening": "建立祭典场地与检索引擎",
+      "engine": "场地和祭典宝可梦能力联动",
+      "prizes": "单奖连击与多目标奖赏价值一起考虑",
+      "sustain": "保护检索核心并备份场地",
+      "risks": "场地被拆、能力封锁、后排被同时收掉",
+      "printings": [
+        "CSV7C_031",
+        "CSV8C_023",
+        "CSV8C_024"
+      ]
+    },
+    "iron_thorns": {
+      "anchors": [
+        "铁荆棘ex"
+      ],
+      "opening": "优先让前台铁荆棘具备持续攻击的能量",
+      "engine": "战斗场特性压制部分规则宝可梦特性",
+      "prizes": "拖慢启动制造攻击节奏差",
+      "sustain": "换位与能量分配维持前台压制",
+      "risks": "未来等豁免、拉走前台；不是所有特性都失效",
+      "printings": [
+        "CSV7C_091"
+      ]
+    },
+    "walls": {
+      "anchors": [
+        "岩殿居蟹",
+        "奇麒麟ex",
+        "厄诡椪 础石面具ex",
+        "谜拟丘"
+      ],
+      "opening": "根据公开攻击来源选择防守宝可梦",
+      "engine": "不同墙的免疫对象不同，须核对标记和文本",
+      "prizes": "拖延与交换争取取奖，不能只看伤害",
+      "sustain": "治疗、换位与不同墙接替",
+      "risks": "穿透效果、指示物、直接昏厥；伤害免疫不是效果免疫",
+      "printings": [
+        "CSV10C_010",
+        "CSV7C_141",
+        "CSV8C_121"
+      ]
+    },
+    "snorlax": {
+      "anchors": [
+        "卡比兽"
+      ],
+      "opening": "把适合限制的目标留在对方前台",
+      "engine": "限制撤退并消耗换位，可能以耗尽牌库获胜",
+      "prizes": "控制优势不能只用奖赏领先衡量",
+      "sustain": "保留控制资源与自身牌库循环",
+      "risks": "仍有换位或攻击出路时不能宣称锁死",
+      "printings": [
+        "CS5aC_093"
+      ]
+    },
+    "pidgeot_control": {
+      "anchors": [
+        "大比鸟ex"
+      ],
+      "opening": "完成二阶检索引擎并确认公开威胁",
+      "engine": "定向检索支持控制、回复或攻击",
+      "prizes": "实际公开组件决定路线，见大比鸟不等于控制套牌",
+      "sustain": "保持核心、回收与替补",
+      "risks": "能力封锁、核心被直接击倒",
+      "printings": [
+        "CSV4C_101"
+      ]
+    },
+    "blissey": {
+      "anchors": [
+        "幸福蛋ex",
+        "吉利蛋"
+      ],
+      "opening": "发展进化、能量与防守",
+      "engine": "能量移动支持轮换和回复",
+      "prizes": "高HP与回复增加对方取奖所需回合",
+      "sustain": "可转移能量、治疗和替补攻击手",
+      "risks": "一击击倒、指示物压制、移动能力被封锁",
+      "printings": [
+        "151C_113",
+        "CSV8C_164",
+        "CSV8C_165"
+      ]
+    },
+    "gouging_fire": {
+      "anchors": [
+        "破空焰ex"
+      ],
+      "opening": "高费用攻击需要尽快附能",
+      "engine": "攻击限制要求换位或替补解除节奏瓶颈",
+      "prizes": "主动进攻同时安排下回合攻击者",
+      "sustain": "换位和能量接力同等重要",
+      "risks": "卡前台、换位耗尽、辅助双奖被抓",
+      "printings": [
+        "CSV7C_051"
+      ]
+    },
+    "darkrai": {
+      "anchors": [
+        "达克莱伊VSTAR",
+        "达克莱伊V"
+      ],
+      "opening": "发展恶能量与弃牌道具",
+      "engine": "全场能量支撑输出，VSTAR回收一次性资源",
+      "prizes": "铺能增伤与辅助目标暴露需权衡",
+      "sustain": "持续附恶能并回收关键道具以保持输出",
+      "risks": "能力封锁、辅助被抓；不能臆测手牌",
+      "printings": [
+        "CS5DC_085",
+        "CS5DC_086"
+      ]
+    },
+    "chien_pao": {
+      "anchors": [
+        "古剑豹ex",
+        "戟脊龙"
+      ],
+      "opening": "保护凉脊龙完成二阶引擎",
+      "engine": "检索水能、自由附能和弃能攻击形成循环",
+      "prizes": "按门槛分配能量，兼顾备战攻击",
+      "sustain": "回收水能与保护戟脊龙",
+      "risks": "引擎被击倒、能力封锁、回收断链",
+      "printings": [
+        "CSV3C_042",
+        "CSV3C_043"
+      ]
+    },
+    "ceruledge": {
+      "anchors": [
+        "苍炎刃鬼ex",
+        "炭小侍"
+      ],
+      "opening": "发展进化并通过抽滤弃能",
+      "engine": "通过公开弃牌区的能量积累提高招式输出",
+      "prizes": "低攻击投入争取高伤害奖赏交换",
+      "sustain": "保证必要附能与下条进化线",
+      "risks": "弃能未成型、进化断档；只使用公开弃牌数量",
+      "printings": [
+        "CSV9C_033",
+        "CSV9C_034"
+      ]
+    },
+    "joltik": {
+      "anchors": [
+        "电电虫"
+      ],
+      "opening": "电电充能布置草雷能量",
+      "engine": "启动攻击牺牲直接伤害换能量",
+      "prizes": "评估启动单奖被击倒后的接力收益",
+      "sustain": "能量去向、换位与后续攻击手",
+      "risks": "启动被截断、能量分配失误；不预设未公开攻击手",
+      "printings": [
+        "CBB5C_1501",
+        "CSV9C_063"
+      ]
+    },
+    "regis": {
+      "anchors": [
+        "雷吉奇卡斯",
+        "雷吉艾斯",
+        "雷吉洛克",
+        "雷吉斯奇鲁",
+        "雷吉艾勒奇",
+        "雷吉铎拉戈"
+      ],
+      "opening": "建立神柱组件与弃牌能量",
+      "engine": "组件齐全才形成附能循环",
+      "prizes": "单奖多攻击手按属性与招式交换",
+      "sustain": "复原被击倒组件并维护能量",
+      "risks": "缺组件、缩备战、能力封锁；单张龙柱不等于完整神柱体系",
+      "printings": [
+        "CS4.5C_018",
+        "CS5.5C_021",
+        "CS5.5C_047",
+        "CS5.5C_051",
+        "CS5.5C_054",
+        "CS5.5C_056"
+      ]
+    },
+    "n_zoroark": {
+      "anchors": [
+        "N的索罗亚克ex",
+        "N的索罗亚"
+      ],
+      "opening": "铺N进化线并发展抽滤",
+      "engine": "交易改善手牌，复制备战N宝可梦招式",
+      "prizes": "根据公开复制目标选输出、补刀或干扰",
+      "sustain": "保护复制来源和下一只索罗亚克",
+      "risks": "来源被清除、进化断档；不能任意复制所有招式",
+      "printings": [
+        "CSV10C_144",
+        "CSV10C_145"
+      ]
+    },
+    "blaziken": {
+      "anchors": [
+        "火焰鸡ex",
+        "火焰鸡"
+      ],
+      "opening": "完成二阶并准备弃牌能量",
+      "engine": "ex的附能支持接力；普通版本按文本分别理解",
+      "prizes": "主攻或辅助角色依据实际变体",
+      "sustain": "保护附能核心与替补进化",
+      "risks": "二阶资源拥挤、能力封锁、攻击后限制",
+      "printings": [
+        "CSV10C_038",
+        "CSV7C_038"
+      ]
+    },
+    "flareon": {
+      "anchors": [
+        "火伊布ex",
+        "伊布ex"
+      ],
+      "opening": "准备进化和首轮攻击附能",
+      "engine": "燃烧充能给自身或其他攻击手铺路",
+      "prizes": "爆发后攻击限制要求轮换",
+      "sustain": "多属性能量、换位与接力攻击手",
+      "risks": "进化被截断、前台受限、异色能量不足",
+      "printings": [
+        "CSV9.5C_023",
+        "CSV9.5C_140"
+      ]
+    },
+    "froslass": {
+      "anchors": [
+        "雪妖女",
+        "愿增猿"
+      ],
+      "opening": "建立持续指示物与转移组件",
+      "engine": "检查阶段累积指示物，转移把负担化为压力",
+      "prizes": "延迟收割多个目标，兼顾己方承伤",
+      "sustain": "维持组件并安排检查前后站位",
+      "risks": "无特性目标、能力封锁、己方先被收掉；不是直接攻击伤害",
+      "printings": [
+        "CSV7C_059",
+        "CSV8C_094"
+      ]
+    },
+    "marnie": {
+      "anchors": [
+        "玛俐的长毛巨魔ex",
+        "玛俐的诈唬魔",
+        "玛俐的捣蛋小妖"
+      ],
+      "opening": "发展进化并准备进化附能",
+      "engine": "庞克泵感给玛俐宝可梦附恶能，暗影子弹压制前后排",
+      "prizes": "正面交换与后排补刀，辅助需见到才确认",
+      "sustain": "下一条进化与基本恶能资源",
+      "risks": "二阶压制、能力封锁；暗影子弹后排是伤害不是指示物",
+      "printings": [
+        "CSV10C_146",
+        "CSV10C_147",
+        "CSV10C_148"
+      ]
+    },
+    "toedscruel": {
+      "anchors": [
+        "陆地水母ex",
+        "原野水母",
+        "陆地水母"
+      ],
+      "opening": "发展草系进化、铺场与附能",
+      "engine": "ex与普通版本功能不同，区分攻击、防护和回收限制",
+      "prizes": "备战附能输出收益与核心暴露并存",
+      "sustain": "保留草能供给和下一条替补进化线路",
+      "risks": "核心被抓、进化断档；不能合并不同卡文特性",
+      "printings": [
+        "CSV5C_009",
+        "CSV5C_010",
+        "CSV6C_078",
+        "CSVSC_005"
+      ]
+    },
+    "hop": {
+      "anchors": [
+        "赫普的苍响ex"
+      ],
+      "opening": "发展赫普辅助与钢能路线",
+      "engine": "低费前后排攻击和高费爆发切换",
+      "prizes": "铺伤再收割，辅助增伤须实际在场",
+      "sustain": "换位、能量与替补攻击手",
+      "risks": "英勇之刃下回合限制、辅助被击倒",
+      "printings": [
+        "CSV10C_161"
+      ]
+    },
+    "ethan_hooh": {
+      "anchors": [
+        "阿响的凤王ex"
+      ],
+      "opening": "发展阿响宝可梦并给后排附能",
+      "engine": "金色火焰从手牌附能，攻击回复支持持久战",
+      "prizes": "比较进攻与多目标回复价值",
+      "sustain": "手牌火能和换位保护能量",
+      "risks": "高费用、手牌干扰；不假设手中一定有火能",
+      "printings": [
+        "CSV10C_035"
+      ]
+    },
+    "ethan_typhlosion": {
+      "anchors": [
+        "阿响的火暴兽",
+        "阿响的火岩鼠",
+        "阿响的火球鼠"
+      ],
+      "opening": "建立二阶并使用阿响的冒险展开",
+      "engine": "弃牌区阿响的冒险数量提高搭档爆破输出",
+      "prizes": "单奖主攻追求有利奖赏交换",
+      "sustain": "支持者和替补进化保障续攻",
+      "risks": "进化断档；只使用公开弃牌数量",
+      "printings": [
+        "CSV10C_028",
+        "CSV10C_029",
+        "CSV10C_030"
+      ]
+    },
+    "cynthia": {
+      "anchors": [
+        "竹兰的烈咬陆鲨ex",
+        "竹兰的尖牙陆鲨",
+        "竹兰的圆陆鲨"
+      ],
+      "opening": "铺进化线，低费招式改善手牌",
+      "engine": "螺旋俯冲补牌，龙之爆破弃能换爆发",
+      "prizes": "持续压制与爆发击倒之间选择",
+      "sustain": "爆发后重新附能并备替补",
+      "risks": "弃能空档、二阶启动受压、手牌干扰",
+      "printings": [
+        "CSV10C_111",
+        "CSV10C_112",
+        "CSV10C_113"
+      ]
+    },
+    "rocket_mewtwo": {
+      "anchors": [
+        "火箭队的超梦ex"
+      ],
+      "opening": "先建立足够火箭队宝可梦和附能",
+      "engine": "达到场上数量条件才可攻击，后排弃能可增伤",
+      "prizes": "高输出与后排能量成本一同计算",
+      "sustain": "维持数量与能量再生组件",
+      "risks": "减员导致无法攻击、后排引擎被抓",
+      "printings": [
+        "CSV10C_085"
+      ]
+    },
+    "yanmega": {
+      "anchors": [
+        "远古巨蜓ex",
+        "蜻蜻蜓"
+      ],
+      "opening": "进化后准备从备战进入前台",
+      "engine": "换位触发自身附能，攻击后给后排转能",
+      "prizes": "进攻同时建立下一轮攻击者",
+      "sustain": "换位、手填与接力位置",
+      "risks": "进前台时机错误、换位耗尽、接力被抓",
+      "printings": [
+        "CSV10C_002",
+        "CSV10C_003"
+      ]
+    },
+    "mamoswine": {
+      "anchors": [
+        "象牙猪ex",
+        "长毛猪",
+        "小山猪"
+      ],
+      "opening": "多条二阶线路分配检索与进化资源",
+      "engine": "检索宝可梦稳定进化，后排二阶数量增伤",
+      "prizes": "增伤同时管理暴露的后排",
+      "sustain": "保护场上检索核心以及为其供能的组件",
+      "risks": "启动慢、后排二阶被清除、能力封锁",
+      "printings": [
+        "CSV10C_102",
+        "CSV10C_103",
+        "CSV10C_104"
+      ]
+    },
+    "dusknoir": {
+      "anchors": [
+        "黑夜魔灵",
+        "彷徨夜灵",
+        "夜巡灵"
+      ],
+      "opening": "准备额外进化线并关注目标门槛",
+      "engine": "主动昏厥换伤害指示物，付出奖赏与组件",
+      "prizes": "自损奖赏与多目标击倒一起计算",
+      "sustain": "一次性进化组件依赖回收",
+      "risks": "送出奖赏可能直接输；指示物不是攻击伤害",
+      "printings": [
+        "CS5.5C_032",
+        "CSV8C_081",
+        "CSV8C_082",
+        "CSV8C_083"
+      ]
+    },
+    "banette": {
+      "anchors": [
+        "诅咒娃娃ex",
+        "怨影娃娃"
+      ],
+      "opening": "完成进化和限制道具的攻击条件",
+      "engine": "道具限制拖慢对方，为其他引擎争取时间",
+      "prizes": "看关键行动受限程度而非只看伤害",
+      "sustain": "根据节奏轮换限制攻击与其他主攻手",
+      "risks": "支持者和能力仍能展开，不是完全封锁",
+      "printings": [
+        "CSV1C_053",
+        "CSV1C_054"
+      ]
+    }
+  },
+  "deck_coverage": {
+    "1700001": [
+      "regis"
+    ],
+    "1700002": [
+      "archaludon"
+    ],
+    "1750001": [
+      "archaludon"
+    ],
+    "800017280": [
+      "archaludon"
+    ],
+    "1700003": [
+      "palkia",
+      "terapagos",
+      "tera_box"
+    ],
+    "1700004": [
+      "palkia",
+      "gholdengo"
+    ],
+    "575479": [
+      "palkia",
+      "gholdengo"
+    ],
+    "1700005": [
+      "charizard",
+      "dusknoir"
+    ],
+    "575716": [
+      "charizard",
+      "dusknoir"
+    ],
+    "800025404": [
+      "charizard",
+      "dusknoir"
+    ],
+    "1700006": [
+      "raging_bolt"
+    ],
+    "575718": [
+      "raging_bolt"
+    ],
+    "620761": [
+      "raging_bolt"
+    ],
+    "800018509": [
+      "raging_bolt"
+    ],
+    "1700007": [
+      "miraidon"
+    ],
+    "1750003": [
+      "miraidon"
+    ],
+    "575720": [
+      "miraidon"
+    ],
+    "599947": [
+      "miraidon"
+    ],
+    "1700008": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "1750002": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "575723": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "587205": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "675701": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "800015734": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "800018506": [
+      "dragapult",
+      "dusknoir"
+    ],
+    "1700009": [
+      "dragapult",
+      "charizard"
+    ],
+    "579502": [
+      "dragapult",
+      "charizard"
+    ],
+    "18000230": [
+      "dragapult",
+      "charizard"
+    ],
+    "1700010": [
+      "poison",
+      "terapagos"
+    ],
+    "620880": [
+      "poison",
+      "terapagos"
+    ],
+    "1700011": [
+      "regidrago"
+    ],
+    "575653": [
+      "regidrago"
+    ],
+    "581056": [
+      "regidrago"
+    ],
+    "1700012": [
+      "roaring_moon"
+    ],
+    "1750005": [
+      "slowking"
+    ],
+    "675834": [
+      "slowking"
+    ],
+    "18000072": [
+      "n_zoroark"
+    ],
+    "675899": [
+      "n_zoroark"
+    ],
+    "800018502": [
+      "n_zoroark"
+    ],
+    "18000081": [
+      "n_zoroark",
+      "pidgeot_control"
+    ],
+    "18000098": [
+      "n_zoroark",
+      "toedscruel"
+    ],
+    "18000320": [
+      "charizard"
+    ],
+    "620909": [
+      "charizard"
+    ],
+    "18000393": [
+      "blaziken",
+      "pidgeot_control"
+    ],
+    "18000405": [
+      "festival"
+    ],
+    "602769": [
+      "festival"
+    ],
+    "18000519": [
+      "walls"
+    ],
+    "800015927": [
+      "walls"
+    ],
+    "800052301": [
+      "walls"
+    ],
+    "18000612": [
+      "terapagos",
+      "tera_box"
+    ],
+    "18000625": [
+      "blaziken",
+      "froslass"
+    ],
+    "18000663": [
+      "flareon",
+      "pidgeot_control",
+      "tera_box"
+    ],
+    "561444": [
+      "dialga"
+    ],
+    "569061": [
+      "arceus",
+      "giratina"
+    ],
+    "572568": [
+      "future"
+    ],
+    "575620": [
+      "lost_box"
+    ],
+    "594959": [
+      "lost_box"
+    ],
+    "575657": [
+      "lugia"
+    ],
+    "609431": [
+      "lugia"
+    ],
+    "577861": [
+      "palkia",
+      "dusknoir"
+    ],
+    "578647": [
+      "gardevoir"
+    ],
+    "610080": [
+      "gardevoir"
+    ],
+    "675703": [
+      "gardevoir"
+    ],
+    "800017097": [
+      "gardevoir"
+    ],
+    "800018497": [
+      "gardevoir"
+    ],
+    "800018498": [
+      "gardevoir"
+    ],
+    "800030002": [
+      "gardevoir"
+    ],
+    "579577": [
+      "iron_thorns"
+    ],
+    "580445": [
+      "dragapult",
+      "banette"
+    ],
+    "581614": [
+      "blissey",
+      "walls"
+    ],
+    "582754": [
+      "gouging_fire"
+    ],
+    "591117": [
+      "darkrai"
+    ],
+    "593260": [
+      "chien_pao"
+    ],
+    "594635": [
+      "snorlax"
+    ],
+    "594978": [
+      "charizard",
+      "arceus",
+      "dragapult"
+    ],
+    "606452": [
+      "ceruledge"
+    ],
+    "610403": [
+      "ceruledge"
+    ],
+    "800017413": [
+      "ceruledge"
+    ],
+    "606676": [
+      "dragapult",
+      "iron_thorns",
+      "toedscruel"
+    ],
+    "607805": [
+      "conkeldurr",
+      "poison"
+    ],
+    "607807": [
+      "joltik"
+    ],
+    "800018817": [
+      "joltik"
+    ],
+    "608194": [
+      "ancient"
+    ],
+    "620753": [
+      "gholdengo"
+    ],
+    "800016834": [
+      "gholdengo"
+    ],
+    "800017070": [
+      "gholdengo"
+    ],
+    "646600": [
+      "marnie"
+    ],
+    "800018501": [
+      "marnie"
+    ],
+    "675700": [
+      "marnie",
+      "froslass"
+    ],
+    "675892": [
+      "flareon",
+      "tera_box"
+    ],
+    "800017643": [
+      "flareon",
+      "tera_box"
+    ],
+    "675893": [
+      "tera_box"
+    ],
+    "800015934": [
+      "tera_box"
+    ],
+    "800017047": [
+      "mamoswine",
+      "blaziken"
+    ],
+    "800017098": [
+      "blissey"
+    ],
+    "800017405": [
+      "dragapult",
+      "gholdengo"
+    ],
+    "800017407": [
+      "hop"
+    ],
+    "800017631": [
+      "froslass"
+    ],
+    "800018105": [
+      "gardevoir",
+      "festival"
+    ],
+    "800018334": [
+      "roaring_moon",
+      "poison"
+    ],
+    "800018359": [
+      "pidgeot_control"
+    ],
+    "800018499": [
+      "dragapult"
+    ],
+    "800030001": [
+      "dragapult"
+    ],
+    "800018500": [
+      "toedscruel"
+    ],
+    "800018539": [
+      "ethan_hooh"
+    ],
+    "800018543": [
+      "cynthia"
+    ],
+    "800018714": [
+      "walls",
+      "iron_thorns"
+    ],
+    "800018880": [
+      "ethan_typhlosion"
+    ],
+    "800019125": [
+      "blaziken",
+      "dragapult"
+    ],
+    "800021836": [
+      "walls",
+      "n_zoroark"
+    ],
+    "800026575": [
+      "rocket_mewtwo"
+    ],
+    "800033475": [
+      "yanmega"
+    ]
+  }
+}

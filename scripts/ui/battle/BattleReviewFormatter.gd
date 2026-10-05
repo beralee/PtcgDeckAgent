@@ -4,6 +4,7 @@ const BattleI18nScript := preload("res://scripts/ui/battle/BattleI18n.gd")
 
 
 func format_review(review: Dictionary) -> String:
+	review = preload("res://scripts/ui/ModelDisplayText.gd").escape_tree(review)
 	var lines: Array[String] = []
 	lines.append("[b]%s[/b] %s" % [
 		BattleI18nScript.t("battle.review.status_label"),

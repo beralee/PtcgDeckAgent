@@ -1,0 +1,63 @@
+{
+  "name": "鬼斯通",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【恶】【无】 黑色微寐 40\n令对手的战斗宝可梦陷入【睡眠】状态。\n\n",
+  "yorenCode": "P093",
+  "pokemonAttr": {
+    "energyType": "D",
+    "stage": "Stage 1",
+    "hp": 80,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "F",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 1,
+    "attack": [
+      {
+        "name": "黑色微寐",
+        "text": "令对手的战斗宝可梦陷入【睡眠】状态。",
+        "cost": "DC",
+        "damage": "40",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": "鬼斯"
+  },
+  "setCode": "CSV5C",
+  "cardIndex": "077",
+  "setCardsNum": "",
+  "artist": "DOM",
+  "rarity": "C",
+  "releaseDate": "2025-09-11T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "ad3467af79c5e09c369190ed29beda7c",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV5C",
+      "cardIndex": "077",
+      "cardName": "鬼斯通",
+      "rarity": "C",
+      "effectId": "ad3467af79c5e09c369190ed29beda7c",
+      "cardType": "Pokemon",
+      "yorenCode": "P093",
+      "is": [
+        "Stage 1"
+      ],
+      "setCodeEn": "PAF",
+      "cardIndexEn": "56",
+      "nameEn": "Haunter"
+    }
+  ],
+  "setCodeEn": "PAF",
+  "cardIndexEn": "56",
+  "nameEn": "Haunter"
+}

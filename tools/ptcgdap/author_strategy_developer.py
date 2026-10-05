@@ -10,6 +10,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 from typing import Any
 
 
@@ -203,7 +204,19 @@ def scaffold_workspace(
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(value)
         (scenario_root / "morgrem-evolve.json").write_bytes(_json_bytes(scenario))
-        os.replace(temporary, target)
+        # Windows scanners can briefly retain handles to newly created files.
+        # Retry only sharing/access errors, for at most 375 ms, and never let a
+        # competing writer's directory turn this into an overwrite.
+        for attempt in range(5):
+            if target.exists() or target.is_symlink():
+                _raise("developer_output_exists")
+            try:
+                os.replace(temporary, target)
+                break
+            except PermissionError as error:
+                if getattr(error, "winerror", None) not in (5, 32, 33) or attempt == 4:
+                    raise
+                time.sleep(0.025 * (2 ** attempt))
     except Exception:
         if temporary.exists():
             shutil.rmtree(temporary)

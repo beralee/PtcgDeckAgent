@@ -26,9 +26,9 @@ func execute_attack(
 	for card: CardInstance in attacker.attached_energy:
 		card.face_up = false
 		player.deck.append(card)
-	if attacker.attached_tool != null:
-		attacker.attached_tool.face_up = false
-		player.deck.append(attacker.attached_tool)
+	for tool: CardInstance in attacker.get_attached_tools():
+		tool.face_up = false
+		player.deck.append(tool)
 
 	# 清空槽位
 	attacker.pokemon_stack.clear()

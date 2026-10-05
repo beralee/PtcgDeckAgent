@@ -20,15 +20,16 @@ func test_critical_test_scripts_load_without_parser_errors() -> String:
 	])
 
 
-func test_regression_sources_do_not_contain_known_parser_breakages() -> String:
-	var mcts_source := FileAccess.get_file_as_string("res://tests/test_mcts_failure_diagnostics.gd")
-	var battle_ui_source := FileAccess.get_file_as_string("res://tests/test_battle_ui_features.gd")
-	var runner_source := FileAccess.get_file_as_string("res://tests/TestRunner.gd")
-
-	return run_checks([
-		assert_false("var match :=" in mcts_source, "MCTS diagnostics test should not use the reserved keyword 'match' as a variable"),
-		assert_false(char(0x2033) in battle_ui_source, "Battle UI features test should not contain stray double-prime characters"),
-		assert_false(char(0x20AC) in battle_ui_source, "Battle UI features test should not contain stray euro-sign characters"),
-		assert_true("TestSuiteCatalogScript" in runner_source, "TestRunner should load suites through the shared catalog"),
-		assert_true("SharedSuiteRunnerScript" in runner_source, "TestRunner should delegate execution through the shared runner"),
-	])
+func test_cli_entrypoints_are_compilable_and_instantiable() -> String:
+	# Parsing the real scripts catches every syntax error; searching a few known
+	# broken tokens cannot establish that the runner actually works.
+	for path: String in [
+		"res://tests/CliTestRunner.gd",
+		"res://tests/FocusedSuiteRunner.gd",
+		"res://tests/FunctionalTestRunner.gd",
+		"res://tests/UITestRunner.gd",
+	]:
+		var script := load(path) as GDScript
+		if script == null or not script.can_instantiate():
+			return "Test entrypoint is not instantiable: " + path
+	return ""

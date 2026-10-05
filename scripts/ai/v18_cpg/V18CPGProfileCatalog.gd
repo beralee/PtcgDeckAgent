@@ -276,11 +276,18 @@ static func _merge_profile_override(base: Dictionary, deck_id: int) -> Dictionar
 
 
 static func get_profile_for_strategy(strategy_id: String) -> Dictionary:
-	for deck_id: int in ALL_DECK_IDS:
-		var profile := get_profile_for_deck(deck_id)
-		if str(profile.get("strategy_id", "")) == strategy_id:
-			return profile
-	return {}
+	# The identity encodes its deck. Do not build every model profile (including
+	# reading its optional override) when detecting an unrelated rules strategy.
+	if not strategy_id.begins_with("v18cpg_"):
+		return {}
+	var fields := strategy_id.split("_", true, 2)
+	if fields.size() != 3 or not fields[1].is_valid_int():
+		return {}
+	var deck_id := fields[1].to_int()
+	if deck_id not in ALL_DECK_IDS:
+		return {}
+	var profile := get_profile_for_deck(deck_id)
+	return profile if str(profile.get("strategy_id", "")) == strategy_id else {}
 
 
 static func list_profiles() -> Array[Dictionary]:

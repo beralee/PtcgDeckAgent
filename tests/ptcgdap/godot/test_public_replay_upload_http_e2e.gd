@@ -14,7 +14,7 @@ func test_live_python_service_round_trip() -> String:
 	var token := str(arguments.get("replay-e2e-token", ""))
 	var artifact_path := str(arguments.get("replay-e2e-artifact", ""))
 	if endpoint.is_empty() and token.is_empty() and artifact_path.is_empty():
-		return ""
+		return "SKIP: Replay HTTP E2E requires endpoint, token and artifact arguments"
 	if endpoint.is_empty() or token.is_empty() or artifact_path.is_empty():
 		return "missing replay E2E endpoint, token, or artifact argument"
 	var artifact_result := _read_artifact(artifact_path)

@@ -47,6 +47,9 @@ func _can_rare_candy_evolve(stage2_card: CardInstance, target_slot: PokemonSlot,
 		return false
 	if not stage2_card.card_data.is_pokemon() or stage2_card.card_data.stage != "Stage 2":
 		return false
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.prevents_card_from_hand(stage2_card.owner_index, stage2_card, state):
+		return false
 	if target_slot.pokemon_stack.size() != 1:
 		return false
 	if target_slot.turn_played == state.turn_number:

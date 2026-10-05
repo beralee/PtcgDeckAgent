@@ -1,8 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="cn.skillserver.ptcg.updater">
     <uses-sdk android:minSdkVersion="24" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application>
         <meta-data android:name="org.godotengine.plugin.v2.PtcgAppUpdater" android:value="cn.skillserver.ptcg.updater.PtcgAppUpdater" />
         <receiver android:name="cn.skillserver.ptcg.updater.InstallResultReceiver" android:exported="false" />
+        <provider android:name="cn.skillserver.ptcg.updater.VerifiedApkProvider"
+            android:authorities="${applicationId}.app_update_apk"
+            android:exported="false" android:grantUriPermissions="true" />
+        <receiver android:name="cn.skillserver.ptcg.updater.DownloadReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+                <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-29",
+  "status": "local_fix_verified_not_published",
+  "device": "Android 16 / API 36 x86_64 emulator",
+  "original_player_device_confirmed": false,
+  "reproduced": "background receiver confirmation launch is BAL_BLOCK while updater persists awaiting_user",
+  "godot": {
+    "red": {
+      "passed": 23,
+      "failed": 3
+    },
+    "green_distinct": 81,
+    "final_updater_recheck": 26
+  },
+  "java_outcome_cases": 7,
+  "manifest_builder_tests": 5,
+  "native_scenarios": [
+    {
+      "name": "background_consent_is_queued_without_launch",
+      "passed": true
+    },
+    {
+      "name": "foreground_resume_shows_real_consent_and_abort_is_distinct",
+      "passed": true
+    },
+    {
+      "name": "compatible_installer_cancel_revokes_private_apk_grant",
+      "passed": true
+    },
+    {
+      "name": "compatible_real_A_to_B_upgrade_preserves_data",
+      "passed": true
+    },
+    {
+      "name": "permission_denied_then_retry",
+      "passed": true
+    },
+    {
+      "name": "system_cancel_then_retry",
+      "passed": true
+    },
+    {
+      "name": "process_death_during_confirmation",
+      "passed": true
+    },
+    {
+      "name": "real_A_to_B_upgrade_preserves_data",
+      "passed": true
+    }
+  ],
+  "final_apk": {
+    "path": "output/android-install-fix-20260929/PtcgDeckAgent-0.6.2-install-fix.apk",
+    "version": "0.6.2",
+    "build": 62,
+    "bytes": 287046780,
+    "sha256": "b5dae27486bbf83231ea6523999ff6ecb24bf1ed2838054f27aae45b82725961",
+    "signer_sha256": "301f30c5221085b11ced3e187d79700be42eeabecc5bb49220d0ba342ab5f37d"
+  },
+  "source_sha256": {
+    "native/app_updater/AndroidManifest.xml": "766cfb39b61c4fbe468c6c2bf7ff8d71c2bffed5de01430aca13ed416f1cc575",
+    "native/app_updater/build.ps1": "900d0f0ae2f7288cd7fc9c25629764239e2955d6a14426cd132dd45be4beecc2",
+    "native/app_updater/src/cn/skillserver/ptcg/updater/PtcgAppUpdater.java": "990556a9e51cdfa478969dbc9373f7e218aee0a280346fce5edb8240101884f0",
+    "native/app_updater/src/cn/skillserver/ptcg/updater/InstallResultReceiver.java": "020ba04de695aeda90c5ef01a9db3d01ad68d3e20838e1aab0ba5bd16211fb7b",
+    "native/app_updater/src/cn/skillserver/ptcg/updater/UpdateStatus.java": "f3e7c45f17d2f75e666a548fc1bdff4d8c72a5dc080e98c85c368849f67372f5",
+    "native/app_updater/src/cn/skillserver/ptcg/updater/InstallConfirmation.java": "3424209d7599f101bde30ad8464475b8b62e2cab16ea760d3c9ba91e3040dbaa",
+    "native/app_updater/src/cn/skillserver/ptcg/updater/InstallOutcome.java": "4d05d421f5a22f25233445a6bafaca8ed78fcf05407c43823e5f595c58316653",
+    "native/app_updater/src/cn/skillserver/ptcg/updater/VerifiedApkProvider.java": "1810c441ae8165dcf09c5f704cb1c08a7fbb777b4de9cffe7430493d87ba263f",
+    "scripts/update/AppUpdater.gd": "5e85a3779ba140f135743e40d53ba7cca5931c2366ace108967bc1c071a0c397",
+    "scripts/update/AppUpdateInstaller.gd": "5cb26d56d540ab504f465021bc61dde24ea1a7e1ba3a5a0c8ea32708d857dcb0",
+    "scripts/update/AppUpdateDialog.gd": "d783095a8bbe786d125917b5f1725752863dc9a667e797c7e2a8a22be1de242a",
+    "tests/test_app_updater.gd": "079b2e4cd5bf532136dfb1fb2cb1cbbea9026ad84587082258000fc309197846",
+    "tests/run_android_update_install_compat.py": "19c6154d8827bc3aadc8ed57c52d0ed6544d11be7ffa978150a61e04a434b16c",
+    "tests/run_android_update_lab_native.py": "8f0aa0f929e2e0ba51a38f1993cd2afe9da4367e0c8aca4a42e8feeeb9b21ac1",
+    "tools/inspect_app_update_export.py": "2d17609e0e176068eb83cf497cf0ba171f71ee5e001a68a8517b9d85f7a4d59d"
+  },
+  "aar_sha256": "af772e440e94fef76f476398abc4d49f02ba7c65069db8e1670f630afbb71959",
+  "online_changed": false,
+  "committed": false,
+  "physical_oem_device_tested": false,
+  "alignment_claim": "application updater only; no new strategy/CABT/A5 claim",
+  "raw_evidence_root": ".tmp/update_install_20260929",
+  "rollback_snapshot": ".tmp/update_install_20260929/before"
+}

@@ -36,7 +36,8 @@ static func normalize_suite_name(suite_name: String) -> String:
 
 
 static func normalize_group_name(group_name: String) -> String:
-	return group_name.strip_edges().to_lower()
+	var normalized := group_name.strip_edges().to_lower()
+	return "ai" if normalized == "ai_training" else normalized
 
 
 static func _parse_filter_values(args: PackedStringArray, prefix: String, normalizer: Callable) -> Dictionary:
@@ -44,7 +45,7 @@ static func _parse_filter_values(args: PackedStringArray, prefix: String, normal
 	for raw_arg: String in args:
 		if not raw_arg.begins_with(prefix):
 			continue
-		var raw_value := raw_arg.split("=", false, 1)[1]
+		var raw_value := raw_arg.substr(prefix.length())
 		for item_name: String in raw_value.split(",", false):
 			var normalized := str(normalizer.call(item_name))
 			if normalized == "":

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "atlas": "portraits.png",
+  "columns": 4,
+  "rows": 3,
+  "cell_size": 256,
+  "character": "Original teal-haired card-game practice rival",
+  "style": "clean HD chibi, navy/teal/gold, transparent RGBA",
+  "order": ["eager", "focused", "confident", "confused", "anxious", "frustrated", "surprised", "determined", "proud", "relieved", "joyful", "respectful"],
+  "labels": ["跃跃欲试", "专注", "自信", "犯难", "紧张", "郁闷", "意外", "不服输", "小得意", "松口气", "开心", "服气"],
+  "generation": "Built-in image_gen; original expression atlas, generated 2026-09-29",
+  "processing": "generate2dsprite deterministic extraction; shared scale, 256px cells, transparent safe padding"
+}

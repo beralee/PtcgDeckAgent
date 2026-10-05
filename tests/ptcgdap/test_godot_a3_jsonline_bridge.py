@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import os
+import secrets
+import subprocess
 import sys
 import unittest
 
@@ -48,6 +51,31 @@ def mapped_marnie_semantic_deck() -> list[dict[str, object]]:
 
 @unittest.skipUnless(GODOT.is_file(), "local Godot runtime unavailable")
 class GodotA3JsonLineBridgeTests(unittest.TestCase):
+    def test_engine_exits_when_its_bridge_disconnects_without_dispose(self) -> None:
+        from tools.ptcgdap.godot_a3_jsonline_bridge import _connect, _free_loopback_port
+
+        port = _free_loopback_port()
+        process = subprocess.Popen([
+            str(GODOT), "--headless", "--quiet", "--path", str(ROOT),
+            "-s", "res://tools/ptcgdap/a3_godot_headless_bridge.gd", "--",
+            f"--bridge-port={port}", f"--bridge-token={secrets.token_hex(32)}",
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            connection = _connect(port, process)
+            connection.close()
+            self.assertEqual(process.wait(timeout=5), 0)
+        finally:
+            if process.poll() is None:
+                if os.name == "nt":
+                    subprocess.run(
+                        ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        check=False, timeout=5,
+                    )
+                if process.poll() is None:
+                    process.kill()
+                process.wait(timeout=5)
+
     def test_punk_up_exact_quantity_reobserves_each_assignment_target(self) -> None:
         deck = mapped_marnie_semantic_deck()
         adapter = GodotHeadlessEngineAdapter(command(), cwd=ROOT)

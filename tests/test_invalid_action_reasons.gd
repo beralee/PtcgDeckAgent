@@ -118,7 +118,8 @@ func test_tool_target_already_has_tool_reason() -> String:
 	)
 	return run_checks([
 		assert_str_contains(reason, "道具", "Tool block should mention Tool"),
-		assert_str_contains(reason, "已经", "Tool block should explain target already has one"),
+		assert_str_contains(reason, "上限", "Tool block should explain the attachment limit"),
+		assert_str_contains(reason, "1张", "Ordinary Pokemon must report their one-tool limit"),
 	])
 
 

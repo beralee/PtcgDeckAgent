@@ -45,11 +45,28 @@ const RELEASE_UNUSED_IMAGE_EXCLUDE_FILTERS := [
 	"assets/ui/8187aae7-e467-446f-bcd8-544468eae16b.png",
 ]
 const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
-const EXPECTED_APP_VERSION := "0.6.0"
-const EXPECTED_BUILD_NUMBER := "60"
-const EXPECTED_WEB_VERSION := "0.6.0.2"
-const EXPECTED_WEB_BUILD_NUMBER := "602"
+const EXPECTED_APP_VERSION := "0.6.5"
+const EXPECTED_BUILD_NUMBER := "65"
+const EXPECTED_WEB_VERSION := "0.6.5"
+const EXPECTED_WEB_BUILD_NUMBER := "650"
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
+
+
+func test_portable_platforms_retain_arena_and_exclude_desktop_media() -> String:
+	var presets := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var checks: Array[String] = []
+	for preset: String in ["Android", "Web", "Web UI E2E"]:
+		var excluded := _extract_string_value(_extract_preset_block(presets, preset), "exclude_filter").split(",")
+		for desktop_filter: String in ["assets/arena3d/product-*/**", "assets/arena3d/pokemon/*.glb", "assets/arena3d/pokemon/audio/**", "assets/arena3d/pokemon/model_manifest.json", "assets/arena3d/supporters/**"]:
+			checks.append(assert_true(desktop_filter in excluded, preset + " must exclude desktop media: " + desktop_filter))
+		for portable_path: String in ["assets/arena3d/portable/grove_table.glb", "assets/arena3d/portable/reward_cradle.glb", "assets/arena3d/portable/pokemon/charizard.glb", "assets/arena3d/previews/grove.png"]:
+			for pattern: String in excluded:
+				checks.append(assert_false(portable_path.match(pattern), preset + " must retain portable arena resource: " + portable_path))
+		checks.append(assert_true("evidence/**/*.png" in excluded, preset + " must not bundle visual test screenshots"))
+		checks.append(assert_false("scenes/arena3d/**" in excluded, "Shared battle scripts still preload small arena helpers"))
+	var windows_excluded := _extract_string_value(_extract_preset_block(presets, "Windows Desktop"), "exclude_filter").split(",")
+	checks.append(assert_false("assets/arena3d/**" in windows_excluded, "Windows must retain its 3D field"))
+	return run_checks(checks)
 
 
 func test_release_version_metadata_is_consistent_across_platforms() -> String:

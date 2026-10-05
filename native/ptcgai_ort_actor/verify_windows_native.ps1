@@ -5,7 +5,10 @@ $sourceRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $lock = Get-Content -LiteralPath (Join-Path $sourceRoot "dependencies.lock.json") -Raw | ConvertFrom-Json
 $root = (Resolve-Path -LiteralPath $Directory).Path
 $records = @()
-foreach ($name in @("ptcgai_ort.windows.template_release.x86_64.v3.dll", "onnxruntime.dll")) {
+$descriptor = Join-Path $sourceRoot '../../scripts/ai/ptcgdap/native/ptcgai_ort_actor.gdextension'
+$match = [regex]::Match([IO.File]::ReadAllText($descriptor), '(?m)^windows\.release\.x86_64\s*=\s*"res://bin/ptcgai_ort/([^"/\\]+\.dll)"')
+if (-not $match.Success) { throw 'Missing Windows release library in the GDExtension descriptor' }
+foreach ($name in @($match.Groups[1].Value, "onnxruntime.dll")) {
     $path = Join-Path $root $name
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing Windows native dependency: $name" }
     $bytes = [IO.File]::ReadAllBytes($path)

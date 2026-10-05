@@ -66,10 +66,11 @@ func test_local_library_discovers_and_loads_completed_community_replay() -> Stri
 		assert_eq(entries.size(), 1),
 		assert_eq(first.get("source"), "local"),
 		assert_eq(first.get("replay_id"), artifact.manifest.replay_id),
-		assert_eq(first.get("frame_count"), 156),
+		assert_eq(artifact.frames.size(), 3, "Tracked synthetic UI fixture has three public frames"),
+		assert_eq(first.get("frame_count"), artifact.frames.size()),
 		assert_eq(first.get("strategy_id"), ""),
 		assert_true(bool(loaded.get("accepted", false)), str(loaded)),
-		assert_eq(loaded.get("artifact", {}).get("manifest", {}).get("frame_count"), 156),
+		assert_eq(loaded.get("artifact"), artifact, "Storage must preserve every validated frame and envelope"),
 		assert_eq(listed.get("rejected_count"), 0),
 	])
 
@@ -110,7 +111,7 @@ func test_local_library_isolates_bad_index_without_hiding_valid_history() -> Str
 func test_installed_live_community_history_when_explicitly_requested() -> String:
 	var expected_raw := OS.get_environment("PTCGDAP_EXPECT_LOCAL_REPLAY_IDS").strip_edges()
 	if expected_raw.is_empty():
-		return ""
+		return "SKIP: Installed-history fixture requires PTCGDAP_EXPECT_LOCAL_REPLAY_IDS"
 	var owner: Variant = _contract_owner()
 	var library_created: Dictionary = LocalLibraryScript.create(owner, "live-community")
 	if not bool(library_created.get("accepted", false)):

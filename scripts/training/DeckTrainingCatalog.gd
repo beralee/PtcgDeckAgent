@@ -133,6 +133,8 @@ static func _cache_signature(path: String) -> String:
 
 
 static func get_scenario(scenario_id: String, path: String = CATALOG_PATH) -> Dictionary:
+	if path == CATALOG_PATH and scenario_id.begins_with("expert-dragapult185-"):
+		return preload("res://scripts/training/expert/ExpertPlayCatalog.gd").get_scenario(scenario_id)
 	for scenario: Dictionary in list_scenarios(path):
 		if str(scenario.get("id", "")) == scenario_id:
 			return scenario

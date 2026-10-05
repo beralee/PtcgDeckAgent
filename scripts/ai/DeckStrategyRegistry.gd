@@ -206,10 +206,12 @@ static func strategy_id_for_deck_id(deck_id: int) -> String:
 
 
 static func llm_strategy_id_for_deck(deck_id: int, base_strategy_id: String = "") -> String:
-	var resolved_base_id := base_strategy_id
+	# Card-name inference may select a rules fallback, but it is not evidence
+	# that this exact deck has an adapted LLM strategy.
+	var resolved_base_id := strategy_id_for_deck_id(deck_id)
 	if resolved_base_id == "":
-		resolved_base_id = strategy_id_for_deck_id(deck_id)
-	if resolved_base_id == "":
+		return ""
+	if base_strategy_id != "" and base_strategy_id != resolved_base_id:
 		return ""
 
 	# V18 CPG profiles own their release/feature availability. Asking for

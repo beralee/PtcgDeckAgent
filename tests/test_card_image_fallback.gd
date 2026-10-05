@@ -2,6 +2,93 @@ class_name TestCardImageFallback
 extends TestBase
 
 const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
+const ContentManifestScript = preload("res://scripts/card_content/ContentManifest.gd")
+
+
+func test_signed_update_preserves_bundled_images_in_all_card_views() -> String:
+	var bytes := FileAccess.get_file_as_bytes(CardData.build_bundled_image_path("CS5aC", "107"))
+	var previous: Variant = Engine.get_meta("ptcg_card_content_snapshot", {})
+	var target := _signed_image_snapshot("CS5aC_107", bytes)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+	var card := CardData.from_dict({"set_code": "CS5aC", "card_index": "107"})
+	var view = BattleCardViewScript.new()
+	var result := assert_not_null(view.call("_load_texture", card), "Content activation must keep the bundled battle card visible before any download")
+	view.free()
+	for path: String in ["res://scenes/deck_editor/DeckEditor.gd", "res://scenes/deck_manager/DeckManager.gd", "res://scripts/ui/decks/DeckViewDialog.gd"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+		var consumer = load(path).new()
+		var check := assert_not_null(consumer.call("_load_card_texture", "CS5aC", "107"), "Content activation must preserve images in " + path)
+		if result == "": result = check
+		if consumer is Node: consumer.free()
+		consumer = null
+	var digest_check := assert_eq(FileAccess.get_sha256(target), ContentManifestScript.hash_bytes(bytes), "Reused image keeps the signed digest cache identity")
+	if result == "": result = digest_check
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+	Engine.set_meta("ptcg_card_content_snapshot", previous)
+	BattleCardViewScript.clear_texture_cache_for_tests()
+	return result
+
+
+func test_signed_update_reuses_exact_old_download_without_network() -> String:
+	var previous: Variant = Engine.get_meta("ptcg_card_content_snapshot", {})
+	var image := Image.create(2, 3, false, Image.FORMAT_RGBA8)
+	image.fill(Color.CORAL)
+	var bytes := image.save_png_to_buffer()
+	var legacy := "user://cards/images/SIGNED_REUSE/001.png"
+	_write_bytes(legacy, bytes)
+	var target := _signed_image_snapshot("SIGNED_REUSE_001", bytes)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+	var resolved := CardData.resolve_existing_image_path(CardData.get_image_candidate_paths("SIGNED_REUSE", "001"))
+	var service := CardImageCacheService.new()
+	var result := run_checks([
+		assert_true(resolved != "", "Exact previously downloaded pixels must remain usable offline"),
+		assert_eq(FileAccess.get_sha256(target), ContentManifestScript.hash_bytes(bytes), "Old cache must be verified and copied to the digest path"),
+		assert_eq(service.get_status("SIGNED_REUSE", "001"), CardImageCacheService.STATUS_READY, "Download service and direct views must agree on readiness"),
+	])
+	service.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(legacy))
+	Engine.set_meta("ptcg_card_content_snapshot", previous)
+	return result
+
+
+func test_signed_image_rejects_valid_but_wrong_pixels_in_digest_cache() -> String:
+	var previous: Variant = Engine.get_meta("ptcg_card_content_snapshot", {})
+	var image := Image.create(2, 3, false, Image.FORMAT_RGBA8)
+	image.fill(Color.AQUA)
+	var target := _signed_image_snapshot("SIGNED_WRONG_001", image.save_png_to_buffer())
+	image.fill(Color.RED)
+	var wrong := image.save_png_to_buffer()
+	_write_bytes(target, wrong)
+	var legacy := "user://cards/images/SIGNED_WRONG/001.png"
+	_write_bytes(legacy, wrong)
+	var resolved := CardData.resolve_existing_image_path(CardData.get_image_candidate_paths("SIGNED_WRONG", "001"))
+	var result := assert_eq(resolved, "", "PNG signature alone cannot authorize stale pixels for a signed image revision")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(legacy))
+	Engine.set_meta("ptcg_card_content_snapshot", previous)
+	return result
+
+
+func test_signed_image_repairs_corrupt_digest_from_exact_bundle() -> String:
+	var previous: Variant = Engine.get_meta("ptcg_card_content_snapshot", {})
+	var bytes := FileAccess.get_file_as_bytes(CardData.build_bundled_image_path("CS5aC", "107"))
+	var target := _signed_image_snapshot("CS5aC_107", bytes)
+	_write_bytes(target, "broken".to_utf8_buffer())
+	var resolved := CardData.resolve_existing_image_path(CardData.get_image_candidate_paths("CS5aC", "107"))
+	var result := run_checks([
+		assert_true(resolved != "", "Corrupt digest cache should recover from exact bundled bytes"),
+		assert_eq(FileAccess.get_sha256(target), ContentManifestScript.hash_bytes(bytes), "Repair must preserve exact signed bytes"),
+	])
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
+	Engine.set_meta("ptcg_card_content_snapshot", previous)
+	return result
+
+
+func _signed_image_snapshot(uid: String, bytes: PackedByteArray) -> String:
+	var sha := ContentManifestScript.hash_bytes(bytes)
+	Engine.set_meta("ptcg_card_content_snapshot", {"manifest": {"cards": {uid: {"image": {"sha256": sha, "size": bytes.size()}}}}})
+	return "user://card_content/objects/%s.img" % sha
 
 
 func test_card_data_resolves_bundled_image_path_when_user_cache_is_missing() -> String:

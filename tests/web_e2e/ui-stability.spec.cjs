@@ -1,5 +1,77 @@
 const { test, expect } = require('@playwright/test');
 
+test('DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms', async ({ page }, testInfo) => {
+  test.setTimeout(180000);
+  const touch = testInfo.project.name.includes('touch');
+  const errors = [];
+  page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+  page.on('pageerror', error => errors.push(String(error)));
+  let requests = 0;
+  let fail = false;
+  const answer = '# 当前计划\n先铺场，再考虑进攻。\n[b]这是原文括号[/b]\n' + '检查当前奖赏路线，保留可用资源。'.repeat(35);
+  await page.route('https://deepseek-ui.invalid/**', async route => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' } });
+    requests++;
+    if (fail) return route.fulfill({ status: 503, headers: { 'Access-Control-Allow-Origin': '*' }, contentType: 'application/json', body: JSON.stringify({ error: { message: 'fixture unavailable' } }) });
+    return route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content: JSON.stringify({ answer_markdown: answer, suggested_questions: ['先手如何安排？', '支援者什么时候使用？'], tool_request: null }) } }] }) });
+  });
+  await startGame(page);
+  await bridgeRequest(page, 'prepare_deepseek_discussion');
+  const probe = () => bridgeRequest(page, 'deepseek_discussion_probe');
+  const canvas = await page.locator('#canvas').boundingBox();
+  const viewport = (await bridgeRequest(page, 'snapshot')).runtime_profile.viewport_size;
+  for (const id of ['SendButton', 'ResetButton', 'CloseButton']) {
+    const control = await bridgeRequest(page, 'find_control', { id });
+    expect(control.rect.height * canvas.height / viewport.y, `${id} CSS hit height`).toBeGreaterThanOrEqual(43);
+  }
+  async function typeQuestion(text) {
+    await activateControl(page, 'QuestionInput', touch);
+    const editor = page.locator('body > textarea');
+    await expect(editor).toBeVisible();
+    await editor.fill(text);
+    await expect.poll(async () => (await probe()).input).toBe(text);
+  }
+  await typeQuestion('中文输入测试：这回合怎么打？');
+  const editor = page.locator('body > textarea');
+  await editor.dispatchEvent('keydown', { key: 'Enter', isComposing: true, keyCode: 229 });
+  expect(requests).toBe(0);
+  await editor.press('Shift+Enter');
+  await expect.poll(async () => (await probe()).input).toContain('\n');
+  expect(requests).toBe(0);
+  if (touch) await activateControl(page, 'SendButton', true);
+  else await editor.press('Enter');
+  await expect.poll(() => requests).toBe(1);
+  await expect.poll(async () => (await probe()).send_disabled, { timeout: 30000 }).toBe(false);
+  expect((await probe()).messages.some(text => text.includes('[b]这是原文括号[/b]'))).toBe(true);
+  expect((await probe()).suggestion_count).toBe(2);
+  expect((await probe()).input).toBe('');
+  await page.screenshot({ path: testInfo.outputPath('deepseek-answer.png') });
+  fail = true;
+  await typeQuestion('网络失败后保留这条问题');
+  await activateControl(page, 'SendButton', touch);
+  await expect.poll(() => requests).toBe(2);
+  await expect.poll(async () => (await probe()).status).toContain('失败');
+  expect((await probe()).input).toBe('网络失败后保留这条问题');
+  await activateControl(page, 'ResetButton', touch);
+  await expect.poll(async () => (await probe()).suggestion_count).toBe(0);
+  expect((await probe()).input).toBe('');
+  expect((await probe()).messages).toHaveLength(1);
+  await activateControl(page, 'CloseButton', touch);
+  await expect.poll(async () => (await probe()).visible).toBe(false);
+  for (const mode of ['match', 'battle']) {
+    await bridgeRequest(page, 'prepare_deepseek_discussion', { mode });
+    await expect.poll(async () => (await probe()).visible).toBe(true);
+    await activateControl(page, 'CloseButton', touch);
+    await expect.poll(async () => (await probe()).visible).toBe(false);
+  }
+  expect(errors.filter(value => /SCRIPT ERROR|Uncaught|unreachable/.test(value))).toEqual([]);
+});
+
+function skipOutsideScope(condition, reason) {
+  if (condition) test.info().annotations.push({ type: 'not-applicable', description: reason });
+  test.skip(condition, reason);
+}
+
 test('downloaded author strategy starts and completes local Web matches', async ({ page }, testInfo) => {
   const fixtureDir = process.env.PTCG_WEB_STRATEGY_FIXTURE_DIR;
   test.skip(!fixtureDir, 'Supply a pinned public leaderboard/profile/package fixture directory');
@@ -90,11 +162,18 @@ async function startGame(page, adapterMode = 'v2') {
 }
 
 async function semanticPoint(page, id) {
-  const control = await bridgeRequest(page, 'find_control', { id });
-  expect(control.visible).toBe(true);
-  expect(control.disabled).toBe(false);
-  expect(control.rect.width).toBeGreaterThan(1);
-  expect(control.rect.height).toBeGreaterThan(1);
+  // Godot containers can be visible before their first deferred layout. Like
+  // a DOM locator click, wait for stable geometry before sending one real tap.
+  let control;
+  let previousRect;
+  let stableSamples = 0;
+  await expect.poll(async () => {
+    control = await bridgeRequest(page, 'find_control', { id });
+    const rect = JSON.stringify(control.rect);
+    stableSamples = rect === previousRect ? stableSamples + 1 : 0;
+    previousRect = rect;
+    return control.visible && !control.disabled && control.rect.width > 1 && control.rect.height > 1 && stableSamples >= 2;
+  }, { message: `Wait for stable hit target: ${id}`, intervals: [32] }).toBe(true);
   const snapshot = await bridgeRequest(page, 'snapshot');
   const canvas = await page.locator('#canvas').boundingBox();
   if (!canvas) throw new Error('Godot canvas has no browser bounding box');
@@ -155,7 +234,7 @@ async function scrollControlIntoView(page, id) {
     if (centerY >= 0 && centerY <= logicalHeight) return;
     const canvas = await page.locator('#canvas').boundingBox();
     if (!canvas) throw new Error('Godot canvas has no browser bounding box');
-    if (test.info().project.name.startsWith('webkit-touch')) {
+    if (test.info().project.name.startsWith('webkit') && test.info().project.name.includes('touch')) {
       // Mobile WebKit cannot synthesize mouse wheels. Exercise the same canvas
       // touch listeners as a finger drag, without changing Godot scroll state.
       await page.evaluate(async ({ x, y, direction }) => {
@@ -205,6 +284,9 @@ test('miniapp import switches source, retries, and persists all 60 cards', async
   await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'ProgressLabel' })).text).toContain('暂时不可用');
   await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'UrlInput' })).text).toBe(code);
   await activateControl(page, 'BtnDoImport', useTouch);
+  await expect.poll(async () => (await bridgeRequest(page, 'list_controls')).find(item => item.name === 'BtnDoImport')?.text).toBe('保存卡组');
+  expect(await bridgeRequest(page, 'saved_deck_probe', { id: deckId })).toEqual({});
+  await activateControl(page, 'BtnDoImport', useTouch);
   await expect.poll(async () => (await bridgeRequest(page, 'saved_deck_probe', { id: deckId })).total_cards, { timeout: 60000 }).toBe(60);
   expect(requests).toEqual([{ deckCode: code }, { deckCode: code }]);
   await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'BtnDoImport' })).text).toBe('查看卡组');
@@ -216,7 +298,7 @@ test('miniapp import switches source, retries, and persists all 60 cards', async
 });
 
 test('Safari deck import accepts pasted URL and persists a complete deck', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.endsWith('landscape'), 'Portrait import and desktop');
+  skipOutsideScope(testInfo.project.name.endsWith('landscape'), 'Portrait import and desktop');
   const fixture = structuredClone(require('./fixtures/tcg-deck-574793.json'));
   fixture.data.variant.variantName = 'Safari import regression 991574793';
   const requests = [];
@@ -241,9 +323,11 @@ test('Safari deck import accepts pasted URL and persists a complete deck', async
   await activateControl(page, 'BtnDoImport', useTouch);
   await expect.poll(() => requests.length).toBe(1);
   expect(requests[0]).toEqual({ deckId: 991574793 });
+  await expect.poll(async () => (await bridgeRequest(page, 'list_controls')).find(item => item.name === 'BtnDoImport')?.text).toBe('保存卡组');
+  expect(await bridgeRequest(page, 'saved_deck_probe', { id: 991574793 })).toEqual({});
+  await activateControl(page, 'BtnDoImport', useTouch);
   await expect.poll(async () => (await bridgeRequest(page, 'saved_deck_probe', { id: 991574793 })).total_cards, { timeout: 60000 }).toBe(60);
-  await expect.poll(() => page.evaluate(() => window.__ptcgImportStorage?.done), { timeout: 70000 }).toBe(true);
-  expect(await page.evaluate(() => window.__ptcgImportStorage)).toEqual({ done: true, ok: true, error: '' });
+  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'BtnDoImport' })).text).toBe('查看卡组');
   await page.reload();
   await page.locator('#start-game').click();
   await page.waitForFunction(() => window.__PTCG_TEST__);
@@ -256,18 +340,20 @@ test('Safari deck import accepts pasted URL and persists a complete deck', async
   await editor.fill('991574794');
   await activateControl(page, 'BtnDoImport', useTouch);
   await expect.poll(() => requests.length).toBe(2);
-  await expect.poll(async () => (await bridgeRequest(page, 'list_controls')).some(control => control.name === 'DeckRenameConfirmButton' && control.visible)).toBe(true);
+  await expect.poll(async () => (await bridgeRequest(page, 'list_controls')).find(item => item.name === 'BtnDoImport')?.text).toBe('保存卡组');
+  await activateControl(page, 'BtnDoImport', useTouch);
+  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'ProgressLabel' })).text).toContain('已有已保存卡组使用该名称');
+  await activateControl(page, 'ImportPreviewName', useTouch);
   await expect(editor).toHaveValue(fixture.data.variant.variantName);
   await editor.fill('Safari renamed deck');
-  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckRenameConfirmButton' })).disabled).toBe(false);
-  await activateControl(page, 'DeckRenameConfirmButton', useTouch);
+  await activateControl(page, 'BtnDoImport', useTouch);
   await expect.poll(async () => (await bridgeRequest(page, 'saved_deck_probe', { id: 991574794 })).deck_name).toBe('Safari renamed deck');
   expect(requests).toEqual([{ deckId: 991574793 }, { deckId: 991574794 }]);
   await page.screenshot({ path: testInfo.outputPath('import-saved.png') });
 });
 
 test('Safari deck import reports storage denial without claiming durable success', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'webkit-touch', 'Safari storage failure');
+  skipOutsideScope(testInfo.project.name !== 'webkit-touch', 'Safari storage failure');
   await page.addInitScript(() => {
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function(key, value) {
@@ -284,12 +370,14 @@ test('Safari deck import reports storage denial without claiming durable success
   await activateControl(page, 'BtnImport', true);
   await page.locator('body > input').fill('991574795');
   await activateControl(page, 'BtnDoImport', true);
-  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'ProgressLabel' })).text).toContain('浏览器未能保存');
-  expect(await page.evaluate(() => window.__ptcgImportStorage.ok)).toBe(false);
+  await expect.poll(async () => (await bridgeRequest(page, 'list_controls')).find(item => item.name === 'BtnDoImport')?.text).toBe('保存卡组');
+  await activateControl(page, 'BtnDoImport', true);
+  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'ProgressLabel' })).text).toContain('保存失败');
+  expect((await bridgeRequest(page, 'find_control', { id: 'BtnDoImport' })).text).not.toBe('查看卡组');
 });
 
 test('strategy hub settings scrolls through canvas input and keeps tabs usable', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.endsWith('landscape'), 'Portrait touch and desktop are covered separately');
+  skipOutsideScope(testInfo.project.name.endsWith('landscape'), 'Portrait touch and desktop are covered separately');
   await startGame(page, 'v2');
   const useTouch = testInfo.project.name.includes('touch');
   await activateControl(page, 'BtnStrategyHub', useTouch);
@@ -330,13 +418,13 @@ test('strategy hub settings scrolls through canvas input and keeps tabs usable',
   expect((await bridgeRequest(page, 'find_control', { id: 'AISettingsTab' })).text).toBe('DeepSeek');
   const developerTab = await bridgeRequest(page, 'find_control', { id: 'ReplayTab' });
   expect(developerTab.visible).toBe(true);
-  expect(developerTab.text).toBe('开发者');
+  expect(developerTab.text).toBe('AI训练家');
   await activateControl(page, 'ReplayTab', useTouch);
   expect((await bridgeRequest(page, 'find_control', { id: 'DeveloperPortalButton' })).visible).toBe(true);
 });
 
 test('real canvas input navigates main menu and settings without runtime errors', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.endsWith('landscape'), 'The landscape WebKit project is scoped to battle HUD touch regression');
+  skipOutsideScope(testInfo.project.name.endsWith('landscape'), 'The landscape WebKit project is scoped to battle HUD touch regression');
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => {
@@ -356,7 +444,7 @@ test('real canvas input navigates main menu and settings without runtime errors'
 });
 
 test('iOS Web AI key opens a real DOM editor and syncs typed text', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'webkit-touch', 'This regression targets portrait iOS Safari text entry');
+  skipOutsideScope(testInfo.project.name !== 'webkit-touch', 'This regression targets portrait iOS Safari text entry');
   await startGame(page, 'v2');
   await activateControl(page, 'BtnStrategyHub', true);
   await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('StrategyHub');
@@ -422,7 +510,7 @@ test('iOS Web AI key opens a real DOM editor and syncs typed text', async ({ pag
 });
 
 test('iOS Web native API key paste is isolated, cancellable, and persistent', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'webkit-touch', 'This regression targets portrait iOS Safari native paste');
+  skipOutsideScope(testInfo.project.name !== 'webkit-touch', 'This regression targets portrait iOS Safari native paste');
   await startGame(page, 'v2');
   await activateControl(page, 'BtnStrategyHub', true);
   await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('StrategyHub');
@@ -498,7 +586,7 @@ test('iOS Web native API key paste is isolated, cancellable, and persistent', as
 });
 
 test('real canvas input round-trips battle setup and deck manager', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.endsWith('landscape'), 'The landscape WebKit project is scoped to battle HUD touch regression');
+  skipOutsideScope(testInfo.project.name.endsWith('landscape'), 'The landscape WebKit project is scoped to battle HUD touch regression');
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => {
@@ -514,6 +602,7 @@ test('real canvas input round-trips battle setup and deck manager', async ({ pag
 
 	await activateControl(page, 'BtnDeckManager', useTouch);
 	await expect.poll(async () => (await bridgeRequest(page, 'snapshot')).scene).toBe('DeckManager');
+	await scrollControlIntoView(page, 'DeckSearchInput');
 	const deckSearch = await bridgeRequest(page, 'find_control', { id: 'DeckSearchInput' });
 	expect(deckSearch.visible).toBe(true);
 	expect(deckSearch.rect.width).toBeGreaterThan(200);
@@ -559,7 +648,7 @@ test('real canvas input round-trips battle setup and deck manager', async ({ pag
 		const state = window.__ptcgDeckAgentTextInput || null;
 		return !state || !state.input || state.input.value === '';
 	})).toBe(true);
-	const recommendation = await bridgeRequest(page, 'find_control', { id: 'RecommendationFeedCard' });
+	const recommendation = await bridgeRequest(page, 'find_control', { id: 'DiscoveryCarousel' });
 	expect(recommendation.visible).toBe(true);
 	await activateControl(page, 'BtnImport', useTouch);
 	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'UrlInput' })).visible).toBe(true);
@@ -589,7 +678,7 @@ test('real canvas input round-trips battle setup and deck manager', async ({ pag
 });
 
 test('deck editor card search exposes HUD radios and filters ex cards', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-desktop', 'DeckEditor is landscape-only on Web and this regression uses the desktop canvas');
+  skipOutsideScope(testInfo.project.name !== 'chromium-desktop', 'DeckEditor is landscape-only on Web and this regression uses the desktop canvas');
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => {
@@ -622,7 +711,16 @@ test('deck editor card search exposes HUD radios and filters ex cards', async ({
 
 	await activateControl(page, 'DeckPoolSearchTagRadio_Tera', false);
 	await activateControl(page, 'DeckPoolSearchEnergyRadio_G', false);
-	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchResultLabel' })).text).toContain('找到 2 张');
+	// Count the shipped card records independently of the UI filter. New Tera
+	// printings must remain visible without freezing this regression at two cards.
+	const fs = require('node:fs');
+	const path = require('node:path');
+	const cardsDir = path.resolve(__dirname, '../../data/bundled_user/cards');
+	const grassTeraCards = fs.readdirSync(cardsDir).filter(file => file.endsWith('.json'))
+		.map(file => JSON.parse(fs.readFileSync(path.join(cardsDir, file), 'utf8').replace(/^\uFEFF/, '')))
+		.filter(card => card.card_type === 'Pokemon' && card.energy_type === 'G' && card.ancient_trait === 'Tera');
+	expect(grassTeraCards.length).toBeGreaterThan(0);
+	await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'DeckPoolSearchResultLabel' })).text).toBe(`宝可梦：找到 ${grassTeraCards.length} 张`);
 	await activateControl(page, 'DeckPoolSearchEnergyRadio_All', false);
 	await activateControl(page, 'DeckPoolSearchTagRadio_ex', false);
 
@@ -648,7 +746,7 @@ test('deck editor card search exposes HUD radios and filters ex cards', async ({
 });
 
 test('blur cancels active pointer ownership and late release does not navigate', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mouse down/up lifecycle probe is a desktop Chromium contract');
+  skipOutsideScope(testInfo.project.name !== 'chromium-desktop', 'Mouse down/up lifecycle probe is a desktop Chromium contract');
   await startGame(page, 'v2');
   const point = await semanticPoint(page, 'BtnStrategyHub');
   await page.mouse.move(point.x, point.y);
@@ -661,7 +759,7 @@ test('blur cancels active pointer ownership and late release does not navigate',
 });
 
 test('iOS Web touch confirms modal and persistent battle HUD actions', async ({ page }, testInfo) => {
-  test.skip(!testInfo.project.name.startsWith('webkit-touch'), 'This regression targets the iOS Safari touch pipeline');
+  skipOutsideScope(!testInfo.project.name.startsWith('webkit-touch'), 'This regression targets the iOS Safari touch pipeline');
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => {
@@ -768,7 +866,7 @@ test('iOS Web touch confirms modal and persistent battle HUD actions', async ({ 
 
 test('Chromium touch hand survives twenty semantic generations with first-tap success', async ({ page }, testInfo) => {
   test.setTimeout(300000);
-  test.skip(testInfo.project.name !== 'chromium-touch', 'This regression targets Android-style Chromium touch');
+  skipOutsideScope(testInfo.project.name !== 'chromium-touch', 'This regression targets Android-style Chromium touch');
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => {
@@ -826,7 +924,7 @@ test('Chromium touch hand survives twenty semantic generations with first-tap su
 });
 
 test('legacy kill switch starts the same production UI', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-desktop', 'Kill-switch smoke only needs one browser engine');
+  skipOutsideScope(testInfo.project.name !== 'chromium-desktop', 'Kill-switch smoke only needs one browser engine');
   await startGame(page, 'legacy');
   const snapshot = await bridgeRequest(page, 'snapshot');
   expect(snapshot.scene).toBe('MainMenu');
@@ -837,7 +935,7 @@ test('legacy kill switch starts the same production UI', async ({ page }, testIn
 });
 
 test('AI ladder shows ranked authors and opens and closes strategy details', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.endsWith('landscape'), 'Landscape battle HUD has a separate regression');
+  skipOutsideScope(testInfo.project.name.endsWith('landscape'), 'Landscape battle HUD has a separate regression');
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   await startGame(page, 'v2');
@@ -879,10 +977,12 @@ test('AI ladder shows ranked authors and opens and closes strategy details', asy
     expect(rankLabel?.text).toBe(expectedRanks[index]);
   }
   await page.screenshot({ path: testInfo.outputPath('ai-ladder.png') });
-  await activateControl(page, rankedCards[0].path, useTouch);
-  await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'CloseStrategyDetailButton' })).visible).toBe(true);
-  await activateControl(page, 'CloseStrategyDetailButton', useTouch);
-  await expect.poll(async () => (await bridgeRequest(page, 'list_controls'))
-    .some(control => control.name === 'CloseStrategyDetailButton')).toBe(false);
+  for (let cycle = 0; cycle < 3; cycle++) {
+    await activateControl(page, rankedCards[0].path, useTouch);
+    await expect.poll(async () => (await bridgeRequest(page, 'find_control', { id: 'CloseStrategyDetailButton' })).visible).toBe(true);
+    await activateControl(page, 'CloseStrategyDetailButton', useTouch);
+    await expect.poll(async () => (await bridgeRequest(page, 'list_controls'))
+      .some(control => control.name === 'CloseStrategyDetailButton')).toBe(false);
+  }
   expect(errors).toEqual([]);
 });

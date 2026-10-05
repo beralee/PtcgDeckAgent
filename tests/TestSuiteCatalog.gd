@@ -5,7 +5,26 @@ const TestSuiteFilterScript = preload("res://scripts/tools/TestSuiteFilter.gd")
 
 const TEST_DIR := "res://tests"
 const GROUP_FUNCTIONAL := "functional"
-const GROUP_AI_TRAINING := "ai_training"
+const GROUP_UI := "ui"
+const GROUP_AI := "ai"
+# Compatibility with existing callers and --group=ai_training.
+const GROUP_AI_TRAINING := GROUP_AI
+const GROUPS := [GROUP_UI, GROUP_FUNCTIONAL, GROUP_AI]
+
+# Names without an explicit UI token whose primary owner is a scene/input
+# controller. Keep domain-only battle rules in functional.
+const UI_OWNER_FILES := [
+	"test_battle_action_controller.gd", "test_battle_action_controller_invalid_hints.gd",
+	"test_battle_action_intent_layer.gd", "test_battle_effect_interaction_controller.gd",
+	"test_battle_effects_setting.gd", "test_battle_i18n.gd",
+	"test_battle_interaction_coordinator.gd", "test_battle_invalid_action_hint_controller.gd",
+	"test_battle_mulligan_notice.gd", "test_battle_prompt_router.gd",
+	"test_battle_ai_advice_copy.gd", "test_battle_runtime_log_controller.gd",
+	"test_card_proxy_renderer.gd", "test_deck_editor.gd", "test_deck_manager.gd",
+	"test_deck_center_redesign.gd",
+	"test_deck_center_android_interaction.gd",
+	"test_deck_delete_feedback_regressions.gd", "test_deck_training_home_notice.gd",
+]
 
 const AI_TRAINING_FILES := {
 	"test_agent_version_store.gd": true,
@@ -100,6 +119,9 @@ static func all_suites() -> Array[Dictionary]:
 static func get_suites(selected_groups: Dictionary = {}) -> Array[Dictionary]:
 	if selected_groups.is_empty():
 		return all_suites()
+	for group: String in selected_groups:
+		if TestSuiteFilterScript.normalize_group_name(group) not in GROUPS:
+			return []
 
 	var filtered: Array[Dictionary] = []
 	for suite: Dictionary in all_suites():
@@ -135,18 +157,73 @@ static func _discover_test_files() -> Array[String]:
 
 
 static func _build_suite_entry(relative_path: String) -> Dictionary:
+	var groups := _groups_for_file(relative_path)
 	return {
 		"name": _suite_name_for_file(relative_path),
 		"path": "%s/%s" % [TEST_DIR, relative_path],
-		"groups": _groups_for_file(relative_path),
+		"groups": groups,
+		"category": groups[0],
+		"ai_versions": _ai_versions_for_file(relative_path),
+		"profiles": _profiles_for_file(relative_path),
 	}
 
 
 static func _groups_for_file(relative_path: String) -> Array[String]:
 	var file_name := relative_path.get_file()
+	# "layout" here means release files/URLs, not screen geometry.
+	if file_name == "test_web_release_layout.gd":
+		return [GROUP_FUNCTIONAL]
+	if file_name.begins_with("test_arena") or file_name in UI_OWNER_FILES:
+		return [GROUP_UI]
+	# Presentation and interaction own UI, even when presenting AI.
+	if relative_path.begins_with("ui/") or file_name.begins_with("test_strategy_hub_") or file_name == "test_author_strategy_battle_setup.gd":
+		return [GROUP_UI]
+	# An owning AI directory outranks ambiguous tokens such as model "input".
+	if relative_path.begins_with("ai/") or relative_path.begins_with("ptcgdap/godot/") or relative_path.begins_with("llm_decks/") or relative_path.begins_with("v18_llm_policy_graph/"):
+		return [GROUP_AI]
+	if _matches(file_name, "(?:^|_)(?:ui|layout|dialog|panel|popup|modal|portrait|vfx|animation|animator|visual|pointer|scroll|menu|input|touch|hud|display|overlay|presenter|presentation)(?:_|\\.)") or file_name.begins_with("test_battle_setup_") or file_name.begins_with("test_battle_scene_"):
+		return [GROUP_UI]
+	if file_name in ["test_local_optimized_strategy_visibility.gd", "test_battle_hand_surface_reconciliation.gd"]:
+		return [GROUP_UI]
 	if bool(AI_TRAINING_FILES.get(file_name, false)):
 		return [GROUP_AI_TRAINING]
+	if _matches(file_name, "^test_(?:ai_|llm_|mcts_|v17|v18|author_|tournament_author_|local_author_)|(?:_strategy|_strategies)(?:_|\\.)"):
+		return [GROUP_AI]
 	return [GROUP_FUNCTIONAL]
+
+
+static func _matches(value: String, pattern: String) -> bool:
+	var regex := RegEx.new()
+	return regex.compile(pattern) == OK and regex.search(value) != null
+
+
+static func _ai_versions_for_file(path: String) -> Array[String]:
+	# Tags describe evidence, not an emulated runtime.
+	if path.get_file() == "test_battle_setup_ai_versions.gd":
+		return ["legacy", "v17", "v17.5", "v18", "v18.5", "author"]
+	if path.get_file() == "test_deck_strategy_registry_expansion.gd":
+		return ["legacy", "v17", "v17.5", "v18"]
+	if path.get_file() in ["test_bundled_deck_catalog.gd", "test_card_database_seed.gd"]:
+		return ["v18.5"]
+	if path.contains("v175"):
+		return ["v17.5"]
+	if path.contains("v17"):
+		return ["v17"]
+	if path.contains("v18"):
+		return ["v18"]
+	if path.begins_with("ai/") or path.begins_with("ptcgdap/") or path.contains("author"):
+		return ["author"]
+	if _groups_for_file(path) == [GROUP_AI]:
+		return ["legacy"]
+	return []
+
+
+static func _profiles_for_file(path: String) -> Array[String]:
+	if path in ["ui/test_strategy_hub_input_compatibility.gd", "test_non_battle_portrait_layout.gd", "test_non_battle_web_input_v2.gd", "test_web_input_adapter.gd", "test_web_ui_e2e_bridge.gd", "ptcgdap/godot/test_strategy_hub_responsive.gd"]:
+		return ["desktop-layout", "touch-layout", "web-contract"]
+	if path.begins_with("ai/ptcgdap/"):
+		return ["native-model"]
+	return ["host"]
 
 
 static func _suite_name_for_file(relative_path: String) -> String:

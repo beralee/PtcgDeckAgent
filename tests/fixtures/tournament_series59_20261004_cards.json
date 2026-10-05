@@ -1,0 +1,583 @@
+{
+  "series": 59,
+  "after": "2026-09-16",
+  "through": "2026-10-04",
+  "cards": [
+    {
+      "uid": "151C_084",
+      "name": "嘟嘟",
+      "effect_id": "f4d3cb54f0c01ba9b5f2a4cb9fce9ec3",
+      "source_url": "https://tcg.mik.moe/cards/151C/084"
+    },
+    {
+      "uid": "151C_085",
+      "name": "嘟嘟利",
+      "effect_id": "3c059ab293ff488fdfe4b1b8282053b2",
+      "source_url": "https://tcg.mik.moe/cards/151C/085"
+    },
+    {
+      "uid": "30thP_002",
+      "name": "小火龙",
+      "effect_id": "ff57cea32736dd645dcf07ab54b3f9ea",
+      "source_url": "https://tcg.mik.moe/cards/30thP/002"
+    },
+    {
+      "uid": "30thP_022",
+      "name": "敲音猴",
+      "effect_id": "6210ae52fd5e55c69feaced7f0ba74c8",
+      "source_url": "https://tcg.mik.moe/cards/30thP/022"
+    },
+    {
+      "uid": "CSV1C_015",
+      "name": "奥利纽",
+      "effect_id": "5eddf621d8b7bca3d4e0f737b4daea19",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/015"
+    },
+    {
+      "uid": "CSV1C_017",
+      "name": "原野水母",
+      "effect_id": "55e5e3d815b73dec1f38aa900afba0ee",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/017"
+    },
+    {
+      "uid": "CSV1C_029",
+      "name": "呆呆兽",
+      "effect_id": "73bdd71cb7017633aaf201b028bd3652",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/029"
+    },
+    {
+      "uid": "CSV1C_044",
+      "name": "自爆磁怪ex",
+      "effect_id": "70f02f5c8d8cccba81edc75ac5eb4f46",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/044"
+    },
+    {
+      "uid": "CSV1C_071",
+      "name": "弃世猴",
+      "effect_id": "ea313f5fb16a8fa1ee1594a403534d27",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/071"
+    },
+    {
+      "uid": "CSV1C_097",
+      "name": "普隆隆姆",
+      "effect_id": "a3fb29e6398509034c1f225f49ecb000",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/097"
+    },
+    {
+      "uid": "CSV1C_119",
+      "name": "坂木的领导力",
+      "effect_id": "4d05011aee8f573fbd15fc0cad79bd9f",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/119"
+    },
+    {
+      "uid": "CSV1C_125",
+      "name": "米莫莎",
+      "effect_id": "9633328b8477513ca950a1a266c83502",
+      "source_url": "https://tcg.mik.moe/cards/CSV1C/125"
+    },
+    {
+      "uid": "CSV2C_061",
+      "name": "随风球",
+      "effect_id": "3681b2671b2cfb5cf4381d72d87ed2f6",
+      "source_url": "https://tcg.mik.moe/cards/CSV2C/061"
+    },
+    {
+      "uid": "CSV2C_099",
+      "name": "大王铜象ex",
+      "effect_id": "6743b9624831bf2307918dce25e1fb2d",
+      "source_url": "https://tcg.mik.moe/cards/CSV2C/099"
+    },
+    {
+      "uid": "CSV2C_122",
+      "name": "萨瓦罗",
+      "effect_id": "b9c904c0285e30282f6bc5b43b5479c4",
+      "source_url": "https://tcg.mik.moe/cards/CSV2C/122"
+    },
+    {
+      "uid": "CSV3C_004",
+      "name": "榛果球",
+      "effect_id": "3fa95a3b6535b99cdd2370decb9ac64b",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/004"
+    },
+    {
+      "uid": "CSV3C_005",
+      "name": "佛烈托斯ex",
+      "effect_id": "1d232492f05784c869bd73a62bd1e484",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/005"
+    },
+    {
+      "uid": "CSV3C_015",
+      "name": "古简蜗ex",
+      "effect_id": "f7bd711194afce054b19b61b5d3fd510",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/015"
+    },
+    {
+      "uid": "CSV3C_029",
+      "name": "炭小侍",
+      "effect_id": "59c6098cd9e60035da8a0a0f6513ef1b",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/029"
+    },
+    {
+      "uid": "CSV3C_080",
+      "name": "古鼎鹿ex",
+      "effect_id": "6db296a19d741896c070fe471e92b8f3",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/080"
+    },
+    {
+      "uid": "CSV3C_082",
+      "name": "玛狃拉",
+      "effect_id": "889c7ffe260732b2db55b5c14f05cb33",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/082"
+    },
+    {
+      "uid": "CSV3C_089",
+      "name": "铜镜怪",
+      "effect_id": "b215ad214738ffd22b00673b4a254b15",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/089"
+    },
+    {
+      "uid": "CSV3C_096",
+      "name": "麒麟奇",
+      "effect_id": "8e3a8f7248c7087364b542c5e277f6cc",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/096"
+    },
+    {
+      "uid": "CSV3C_098",
+      "name": "土龙弟弟",
+      "effect_id": "0d02b63d128400622f704237482e5829",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/098"
+    },
+    {
+      "uid": "CSV3C_120",
+      "name": "复仇拳箱",
+      "effect_id": "09e67f9448cf4a062206fc6266c94b5f",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/120"
+    },
+    {
+      "uid": "CSV3C_128",
+      "name": "灾祸荒野",
+      "effect_id": "b599512657c5c23024fde7875db3ba2d",
+      "source_url": "https://tcg.mik.moe/cards/CSV3C/128"
+    },
+    {
+      "uid": "CSV4C_001",
+      "name": "飞天螳螂",
+      "effect_id": "16a6b9b3e74104caa59751bf55e6cd28",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/001"
+    },
+    {
+      "uid": "CSV4C_015",
+      "name": "九尾",
+      "effect_id": "b540fb36a187e1d05008e3be61084e81",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/015"
+    },
+    {
+      "uid": "CSV4C_045",
+      "name": "波克比",
+      "effect_id": "93ddf8f138b1edbb9b57620bcaa80b5d",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/045"
+    },
+    {
+      "uid": "CSV4C_046",
+      "name": "波克基古",
+      "effect_id": "bef823435789b8e25911400efe0b50a4",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/046"
+    },
+    {
+      "uid": "CSV4C_073",
+      "name": "盐石垒",
+      "effect_id": "162aa30465bfa41d838cbe010eeed5b2",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/073"
+    },
+    {
+      "uid": "CSV4C_076",
+      "name": "月亮伊布",
+      "effect_id": "2660960a5e1f7383bd679ca3dc27621f",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/076"
+    },
+    {
+      "uid": "CSV4C_085",
+      "name": "坚盾剑怪",
+      "effect_id": "ec6d0412aa2e5a0b0ed1490ac796df86",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/085"
+    },
+    {
+      "uid": "CSV4C_088",
+      "name": "普隆隆姆ex",
+      "effect_id": "ab8223ccdd32e7042b64196017d4d6db",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/088"
+    },
+    {
+      "uid": "CSV4C_100",
+      "name": "比比鸟",
+      "effect_id": "837d59970f306655cfdf630bed5431b4",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/100"
+    },
+    {
+      "uid": "CSV4C_103",
+      "name": "伊布",
+      "effect_id": "b8aaf66c1209ba720cdcabdb011e06e7",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/103"
+    },
+    {
+      "uid": "CSV4C_120",
+      "name": "招式学习器 暗中奇袭",
+      "effect_id": "43b20ef70cd362c3a52aa6820cb69829",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/120"
+    },
+    {
+      "uid": "CSV4C_122",
+      "name": "辛俐",
+      "effect_id": "8eb02a558725c4ccde3574f0f9451007",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/122"
+    },
+    {
+      "uid": "CSV4C_127",
+      "name": "海滩场地",
+      "effect_id": "10aa378456f578af10dfb5c2ff38c878",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/127"
+    },
+    {
+      "uid": "CSV4C_128",
+      "name": "练习室",
+      "effect_id": "45e96e576a5a81e61acd2e46a81547b4",
+      "source_url": "https://tcg.mik.moe/cards/CSV4C/128"
+    },
+    {
+      "uid": "CSV5C_008",
+      "name": "原野水母",
+      "effect_id": "50fcaf60eed755b7394ca95828345980",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/008"
+    },
+    {
+      "uid": "CSV5C_011",
+      "name": "热辣娃",
+      "effect_id": "54ac40e061bac6c8b358d6247b7a15eb",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/011"
+    },
+    {
+      "uid": "CSV5C_012",
+      "name": "狠辣椒ex",
+      "effect_id": "044e627b60cfc8c546ef7e172c0a874d",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/012"
+    },
+    {
+      "uid": "CSV5C_020",
+      "name": "炭小侍",
+      "effect_id": "d903825962e8a629b0adfd9e03c4a0d6",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/020"
+    },
+    {
+      "uid": "CSV5C_021",
+      "name": "红莲铠骑ex",
+      "effect_id": "4364b8582611727c6d832f681c40dfe4",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/021"
+    },
+    {
+      "uid": "CSV5C_029",
+      "name": "小球飞鱼",
+      "effect_id": "54984a509550b1cfdbe940c0b20be30f",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/029"
+    },
+    {
+      "uid": "CSV5C_129",
+      "name": "医疗能量",
+      "effect_id": "716f25159d0f0b7693eb93f3fb26a4cd",
+      "source_url": "https://tcg.mik.moe/cards/CSV5C/129"
+    },
+    {
+      "uid": "CSV6C_015",
+      "name": "超能艳鸵ex",
+      "effect_id": "dea85315621ce2efd111b12d1e2fbc79",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/015"
+    },
+    {
+      "uid": "CSV6C_030",
+      "name": "丑丑鱼",
+      "effect_id": "81e1caca63306c340b5915fb14cdb077",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/030"
+    },
+    {
+      "uid": "CSV6C_043",
+      "name": "古剑豹",
+      "effect_id": "b868f9185451bae128d75f0aca7b91f9",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/043"
+    },
+    {
+      "uid": "CSV6C_060",
+      "name": "飘飘雏",
+      "effect_id": "1e38b408b75cc5ec2a7d0cc98a761420",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/060"
+    },
+    {
+      "uid": "CSV6C_066",
+      "name": "铁武者ex",
+      "effect_id": "b417ad06ad8e4aa783b35fe1f3f27010",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/066"
+    },
+    {
+      "uid": "CSV6C_067",
+      "name": "大岩蛇",
+      "effect_id": "f170a8c91d1fed0fc2c8398f48969539",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/067"
+    },
+    {
+      "uid": "CSV6C_083",
+      "name": "沙铁皮ex",
+      "effect_id": "31d0610ee2a0b1e904e08ad72251aa48",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/083"
+    },
+    {
+      "uid": "CSV6C_097",
+      "name": "大钢蛇",
+      "effect_id": "3bc08c4356345e9aac2899f4af8278dd",
+      "source_url": "https://tcg.mik.moe/cards/CSV6C/097"
+    },
+    {
+      "uid": "CSV7C_050",
+      "name": "古玉鱼",
+      "effect_id": "1b27a9489251f2aea2acb7b058f0fcf0",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/050"
+    },
+    {
+      "uid": "CSV7C_071",
+      "name": "海豚侠",
+      "effect_id": "3fe795cc18c44928e6755503dbc1fdfb",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/071"
+    },
+    {
+      "uid": "CSV7C_094",
+      "name": "铜镜怪",
+      "effect_id": "12a9c244a95af5d450f3d39ede73a2d2",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/094"
+    },
+    {
+      "uid": "CSV7C_095",
+      "name": "青铜钟",
+      "effect_id": "9050fd41ac6abcce248c52570001e8e8",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/095"
+    },
+    {
+      "uid": "CSV7C_112",
+      "name": "幼基拉斯",
+      "effect_id": "329596a8bb8fed48e033da67fe7fabfc",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/112"
+    },
+    {
+      "uid": "CSV7C_113",
+      "name": "沙基拉斯",
+      "effect_id": "e36b6f130408a32b3baad6cc524fa9de",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/113"
+    },
+    {
+      "uid": "CSV7C_133",
+      "name": "古鼎鹿",
+      "effect_id": "5ed8053b43211ace08218c99208ab742",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/133"
+    },
+    {
+      "uid": "CSV7C_157",
+      "name": "伊布",
+      "effect_id": "880f55ba795d8703bc0fbb7266d61cee",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/157"
+    },
+    {
+      "uid": "CSV7C_198",
+      "name": "白露的真心",
+      "effect_id": "c2910457bc7fd02aa51bb4fa59618368",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/198"
+    },
+    {
+      "uid": "CSV7C_199",
+      "name": "松叶的信心",
+      "effect_id": "0d2ca8f42fe1500644bc1bd21c89eeb1",
+      "source_url": "https://tcg.mik.moe/cards/CSV7C/199"
+    },
+    {
+      "uid": "CSV8C_026",
+      "name": "来悲粗茶",
+      "effect_id": "defef39f399206a6de240aab5caa7f6b",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/026"
+    },
+    {
+      "uid": "CSV8C_039",
+      "name": "炭小侍",
+      "effect_id": "d94f8f6e08bc586538c8b77e3c184a56",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/039"
+    },
+    {
+      "uid": "CSV8C_043",
+      "name": "厄诡椪 火灶面具ex",
+      "effect_id": "afe6e5fb7931c8c529e43134ef264885",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/043"
+    },
+    {
+      "uid": "CSV8C_063",
+      "name": "海豚侠",
+      "effect_id": "3c38a9d3798223dfe455c2bc898f78b6",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/063"
+    },
+    {
+      "uid": "CSV8C_064",
+      "name": "海豚侠ex",
+      "effect_id": "1b97f4552b78e850d48100edf4d82c95",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/064"
+    },
+    {
+      "uid": "CSV8C_092",
+      "name": "飘飘雏",
+      "effect_id": "90343c8393ff4c3a2ee74e551df524d5",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/092"
+    },
+    {
+      "uid": "CSV8C_120",
+      "name": "够赞狗",
+      "effect_id": "cc0285c411d9f2c4d7c3f0c486cd2667",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/120"
+    },
+    {
+      "uid": "CSV8C_147",
+      "name": "铜象",
+      "effect_id": "1e692d5fa029fe63fd2a730d1a309587",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/147"
+    },
+    {
+      "uid": "CSV8C_155",
+      "name": "啃果虫",
+      "effect_id": "83cf2dc98e97628df64ef9f35f1befb3",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/155"
+    },
+    {
+      "uid": "CSV8C_166",
+      "name": "伊布",
+      "effect_id": "fb03e90c5a6d772ba32e1451c20cbae6",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/166"
+    },
+    {
+      "uid": "CSV8C_174",
+      "name": "鬼之假面",
+      "effect_id": "c4ee8747f7ad45f9a828384fb1637fd9",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/174"
+    },
+    {
+      "uid": "CSV8C_178",
+      "name": "危险光线",
+      "effect_id": "cbc04dc354816e1a5795de522630d8d1",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/178"
+    },
+    {
+      "uid": "CSV8C_179",
+      "name": "妨碍书信",
+      "effect_id": "941f9d4ce0aff2ae62b21503b7615e1b",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/179"
+    },
+    {
+      "uid": "CSV8C_180",
+      "name": "宝可生机剂A",
+      "effect_id": "2002cf21cc417f766451ab5760e81560",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/180"
+    },
+    {
+      "uid": "CSV8C_202",
+      "name": "公民馆",
+      "effect_id": "2c910670d5c291e5f2c379190be91ee8",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/202"
+    },
+    {
+      "uid": "CSV8C_204",
+      "name": "中立中心",
+      "effect_id": "6697150282b5d32d026ce20a993b4b53",
+      "source_url": "https://tcg.mik.moe/cards/CSV8C/204"
+    },
+    {
+      "uid": "CSV9.5C_105",
+      "name": "狃拉",
+      "effect_id": "608a8fad4d6cf60d03b9711a66be6674",
+      "source_url": "https://tcg.mik.moe/cards/CSV9.5C/105"
+    },
+    {
+      "uid": "CSV9.5C_120",
+      "name": "铜镜怪",
+      "effect_id": "6a5025792063a6ff9c0761027bffdbb3",
+      "source_url": "https://tcg.mik.moe/cards/CSV9.5C/120"
+    },
+    {
+      "uid": "CSV9C_019",
+      "name": "斯魔茶",
+      "effect_id": "c2a4f4ce310fd236994b700562ce2892",
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/019"
+    },
+    {
+      "uid": "CSV9C_091",
+      "name": "咚咚鼠",
+      "effect_id": "a048b275e9d6b42344f9399c374467d0",
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/091"
+    },
+    {
+      "uid": "CSV9C_137",
+      "name": "铝钢桥龙",
+      "effect_id": "e5b5f21d3d91e433188733bbd04a3553",
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/137"
+    },
+    {
+      "uid": "CSV9C_140",
+      "name": "噗隆隆",
+      "effect_id": "10fae18e35ba5ba1481dda8253f4b4d8",
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/140"
+    },
+    {
+      "uid": "CSV9C_179",
+      "name": "推理套装",
+      "effect_id": "b2ed6eb5dd7e6221d6673540adb331ab",
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/179"
+    },
+    {
+      "uid": "CSV9C_197",
+      "name": "杜若",
+      "effect_id": "3f56cb20813b60d36e976cdb5bbe3333",
+      "source_url": "https://tcg.mik.moe/cards/CSV9C/197"
+    },
+    {
+      "uid": "CSVH3aC_005",
+      "name": "下石鸟ex",
+      "effect_id": "bbdb7b20fc7c4292acad64687c1ef318",
+      "source_url": "https://tcg.mik.moe/cards/CSVH3aC/005"
+    },
+    {
+      "uid": "CSVH5eC_027",
+      "name": "诅咒娃娃",
+      "effect_id": "04cb7a5607e2d5e5a5a3daeefc15f64a",
+      "source_url": "https://tcg.mik.moe/cards/CSVH5eC/027"
+    },
+    {
+      "uid": "CSVL2C_007",
+      "name": "原野水母",
+      "effect_id": "ce9e5d4c4001b526757e2fa1f75d0e05",
+      "source_url": "https://tcg.mik.moe/cards/CSVL2C/007"
+    },
+    {
+      "uid": "CSVNC_015",
+      "name": "金鱼王",
+      "effect_id": "c03588e3709ba32ad3c63409b64bdf2c",
+      "source_url": "https://tcg.mik.moe/cards/CSVNC/015"
+    },
+    {
+      "uid": "SVP_047",
+      "name": "普隆隆姆",
+      "effect_id": "eb1836e87ae4f678bac49ab21623d321",
+      "source_url": "https://tcg.mik.moe/cards/SVP/047"
+    },
+    {
+      "uid": "SVP_100",
+      "name": "火恐龙",
+      "effect_id": "4eaba5926d7967ebdfe2f91c5511060d",
+      "source_url": "https://tcg.mik.moe/cards/SVP/100"
+    },
+    {
+      "uid": "SVP_341",
+      "name": "宝可梦中心的姐姐",
+      "effect_id": "601387a0c0610f55b540d562e9379fa5",
+      "source_url": "https://tcg.mik.moe/cards/SVP/341"
+    }
+  ]
+}

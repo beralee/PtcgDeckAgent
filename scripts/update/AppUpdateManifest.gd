@@ -4,8 +4,9 @@ extends RefCounted
 
 const DOWNLOAD_PAGE := "https://ptcg.skillserver.cn/"
 const DOWNLOAD_ORIGIN := "https://ptcg.skillserver.cn/"
+const ANDROID_APK_URL := "https://ptcg.skillserver.cn/dist/downloads/ptcgdeckagent-android.apk"
 const MAX_PACKAGE_BYTES := 2 * 1024 * 1024 * 1024
-const FORMATS := {"windows": "windows_zip", "macos": "macos_zip", "android": "android_apk"}
+const FORMATS := {"windows": "windows_zip", "android": "android_apk"}
 
 
 static func platform_key() -> String:
@@ -43,7 +44,8 @@ static func compare_versions(left: String, right: String) -> int:
 
 static func select_release(data: Dictionary, platform: String, arch: String) -> Dictionary:
 	var schema: Variant = data.get("schema_version", 1)
-	if schema not in [1, 2] or str(data.get("channel", "stable")) != "stable":
+	# Godot parses JSON numeric fields as floats; Array.has uses strict types.
+	if typeof(schema) not in [TYPE_INT, TYPE_FLOAT] or float(schema) not in [1.0, 2.0] or str(data.get("channel", "stable")) != "stable":
 		return {}
 	var platforms: Variant = data.get("platforms", {})
 	var target: Dictionary = {}
@@ -56,15 +58,25 @@ static func select_release(data: Dictionary, platform: String, arch: String) -> 
 		"latest_version": version,
 		"download_page_url": safe_page(target.get("download_page_url", target.get("page_url", data.get("download_page_url", DOWNLOAD_PAGE)))),
 		"artifact": {},
-		"native_update_reason": "这个版本暂未提供游戏内更新包，可以重新下载安装。",
+		"native_update_reason": "这个平台暂未提供游戏内更新包，请点击“去网页下载”。",
 	}
 	var artifacts: Variant = target.get("artifacts", [])
-	if schema != 2 or not artifacts is Array or artifacts.size() > 8:
+	if int(schema) == 1 and platform == "android" and arch == "arm64":
+		result.artifact = fixed_android_download(version)
+		result.native_update_reason = ""
+		return result
+	if platform == "macos":
+		result.native_update_reason = "macOS 版本请前往官网下载新版，按原有方式安装。"
+		result["website_only"] = true
+		return result
+	if int(schema) != 2 or not artifacts is Array or artifacts.size() > 8:
 		return result
 	var candidates: Array[Dictionary] = []
 	for item: Variant in artifacts:
 		if not item is Dictionary:
 			continue
+		if item.get("verification") == "android_signature":
+			continue # The fixed-address fallback is a client-owned v1 policy only.
 		var selected: Dictionary = validate_artifact(item, platform, arch)
 		if not selected.is_empty():
 			candidates.append(selected)
@@ -76,10 +88,21 @@ static func select_release(data: Dictionary, platform: String, arch: String) -> 
 
 
 static func validate_artifact(item: Dictionary, platform: String, arch: String) -> Dictionary:
+	if item.get("verification") == "android_signature":
+		if platform != "android" or arch != "arm64" or not valid_version(item.get("version", "")):
+			return {}
+		var fixed := fixed_android_download(str(item.version))
+		var normalized := item.duplicate(true)
+		if typeof(normalized.get("size")) not in [TYPE_INT, TYPE_FLOAT] or normalized.size != 0:
+			return {}
+		normalized.size = 0 # JSON restores the bounded zero-size placeholder as float.
+		# This grants transport only. Native signature/identity/version validation
+		# must produce real size, digest and build before the ordinary install gate.
+		return fixed if normalized == fixed else {}
 	if not FORMATS.has(platform) or item.get("format") != FORMATS[platform]:
 		return {}
 	var artifact_arch: Variant = item.get("arch")
-	if artifact_arch != arch and not (artifact_arch == "universal" and platform in ["macos", "android"]):
+	if artifact_arch != arch and not (artifact_arch == "universal" and platform == "android"):
 		return {}
 	var url: Variant = item.get("url")
 	var size: Variant = item.get("size")
@@ -106,6 +129,13 @@ static func validate_artifact(item: Dictionary, platform: String, arch: String) 
 		"size": int(size), "sha256": digest.to_lower(), "entry": entry,
 		"build": int(item.get("build", 0)),
 	}
+
+
+static func fixed_android_download(version: String) -> Dictionary:
+	return {"verification": "android_signature", "version": version,
+		"url": ANDROID_APK_URL, "arch": "arm64", "format": "android_apk",
+		"entry": "PtcgDeckAgent.apk", "size": 0,
+		"download_id": (ANDROID_APK_URL + "\n" + version).sha256_text()}
 
 
 static func safe_component(value: String) -> bool:

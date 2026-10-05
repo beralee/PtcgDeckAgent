@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "version": "0.6.2",
+  "generated_at": "2026-09-27T19:43:05.255107+00:00",
+  "git_head": "53cc7f86cb2048827ae29dc510494ded92ceb48c",
+  "working_tree_dirty": true,
+  "published": false,
+  "committed": false,
+  "all_tests_passed": false,
+  "all_platform_release_accepted": false,
+  "godot": {
+    "status": "passed",
+    "suite_count": 708,
+    "completed_suites": 708,
+    "missing_suites": [],
+    "totals": {
+      "total": 7538,
+      "passed": 7538,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "python": {
+    "passed": 1013,
+    "subtests_passed": 1526,
+    "failed": 0,
+    "seconds": 741.48,
+    "faulthandler_plugin_disabled": true
+  },
+  "powershell": [
+    {
+      "exit_code": 0,
+      "log": ".tmp/v062_release/test_training_watchdog.log",
+      "script": "scripts/training/test_training_watchdog.ps1"
+    },
+    {
+      "exit_code": 0,
+      "log": ".tmp/v062_release/test_parallel_training_launcher.log",
+      "script": "scripts/training/test_parallel_training_launcher.ps1"
+    },
+    {
+      "exit_code": 0,
+      "log": ".tmp/v062_release/test_parallel_training_dashboard.log",
+      "script": "scripts/training/test_parallel_training_dashboard.ps1"
+    },
+    {
+      "exit_code": 0,
+      "log": ".tmp/v062_release/test_resume_phase23.log",
+      "script": "scripts/training/test_resume_phase23.ps1"
+    },
+    {
+      "exit_code": 0,
+      "log": ".tmp/v062_release/test_run_v18_rule_benchmarks.log",
+      "script": "tests/test_run_v18_rule_benchmarks.ps1"
+    }
+  ],
+  "native_worker": "passed",
+  "node_import_gateway": {
+    "passed": 8,
+    "failed": 0
+  },
+  "browser": {
+    "status": "passed",
+    "total": 96,
+    "passed": 52,
+    "failed": 0,
+    "skipped": 0,
+    "not_applicable": 44
+  },
+  "browser_latest": {
+    "status": "passed",
+    "total": 18,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "not_applicable": 2
+  },
+  "browser_rotation": {
+    "passed": 2,
+    "failed": 4,
+    "skipped": 0,
+    "cases": [
+      {
+        "project": "webkit-desktop",
+        "status": "unexpected",
+        "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "webkit-tablet-touch",
+        "status": "unexpected",
+        "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "chromium-desktop",
+        "status": "expected",
+        "error": ""
+      },
+      {
+        "project": "chromium-touch",
+        "status": "expected",
+        "error": ""
+      },
+      {
+        "project": "webkit-touch",
+        "status": "unexpected",
+        "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "webkit-touch-landscape",
+        "status": "unexpected",
+        "error": "Error: The action dialog must actually repaint the canvas\n\nThe action dialog must actually repaint the canvas\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 8000ms exceeded while waiting on the predicate"
+      }
+    ]
+  },
+  "edge_deck_center": {
+    "passed": 3,
+    "failed": 0
+  },
+  "windows_final_ui": "passed",
+  "android_final_ui": "passed",
+  "windows_updater": {
+    "passed": 6,
+    "failed": 0
+  },
+  "android_updater": {
+    "passed": 20,
+    "failed": 0
+  },
+  "website": {
+    "build": "passed",
+    "tests_passed": 43,
+    "tests_failed": 0,
+    "download_and_build_hashes_match": true
+  },
+  "packages": {
+    "version": "0.6.2",
+    "artifacts": [
+      {
+        "name": "PtcgDeckAgent-win.zip",
+        "platform": "windows-x86_64",
+        "bytes": 242833408,
+        "sha256": "23481f9629a29195d75c75513b7b6dcb99402558fd16be1ce6429f2234529561"
+      },
+      {
+        "name": "ptcgdeckagent-mac.zip",
+        "platform": "macos-x86_64-arm64",
+        "bytes": 266834558,
+        "sha256": "9b854087d21e3711c855b80f0f879d140393031e79302b6d8e37be4fe7cb9030"
+      },
+      {
+        "name": "ptcgdeckagent-android.apk",
+        "platform": "android-arm64",
+        "bytes": 296328493,
+        "sha256": "f6c600781a77f380a3aad5db5e1f4f64718e10459e842183c3b3ae4819a2a896"
+      }
+    ],
+    "macos": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "rules_only": true,
+      "native_verified": false,
+      "notarized": false
+    },
+    "published": false
+  },
+  "web": {
+    "version": "0.6.2",
+    "build_number": 620,
+    "release_path": "/dist/web/v0_6_2",
+    "verified_files": 16,
+    "manifest_sha256": "ffc856ff89f355649080b46b8dd03b3ac4eb93600cc4bfec511fc195ee62a64b"
+  },
+  "open_validation": [
+    "Four Windows WebKit rotation pixel tests fail; stock Godot Web canary reproduces in two Playwright/WebKit versions.",
+    "Safari macOS/iOS physical-device rotation/rendering acceptance is unavailable.",
+    "macOS native execution/signature verification/notarization is not completed.",
+    "Android ARM64 APK was run using emulator translation, not physical ARM/4KiB/16KiB device acceptance."
+  ],
+  "evidence_root": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_release",
+  "rollback_backup": "D:\\ai\\code\\PtcgDAP\\.tmp\\v062_release\\previous",
+  "source_sha256": {
+    "project.godot": "a27c53fd1f0cf15cdad59d4ec2926a39160209828a41bef52acf336ccc6b393b",
+    "export_presets.cfg": "7457a12dd8164a9469cbe99f24aa4036480f5492ef608a4c129407610266407f",
+    "scripts/app/AppVersion.gd": "cc26c2725e8974d0de8a0739787d1934f22b3886b6f75b527618fd7624153da4",
+    "scripts/ai/ptcgdap/packages/AuthorStrategyPackageCatalog.gd": "3553a5834b851d62d1aa445ae436afdca87e582e32fd3f7e8fa87c309b6b568f",
+    "scripts/ui/non_battle/NonBattleLayoutController.gd": "998249b0730d33f60c31d5f9d395cc162bb6617bffa7f04e5b3c35f4a18d598a",
+    "scenes/deck_manager/DeckManager.gd": "389967e214e15303a942ff41261e2aaa86d73cd2b1505a83ea6126aa83aab5e2",
+    "scenes/ptcgdap_strategy_hub/StrategyHub.gd": "31e2021ce9d46931ae8a86ff717c06a885f576f5a83d409516749861e14583c9",
+    "scripts/ui/battle/layouts/BattleLandscapeLayoutView.gd": "31a2eb9532e20668f9d1b62700c7a1e76b811c9b5d87c56b9efaf9b4f878d8bc",
+    "scripts/ui/battle/layouts/BattlePortraitLayoutView.gd": "dca9bd661e2a0f0cd954032cd95763c01b7feb42844c0a90a61f95ca43a6ce4d",
+    "scripts/tools/export_ptcgdap_device_release.ps1": "a9d7b86921db4811464a63af096dd1886fe6ec883843f9b202bcd12249b068c5",
+    "scripts/tools/run_android_ui_e2e.ps1": "d26a25131e7695b043e4b1f7cde389c375daeca99ee3eabe2a845f16d2f3df0d",
+    "scripts/tools/ArenaUiRegression.gd": "f9ac76794f22b11db191061efc2b92cd2756f51d3d6b2aef5bc22778e2879a80",
+    "tests/test_battle_portrait_layout.gd": "105ec885fe7be6a60e1884fa49646c93ccc13ba7902ddfc77ffbfc338af3f720",
+    "tests/test_tournament_author_runtime.gd": "3d44bde9f05a22dc2674496c0f73da376085f0711f87e931a651d175f692ce68",
+    "tests/test_update_checker.gd": "28f372b1b5680354bbeb1b61ca45c5e0d53e1da25b891233caeebcf412b426fd",
+    "tests/test_ui_runtime_profile.gd": "d869681a7257e31c4af43be73051a456b112fa5f69d887e947ce6c271e67d513",
+    "tests/web_e2e/arena-platform.spec.cjs": "b400e4a14834222ee4c8b41c04725d32217b172c79cfaf648b46c1bc76c6eac4",
+    "tests/web_e2e/check_frame_change.py": "2e1c78b60ed4b40dbe362f3578effcf5a93d96f5db6609a19f261f844bf1ba3c",
+    "web/e2e/ArenaWebProbe.gd": "f45491380e2cbb03bdb50f45e471e59107ce325e8d793e789e8881d2f03cc7a7"
+  },
+  "reports_sha256": {
+    "godot-final-v2.json": "3fa994593df6bdc3d90ec345ff2f9a44cfaa5fad3aae210386dfce913fe71715",
+    "python-full3.xml": "71edee947acfce7b9038f9deb510417c1297652eca0abea1eb781b7d3c5f98e5",
+    "web_final/summary.json": "147f4cd15bcef43bba95ea24519e5a9c556614381a25ac348a4bf8cc33ecbf0d",
+    "web_latest_targeted/summary.json": "d6c3e62f579030a38512dd1cebf8298196959aaf0eb48e0a1ee19ec2fb1b4086",
+    "arena_rotation_final/results.json": "e4bf63159507451a2da4097d4c6f46d642afd8abe56fa40f80e5803b00699a2e",
+    "website-final-tests.log": "86d566f0db2380d120b8e6eb8f39c748c26e846564517e5a6c6567531544cb17",
+    "final-packages.json": "ad0b71dd88bd66e53ed05b55d8a2e8368d23618b670ad5e5a2834132c45de1ed"
+  },
+  "superseded_artifacts_by": "evidence/ptcgdap/2d_export_trim_v062_20260928.json"
+}

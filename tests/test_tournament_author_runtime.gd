@@ -170,7 +170,13 @@ func test_recovery_startup_failure_after_preflight_returns_to_tournament_without
 		selection.archive_sha256 = "F".repeat(64)
 		GameManager.set_author_strategy_selection(selection)
 		var battle: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
-		battle.call("_start_battle")
+		var tree := Engine.get_main_loop() as SceneTree
+		tree.root.add_child(battle)
+		var deadline := Time.get_ticks_msec() + 10000
+		await tree.process_frame
+		while bool(battle.get("_battle_start_pending")) and Time.get_ticks_msec() < deadline:
+			await tree.process_frame
+		checks.append(assert_false(bool(battle.get("_battle_start_pending")), "Failed preparation must finish within the startup deadline"))
 		checks.append(assert_false(GameManager.is_tournament_battle_active()))
 		checks.append(assert_eq(GameManager.consume_last_requested_scene_path(), GameManager.SCENE_TOURNAMENT_OVERVIEW if round_index == 0 else GameManager.SCENE_TOURNAMENT_STANDINGS))
 		checks.append(assert_false(GameManager.tournament_start_error.is_empty()))

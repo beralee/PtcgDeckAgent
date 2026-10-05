@@ -28,8 +28,11 @@ func test_deck_delete_closes_input_transaction_before_incremental_commit() -> St
 	tree.root.add_child(scene)
 	await tree.process_frame
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	# Settle the intentional breakpoint rebuild before testing the delete transaction.
+	await tree.process_frame
+	await tree.process_frame
 
-	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list := scene.get_node_or_null("%DeckList") as Container
 	var survivor_before := _deck_row_with_id(deck_list, SURVIVOR_DECK_ID)
 	var deck_to_delete := CardDatabase.get_deck(DELETE_DECK_ID)
 	scene.call("_on_delete_deck", deck_to_delete)
@@ -42,7 +45,7 @@ func test_deck_delete_closes_input_transaction_before_incremental_commit() -> St
 	var delete_waits_for_idle_frame := CardDatabase.has_deck(DELETE_DECK_ID)
 	await tree.process_frame
 
-	deck_list = scene.get_node_or_null("%DeckList") as VBoxContainer
+	deck_list = scene.get_node_or_null("%DeckList") as Container
 	var survivor_after := _deck_row_with_id(deck_list, SURVIVOR_DECK_ID)
 	var deleted_row_after := _deck_row_with_id(deck_list, DELETE_DECK_ID)
 	var result := run_checks([
@@ -171,7 +174,7 @@ func test_deck_save_upserts_one_row_after_the_active_callback() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	tree.root.add_child(scene)
 	await tree.process_frame
-	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var deck_list := scene.get_node_or_null("%DeckList") as Container
 	var target_before := _deck_row_with_id(deck_list, UPSERT_DECK_ID)
 	var survivor_before := _deck_row_with_id(deck_list, SURVIVOR_DECK_ID)
 	var deck := CardDatabase.get_deck(UPSERT_DECK_ID)
@@ -180,7 +183,7 @@ func test_deck_save_upserts_one_row_after_the_active_callback() -> String:
 	var target_inside_callback := _deck_row_with_id(deck_list, UPSERT_DECK_ID)
 	var survivor_inside_callback := _deck_row_with_id(deck_list, SURVIVOR_DECK_ID)
 	await tree.process_frame
-	deck_list = scene.get_node_or_null("%DeckList") as VBoxContainer
+	deck_list = scene.get_node_or_null("%DeckList") as Container
 	var target_after := _deck_row_with_id(deck_list, UPSERT_DECK_ID)
 	var survivor_after := _deck_row_with_id(deck_list, SURVIVOR_DECK_ID)
 	var result := run_checks([

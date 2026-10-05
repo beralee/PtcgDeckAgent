@@ -1,6 +1,8 @@
 class_name TestBattleSetupLayout
 extends TestBase
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const BattleSetupScene := preload("res://scenes/battle_setup/BattleSetup.tscn")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
@@ -219,7 +221,7 @@ func test_battle_setup_strategy_discussion_uses_pair_session_and_resets_on_deck_
 
 	scene.call("_on_discuss_strategy_ai_pressed")
 	var first_signature := str(scene.get("_strategy_discussion_signature"))
-	var dialog := scene.get("_strategy_discussion_dialog") as AcceptDialog
+	var dialog := scene.get("_strategy_discussion_dialog") as GameModal
 	var first_title := ""
 	if dialog != null:
 		var deck_name_label := dialog.get_node_or_null("%DeckNameLabel") as Label
@@ -365,7 +367,7 @@ func test_battle_setup_landscape_deck_picker_stays_inside_short_viewport() -> St
 		assert_true(panel != null and panel_rect.position.y >= safe_margin - 0.5, "Landscape deck picker should keep its top edge inside the viewport: %s" % str(panel_rect)),
 		assert_true(panel != null and panel_rect.end.y <= viewport_size.y - safe_margin + 0.5, "Landscape deck picker should keep its bottom edge inside the viewport: %s vs %s; %s" % [str(panel_rect), str(viewport_size), str(diagnostics)]),
 		assert_true(scroll != null and scroll.size.y > 0.0, "Landscape deck picker should retain a usable scroll area after fitting the viewport"),
-		assert_eq(all_tab.text if all_tab != null else "", "全部(更新18.0)", "Battle setup deck picker should identify the full 18.0 deck list"),
+		assert_eq(all_tab.text if all_tab != null else "", "全部(更新18.5)", "Battle setup deck picker should identify the full 18.5 deck list"),
 	])
 
 	_dispose_scene(scene)
@@ -473,6 +475,8 @@ func test_battle_setup_portrait_keeps_hidden_drag_scroll() -> String:
 func test_battle_setup_portrait_screen_touch_selects_background_card() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	var previous_background := str(GameManager.selected_battle_background)
+	var previous_profile := GameManager.ui_runtime_profile
+	GameManager.ui_runtime_profile = UiRuntimeProfile.new({"host_kind": "native", "native_os": "android", "mobile_like": true, "pointer_mode": "touch"})
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
 	GameManager.selected_battle_background = "res://assets/ui/background.png"
 	var scene := BattleSetupScene.instantiate()
@@ -482,16 +486,16 @@ func test_battle_setup_portrait_screen_touch_selects_background_card() -> String
 	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	scene.position = Vector2.ZERO
 	scene.size = Vector2(390, 844)
-	scene.set("_battle_backgrounds", [
-		"res://assets/ui/background.png",
-		"res://assets/ui/background1.png",
-	])
 	scene.call("_refresh_background_gallery")
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
 	scene.call("_layout_background_gallery_cards")
 
 	var row := scene.find_child("BackgroundGalleryRow", true, false) as HBoxContainer
-	var target_card := row.get_child(1) as Control if row != null and row.get_child_count() > 1 else null
+	# 3D fields can precede 2D backgrounds on supported mobile runtimes.
+	var target_card: Control = null
+	if row != null:
+		for child in row.get_children():
+			if str(child.get_meta("background_path","")) == "res://assets/ui/background1.png": target_card = child
 	var target_position := target_card.get_global_rect().get_center() if target_card != null else Vector2.ZERO
 	if target_card != null and target_card.get_global_rect().size == Vector2.ZERO:
 		target_card.position = Vector2(204, 0)
@@ -515,6 +519,7 @@ func test_battle_setup_portrait_screen_touch_selects_background_card() -> String
 	_dispose_scene(scene)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	GameManager.selected_battle_background = previous_background
+	GameManager.ui_runtime_profile = previous_profile
 	return result
 
 
@@ -661,7 +666,7 @@ func test_battle_setup_hides_strategy_discussion_button_in_portrait_only() -> St
 	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
 	var hidden_in_portrait := discuss_button != null and not discuss_button.visible
 	scene.call("_on_discuss_strategy_ai_pressed")
-	var dialog_after_portrait_press := scene.get("_strategy_discussion_dialog") as AcceptDialog
+	var dialog_after_portrait_press := scene.get("_strategy_discussion_dialog") as GameModal
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
 	scene.call("_refresh_ai_ui_visibility")
 	var visible_in_landscape := discuss_button != null and discuss_button.visible
@@ -1694,7 +1699,7 @@ func test_battle_setup_view_button_press_opens_deck_dialog() -> String:
 
 	var dialog_opened := false
 	for child: Node in scene.get_children():
-		if child is AcceptDialog and (child as AcceptDialog).title == "Deck Preview":
+		if child is GameModal and (child as GameModal).title == "Deck Preview":
 			dialog_opened = true
 			break
 	var grid := scene.find_child("DeckViewCardGrid", true, false) as GridContainer
@@ -1728,6 +1733,48 @@ func test_battle_setup_hides_ai_edit_button_in_vs_ai_mode() -> String:
 	])
 
 	scene.queue_free()
+	return result
+
+
+func test_battle_setup_portrait_footer_touch_takes_priority_over_scrolled_volume_slider() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_clear_startup_input_shield")
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var start_button := scene.find_child("BtnStart", true, false) as Button
+	var slider := scene.find_child("BgmVolumeSlider", true, false) as HSlider
+	# The scrolling content can pass behind the fixed footer. Reproduce its
+	# hitbox overlap without relying on a particular device's scroll offset.
+	start_button.size = Vector2(160, 64)
+	slider.global_position = start_button.global_position
+	slider.size = start_button.size
+	for connection: Dictionary in start_button.pressed.get_connections():
+		start_button.pressed.disconnect(connection["callable"])
+	var clicks := [0]
+	start_button.disabled = false
+	start_button.pressed.connect(func() -> void: clicks[0] += 1)
+	var original_volume := slider.value
+	var point := start_button.get_global_rect().get_center()
+	var overlaps := slider.get_global_rect().has_point(point)
+	for pressed: bool in [true, false]:
+		var touch := InputEventScreenTouch.new()
+		touch.position = point
+		touch.pressed = pressed
+		scene.call("_input", touch)
+	var result := run_checks([
+		assert_true(overlaps, "Regression must overlap the volume slider with the fixed footer"),
+		assert_eq(clicks[0], 1, "A footer touch must activate Start exactly once even when scrolling content overlaps it"),
+		assert_eq(slider.value, original_volume, "Touching the visible footer must not change the volume behind it"),
+	])
+	slider.value = original_volume
+	_dispose_scene(scene)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	return result
 
 
@@ -1789,7 +1836,7 @@ func test_battle_setup_deck_view_close_release_does_not_reopen_underlying_button
 	scene.call("_on_deck_view_pressed", 0)
 	await tree.process_frame
 
-	var dialog := scene.find_child("DeckViewDialog", false, false) as AcceptDialog
+	var dialog := scene.find_child("DeckViewDialog", false, false) as GameModal
 	var deck1_view := scene.find_child("Deck1ViewButton", true, false) as Button
 	if deck1_view != null:
 		deck1_view.global_position = Vector2(80, 80)

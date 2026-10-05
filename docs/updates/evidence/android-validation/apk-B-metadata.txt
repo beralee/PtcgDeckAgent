@@ -1,0 +1,5 @@
+package: name='cn.skillserver.ptcg.updatelab' versionCode='2' versionName='1.0.1' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+sdkVersion:'24'
+targetSdkVersion:'35'
+application-label:'升级验证'
+native-code: 'arm64-v8a' 'x86_64'

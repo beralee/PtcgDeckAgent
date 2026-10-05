@@ -20,12 +20,15 @@ $suites = @(
 $results = @()
 foreach ($suite in $suites) {
     $log = Join-Path $artifact (([IO.Path]::GetFileNameWithoutExtension($suite)) + '.log')
-    & $GodotPath --headless --path $repo --script tests/FocusedSuiteRunner.gd -- "--suite-script=res://$suite" *> $log
+    # Use the common watchdog and isolated user://; never inherit player data.
+    $reportDir = Join-Path $artifact (([IO.Path]::GetFileNameWithoutExtension($suite)) + '-' + [guid]::NewGuid().ToString('N'))
+    & (Join-Path $PSScriptRoot 'run_godot_tests.ps1') -Runner focused -SuiteScript "res://$suite" -GodotExe $GodotPath -ReportDirectory $reportDir *> $log
     $code = $LASTEXITCODE
-    $summary = Select-String -LiteralPath $log -Pattern '^Total: (\d+) \| Failed: (\d+)' | Select-Object -Last 1
-    $passed = $code -eq 0 -and $null -ne $summary -and $summary.Matches[0].Groups[2].Value -eq '0'
-    $results += [ordered]@{ suite = $suite; passed = $passed; exit_code = $code; summary = [string]$summary.Line; log = $log }
-    Write-Output "$suite : $passed $($summary.Line)"
+    $reportPath = Join-Path $reportDir 'report.json'
+    $report = if (Test-Path -LiteralPath $reportPath) { Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json } else { $null }
+    $passed = $code -eq 0 -and $null -ne $report -and $report.status -eq 'passed' -and $report.totals.passed -gt 0
+    $results += [ordered]@{ suite = $suite; passed = $passed; exit_code = $code; report = $reportPath; log = $log }
+    Write-Output "$suite : $passed (report: $reportPath)"
 }
 if ($IncludeWeb) {
     try {

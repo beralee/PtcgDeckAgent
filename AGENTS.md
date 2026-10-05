@@ -89,6 +89,36 @@ state the achieved alignment level without overclaiming.
 Do not commit, push, publish, modify `ptcgabc`, or change private cloud services
 unless the user explicitly authorizes that action.
 
+## Bundled deck completeness gate
+
+When adding or removing a built-in deck, update its JSON under
+`data/bundled_user/decks/`, `_manifest.txt`, and the generated seed revision.
+New built-in opponents must also be registered in
+`CardDatabase.SUPPORTED_AI_DECK_IDS`. A genuinely player-only deck requires an
+explicit reason in `tests/fixtures/bundled_player_only_decks.json`; the existing
+entries preserve the historical player-only scope. Never regenerate that file
+from the current AI shortlist to silence a missing-registration failure.
+
+Before reporting a bundled-deck change complete, run the automatically
+discovered `BundledDeckCatalog` functional suite with an isolated user-data
+directory. It scans actual bundled files independently of the manifest and AI
+shortlist, checks explicit scope, and verifies every AI opponent's rendered
+selection button, import-time ordering and explicit LLM eligibility. Preserve
+the original `import_date`; new AI decks must sort ahead of older imports
+without adding version or benchmark-rank overrides. Matching card names to an
+older rules strategy does not qualify a new deck for LLM support: register the
+exact deck adaptation before exposing a model variant or support marker.
+Also run `CardDatabaseSeed` and
+`python -m unittest tests.ptcgdap.test_bundled_seed_revision`.
+For example:
+
+```powershell
+.\scripts\tools\run_godot_tests.ps1 -Runner functional -Suite 'BundledDeckCatalog,CardDatabaseSeed' -UserDataRoot .godot_test_user\bundled_deck_check
+```
+
+Do not weaken this gate to a fixed deck count, version-name prefix, or a list
+derived solely from `SUPPORTED_AI_DECK_IDS`: those miss newly added files.
+
 ## Process safety
 
 - Do not run high-memory Python pools in parallel.

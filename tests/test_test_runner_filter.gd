@@ -5,6 +5,13 @@ const TestSuiteFilterScript = preload("res://scripts/tools/TestSuiteFilter.gd")
 const TestSuiteCatalogScript = preload("res://tests/TestSuiteCatalog.gd")
 
 
+func test_explicit_empty_filters_do_not_index_past_the_argument() -> String:
+	return run_checks([
+		assert_true(TestSuiteFilterScript.parse_suite_filter(PackedStringArray(["--suite="])).is_empty()),
+		assert_true(TestSuiteFilterScript.parse_group_filter(PackedStringArray(["--group="])).is_empty()),
+	])
+
+
 func test_parse_suite_filter_empty_args_runs_all() -> String:
 	var selected := TestSuiteFilterScript.parse_suite_filter(PackedStringArray())
 	return run_checks([

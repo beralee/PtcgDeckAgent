@@ -1,0 +1,104 @@
+{
+  "schema": "ptcgdap.android_self_ko_prize_dialog.v1",
+  "date": "2026-09-21",
+  "scope": "Constructed real BattleScene + actual Dusclops effect; synthetic prior AI dialog lifecycle on Android; actual Nest Ball prior search in desktop regression",
+  "engine": "Godot 4.6.1",
+  "avd": "Medium_Phone_API_36.1",
+  "device": "emulator-5556 (read-only, closed after verification)",
+  "graphics": "host GPU, OpenGL ES 3.1 Compatibility",
+  "red": {
+    "current_player": 1,
+    "damage": 50,
+    "dialog_opacity": 0.0,
+    "dialog_visible": true,
+    "engine_prize_remaining": 1,
+    "human_hand": 0,
+    "human_prizes": 6,
+    "pending": "take_prize",
+    "platform": "Android",
+    "portrait_dialog_active": true,
+    "prize_rect": [
+      248.0,
+      1281.0,
+      368.0,
+      514.133361816406
+    ],
+    "second": 5,
+    "state": "phase=6 turn=10 current=1 view=0 pending=take_prize selected=- hand=0/0 overlays=dialog=true handover=false coin=false detail=false discard=false effect=kind= player=-1 step=-1/0 card=- ctx_keys=0",
+    "turn": 10
+  },
+  "green_before_touch": {
+    "current_player": 1,
+    "damage": 50,
+    "dialog_opacity": 1.0,
+    "dialog_visible": true,
+    "engine_prize_remaining": 1,
+    "human_hand": 0,
+    "human_prizes": 6,
+    "pending": "take_prize",
+    "platform": "Android",
+    "portrait_dialog_active": true,
+    "prize_rect": [
+      248.0,
+      1281.0,
+      368.0,
+      514.133361816406
+    ],
+    "second": 9,
+    "state": "phase=6 turn=10 current=1 view=0 pending=take_prize selected=- hand=0/0 overlays=dialog=true handover=false coin=false detail=false discard=false effect=kind= player=-1 step=-1/0 card=- ctx_keys=0",
+    "turn": 10
+  },
+  "green_after_touch": {
+    "current_player": 0,
+    "damage": 50,
+    "dialog_opacity": 1.0,
+    "dialog_visible": false,
+    "engine_prize_remaining": 0,
+    "human_hand": 2,
+    "human_prizes": 5,
+    "pending": "",
+    "platform": "Android",
+    "portrait_dialog_active": false,
+    "prize_rect": [
+      49.0,
+      1959.677734375,
+      368.0,
+      514.133361816406
+    ],
+    "second": 47,
+    "state": "phase=4 turn=11 current=0 view=0 pending= selected=- hand=2/0 overlays=dialog=false handover=false coin=false detail=false discard=false effect=kind= player=-1 step=-1/0 card=- ctx_keys=0",
+    "turn": 11
+  },
+  "input": {
+    "kind": "adb shell input tap",
+    "y": 1040,
+    "x": 292
+  },
+  "tests": {
+    "dialog_controller": 32,
+    "self_ko": 3,
+    "functional_discovery_verified": true,
+    "failed": 0,
+    "ui_features_part4": 99,
+    "ui_handover": 17,
+    "unique_total": 151
+  },
+  "diagnostics": {
+    "godot_errors": 0,
+    "ui_suite_exit_resource_warnings": true,
+    "swiftshader_trials_excluded_from_visual_acceptance": true,
+    "shader_cache_recompile_warning": true
+  },
+  "builds": {
+    "green_sha256": "56015df1d42d11ce5863ba18431ca265780dbbb9bd862f25589155e3f0f98103",
+    "red_sha256": "7ebf864ead3abb7af96808a0965a1f3415529b15de83d65eeccd1f2dfe3f6576",
+    "mobile_update_published": false,
+    "diagnostic_only": true
+  },
+  "fix": {
+    "path": "scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd",
+    "method": "_prepare_dialog_overlay_for_prize_selection",
+    "added_statement": "dialog_overlay.modulate = Color.WHITE"
+  },
+  "user_match_exact_replay": false
+}

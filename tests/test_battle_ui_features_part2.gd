@@ -1143,8 +1143,8 @@ func test_normal_battle_discard_hud_physical_click_opens_collection_popup() -> S
 	if rotated_touch_popup_opened:
 		scene.call("_close_discard_collection_viewer", "rotated_viewport_touch_test")
 
-	# Godot Android can also deliver ScreenTouch after the OS has already rotated
-	# it into portrait coordinates even though get_viewport_rect() is landscape.
+	# This is the old unrotated HUD rectangle, not a second valid viewport input
+	# coordinate. Accepting both spaces created invisible hit targets over prizes.
 	var post_rotation_native_press := InputEventScreenTouch.new()
 	post_rotation_native_press.index = 0
 	post_rotation_native_press.pressed = true
@@ -1192,8 +1192,8 @@ func test_normal_battle_discard_hud_physical_click_opens_collection_popup() -> S
 		assert_true(mouse_first_popup_stayed_open, "Android's mouse-first touch echo must not immediately close the discard popup it just opened"),
 		assert_true(rotated_touch_handled, "Forced portrait must convert the native landscape touch into battle-local HUD coordinates"),
 		assert_true(rotated_touch_popup_opened, "A native Android touch must open the discard popup through the rotated portrait canvas"),
-		assert_true(post_rotation_touch_handled, "Forced portrait must accept Android touch coordinates already rotated by the OS"),
-		assert_true(post_rotation_touch_popup_opened, "Post-rotation native Android coordinates must open the discard popup"),
+		assert_false(post_rotation_touch_handled, "An unrotated ghost rectangle must not be treated as a second HUD hit target"),
+		assert_false(post_rotation_touch_popup_opened, "A touch outside the rendered HUD must not open the discard popup"),
 	])
 
 
@@ -2713,7 +2713,7 @@ func test_exp_share_assignment_keeps_follow_up_prize_prompt() -> String:
 	gsm.game_state = GameState.new()
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.turn_number = 2
-	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	gsm.game_state.phase = GameState.GamePhase.MAIN
 	scene.set("_gsm", gsm)
 	scene.set("_view_player", 1)
 	gsm.player_choice_required.connect(scene._on_player_choice_required)
@@ -2725,13 +2725,13 @@ func test_exp_share_assignment_keeps_follow_up_prize_prompt() -> String:
 
 	var attacker := PokemonSlot.new()
 	attacker.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Attacker", 120, "C"), 0))
+	attacker.get_card_data().attacks = [{"name": "Knockout", "cost": "", "damage": "60"}]
 	gsm.game_state.players[0].active_pokemon = attacker
 	for prize_index: int in 6:
 		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Prize %d" % prize_index, 60, "C"), 0))
 
 	var knocked_out := PokemonSlot.new()
 	knocked_out.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Knocked Out Active", 60, "C"), 1))
-	knocked_out.damage_counters = 60
 	var energy_a := CardInstance.create(_make_energy_cd("Basic Energy A", "C"), 1)
 	var energy_b := CardInstance.create(_make_energy_cd("Basic Energy B", "C"), 1)
 	knocked_out.attached_energy.append(energy_a)
@@ -2745,7 +2745,9 @@ func test_exp_share_assignment_keeps_follow_up_prize_prompt() -> String:
 	exp_share_target.attached_tool = exp_share_card
 	gsm.game_state.players[1].bench = [exp_share_target]
 
-	gsm.call("_handle_knockout", 1, knocked_out, true)
+	# Exp. Share requires an attack-damage knockout; drive the real attack so
+	# damage provenance and the energy-transfer/prize prompts remain linked.
+	var attack_executed := gsm.use_attack(0, 0)
 	var initial_pending: String = str(scene.get("_pending_choice"))
 	var assignments: Array[Dictionary] = [{
 		"source": energy_a,
@@ -2758,6 +2760,7 @@ func test_exp_share_assignment_keeps_follow_up_prize_prompt() -> String:
 
 	GameManager.current_mode = previous_mode
 	return run_checks([
+		assert_true(attack_executed, "The attack must cause the knockout through the engine"),
 		assert_eq(initial_pending, "exp_share_target", "Exp. Share knockout should first wait for the energy-transfer prompt"),
 		assert_true(transferred, "Exp. Share should move the selected Basic Energy to the target"),
 		assert_eq(active_after_commit, null, "The knocked-out Active should be removed before the replacement prompt"),

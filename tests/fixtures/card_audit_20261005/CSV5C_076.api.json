@@ -1,0 +1,70 @@
+{
+  "name": "鬼斯",
+  "cardType": "Pokemon",
+  "mechanic": null,
+  "label": null,
+  "description": "【无】 吸引 \n从自己牌库上方抽取1张卡牌。\n\n【恶】【无】 磷火 20\n\n\n",
+  "yorenCode": "P092",
+  "pokemonAttr": {
+    "energyType": "D",
+    "stage": "Basic",
+    "hp": 50,
+    "ability": [],
+    "ancientTrait": "",
+    "weakness": {
+      "energy": "F",
+      "value": "×2"
+    },
+    "resistance": null,
+    "retreatCost": 1,
+    "attack": [
+      {
+        "name": "吸引",
+        "text": "从自己牌库上方抽取1张卡牌。",
+        "cost": "C",
+        "damage": "",
+        "isVStarPower": false
+      },
+      {
+        "name": "磷火",
+        "text": "",
+        "cost": "DC",
+        "damage": "20",
+        "isVStarPower": false
+      }
+    ],
+    "evolvesFrom": ""
+  },
+  "setCode": "CSV5C",
+  "cardIndex": "076",
+  "setCardsNum": "",
+  "artist": "Nobuhiro Imagawa",
+  "rarity": "C",
+  "releaseDate": "2025-09-11T16:00:00Z",
+  "regulationMark": "G",
+  "effectId": "d855e2994b2c3a876900fd79293e6f83",
+  "regulationLegal": {
+    "standard": true,
+    "expanded": true
+  },
+  "effectSameCards": [
+    {
+      "setCode": "CSV5C",
+      "cardIndex": "076",
+      "cardName": "鬼斯",
+      "rarity": "C",
+      "effectId": "d855e2994b2c3a876900fd79293e6f83",
+      "cardType": "Pokemon",
+      "yorenCode": "P092",
+      "is": [
+        "Basic"
+      ],
+      "setCodeEn": "PAF",
+      "cardIndexEn": "55",
+      "nameEn": "Gastly"
+    }
+  ],
+  "setCodeEn": "PAF",
+  "cardIndexEn": "55",
+  "nameEn": "Gastly"
+}

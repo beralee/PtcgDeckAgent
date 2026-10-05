@@ -1,5 +1,28 @@
 # 66. State-conditioned transaction value v2 and paired branch credit
 
+## 2026-09-20 clarification and semantic actor R4
+
+The historical paired traces below establish a matched prefix and an association
+with the final outcome. Unless continuation policies and the single intervention
+are also controlled, that association is not a causal advantage label for the
+first action. The Forge learned-strategy pipeline keeps those evidence claims
+separate; this clarification does not relabel historical experiments.
+
+The authorized Marnie R4 interface adds `ptcgdap_local_semantic_actor_i32_v2`
+(416 frame / 48 option columns) while retaining v1. `SemanticModelInputV2.gd`
+preserves per-slot public board facts and current target/source relations;
+`PtcgDAPModelActor`, the package loader and the native contract accept this
+version without relaxing Base authority. Development captures record the actual
+profile, width and projector artifact. The exact UTF-8 category framing uses
+byte arrays because Godot strings cannot preserve NUL separators.
+
+The new Windows native DLL has been built and tested in an isolated Forge R4
+runtime; the user's installed `bin` DLL is not replaced. DLL names alone do not
+identify profile support. Engine/strength receipts and source hashes are under
+`D:/ai/code/ptcg-strategy-forge/work/marnies-gift-box-neural-r4-20260920/`.
+Neither the new profile nor the old paired-branch lane establishes PPO,
+cross-device acceptance or production approval.
+
 ## Outcome
 
 This work package added a full-public-state transaction value layer and a stricter credit-assignment lane without changing the public policy boundary or Base Graph authority. The resulting 5.36.0 package is a development candidate, not a promoted replacement.

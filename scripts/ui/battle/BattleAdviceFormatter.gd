@@ -4,6 +4,8 @@ const BattleI18nScript := preload("res://scripts/ui/battle/BattleI18n.gd")
 
 
 func format_advice(result: Dictionary, progress_text: String = "") -> String:
+	result = preload("res://scripts/ui/ModelDisplayText.gd").escape_tree(result)
+	progress_text = progress_text.replace("[", "[lb]")
 	var status := str(result.get("status", ""))
 	if status == "running":
 		var running_progress := progress_text.strip_edges()

@@ -1,0 +1,3703 @@
+{
+  "schema_version": 1,
+  "curriculum_id": "dragapult185-expert-v1",
+  "title": "多龙 18.5 · 专家共创",
+  "deck_id": 675701,
+  "deck_sha256": "2d08eec0a830d15d468e2f2e014e19e191f5cd02fa76d3ac46fb150d3774ab06",
+  "question_count": 36,
+  "scenarios": [
+    {
+      "id": "expert-dragapult185-01",
+      "revision": 1,
+      "order": 1,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "transfer",
+      "topic": "转伤与能量",
+      "title": "局面里的第三十点",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 30
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thC_102",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 40
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-02",
+      "revision": 1,
+      "order": 2,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "transfer",
+      "topic": "转伤与能量",
+      "title": "相似场面，重新判断",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thC_102",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 40
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-03",
+      "revision": 1,
+      "order": 3,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "transfer",
+      "topic": "转伤与能量",
+      "title": "唯一夜光给谁",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_PSY"
+          ],
+          "damage": 30
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thC_102",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 40
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-04",
+      "revision": 1,
+      "order": 4,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "supporter",
+      "topic": "支援者取舍",
+      "title": "最后两奖之前",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_039",
+          "30thDC_040",
+          "CSV1C_127",
+          "CSV8C_159"
+        ],
+        "discard": [],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 20
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-05",
+      "revision": 1,
+      "order": 5,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "supporter",
+      "topic": "支援者取舍",
+      "title": "手里有路，先走哪条",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_039",
+          "30thDC_040",
+          "CSV8C_183"
+        ],
+        "discard": [
+          "CSVE1C_FIR"
+        ],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 20
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-06",
+      "revision": 1,
+      "order": 6,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "supporter",
+      "topic": "支援者取舍",
+      "title": "落后时的调度",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_039",
+          "30thDC_040",
+          "CSV1C_127",
+          "CSV8C_159",
+          "CSV6C_114"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 20
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-07",
+      "revision": 1,
+      "order": 7,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "recovery",
+      "topic": "担架回收",
+      "title": "弃牌区的那张牌",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_183",
+          "30thDC_039"
+        ],
+        "discard": [
+          "CSVE1C_FIR",
+          "CSV8C_159"
+        ],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 20
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-08",
+      "revision": 1,
+      "order": 8,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "recovery",
+      "topic": "担架回收",
+      "title": "缺的是能量还是身体",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_183",
+          "30thDC_039"
+        ],
+        "discard": [
+          "CSV8C_159",
+          "CSV8C_081"
+        ],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 20
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-09",
+      "revision": 1,
+      "order": 9,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "recovery",
+      "topic": "担架回收",
+      "title": "两张担架的次序",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_183",
+          "CSV8C_183",
+          "30thDC_040"
+        ],
+        "discard": [
+          "CSVE1C_FIR",
+          "CSV8C_159"
+        ],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-10",
+      "revision": 1,
+      "order": 10,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "information",
+      "topic": "信息与进化",
+      "title": "进化之前还有什么",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thC_101",
+          "30thDC_040",
+          "CSV8C_081"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-11",
+      "revision": 1,
+      "order": 11,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "information",
+      "topic": "信息与进化",
+      "title": "两个引擎怎么用",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thC_101",
+          "30thDC_040",
+          "CSV8C_081"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-12",
+      "revision": 1,
+      "order": 12,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "information",
+      "topic": "信息与进化",
+      "title": "新上场的一只",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0,
+            "turn_played": 7
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thC_101",
+          "30thDC_040",
+          "CSV8C_081",
+          "CSVH1C_045"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-13",
+      "revision": 1,
+      "order": 13,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "budew",
+      "topic": "开局与控场",
+      "title": "开局的小花",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 2,
+      "turn_number": 2,
+      "first_player_index": 1,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0,
+          "turn_played": 2
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0,
+            "turn_played": 2
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "30thC_102",
+          "CSVE1C_PSY",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 6
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV7C_177",
+          "30thDC_040",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 6
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-14",
+      "revision": 1,
+      "order": 14,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "budew",
+      "topic": "开局与控场",
+      "title": "控场后的交接",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 2,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSVE1C_FIR",
+          "30thDC_040",
+          "CSV9C_078"
+        ],
+        "discard": [],
+        "prize_count": 5
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-15",
+      "revision": 1,
+      "order": 15,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "budew",
+      "topic": "开局与控场",
+      "title": "还差一个回合",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 2,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thC_102",
+          "30thDC_040",
+          "CSV8C_203"
+        ],
+        "discard": [],
+        "prize_count": 5
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-16",
+      "revision": 1,
+      "order": 16,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "handoff",
+      "topic": "保护与交棒",
+      "title": "前场之后谁接班",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 2,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-17",
+      "revision": 1,
+      "order": 17,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "handoff",
+      "topic": "保护与交棒",
+      "title": "多一个承伤选择",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 2,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-18",
+      "revision": 1,
+      "order": 18,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "handoff",
+      "topic": "保护与交棒",
+      "title": "主力已经就绪",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 2,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158",
+              "CSV8C_159"
+            ],
+            "energy": [
+              "CSVE1C_FIR",
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV1C_127",
+          "30thDC_040",
+          "CSV8C_158"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-19",
+      "revision": 1,
+      "order": 19,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "hawlucha",
+      "topic": "十点与多奖",
+      "title": "两个十点落在哪里",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV1C_079",
+          "30thDC_039",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV9C_078"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-20",
+      "revision": 1,
+      "order": 20,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "hawlucha",
+      "topic": "十点与多奖",
+      "title": "满后场的选择",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV9.5C_004"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_094"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV1C_079",
+          "30thDC_039",
+          "CSV1C_127",
+          "30thDC_040",
+          "CSV6C_125"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV9C_078"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-21",
+      "revision": 1,
+      "order": 21,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "hawlucha",
+      "topic": "十点与多奖",
+      "title": "这一轮与下一轮",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV1C_079",
+          "CSV1C_127",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV9C_078"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-22",
+      "revision": 1,
+      "order": 22,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "spread",
+      "topic": "伤害分配",
+      "title": "六个指示物的去处",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSV1C_127"
+            ],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thDC_039",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 10
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 10
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-23",
+      "revision": 1,
+      "order": 23,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "spread",
+      "topic": "伤害分配",
+      "title": "两条收奖线",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSV1C_127"
+            ],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thDC_039",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 40
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 30
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-24",
+      "revision": 1,
+      "order": 24,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "spread",
+      "topic": "伤害分配",
+      "title": "只剩一张奖赏",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSV1C_127"
+            ],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "30thDC_039",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 1
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 10
+          },
+          {
+            "stack": [
+              "CSV8C_081"
+            ],
+            "energy": [],
+            "damage": 10
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-25",
+      "revision": 1,
+      "order": 25,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "energy",
+      "topic": "稀缺能量",
+      "title": "双线的能源预算",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158"
+          ],
+          "energy": [
+            "CSVE1C_PSY"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSV1C_127",
+          "CSV7C_203",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-26",
+      "revision": 1,
+      "order": 26,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "energy",
+      "topic": "稀缺能量",
+      "title": "特殊能量的相处",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158"
+          ],
+          "energy": [
+            "CSV1C_127"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSV1C_127",
+          "CSV7C_203",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-27",
+      "revision": 1,
+      "order": 27,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "energy",
+      "topic": "稀缺能量",
+      "title": "撤回主力的代价",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 280
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV6C_125",
+          "CSV8C_159",
+          "CSV1C_127",
+          "CSV8C_183"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-28",
+      "revision": 1,
+      "order": 28,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "dusknoir",
+      "topic": "自爆与奖赏",
+      "title": "一张奖赏的交换",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 30
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_083",
+          "CSV6C_114",
+          "CSV3C_123",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 2
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-29",
+      "revision": 1,
+      "order": 29,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "dusknoir",
+      "topic": "自爆与奖赏",
+      "title": "危险的最后一奖",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 30
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_083",
+          "CSV6C_114",
+          "CSV3C_123",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 1
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-30",
+      "revision": 1,
+      "order": 30,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "dusknoir",
+      "topic": "自爆与奖赏",
+      "title": "同奖时的顺序",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSVE1C_FIR",
+            "CSVE1C_PSY"
+          ],
+          "damage": 30
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_081",
+              "CSV8C_082"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_083",
+          "CSV6C_114",
+          "CSV3C_123",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 70
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-31",
+      "revision": 1,
+      "order": 31,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "fezandipiti",
+      "topic": "吉雉鸡与补牌",
+      "title": "失去一只之后",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSV1C_127",
+          "30thDC_040",
+          "30thC_101"
+        ],
+        "discard": [
+          "CSV8C_157"
+        ],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        6,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        6,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-32",
+      "revision": 1,
+      "order": 32,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "fezandipiti",
+      "topic": "吉雉鸡与补牌",
+      "title": "同样手牌的新回合",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSV8C_159",
+          "CSV1C_127",
+          "30thDC_040",
+          "30thC_101"
+        ],
+        "discard": [
+          "CSV8C_157"
+        ],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        4,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        4,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-33",
+      "revision": 1,
+      "order": 33,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "fezandipiti",
+      "topic": "吉雉鸡与补牌",
+      "title": "从手牌开始搭桥",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157",
+              "CSV8C_158"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thC_101",
+          "CSV8C_159",
+          "CSV1C_127",
+          "30thDC_040",
+          "CSV8C_081"
+        ],
+        "discard": [
+          "CSV8C_157"
+        ],
+        "prize_count": 4
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 3
+      },
+      "last_knockout_turn_against": [
+        6,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        6,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-34",
+      "revision": 1,
+      "order": 34,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "endgame",
+      "topic": "跳阶与终结",
+      "title": "终局的两个攻击手",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_172"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSVH1C_045",
+          "CSV8C_159",
+          "CSVE1C_FIR",
+          "CSV9C_078",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 1
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-35",
+      "revision": 1,
+      "order": 35,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "endgame",
+      "topic": "跳阶与终结",
+      "title": "终局还没有到",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_172"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSVH1C_045",
+          "CSV8C_159",
+          "CSVE1C_FIR",
+          "CSV9C_078",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 4
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "expert-dragapult185-36",
+      "revision": 1,
+      "order": 36,
+      "training_mode": "expert_play_v1",
+      "deck_key": "dragapult185_expert",
+      "player_deck_id": 675701,
+      "opponent_deck_id": 675701,
+      "opponent_name": "18.5 多龙",
+      "family_id": "endgame",
+      "topic": "跳阶与终结",
+      "title": "刚刚铺下的后继",
+      "split_group": "dragapult185-expert-v1",
+      "origin": "authored_open_position",
+      "prompt": "按你的实战判断打完这段牌。你可以选择拿奖、培养、控场或保留资源；无需凑操作数。",
+      "turn_limit": 1,
+      "turn_number": 7,
+      "first_player_index": 0,
+      "player": {
+        "active": {
+          "stack": [
+            "CSV9.5C_004"
+          ],
+          "energy": [],
+          "damage": 0
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [
+              "CSVE1C_PSY"
+            ],
+            "damage": 0,
+            "turn_played": 7
+          },
+          {
+            "stack": [
+              "CSV8C_172"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "CSVH1C_045",
+          "CSV8C_159",
+          "CSVE1C_FIR",
+          "CSV9C_078",
+          "30thDC_040"
+        ],
+        "discard": [],
+        "prize_count": 2
+      },
+      "opponent": {
+        "active": {
+          "stack": [
+            "CSV8C_157",
+            "CSV8C_158",
+            "CSV8C_159"
+          ],
+          "energy": [
+            "CSV7C_203"
+          ],
+          "damage": 80
+        },
+        "bench": [
+          {
+            "stack": [
+              "CSV8C_157"
+            ],
+            "energy": [],
+            "damage": 0
+          },
+          {
+            "stack": [
+              "CSV8C_135"
+            ],
+            "energy": [],
+            "damage": 0
+          }
+        ],
+        "hand": [
+          "30thDC_040",
+          "CSV8C_158",
+          "CSVE1C_PSY"
+        ],
+        "discard": [],
+        "prize_count": 1
+      },
+      "last_knockout_turn_against": [
+        -999,
+        -999
+      ],
+      "last_knockout_during_opponent_turn_against": [
+        -999,
+        -999
+      ],
+      "knockout_provenance_tracked_against": [
+        true,
+        true
+      ]
+    }
+  ]
+}

@@ -233,10 +233,13 @@ func on_battle_advice_status_changed(scene: Object, status: String, _context: Di
 
 
 func on_battle_advice_completed(scene: Object, result: Dictionary) -> void:
+	var overlay := scene.get("_review_overlay") as Control
+	var update_open_advice := is_instance_valid(overlay) and overlay.visible and str(scene.get("_review_overlay_mode")) == "advice"
 	scene.set("_battle_advice_last_result", result.duplicate(true))
 	scene.set("_battle_advice_busy", false)
 	scene.set("_battle_advice_progress_text", "")
-	show_battle_advice_overlay(scene, result)
+	if update_open_advice:
+		show_battle_advice_overlay(scene, result)
 	refresh_battle_advice_panel(scene)
 	scene.call("_refresh_ui")
 

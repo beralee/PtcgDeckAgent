@@ -154,6 +154,10 @@ if (-not $SkipExport) {
 Copy-UserVisitBridge -ProjectRoot $resolvedProjectRoot -ReleaseDir $releaseDir
 Assert-ExpectedFiles -ReleaseDir $releaseDir -Name $BaseName
 
+$assetReport = Join-Path $resolvedOutputRoot "2d-assets-$version.json"
+& python (Join-Path $resolvedProjectRoot "tools/inspect_2d_export_assets.py") (Join-Path $releaseDir "$BaseName.pck") --root $resolvedProjectRoot --output $assetReport --arena-mode portable
+if ($LASTEXITCODE -ne 0) { throw "Web 2D asset verification failed; see $assetReport" }
+
 $files = Get-ReleaseFiles -ReleaseDir $releaseDir
 $publicBase = $PublicBasePath.TrimEnd("/")
 $releasePath = "$publicBase/web/$releaseSlug"

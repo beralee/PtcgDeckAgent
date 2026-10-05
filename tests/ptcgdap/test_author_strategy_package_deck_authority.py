@@ -89,6 +89,7 @@ class AuthorStrategyPackageDeckAuthorityTests(unittest.TestCase):
 
         for function_name in (
             "_author_strategy_record_can_start",
+            "_author_strategy_admission",
             "_author_strategy_display_status_label",
             "_author_strategy_display_status_detail",
             "_selected_deck_for_slot",
@@ -110,7 +111,10 @@ class AuthorStrategyPackageDeckAuthorityTests(unittest.TestCase):
         admission = self._gdscript_function(
             battle_setup, "_author_strategy_record_can_start"
         )
-        self.assertIn("evaluate_selection", admission)
+        self.assertIn("_author_strategy_admission(record)", admission)
+        self.assertIn("evaluate_selection", self._gdscript_function(
+            battle_setup, "_author_strategy_admission"
+        ))
 
         explicit_start = self._gdscript_function(battle_setup, "_apply_setup_selection")
         self.assertIn("_materialize_author_strategy_deck", explicit_start)

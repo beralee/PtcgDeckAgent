@@ -59,6 +59,16 @@ def has_engine_errors(log):
     return bool(re.search(r"(?m)^(?:SCRIPT ERROR:|ERROR:)|Parse Error:|uncaught exception", log))
 
 
+def archive_name(root, diagnostic=False):
+    if diagnostic:
+        return "PtcgDeckAgent-macOS-diagnostic.zip"
+    source = (root / "scripts/app/AppVersion.gd").read_text(encoding="utf-8")
+    match = re.search(r'^const VERSION := "([0-9]+\.[0-9]+\.[0-9]+)"$', source, re.M)
+    if match is None:
+        raise ValueError("Current release version is missing or malformed")
+    return f"PtcgDeckAgent-macOS-{match[1]}-rules.zip"
+
+
 def run_logged(command, path, timeout=600):
     with path.open("w") as output:
         result = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT, timeout=timeout)
@@ -118,7 +128,7 @@ def main():
     if args.prepare_only:
         return
     run_logged([str(godot), "--headless", "--path", str(snapshot), "--import"], out / "import.log")
-    archive = out / ("PtcgDeckAgent-macOS-diagnostic.zip" if args.diagnostic else "PtcgDeckAgent-macOS-0.6.0-rules.zip")
+    archive = out / archive_name(root, args.diagnostic)
     run_logged([str(godot), "--headless", "--path", str(snapshot),
                 "--export-release", "macOS", str(archive)], out / "export.log")
     unpacked = out / "unpacked"

@@ -94,9 +94,9 @@ func _return_slot_cards_to_hand(slot: PokemonSlot, player: PlayerState) -> void:
 	for energy_card: CardInstance in slot.attached_energy:
 		energy_card.face_up = true
 		player.hand.append(energy_card)
-	if slot.attached_tool != null:
-		slot.attached_tool.face_up = true
-		player.hand.append(slot.attached_tool)
+	for tool: CardInstance in slot.get_attached_tools():
+		tool.face_up = true
+		player.hand.append(tool)
 	slot.pokemon_stack.clear()
 	slot.attached_energy.clear()
 	slot.attached_tool = null

@@ -570,12 +570,11 @@ func test_ai_uses_resolved_granted_attack_targets_without_opening_interaction() 
 	attacker.attached_tool = tool
 	player.active_pokemon = attacker
 	opponent.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Defender", "P"), 1))
-	var granted_attack := {
-		"id": "test_resolved_target_attack",
-		"name": "Resolved Target Attack",
-		"cost": "",
-		"damage": "0",
-	}
+	# Use the current legal attack, including the attached tool's source identity.
+	var available_attacks := gsm.effect_processor.get_granted_attacks(attacker, gsm.game_state)
+	if available_attacks.size() != 1:
+		return "The fixture must expose exactly one tool-granted attack"
+	var granted_attack: Dictionary = available_attacks[0]
 	var scene := StadiumActionScene.new()
 	var ai = AIOpponentScript.new()
 	ai.configure(0, 1)

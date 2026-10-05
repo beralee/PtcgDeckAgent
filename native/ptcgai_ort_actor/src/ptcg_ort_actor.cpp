@@ -106,8 +106,13 @@ bool PtcgOrtActor::verify_contract(std::string &failure) {
     auto semantic = kInputs;
     semantic[0].shape = {1, 128}; semantic[1].shape = {1, 128};
     semantic[2].shape = {1, kMaxOptions, 32}; semantic[3].shape = {1, kMaxOptions, 32};
+    if (verify_io(*session, semantic, true, failure)) {
+        frame_width = 128; option_width = 32; failure.clear(); return true;
+    }
+    semantic[0].shape = {1, 416}; semantic[1].shape = {1, 416};
+    semantic[2].shape = {1, kMaxOptions, 48}; semantic[3].shape = {1, kMaxOptions, 48};
     if (!verify_io(*session, semantic, true, failure)) return false;
-    frame_width = 128; option_width = 32; failure.clear(); return true;
+    frame_width = 416; option_width = 48; failure.clear(); return true;
 }
 
 Dictionary PtcgOrtActor::load_actor(const PackedByteArray &artifact) {

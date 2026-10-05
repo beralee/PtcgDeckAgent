@@ -29,7 +29,7 @@ func play_deck_shuffle_effect(player_index: int) -> void:
 	if preview == null:
 		return
 	stop_deck_shuffle_effect(player_index)
-	if not bool(GameManager.battle_effects_enabled):
+	if not preload("res://scripts/ui/battle/BattlePresentation.gd").legacy_effects_enabled(_scene):
 		return
 	preview.pivot_offset = preview.size * 0.5
 	var base_positions_variant: Variant = _get("_deck_preview_base_positions")

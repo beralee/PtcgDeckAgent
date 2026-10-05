@@ -1,0 +1,90 @@
+{
+  "code": 200,
+  "data": {
+    "name": "红莲铠骑ex",
+    "cardType": "Pokemon",
+    "mechanic": "ex",
+    "label": null,
+    "description": "特性: 红莲盔甲\n如果这只宝可梦的HP为全满状态的话，则这只宝可梦受到对手宝可梦的招式的伤害「-80」。\n\n【无】【无】 灼热火箭炮 40+\n追加造成这只宝可梦身上附着的【火】能量数量×40伤害。\n\n",
+    "yorenCode": "Y1333",
+    "pokemonAttr": {
+      "energyType": "R",
+      "stage": "Stage 1",
+      "hp": 260,
+      "ability": [
+        {
+          "name": "红莲盔甲",
+          "text": "如果这只宝可梦的HP为全满状态的话，则这只宝可梦受到对手宝可梦的招式的伤害「-80」。",
+          "isVStarPower": false
+        }
+      ],
+      "ancientTrait": "",
+      "weakness": {
+        "energy": "W",
+        "value": "×2"
+      },
+      "resistance": null,
+      "retreatCost": 2,
+      "attack": [
+        {
+          "name": "灼热火箭炮",
+          "text": "追加造成这只宝可梦身上附着的【火】能量数量×40伤害。",
+          "cost": "CC",
+          "damage": "40+",
+          "isVStarPower": false
+        }
+      ],
+      "evolvesFrom": "炭小侍"
+    },
+    "setCode": "CSV5C",
+    "cardIndex": "021",
+    "setCardsNum": "",
+    "artist": "takuyoa",
+    "rarity": "RR",
+    "releaseDate": "2025-09-11T16:00:00Z",
+    "regulationMark": "G",
+    "effectId": "4364b8582611727c6d832f681c40dfe4",
+    "regulationLegal": {
+      "standard": true,
+      "expanded": true
+    },
+    "effectSameCards": [
+      {
+        "setCode": "CSV5C",
+        "cardIndex": "021",
+        "cardName": "红莲铠骑ex",
+        "rarity": "RR",
+        "effectId": "4364b8582611727c6d832f681c40dfe4",
+        "cardType": "Pokemon",
+        "yorenCode": "Y1333",
+        "is": [
+          "ex",
+          "Stage 1"
+        ],
+        "setCodeEn": "PAR",
+        "cardIndexEn": "27",
+        "nameEn": "Armarouge ex"
+      },
+      {
+        "setCode": "CSV5C",
+        "cardIndex": "139",
+        "cardName": "红莲铠骑ex",
+        "rarity": "SR",
+        "effectId": "4364b8582611727c6d832f681c40dfe4",
+        "cardType": "Pokemon",
+        "yorenCode": "Y1333",
+        "is": [
+          "ex",
+          "Stage 1"
+        ],
+        "setCodeEn": "PAR",
+        "cardIndexEn": "27",
+        "nameEn": "Armarouge ex"
+      }
+    ],
+    "setCodeEn": "PAR",
+    "cardIndexEn": "27",
+    "nameEn": "Armarouge ex"
+  },
+  "msg": "OK."
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import secrets
 import socket
@@ -162,12 +163,19 @@ def main() -> int:
             stream.close()
         if connection is not None:
             connection.close()
-        if process.poll() is None:
-            process.terminate()
         try:
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            process.kill()
+            # Windows' console executable is a launcher with an engine child.
+            # Terminating just the launcher leaves a headless engine running.
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    check=False, timeout=5,
+                )
+            if process.poll() is None:
+                process.kill()
             process.wait(timeout=5)
 
 

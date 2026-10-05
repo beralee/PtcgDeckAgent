@@ -42,8 +42,8 @@ static func _compute_status(card: CardData) -> Dictionary:
 			return _implemented()
 		if effect_id == "":
 			return _unimplemented("missing effect id")
-		var processor := EffectProcessor.new()
-		var implemented := processor.has_effect(effect_id)
+		var processor := _new_effect_processor()
+		var implemented: bool = processor.has_effect(effect_id)
 		processor.prepare_for_disposal()
 		return _implemented() if implemented else _unimplemented("effect is not registered")
 
@@ -58,11 +58,11 @@ static func _compute_pokemon_status(card: CardData, effect_id: String) -> Dictio
 	if effect_id == "":
 		return _unimplemented("missing effect id")
 
-	var processor := EffectProcessor.new()
+	var processor := _new_effect_processor()
 	processor.register_pokemon_card(card)
-	var has_card_effect := processor.has_effect(effect_id)
-	var has_attack_effect := processor.has_attack_effect(effect_id)
-	var card_effect := processor.get_effect(effect_id)
+	var has_card_effect: bool = processor.has_effect(effect_id)
+	var has_attack_effect: bool = processor.has_attack_effect(effect_id)
+	var card_effect: RefCounted = processor.get_effect(effect_id)
 	var card_effect_handles_attack := _effect_overrides_method(card_effect, "execute_attack")
 	processor.prepare_for_disposal()
 
@@ -111,7 +111,13 @@ static func _attack_needs_effect(attack: Dictionary) -> bool:
 	return not damage.is_valid_int()
 
 
-static func _effect_overrides_method(effect: BaseEffect, method_name: String) -> bool:
+static func _new_effect_processor() -> RefCounted:
+	# Card catalogs can invalidate status caches during boot without compiling
+	# battle effects. Load the processor only for a real implementation query.
+	return load("res://scripts/engine/EffectProcessor.gd").new()
+
+
+static func _effect_overrides_method(effect: RefCounted, method_name: String) -> bool:
 	if effect == null:
 		return false
 	var script: Script = effect.get_script()

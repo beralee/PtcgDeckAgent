@@ -1,0 +1,58 @@
+{
+	"name": "金鱼王",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "特性: 祭典乐舞\n如果场上有「祭典会场」的话，则这只宝可梦，可以连续使用2次拥有的招式。（如果第1次的招式令对手的战斗宝可梦【昏厥】的话，则在下一只对手的宝可梦被放于战斗场后，继续使用第2次招式。）\n\n【无】 快速抽取 60\n从自己牌库上方抽取2张卡牌。\n\n",
+	"yoren_code": "P119",
+	"set_code": "CSVNC",
+	"card_index": "015",
+	"set_code_en": "PRE",
+	"card_index_en": "21",
+	"name_en": "Seaking",
+	"name_zh": "",
+	"artist": "Nelnal",
+	"rarity": "无标记",
+	"release_date": "2026-05-14T16:00:00Z",
+	"regulation_mark": "H",
+	"effect_id": "c03588e3709ba32ad3c63409b64bdf2c",
+	"image_url": "https://tcg.mik.moe/static/img/CSVNC/015.png",
+	"image_local_path": "user://cards/images/CSVNC/015.png",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/cards/CSVNC/015",
+	"source_set_code": "CSVNC",
+	"source_card_index": "015",
+	"source_language": "zh-CN",
+	"source_prints": [],
+	"source_imported_at": 0,
+	"source_parser_version": 1,
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "W",
+	"stage": "Stage 1",
+	"hp": 110,
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"evolves_from": "角金鱼",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "快速抽取",
+			"text": "从自己牌库上方抽取2张卡牌。",
+			"cost": "C",
+			"damage": "60",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "祭典乐舞",
+			"text": "如果场上有「祭典会场」的话，则这只宝可梦，可以连续使用2次拥有的招式。（如果第1次的招式令对手的战斗宝可梦【昏厥】的话，则在下一只对手的宝可梦被放于战斗场后，继续使用第2次招式。）"
+		}
+	],
+	"energy_provides": ""
+}

@@ -1,0 +1,231 @@
+{
+	"cards": [
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "004",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "28505a8ad6e07e74382c1b5e09737932",
+			"name": "含羞苞",
+			"name_en": "Budew",
+			"set_code": "CSV9.5C"
+		},
+		{
+			"card_index": "008",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "294212d9c02dc0acb886a7ef01ebeac4",
+			"name": "能量转移",
+			"name_en": "Energy Switch",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "DAR",
+			"card_type": "Basic Energy",
+			"count": 9,
+			"effect_id": "46c769fc57a6c250c560df648bb779f8",
+			"name": "基本恶能量",
+			"name_en": "Darkness Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "f6baf0c4c60ff47c7f836c1271f40cb3",
+			"name": "雪童子",
+			"name_en": "Snorunt",
+			"set_code": "CSV9.5C"
+		},
+		{
+			"card_index": "094",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "66fee12502043db7d92b97b0d62b0f59",
+			"name": "愿增猿",
+			"name_en": "Munkidori",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "148",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "863479acd128e1e5e2643a3a1e77ce26",
+			"name": "玛俐的长毛巨魔ex",
+			"name_en": "Marnie's Grimmsnarl ex",
+			"set_code": "CSV10C"
+		},
+		{
+			"card_index": "039",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "30thDC"
+		},
+		{
+			"card_index": "147",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "945c3caf74096499c2140de9f71d815e",
+			"name": "玛俐的诈唬魔",
+			"name_en": "Marnie's Morgrem",
+			"set_code": "CSV10C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
+			"name": "博士的研究",
+			"name_en": "Professor's Research",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "102",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "b0754293ea1611bb9f931f02060ceb3b",
+			"name": "宝可平板",
+			"name_en": "Poké Pad",
+			"set_code": "30thC"
+		},
+		{
+			"card_index": "146",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "cd9d3ec383aa409ff7930840c21d43b0",
+			"name": "玛俐的捣蛋小妖",
+			"name_en": "Marnie's Impidimp",
+			"set_code": "CSV10C"
+		},
+		{
+			"card_index": "118",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+			"name": "勇气护符",
+			"name_en": "Bravery Charm",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "045",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "d3891abcfe3277c8811cde06741d3236",
+			"name": "神奇糖果",
+			"name_en": "Rare Candy",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "040",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "d57b61102355e6a0407d0aeb4db9477d",
+			"name": "莉莉艾的决心",
+			"name_en": "Lillie's Determination",
+			"set_code": "30thDC"
+		},
+		{
+			"card_index": "216",
+			"card_type": "Stadium",
+			"count": 3,
+			"effect_id": "dc1d73740f5d6e98ad1491ca9067aac3",
+			"name": "尖钉镇道馆",
+			"name_en": "Spikemuth Gym",
+			"set_code": "CSV10C"
+		},
+		{
+			"card_index": "120",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "e228e825c541ce80e2507c557cb506c3",
+			"name": "招式学习器 退化",
+			"name_en": "Technical Machine: Devolution",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "176",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e92a86246f44351d023bd4fa271089aa",
+			"name": "秘密箱",
+			"name_en": "Secret Box",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "059",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "f27a2982c03f5b49a68ec0a77a2d6e48",
+			"name": "雪妖女",
+			"name_en": "Froslass",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		}
+	],
+	"deck_code": "MM4_WUGiGvCRgd0QST",
+	"deck_name": "18.5 玛俐的长毛巨魔 雪妖女",
+	"id": 675700,
+	"import_date": "2026-09-19T21:26:44",
+	"source_id": "675700",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/decks/list/675700",
+	"strategy": "",
+	"total_cards": 60,
+	"updated_at": 1789824409548,
+	"variant_name": "18.5 玛俐的长毛巨魔 雪妖女"
+}

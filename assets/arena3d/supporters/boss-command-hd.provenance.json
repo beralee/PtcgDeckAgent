@@ -1,0 +1,13 @@
+{
+  "source_asset": "assets/textures/vfx/trainer_boss_orders/sheet-transparent.png",
+  "source_asset_unchanged": true,
+  "generated_asset": "assets/arena3d/supporters/boss-command-hd.png",
+  "generator": "Built-in image_gen image edit, 2026-09-29",
+  "generated_original": "exec-752860c1-1a82-4380-b52e-422972c78e0d.png",
+  "dimensions": [1536, 1024],
+  "grid": {"columns": 3, "rows": 2},
+  "mode": "RGBA; true transparent pixels inspected, six contained poses visually reviewed",
+  "runtime_alignment": "Bottom-row Sprite2D offset +48 pixels preserves the bust baseline; original atlas is retained without raster modification.",
+  "sound": "boss_command.wav is original synthesis from tools/arena3d/build_boss_command_audio.py, 48 kHz stereo, 3.05 seconds.",
+  "prompt": "High resolution faithful remaster of the supplied existing Giovanni (Pokemon Team Rocket boss) six-frame command animation sprite sheet for a PC game. Preserve precisely the same character identity, face, black suit, red tie, black slicked-back hair, intimidating confident expression, AND the same six poses in the same row-major order: top left calm stern bust with small violet aura; top middle raised gloved open palm facing viewer with red flare; top right pointing gloved index finger directly at viewer; bottom left stern bust surrounded by a violet crescent of energy; bottom middle pointing at viewer with fiery red targeting disk beside his hand; bottom right pointing at viewer with violet crescent energy. Improve linework resolution and clean anime cel shading, do not redesign him. EXACT 3 columns x 2 rows regular grid, 1536x1024 or highest possible matching 3:2 dimensions, each cell square. Each bust and its contained original aura centered at EXACT same position in every cell, head top at 25% of cell, flat bust bottom at 77%, body scale consistent, all hair, fingers and aura inside central 86% of cell. Six poses, no extra cells. Pure transparent background (real alpha), absolutely no checkboard texture, no background scenery, no text, no labels or borders. Crisp anime illustration lines, clean eyes and finger anatomy. This is a detail enhancement of the reference asset, not a new scene."
+}

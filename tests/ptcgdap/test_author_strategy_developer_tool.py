@@ -6,6 +6,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
+import os
 
 from scripts.ai.ptcgdap.source_lock import load_json_strict
 from tools.ptcgdap.author_strategy_developer import (
@@ -26,6 +28,24 @@ GUIDE = ROOT / "docs/ptcgdap/10-author-strategy-developer-guide.md"
 
 
 class AuthorStrategyDeveloperToolTests(unittest.TestCase):
+    def test_scaffold_recovers_from_transient_windows_directory_sharing_lock(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as raw:
+            workspace = Path(raw) / "workspace"
+            replace = os.replace
+            attempts = []
+            def replace_once_locked(source, target):
+                attempts.append(target)
+                if len(attempts) == 1:
+                    error = PermissionError("directory is temporarily held by a file scanner")
+                    error.winerror = 5
+                    raise error
+                return replace(source, target)
+            with mock.patch("tools.ptcgdap.author_strategy_developer.os.replace", side_effect=replace_once_locked):
+                result = scaffold_workspace(workspace)
+            self.assertEqual(result["status"], "scaffolded")
+            self.assertTrue((workspace / "package").is_dir())
+            self.assertEqual(len(attempts), 2)
+
     def test_adjudication_report_handles_legal_optional_zero_without_calling_it_fallback(self) -> None:
         report = _adjudication_report(
             {

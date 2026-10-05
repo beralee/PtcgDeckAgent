@@ -162,6 +162,12 @@ var _top_left_badge: Label
 var _top_right_badge: Label
 var _implementation_badge_panel: PanelContainer
 var _implementation_badge_label: Label
+# Presentation policy is set before entering the tree, so ready/refresh cannot
+# expose a legacy text overlay for one frame before an external poll hides it.
+var info_overlay_enabled := true:
+	set(value):
+		info_overlay_enabled = value
+		_update_overlay_visibility()
 var _info_panel: PanelContainer
 var _title_label: Label
 var _subtitle_label: Label
@@ -1147,7 +1153,7 @@ func _update_overlay_visibility() -> void:
 		_info_panel.visible = false
 		return
 	_status_hud.visible = false
-	_info_panel.visible = _title_label.visible or _subtitle_label.visible
+	_info_panel.visible = info_overlay_enabled and (_title_label.visible or _subtitle_label.visible)
 
 
 func _update_battle_status_ui() -> void:
@@ -1818,6 +1824,14 @@ func activate_primary_click() -> bool:
 
 func _handle_card_pointer_input(event: InputEvent) -> void:
 	if not _clickable:
+		return
+	if event is InputEventScreenTouch and event.canceled:
+		_cancel_touch_long_press()
+		_hand_primary_press_active = false
+		_hand_primary_press_cancelled = false
+		_hand_primary_press_from_touch = false
+		clear_primary_release_fallback()
+		accept_event()
 		return
 	var release_primary_click := display_mode == MODE_HAND or bool(get_meta("card_gallery_drag_input_enabled", false))
 	if release_primary_click:

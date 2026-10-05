@@ -1,0 +1,90 @@
+[
+  {
+    "scenario": "notification_progress_after_process_exit",
+    "passed": true,
+    "report": {
+      "task": "10",
+      "before": 2,
+      "after": 6,
+      "app_process_absent": true
+    }
+  },
+  {
+    "scenario": "reopen_attaches_same_system_task",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | downloading |  | 系统正在下载，通知栏可查看进度；离开游戏也会继续。"
+      ],
+      "issue": "",
+      "message": "系统正在下载，通知栏可查看进度；离开游戏也会继续。",
+      "preserved": "created-in-1.0.0",
+      "state": "downloading",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "network_loss_waits_then_resumes_same_task",
+    "passed": true,
+    "report": {
+      "waiting": {
+        "case": "",
+        "history": [
+          " | downloading |  | 系统正在下载，通知栏可查看进度；离开游戏也会继续。",
+          " | downloading |  | 正在等待网络或系统重试，恢复后会继续下载。"
+        ],
+        "issue": "",
+        "message": "正在等待网络或系统重试，恢复后会继续下载。",
+        "preserved": "created-in-1.0.0",
+        "state": "downloading",
+        "version": "1.0.0"
+      },
+      "before": 7,
+      "after": 10
+    }
+  },
+  {
+    "scenario": "explicit_cancel_removes_system_task",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | downloading |  | 系统正在下载，通知栏可查看进度；离开游戏也会继续。",
+        " | downloading |  | 正在等待网络或系统重试，恢复后会继续下载。",
+        " | downloading |  | 系统正在下载，通知栏可查看进度；离开游戏也会继续。",
+        " | cancelled |  | 下载已取消。已安装的游戏和本地数据不受影响，可以重新下载。"
+      ],
+      "issue": "",
+      "message": "下载已取消。已安装的游戏和本地数据不受影响，可以重新下载。",
+      "preserved": "created-in-1.0.0",
+      "state": "cancelled",
+      "version": "1.0.0"
+    }
+  },
+  {
+    "scenario": "download_completes_with_game_closed",
+    "passed": true,
+    "report": {
+      "task": "11",
+      "completion_notification": true
+    }
+  },
+  {
+    "scenario": "completion_tap_verifies_before_install",
+    "passed": true,
+    "report": {
+      "case": "",
+      "history": [
+        " | downloading |  | 下载已完成，正在整理文件，随后将校验安装包…",
+        " | verifying |  | 正在校验更新文件…",
+        " | ready |  | 更新已下载并校验。点击安装后，请确认 Android 系统安装提示。"
+      ],
+      "issue": "",
+      "message": "更新已下载并校验。点击安装后，请确认 Android 系统安装提示。",
+      "preserved": "created-in-1.0.0",
+      "state": "ready",
+      "version": "1.0.0"
+    }
+  }
+]

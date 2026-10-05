@@ -359,6 +359,7 @@ func _board_modal_overlays() -> Array[Control]:
 		_handover_panel,
 		_coin_overlay,
 		_review_overlay,
+		_draw_reveal_overlay,
 		get("_match_end_overlay"),
 	]:
 		var overlay := overlay_variant as Control
@@ -579,6 +580,9 @@ func _prepare_dialog_overlay_for_prize_selection() -> void:
 		dialog_box.custom_minimum_size = Vector2(max_width, 0)
 	dialog_overlay.z_index = DIALOG_OVERLAY_Z_INDEX
 	dialog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	# AI dialogs can be hidden before their deferred reveal restores opacity.
+	# Prize selection reuses that overlay without the normal dialog reveal path.
+	dialog_overlay.modulate = Color.WHITE
 	dialog_overlay.visible = true
 	_refresh_end_turn_hud_button_state()
 
@@ -1323,3 +1327,30 @@ func _vstar_hud_aspect() -> float:
 		if texture_size.y > 0.0:
 			return texture_size.x / texture_size.y
 	return VSTAR_LOST_HUD_WIDTH_RATIO
+
+
+func _style_hud_button(button: Button) -> void:
+	if button == null:
+		return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.01, 0.11, 0.18, 0.72)
+	normal.border_color = Color(0.16, 0.62, 0.76, 0.9)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.04, 0.18, 0.28, 0.82)
+	hover.border_color = Color(0.37, 0.91, 0.98, 0.96)
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.03, 0.14, 0.22, 0.9)
+	pressed.border_color = Color(0.56, 0.94, 1.0, 1.0)
+	var disabled := normal.duplicate()
+	disabled.bg_color = Color(0.04, 0.08, 0.12, 0.45)
+	disabled.border_color = Color(0.22, 0.31, 0.38, 0.6)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.58, 0.63))

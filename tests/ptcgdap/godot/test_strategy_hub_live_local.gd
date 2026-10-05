@@ -7,13 +7,17 @@ const HubScene = preload("res://scenes/ptcgdap_strategy_hub/StrategyHub.tscn")
 func test_local_control_renders_uploaded_strategy_and_both_rankings() -> String:
 	var endpoint := OS.get_environment("PTCGDAP_PLATFORM_BASE_URL").strip_edges()
 	if endpoint.is_empty():
-		return ""
+		return "SKIP: PTCGDAP_PLATFORM_BASE_URL is required for the local integration fixture"
 	var hub := HubScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(hub)
 	var latest := hub.get_node("%StrategyList") as VBoxContainer
 	var strategies := hub.get_node("%StrategyRankingList") as VBoxContainer
 	var authors := hub.get_node("%AuthorRankingList") as VBoxContainer
+	# The current hub opens on rankings. Finish that request before switching
+	# to latest, otherwise its in-flight guard correctly rejects the click.
+	await _wait_until_settled(strategies, tree)
+	(hub.get_node("%LatestBoardTab") as Button).pressed.emit()
 	var latest_ready := await _wait_until_settled(latest, tree)
 	var archive_ready := false
 	var history_cards := 0
@@ -81,9 +85,12 @@ func test_local_control_renders_uploaded_strategy_and_both_rankings() -> String:
 
 func _wait_until_settled(list: VBoxContainer, tree: SceneTree) -> bool:
 	var deadline := Time.get_ticks_msec() + 5_000
-	while list.get_child_count() == 0 and Time.get_ticks_msec() < deadline:
+	while Time.get_ticks_msec() < deadline:
 		await tree.process_frame
-	return list.get_child_count() > 0
+		var client: Node = list.owner.get("_client")
+		if client != null and list.get_child_count() > 0 and not bool(client.audit_snapshot().get("in_flight", false)):
+			return true
+	return false
 
 
 func _wait_until_text_contains(label: Label, expected: String, tree: SceneTree) -> bool:

@@ -1,0 +1,1203 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "total": 96,
+  "passed": 52,
+  "failed": 0,
+  "skipped": 0,
+  "not_applicable": 44,
+  "cases": [
+    {
+      "project": "webkit-desktop",
+      "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "DeepSeek discussion sends Chinese text, recovers errors and preserves modal input across platforms",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "downloaded author strategy starts and completes local Web matches",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "downloaded author strategy starts and completes local Web matches",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "downloaded author strategy starts and completes local Web matches",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "downloaded author strategy starts and completes local Web matches",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "downloaded author strategy starts and completes local Web matches",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "downloaded author strategy starts and completes local Web matches",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "miniapp import switches source, retries, and persists all 60 cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "miniapp import switches source, retries, and persists all 60 cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "miniapp import switches source, retries, and persists all 60 cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "miniapp import switches source, retries, and persists all 60 cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "miniapp import switches source, retries, and persists all 60 cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "miniapp import switches source, retries, and persists all 60 cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "Safari deck import accepts pasted URL and persists a complete deck",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "Safari deck import accepts pasted URL and persists a complete deck",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "Safari deck import accepts pasted URL and persists a complete deck",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "Safari deck import accepts pasted URL and persists a complete deck",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "Safari deck import accepts pasted URL and persists a complete deck",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "Safari deck import accepts pasted URL and persists a complete deck",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Portrait import and desktop"
+        },
+        {
+          "type": "skip",
+          "description": "Portrait import and desktop",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "Safari deck import reports storage denial without claiming durable success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Safari storage failure"
+        },
+        {
+          "type": "skip",
+          "description": "Safari storage failure",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "Safari deck import reports storage denial without claiming durable success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Safari storage failure"
+        },
+        {
+          "type": "skip",
+          "description": "Safari storage failure",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "Safari deck import reports storage denial without claiming durable success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Safari storage failure"
+        },
+        {
+          "type": "skip",
+          "description": "Safari storage failure",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-touch",
+      "test": "Safari deck import reports storage denial without claiming durable success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Safari storage failure"
+        },
+        {
+          "type": "skip",
+          "description": "Safari storage failure",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "Safari deck import reports storage denial without claiming durable success",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "Safari deck import reports storage denial without claiming durable success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Safari storage failure"
+        },
+        {
+          "type": "skip",
+          "description": "Safari storage failure",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "strategy hub settings scrolls through canvas input and keeps tabs usable",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "strategy hub settings scrolls through canvas input and keeps tabs usable",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "strategy hub settings scrolls through canvas input and keeps tabs usable",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "strategy hub settings scrolls through canvas input and keeps tabs usable",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "strategy hub settings scrolls through canvas input and keeps tabs usable",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "strategy hub settings scrolls through canvas input and keeps tabs usable",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Portrait touch and desktop are covered separately"
+        },
+        {
+          "type": "skip",
+          "description": "Portrait touch and desktop are covered separately",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "real canvas input navigates main menu and settings without runtime errors",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "real canvas input navigates main menu and settings without runtime errors",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "real canvas input navigates main menu and settings without runtime errors",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "real canvas input navigates main menu and settings without runtime errors",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "real canvas input navigates main menu and settings without runtime errors",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "real canvas input navigates main menu and settings without runtime errors",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "The landscape WebKit project is scoped to battle HUD touch regression"
+        },
+        {
+          "type": "skip",
+          "description": "The landscape WebKit project is scoped to battle HUD touch regression",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "iOS Web AI key opens a real DOM editor and syncs typed text",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari text entry"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari text entry",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "iOS Web AI key opens a real DOM editor and syncs typed text",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari text entry"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari text entry",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "iOS Web AI key opens a real DOM editor and syncs typed text",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari text entry"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari text entry",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-touch",
+      "test": "iOS Web AI key opens a real DOM editor and syncs typed text",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari text entry"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari text entry",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "iOS Web AI key opens a real DOM editor and syncs typed text",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "iOS Web AI key opens a real DOM editor and syncs typed text",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari text entry"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari text entry",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "iOS Web native API key paste is isolated, cancellable, and persistent",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari native paste"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari native paste",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "iOS Web native API key paste is isolated, cancellable, and persistent",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari native paste"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari native paste",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "iOS Web native API key paste is isolated, cancellable, and persistent",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari native paste"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari native paste",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-touch",
+      "test": "iOS Web native API key paste is isolated, cancellable, and persistent",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari native paste"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari native paste",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "iOS Web native API key paste is isolated, cancellable, and persistent",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "iOS Web native API key paste is isolated, cancellable, and persistent",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets portrait iOS Safari native paste"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets portrait iOS Safari native paste",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "real canvas input round-trips battle setup and deck manager",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "real canvas input round-trips battle setup and deck manager",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "real canvas input round-trips battle setup and deck manager",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "real canvas input round-trips battle setup and deck manager",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "real canvas input round-trips battle setup and deck manager",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "real canvas input round-trips battle setup and deck manager",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "The landscape WebKit project is scoped to battle HUD touch regression"
+        },
+        {
+          "type": "skip",
+          "description": "The landscape WebKit project is scoped to battle HUD touch regression",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "deck editor card search exposes HUD radios and filters ex cards",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas"
+        },
+        {
+          "type": "skip",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "deck editor card search exposes HUD radios and filters ex cards",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas"
+        },
+        {
+          "type": "skip",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "deck editor card search exposes HUD radios and filters ex cards",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "deck editor card search exposes HUD radios and filters ex cards",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas"
+        },
+        {
+          "type": "skip",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "deck editor card search exposes HUD radios and filters ex cards",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas"
+        },
+        {
+          "type": "skip",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "deck editor card search exposes HUD radios and filters ex cards",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas"
+        },
+        {
+          "type": "skip",
+          "description": "DeckEditor is landscape-only on Web and this regression uses the desktop canvas",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "blur cancels active pointer ownership and late release does not navigate",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract"
+        },
+        {
+          "type": "skip",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "blur cancels active pointer ownership and late release does not navigate",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract"
+        },
+        {
+          "type": "skip",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "blur cancels active pointer ownership and late release does not navigate",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "blur cancels active pointer ownership and late release does not navigate",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract"
+        },
+        {
+          "type": "skip",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "blur cancels active pointer ownership and late release does not navigate",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract"
+        },
+        {
+          "type": "skip",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "blur cancels active pointer ownership and late release does not navigate",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract"
+        },
+        {
+          "type": "skip",
+          "description": "Mouse down/up lifecycle probe is a desktop Chromium contract",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "iOS Web touch confirms modal and persistent battle HUD actions",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets the iOS Safari touch pipeline"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets the iOS Safari touch pipeline",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "iOS Web touch confirms modal and persistent battle HUD actions",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets the iOS Safari touch pipeline"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets the iOS Safari touch pipeline",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "iOS Web touch confirms modal and persistent battle HUD actions",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets the iOS Safari touch pipeline"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets the iOS Safari touch pipeline",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-touch",
+      "test": "iOS Web touch confirms modal and persistent battle HUD actions",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets the iOS Safari touch pipeline"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets the iOS Safari touch pipeline",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "iOS Web touch confirms modal and persistent battle HUD actions",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "iOS Web touch confirms modal and persistent battle HUD actions",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "Chromium touch hand survives twenty semantic generations with first-tap success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets Android-style Chromium touch"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets Android-style Chromium touch",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "Chromium touch hand survives twenty semantic generations with first-tap success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets Android-style Chromium touch"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets Android-style Chromium touch",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "Chromium touch hand survives twenty semantic generations with first-tap success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets Android-style Chromium touch"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets Android-style Chromium touch",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-touch",
+      "test": "Chromium touch hand survives twenty semantic generations with first-tap success",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "Chromium touch hand survives twenty semantic generations with first-tap success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets Android-style Chromium touch"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets Android-style Chromium touch",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "Chromium touch hand survives twenty semantic generations with first-tap success",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "This regression targets Android-style Chromium touch"
+        },
+        {
+          "type": "skip",
+          "description": "This regression targets Android-style Chromium touch",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "legacy kill switch starts the same production UI",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Kill-switch smoke only needs one browser engine"
+        },
+        {
+          "type": "skip",
+          "description": "Kill-switch smoke only needs one browser engine",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "legacy kill switch starts the same production UI",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Kill-switch smoke only needs one browser engine"
+        },
+        {
+          "type": "skip",
+          "description": "Kill-switch smoke only needs one browser engine",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "legacy kill switch starts the same production UI",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "legacy kill switch starts the same production UI",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Kill-switch smoke only needs one browser engine"
+        },
+        {
+          "type": "skip",
+          "description": "Kill-switch smoke only needs one browser engine",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch",
+      "test": "legacy kill switch starts the same production UI",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Kill-switch smoke only needs one browser engine"
+        },
+        {
+          "type": "skip",
+          "description": "Kill-switch smoke only needs one browser engine",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "legacy kill switch starts the same production UI",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Kill-switch smoke only needs one browser engine"
+        },
+        {
+          "type": "skip",
+          "description": "Kill-switch smoke only needs one browser engine",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    },
+    {
+      "project": "webkit-desktop",
+      "test": "AI ladder shows ranked authors and opens and closes strategy details",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-tablet-touch",
+      "test": "AI ladder shows ranked authors and opens and closes strategy details",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-desktop",
+      "test": "AI ladder shows ranked authors and opens and closes strategy details",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "chromium-touch",
+      "test": "AI ladder shows ranked authors and opens and closes strategy details",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch",
+      "test": "AI ladder shows ranked authors and opens and closes strategy details",
+      "status": "passed",
+      "annotations": []
+    },
+    {
+      "project": "webkit-touch-landscape",
+      "test": "AI ladder shows ranked authors and opens and closes strategy details",
+      "status": "not_applicable",
+      "annotations": [
+        {
+          "type": "not-applicable",
+          "description": "Landscape battle HUD has a separate regression"
+        },
+        {
+          "type": "skip",
+          "description": "Landscape battle HUD has a separate regression",
+          "location": {
+            "file": "D:\\ai\\code\\PtcgDAP\\tests\\web_e2e\\ui-stability.spec.cjs",
+            "line": 72,
+            "column": 8
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 class_name DeckViewDialog
 extends RefCounted
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const DECK_IMAGE_ACCENT := Color(0.72, 0.64, 1.0, 1.0)
@@ -64,11 +66,12 @@ func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -
 	var view_entries := _unique_deck_view_entries(deck.cards)
 	var layout := _deck_view_layout_profile(host, view_entries.size())
 	var portrait := bool(layout.get("portrait", false))
-	var dialog := AcceptDialog.new()
+	var dialog := GameModal.new()
+	dialog.scale_content = false
 	dialog.name = "DeckViewDialog"
 	dialog.title = deck.deck_name
-	dialog.size = layout.get("dialog_size", Vector2i(800, 700))
-	dialog.min_size = dialog.size
+	dialog.dialog_size = layout.get("dialog_size", Vector2i(800, 700))
+	dialog.min_size = dialog.dialog_size
 	_apply_deck_view_dialog_hud(dialog)
 	dialog.ok_button_text = "关闭"
 
@@ -83,7 +86,11 @@ func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -
 	margin.add_theme_constant_override("margin_top", margin_value)
 	margin.add_theme_constant_override("margin_right", margin_value)
 	margin.add_theme_constant_override("margin_bottom", margin_value)
-	dialog.add_child(margin)
+	dialog.add_content(margin)
+	# The modal already provides padding; do not subtract the old Window margins twice.
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for side: String in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 0)
 
 	var outer := VBoxContainer.new()
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -103,6 +110,7 @@ func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	HudThemeScript.style_scroll_container(scroll, "compact")
 	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(scroll)
 
 	var grid := GridContainer.new()
@@ -151,6 +159,9 @@ func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -
 		content_close_button.pressed.connect(dialog.queue_free)
 		NonBattleTouchBridgeScript.bind_button_touch(content_close_button)
 		outer.add_child(content_close_button)
+	dialog.layout_updated.connect(func() -> void:
+		_fit_deck_grid(dialog, grid, scroll)
+	)
 
 	host.add_child(dialog)
 	var ok_button := dialog.get_ok_button()
@@ -162,20 +173,48 @@ func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -
 			ok_button.add_theme_font_size_override("font_size", int(layout.get("button_font_size", 15)))
 	if dialog.is_inside_tree():
 		if portrait:
-			dialog.popup(Rect2i(layout.get("dialog_position", Vector2i.ZERO), dialog.size))
+			dialog.popup(Rect2i(layout.get("dialog_position", Vector2i.ZERO), dialog.dialog_size))
 		else:
 			dialog.popup_centered()
 	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
 
 
-func _on_share_poster_pressed(host: Node, dialog: AcceptDialog, deck: DeckData) -> void:
+func _fit_deck_grid(dialog: GameModal, grid: GridContainer, scroll: ScrollContainer) -> void:
+	var scale := float(GameModal.UI.for_control(dialog).scale)
+	var width := maxf(1, dialog.get_content().size.x - 24 * scale)
+	grid.columns = 4 if dialog.get_viewport_rect().size.y > dialog.get_viewport_rect().size.x else clampi(int(width / (110 * scale)), 2, 10)
+	var gap := 6 * scale
+	grid.add_theme_constant_override("h_separation", roundi(gap))
+	grid.custom_minimum_size.x = 0
+	var tile_width := floorf((width - gap * (grid.columns - 1)) / grid.columns)
+	var art_height := tile_width * 1.4
+	var caption_size := roundi(12 * scale)
+	for tile: Control in grid.get_children():
+		tile.custom_minimum_size = Vector2(tile_width, art_height + 24 * scale)
+		var frame := tile.find_child("DeckViewCardImageFrame", true, false) as Control
+		frame.custom_minimum_size = Vector2(maxf(1, tile_width - 8), maxf(1, art_height - 8))
+		var label := tile.find_child("DeckViewCardNameLabel", true, false) as Label
+		label.custom_minimum_size = Vector2(maxf(1, tile_width - 8), 22 * scale)
+		label.add_theme_font_size_override("font_size", caption_size)
+		var badge := tile.find_child("DeckViewCardCountBadge", true, false) as Label
+		badge.add_theme_font_size_override("font_size", roundi(14 * scale))
+		badge.custom_minimum_size = Vector2(34, 24) * scale
+		badge.offset_left = -38 * scale
+		badge.offset_top = -28 * scale
+		badge.offset_right = -4 * scale
+		badge.offset_bottom = -4 * scale
+	GameModal.UI.scroll(scroll)
+
+
+func _on_share_poster_pressed(host: Node, dialog: GameModal, deck: DeckData) -> void:
 	if dialog != null and is_instance_valid(dialog):
 		dialog.queue_free()
 	if host != null and host.has_method("_on_share_deck_poster"):
 		host.call("_on_share_deck_poster", deck)
 
 
-func _apply_deck_view_dialog_hud(dialog: AcceptDialog) -> void:
+func _apply_deck_view_dialog_hud(dialog: GameModal) -> void:
 	if dialog == null:
 		return
 	dialog.add_theme_stylebox_override("panel", _deck_view_dialog_style())
@@ -669,16 +708,16 @@ func _open_view_tile_card_detail(host: Node, set_code: String, card_index: Strin
 		_show_card_detail(host, card)
 
 
-func _show_card_detail(host: Node, card: CardData) -> AcceptDialog:
+func _show_card_detail(host: Node, card: CardData) -> GameModal:
 	if _host_uses_portrait_deck_view(host):
 		return null
-	var dialog := AcceptDialog.new()
+	var dialog := GameModal.new()
+	dialog.scale_content = false
 	dialog.name = "DeckViewCardDetailDialog"
 	dialog.title = card.display_name()
 	dialog.ok_button_text = "关闭"
-	dialog.size = _card_detail_dialog_size(host)
-	dialog.min_size = dialog.size
-	dialog.initial_position = Window.WINDOW_INITIAL_POSITION_ABSOLUTE
+	dialog.dialog_size = _card_detail_dialog_size(host)
+	dialog.min_size = dialog.dialog_size
 	_apply_deck_view_dialog_hud(dialog)
 
 	var margin := MarginContainer.new()
@@ -692,7 +731,7 @@ func _show_card_detail(host: Node, card: CardData) -> AcceptDialog:
 	margin.add_theme_constant_override("margin_top", margin_value)
 	margin.add_theme_constant_override("margin_right", margin_value)
 	margin.add_theme_constant_override("margin_bottom", margin_value)
-	dialog.add_child(margin)
+	dialog.add_content(margin)
 
 	var outer := VBoxContainer.new()
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -821,6 +860,7 @@ func _show_card_detail(host: Node, card: CardData) -> AcceptDialog:
 	if dialog.is_inside_tree():
 		_popup_dialog_centered_for_host(host, dialog)
 	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
 	return dialog
 
 
@@ -841,7 +881,7 @@ func _card_detail_dialog_size(host: Node) -> Vector2i:
 	return Vector2i(500, 480)
 
 
-func _create_card_detail_close_button(dialog: AcceptDialog) -> Button:
+func _create_card_detail_close_button(dialog: GameModal) -> Button:
 	var button := Button.new()
 	button.name = "DeckViewCardDetailCloseButton"
 	button.text = dialog.ok_button_text
@@ -859,22 +899,19 @@ func _create_card_detail_close_button(dialog: AcceptDialog) -> Button:
 	return button
 
 
-func _popup_dialog_centered_for_host(host: Node, dialog: Window) -> void:
+func _popup_dialog_centered_for_host(host: Node, dialog: GameModal) -> void:
 	if dialog == null:
 		return
 	var position := _dialog_centered_position_for_host(host, dialog)
 	dialog.set_meta("deck_view_centered_position", position)
-	dialog.position = position
-	dialog.popup(Rect2i(position, dialog.size))
-	dialog.position = position
-	dialog.set_deferred("position", position)
+	dialog.popup(Rect2i(position, dialog.dialog_size))
 
 
-func _dialog_centered_position_for_host(host: Node, dialog: Window) -> Vector2i:
+func _dialog_centered_position_for_host(host: Node, dialog: GameModal) -> Vector2i:
 	var viewport_size := _host_viewport_size(host)
 	return Vector2i(
-		roundi(maxf(0.0, (viewport_size.x - float(dialog.size.x)) * 0.5)),
-		roundi(maxf(0.0, (viewport_size.y - float(dialog.size.y)) * 0.5))
+		roundi(maxf(0.0, (viewport_size.x - float(dialog.dialog_size.x)) * 0.5)),
+		roundi(maxf(0.0, (viewport_size.y - float(dialog.dialog_size.y)) * 0.5))
 	)
 
 

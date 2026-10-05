@@ -46,7 +46,7 @@ EXPECTED_ARTIFACT_CANONICAL_SHA256 = {
 }
 COMPETITIVE_POLICY_V2_PROFILE_ID = "ptcgdap-competitive-policy-v2"
 COMPETITIVE_POLICY_V2_BUNDLE_ID = "ptcgdap-competitive-policy-v2-as2-wp1"
-COMPETITIVE_POLICY_V2_EXPECTED_BUNDLE_CANONICAL_SHA256 = "5F87E10C6C87B5CE71CBB2ACE2C31A5FA39C49C95F84F0D7983DEC86DCA2F3C3"
+COMPETITIVE_POLICY_V2_EXPECTED_BUNDLE_CANONICAL_SHA256 = "7E2952CC8A08DBD66DA44E71B6BD8640C0BD7B3219D6BF0B44F6B2529B3162DD"
 COMPETITIVE_POLICY_V2_CONTRACT_FILENAMES = {
     "schema": "competitive_policy_v2.schema.json",
     "profile": "competitive_policy_v2_profile.json",
@@ -54,9 +54,9 @@ COMPETITIVE_POLICY_V2_CONTRACT_FILENAMES = {
     "bundle": "competitive_policy_v2_bundle.json",
 }
 COMPETITIVE_POLICY_V2_EXPECTED_ARTIFACT_CANONICAL_SHA256 = {
-    "schema": "4A8E21D90A0B6EF1921BDC123BB58C0297F57EEACF8490F44EC0B46E8E60B910",
-    "profile": "46FC76FFD292FDA0A9F4F4221EA14C8F7DFC2462163733E42876EAA7CFE63677",
-    "vectors": "42BEB7D514686600F255E06BB76AF4440A08294D845C8D9CE4A7966C28701F7E",
+    "schema": "DAC448BCF83D2DC28CD6B5AB15643279B03452037C5284B7DEE484ACCA8D335B",
+    "profile": "DEBD9D61AFA8AE1266058B6F436281AACB84FDF4C725CF640ECEB603E69177A7",
+    "vectors": "6F0E7BD829532E06D92CA68CEB5FDA3C3A2AD0A3AEC3D45E0948B9A5C20353C8",
 }
 CONTRACT_FILENAMES = {
     "schema": "author_strategy_package.schema.json",
@@ -833,6 +833,10 @@ class AuthorStrategyPackageLoader:
             "deck_platform_scope": copy.deepcopy(deck_manifest.get("platform_scope", [])),
             "deck_card_count": deck_manifest.get("card_count"),
         }
+        from .strategy_runtime_compatibility import requirements
+        runtime_requirements = requirements(adapter)
+        if runtime_requirements:
+            metadata["runtime_compatibility"] = runtime_requirements
         if execution_trusted:
             metadata["signature_key_id"] = signature["key_id"]
             metadata["signature_scope"] = signature_scope
@@ -959,6 +963,11 @@ class AuthorStrategyPackageLoader:
             _raise("package_policy_unsupported")
         if type(raw_adapter) is not dict:
             _raise("package_policy_unsupported")
+        from .strategy_runtime_compatibility import requirements
+        try:
+            requirements(raw_adapter)
+        except ValueError as exc:
+            _raise(str(exc))
         adapter_validator = (
             self._competitive_policy_v2_validator
             if raw_adapter.get("schema_version") == 2

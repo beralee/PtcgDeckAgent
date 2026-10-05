@@ -6,6 +6,9 @@ $ErrorActionPreference = 'Stop'
 $exports = (Resolve-Path -LiteralPath $ExportRoot).Path
 $build = Get-Content (Join-Path $exports 'build.json') -Raw | ConvertFrom-Json
 $snapshot = $build.sourceSnapshot
+if (-not $snapshot -or -not (Test-Path -LiteralPath (Join-Path $snapshot 'project.godot') -PathType Leaf)) {
+    throw "This diagnostic build released its temporary source snapshot. Rebuild with scripts/tools/build_strategy_parity_exports.ps1 -OutputRoot '$exports' -AndroidArchitecture '$($build.androidAbi -replace 'arm64-v8a','arm64')' -KeepSourceSnapshot, then rerun this player export. The old binary and source-manifest.json remain available."
+}
 $projectPath = Join-Path $snapshot 'project.godot'
 $presetPath = Join-Path $snapshot 'export_presets.cfg'
 $originalProject = [IO.File]::ReadAllBytes($projectPath)
@@ -15,7 +18,7 @@ $apkPath = Join-Path $exports 'PtcgDeckAgent-fixed.apk'
 $logPath = Join-Path $exports 'player-export.private.log'
 try {
     $project = $encoding.GetString($originalProject).Replace('AndroidStrategyParityRunner="*res://tests/ai/ptcgdap/AndroidStrategyParityRunner.gd"','')
-    $preset = $encoding.GetString($originalPreset).Replace('include_filter="tests/**,data/**,','include_filter="data/**,').Replace('exclude_filter="','exclude_filter="tests/**,')
+    $preset = $encoding.GetString($originalPreset).Replace('include_filter="tests/**,','include_filter="').Replace('exclude_filter="','exclude_filter="tests/**,')
     [IO.File]::WriteAllText($projectPath,$project,$encoding)
     [IO.File]::WriteAllText($presetPath,$preset,$encoding)
     $ErrorActionPreference = 'Continue'

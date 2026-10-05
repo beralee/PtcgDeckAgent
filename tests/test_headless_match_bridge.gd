@@ -109,6 +109,45 @@ class FakeOfficialMunkidoriStrategy extends RefCounted:
 		return false
 
 
+class FakeLocalMunkidoriStrategy extends RefCounted:
+	var published_windows: Array[Dictionary] = []
+	var wanted_count := 2
+
+	func uses_sequential_interaction_windows() -> bool:
+		return true
+
+	func uses_external_decision_port() -> bool:
+		return false
+
+	func pick_interaction_items(items: Array, step: Dictionary, _context: Dictionary = {}) -> Array:
+		var metadata := UcisInteractionCompiler.metadata_for_step(step)
+		published_windows.append({
+			"select_type_raw": int(metadata.get("select_type_raw", -1)),
+			"select_context_raw": int(metadata.get("context_raw", -1)),
+			"option_type_raw": int(metadata.get("option_type_raw", -1)),
+		})
+		match int(metadata.get("context_raw", -1)):
+			16:
+				for item: Variant in items:
+					if item is PokemonSlot and item.get_pokemon_name() == "Drifloon":
+						return [item]
+			40:
+				for item: Variant in items:
+					if item is Dictionary and int(item.get("number", -1)) == wanted_count:
+						return [item]
+			13:
+				for item: Variant in items:
+					if item is PokemonSlot and item.get_pokemon_name() == "Opponent Bench":
+						return [item]
+		return []
+
+	func should_preserve_empty_interaction_selection(
+		_step: Dictionary,
+		_context: Dictionary = {}
+	) -> bool:
+		return false
+
+
 class FakeOpeningSetupStrategy extends RefCounted:
 	func plan_opening_setup(_player: PlayerState) -> Dictionary:
 		return {
@@ -1300,4 +1339,84 @@ func test_author_retreat_declaration_opens_fresh_headless_switch_window() -> Str
 		assert_eq(bridge.get_pending_prompt_owner(), 0),
 		assert_eq(data.get("bench", []), [target]),
 		assert_true(gsm.game_state.players[0].active_pokemon.get_top_card().card_data.name == "Pivot", "Declaration must not atomically consume the preselected builder target"),
+	])
+
+
+func test_local_author_munkidori_uses_source_count_target_windows() -> String:
+	return _assert_local_munkidori_sequence(2, false)
+
+
+func test_local_author_munkidori_amounts_and_reordered_boards_apply_once() -> String:
+	var checks: Array[String] = []
+	for amount: int in [1, 2, 3]:
+		for reverse: bool in [false, true]:
+			checks.append(_assert_local_munkidori_sequence(amount, reverse))
+	return run_checks(checks)
+
+
+func _assert_local_munkidori_sequence(amount: int, reverse: bool) -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var resolver := AIStepResolverScript.new()
+	var strategy := FakeLocalMunkidoriStrategy.new()
+	strategy.wanted_count = amount
+	resolver.set_deck_strategy(strategy)
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_local_sequence_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability(
+		"Munkidori", "Adrena-Brain", "munkidori_local_sequence_test", 0
+	))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	var source := _make_slot(_make_basic_card("Drifloon"))
+	source.damage_counters = 30
+	var other_source := _make_slot(_make_basic_card("Other Source"))
+	other_source.damage_counters = 20
+	player.active_pokemon = munkidori
+	player.bench.assign([other_source, source] if reverse else [source, other_source])
+	var opponent_active := _make_slot(_make_basic_card("Opponent Active"))
+	var opponent_bench := _make_slot(_make_basic_card("Opponent Bench"))
+	var other_target := _make_slot(_make_basic_card("Other Target"))
+	opponent_active.get_top_card().owner_index = 1
+	opponent_bench.get_top_card().owner_index = 1
+	other_target.get_top_card().owner_index = 1
+	opponent.active_pokemon = opponent_active
+	opponent.bench.assign([other_target, opponent_bench] if reverse else [opponent_bench, other_target])
+	bridge.bind(gsm)
+
+	var steps := effect.get_interaction_steps(munkidori.get_top_card(), gsm.game_state)
+	bridge._start_effect_interaction(
+		"ability", 0, steps, munkidori.get_top_card(), munkidori, 0
+	)
+	var resolved_source := resolver.resolve_pending_step(bridge, gsm, 0, [])
+	var resolved_count := resolver.resolve_pending_step(bridge, gsm, 0, [])
+	var selected_count := int(
+		bridge.get("_field_interaction_assignment_selected_source_index")
+	)
+	var resolved_target := resolver.resolve_pending_step(bridge, gsm, 0, [])
+	var semantics: Array = strategy.published_windows.map(
+		func(window: Dictionary) -> Array:
+			return [
+				int(window.get("select_type_raw", -1)),
+				int(window.get("select_context_raw", -1)),
+				int(window.get("option_type_raw", -1)),
+			]
+	)
+
+	return run_checks([
+		assert_true(resolved_source),
+		assert_true(resolved_count),
+		assert_eq(selected_count, amount, "The accepted semantic count persists until the fresh target window"),
+		assert_true(resolved_target),
+		assert_eq(semantics, [[1, 16, 3], [8, 40, 0], [1, 13, 3]]),
+		assert_eq(source.damage_counters, 30 - amount * 10),
+		assert_eq(other_source.damage_counters, 20),
+		assert_eq(opponent_active.damage_counters, 0),
+		assert_eq(opponent_bench.damage_counters, amount * 10),
+		assert_eq(other_target.damage_counters, 0),
+		assert_eq(str(bridge.get("_pending_choice")), ""),
 	])

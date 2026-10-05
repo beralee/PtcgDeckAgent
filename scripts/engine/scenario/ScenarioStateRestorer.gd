@@ -173,7 +173,10 @@ static func _restore_slot(slot_variant: Variant, fallback_owner_index: int) -> P
 	var slot := PokemonSlot.new()
 	slot.pokemon_stack = _restore_card_list(slot_snapshot.get("pokemon_stack", []), fallback_owner_index)
 	slot.attached_energy = _restore_card_list(slot_snapshot.get("attached_energy", []), fallback_owner_index)
-	slot.attached_tool = _restore_card_instance(slot_snapshot.get("attached_tool", {}), fallback_owner_index)
+	if slot_snapshot.has("attached_tools"):
+		slot.attached_tools = _restore_card_list(slot_snapshot.get("attached_tools"), fallback_owner_index)
+	else:
+		slot.attached_tool = _restore_card_instance(slot_snapshot.get("attached_tool", {}), fallback_owner_index)
 	slot.damage_counters = int(slot_snapshot.get("damage_counters", 0))
 	slot.turn_played = int(slot_snapshot.get("turn_played", -1))
 	slot.turn_evolved = int(slot_snapshot.get("turn_evolved", -1))

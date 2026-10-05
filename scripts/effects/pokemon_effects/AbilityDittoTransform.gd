@@ -81,9 +81,7 @@ func execute_ability(
 		player.discard_pile.append(card)
 	pokemon.pokemon_stack.clear()
 	pokemon.attached_energy.clear()
-	if pokemon.attached_tool != null:
-		player.discard_pile.append(pokemon.attached_tool)
-		pokemon.attached_tool = null
+	pokemon.attached_tool = null
 
 	# 从牌库取出替换宝可梦
 	player.deck.erase(replacement)

@@ -6,7 +6,7 @@ const BUNDLED_ROOT := "res://data/card_catalog"
 const USER_ROOT := "user://card_catalog"
 const BUNDLED_MANIFEST := "catalog_manifest.json"
 const USER_MANIFEST := "remote_manifest.json"
-const MIN_SEARCH_INDEX_SCHEMA_VERSION := 2
+const MIN_SEARCH_INDEX_SCHEMA_VERSION := 3
 
 var _bundled_root := BUNDLED_ROOT
 var _user_root := USER_ROOT
@@ -40,6 +40,28 @@ func reload() -> void:
 		use_user = _load_index_for_manifest(_user_root, user_manifest)
 	if not use_user and not bundled_manifest.is_empty():
 		_load_index_for_manifest(_bundled_root, bundled_manifest)
+	# Only the default product catalog participates; isolated test/custom catalogs
+	# keep their explicitly selected roots.
+	if _bundled_root == BUNDLED_ROOT and _user_root == USER_ROOT:
+		_merge_content_snapshot()
+
+func _merge_content_snapshot() -> void:
+	var paths = preload("res://scripts/card_content/ContentPaths.gd")
+	for uid: String in paths.card_uids():
+		var source := "res://data/bundled_user/cards/%s.json" % uid
+		if FileAccess.get_sha256(source) != str(paths.card(uid).get("source_sha256", "")): continue
+		var document := _load_json_dictionary(source)
+		if document.is_empty(): continue
+		var entry: Dictionary = CardCatalogSearchRecordScript.from_dictionary(document)
+		entry["uid"] = uid
+		entry["content_source"] = source
+		# Compute from this process's rules, never retain a stale implementation
+		# badge from an older catalog. Do it lazily when a status filter is used.
+		entry["implementation_status"] = ""
+		if not _entries_by_uid.has(uid): _entry_order.append(uid)
+		_entries_by_uid[uid] = entry
+	if not paths.card_uids().is_empty():
+		_manifest["catalog_version"] = paths.snapshot().get("manifest", {}).get("content_version", "")
 
 
 func is_ready() -> bool:
@@ -78,7 +100,7 @@ func get_card_data(set_code: String, card_index: String) -> CardData:
 	var entry: Dictionary = _entries_by_uid.get(uid, {})
 	if entry.is_empty():
 		return null
-	var card_dict := _load_card_dict_for_entry(entry)
+	var card_dict := _load_json_dictionary(str(entry.content_source)) if entry.has("content_source") else _load_card_dict_for_entry(entry)
 	if card_dict.is_empty():
 		card_dict = _minimal_card_dict_from_entry(entry)
 	var card := CardData.from_dict(card_dict)
@@ -239,6 +261,11 @@ func _matches_query(entry: Dictionary, normalized_query: String) -> bool:
 
 
 func _matches_filters(entry: Dictionary, filters: Dictionary) -> bool:
+	if entry.has("content_source") and (filters.has("implementation_status") or filters.has("statuses") or bool(filters.get("implemented_only", false))) and str(entry.get("implementation_status", "")) == "":
+		var card := CardData.from_dict(_load_json_dictionary(str(entry.content_source)))
+		var status := CardImplementationStatus.get_status(card)
+		entry["implementation_status"] = "unimplemented" if bool(status.get("unimplemented", false)) else "implemented"
+		entry["implementation_reason"] = str(status.get("reason", ""))
 	for key: Variant in filters.keys():
 		var filter_key := str(key)
 		var expected: Variant = filters[key]

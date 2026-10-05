@@ -1,0 +1,7 @@
+PASS success
+PASS startup_rollback
+PASS archive_traversal
+PASS corrupt_hash
+PASS cancelled_preparation
+PASS unexpected_exit
+Evidence: D:\ai\code\PtcgDAP\.tmp\app-updater-windows-b85c6866e3474c5680b276a53a19d17c

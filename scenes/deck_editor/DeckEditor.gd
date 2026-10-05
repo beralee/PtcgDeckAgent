@@ -1,6 +1,8 @@
 ## 卡组编辑器 - 逐张替换卡组中的卡牌
 extends Control
 
+const GameModal := preload("res://scripts/ui/GameModalDialog.gd")
+
 const CardCatalogSearchRecordScript := preload("res://scripts/card_catalog/CardCatalogSearchRecord.gd")
 ## 分类标签定义：显示名 -> 匹配的 card_type 值列表
 const CATEGORY_TABS: Array[Dictionary] = [
@@ -135,16 +137,18 @@ var _pool_search_results_dirty: bool = false
 const AI_TIMEOUT_SECONDS := 180.0
 const ZENMUX_CLIENT_PATH := "res://scripts/network/ZenMuxClient.gd"
 var _ai_client = null
-var _ai_loading_dialog: AcceptDialog = null
+var _ai_loading_dialog: GameModal = null
 var _ai_loading_bar: ProgressBar = null
 var _ai_loading_elapsed_label: Label = null
 var _ai_loading_start_time: float = 0.0
 var _ai_loading_active: bool = false
+var _ai_request_generation := 0
+var _ai_request_pending := false
 ## AI 建议与历史
 var _ai_replacements: Array[Dictionary] = []
 var _ai_summary: String = ""
 var _ai_history: Array[Dictionary] = []
-var _deck_discussion_dialog: AcceptDialog = null
+var _deck_discussion_dialog: GameModal = null
 
 ## 纹理缓存
 var _texture_cache: Dictionary = {}
@@ -203,7 +207,7 @@ func _ready() -> void:
 		_go_back_to_return_scene()
 		return
 
-	_deck = DeckData.from_dict(source_deck.to_dict())
+	_deck = DeckData.from_dict(source_deck.to_dict().duplicate(true))
 	%TitleLabel.text = "编辑卡组：%s" % _deck.deck_name
 
 	_build_pool()
@@ -2041,136 +2045,40 @@ func _queue_pool_card_image_download(card: CardData) -> void:
 func _on_strategy_pressed() -> void:
 	if _deck == null:
 		return
-	var viewport_size := get_viewport().get_visible_rect().size
-	var dialog_size := Vector2i(
-		clampi(int(viewport_size.x) - 80, 660, 780),
-		clampi(int(viewport_size.y) - 90, 480, 560)
-	)
-	var dialog := AcceptDialog.new()
-	dialog.borderless = true
-	dialog.exclusive = false
-	dialog.transient = false
-	dialog.title = ""
-	dialog.ok_button_text = "关闭"
-	dialog.dialog_hide_on_ok = true
-	dialog.min_size = Vector2i(660, 480)
-	dialog.size = dialog_size
-	dialog.add_theme_stylebox_override("panel", _make_strategy_dialog_style(Color(0.035, 0.055, 0.095, 0.98), Color(0.18, 0.35, 0.46, 0.75), 18, 0, 18))
-	if dialog.get_ok_button() != null:
-		dialog.get_ok_button().visible = false
-
-	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 18
-	root.offset_top = 16
-	root.offset_right = -18
-	root.offset_bottom = -16
-	dialog.add_child(root)
-
-	var title := Label.new()
-	title.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	title.offset_top = 0
-	title.offset_bottom = 36
-	title.text = "编辑打法思路"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
-	title.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0, 1.0))
-	title.add_theme_color_override("font_shadow_color", Color(0.10, 0.55, 0.95, 0.65))
-	title.add_theme_constant_override("shadow_offset_x", 0)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	root.add_child(title)
-
-	var close_btn := Button.new()
-	close_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	close_btn.offset_left = -44
-	close_btn.offset_top = 0
-	close_btn.offset_right = -8
-	close_btn.offset_bottom = 36
-	close_btn.text = "X"
-	close_btn.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
-	_style_strategy_icon_button(close_btn)
-	root.add_child(close_btn)
-
-	var header := PanelContainer.new()
-	header.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	header.offset_top = 48
-	header.offset_bottom = 122
-	header.add_theme_stylebox_override("panel", _make_strategy_dialog_style(Color(0.055, 0.085, 0.135, 0.92), Color(0.22, 0.72, 0.86, 0.42), 14, 14, 10))
-	root.add_child(header)
-
-	var header_vbox := VBoxContainer.new()
-	header_vbox.add_theme_constant_override("separation", 6)
-	header.add_child(header_vbox)
-
-	var hint := Label.new()
-	hint.text = _deck.deck_name
-	hint.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
-	hint.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
-	header_vbox.add_child(hint)
-
-	var desc := Label.new()
-	desc.text = "描述这套卡组的核心战术、关键卡牌配合、各对局要点。AI 分析与对战建议会参考此信息。"
+	var dialog := GameModal.new()
+	dialog.title = "编辑打法思路"
+	dialog.dialog_size = Vector2(720, 560)
+	dialog.show_cancel = true
+	dialog.ok_button_text = "保存"
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 16)
+	dialog.add_content(body)
+	var hint := GameModal.UI.label(_deck.deck_name, 18, GameModal.UI.ACCENT)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_child(hint)
+	var desc := GameModal.UI.label("记录核心战术、关键卡牌配合与对局要点，供 AI 分析参考。", 16, GameModal.UI.MUTED)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
-	desc.add_theme_color_override("font_color", Color(0.74, 0.84, 0.92, 1.0))
-	header_vbox.add_child(desc)
-
-	var editor_panel := PanelContainer.new()
-	editor_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	editor_panel.offset_top = 136
-	editor_panel.offset_bottom = -72
-	editor_panel.add_theme_stylebox_override("panel", _make_strategy_dialog_style(Color(0.028, 0.044, 0.072, 0.97), Color(0.18, 0.68, 0.82, 0.48), 16, 12, 10))
-	root.add_child(editor_panel)
-
+	body.add_child(desc)
 	var text_edit := TextEdit.new()
+	text_edit.name = "StrategyNotesInput"
 	text_edit.text = _deck.strategy
-	text_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_edit.custom_minimum_size.y = 240
 	text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	text_edit.placeholder_text = "例：核心攻击手是XXex，通过YY加速能量，前两回合目标是展开ZZ线..."
-	text_edit.add_theme_color_override("font_color", Color(0.94, 0.98, 1.0, 1.0))
-	text_edit.add_theme_color_override("placeholder_color", Color(0.50, 0.58, 0.66, 1.0))
-	text_edit.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
-	var input_normal := _make_strategy_dialog_style(Color(0.015, 0.024, 0.042, 0.92), Color(0.18, 0.31, 0.40, 0.95), 12, 10, 0)
-	var input_focus := _make_strategy_dialog_style(Color(0.020, 0.036, 0.062, 0.97), Color(0.22, 0.86, 0.95, 0.95), 12, 10, 0)
-	text_edit.add_theme_stylebox_override("normal", input_normal)
-	text_edit.add_theme_stylebox_override("focus", input_focus)
-	text_edit.add_theme_stylebox_override("read_only", input_normal)
-	HudThemeScript.style_scrollable_control(text_edit)
-	editor_panel.add_child(text_edit)
-
-	var actions := HBoxContainer.new()
-	actions.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	actions.offset_top = -56
-	actions.offset_bottom = -4
-	actions.alignment = BoxContainer.ALIGNMENT_END
-	actions.add_theme_constant_override("separation", 10)
-	root.add_child(actions)
-
-	var cancel_btn := Button.new()
-	cancel_btn.custom_minimum_size = Vector2(110, 48)
-	cancel_btn.text = "取消"
-	_style_strategy_button(cancel_btn, false)
-	actions.add_child(cancel_btn)
-
-	var save_btn := Button.new()
-	save_btn.custom_minimum_size = Vector2(120, 48)
-	save_btn.text = "保存"
-	_style_strategy_button(save_btn, true)
-	actions.add_child(save_btn)
-
-	add_child(dialog)
-	var save_strategy := func() -> void:
+	text_edit.placeholder_text = "例如：前两回合优先铺场，再为主力攻击手加速能量……"
+	text_edit.add_theme_font_size_override("font_size", 17)
+	text_edit.add_theme_stylebox_override("normal", GameModal.UI.box(GameModal.UI.BG))
+	text_edit.add_theme_stylebox_override("focus", GameModal.UI.box(GameModal.UI.BG, GameModal.UI.ACCENT))
+	NonBattleTouchBridgeScript.configure_native_text_edit(text_edit)
+	body.add_child(text_edit)
+	dialog.confirmed.connect(func() -> void:
 		_deck.strategy = text_edit.text
 		_dirty = true
 		dialog.queue_free()
-	save_btn.pressed.connect(save_strategy)
-	cancel_btn.pressed.connect(dialog.queue_free)
-	close_btn.pressed.connect(dialog.queue_free)
+	)
 	dialog.canceled.connect(dialog.queue_free)
-	dialog.popup_centered(dialog_size)
-	text_edit.call_deferred("grab_focus")
+	add_child(dialog)
+	dialog.popup_centered()
 
 
 func _make_strategy_dialog_style(bg: Color, border: Color, radius: int, margin: int, shadow_size: int = 0) -> StyleBoxFlat:
@@ -2216,11 +2124,11 @@ func _style_strategy_icon_button(button: Button) -> void:
 
 
 func _on_ai_pressed() -> void:
-	var dialog := AcceptDialog.new()
+	var dialog := GameModal.new()
 	dialog.title = "AI 卡组分析"
 	dialog.ok_button_text = "开始分析"
 	dialog.dialog_hide_on_ok = false
-	dialog.size = Vector2i(750, 600)
+	dialog.dialog_size = Vector2i(750, 600)
 
 	var scroll := ScrollContainer.new()
 	scroll.anchors_preset = Control.PRESET_FULL_RECT
@@ -2228,8 +2136,8 @@ func _on_ai_pressed() -> void:
 	scroll.offset_top = 8
 	scroll.offset_right = -8
 	scroll.offset_bottom = -8
-	HudThemeScript.style_scroll_container(scroll)
-	dialog.add_child(scroll)
+	GameModal.UI.scroll(scroll)
+	dialog.add_content(scroll)
 
 	var root_vbox := VBoxContainer.new()
 	root_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2239,6 +2147,7 @@ func _on_ai_pressed() -> void:
 	# --- 针对卡组 ---
 	var target_header := Label.new()
 	target_header.text = "针对卡组（最多选2个，可选自身卡组用于内战优化）"
+	target_header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	target_header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	root_vbox.add_child(target_header)
 
@@ -2289,6 +2198,7 @@ func _on_ai_pressed() -> void:
 	# --- 优化方向 ---
 	var goal_header := Label.new()
 	goal_header.text = "优化方向（可多选或不选）"
+	goal_header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	goal_header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	root_vbox.add_child(goal_header)
 
@@ -2312,6 +2222,16 @@ func _on_ai_pressed() -> void:
 		goal_grid.add_child(cb)
 		goal_checks.append(cb)
 
+	dialog.layout_updated.connect(func() -> void:
+		var columns := clampi(int(dialog.get_content().size.x / 260.0), 1, 3)
+		deck_grid.columns = columns
+		goal_grid.columns = columns
+	)
+	for cb: CheckBox in deck_checks + goal_checks:
+		cb.custom_minimum_size.y = 48
+		cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cb.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		cb.add_theme_font_size_override("font_size", 16)
 	add_child(dialog)
 	dialog.popup_centered()
 
@@ -2331,11 +2251,13 @@ func _on_ai_pressed() -> void:
 
 
 func _run_ai_analysis(target_decks: Array[DeckData], goals: Array[String]) -> void:
+	if _ai_request_pending:
+		return
 	var api_config: Dictionary = GameManager.get_battle_review_api_config()
 	var endpoint: String = str(api_config.get("endpoint", ""))
 	var api_key: String = str(api_config.get("api_key", ""))
 	if endpoint == "" or api_key == "":
-		_show_ai_result("AI 未配置。请在 user://battle_review_api.json 中设置 endpoint 和 api_key。")
+		_show_ai_result("尚未配置 DeepSeek，请先到设置页填写 API 地址和密钥。")
 		return
 
 	var ai_client = _get_ai_client()
@@ -2347,11 +2269,14 @@ func _run_ai_analysis(target_decks: Array[DeckData], goals: Array[String]) -> vo
 	var payload := _build_ai_payload(api_config, target_decks, goals)
 
 	_show_ai_loading()
+	_ai_request_pending = true
+	_ai_request_generation += 1
 	var err: int = ai_client.request_json(
 		self, endpoint, api_key, payload,
-		_on_ai_response
+		_on_ai_response.bind(_ai_request_generation)
 	)
 	if err != OK:
+		_ai_request_pending = false
 		_dismiss_ai_loading()
 		_show_ai_result("AI 请求发送失败（错误码 %d）。请检查网络连接和 API 配置。" % err)
 
@@ -2534,7 +2459,10 @@ func _build_ai_user_data(target_decks: Array[DeckData], goals: Array[String]) ->
 	}
 
 
-func _on_ai_response(response: Dictionary) -> void:
+func _on_ai_response(response: Dictionary, generation: int = -1) -> void:
+	if generation != -1 and (generation != _ai_request_generation or not _ai_request_pending):
+		return
+	_ai_request_pending = false
 	_dismiss_ai_loading()
 
 	var status: String = str(response.get("status", ""))
@@ -2587,10 +2515,10 @@ func _on_ai_response(response: Dictionary) -> void:
 
 func _show_ai_loading() -> void:
 	_dismiss_ai_loading()
-	_ai_loading_dialog = AcceptDialog.new()
+	_ai_loading_dialog = GameModal.new()
 	_ai_loading_dialog.title = "AI 分析中"
 	_ai_loading_dialog.ok_button_text = "取消"
-	_ai_loading_dialog.size = Vector2i(500, 220)
+	_ai_loading_dialog.dialog_size = Vector2i(500, 220)
 
 	var vbox := VBoxContainer.new()
 	vbox.anchors_preset = Control.PRESET_FULL_RECT
@@ -2599,7 +2527,7 @@ func _show_ai_loading() -> void:
 	vbox.offset_right = -16
 	vbox.offset_bottom = -12
 	vbox.add_theme_constant_override("separation", 12)
-	_ai_loading_dialog.add_child(vbox)
+	_ai_loading_dialog.add_content(vbox)
 
 	var tips: Array[String] = [
 		"AI 正在分析卡组构筑，通常需要 30~90 秒...",
@@ -2626,7 +2554,8 @@ func _show_ai_loading() -> void:
 
 	add_child(_ai_loading_dialog)
 	_ai_loading_dialog.popup_centered()
-	_ai_loading_dialog.confirmed.connect(_dismiss_ai_loading)
+	_ai_loading_dialog.confirmed.connect(_cancel_ai_analysis)
+	_ai_loading_dialog.canceled.connect(_cancel_ai_analysis)
 
 	_ai_loading_start_time = Time.get_ticks_msec() / 1000.0
 	_ai_loading_active = true
@@ -2651,6 +2580,18 @@ func _dismiss_ai_loading() -> void:
 	if _ai_loading_dialog != null and is_instance_valid(_ai_loading_dialog):
 		_ai_loading_dialog.queue_free()
 	_ai_loading_dialog = null
+
+
+func _cancel_ai_analysis() -> void:
+	_ai_request_generation += 1
+	_ai_request_pending = false
+	if _ai_client != null and _ai_client.has_method("cancel_pending_requests"):
+		_ai_client.cancel_pending_requests()
+	_dismiss_ai_loading()
+
+
+func _exit_tree() -> void:
+	_cancel_ai_analysis()
 
 
 func _show_ai_result(text: String) -> void:
@@ -3154,7 +3095,7 @@ func _on_discuss_ai_pressed() -> void:
 		return
 	if _deck_discussion_dialog == null or not is_instance_valid(_deck_discussion_dialog):
 		var scene := preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")
-		_deck_discussion_dialog = scene.instantiate() as AcceptDialog
+		_deck_discussion_dialog = scene.instantiate() as GameModal
 		add_child(_deck_discussion_dialog)
 	_deck_discussion_dialog.call("setup_for_deck", _deck)
 	_popup_deck_discussion_right_aligned()
@@ -3179,10 +3120,9 @@ func _popup_deck_discussion_right_aligned() -> void:
 		int(viewport_rect.position.x + viewport_size.x) - dialog_size.x - right_margin,
 		int(viewport_rect.position.y) + maxi(vertical_margin, int((viewport_size.y - dialog_size.y) * 0.5))
 	)
-	_deck_discussion_dialog.size = dialog_size
+	_deck_discussion_dialog.dialog_size = dialog_size
 	_deck_discussion_dialog.popup(Rect2i(dialog_pos, dialog_size))
-	_deck_discussion_dialog.position = dialog_pos
-	_deck_discussion_dialog.size = dialog_size
+	_deck_discussion_dialog.dialog_size = dialog_size
 
 
 func _add_separator(container: VBoxContainer) -> void:
@@ -3200,7 +3140,16 @@ func _energy_display(energy_code: String) -> String:
 func _on_save_pressed() -> void:
 	if _deck == null:
 		return
-	CardDatabase.save_deck(_deck)
+	_recalc_total()
+	var errors := CardDatabase.validate_deck(_deck)
+	if not errors.is_empty():
+		%SaveErrorDialog.dialog_text = "请调整以下问题后再保存：\n\n" + "\n".join(errors)
+		%SaveErrorDialog.popup_centered()
+		return
+	# Keep subsequent edits separate from the saved database resource as well.
+	var saved_deck := DeckData.from_dict(_deck.to_dict().duplicate(true))
+	CardDatabase.save_deck(saved_deck)
+	_deck.updated_at = saved_deck.updated_at
 	_dirty = false
 
 

@@ -12,6 +12,9 @@ var _callback: Variant = null
 var _installed: bool = false
 var _last_touch_event: Dictionary = {}
 var _author_strategy_probe: Dictionary = {}
+var _arena_probe: Node
+var _arena_performance: Node
+var _deepseek_probe: RefCounted
 
 
 func _ready() -> void:
@@ -114,6 +117,30 @@ func _on_command(args: Array) -> void:
 
 func _execute_command(command: String, payload: Dictionary) -> Dictionary:
 	match command:
+		"prepare_arena_performance":
+			if is_instance_valid(_arena_performance):
+				return {"done":true,"ok":false,"error":"Use a fresh page for each benchmark process"}
+			_arena_performance = load("res://scripts/performance/ArenaPerformanceRunner.gd").new()
+			_arena_performance.mode = str(payload.get("mode","3d"))
+			_arena_performance.seconds = 20.0
+			_arena_performance.exit_on_finish = false
+			add_child(_arena_performance)
+			return {"done":true,"ok":true,"value":{}}
+		"arena_performance_result":
+			return {"done":true,"ok":true,"value":_arena_performance.last_report if is_instance_valid(_arena_performance) else {}}
+		"prepare_deepseek_discussion":
+			if _deepseek_probe == null:
+				_deepseek_probe = load("res://web/e2e/DeepSeekDiscussionProbe.gd").new()
+			return {"done": true, "ok": true, "value": _deepseek_probe.open(get_tree().current_scene, str(payload.get("mode", "deck")))}
+		"deepseek_discussion_probe":
+			return {"done": true, "ok": true, "value": _deepseek_probe.snapshot() if _deepseek_probe != null else {"visible": false}}
+		"prepare_arena_fixture":
+			if not is_instance_valid(_arena_probe):
+				_arena_probe = load("res://web/e2e/ArenaWebProbe.gd").new()
+				add_child(_arena_probe)
+			return {"done":true,"ok":true,"value":{}}
+		"arena_probe":
+			return {"done":true,"ok":true,"value":_arena_probe.snapshot() if is_instance_valid(_arena_probe) else {"ready":false}}
 		"snapshot":
 			return {"done": true, "ok": true, "value": _snapshot()}
 		"find_control":

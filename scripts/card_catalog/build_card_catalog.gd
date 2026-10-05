@@ -15,11 +15,21 @@ const SOURCE_CARD_DIRECTORIES := [
 ]
 const OUTPUT_ROOT := "res://data/card_catalog"
 const OUTPUT_SETS_DIR := "res://data/card_catalog/sets"
-const CATALOG_SCHEMA_VERSION := 2
+const CATALOG_SCHEMA_VERSION := 3
 const SET_PAYLOAD_SCHEMA_VERSION := 1
+
+var _preserved_card_records: Dictionary = {}
+var _preserved_index_entries: Dictionary = {}
 
 
 func _initialize() -> void:
+	var preserve_catalog := ""
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with("--preserve-catalog="):
+			preserve_catalog = argument.trim_prefix("--preserve-catalog=")
+	if not preserve_catalog.is_empty() and not _load_preserved_catalog(preserve_catalog):
+		quit(1)
+		return
 	var exit_code := _build()
 	quit(exit_code)
 
@@ -34,10 +44,18 @@ func _build() -> int:
 	_ensure_dir(OUTPUT_SETS_DIR)
 
 	var grouped := {}
+	var canonical_set_codes := {}
 	for card: CardData in cards:
 		var set_code := card.set_code.strip_edges()
 		if set_code == "":
 			continue
+		# Printed UID casing is identity and stays on the CardData. Shard paths
+		# share a case-insensitive namespace on Windows, so aliases must group
+		# into one file. Sources are UID-sorted, making the chosen spelling stable.
+		var folded := set_code.to_lower()
+		if not canonical_set_codes.has(folded):
+			canonical_set_codes[folded] = set_code
+		set_code = canonical_set_codes[folded]
 		if not grouped.has(set_code):
 			grouped[set_code] = []
 		(grouped[set_code] as Array).append(card)
@@ -57,9 +75,14 @@ func _build() -> int:
 		var set_payload_cards: Array[Dictionary] = []
 		for raw_card: Variant in set_cards:
 			var card := raw_card as CardData
-			var card_dict := card.to_dict()
+			var card_dict: Dictionary = _preserved_card_records.get(card.get_uid(), card.to_dict())
 			set_payload_cards.append(card_dict)
-			index_cards.append(_index_entry_for_card(card, "sets/%s.json" % set_code))
+			var set_file := "sets/%s.json" % set_code
+			var index_entry: Dictionary = _preserved_index_entries.get(card.get_uid(), _index_entry_for_card(card, set_file)).duplicate(true)
+			# Upgrade preserved search rows from their authoritative full printing.
+			index_entry["evolves_from"] = str(card_dict.get("evolves_from", ""))
+			index_entry["set_file"] = set_file
+			index_cards.append(index_entry)
 			total_cards += 1
 		var set_payload := {
 			"schema_version": SET_PAYLOAD_SCHEMA_VERSION,
@@ -119,6 +142,8 @@ func _load_source_cards() -> Array[CardData]:
 			if card.set_code == "" or card.card_index == "":
 				continue
 			cards_by_uid[card.get_uid()] = card
+	for uid: String in _preserved_card_records:
+		cards_by_uid[uid] = CardData.from_dict(_preserved_card_records[uid])
 	var cards: Array[CardData] = []
 	for raw_card: Variant in cards_by_uid.values():
 		cards.append(raw_card as CardData)
@@ -126,6 +151,56 @@ func _load_source_cards() -> Array[CardData]:
 		return _card_sort_key(a) < _card_sort_key(b)
 	)
 	return cards
+
+
+func _load_preserved_catalog(root: String) -> bool:
+	# Optional release overlay input: preserve already shipped metadata exactly,
+	# while adding cards absent from this snapshot from the normal source roots.
+	var manifest := _load_json_dictionary(root.path_join("catalog_manifest.json"))
+	var index_path := root.path_join("index.json")
+	if manifest.is_empty() or not _preserved_hash_matches(index_path, str(manifest.get("index_file", {}).get("sha256", ""))):
+		push_error("Card catalog builder: invalid preserved catalog index")
+		return false
+	var index := _load_json_dictionary(index_path)
+	var records := {}
+	var paths := {}
+	for shard: Dictionary in manifest.get("sets", []):
+		var relative := str(shard.get("path", ""))
+		if not relative.begins_with("sets/") or ".." in relative or paths.has(relative.to_lower()):
+			push_error("Card catalog builder: ambiguous preserved shard path")
+			return false
+		paths[relative.to_lower()] = true
+		var path := root.path_join(relative)
+		if not _preserved_hash_matches(path, str(shard.get("sha256", ""))):
+			push_error("Card catalog builder: invalid preserved shard hash")
+			return false
+		var payload := _load_json_dictionary(path)
+		for card: Dictionary in payload.get("cards", []):
+			var uid := str(card.get("set_code", "")) + "_" + str(card.get("card_index", ""))
+			if uid == "_" or records.has(uid):
+				push_error("Card catalog builder: invalid preserved printing identity")
+				return false
+			records[uid] = card
+	var entries := {}
+	for entry: Dictionary in index.get("cards", []):
+		var uid := str(entry.get("uid", ""))
+		if not records.has(uid) or entries.has(uid):
+			push_error("Card catalog builder: preserved index does not match its full records")
+			return false
+		entries[uid] = entry
+	if entries.is_empty() or entries.size() != records.size() or entries.size() != int(manifest.get("card_count", -1)):
+		push_error("Card catalog builder: incomplete preserved catalog")
+		return false
+	_preserved_card_records = records
+	_preserved_index_entries = entries
+	return true
+
+
+func _preserved_hash_matches(path: String, expected: String) -> bool:
+	if not FileAccess.file_exists(path) or expected.is_empty(): return false
+	# Older checked-in snapshots used Git CRLF conversion after the generator
+	# hashed its LF JSON text. Accept only that exact newline normalization.
+	return FileAccess.get_sha256(path) == expected or FileAccess.get_file_as_string(path).replace("\r\n", "\n").sha256_text() == expected
 
 
 func _source_card_file_names(source_path: String) -> PackedStringArray:

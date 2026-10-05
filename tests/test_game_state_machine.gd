@@ -44,6 +44,19 @@ class CountingCoinFlipper extends CoinFlipper:
 		return flip()
 
 
+class TwoRedrawPlayer extends PlayerState:
+	var redraws := 0
+
+	func shuffle_deck() -> void:
+		redraws += 1
+		# Deterministic first failure, then a valid hand; preserve all cards.
+		deck.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
+			var a_basic := a.card_data.is_basic_pokemon()
+			var b_basic := b.card_data.is_basic_pokemon()
+			return a_basic and not b_basic if redraws >= 2 else not a_basic and b_basic
+		)
+
+
 ## 创建包含 60 张基础宝可梦的测试卡组数据
 func _make_test_deck_data(deck_id: int) -> DeckData:
 	var deck := DeckData.new()
@@ -1131,6 +1144,38 @@ func test_gift_energy_knockout_logs_exact_drawn_cards_for_reveal() -> String:
 	])
 
 
+func test_repeated_mulligans_offer_one_total_bonus_after_both_hands_are_ready() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	for pi: int in 2:
+		var player := TwoRedrawPlayer.new() if pi == 0 else PlayerState.new()
+		player.player_index = pi
+		for i: int in 20:
+			var data := _make_basic_pokemon_card_data("Opening %d" % i)
+			if pi == 0 and i < 19:
+				data.card_type = "Item"
+			player.deck.append(CardInstance.create(data, pi))
+		player.draw_cards(7)
+		gsm.game_state.players.append(player)
+	var choices: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(kind: String, data: Dictionary) -> void:
+		choices.append({"kind": kind, "data": data.duplicate(true)})
+	)
+	gsm._check_mulligan()
+	var before_draw := gsm.game_state.players[1].hand.size()
+	var pending := gsm.get_pending_decision_snapshot()
+	var accepted := gsm.resolve_mulligan_draw_count(1, 2)
+	return run_checks([
+		assert_eq(gsm._mulligan_counts[0], 2, "All failed hands must be redrawn before the bonus window opens"),
+		assert_eq(int(pending.get("mulligan_count", 0)), 2, "The single bonus window must contain the total unmatched mulligans"),
+		assert_eq(before_draw, 7, "Bonus cards must not be awarded during earlier failed hands"),
+		assert_true(accepted, "The full two-card entitlement must be legal in one resolution"),
+		assert_eq(gsm.game_state.players[1].hand.size(), 9, "Two mulligans grant two cards, not one plus two"),
+		assert_eq(choices.size(), 2, "Only one bonus window and one setup_ready event should be emitted"),
+		assert_eq(str(choices[-1].get("kind", "")), "setup_ready", "Setup must continue after the one-shot bonus"),
+	])
+
+
 func test_both_players_mulligan_do_not_redraw_initial_hands_twice() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -1161,6 +1206,7 @@ func test_both_players_mulligan_do_not_redraw_initial_hands_twice() -> String:
 		assert_eq(gsm.game_state.players[1].hand.size(), 7, "Player 1 should end mulligan with 7 cards"),
 		assert_eq(gsm.game_state.players[0].deck.size(), 7, "Player 0 deck should not double-draw"),
 		assert_eq(gsm.game_state.players[1].deck.size(), 7, "Player 1 deck should not double-draw"),
+		assert_eq(gsm._mulligan_counts, [0, 0], "Simultaneous failed hands cancel and must not award bonus cards"),
 	])
 
 

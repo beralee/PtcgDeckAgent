@@ -1,0 +1,30 @@
+{
+  "document_type": "damage_registry_catalog_refresh_receipt_v1",
+  "user_authorization": "2026-09-20 user agreed to game and SDK registry synchronization",
+  "source_root": "D:\\ai\\code\\PtcgDAP",
+  "source_head": "53cc7f86cb2048827ae29dc510494ded92ceb48c",
+  "old_count": 797,
+  "new_count": 1011,
+  "existing_changed": [],
+  "old_file_sha256": "CFB0500B441EFC244A76FF936E5A3EF0921799A8A9CC1D7FD110A544EEB57DD9",
+  "new_file_sha256": "C132A27B82CF2BA0661065E5EF5A10AE0AB506B44CDB7DB802B51A286D9EDFB4",
+  "old_registry_sha256": "1FDC12126BD74E4E10AEB5B4580E18916B5401B76B0E42EF7EDE70E04CAD398C",
+  "new_registry_sha256": "5538DE9F6F9EF7ADA2701BD256B678293974D3BD155745608C6606F16E8AF644",
+  "same_as_prepared_runtime": true,
+  "production_approval": false,
+  "python_tests": 14,
+  "forge_catalog_test": true,
+  "canary": {
+    "games": 4,
+    "clean": true,
+    "runtime_sha256": "A19CBAD5A05B32ADBE428C1F0682B59877B0BB875FE3F4C4FAFC8E7C8A191894",
+    "report_sha256": "5FA662A4F19D44C2CA9A03A9E993AA63B83990167EF3564FDD7B23C2815C0F22",
+    "policy_calls": 310
+  },
+  "claims": {
+    "local_godot_registry_fix": true,
+    "card_rule_parity": false,
+    "ladder_strength": false,
+    "production": false
+  }
+}

@@ -1,0 +1,633 @@
+{
+  "cards": {
+    "30thC_101": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "高级球",
+      "retreat": 0,
+      "stage": -1
+    },
+    "30thC_102": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "宝可平板",
+      "retreat": 0,
+      "stage": -1
+    },
+    "30thDC_039": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "老大的指令",
+      "retreat": 0,
+      "stage": -1
+    },
+    "30thDC_040": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "莉莉艾的决心",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV10C_146": {
+      "attacks": [
+        {
+          "cost": "D",
+          "index": 1,
+          "pressure": 10
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "D",
+      "engine": false,
+      "from": "",
+      "hp": 70,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "玛俐的捣蛋小妖",
+      "retreat": 1,
+      "stage": 0
+    },
+    "CSV10C_147": {
+      "attacks": [
+        {
+          "cost": "DD",
+          "index": 0,
+          "pressure": 60
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "D",
+      "engine": false,
+      "from": "玛俐的捣蛋小妖",
+      "hp": 100,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "玛俐的诈唬魔",
+      "retreat": 1,
+      "stage": 1
+    },
+    "CSV10C_148": {
+      "attacks": [
+        {
+          "cost": "DD",
+          "index": 0,
+          "pressure": 210
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "D",
+      "engine": true,
+      "from": "玛俐的诈唬魔",
+      "hp": 320,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "玛俐的长毛巨魔ex",
+      "retreat": 2,
+      "stage": 2
+    },
+    "CSV1C_079": {
+      "attacks": [
+        {
+          "cost": "FCC",
+          "index": 0,
+          "pressure": 70
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "F",
+      "engine": true,
+      "from": "",
+      "hp": 70,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "摔角鹰人",
+      "retreat": 1,
+      "stage": 0
+    },
+    "CSV1C_127": {
+      "attacks": [],
+      "energy_model": "luminous",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "夜光能量",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV3C_123": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "奇树",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV6C_114": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "反击捕捉器",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV6C_125": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "弗图博士的剧本",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV7C_177": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "友好宝芬",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV7C_203": {
+      "attacks": [],
+      "energy_model": "neo_upper",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "新冲天能量",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV8C_081": {
+      "attacks": [
+        {
+          "cost": "PP",
+          "index": 1,
+          "pressure": 30
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "P",
+      "engine": false,
+      "from": "",
+      "hp": 60,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "夜巡灵",
+      "retreat": 1,
+      "stage": 0
+    },
+    "CSV8C_082": {
+      "attacks": [
+        {
+          "cost": "PP",
+          "index": 0,
+          "pressure": 50
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "P",
+      "engine": true,
+      "from": "夜巡灵",
+      "hp": 90,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "彷徨夜灵",
+      "retreat": 2,
+      "stage": 1
+    },
+    "CSV8C_083": {
+      "attacks": [
+        {
+          "cost": "PPC",
+          "index": 0,
+          "pressure": 150
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "P",
+      "engine": true,
+      "from": "彷徨夜灵",
+      "hp": 160,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "黑夜魔灵",
+      "retreat": 3,
+      "stage": 2
+    },
+    "CSV8C_094": {
+      "attacks": [
+        {
+          "cost": "PC",
+          "index": 0,
+          "pressure": 60
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "P",
+      "engine": true,
+      "from": "",
+      "hp": 110,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "愿增猿",
+      "retreat": 1,
+      "stage": 0
+    },
+    "CSV8C_135": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "D",
+      "engine": true,
+      "from": "",
+      "hp": 210,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "吉雉鸡ex",
+      "retreat": 1,
+      "stage": 0
+    },
+    "CSV8C_157": {
+      "attacks": [
+        {
+          "cost": "P",
+          "index": 0,
+          "pressure": 10
+        },
+        {
+          "cost": "RP",
+          "index": 1,
+          "pressure": 40
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "N",
+      "engine": false,
+      "from": "",
+      "hp": 70,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "多龙梅西亚",
+      "retreat": 1,
+      "stage": 0
+    },
+    "CSV8C_158": {
+      "attacks": [
+        {
+          "cost": "RP",
+          "index": 0,
+          "pressure": 70
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "N",
+      "engine": true,
+      "from": "多龙梅西亚",
+      "hp": 90,
+      "information_abilities": [
+        0
+      ],
+      "information_minimum_deck_count": 2,
+      "name": "多龙奇",
+      "retreat": 1,
+      "stage": 1
+    },
+    "CSV8C_159": {
+      "attacks": [
+        {
+          "cost": "C",
+          "index": 0,
+          "pressure": 70
+        },
+        {
+          "cost": "RP",
+          "index": 1,
+          "pressure": 260
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "N",
+      "engine": false,
+      "from": "多龙奇",
+      "hp": 320,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "多龙巴鲁托ex",
+      "retreat": 1,
+      "stage": 2
+    },
+    "CSV8C_172": {
+      "attacks": [
+        {
+          "cost": "CCCCC",
+          "index": 0,
+          "pressure": 240
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "C",
+      "engine": true,
+      "from": "",
+      "hp": 260,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "月月熊 赫月ex",
+      "retreat": 3,
+      "stage": 0
+    },
+    "CSV8C_183": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "夜间担架",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV8C_203": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "阻碍之塔",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSV9.5C_004": {
+      "attacks": [
+        {
+          "cost": "",
+          "index": 0,
+          "pressure": 100
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "G",
+      "engine": false,
+      "from": "",
+      "hp": 30,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "含羞苞",
+      "retreat": 0,
+      "stage": 0
+    },
+    "CSV9C_078": {
+      "attacks": [
+        {
+          "cost": "PPC",
+          "index": 0,
+          "pressure": 200
+        }
+      ],
+      "energy_model": "",
+      "energy_type": "P",
+      "engine": true,
+      "from": "",
+      "hp": 210,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "拉帝亚斯ex",
+      "retreat": 2,
+      "stage": 0
+    },
+    "CSVE1C_DAR": {
+      "attacks": [],
+      "energy_model": "basic",
+      "energy_type": "D",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "基本恶能量",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSVE1C_FIR": {
+      "attacks": [],
+      "energy_model": "basic",
+      "energy_type": "R",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "基本火能量",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSVE1C_PSY": {
+      "attacks": [],
+      "energy_model": "basic",
+      "energy_type": "P",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "基本超能量",
+      "retreat": 0,
+      "stage": -1
+    },
+    "CSVH1C_045": {
+      "attacks": [],
+      "energy_model": "",
+      "energy_type": "",
+      "engine": false,
+      "from": "",
+      "hp": 0,
+      "information_abilities": [],
+      "information_minimum_deck_count": 0,
+      "name": "神奇糖果",
+      "retreat": 0,
+      "stage": -1
+    }
+  },
+  "max_actions": 3,
+  "profile_id": "public-attack-access-v1",
+  "schema_version": 1,
+  "scope": "conditional_public_resource_plans_not_damage_or_legality_proofs",
+  "sources": [
+    {
+      "path": "data/bundled_user/cards/30thC_101.json",
+      "sha256": "6FC235638A83325E949FD277945A1C9F703057C05E9B7D19B5E225ECD19F4F92"
+    },
+    {
+      "path": "data/bundled_user/cards/30thC_102.json",
+      "sha256": "3FC6261DA90FF5BCE77B134DBB64ABC53D05CAEA54F601DF7BD325F34C96BB15"
+    },
+    {
+      "path": "data/bundled_user/cards/30thDC_039.json",
+      "sha256": "3F97376123B4A58FD557AFF13A20BB6802B7974BA5A1FAD63A6925C3AF709DCE"
+    },
+    {
+      "path": "data/bundled_user/cards/30thDC_040.json",
+      "sha256": "1712BCBFCD9AD0391CE74B20F428E424925F35646220110D2943EA8C001D9231"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_146.json",
+      "sha256": "4CE7694E86F97D77AEEBA690E61027B811C472051BCB65FA3780FB5ED918F505"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_147.json",
+      "sha256": "58CFA92FB6434F6837E6A20BC4C14DC445020A1616A765490821E31BF5E9B045"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV10C_148.json",
+      "sha256": "01F439FB05A93FC770D808BBF7B3CEBCB38003667DD512182E06C161F4A697C1"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_079.json",
+      "sha256": "2E514E9816950E528C17A5BCA269A1C99772781AA006A1B56D19AEA07F815984"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV1C_127.json",
+      "sha256": "F2B7D5BAF7005C82C834DB48B06564055A470BE2F967E336052C77F026306806"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV3C_123.json",
+      "sha256": "A3FD12456E9991925DA4D21A42E6B5BB472C64F31833D9149C8305F9C81E17F6"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV6C_114.json",
+      "sha256": "5F086E6492A5AFDD4A668A06616D166C56AE401BC79866AFF3F6BD3BE0477CDA"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV6C_125.json",
+      "sha256": "36A589A7B02ED1353AE1A3200BB70C124F61B917A22E8059D7236897A0DD4F93"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV7C_177.json",
+      "sha256": "1D3C1D8C97B6FC1ED177B9BCE21896AB3B97F6CCEC004E52DC1FDAAEF80AA98A"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV7C_203.json",
+      "sha256": "3157BDEC42189CBB468E71B45CB0C0AD03E32C24DE72028B58C6798BC56A01E3"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_081.json",
+      "sha256": "7F4B3E9F8130AB606358C80D6AF3ADFE30AC8370D7A53679D4AFFAD29FDFD454"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_082.json",
+      "sha256": "1B4160579F3629CB0F5E0E2392A2ECE5A66A9C3F20708A5A67D45A2F289B973E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_083.json",
+      "sha256": "C4690EFFD1551EA2812CBC24E8D919EA8F3D7593B1725FC58253CE2B8A1234EE"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_094.json",
+      "sha256": "9EEDD84B0FDA69DFBED0A32C0321C2E4B9A8A4B6C905D22F3EB8FEBBAB56C2A1"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_135.json",
+      "sha256": "D8A5D264E79015D4D16C5E9639B18308D9F4B8298FADADF3FC8E4DF364C23FE7"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_157.json",
+      "sha256": "8CFCD71A90387295DA44FBFC8C36D29191AC9DB14E632EDEC759FE8CCC2EA46C"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_158.json",
+      "sha256": "4694B0B9FDE1EB14D471126FB754DFB40E7BDAB9A4E4F638F8F0C07E1647A414"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_159.json",
+      "sha256": "C175E577B4E1AE7D2713ABBEC473CDEA5375A69BBBABADA4163204BE299AF56E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_172.json",
+      "sha256": "025128712CB0513FFFADC1700CD1F0507BD2DDD6963BB27843AF21B8AC6D0124"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_183.json",
+      "sha256": "713F2B15DED2F144E562667A5B7AC853E6770DDA3616934882664BF67D9AA457"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV8C_203.json",
+      "sha256": "C8BA3F30BD1847F8012376A1BF32E2ED0D8EA7D028886FC0119FBCA8DA9968B9"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV9.5C_004.json",
+      "sha256": "20609F805C051F9CA5D4CEB8AB3FA75F23E34D735B5687B06FBFD95C7E8E013A"
+    },
+    {
+      "path": "data/bundled_user/cards/CSV9C_078.json",
+      "sha256": "A2B97B850ED020FBE0CE68EF5C6E4ADD25383DFCDE8FC74224A6CACE32CF7C2E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVE1C_DAR.json",
+      "sha256": "B86CF49A7890C45951CDB80C87BC75F0392812C5370DA66866FCC979DC79CAB2"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVE1C_FIR.json",
+      "sha256": "0A43CCFFCE7E89CCAB9F66D2AD82D972958A6231616F06FBEEE0B77BB24A394E"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVE1C_PSY.json",
+      "sha256": "6F49343EBC7C3B4BF3AD3299A24D0379721CD6E1BB4E6B6B230EF0CEA546E705"
+    },
+    {
+      "path": "data/bundled_user/cards/CSVH1C_045.json",
+      "sha256": "687FBE4400FF799FCBF889245D76779A0E7BFD69B21ACDDB80439C8E28D74B11"
+    }
+  ]
+}

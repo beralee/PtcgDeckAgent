@@ -71,6 +71,8 @@ func _configure_battle_pointer_runtime(
 func _claim_modal_pointer_event(event: InputEvent, intent: String) -> bool:
 	if _battle_pointer_input_router == null:
 		return false
+	if is_inside_tree():
+		return _battle_pointer_input_router.claim_gui_event(event, intent, "battle_modal")
 	return _battle_pointer_input_router.claim_event(event, intent, "battle_modal")
 
 
@@ -211,7 +213,7 @@ func _prepare_ios_web_hand_rebuild(reason: String = "hand_rebuild") -> void:
 			"ios_web_%s" % reason
 		)
 	if _battle_pointer_input_router != null:
-		_battle_pointer_input_router.cancel_all("ios_web_%s" % reason)
+		_battle_pointer_input_router.cancel_all("ios_web_%s" % reason, -1, "battle_modal")
 	if _web_battle_input_adapter != null:
 		_web_battle_input_adapter.cancel_all("ios_web_%s" % reason)
 
@@ -283,8 +285,10 @@ func _reconcile_hand_pointer_surface(signature: String) -> int:
 			or _uses_ios_web_hand_touch_profile()
 		)
 		if browser_hand_path_active and _battle_pointer_input_router != null:
+			# A new hand invalidates its old gestures, not the modal gesture that
+			# committed the change. Its Android compatibility tail is still pending.
 			_battle_pointer_input_router.cancel_all(
-				"hand_surface_generation_%d" % generation
+				"hand_surface_generation_%d" % generation, -1, "battle_modal"
 			)
 		if browser_hand_path_active and _web_battle_input_adapter != null:
 			_web_battle_input_adapter.cancel_all(

@@ -1,0 +1,13 @@
+{
+  "type": "Windows 3D supporter character presentation",
+  "count": 18,
+  "characters": "characters/provenance.json",
+  "audio": "character-audio-provenance.json",
+  "approved_boss_art": "boss-command-hd.provenance.json",
+  "approved_boss_audio_generator": "tools/arena3d/build_boss_command_audio.py",
+  "legacy_audio": {
+    "generator": "tools/arena3d/build_supporter_audio.py",
+    "file": "audio/boss.wav",
+    "note": "Preserved legacy cue; runtime Boss uses boss_command.wav."
+  }
+}

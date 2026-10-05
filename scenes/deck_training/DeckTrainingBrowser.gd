@@ -31,6 +31,19 @@ func _ready() -> void:
 	NonBattleTouchBridgeScript.bind_button_touch(_back_button)
 	_replay_button.pressed.connect(_on_replay_pressed)
 	NonBattleTouchBridgeScript.bind_button_touch(_replay_button)
+	var expert_button := Button.new()
+	expert_button.name = "ExpertPlayEntry"
+	expert_button.text = "多龙 18.5 · 专家共创 · 玩着教 AI"
+	expert_button.hide()
+	expert_button.custom_minimum_size.y = 50
+	expert_button.add_theme_font_size_override("font_size", 20)
+	expert_button.pressed.connect(func() -> void:
+		GameManager.goto_scene("res://scenes/deck_training/ExpertPlayBrowser.tscn")
+	)
+	NonBattleTouchBridgeScript.bind_button_touch(expert_button)
+	var container := _status_label.get_parent()
+	container.add_child(expert_button)
+	container.move_child(expert_button, 1)
 	_build_deck_selector()
 	_build_scenario_list()
 	_apply_layout()
@@ -236,6 +249,10 @@ func _apply_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = 
 	var header_button_font := maxi(24, button_font - 7) if portrait else button_font
 	var secondary_height := float(context.get("secondary_button_height", 104.0)) if portrait else 48.0
 	var primary_height := float(context.get("primary_button_height", 116.0)) if portrait else 58.0
+	var expert_entry := find_child("ExpertPlayEntry", true, false) as Button
+	if expert_entry != null:
+		expert_entry.custom_minimum_size.y = secondary_height
+		expert_entry.add_theme_font_size_override("font_size", header_button_font)
 	var root_vbox := get_node_or_null("RootMargin/VBox") as VBoxContainer
 	var header := get_node_or_null("RootMargin/VBox/Header") as HBoxContainer
 	var title := find_child("Title", true, false) as Label

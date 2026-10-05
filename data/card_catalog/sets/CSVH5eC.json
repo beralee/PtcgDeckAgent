@@ -1,0 +1,66 @@
+{
+	"cards": [
+		{
+			"abilities": [],
+			"ancient_trait": "",
+			"artist": "Anesaki Dynamic",
+			"attacks": [
+				{
+					"cost": "P",
+					"damage": "",
+					"is_vstar_power": false,
+					"name": "咒术言语",
+					"text": "对手选择对手自己的3张手牌，放回牌库并重洗牌库。"
+				},
+				{
+					"cost": "PC",
+					"damage": "70",
+					"is_vstar_power": false,
+					"name": "幽魂射击",
+					"text": ""
+				}
+			],
+			"card_index": "027",
+			"card_index_en": "91",
+			"card_type": "Pokemon",
+			"description": "【超】 咒术言语 \n对手选择对手自己的3张手牌，放回牌库并重洗牌库。\n\n【超】【无】 幽魂射击 70\n\n\n",
+			"effect_id": "04cb7a5607e2d5e5a5a3daeefc15f64a",
+			"energy_provides": "",
+			"energy_type": "P",
+			"evolves_from": "怨影娃娃",
+			"hp": 90,
+			"image_local_path": "user://cards/images/CSVH5eC/027.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSVH5eC/027.png",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "诅咒娃娃",
+			"name_en": "Banette",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_expanded": true,
+			"regulation_mark": "I",
+			"regulation_standard": true,
+			"release_date": "2026-07-15T16:00:00Z",
+			"resistance_energy": "F",
+			"resistance_value": "-30",
+			"retreat_cost": 1,
+			"set_code": "CSVH5eC",
+			"set_code_en": "ASC",
+			"source_card_index": "027",
+			"source_imported_at": 0,
+			"source_language": "zh-CN",
+			"source_parser_version": 1,
+			"source_prints": [],
+			"source_provider": "tcg_mik",
+			"source_set_code": "CSVH5eC",
+			"source_url": "https://tcg.mik.moe/cards/CSVH5eC/027",
+			"stage": "Stage 1",
+			"weakness_energy": "D",
+			"weakness_value": "×2",
+			"yoren_code": "P354"
+		}
+	],
+	"schema_version": 1,
+	"set_code": "CSVH5eC"
+}

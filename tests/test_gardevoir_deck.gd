@@ -1247,12 +1247,17 @@ func test_klefki_snipe_discard_tool() -> String:
 	defender.attached_tool = CardInstance.create(tool_cd, 1)
 
 	var effect := AttackDiscardDefenderTool.new()
+	effect.before_attack_damage(attacker, defender, 0, state)
+	var checks: Array[String] = [
+		assert_eq(defender.attached_tool, null, "狙落：应在造成伤害前弃掉对手战斗宝可梦的道具"),
+		assert_eq(state.players[1].discard_pile.size(), 1, "狙落：道具应在伤害前进入弃牌区"),
+	]
 	effect.execute_attack(attacker, defender, 0, state)
-
-	return run_checks([
+	checks.append_array([
 		assert_eq(defender.attached_tool, null, "狙落：应弃掉对手战斗宝可梦的道具"),
-		assert_eq(state.players[1].discard_pile.size(), 1, "狙落：道具应进入弃牌区"),
+		assert_eq(state.players[1].discard_pile.size(), 1, "狙落：伤害后不得重复弃置道具"),
 	])
+	return run_checks(checks)
 
 
 ## ==================== 秘密箱 Secret Box ====================

@@ -63,157 +63,143 @@ static func format_script_error_failure(base_message: String, script_errors: Arr
 static func run_suites(
 	suites: Array[Dictionary],
 	selected_suites: Dictionary = {},
-	title: String = "PTCG Train Unit Tests"
+	title: String = "PTCG Train Unit Tests",
+	options: Dictionary = {}
 ) -> Dictionary:
-	var total := 0
-	var passed := 0
-	var failed := 0
-	var lines: Array[String] = ["===== %s =====" % title, ""]
+	var records: Array[Dictionary] = []
+	var identities := {}
+	var paths := {}
+	var selected_count := 0
+	for suite: Dictionary in suites:
+		var name := str(suite.get("name", ""))
+		var key := TestSuiteFilterScript.normalize_suite_name(name)
+		var path := str(suite.get("path", ""))
+		if key.is_empty() or path.is_empty() or identities.has(key) or paths.has(path):
+			_record(records, suite, "_suite_selection", "failed", "Empty or duplicate suite identity: %s (%s)" % [name, path])
+		identities[key] = true
+		paths[path] = true
+		if TestSuiteFilterScript.should_run_suite(selected_suites, name):
+			selected_count += 1
+	for key: String in selected_suites:
+		if not identities.has(key):
+			_record(records, {}, "_suite_selection", "failed", "Unknown suite: %s" % key)
+	if selected_count == 0:
+		_record(records, {}, "_suite_selection", "failed", "No suites selected; refusing an empty success")
+	if not records.is_empty():
+		return _build_report(records, title)
+
 	var error_gate := ScriptErrorGate.new()
 	OS.add_logger(error_gate)
-
-	if not selected_suites.is_empty():
-		lines.append("Selected suites: %s" % ", ".join(selected_suites.keys()))
-		lines.append("")
-
 	for suite: Dictionary in suites:
-		var suite_name := str(suite.get("name", ""))
-		if not TestSuiteFilterScript.should_run_suite(selected_suites, suite_name):
+		if not TestSuiteFilterScript.should_run_suite(selected_suites, str(suite.name)):
 			continue
-
-		lines.append("--- %s ---" % suite_name)
-		var suite_path := str(suite.get("path", ""))
+		var suite_path := str(suite.path)
 		var load_errors := error_gate.take_script_errors()
-		var suite_resource: Resource = ResourceLoader.load(
-			suite_path,
-			"GDScript",
-			ResourceLoader.CACHE_MODE_IGNORE_DEEP
-		)
+		var resource := ResourceLoader.load(suite_path, "GDScript", ResourceLoader.CACHE_MODE_IGNORE_DEEP)
 		load_errors.append_array(error_gate.take_script_errors())
-		if suite_resource == null or not suite_resource is GDScript:
-			total += 1
-			failed += 1
-			var load_message := "Unable to load suite script: %s" % suite_path
-			lines.append("FAIL _suite_load :: %s" % format_script_error_failure(load_message, load_errors))
-			lines.append("")
+		if resource == null or not resource is GDScript:
+			_record(records, suite, "_suite_load", "failed", format_script_error_failure("Unable to load suite script: %s" % suite_path, load_errors))
 			continue
-
-		var suite_script := suite_resource as GDScript
-		var can_instantiate := suite_script.can_instantiate()
+		var script := resource as GDScript
+		var instantiable := script.can_instantiate()
 		load_errors.append_array(error_gate.take_script_errors())
 		if not load_errors.is_empty():
-			total += 1
-			failed += 1
-			var validation_message := "Suite script emitted errors while loading: %s" % suite_path
-			lines.append("FAIL _suite_load :: %s" % format_script_error_failure(validation_message, load_errors))
-			lines.append("")
+			_record(records, suite, "_suite_load", "failed", format_script_error_failure("Suite emitted errors while loading", load_errors))
 			continue
-		if not can_instantiate:
-			total += 1
-			failed += 1
-			lines.append("FAIL _suite_init :: Suite script cannot be instantiated: %s" % suite_path)
-			lines.append("")
+		if not instantiable or script_requires_init_arguments(script):
+			_record(records, suite, "_suite_init", "failed", "Unable to instantiate suite without required _init arguments or abstract implementation: %s" % suite_path)
 			continue
-		if script_requires_init_arguments(suite_script):
-			total += 1
-			failed += 1
-			lines.append("FAIL _suite_init :: Unable to instantiate suite without required _init arguments: %s" % suite_path)
-			lines.append("")
-			continue
-
+		var suite_root := _capture_root_children()
+		var suite_orphans := _capture_orphan_nodes()
+		var test_obj: Variant = script.new()
 		var init_errors := error_gate.take_script_errors()
-		var test_obj: Variant = suite_script.new()
-		init_errors.append_array(error_gate.take_script_errors())
-		var methods: Array[Dictionary] = []
-		if test_obj != null and init_errors.is_empty():
-			methods = test_obj.get_method_list()
-			init_errors.append_array(error_gate.take_script_errors())
 		if test_obj == null or not init_errors.is_empty():
-			test_obj = null
-			suite_script = null
-			await _wait_for_cleanup_frames()
-			init_errors.append_array(error_gate.take_script_errors())
-			total += 1
-			failed += 1
-			lines.append("FAIL _suite_init :: %s" % format_script_error_failure(
-				"Unable to instantiate suite: %s" % suite_path,
-				init_errors
-			))
-			lines.append("")
-			continue
-
-		var suite_test_count := 0
-		for method: Dictionary in methods:
-			var method_name := str(method.get("name", ""))
-			if not method_name.begins_with("test_"):
-				continue
-
-			suite_test_count += 1
-			total += 1
-			# Emit the active test immediately. The summary is intentionally buffered,
-			# but operators must still be able to distinguish a slow test from a
-			# stalled runner and stop at the exact owning test.
-			print("RUN: %s.%s" % [suite_name, method_name])
-			var started_at_msec := Time.get_ticks_msec()
-			var runtime_errors := error_gate.take_script_errors()
-			var root_snapshot := _capture_root_children()
-			var orphan_snapshot := _capture_orphan_nodes()
-			var result: Variant = await test_obj.call(method_name)
-
-			await _cleanup_root_children(root_snapshot)
-			_cleanup_orphan_nodes(orphan_snapshot)
-			await _wait_for_cleanup_frames()
-			runtime_errors.append_array(error_gate.take_script_errors())
-
-			var message := format_script_error_failure(str(result), runtime_errors)
-			if message == "":
-				passed += 1
-				lines.append("PASS %s" % method_name)
-				print("PASS: %s.%s (%d ms)" % [
-					suite_name,
-					method_name,
-					Time.get_ticks_msec() - started_at_msec,
-				])
-			else:
-				failed += 1
-				lines.append("FAIL %s :: %s" % [method_name, message])
-				print("FAIL: %s.%s (%d ms): %s" % [
-					suite_name,
-					method_name,
-					Time.get_ticks_msec() - started_at_msec,
-					message,
-				])
-
-		if suite_test_count == 0:
-			total += 1
-			failed += 1
-			lines.append("FAIL _suite_discovery :: No test methods found")
-
-		lines.append("")
+			_record(records, suite, "_suite_init", "failed", format_script_error_failure("Unable to instantiate suite", init_errors))
+		else:
+			var methods: Array[Dictionary] = test_obj.get_method_list()
+			methods.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.name) < str(b.name))
+			var test_count := 0
+			for method: Dictionary in methods:
+				var method_name := str(method.name)
+				if not method_name.begins_with("test_"):
+					continue
+				var test_filter := str(options.get("test_filter", ""))
+				if not test_filter.is_empty() and method_name.find(test_filter) == -1:
+					continue
+				test_count += 1
+				var arguments: Array = method.get("args", [])
+				var defaults: Array = method.get("default_args", [])
+				if arguments.size() > defaults.size():
+					_record(records, suite, method_name, "failed", "Test methods must not require arguments")
+					continue
+				print("RUN: %s.%s" % [suite.name, method_name])
+				var started := Time.get_ticks_msec()
+				var errors := error_gate.take_script_errors()
+				var root_before := _capture_root_children()
+				var orphans_before := _capture_orphan_nodes()
+				if test_obj.has_method("take_assertion_failures"):
+					test_obj.take_assertion_failures()
+				var result: Variant = await test_obj.call(method_name)
+				await _cleanup_root_children(root_before)
+				_cleanup_orphan_nodes(orphans_before)
+				await _wait_for_cleanup_frames()
+				errors.append_array(error_gate.take_script_errors())
+				var message := str(result) if result is String else "Test must return String; received %s" % type_string(typeof(result))
+				var assertion_failed := false
+				if test_obj.has_method("take_assertion_failures"):
+					var assertions: Array = test_obj.take_assertion_failures()
+					if not assertions.is_empty():
+						assertion_failed = true
+						message = " | ".join(assertions)
+				message = format_script_error_failure(message, errors)
+				var status := "passed" if message.is_empty() else "failed"
+				if not assertion_failed and errors.is_empty() and message.begins_with("SKIP: ") and message.trim_prefix("SKIP: ").strip_edges() != "":
+					status = "skipped"
+				_record(records, suite, method_name, status, message, Time.get_ticks_msec() - started)
+			if test_count == 0:
+				_record(records, suite, "_suite_discovery", "failed", "No test methods matched filter '%s'" % str(options.get("test_filter", "")))
+		if test_obj is Node and is_instance_valid(test_obj):
+			(test_obj as Node).free()
 		test_obj = null
-		suite_script = null
+		resource = null
+		script = null
+		await _cleanup_root_children(suite_root)
+		_cleanup_orphan_nodes(suite_orphans)
 		await _wait_for_cleanup_frames()
 		var teardown_errors := error_gate.take_script_errors()
 		if not teardown_errors.is_empty():
-			total += 1
-			failed += 1
-			lines.append("FAIL _suite_teardown :: %s" % format_script_error_failure("", teardown_errors))
-			lines.append("")
-
-	lines.append("===== Summary =====")
-	lines.append("Total: %d | Passed: %d | Failed: %d" % [total, passed, failed])
-	if failed == 0:
-		lines.append("All tests passed!")
-	else:
-		lines.append("%d tests failed!" % failed)
-
+			_record(records, suite, "_suite_teardown", "failed", format_script_error_failure("", teardown_errors))
 	OS.remove_logger(error_gate)
-	return {
-		"total": total,
-		"passed": passed,
-		"failed": failed,
-		"output": "\n".join(lines),
-	}
+	return _build_report(records, title)
+
+
+static func _record(records: Array[Dictionary], suite: Dictionary, test: String, status: String, message: String, elapsed_ms: int = 0) -> void:
+	var record := {"suite": str(suite.get("name", "")), "path": str(suite.get("path", "")), "test": test, "status": status, "message": message, "elapsed_ms": elapsed_ms}
+	records.append(record)
+	var label: String = {"passed": "PASS", "failed": "FAIL", "skipped": "SKIP"}.get(status, "FAIL")
+	print("%s: %s.%s (%d ms)%s" % [label, record.suite, test, elapsed_ms, " :: " + message if message != "" else ""])
+
+
+static func _build_report(records: Array[Dictionary], title: String) -> Dictionary:
+	var passed := 0
+	var failed := 0
+	var skipped := 0
+	var lines: Array[String] = ["===== %s =====" % title]
+	for record: Dictionary in records:
+		match record.status:
+			"passed": passed += 1
+			"skipped": skipped += 1
+			_: failed += 1
+		var label: String = {"passed": "PASS", "failed": "FAIL", "skipped": "SKIP"}.get(record.status, "FAIL")
+		lines.append("%s %s :: %s %s" % [label, record.test, record.suite, record.message])
+	lines.append("===== Summary =====")
+	lines.append("Total: %d | Passed: %d | Failed: %d | Skipped: %d" % [records.size(), passed, failed, skipped])
+	var exit_code := 1 if failed > 0 else (2 if passed == 0 else 0)
+	if failed == 0 and skipped == 0 and passed > 0:
+		lines.append("All tests passed!")
+	return {"schema_version": 1, "total": records.size(), "passed": passed, "failed": failed, "skipped": skipped, "exit_code": exit_code, "cases": records, "output": "\n".join(lines)}
+
+
 
 
 static func script_requires_init_arguments(suite_script: GDScript) -> bool:

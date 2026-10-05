@@ -1,0 +1,58 @@
+{
+	"name": "坚盾剑怪",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "特性: 神秘之盾\n这只宝可梦，不受到对手「宝可梦【ex】・【V】」的招式的伤害。\n\n【钢】【无】 沉重猛击 120\n这个招式的伤害，不计算对手战斗宝可梦身上所附加的效果。\n\n",
+	"yoren_code": "P681",
+	"set_code": "CSV4C",
+	"card_index": "085",
+	"set_code_en": "PAR",
+	"card_index_en": "134",
+	"name_en": "Aegislash",
+	"name_zh": "",
+	"artist": "Jiro Sasumo",
+	"rarity": "R",
+	"release_date": "2025-07-17T16:00:00Z",
+	"regulation_mark": "G",
+	"effect_id": "ec6d0412aa2e5a0b0ed1490ac796df86",
+	"image_url": "https://tcg.mik.moe/static/img/CSV4C/085.png",
+	"image_local_path": "user://cards/images/CSV4C/085.png",
+	"source_provider": "tcg_mik",
+	"source_url": "https://tcg.mik.moe/cards/CSV4C/085",
+	"source_set_code": "CSV4C",
+	"source_card_index": "085",
+	"source_language": "zh-CN",
+	"source_prints": [],
+	"source_imported_at": 0,
+	"source_parser_version": 1,
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "M",
+	"stage": "Stage 2",
+	"hp": 150,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 3,
+	"evolves_from": "双剑鞘",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "沉重猛击",
+			"text": "这个招式的伤害，不计算对手战斗宝可梦身上所附加的效果。",
+			"cost": "MC",
+			"damage": "120",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "神秘之盾",
+			"text": "这只宝可梦，不受到对手「宝可梦【ex】・【V】」的招式的伤害。"
+		}
+	],
+	"energy_provides": ""
+}

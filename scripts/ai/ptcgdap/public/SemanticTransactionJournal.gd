@@ -59,6 +59,11 @@ func _advance(
 		var error: String = PlanningScript.validate_semantic_transactions(definitions)
 		if not error.is_empty():
 			return _result(false, error, "reject", error, _state)
+	if damage_result is Dictionary and not bool(damage_result.get("accepted", false)) \
+			and damage_result.get("error_code") == "unknown_damage_card_uid":
+		var event := "abort" if not _state.is_empty() else "idle"
+		clear()
+		return _result(true, "", event, "unknown_damage_card_uid", {})
 	if not damage_result is Dictionary or not bool(damage_result.get("accepted", false)):
 		return _result(false, "damage_plan_unavailable", "reject", "damage_plan_unavailable", _state)
 	var turn := int(frame.get("public_state", {}).get("turn_number", 0))

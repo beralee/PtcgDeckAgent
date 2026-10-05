@@ -107,6 +107,90 @@ func test_csv10c_122_tails_cancels_attack_damage() -> String:
 	return assert_true(canceled, "CSV10C_122 Sneak Attack should do no damage on tails")
 
 
+func _arbok_gsm(player_index: int) -> GameStateMachine:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _state()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = player_index
+	var arbok := _load_card("121")
+	gsm.game_state.players[1 - player_index].active_pokemon = _slot(arbok, 1 - player_index)
+	gsm.effect_processor.register_pokemon_card(arbok)
+	gsm.game_state.shared_turn_flags["_draw_effect_processor"] = gsm.effect_processor
+	return gsm
+
+
+func test_arbok_rejects_live_hand_bench_and_evolution_for_both_seats() -> String:
+	var checks: Array[String] = []
+	for owner: int in 2:
+		var gsm := _arbok_gsm(owner)
+		var state := gsm.game_state
+		var player := state.players[owner]
+		var basic := CardInstance.create(_pokemon("Ability Basic", "Basic", "P", "", true), owner)
+		var evolution := CardInstance.create(_pokemon("Ability Evolution", "Stage 1", "P", player.active_pokemon.get_pokemon_name(), true), owner)
+		player.hand = [basic, evolution]
+		var intents := BattleActionIntentModel.build(gsm, owner)
+		checks.append(assert_eq(intents.hand_intents[basic.instance_id].state, "blocked", "Player UI must mark basic as blocked"))
+		checks.append(assert_eq(intents.hand_intents[evolution.instance_id].state, "blocked", "Player UI must mark evolution as blocked"))
+		var builder := preload("res://scripts/ai/ptcgdap/host/godot/PtcgDAPAuthorDevelopmentBattleOwner.gd").LegalityOnlyActionBuilder.new()
+		for action: Dictionary in builder.build_actions(gsm, owner):
+			checks.append(assert_false(action.kind in ["play_basic_to_bench", "evolve"], "Author action frontier must omit blocked hand plays"))
+		checks.append(assert_false(gsm.rule_validator.can_play_basic_to_bench(state, owner, basic, gsm.effect_processor), "Glare must remove illegal bench actions"))
+		checks.append(assert_false(gsm.play_basic_to_bench(owner, basic), "Live bench command must reject Glare"))
+		checks.append(assert_false(gsm.evolve_pokemon(owner, evolution, player.active_pokemon), "Live evolution must reject Glare"))
+		checks.append(assert_eq(player.hand.size(), 2, "Rejected actions must preserve hand"))
+		checks.append(assert_eq(player.bench.size(), 0, "Rejected actions must preserve bench"))
+		checks.append(assert_eq(player.active_pokemon.pokemon_stack.size(), 1, "Rejected evolution must preserve stack"))
+	return run_checks(checks)
+
+
+func test_arbok_hand_lock_exceptions_and_active_lifecycle() -> String:
+	var gsm := _arbok_gsm(0)
+	var state := gsm.game_state
+	var player := state.players[0]
+	var arbok := state.players[1].active_pokemon
+	var checks: Array[String] = []
+	for card_name: String in ["Plain", "火箭队的能力宝可梦", "Team Rocket's Ability Pokemon"]:
+		var card := CardInstance.create(_pokemon(card_name, "Basic", "D", "", card_name != "Plain"), 0)
+		player.hand.append(card)
+		checks.append(assert_true(gsm.play_basic_to_bench(0, card), "Plain and Rocket Pokemon remain playable"))
+	var blocked := CardInstance.create(_pokemon("Other Ability", "Basic", "P", "", true), 0)
+	player.hand.append(blocked)
+	checks.append(assert_true(gsm.rule_validator.get_play_basic_to_bench_unusable_reason(state, 0, blocked, gsm.effect_processor).contains("阿柏怪"), "UI rejection should identify Arbok"))
+	state.players[1].bench = [arbok]
+	state.players[1].active_pokemon = _slot(_pokemon("Replacement"), 1)
+	checks.append(assert_true(gsm.rule_validator.can_play_basic_to_bench(state, 0, blocked, gsm.effect_processor), "Benched Arbok must not lock"))
+	state.players[1].bench.clear()
+	state.players[1].active_pokemon = arbok
+	checks.append(assert_false(gsm.rule_validator.can_play_basic_to_bench(state, 0, blocked, gsm.effect_processor), "Returning Active restores lock"))
+	arbok.effects.append({"type": "ability_disabled", "turn": state.turn_number})
+	checks.append(assert_true(gsm.play_basic_to_bench(0, blocked), "Suppressed Glare must allow play"))
+	return run_checks(checks)
+
+
+func test_arbok_blocks_rare_candy_candidates_and_stale_execution() -> String:
+	var gsm := _arbok_gsm(0)
+	var state := gsm.game_state
+	var target := state.players[0].active_pokemon
+	var stage1 := CardInstance.create(_pokemon("Middle", "Stage 1", "P", target.get_pokemon_name()), 0)
+	var stage2 := CardInstance.create(_pokemon("Final", "Stage 2", "P", "Middle", true), 0)
+	var candy_data := CardData.from_dict(JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/CSVH1C_045.json")))
+	var candy := CardInstance.create(candy_data, 0)
+	state.players[0].hand = [stage2, candy]
+	state.players[0].deck = [stage1]
+	var effect := EffectRareCandy.new()
+	var checks: Array[String] = []
+	checks.append(assert_false(effect.can_execute(candy, state), "Candy cannot play a blocked ability Pokemon"))
+	checks.append(assert_eq(effect.build_ucis_interaction_steps_spec_steps(candy, state)[0].items.size(), 0, "Candy must omit blocked evolution pairs"))
+	effect.execute(candy, [{"rare_candy_evolve": [{"card": stage2, "target_slot": target}]}], state)
+	checks.append(assert_eq(target.pokemon_stack.size(), 1, "Stale Candy selection must not bypass Glare"))
+	checks.append(assert_true(stage2 in state.players[0].hand, "Blocked evolution remains in hand"))
+	state.players[1].active_pokemon.effects.append({"type": "ability_disabled", "turn": state.turn_number})
+	checks.append(assert_true(effect.can_execute(candy, state), "Candy becomes available when Glare is suppressed"))
+	checks.append(assert_true(gsm.effect_processor.execute_card_effect(candy, [{"rare_candy_evolve": [{"card": stage2, "target_slot": target}]}], state), "Registered Candy must execute after suppression"))
+	checks.append(assert_eq(target.get_top_card(), stage2, "Allowed Candy must actually evolve the target"))
+	return run_checks(checks)
+
+
 func test_csv10c_123_evolves_up_to_two_selected_darkness_pokemon_from_full_deck() -> String:
 	var state := _state()
 	var processor := EffectProcessor.new()
