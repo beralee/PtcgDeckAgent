@@ -29,7 +29,7 @@ static func variants_for_deck(
 	api_configured: bool,
 	feature_override: Variant = null
 ) -> Array[Dictionary]:
-	var profile := ProfileCatalogScript.get_profile_for_deck(deck_id)
+	var profile := ProfileCatalogScript.setup_variant_metadata_for_deck(deck_id)
 	if profile.is_empty() or str(profile.get("base_strategy_id", "")) != base_strategy_id:
 		return []
 	var enabled := feature_enabled() if feature_override == null else bool(feature_override)
