@@ -892,6 +892,28 @@ func test_main_menu_portrait_layout_reflows_buttons_immediately() -> String:
 	return result
 
 
+func test_main_menu_display_settings_preserves_portrait_footer_clearance() -> String:
+	var scene: Control = MainMenuScene.instantiate()
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_main_menu_hud")
+	var display_button := scene.get_node("%BtnDisplaySettings") as Button
+	var menu := scene.get_node("VBoxContainer") as VBoxContainer
+	var checks: Array[String] = []
+	for show_display_settings: bool in [false, true]:
+		display_button.visible = show_display_settings
+		scene.call("_apply_non_battle_layout_for_tests", scene.size, "portrait")
+		var footer: Control = scene.get("_share_button")
+		var footer_top := scene.size.y + footer.offset_top
+		var menu_bottom := scene.size.y * 0.5 + menu.offset_bottom
+		checks.append(assert_true(menu_bottom <= footer_top - scene.size.y * 0.018 + 0.1, "All visible home actions must retain the footer clearance with display settings %s" % show_display_settings))
+		var button_height := (scene.get_node("%BtnStartBattle") as Button).custom_minimum_size.y
+		var count := 7 if show_display_settings else 6
+		var required_height := button_height * count + menu.get_theme_constant("separation") * (count - 1)
+		checks.append(assert_true(absf(menu.offset_bottom - menu.offset_top - required_height) < 0.1, "The menu must reserve every visible button and gap"))
+	scene.free()
+	return run_checks(checks)
+
+
 func test_main_menu_portrait_version_and_available_update_share_top_status_stack() -> String:
 	var scene: Control = MainMenuScene.instantiate()
 	scene.size = Vector2(1080, 2400)
@@ -1311,6 +1333,22 @@ func test_battle_setup_portrait_layout_stacks_columns_and_keeps_battle_default_p
 		assert_true(deck1_picker != null and deck1_row != null and deck1_picker.get_parent() == deck1_row, "Battle setup landscape should restore deck picker to the original row"),
 		assert_eq(deck1_view.size_flags_horizontal if deck1_view != null else -1, Control.SIZE_FILL, "Battle setup landscape should not keep portrait expand sizing on the View button"),
 		assert_eq(deck1_edit.size_flags_horizontal if deck1_edit != null else -1, Control.SIZE_FILL, "Battle setup landscape should not keep portrait expand sizing on the Edit button"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_windows_narrow_setup_stacks_without_phone_sized_text() -> String:
+	var scene: Control = BattleSetupScene.instantiate()
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1000, 700), "landscape")
+	var stack := scene.find_child("PortraitSetupStack", true, false) as VBoxContainer
+	var start_button := scene.find_child("BtnStart", true, false) as Button
+	var context: Dictionary = scene.get("_current_non_battle_layout_context")
+	var result := run_checks([
+		assert_not_null(stack, "A narrow desktop setup should use the scrollable single column"),
+		assert_eq(int(context.get("body_font_size", 0)), 15, "Desktop text must not inherit the phone font size"),
+		assert_true(start_button != null and start_button.get_theme_font_size("font_size") <= 20, "Desktop buttons should retain desktop font metrics"),
 	])
 	scene.queue_free()
 	return result
